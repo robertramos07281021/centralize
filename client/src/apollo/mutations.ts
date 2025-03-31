@@ -166,3 +166,13 @@ export const CREATE_CUSTOMER = gql `mutation
     }
   }
 `
+
+export const UPDATE_CUSTOMER = gql` mutation
+  updateCustomer($fullName:String!, $dob:String!, $gender:String!, $mobile:[Mobile], $email:[Email], $address:[Address],$id:ID!) {
+    updateCustomer(fullName:$fullName, dob:$dob, gender:$gender, mobile:$mobile, email:$email, address:$address, id:$id) {
+      success
+      message
+    }
+  }
+
+`

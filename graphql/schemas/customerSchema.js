@@ -32,17 +32,38 @@ const customerTypeDefs = gql`
     vendor_endorsement: String
   }
 
+  input Mobile {
+    mobile: String
+  }
+  input Email {
+    email: String
+  }
+  input Address {
+    address: String
+  }
+
+  type SearchCustomer {
+    fullName:String
+    dob: String
+    gender: String
+    contact_no: [Mobile]
+    email: [Email]
+    address: [Address]
+  }
+
   type Success {
     success: Boolean!
     message: String!
   }
   
-  # type Query {
+  type Query {
+    findCustomer(search:String): [SearchCustomer]
+  }
 
-  # }
 
   type Mutation {
     createCustomer(input:[CustomerData]): Success
+    updateCustomer(fullName:String!, dob:String!, gender:String!, mobile:[Mobile], email:[Email], address:[Address],id:ID!): Success
   }
 `
 

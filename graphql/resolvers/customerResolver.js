@@ -59,11 +59,32 @@ const customerResolver = {
             })
           }
         } catch (error) {
-          console.log(error)
           throw new CustomError(error.message, 500)
         }
       })
       return {success: true, message: "successfully add"}
+    },
+    updateCustomer: async(_,{fullName, dob, gender, address, mobile, email},{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
+      
+      try {
+        const customer = await Customer.findById(id) 
+        if(!customer) throw new CustomError("Customer not found",404)
+        await customer.updateOne({fullName, dob, gender})
+        Array.from(address).forEach((element)=> {
+          customer.addresses.push(element)
+        })
+        Array.from(email).forEach((element)=> {
+          customer.emails.push(element)
+        })
+        Array.from(mobile).forEach((element)=> {
+          customer.contact_no.push(element)
+        })
+
+        return {success: true, message: "Customer successfully updated"}
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
     }
   }
 }
