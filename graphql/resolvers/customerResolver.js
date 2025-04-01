@@ -49,9 +49,9 @@ const customerResolver = {
               gender: element.gender,
               dob: element.birthday
             })
-            customer.addresses.push({address: element.address})
-            customer.emails.push({email: element.emails})
-            customer.contact_no.push({mobile: element.one})
+            customer.addresses.push(element.address)
+            customer.emails.push(element.emails)
+            customer.contact_no.push(element.one)
             await customer.save()
   
             await CustomerAccount.create({
