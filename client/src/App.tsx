@@ -14,14 +14,13 @@ import AomDashboard from "./pages/aom/AomDashboard"
 import CeoDashboard from "./pages/ceo/CeoDashboard"
 import TlDashboard from "./pages/tl/TlDashboard"
 import OperationDashboard from "./pages/operation/OperationDashboard"
-
 import AccountsView from "./pages/admin/AccountsView"
 import RegisterView from "./pages/admin/RegisterView"
 import SetupView from "./pages/admin/SetupView"
 import UserView from "./pages/admin/UserView"
 import Disposition from "./pages/Disposition"
 import ExtractorView from "./pages/tl/ExtractorView"
-import CustomerView from "./pages/CustomerView"
+import CustomerDisposition from "./pages/CustomerDisposition"
 
 function App() {
 
@@ -43,7 +42,7 @@ function App() {
         <Route element={<AgentRoute/>}>
           <Route path="/agent-dashboard" element={<AgentDashboard/>}/>
           <Route path="/agent-disposition" element={<Disposition/>}/>
-          <Route path="/agent-disposition/customer-view" element={<CustomerView/>}/>
+          <Route path="/agent-disposition/customer-view" element={<CustomerDisposition/>}/>
 
         </Route>
         <Route element={<AomRoute/>}>
@@ -57,13 +56,12 @@ function App() {
         <Route element={<TlRoute/>}>
           <Route path="/tl-dashboard" element={<TlDashboard/>}/>
           <Route path="/tl-disposition" element={<Disposition/>}/>
-          <Route path="/tl-disposition/customer-view" element={<CustomerView/>}/>
+          <Route path="/tl-disposition/customer-view" element={<CustomerDisposition/>}/>
           <Route path="/outcome-extractor" element={<ExtractorView/>}/>
 
         </Route>
         <Route element={<CeoRoute/>}>
           <Route path="/ceo-dashboard" element={<CeoDashboard/>}/>
-
         </Route>
 
 
