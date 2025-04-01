@@ -1,18 +1,19 @@
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { CiSquarePlus, CiSquareMinus } from "react-icons/ci";
 import Confirmation from "./Confirmation";
 import { useMutation } from "@apollo/client";
 import { UPDATE_CUSTOMER } from "../apollo/mutations";
 import SuccessToast from "./SuccessToast";
+import { LocationState } from "../pages/CustomerDisposition";
 
 interface CustomerUpdateFormProps {
-  cancel: () => void
+  cancel: () => void,
+  state: LocationState
 }
 
 
-const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
+const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) => {
   
-
 
   // mobile =======================================================================
   const [mobiles, setMobiles] = useState<string[]>([""])
@@ -21,7 +22,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
     setMobiles([...mobiles, ""])
   }
 
-  const validatePhone = (phone: string): boolean => /^09\d{9}$/.test(phone);
+  const validatePhone = (phone: string): boolean => /^9\d{9}$/.test(phone);
 
   const handleMinusMobile = (index: number) => {
     if (mobiles.length > 1) {
@@ -112,7 +113,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
     e.preventDefault()
     if(!updateForm?.current?.checkValidity()) {
       setRequired(true)
-      return
     } else {
       setRequired(false)
       setConfirm(true)
@@ -130,11 +130,31 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
         },
         no: () => {setConfirm(false)}
       })
-     
     }
-
-
   }
+
+  useEffect(()=> {
+    if(state) {
+      setData({
+        fullName:state.fullName,
+        dob: state.dob,
+        gender: state.gender
+      })
+      setMobiles((prevMobiles) => [
+        ...prevMobiles.filter(m => m !== ""),
+        ...(state.contact_no ?? [])
+      ]);
+      setAddress((prevAddress) => [
+        ...prevAddress.filter(a => a !== ""),
+        ...(state.addresses ?? [])
+      ])
+      setEmails((prevEmail) => [
+        ...prevEmail.filter(e => e !== ""),
+        ...(state.emails ?? [])
+      ])
+    }
+  },[state])
+
 
 
   return (
@@ -169,7 +189,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
             onChange={(e)=> setData({...data, dob: e.target.value})} 
             id="dob" 
             required
-            className={`${required && !data.dob ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"}  border  text-gray-500 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}  />
+            className={`${required && !data.dob ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"}  border  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}  />
         </div>
         <div> 
           <label 
@@ -191,9 +211,8 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
         </div>
 
         <div >
-          <label 
-            htmlFor="contact" 
-            className="block text-sm font-bold text-slate-500 dark:text-white">Mobile No.</label>
+          <div 
+            className="block text-sm font-bold text-slate-500 dark:text-white">Mobile No.</div>
           <div className="flex flex-col gap-2">
             {
               mobiles.map((m,index)=> (
@@ -202,7 +221,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
                     type="text" 
                     id={`contact_${index}`}   
                     name={`contact_${index}`}
-                    pattern="^09\d{9}$"
+                    pattern="^9\d{9}$"
                     value={m}
                     required
                     onChange={(e)=> handleMobileOnchange(index,e.target.value)}
@@ -223,9 +242,8 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
         </div>
           
         <div  className="">
-          <label 
-          htmlFor="email" 
-          className="block text-sm font-bold text-slate-500 dark:text-white">Email Address</label>
+          <div 
+          className="block text-sm font-bold text-slate-500 dark:text-white">Email Address</div>
           <div className="flex flex-col gap-2">
             {
               emails.map((email,index)=> (
@@ -255,9 +273,8 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
           </div>
         </div>
         <div className="">
-          <label 
-            htmlFor="address" 
-            className="block text-sm font-bold text-slate-500 dark:text-white">Address</label>
+          <div 
+            className="block text-sm font-bold text-slate-500 dark:text-white">Address</div>
           <div className="flex flex-col gap-2">
             {
             address.map((a,index)=> (

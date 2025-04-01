@@ -100,7 +100,7 @@ const Disposition = () => {
                   ))}
                 </td>
                 <td>
-                  <Link to={`${location.pathname}/customer-view`}>
+                  <Link to={`${location.pathname}/customer-view`} state={customer}>
                     View
                   </Link>
                 </td>

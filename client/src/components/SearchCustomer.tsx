@@ -1,6 +1,8 @@
 
 
 const SearchCustomer = () => {
+  
+
   return (
     <div className="w-full flex justify-center py-2 gap-5 mt-10">
       <div className="flex gap-5">
