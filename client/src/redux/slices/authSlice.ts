@@ -14,7 +14,8 @@ type User = {
 interface UserState {
   error: boolean
   need_login: boolean
-  userLogged: User
+  userLogged: User,
+  page: number
 }
 
 const initialState:UserState = {
@@ -29,7 +30,8 @@ const initialState:UserState = {
     branch: "",
     department: "",
     bucket: ""
-  }
+  },
+  page: 0
 };
 
 const authSlice = createSlice({
@@ -49,9 +51,12 @@ const authSlice = createSlice({
     },
     setUserLogged: (state, action: PayloadAction<User>) => {
       state.userLogged = action.payload
+    },
+    setPage: (state,action:PayloadAction<number>) => {
+      state.page = action.payload
     }
   },
 });
 
-export const { logoutUser, setError, setNeedLogin , setUserLogged} = authSlice.actions;
+export const { logoutUser, setError, setNeedLogin , setUserLogged, setPage} = authSlice.actions;
 export default authSlice.reducer;

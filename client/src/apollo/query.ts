@@ -98,7 +98,7 @@ export const BRANCH_QUERY = gql`
   } 
 `
 
-//department query
+//department query ================================================================================
 export const DEPARTMENT_QUERY = gql`
   query departmentQuery($name: String){
     getDepts {
@@ -139,7 +139,7 @@ export const DEPT_BUCKET_QUERY = gql`
 `
 
 
-//bucket query
+//bucket query ==============================================================================================
 export const BUCKET_QUERY = gql`
   query bucketQuery($dept:String, $name:String) {
     getBuckets(dept:$dept) {
@@ -155,7 +155,7 @@ export const BUCKET_QUERY = gql`
     
   }
 `
-//modify record query
+//modify record query ============================================================================================
 export const MODIFY_RECORD_QUERY = gql`
   query Query($id: ID!) {
     getModifyReport(id: $id) {
@@ -165,3 +165,22 @@ export const MODIFY_RECORD_QUERY = gql`
     }
   }
 `
+
+
+//customer query ===========================================================================================
+export const ALL_CUSTOMER = gql`
+query Query($page: Int) {
+  getCustomers(page: $page) {
+    customers {
+      fullName
+      dob
+      gender
+      contact_no
+      email
+      address
+    }
+    total
+  }
+}
+`
+

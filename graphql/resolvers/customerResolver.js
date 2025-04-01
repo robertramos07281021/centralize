@@ -17,8 +17,6 @@ const customerResolver = {
     },
     findCustomer: async(_,{fullName, dob, email, contact_no}) => {
       {
-
-       
         const searchQuery = await Customer.aggregate([
           {
             $match: [
@@ -29,7 +27,31 @@ const customerResolver = {
             ]
           }
         ])
+      }
+    },
+    getCustomers: async(_,{page}) => {
+      try {
 
+
+        const customers = await Customer.aggregate([
+          {
+            $facet: {
+              customers: [
+                { $skip: (page - 1) * 5 },
+                { $limit: 5 }
+              ],
+              total: [
+                {$count: "totalCustomers"}
+              ]
+            }
+          }
+        ])
+        return {
+          customers: customers[0].customers ?? [],
+          total: customers[0].total.length > 0 ? customers[0].total[0].totalCustomers : 0,
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500)
       }
     }
   },
@@ -50,7 +72,7 @@ const customerResolver = {
               dob: element.birthday
             })
             customer.addresses.push(element.address)
-            customer.emails.push(element.emails)
+            customer.emails.push(element.email)
             customer.contact_no.push(element.one)
             await customer.save()
   

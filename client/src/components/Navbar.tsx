@@ -13,7 +13,7 @@ import { setNeedLogin, setUserLogged } from "../redux/slices/authSlice";
 import NavbarExtn from "./NavbarExtn";
 
 
-const Navbar:React.FC = () => {
+const Navbar = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const {data, refetch, error} = useQuery<{ getMe: UserInfo }>(myUserInfos)

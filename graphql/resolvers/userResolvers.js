@@ -26,7 +26,6 @@ const userResolvers = {
                 {$count: "totalUser"}
               ]
             }
-          
           }
         ])
         return {

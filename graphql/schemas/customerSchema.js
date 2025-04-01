@@ -33,7 +33,7 @@ const customerTypeDefs = gql`
   }
 
 
-  type SearchCustomer {
+  type CustomerInfo {
     fullName:String
     dob: String
     gender: String
@@ -42,13 +42,20 @@ const customerTypeDefs = gql`
     address: [String]
   }
 
+  type getCustomers {
+    customers: [CustomerInfo]
+    total: Int
+  }
+
   type Success {
     success: Boolean!
     message: String!
   }
   
   type Query {
-    findCustomer(fullName:String, dob:String, email:String, contact_no:String): [SearchCustomer]
+    findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
+    getCustomers(page:Int): getCustomers!
+
   }
 
 
