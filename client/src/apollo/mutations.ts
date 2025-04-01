@@ -165,7 +165,6 @@ export const CREATE_CUSTOMER = gql `mutation
       message
     }
   }
-<<<<<<< HEAD
 `
 
 export const UPDATE_CUSTOMER = gql` mutation
@@ -176,6 +175,4 @@ export const UPDATE_CUSTOMER = gql` mutation
     }
   }
 
-=======
->>>>>>> 86451352c1b3110265a530f00390f91efdb428ea
 `

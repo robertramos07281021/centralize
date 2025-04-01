@@ -15,6 +15,23 @@ const customerResolver = {
         throw new CustomError(error.message, 500)
       }
     },
+    findCustomer: async(_,{fullName, dob, email, contact_no}) => {
+      {
+
+       
+        const searchQuery = await Customer.aggregate([
+          {
+            $match: [
+              {fullName : {$regex: fullName, $options: "i"}},
+              {dob : {$regex: dob, $options: "i"}},
+              {email : { $elemMatch : { $regex: email, $options: "i"} }},
+              {contact_no :{ $elemMatch: {$regex: contact_no, $options: "i"}} },
+            ]
+          }
+        ])
+
+      }
+    }
   },
   Mutation: {
     createCustomer: async(_,{input},{user}) => {

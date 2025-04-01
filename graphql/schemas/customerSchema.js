@@ -32,23 +32,14 @@ const customerTypeDefs = gql`
     vendor_endorsement: String
   }
 
-  input Mobile {
-    mobile: String
-  }
-  input Email {
-    email: String
-  }
-  input Address {
-    address: String
-  }
 
   type SearchCustomer {
     fullName:String
     dob: String
     gender: String
-    contact_no: [Mobile]
-    email: [Email]
-    address: [Address]
+    contact_no: [String]
+    email: [String]
+    address: [String]
   }
 
   type Success {
@@ -57,13 +48,13 @@ const customerTypeDefs = gql`
   }
   
   type Query {
-    findCustomer(search:String): [SearchCustomer]
+    findCustomer(fullName:String, dob:String, email:String, contact_no:String): [SearchCustomer]
   }
 
 
   type Mutation {
     createCustomer(input:[CustomerData]): Success
-    updateCustomer(fullName:String!, dob:String!, gender:String!, mobile:[Mobile], email:[Email], address:[Address],id:ID!): Success
+    updateCustomer(fullName:String!, dob:String!, gender:String!, mobiles:[String], emails:[String], addresses:[String],id:ID!): Success
   }
 `
 

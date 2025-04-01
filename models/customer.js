@@ -11,23 +11,9 @@ const customerSchema = new Schema(
       type: String,
       required: true,
     },
-    contact_no: [
-      {
-        mobile: {
-          type:String
-        }
-      }
-    ],
-    emails: [{
-      email: {
-        type: String,
-      }
-    }],
-    addresses: [{
-      address: {
-        type: String,
-      } 
-    }],
+    contact_no: [String],
+    emails: [String],
+    addresses: [String],
     dob: {
       type: String,
       required: true 
