@@ -38,8 +38,9 @@ const customerTypeDefs = gql`
     dob: String
     gender: String
     contact_no: [String]
-    email: [String]
-    address: [String]
+    emails: [String]
+    addresses: [String]
+    _id:ID
   }
 
   type getCustomers {

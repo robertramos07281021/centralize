@@ -176,8 +176,9 @@ query Query($page: Int) {
       dob
       gender
       contact_no
-      email
-      address
+      emails
+      addresses
+      _id
     }
     total
   }

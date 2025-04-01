@@ -1,4 +1,4 @@
-import { createSlice,PayloadAction  } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction  } from "@reduxjs/toolkit";
 
 type User = {
   _id: string,
@@ -11,17 +11,26 @@ type User = {
   bucket: string
 }
 
+type search = {
+  fullName: string,
+  contact_no: string,
+  dob: string,
+  email: string
+}
+
 interface UserState {
   error: boolean
   need_login: boolean
   page: number
   userLogged: User
+  search: search
+
 }
 
 const initialState:UserState = {
   error: false,
   need_login: false,
-  page: 60,
+  page: 1,
   userLogged: {
     _id: "",
     change_password: false,
@@ -32,7 +41,12 @@ const initialState:UserState = {
     department: "",
     bucket: ""
   },
-
+  search: {
+    fullName: "",
+    contact_no: "",
+    dob: "",
+    email: ""
+  }
 };
 
 const authSlice = createSlice({
@@ -52,11 +66,14 @@ const authSlice = createSlice({
     setUserLogged: (state, action: PayloadAction<User>) => {
       state.userLogged = action.payload
     },
-    setPage: (state,action:PayloadAction<number>) => {
+    setPage: (state, action:PayloadAction<number>) => {
       state.page = action.payload
+    },
+    setSearch: (state, action:PayloadAction<search>) => {
+      state.search = action.payload
     }
   },
 });
 
-export const { logoutUser, setError, setNeedLogin , setUserLogged, setPage} = authSlice.actions;
+export const { logoutUser, setError, setNeedLogin , setUserLogged, setPage, setSearch} = authSlice.actions;
 export default authSlice.reducer;

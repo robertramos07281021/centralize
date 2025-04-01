@@ -129,3 +129,18 @@ export type CustomerData = {
   txn_fee_os:number
   vendor_endorsement:string
 }
+
+export type CustomerRegistered = {
+  fullName:string
+  dob:string
+  gender:string
+  contact_no:string[]
+  emails:string[]
+  addresses:string[]
+  _id:string
+}
+
+export type AllCustomers = {
+  customers:CustomerRegistered[]
+  total: number
+}
