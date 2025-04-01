@@ -59,15 +59,10 @@ const customerResolver = {
             })
           }
         } catch (error) {
-<<<<<<< HEAD
-=======
-          console.log(error)
->>>>>>> 86451352c1b3110265a530f00390f91efdb428ea
           throw new CustomError(error.message, 500)
         }
       })
       return {success: true, message: "successfully add"}
-<<<<<<< HEAD
     },
     updateCustomer: async(_,{fullName, dob, gender, address, mobile, email},{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
@@ -90,8 +85,6 @@ const customerResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
-=======
->>>>>>> 86451352c1b3110265a530f00390f91efdb428ea
     }
   }
 }

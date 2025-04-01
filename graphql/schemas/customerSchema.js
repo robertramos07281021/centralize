@@ -32,7 +32,6 @@ const customerTypeDefs = gql`
     vendor_endorsement: String
   }
 
-<<<<<<< HEAD
   input Mobile {
     mobile: String
   }
@@ -52,14 +51,11 @@ const customerTypeDefs = gql`
     address: [Address]
   }
 
-=======
->>>>>>> 86451352c1b3110265a530f00390f91efdb428ea
   type Success {
     success: Boolean!
     message: String!
   }
   
-<<<<<<< HEAD
   type Query {
     findCustomer(search:String): [SearchCustomer]
   }
@@ -68,14 +64,6 @@ const customerTypeDefs = gql`
   type Mutation {
     createCustomer(input:[CustomerData]): Success
     updateCustomer(fullName:String!, dob:String!, gender:String!, mobile:[Mobile], email:[Email], address:[Address],id:ID!): Success
-=======
-  # type Query {
-
-  # }
-
-  type Mutation {
-    createCustomer(input:[CustomerData]): Success
->>>>>>> 86451352c1b3110265a530f00390f91efdb428ea
   }
 `
 
