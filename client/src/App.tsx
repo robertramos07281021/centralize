@@ -21,6 +21,7 @@ import SetupView from "./pages/admin/SetupView"
 import UserView from "./pages/admin/UserView"
 import Disposition from "./pages/Disposition"
 import ExtractorView from "./pages/tl/ExtractorView"
+import CustomerView from "./pages/CustomerView"
 
 function App() {
 
@@ -42,6 +43,7 @@ function App() {
         <Route element={<AgentRoute/>}>
           <Route path="/agent-dashboard" element={<AgentDashboard/>}/>
           <Route path="/agent-disposition" element={<Disposition/>}/>
+          <Route path="/agent-disposition/customer-view" element={<CustomerView/>}/>
 
         </Route>
         <Route element={<AomRoute/>}>
@@ -55,6 +57,7 @@ function App() {
         <Route element={<TlRoute/>}>
           <Route path="/tl-dashboard" element={<TlDashboard/>}/>
           <Route path="/tl-disposition" element={<Disposition/>}/>
+          <Route path="/tl-disposition/customer-view" element={<CustomerView/>}/>
           <Route path="/outcome-extractor" element={<ExtractorView/>}/>
 
         </Route>

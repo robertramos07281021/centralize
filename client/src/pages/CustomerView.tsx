@@ -1,8 +1,14 @@
+import CustomerUpdateForm from "../components/CustomerUpdateForm"
 
 
 const CustomerView = () => {
   return (
-    <div>CustomerView</div>
+    <div className="w-full h-full border">
+      <CustomerUpdateForm cancel={()=> ({})}/>
+
+
+
+    </div>
   )
 }
 

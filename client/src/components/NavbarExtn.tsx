@@ -56,7 +56,7 @@ const NavbarExtn = () => {
       {
         accountsNavbar[userType].map((an,index) => 
         <Link key={index} to={an.link}>
-          <div className={`${index > 0 && "border-l"} ${location.pathname === an.link && "bg-slate-200"} border-slate-300 py-2 px-2 hover:bg-slate-200 hover:text-black/60`}>
+          <div className={`${index > 0 && "border-l"} ${location.pathname.includes(an.link) && "bg-slate-200"} border-slate-300 py-2 px-2 hover:bg-slate-200 hover:text-black/60`}>
             {an.name}
           </div>
         </Link>

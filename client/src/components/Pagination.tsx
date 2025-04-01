@@ -11,7 +11,7 @@ interface PaginationProps {
 const Pagination:React.FC<PaginationProps> = ({totalCustomers}) => {
   const {page} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
-  const totalPages = Math.ceil(totalCustomers/5)
+  const totalPages = Math.ceil(totalCustomers/20)
   const previous = () => {
     if(page > 1) {
       dispatch(setPage(page - 1))

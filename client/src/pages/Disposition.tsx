@@ -6,13 +6,14 @@ import { useQuery } from "@apollo/client";
 import { ALL_CUSTOMER } from "../apollo/query";
 import Pagination from "../components/Pagination";
 import { AllCustomers, CustomerRegistered } from "../middleware/types";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 
 
 
 
 const Disposition = () => {
   const {userLogged, page} = useSelector((state:RootState)=> state.auth)
+  const location = useLocation()
 
   const [time, setTime] = useState(new Date());
   useEffect(() => {
@@ -44,7 +45,7 @@ const Disposition = () => {
   },[Customers])
 
   return (
-    <div className="h-full w-full flex flex-col">
+    <div className="min-h-full w-full flex flex-col">
       {
         userLogged.type === "AGENT" &&
         <div className="w-full flex justify-between p-5 text-slate-600 text-xs font-medium ">
@@ -52,11 +53,11 @@ const Disposition = () => {
             Bucket: {userLogged?.bucket?.toUpperCase()}
           </div>
           <div className="text-xs">
-            Date & Time: <span className="">{time.toLocaleDateString()} - {formattedTime}</span>
+            Date & Time: <span >{time.toLocaleDateString()} - {formattedTime}</span>
           </div>
         </div>
       }
-      <div className=" w-full min-h-full flex flex-col px-5">
+      <div className=" w-full h-full flex flex-col px-5">
         <SearchCustomer/>
         <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 mt-5 ">
           <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400 border-y-2 border-slate-300">
@@ -99,7 +100,7 @@ const Disposition = () => {
                   ))}
                 </td>
                 <td>
-                  <Link to={"#"}>
+                  <Link to={`${location.pathname}/customer-view`}>
                     View
                   </Link>
                 </td>
@@ -111,7 +112,11 @@ const Disposition = () => {
 
       </div>
       <div className="p-2 flex justify-center">
-        <Pagination totalCustomers={Customers?.getCustomers?.total ? Customers?.getCustomers?.total : 0 }/>
+      {
+        (Math.ceil((Customers?.getCustomers?.total ?? 0) / 20) > 1) && (
+          <Pagination totalCustomers={Customers?.getCustomers?.total ?? 0} />
+        )
+      }
       </div>
     </div>
   )

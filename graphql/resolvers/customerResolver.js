@@ -37,8 +37,8 @@ const customerResolver = {
           {
             $facet: {
               customers: [
-                { $skip: (page - 1) * 5 },
-                { $limit: 5 }
+                { $skip: (page - 1) * 20 },
+                { $limit: 20 }
               ],
               total: [
                 {$count: "totalCustomers"}
