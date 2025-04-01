@@ -1,33 +1,38 @@
 import { useSelector } from "react-redux"
-import { RootState } from "../redux/store"
+import { RootState, useAppDispatch } from "../redux/store"
 import { useEffect, useState } from "react";
 import SearchCustomer from "../components/SearchCustomer";
 import { useQuery } from "@apollo/client";
 import { ALL_CUSTOMER } from "../apollo/query";
 import Pagination from "../components/Pagination";
+import { setPage } from "../redux/slices/authSlice";
 
 
 
 const Disposition = () => {
-  const {userLogged} = useSelector((state:RootState)=> state.auth)
-  const [time, setTime] = useState(new Date());
+  const {userLogged, page} = useSelector((state:RootState)=> state.auth)
 
+  const [time, setTime] = useState(new Date());
+  const dispatch = useAppDispatch()
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTime(new Date());
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
+    if(userLogged.type === "AGENT") {
+      const timer = setInterval(() => {
+        setTime(new Date());
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [userLogged]);
 
   const formattedTime = time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
-  const [page, setPage] = useState<number>(1)
 
-  const {data:Customers, refetch} = useQuery(ALL_CUSTOMER,{variables: {page:page}})
+
+  const {data:Customers} = useQuery(ALL_CUSTOMER,{variables: {page:page}})
   
-  useEffect(()=> {
-    refetch()
-  },[page, refetch])
+  // useEffect(()=> {
+  //   refetch()
+  // },[page, refetch])
   
+    console.log(page)
 
 
   return (
@@ -84,7 +89,7 @@ const Disposition = () => {
 
       </div>
       <div className="p-2 flex justify-center">
-        <Pagination previous={()=> setPage(page-1)} next={()=> setPage(page + 1)} exists={page} totalCustomers={Customers?.getCustomers?.total}/>
+        <Pagination previous={()=> dispatch(setPage( page - 1 ))} next={()=> dispatch(setPage( page + 1 ))} exists={page} totalCustomers={Customers?.getCustomers?.total}/>
       </div>
     </div>
   )

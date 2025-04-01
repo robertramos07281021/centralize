@@ -14,13 +14,14 @@ type User = {
 interface UserState {
   error: boolean
   need_login: boolean
-  userLogged: User,
   page: number
+  userLogged: User
 }
 
 const initialState:UserState = {
   error: false,
   need_login: false,
+  page: 60,
   userLogged: {
     _id: "",
     change_password: false,
@@ -31,14 +32,13 @@ const initialState:UserState = {
     department: "",
     bucket: ""
   },
-  page: 0
+
 };
 
 const authSlice = createSlice({
   name: "auth",
   initialState,
   reducers: {
-
     logoutUser: (state) => {
       state.error = false
       state.need_login = false
