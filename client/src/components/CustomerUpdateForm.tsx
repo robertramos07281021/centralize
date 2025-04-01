@@ -3,8 +3,8 @@ import { CiSquarePlus, CiSquareMinus } from "react-icons/ci";
 import Confirmation from "./Confirmation";
 import { useMutation } from "@apollo/client";
 import { UPDATE_CUSTOMER } from "../apollo/mutations";
-import SuccessToast from "./SuccessToast";
 import { LocationState } from "../pages/CustomerDisposition";
+import { useLocation, useNavigate } from "react-router-dom";
 
 interface CustomerUpdateFormProps {
   cancel: () => void,
@@ -13,8 +13,8 @@ interface CustomerUpdateFormProps {
 
 
 const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) => {
-  
-
+  const navigate = useNavigate()
+  const location = useLocation()
   // mobile =======================================================================
   const [mobiles, setMobiles] = useState<string[]>([""])
 
@@ -91,18 +91,13 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) =
   })
 
   const [confirm, setConfirm] = useState(false)
-  const [success, setSuccess] = useState({
-    success: false,
-    message: ""
-  })
+
   const [required, setRequired] = useState(false)
   const [updateCustomer] = useMutation(UPDATE_CUSTOMER, {
-    onCompleted: async() => {
+    onCompleted: async(res) => {
       try {
-        setSuccess({
-          success: true,
-          message: "Customer info successfully updated"
-        })
+        cancel()
+        navigate(`${location.pathname}?success=true`,{ state: { ...res.updateCustomer.customer} })
       } catch (error) {
         console.log(error)
       }
@@ -121,8 +116,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) =
         toggle: "UPDATE" ,
         yes: async() => {
           try {
-            const res = await updateCustomer({variables: {...data, mobile: mobiles, email: emails, address: address}})
-            console.log(res)
+            await updateCustomer({variables: {...data, mobiles: mobiles, emails: emails, addresses: address, id:state._id}})
             setConfirm(false)
           } catch (error) {
             console.log(error)
@@ -159,10 +153,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) =
 
   return (
     <>
-      {
-      success?.success &&
-      <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
-      }
       <form ref={updateForm} className="flex flex-col p-2 gap-3" onSubmit={(e)=> handleSubmitUpdateForm(e)} noValidate>
         <h1 className="text-center font-bold text-slate-600 text-lg">Customer Update Information</h1>
         <div className="mt-5">
@@ -201,7 +191,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) =
             value={data.gender}
             required
             onChange={(e)=> setData({...data, gender: e.target.value})}
-            // ${data.gender.trim() === "" ? "bg-red-200" : "bg-gray-50"}
             className={`${required && !data.gender ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}
           >
             <option value="">Choose a gender</option>
@@ -254,7 +243,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) =
                   name={`email_${index}`}
                   value={email}
                   required
-                  pattern="/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/"
+                  pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
                   onChange={(e)=> handleEmailOnchange(index,e.target.value)}
                   className={`${required && (!emails[index] || !validateEmail(emails[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
                   placeholder="Enter Email Address" 

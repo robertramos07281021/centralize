@@ -88,7 +88,7 @@ const Disposition = () => {
                 </th>
                 <td className="px-6 py-4 flex">
                   {customer.contact_no.map((cn, index)=> (
-                    <p key={index}>{cn}{(customer.contact_no.length !== index) && (customer.contact_no.length > 1 ) && ", "}</p>
+                    <p key={index}>{cn}{(customer.contact_no.length !== index) && (customer.contact_no.length > 1 ) && ","}&nbsp;</p>
                   ))}
                 </td>
                 <td className="px-6 py-4">

@@ -51,6 +51,7 @@ const customerTypeDefs = gql`
   type Success {
     success: Boolean!
     message: String!
+    customer: CustomerInfo
   }
   
   type Query {

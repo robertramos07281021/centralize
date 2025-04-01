@@ -103,25 +103,16 @@ const customerResolver = {
       })
       return {success: true, message: "successfully add"}
     },
-    updateCustomer: async(_,{fullName, dob, gender, address, mobile, email},{user}) => {
+    updateCustomer: async(_,{fullName, dob, gender, addresses, mobiles, emails, id},{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
-      
       try {
-        const customer = await Customer.findById(id) 
+        const customer = await Customer.findByIdAndUpdate(id,{
+          fullName, dob, gender, addresses, emails, contact_no:mobiles
+        }, {new: true}) 
         if(!customer) throw new CustomError("Customer not found",404)
-        await customer.updateOne({fullName, dob, gender})
-        Array.from(address).forEach((element)=> {
-          customer.addresses.push(element)
-        })
-        Array.from(email).forEach((element)=> {
-          customer.emails.push(element)
-        })
-        Array.from(mobile).forEach((element)=> {
-          customer.contact_no.push(element)
-        })
-
-        return {success: true, message: "Customer successfully updated"}
+        return {success: true, message: "Customer successfully updated", customer: customer }
       } catch (error) {
+        console.log(error.message)
         throw new CustomError(error.message, 500)
       }
     }

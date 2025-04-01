@@ -1,8 +1,9 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import CustomerUpdateForm from "../components/CustomerUpdateForm"
 import { useSelector } from "react-redux"
 import { RootState } from "../redux/store"
-import { Navigate, useLocation } from "react-router-dom"
+import { Navigate, useLocation, useNavigate } from "react-router-dom"
+import SuccessToast from "../components/SuccessToast"
 
 export type LocationState = {
   fullName:string
@@ -17,13 +18,37 @@ export type LocationState = {
 const CustomerDisposition = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
-
+  const navigate = useNavigate()
   const state = location.state as LocationState || {}
   const [isUpdate, setIsUpdate] = useState<boolean>(false)
+  const [success, setSuccess] = useState({
+    success: false,
+    message: ""
+  })
+  
+  useEffect(()=> {
+    const params = new URLSearchParams(location.search);
+    if(params.get("success")) {
+      setSuccess({
+        success: true,
+        message: "Customer successfully updated"
+      })
+    }
+  },[location.search,navigate, success.success])
+
+  useEffect(()=> {
+    if(!success.success && location.search) {
+     navigate(location.pathname, {state: {...location.state}})
+    }
+  },[success.success,navigate,location.state,location.pathname, location.search])
 
 
   return userLogged._id ? (
     <>
+        {
+        success?.success &&
+        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
+      }
       <div className="w-full grid grid-cols-2 ">
         <div className="flex flex-col p-2 gap-3"> 
           <h1 className="text-center font-bold text-slate-600 text-lg">Customer Information</h1>
@@ -36,7 +61,7 @@ const CustomerDisposition = () => {
           <div className="ms-5">
             <div className="text-sm font-bold text-slate-500">Date Of Birth (yyyy-mm-dd)</div>
             <div className="w-96 border border-gray-300 p-2.5 rounded-lg text-sm bg-gray-50 text-slate-500">
-              {state.dob}
+              {state?.dob}
             </div>
           </div>
           <div className="ms-5 ">
@@ -48,7 +73,7 @@ const CustomerDisposition = () => {
           <div className="ms-5 ">
             <div className="text-sm font-bold text-slate-500">Mobile No.</div>
             <div className="flex flex-col gap-2">
-              {state.contact_no.map((cn,index)=> (
+              {state?.contact_no?.map((cn,index)=> (
                 <div key={index} className="w-96 border border-gray-300 p-2.5 rounded-lg text-sm bg-gray-50 text-slate-500">
                   {cn}
                 </div>
@@ -59,7 +84,7 @@ const CustomerDisposition = () => {
             <div className="text-sm font-bold text-slate-500">Email</div>
             <div className="flex flex-col gap-2"> 
               {
-                state.emails.map((e,index)=> (
+                state?.emails?.map((e,index)=> (
                   <div key={index} className="w-96 border border-gray-300 p-2.5 rounded-lg text-sm bg-gray-50 text-slate-500">
                     {e}
                   </div>
@@ -71,7 +96,7 @@ const CustomerDisposition = () => {
             <div className="text-sm font-bold text-slate-500">Address</div>
             <div className="flex flex-cols gap-2">
               {
-                state.addresses.map((a, index)=> (
+                state?.addresses?.map((a, index)=> (
                   <div key={index} className="w-96 h-32 border border-gray-300 p-2.5 rounded-lg text-sm bg-gray-50 text-slate-500 text-justify">
                     {a}
                   </div>

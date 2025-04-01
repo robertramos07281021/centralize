@@ -168,10 +168,19 @@ export const CREATE_CUSTOMER = gql `mutation
 `
 
 export const UPDATE_CUSTOMER = gql` mutation
-  updateCustomer($fullName:String!, $dob:String!, $gender:String!, $mobile:[Mobile], $email:[Email], $address:[Address],$id:ID!) {
-    updateCustomer(fullName:$fullName, dob:$dob, gender:$gender, mobile:$mobile, email:$email, address:$address, id:$id) {
+  updateCustomer($fullName:String!, $dob:String!, $gender:String!, $mobiles:[String], $emails:[String], $addresses:[String],$id:ID!) {
+    updateCustomer(fullName:$fullName, dob:$dob, gender:$gender, mobiles:$mobiles, emails:$emails, addresses:$addresses, id:$id) {
       success
       message
+      customer {
+        fullName
+        dob
+        gender
+        contact_no
+        emails
+        addresses
+        _id
+      }
     }
   }
 
