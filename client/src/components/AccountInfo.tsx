@@ -49,7 +49,7 @@ const AccountInfo:React.FC<AccountInfoProps> = ({id}) => {
       <div className="grid grid-cols-2 gap-10 text-sm">
         <div className="flex flex-col gap-2">
           <div className="flex items-center gap-3 justify-between">
-            <p className="text-gray-800 font-bold text-end">Bucket</p>
+            <p className="text-gray-800 font-bold">Bucket</p>
             <div className="p-2 border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-80">{accountInfo?.account_bucket.name}</div>
           </div>
           <div className="flex items-center gap-3 justify-between">

@@ -122,7 +122,7 @@ const CustomerDisposition = () => {
           <CustomerUpdateForm cancel={()=> setIsUpdate(false)} state={state}/>
         }
       </div>
-      <div className="p-5 grid grid-cols-2">
+      <div className="p-5 grid grid-cols-2 gap-5">
         <AccountInfo id={state._id}/>
         <DispositionForm/>
       </div>
