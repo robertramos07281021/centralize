@@ -11,7 +11,6 @@ interface CustomerUpdateFormProps {
   state: LocationState
 }
 
-
 const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) => {
   const navigate = useNavigate()
   const location = useLocation()
@@ -41,9 +40,9 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) =
   const handleAddEmail = () => {
     setEmails([...emails,""])
   }
-  const validateEmail = (email: string): boolean=>  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email)
+  const validateEmail = (email: string): boolean=>  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim())
 
-
+  console.log(validateEmail("robert.ramos07281021@gmail.com"))
   const handleEmailOnchange = (index:number, value: string) => {
     const newEmail = [...emails];
     newEmail[index] = value;
@@ -150,7 +149,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) =
   },[state])
 
 
-
   return (
     <>
       <form ref={updateForm} className="flex flex-col p-2 gap-3" onSubmit={(e)=> handleSubmitUpdateForm(e)} noValidate>
@@ -243,7 +241,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) =
                   name={`email_${index}`}
                   value={email}
                   required
-                  pattern="[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}"
                   onChange={(e)=> handleEmailOnchange(index,e.target.value)}
                   className={`${required && (!emails[index] || !validateEmail(emails[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
                   placeholder="Enter Email Address" 

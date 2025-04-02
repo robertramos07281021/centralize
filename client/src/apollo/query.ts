@@ -185,3 +185,36 @@ query Query($page: Int) {
 }
 `
 
+
+//customer account info
+export const ACCOUNT_INFO = gql`
+query AccountInfo($id: ID) {
+  accountInfo(id: $id) {
+    account_bucket {
+      name
+      dept
+    }
+    account_id
+    bill_due_day
+    case_id
+    credit_customer_id
+    endorsement_date
+    grass_details {
+      grass_region
+      vendor_endorsement
+      grass_date
+    }
+    id
+    max_dp
+    out_standing_details {
+      principal_os
+      interest_os
+      admin_fee_os
+      txn_fee_os
+      late_charge_os
+      dst_fee_os
+      total_os
+    }
+  }
+}
+`

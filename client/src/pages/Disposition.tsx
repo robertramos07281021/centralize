@@ -86,17 +86,17 @@ const Disposition = () => {
                 <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
                   {customer.fullName}
                 </th>
-                <td className="px-6 py-4 flex">
+                <td className="px-6 py-4 flex text-gray-700">
                   {customer.contact_no.map((cn, index)=> (
                     <p key={index}>{cn}{(customer.contact_no.length !== index) && (customer.contact_no.length > 1 ) && ","}&nbsp;</p>
                   ))}
                 </td>
-                <td className="px-6 py-4">
+                <td className="px-6 py-4 text-gray-700" title={customer.dob}>
                   {customer.dob}
                 </td>
-                <td className="px-6 py-4 flex">
+                <td className="px-6 py-4 flex text-gray-700">
                   {customer.emails.map((email,index) => (
-                    <p key={index}>{email}{(customer.emails.length !== index) && (customer.emails.length > 1 )}</p>
+                    <p key={index}>{email}{(customer.emails.length !== index) && (customer.emails.length > 1 && "," )}&nbsp;</p>
                   ))}
                 </td>
                 <td>

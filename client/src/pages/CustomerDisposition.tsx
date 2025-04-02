@@ -4,6 +4,8 @@ import { useSelector } from "react-redux"
 import { RootState } from "../redux/store"
 import { Navigate, useLocation, useNavigate } from "react-router-dom"
 import SuccessToast from "../components/SuccessToast"
+import AccountInfo from "../components/AccountInfo"
+import DispositionForm from "../components/DispositionForm"
 
 export type LocationState = {
   fullName:string
@@ -45,7 +47,7 @@ const CustomerDisposition = () => {
 
   return userLogged._id ? (
     <>
-        {
+      {
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
       }
@@ -120,8 +122,9 @@ const CustomerDisposition = () => {
           <CustomerUpdateForm cancel={()=> setIsUpdate(false)} state={state}/>
         }
       </div>
-      <div className="p-5">
-
+      <div className="p-5 grid grid-cols-2">
+        <AccountInfo id={state._id}/>
+        <DispositionForm/>
       </div>
     </>
   ) : (<Navigate to="/"/>)

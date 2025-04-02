@@ -32,7 +32,6 @@ const customerTypeDefs = gql`
     vendor_endorsement: String
   }
 
-
   type CustomerInfo {
     fullName:String
     dob: String
@@ -54,12 +53,45 @@ const customerTypeDefs = gql`
     customer: CustomerInfo
   }
   
+  type outStandingDetails {
+    principal_os: Float
+    interest_os: Float
+    admin_fee_os: Float
+    txn_fee_os: Float
+    late_charge_os: Float
+    dst_fee_os: Float
+    total_os: Float
+  }
+
+  type grassDetails {
+    grass_region: String
+    vendor_endorsement: String
+    grass_date: String
+  }
+
+  type  AccountBucket {
+    name: String
+    dept: String
+  }
+
+  type AccountInfo {
+    id: ID
+    case_id: String,
+    account_id: String
+    endorsement_date: String
+    credit_customer_id: String
+    bill_due_day: Int
+    max_dp: Int
+    out_standing_details: outStandingDetails
+    grass_details: grassDetails
+    account_bucket: AccountBucket
+  } 
+
   type Query {
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
     getCustomers(page:Int): getCustomers!
-
+    accountInfo(id:ID): AccountInfo
   }
-
 
   type Mutation {
     createCustomer(input:[CustomerData]): Success
