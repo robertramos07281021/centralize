@@ -42,7 +42,6 @@ interface accountInfo {
 const AccountInfo:React.FC<AccountInfoProps> = ({id}) => {
   const {data:CustomerAccountInfo} = useQuery<{accountInfo:accountInfo}>(ACCOUNT_INFO,{variables: {id: id}})
   const accountInfo = CustomerAccountInfo?.accountInfo
-  console.log(new Date("2025-02-07"))
   return (
     <div className="p-4">
       <h1 className="text-center font-bold text-slate-600 text-lg mb-5">Account Information</h1>

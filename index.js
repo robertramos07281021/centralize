@@ -22,12 +22,15 @@ import modifyReportResolver from "./graphql/resolvers/modifyReportResolver.js";
 import modifyReportTypeDefs from "./graphql/schemas/modifyReportSchema.js";
 import customerResolver from "./graphql/resolvers/customerResolver.js";
 import customerTypeDefs from "./graphql/schemas/customerSchema.js";
+import dispositionTypeDefs from "./graphql/schemas/dispositionSchema.js";
+import dispositionResolver from "./graphql/resolvers/dispositionResolver.js";
 
 const app = express()
 connectDB()
 
-const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver ]);
-const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs]);
+const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver]);
+
+const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs]);
 
 app.use(cors({
   origin: "http://localhost:3000",
@@ -36,13 +39,11 @@ app.use(cors({
 app.use(bodyParser.json());
 app.use(cookieParser())
 
-
 const startServer = async() => {
   const server = new ApolloServer({
     typeDefs,
     resolvers
   })
-
   try {
     await server.start()
 
