@@ -22,7 +22,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
     setMobiles([...mobiles, ""])
   }
 
-  const validatePhone = (phone: string): boolean => /^9\d{9}$/.test(phone);
+  const validatePhone = (phone: string): boolean => /^09\d{9}$/.test(phone);
 
   const handleMinusMobile = (index: number) => {
     if (mobiles.length > 1) {
@@ -209,7 +209,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
                     type="text" 
                     id={`contact_${index}`}   
                     name={`contact_${index}`}
-                    pattern="^9\d{9}$"
+                    pattern="^09\d{9}$"
                     value={m}
                     required
                     onChange={(e)=> handleMobileOnchange(index,e.target.value)}

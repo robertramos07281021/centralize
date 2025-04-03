@@ -128,65 +128,64 @@ const CustomerDisposition = () => {
               }
             </div>
           </div>
-
-          <div className="ms-5 mt-5">
-            <div className="text-sm font-bold text-slate-500 uppercase">Full Name</div>
-            <div className={`${selectedCustomer._id ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg text-sm bg-gray-50 text-slate-500`}>
+          <div className="ms-5 mt-5 2xl:text-sm lg:text-xs">
+            <div className="font-bold text-slate-500 uppercase">Full Name</div>
+            <div className={`${selectedCustomer._id ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
               {selectedCustomer.customer_info?.fullName}
             </div>
           </div>
-          <div className="ms-5">
-            <div className="text-sm font-bold text-slate-500">Date Of Birth (yyyy-mm-dd)</div>
-            <div className={`${selectedCustomer._id ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg text-sm bg-gray-50 text-slate-500`}>
+          <div className="ms-5 2xl:text-sm lg:text-xs">
+            <div className=" font-bold text-slate-500">Date Of Birth (yyyy-mm-dd)</div>
+            <div className={`${selectedCustomer._id ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
               {selectedCustomer?.customer_info?.dob}
             </div>
           </div>
-          <div className="ms-5 ">
-            <div className="text-sm font-bold text-slate-500">Gender</div>
-            <div className={`${selectedCustomer._id ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg text-sm bg-gray-50 text-slate-500`}>
+          <div className="ms-5 2xl:text-sm lg:text-xs">
+            <div className="font-bold text-slate-500">Gender</div>
+            <div className={`${selectedCustomer._id ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
               {selectedCustomer?.customer_info?.gender === "F" ? "Female" : "Male"}
             </div>
           </div>
-          <div className="ms-5 ">
-            <div className="text-sm font-bold text-slate-500">Mobile No.</div>
+          <div className="ms-5 2xl:text-sm lg:text-xs">
+            <div className="font-bold text-slate-500">Mobile No.</div>
             <div className="flex flex-col gap-2">
               { !selectedCustomer._id &&
-                <div className="w-96 border border-gray-300 p-5 rounded-lg text-sm bg-gray-50 text-slate-500">
+                <div className="w-96 border border-gray-300 p-5 rounded-lg  bg-gray-50 text-slate-500">
                 </div>
               }
               {selectedCustomer?.customer_info?.contact_no?.map((cn,index)=> (
-                <div key={index} className="w-96 border border-gray-300 p-2.5 rounded-lg text-sm bg-gray-50 text-slate-500">
+                <div key={index} className="w-96 border border-gray-300 p-2.5 rounded-lg  bg-gray-50 text-slate-500">
                   {cn}
                 </div>
               ))}
             </div>
           </div>
-          <div className="ms-5">
-            <div className="text-sm font-bold text-slate-500">Email</div>
+          <div className="ms-5 2xl:text-sm lg:text-xs">
+            <div className=" font-bold text-slate-500">Email</div>
             <div className="flex flex-col gap-2"> 
               { !selectedCustomer._id &&
-                <div className="w-96 border border-gray-300 p-5 rounded-lg text-sm bg-gray-50 text-slate-500">
+                <div className="w-96 border border-gray-300 p-5 rounded-lg  bg-gray-50 text-slate-500">
                 </div>
               }
               {
                 selectedCustomer?.customer_info?.emails?.map((e,index)=> (
-                  <div key={index} className="w-96 border border-gray-300 p-2.5 rounded-lg text-sm bg-gray-50 text-slate-500">
+                  <div key={index} className="w-96 border border-gray-300 p-2.5 rounded-lg bg-gray-50 text-slate-500">
                     {e}
                   </div>
                 ))
               }
             </div>
           </div>
-          <div className="ms-5">
-            <div className="text-sm font-bold text-slate-500">Address</div>
+          <div className="ms-5 2xl:text-sm lg:text-xs">
+            <div className="font-bold text-slate-500">Address</div>
             <div className="flex flex-cols gap-2">
               { !selectedCustomer._id &&
-                <div className="w-96 h-36 border border-gray-300 rounded-lg text-sm bg-gray-50 text-slate-500">
+                <div className="w-96 h-36 border border-gray-300 rounded-lg bg-gray-50 text-slate-500">
                 </div>
               }
               {
                 selectedCustomer?.customer_info?.addresses?.map((a, index)=> (
-                  <div key={index} className="w-96 max-h-96 border border-gray-300 p-2.5 rounded-lg text-sm bg-gray-50 text-slate-500 text-justify">
+                  <div key={index} className="w-96 max-h-96 border border-gray-300 p-2.5 rounded-lg  bg-gray-50 text-slate-500 text-justify">
                     {a}
                   </div>
                 ))
@@ -196,12 +195,12 @@ const CustomerDisposition = () => {
           </div>
           {
             !isUpdate &&
-          <div className="ms-5">
+          <div className="ms-5 2xl:text-sm lg:text-xs">
             { selectedCustomer._id &&
               <button 
                 type="button" 
                 onClick={()=> setIsUpdate(true)}
-                className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 cursor-pointer`}>
+                className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg  px-5 py-2.5 me-2 mb-2 cursor-pointer`}>
                 Update
               </button>
               

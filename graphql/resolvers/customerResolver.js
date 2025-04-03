@@ -53,46 +53,6 @@ const customerResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    // accountInfo: async(_,{id}) => {
-    //   try {
-    //     const objectId = new mongoose.Types.ObjectId(id);
-    //     const account = await CustomerAccount.aggregate([
-    //       {
-    //         $match: {
-    //           customer: objectId
-    //         }
-    //       },
-    //       {
-    //         $lookup: {
-    //           from: "buckets",
-    //           localField: "bucket",
-    //           foreignField: "_id",
-    //           as: "account_bucket"
-    //         },
-    //       },
-    //       {
-    //         $unwind: "$account_bucket"
-    //       },
-    //       { 
-    //         $project: { 
-    //           customer: 1,
-    //           account_bucket: 1,
-    //           account_id: 1,
-    //           credit_customer_id: 1,
-    //           bill_due_day: 1,
-    //           case_id: 1,
-    //           max_dpd: 1,
-    //           out_standing_details: 1,
-    //           grass_details: 1,
-    //           endorsement_date: 1
-    //         } 
-    //       }
-    //     ])
-    //     return account.length > 0 ? account[0] : null;
-    //   } catch (error) {
-    //       throw new CustomError(error.message, 500)
-    //   }
-    // },
     search: async(_,{search}) => {
 
       const accounts = await CustomerAccount.aggregate([
