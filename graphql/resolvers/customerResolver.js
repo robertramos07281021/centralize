@@ -92,6 +92,46 @@ const customerResolver = {
       } catch (error) {
           throw new CustomError(error.message, 500)
       }
+    },
+    search: async(_,{search}) => {
+
+      const accounts = await CustomerAccount.aggregate([
+        {
+          $lookup: {
+            from: "customers",
+            localField: "customer",
+            foreignField:"_id",
+            as: "customer_info",
+          },
+        },
+        {
+          $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true }
+        },
+        {
+          $lookup: {
+            from: "buckets",
+            localField: "bucket",
+            foreignField: "_id",
+            as: "account_bucket"
+          }
+        },
+        {
+          $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true }
+        }
+      ])
+      const newAccountsFilter = accounts.filter((account)=> {
+        account.customer_info.fullName.toLowerCase().include(search.toLowerCase()) ||
+        account.customer_info.contact_no.some(contact => search.includes(contact)) ||
+        account.customer_info.emails.some(email => search.includes(email)) ||
+        account.customer_info.addresses.some(address => search.includes(address)) ||
+        account.credit_customer_id.include(search) ||
+        account.account_id.include(search)
+      })
+      console.log(newAccountsFilter)
+      return {
+        succes: true,
+        message: "hello"
+      }
     }
   },
   Mutation: {

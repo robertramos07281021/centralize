@@ -169,6 +169,7 @@ export const MODIFY_RECORD_QUERY = gql`
 
 //customer query ===========================================================================================
 export const ALL_CUSTOMER = gql`
+# not used
 query Query($page: Int) {
   getCustomers(page: $page) {
     customers {

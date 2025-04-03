@@ -28,6 +28,8 @@ const CustomerDisposition = () => {
     message: ""
   })
   
+  const [search, setSearch] = useState("")
+
   useEffect(()=> {
     const params = new URLSearchParams(location.search);
     if(params.get("success")) {
@@ -44,6 +46,17 @@ const CustomerDisposition = () => {
     }
   },[success.success,navigate,location.state,location.pathname, location.search])
 
+  const [time, setTime] = useState(new Date());
+  useEffect(() => {
+    if(userLogged.type === "AGENT") {
+      const timer = setInterval(() => {
+        setTime(new Date());
+      }, 1000);
+      return () => clearInterval(timer);
+    }
+  }, [userLogged]);
+
+  const formattedTime = time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
 
   return userLogged._id ? (
     <>
@@ -51,9 +64,32 @@ const CustomerDisposition = () => {
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
       }
+      <div className="">
+      {
+        userLogged.type === "AGENT" &&
+        <div className="w-full flex justify-between p-5 text-slate-600 text-xs font-medium ">
+          <div>
+            Bucket: {userLogged?.bucket?.toUpperCase()}
+          </div>
+          <div className="text-xs">
+            Date & Time: <span >{time.toLocaleDateString()} - {formattedTime}</span>
+          </div>
+        </div>
+      }
+      
       <div className="w-full grid grid-cols-2 ">
         <div className="flex flex-col p-2 gap-3"> 
           <h1 className="text-center font-bold text-slate-600 text-lg">Customer Information</h1>
+          <div className="ms-5 mt-5">
+            <input 
+              type="text" 
+              name="search" 
+              value={search}
+              onChange={(e)=> setSearch(e.target.value)}
+              id="search"
+              placeholder="Search" 
+              className="w-96 p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "/>
+          </div>
           <div className="ms-5 mt-5">
             <div className="text-sm font-bold text-slate-500 uppercase">Full Name</div>
             <div className="w-96 border border-gray-300 p-2.5 rounded-lg text-sm bg-gray-50 text-slate-500">
@@ -121,6 +157,7 @@ const CustomerDisposition = () => {
           isUpdate &&
           <CustomerUpdateForm cancel={()=> setIsUpdate(false)} state={state}/>
         }
+      </div>
       </div>
       <div className="p-5 grid grid-cols-2 gap-5">
         <AccountInfo id={state._id}/>

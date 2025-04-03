@@ -1,22 +1,11 @@
+import { DateTime } from "../../middlewares/dateTime.js"
 
 
 const dispositionResolver = {
+  DateTime,
   Query: {
-    getBranches: async() => {
-      try {
-        return await Branch.find({}) 
-      } catch (error) {
-        throw new CustomError(error.message, 500)
-      }
-    },
-    getBranch: async(_,{name}) => {
-      try {
-        const res = await Branch.findOne({name}) 
-        return res 
-      } catch (error) {
-        console.log(error)
-        throw new CustomError(error.message, 500)
-      }
+    getAccountDispositions: async(_,{id}) => {
+      console.log(id)
     }
   },
   Mutation: {
@@ -50,9 +39,7 @@ const dispositionResolver = {
       }
     }
   },
-  Muation: {
-    
-  }
+
 }
 
 export default dispositionResolver

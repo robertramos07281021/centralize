@@ -27,8 +27,8 @@ const NavbarExtn = () => {
         link: "/agent-dashboard"
       },
       {
-        name: "Disposition",
-        link: "/agent-disposition"
+        name: "Production Area",
+        link: "/agent-production-area"
       }
     ],
     TL: [
@@ -37,8 +37,8 @@ const NavbarExtn = () => {
         link: "/tl-dashboard"
       },
       {
-        name: "Disposition",
-        link: "/tl-disposition"
+        name: "Production Area",
+        link: "/tl-production-area"
       },
       {
         name: "Outcome Extractor",

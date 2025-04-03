@@ -8,7 +8,7 @@ import Pagination from "../components/Pagination";
 import { AllCustomers, CustomerRegistered } from "../middleware/types";
 import { Link, useLocation } from "react-router-dom";
 
-
+//not used
 
 
 const Disposition = () => {

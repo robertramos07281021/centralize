@@ -5,10 +5,6 @@ const dispositionSchema = new Schema(
   {
     amount: {
       type: Number,
-      required: true,
-    },
-    type: {
-      type: String,
       required: true
     },
     customer_account: {
@@ -16,7 +12,7 @@ const dispositionSchema = new Schema(
       ref: "CustomerAccount",
       required: true
     },
-    name: {
+    disposition: {
       type: String,
       required: true
     },
@@ -30,7 +26,6 @@ const dispositionSchema = new Schema(
     },
     ref_no: {
       type: String,
-      required: true
     },
     comment: {
       type: String

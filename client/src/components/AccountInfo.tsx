@@ -60,23 +60,16 @@ const AccountInfo:React.FC<AccountInfoProps> = ({id}) => {
             <div className="p-2 border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-80">{accountInfo?.credit_customer_id}</div>
           </div>
           <div className="flex items-center gap-3 justify-between">
-            <p className="text-gray-800 font-bold ">Credit ID</p>
-            <div className="p-2 border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-80">{accountInfo?.credit_customer_id}</div>
-          </div>
-          <div className="flex items-center gap-3 justify-between">
-            <p className="text-gray-800 font-bold ">Interest OS</p>
-            <div className="p-2 border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-80">{accountInfo?.out_standing_details?.interest_os}</div>
-          </div>
+              <p className="text-gray-800 font-bold ">Account ID</p>
+              <div className={`${accountInfo?.account_id ? "p-2" : "p-4.5"} border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-80`}>{accountInfo?.account_id ? accountInfo?.account_id : " "}</div>
+            </div>
+        
         </div>
         <div className="flex flex-col  ">
           <div className="flex flex-col gap-2">
             <div className="flex items-center gap-3 justify-between">
               <p className="text-gray-800 font-bold ">Endorsement Date</p>
               <div className="p-2 border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-96">{accountInfo?.endorsement_date}</div>
-            </div>
-            <div className="flex items-center gap-3 justify-between">
-              <p className="text-gray-800 font-bold ">Account ID</p>
-              <div className={`${accountInfo?.account_id ? "p-2" : "p-4.5"} border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-80`}>{accountInfo?.account_id ? accountInfo?.account_id : " "}</div>
             </div>
             <div className="flex items-center gap-3 justify-between">
               <p className="text-gray-800 font-bold ">Bill Due Date</p>
@@ -95,6 +88,10 @@ const AccountInfo:React.FC<AccountInfoProps> = ({id}) => {
             <div className="flex items-center gap-3 justify-between">
               <p className="text-gray-800 font-bold ">Interest OS</p>
               <div className="p-2 border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-80">{accountInfo?.out_standing_details.interest_os}</div>
+            </div>
+            <div className="flex items-center gap-3 justify-between">
+              <p className="text-gray-800 font-bold ">DST Fee OS</p>
+              <div className="p-2 border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-80">{accountInfo?.out_standing_details?.dst_fee_os}</div>
             </div>
           </div>
          

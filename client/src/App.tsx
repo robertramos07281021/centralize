@@ -41,8 +41,8 @@ function App() {
         </Route>
         <Route element={<AgentRoute/>}>
           <Route path="/agent-dashboard" element={<AgentDashboard/>}/>
-          <Route path="/agent-disposition" element={<Disposition/>}/>
-          <Route path="/agent-disposition/customer-view" element={<CustomerDisposition/>}/>
+          {/* <Route path="/agent-production-area" element={<Disposition/>}/> */}
+          <Route path="/agent-production-area" element={<CustomerDisposition/>}/>
 
         </Route>
         <Route element={<AomRoute/>}>
@@ -55,8 +55,8 @@ function App() {
         </Route>
         <Route element={<TlRoute/>}>
           <Route path="/tl-dashboard" element={<TlDashboard/>}/>
-          <Route path="/tl-disposition" element={<Disposition/>}/>
-          <Route path="/tl-disposition/customer-view" element={<CustomerDisposition/>}/>
+          <Route path="/tl-production-area" element={<Disposition/>}/>
+          {/* <Route path="/tl-production-area" element={<CustomerDisposition/>}/> */}
           <Route path="/outcome-extractor" element={<ExtractorView/>}/>
 
         </Route>

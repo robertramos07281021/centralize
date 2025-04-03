@@ -156,7 +156,9 @@ const userResolvers = {
         const validatePassword = await bcrypt.compare(password, user.password)
         if(!validatePassword) throw new CustomError("Invalid",401)
   
-        const token = jwt.sign({id: user._id,username: user.username}, process.env.SECRET,{ expiresIn: "1d"})
+        const token = jwt.sign({id: user._id,username: user.username}, process.env.SECRET,
+          // { expiresIn: "1d"}
+        )
   
         user.isOnline = true
         await user.save()

@@ -86,11 +86,16 @@ const customerTypeDefs = gql`
     grass_details: grassDetails
     account_bucket: AccountBucket
   } 
+  type Sample {
+    success: Boolean,
+    message: String
+  }
 
   type Query {
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
     getCustomers(page:Int): getCustomers!
     accountInfo(id:ID): AccountInfo
+    search(search:String):Sample
   }
 
   type Mutation {

@@ -65,8 +65,7 @@ const DispositionForm = () => {
                   value={data.amount}
                   onChange={handleOnChangeAmount}
                   pattern="[0-9]*"
-                  required 
-                  className="ps-8 p-1.5 border rounded-lg border-slate-500 w-80"/>
+                  className="bg-gray-50 border border-gray-500 text-gray-900 text-sm rounded-lg pl-8 focus:ring-blue-500 focus:border-blue-500 block w-80 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"/>
                 <p className="absolute top-2 left-4">&#x20B1;</p>
               </div>
             </label>
@@ -76,9 +75,9 @@ const DispositionForm = () => {
                 name="payment" 
                 id="payment" 
                 value={data.payment}
-                required
+        
                 onChange={(e)=> setData({...data, payment: e.target.value})}
-                className="g-gray-50 border border-gray-500 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-80 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                className="bg-gray-50 border border-gray-500 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-80 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
                 <option value="">Select Payment</option>
                 <option value="partial">Partial</option>
                 <option value="full">Full</option>
@@ -92,7 +91,7 @@ const DispositionForm = () => {
                 value={data.disposition}
                 required
                 onChange={(e)=> setData({...data, disposition: e.target.value})}
-                className="bg-gray-50 border border-gray-500 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-80 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500">
+                className={`${required && !data.disposition ? "bg-red-100  border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-80 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}>
                 <option value="">Select Disposition</option>
                 {
                   disposition.map((dispo,index)=> (
@@ -112,8 +111,7 @@ const DispositionForm = () => {
                 name="payment_date"
                 value={data.payment_date}
                 onChange={(e)=> setData({...data, payment_date: e.target.value})}
-                className="block  p-2 w-80 text-sm text-gray-900 border border-gray-500 rounded-lg bg-gray-50 focus:ring-blue-500  focus:ring outline-0 focus:border-blue-500 " 
-                placeholder="Enter Full Name" 
+                className="bg-gray-50 border border-gray-500 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-80 p-2 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
                 required 
               />
             </label>
