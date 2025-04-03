@@ -53,46 +53,46 @@ const customerResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    accountInfo: async(_,{id}) => {
-      try {
-        const objectId = new mongoose.Types.ObjectId(id);
-        const account = await CustomerAccount.aggregate([
-          {
-            $match: {
-              customer: objectId
-            }
-          },
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "bucket",
-              foreignField: "_id",
-              as: "account_bucket"
-            },
-          },
-          {
-            $unwind: "$account_bucket"
-          },
-          { 
-            $project: { 
-              customer: 1,
-              account_bucket: 1,
-              account_id: 1,
-              credit_customer_id: 1,
-              bill_due_day: 1,
-              case_id: 1,
-              max_dpd: 1,
-              out_standing_details: 1,
-              grass_details: 1,
-              endorsement_date: 1
-            } 
-          }
-        ])
-        return account.length > 0 ? account[0] : null;
-      } catch (error) {
-          throw new CustomError(error.message, 500)
-      }
-    },
+    // accountInfo: async(_,{id}) => {
+    //   try {
+    //     const objectId = new mongoose.Types.ObjectId(id);
+    //     const account = await CustomerAccount.aggregate([
+    //       {
+    //         $match: {
+    //           customer: objectId
+    //         }
+    //       },
+    //       {
+    //         $lookup: {
+    //           from: "buckets",
+    //           localField: "bucket",
+    //           foreignField: "_id",
+    //           as: "account_bucket"
+    //         },
+    //       },
+    //       {
+    //         $unwind: "$account_bucket"
+    //       },
+    //       { 
+    //         $project: { 
+    //           customer: 1,
+    //           account_bucket: 1,
+    //           account_id: 1,
+    //           credit_customer_id: 1,
+    //           bill_due_day: 1,
+    //           case_id: 1,
+    //           max_dpd: 1,
+    //           out_standing_details: 1,
+    //           grass_details: 1,
+    //           endorsement_date: 1
+    //         } 
+    //       }
+    //     ])
+    //     return account.length > 0 ? account[0] : null;
+    //   } catch (error) {
+    //       throw new CustomError(error.message, 500)
+    //   }
+    // },
     search: async(_,{search}) => {
 
       const accounts = await CustomerAccount.aggregate([
@@ -100,38 +100,36 @@ const customerResolver = {
           $lookup: {
             from: "customers",
             localField: "customer",
-            foreignField:"_id",
+            foreignField: "_id",
             as: "customer_info",
           },
         },
-        {
-          $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true }
-        },
+        { $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } },
         {
           $lookup: {
             from: "buckets",
             localField: "bucket",
             foreignField: "_id",
-            as: "account_bucket"
-          }
+            as: "account_bucket",
+          },
         },
+        { $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } },
         {
-          $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true }
-        }
+          $match: {
+            $or: [
+              { "customer_info.fullName": { $regex: search, $options: "i" } },
+              { "customer_info.contact_no": { $elemMatch: { $regex: search, $options: "i" } } },
+              { "customer_info.emails": { $elemMatch: { $regex: search, $options: "i" } } },
+              { "customer_info.addresses": { $elemMatch: { $regex: search, $options: "i" } } },
+              { credit_customer_id: { $regex: search, $options: "i" } },
+              { account_id: { $regex: search, $options: "i" } },
+              { "out_standing_details.total_os": { $regex: search, } },
+              { case_id: { $regex: search, $options: "i" } },
+            ],
+          },
+        },
       ])
-      const newAccountsFilter = accounts.filter((account)=> {
-        account.customer_info.fullName.toLowerCase().include(search.toLowerCase()) ||
-        account.customer_info.contact_no.some(contact => search.includes(contact)) ||
-        account.customer_info.emails.some(email => search.includes(email)) ||
-        account.customer_info.addresses.some(address => search.includes(address)) ||
-        account.credit_customer_id.include(search) ||
-        account.account_id.include(search)
-      })
-      console.log(newAccountsFilter)
-      return {
-        succes: true,
-        message: "hello"
-      }
+      return [...accounts]
     }
   },
   Mutation: {
@@ -152,7 +150,7 @@ const customerResolver = {
             })
             customer.addresses.push(element.address)
             customer.emails.push(element.email)
-            customer.contact_no.push(element.one)
+            customer.contact_no.push("0" + element.one)
             await customer.save()
   
             await CustomerAccount.create({

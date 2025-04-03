@@ -3,17 +3,18 @@ import { CiSquarePlus, CiSquareMinus } from "react-icons/ci";
 import Confirmation from "./Confirmation";
 import { useMutation } from "@apollo/client";
 import { UPDATE_CUSTOMER } from "../apollo/mutations";
-import { LocationState } from "../pages/CustomerDisposition";
-import { useLocation, useNavigate } from "react-router-dom";
+
+import {  useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
 
 interface CustomerUpdateFormProps {
-  cancel: () => void,
-  state: LocationState
+  cancel: () => void, 
 }
 
-const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) => {
+const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const navigate = useNavigate()
-  const location = useLocation()
+  const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
   // mobile =======================================================================
   const [mobiles, setMobiles] = useState<string[]>([""])
 
@@ -115,7 +116,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) =
         toggle: "UPDATE" ,
         yes: async() => {
           try {
-            await updateCustomer({variables: {...data, mobiles: mobiles, emails: emails, addresses: address, id:state._id}})
+            await updateCustomer({variables: {...data, mobiles: mobiles, emails: emails, addresses: address, id:selectedCustomer._id}})
             setConfirm(false)
           } catch (error) {
             console.log(error)
@@ -127,26 +128,26 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel, state}) =
   }
 
   useEffect(()=> {
-    if(state) {
+    if(selectedCustomer) {
       setData({
-        fullName:state.fullName,
-        dob: state.dob,
-        gender: state.gender
+        fullName:selectedCustomer.customer_info.fullName,
+        dob: selectedCustomer.customer_info.dob,
+        gender: selectedCustomer.customer_info.gender
       })
       setMobiles((prevMobiles) => [
         ...prevMobiles.filter(m => m !== ""),
-        ...(state.contact_no ?? [])
+        ...(selectedCustomer.customer_info.contact_no ?? [])
       ]);
       setAddress((prevAddress) => [
         ...prevAddress.filter(a => a !== ""),
-        ...(state.addresses ?? [])
+        ...(selectedCustomer.customer_info.addresses ?? [])
       ])
       setEmails((prevEmail) => [
         ...prevEmail.filter(e => e !== ""),
-        ...(state.emails ?? [])
+        ...(selectedCustomer.customer_info.emails ?? [])
       ])
     }
-  },[state])
+  },[selectedCustomer])
 
 
   return (

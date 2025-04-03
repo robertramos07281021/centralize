@@ -77,7 +77,7 @@ export type ExcelFile = {
   grass_date:string | number // this is date
   bucket:string
   case_id:string | number //need to string
-  one:string | number  // need to string // cp number
+  one: string // need to string // cp number
   platform_user_id:string | number //need to string
   platform_user_id_1:string | number//need to string
   credit_user_id:string
@@ -143,4 +143,39 @@ export type CustomerRegistered = {
 export type AllCustomers = {
   customers:CustomerRegistered[]
   total: number
+}
+
+type outStandingDetails = {
+  principal_os: number
+  interest_os: number
+  admin_fee_os: number
+  txn_fee_os: number
+  late_charge_os: number
+  dst_fee_os: number
+  total_os: number
+}
+
+type grassDetails = {
+  grass_region: string
+  vendor_endorsement: string
+  grass_date: string
+}
+
+type  AccountBucket = {
+  name: string
+  dept: string
+}
+
+export type Search = {
+    _id: string
+    case_id: string
+    account_id: string
+    endorsement_date: string
+    credit_customer_id: string
+    bill_due_day: number
+    max_dpd: number
+    out_standing_details: outStandingDetails
+    grass_details: grassDetails
+    account_bucket: AccountBucket
+    customer_info: CustomerRegistered
 }

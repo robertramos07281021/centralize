@@ -45,8 +45,7 @@ const Uploader:React.FC = () => {
   
       reader.readAsBinaryString(file);
     }, []);
-  
-  
+
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
       accept: {
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [], 

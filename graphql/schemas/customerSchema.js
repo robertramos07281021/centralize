@@ -81,21 +81,31 @@ const customerTypeDefs = gql`
     endorsement_date: String
     credit_customer_id: String
     bill_due_day: Int
-    max_dp: Int
+    max_dpd: Int
     out_standing_details: outStandingDetails
     grass_details: grassDetails
     account_bucket: AccountBucket
   } 
-  type Sample {
-    success: Boolean,
-    message: String
+
+  type Search {
+    _id: ID
+    case_id: String
+    account_id: String
+    endorsement_date: String
+    credit_customer_id: String
+    bill_due_day: Int
+    max_dpd: Int
+    out_standing_details: outStandingDetails
+    grass_details: grassDetails
+    account_bucket: AccountBucket
+    customer_info: CustomerInfo
   }
 
   type Query {
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
     getCustomers(page:Int): getCustomers!
-    accountInfo(id:ID): AccountInfo
-    search(search:String):Sample
+    # accountInfo(id:ID): AccountInfo
+    search(search:String):[Search]
   }
 
   type Mutation {

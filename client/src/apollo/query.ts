@@ -188,25 +188,48 @@ query Query($page: Int) {
 
 
 //customer account info
-export const ACCOUNT_INFO = gql`
-query AccountInfo($id: ID) {
-  accountInfo(id: $id) {
-    account_bucket {
-      name
-      dept
-    }
-    account_id
-    bill_due_day
+// export const ACCOUNT_INFO = gql`
+// query AccountInfo($id: ID) {
+//   accountInfo(id: $id) {
+//     account_bucket {
+//       name
+//       dept
+//     }
+//     account_id
+//     bill_due_day
+//     case_id
+//     credit_customer_id
+//     endorsement_date
+//     grass_details {
+//       grass_region
+//       vendor_endorsement
+//       grass_date
+//     }
+//     id
+//     max_dpd
+//     out_standing_details {
+//       principal_os
+//       interest_os
+//       admin_fee_os
+//       txn_fee_os
+//       late_charge_os
+//       dst_fee_os
+//       total_os
+//     }
+//   }
+// }
+// `
+
+export const SEARCH = gql`
+query Search($search: String) {
+  search(search: $search) {
+    _id
     case_id
-    credit_customer_id
+    account_id
     endorsement_date
-    grass_details {
-      grass_region
-      vendor_endorsement
-      grass_date
-    }
-    id
-    max_dp
+    credit_customer_id
+    bill_due_day
+    max_dpd
     out_standing_details {
       principal_os
       interest_os
@@ -216,6 +239,27 @@ query AccountInfo($id: ID) {
       dst_fee_os
       total_os
     }
+    grass_details {
+      grass_region
+      vendor_endorsement
+      grass_date
+    }
+    account_bucket {
+      name
+      dept
+    }
+    customer_info {
+      fullName
+      dob
+      gender
+      contact_no
+      emails
+      addresses
+      _id
+    }
   }
 }
+
+
+
 `

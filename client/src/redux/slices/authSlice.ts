@@ -1,4 +1,5 @@
 import { createSlice, PayloadAction  } from "@reduxjs/toolkit";
+import { Search } from "../../middleware/types";
 
 type User = {
   _id: string,
@@ -24,7 +25,7 @@ interface UserState {
   page: number
   userLogged: User
   search: search
-
+  selectedCustomer:Search
 }
 
 const initialState:UserState = {
@@ -46,8 +47,46 @@ const initialState:UserState = {
     contact_no: "",
     dob: "",
     email: ""
+  },
+  selectedCustomer: {
+    _id: "",
+    case_id: "",
+    account_id: "",
+    endorsement_date: "",
+    credit_customer_id: "",
+    bill_due_day: 0,
+    max_dpd: 0,
+    out_standing_details: {
+      principal_os: 0,
+      interest_os: 0,
+      admin_fee_os: 0,
+      txn_fee_os: 0,
+      late_charge_os: 0,
+      dst_fee_os: 0,
+      total_os: 0
+    },
+    grass_details: {
+      grass_region: "",
+      vendor_endorsement: "",
+      grass_date: ""
+    },
+    account_bucket: {
+      name: "",
+      dept: ""
+    },
+    customer_info: {
+      fullName:"",
+      dob:"",
+      gender:"",
+      contact_no:[],
+      emails:[],
+      addresses:[],
+      _id:""
+    }
   }
 };
+
+
 
 const authSlice = createSlice({
   name: "auth",
@@ -71,9 +110,12 @@ const authSlice = createSlice({
     },
     setSearch: (state, action:PayloadAction<search>) => {
       state.search = action.payload
+    },
+    setSelectedCustomer: (state, action:PayloadAction<Search>) => {
+      state.selectedCustomer = action.payload
     }
   },
 });
 
-export const { logoutUser, setError, setNeedLogin , setUserLogged, setPage, setSearch} = authSlice.actions;
+export const { logoutUser, setError, setNeedLogin , setUserLogged, setPage, setSearch, setSelectedCustomer} = authSlice.actions;
 export default authSlice.reducer;
