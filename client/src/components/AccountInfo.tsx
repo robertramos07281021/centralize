@@ -25,34 +25,33 @@ const AccountInfo = () => {
             <div className={`${selectedCustomer?.account_id ? "p-2" : "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.account_id ? selectedCustomer?.account_id : " "}</div>
           </div>
         </div>
-        <div className="flex flex-col">
-          <div className="flex flex-col gap-2">
-            <div className="grid grid-cols-4 items-center">
-              <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Endorsement Date</p>
-              <div className={`${selectedCustomer._id ?  "p-2": "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.endorsement_date}</div>
-            </div>
-            <div className="grid grid-cols-4 items-center">
-              <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs ">Bill Due Date</p>
-              <div className={`${selectedCustomer._id ?  "p-2": "p-4.5"} 2xl:text-sm lg:text-xs p-2 border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>  {selectedCustomer?.endorsement_date && selectedCustomer?.bill_due_day
-              ? new Date(
-                new Date(selectedCustomer.endorsement_date).setDate(
-                new Date(selectedCustomer.endorsement_date).getDate() + selectedCustomer.bill_due_day
-              )).toLocaleDateString(): "N/A"}
-            </div>
-            </div>
-            <div className="grid grid-cols-4 items-center">
-              <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Principal OS</p>
-              <div className={`${selectedCustomer._id ?  "p-2": "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.out_standing_details.principal_os}</div>
-            </div>
-            <div className="grid grid-cols-4 items-center">
-              <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Interest OS</p>
-              <div className={`${selectedCustomer._id ?  "p-2": "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.out_standing_details.interest_os}</div>
-            </div>
-            <div className="grid grid-cols-4 items-center">
-              <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">DST Fee OS</p>
-              <div className={`${selectedCustomer._id ?  "p-2": "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.out_standing_details?.dst_fee_os}</div>
-            </div>
+        <div className="flex flex-col gap-2">
+          <div className="grid grid-cols-4 items-center">
+            <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Endorsement Date</p>
+            <div className={`${selectedCustomer._id ?  "p-2": "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.endorsement_date}</div>
           </div>
+          <div className="grid grid-cols-4 items-center">
+            <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs ">Bill Due Date</p>
+            <div className="p-2 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3">  {selectedCustomer?.endorsement_date && selectedCustomer?.bill_due_day
+            ? new Date(
+              new Date(selectedCustomer.endorsement_date).setDate(
+              new Date(selectedCustomer.endorsement_date).getDate() + selectedCustomer.bill_due_day
+            )).toLocaleDateString(): "N/A"}
+          </div>
+          </div>
+          <div className="grid grid-cols-4 items-center">
+            <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Principal OS</p>
+            <div className="p-2 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3">{selectedCustomer?.out_standing_details.principal_os}</div>
+          </div>
+          <div className="grid grid-cols-4 items-center">
+            <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Interest OS</p>
+            <div className="p-2 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3">{selectedCustomer?.out_standing_details.interest_os}</div>
+          </div>
+          <div className="grid grid-cols-4 items-center">
+            <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">DST Fee OS</p>
+            <div className="p-2 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3">{selectedCustomer?.out_standing_details?.dst_fee_os}</div>
+          </div>
+         
         </div>
       </div>
       <div className="flex items-center justify-center gap-5 mt-5 text-slate-500 font-medium">

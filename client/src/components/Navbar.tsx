@@ -9,7 +9,7 @@ import Confirmation from "./Confirmation";
 import Loading from "../pages/Loading";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../redux/store";
-import { setNeedLogin, setUserLogged } from "../redux/slices/authSlice";
+import { setNeedLogin, setSelectedCustomer, setUserLogged } from "../redux/slices/authSlice";
 import NavbarExtn from "./NavbarExtn";
 
 
@@ -37,6 +37,42 @@ const Navbar = () => {
           bucket: ""
         }
       ))
+      dispatch(setSelectedCustomer({
+        _id: "",
+        case_id: "",
+        account_id: "",
+        endorsement_date: "",
+        credit_customer_id: "",
+        bill_due_day: 0,
+        max_dpd: 0,
+        out_standing_details: {
+          principal_os: 0,
+          interest_os: 0,
+          admin_fee_os: 0,
+          txn_fee_os: 0,
+          late_charge_os: 0,
+          dst_fee_os: 0,
+          total_os: 0
+        },
+        grass_details: {
+          grass_region: "",
+          vendor_endorsement: "",
+          grass_date: ""
+        },
+        account_bucket: {
+          name: "",
+          dept: ""
+        },
+        customer_info: {
+          fullName:"",
+          dob:"",
+          gender:"",
+          contact_no:[],
+          emails:[],
+          addresses:[],
+          _id:""
+        }
+      }))
       navigate('/')
     }
   };

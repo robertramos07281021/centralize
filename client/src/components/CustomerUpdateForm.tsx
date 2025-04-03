@@ -1,12 +1,15 @@
 import { useEffect, useRef, useState } from "react";
 import { CiSquarePlus, CiSquareMinus } from "react-icons/ci";
 import Confirmation from "./Confirmation";
-import { useMutation } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import { UPDATE_CUSTOMER } from "../apollo/mutations";
 
-import {  useNavigate } from "react-router-dom";
+import {  useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { RootState } from "../redux/store";
+import { RootState, useAppDispatch } from "../redux/store";
+import { setSelectedCustomer } from "../redux/slices/authSlice";
+import { SEARCH } from "../apollo/query";
+import { Search } from "../middleware/types";
 
 interface CustomerUpdateFormProps {
   cancel: () => void, 
@@ -14,6 +17,16 @@ interface CustomerUpdateFormProps {
 
 const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const [id, setId] = useState("")
+  const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: id}})
+  const location = useLocation()
+  useEffect(()=> {
+    if(searchData?.search.length === 1) {
+      dispatch(setSelectedCustomer(searchData?.search[0]))
+    }
+  },[searchData,dispatch])
+    
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
   // mobile =======================================================================
   const [mobiles, setMobiles] = useState<string[]>([""])
@@ -21,6 +34,8 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const handleAddMobile = () => {
     setMobiles([...mobiles, ""])
   }
+
+
 
   const validatePhone = (phone: string): boolean => /^09\d{9}$/.test(phone);
 
@@ -43,7 +58,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   }
   const validateEmail = (email: string): boolean=>  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim())
 
-  console.log(validateEmail("robert.ramos07281021@gmail.com"))
   const handleEmailOnchange = (index:number, value: string) => {
     const newEmail = [...emails];
     newEmail[index] = value;
@@ -97,7 +111,12 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
     onCompleted: async(res) => {
       try {
         cancel()
-        navigate(`${location.pathname}?success=true`,{ state: { ...res.updateCustomer.customer} })
+        navigate(`${location.pathname}?success=true`)
+        setId(res.updateCustomer.customer._id)
+        refetch()
+        if(searchData) {
+          dispatch(setSelectedCustomer(searchData?.search[0]))
+        }
       } catch (error) {
         console.log(error)
       }
@@ -116,7 +135,8 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
         toggle: "UPDATE" ,
         yes: async() => {
           try {
-            await updateCustomer({variables: {...data, mobiles: mobiles, emails: emails, addresses: address, id:selectedCustomer._id}})
+            await updateCustomer({variables: {...data, mobiles: mobiles, emails: emails, addresses: address, id:selectedCustomer.customer_info._id}})
+            
             setConfirm(false)
           } catch (error) {
             console.log(error)
@@ -289,11 +309,11 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
           </div>
         </div>
         <div>
-        <button type="submit" className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}>Update</button>
+        <button type="submit" className={`bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-500 font-medium rounded-lg text-sm w-24 py-2.5 me-2 mb-2  cursor-pointer`}>Save</button>
         <button 
           type="button"
           onClick={cancel} 
-          className={` bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}>Cancel</button>
+          className={` bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg text-sm w-24 py-2.5 me-2 mb-2  cursor-pointer`}>Cancel</button>
         </div>
       </form>
       { confirm &&

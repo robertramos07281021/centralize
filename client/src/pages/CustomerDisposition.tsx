@@ -10,6 +10,7 @@ import { useQuery } from "@apollo/client"
 import { SEARCH } from "../apollo/query"
 import { Search } from "../middleware/types"
 import { setSelectedCustomer } from "../redux/slices/authSlice"
+import AgentTimer from "../components/AgentTimer"
 
 
 const CustomerDisposition = () => {
@@ -39,54 +40,34 @@ const CustomerDisposition = () => {
     setSearch("")
     refetch()
   }
+  
+  useEffect(()=> {
+    if(!success.success){
+      navigate(location.pathname)
+    }
+  },[success.success,navigate,location.pathname])
 
   useEffect(()=> {
     const params = new URLSearchParams(location.search);
-    if(params.get("success")) {
+    if(params?.get("success")) {
       setSuccess({
         success: true,
         message: "Customer successfully updated"
       })
     }
-  },[location.search,navigate, success.success])
-
-  useEffect(()=> {
-    if(!success.success && location.search) {
-     navigate(location.pathname, {state: {...location.state}})
-    }
-  },[success.success,navigate,location.state,location.pathname, location.search])
-
-  const [time, setTime] = useState(new Date());
-  useEffect(() => {
-    if(userLogged.type === "AGENT") {
-      const timer = setInterval(() => {
-        setTime(new Date());
-      }, 1000);
-      return () => clearInterval(timer);
-    }
-  }, [userLogged]);
-
-  const formattedTime = time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true });
-
+  },[location.search])
+  
   return userLogged._id ? (
     <>
       {
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
       }
-      <div className="">
+      <div>
       {
         userLogged.type === "AGENT" &&
-        <div className="w-full flex justify-between p-5 text-slate-600 text-xs font-medium ">
-          <div>
-            Bucket: {userLogged?.bucket?.toUpperCase()}
-          </div>
-          <div className="text-xs">
-            Date & Time: <span >{time.toLocaleDateString()} - {formattedTime}</span>
-          </div>
-        </div>
+        <AgentTimer/>
       }
-      
       <div className="w-full grid grid-cols-2 ">
         <div className="flex flex-col p-2 gap-3"> 
           <h1 className="text-center font-bold text-slate-600 text-lg">Customer Information</h1>

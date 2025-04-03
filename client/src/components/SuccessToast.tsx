@@ -34,7 +34,7 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
       close: "text-green-400"
     }
   } as const;
-
+  console.log(successObject)
   useEffect(()=> {
     const timer = setTimeout(()=> {
       if(successObject?.success) {

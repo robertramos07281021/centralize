@@ -54,7 +54,9 @@ const customerResolver = {
       }
     },
     search: async(_,{search}) => {
-
+      const isValidObjectId = mongoose.Types.ObjectId.isValid(search);
+      const checkId = isValidObjectId ? new mongoose.Types.ObjectId(search) : null;
+     
       const accounts = await CustomerAccount.aggregate([
         {
           $lookup: {
@@ -85,6 +87,7 @@ const customerResolver = {
               { account_id: { $regex: search, $options: "i" } },
               { "out_standing_details.total_os": { $regex: search, } },
               { case_id: { $regex: search, $options: "i" } },
+              ...(checkId ? [{ "customer_info._id": checkId }] : []),
             ],
           },
         },
