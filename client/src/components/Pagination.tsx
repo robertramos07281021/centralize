@@ -7,6 +7,7 @@ interface PaginationProps {
   totalCustomers: number
 }
 
+//not used
 
 const Pagination:React.FC<PaginationProps> = ({totalCustomers}) => {
   const {page} = useSelector((state:RootState)=> state.auth)

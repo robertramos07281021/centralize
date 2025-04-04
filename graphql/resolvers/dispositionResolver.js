@@ -1,4 +1,8 @@
 import { DateTime } from "../../middlewares/dateTime.js"
+import CustomError from "../../middlewares/errors.js"
+import Customer from "../../models/customer.js"
+import CustomerAccount from "../../models/customerAccount.js"
+import Disposition from "../../models/disposition.js"
 
 
 const dispositionResolver = {
@@ -9,37 +13,33 @@ const dispositionResolver = {
     }
   },
   Mutation: {
-    createBranch: async(_,{name},{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
+    createDisposition: async(_,{customerAccountId, userId, amount, payment, disposition, payment_date, payment_method,ref_no, comment}) => {
       try {
-        await Branch.create({name})
-        return {message: "Successfully created branch", success: true}
+        const newDisposition = await Disposition.create({
+          customer_account: customerAccountId, user:userId, amount:parseFloat(amount) || 0, payment, disposition, payment_date, payment_method, ref_no, comment
+        })
+
+        const customerAccount = await CustomerAccount.findById(customerAccountId)
+        
+        await Disposition.findByIdAndUpdate(customerAccount.current_disposition,
+        {
+          $set: {
+            existing: false
+          }
+        })
+        customerAccount.current_disposition = newDisposition._id
+        await customerAccount.save()
+        
+        return {
+          success: true,
+          message: "Disposition successfully created"
+        }
       } catch (error) {
-        throw new CustomError(error.message, 500)
-      }
-    },
-    updateBranch: async(_,{id, name},{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-      try {
-        const updateBranch = await Branch.findByIdAndUpdate(id,{$set: { name }})
-        if(!updateBranch) throw new CustomError("Branch not found",404)
-        return {message: "Branch successfully updated",success: true}
-      } catch (error) {
-        throw new CustomError(error.message, 500)
-      }
-    },
-    deleteBranch: async(_,{id}, {user} ) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-      try {
-        const deleteBranch = await Branch.findByIdAndDelete(id)
-        if(!deleteBranch) throw new CustomError("Branch not found",404)
-        return {message: "Branch successfully deleted",success: true}
-      } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }
   },
-
 }
 
 export default dispositionResolver

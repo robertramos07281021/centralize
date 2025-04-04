@@ -123,7 +123,7 @@ const CustomerDisposition = () => {
           </div>
           <div className="ms-5 2xl:text-sm lg:text-xs">
             <div className="font-bold text-slate-500">Gender</div>
-            <div className={`${selectedCustomer._id ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
+            <div className={`p-2.5 w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
               {selectedCustomer?.customer_info?.gender === "F" ? "Female" : "Male"}
             </div>
           </div>
@@ -178,12 +178,20 @@ const CustomerDisposition = () => {
             !isUpdate &&
           <div className="ms-5 2xl:text-sm lg:text-xs">
             { selectedCustomer._id &&
-              <button 
-                type="button" 
-                onClick={()=> setIsUpdate(true)}
-                className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg  px-5 py-2.5 me-2 mb-2 cursor-pointer`}>
-                Update
-              </button>
+              <>
+                <button 
+                  type="button" 
+                  onClick={()=> setIsUpdate(true)}
+                  className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}>
+                  Update
+                </button>
+                <button 
+                  type="button" 
+                  onClick={()=> setIsUpdate(true)}
+                  className={`bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}>
+                  Clear
+                </button>
+              </>
               
             }
           </div>

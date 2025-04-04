@@ -1,11 +1,24 @@
 import { useRef, useState } from "react"
 import Confirmation from "./Confirmation"
+import { useSelector } from "react-redux"
+import { RootState, useAppDispatch } from "../redux/store"
+import { useMutation } from "@apollo/client"
+import { CREATE_DISPOSITION } from "../apollo/mutations"
+import { Success } from "../middleware/types"
+import SuccessToast from "./SuccessToast"
+import { setSelectedCustomer } from "../redux/slices/authSlice"
+
 
 
 
 const DispositionForm = () => {
+  const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const disposition = ["Bill Dispute","Follow Up Payment","Failed Verification", "Hung Up", "In Capacity To Pay", "Leave Message", "Paid", "Promise To Pay", "RPC Call Back", "Refuse To Pay", "Undernego", "Answering Machine", "Wrong Number", "No Answer"]
-
+    const [success, setSuccess] = useState<Success | null>({
+      success: false,
+      message: ""
+    })
+  const dispatch = useAppDispatch()
   const [data, setData] = useState({
     amount: "",
     payment: "",
@@ -16,19 +29,79 @@ const DispositionForm = () => {
     comment: ""
   })
 
+  const [createDisposition] = useMutation(CREATE_DISPOSITION,{
+    onCompleted: async() => {
+      try {
+        setSuccess({
+          success: true,
+          message: "Disposition successfully created"
+        })
+        setConfirm(false)
+        setData({
+          amount: "",
+          payment: "",
+          disposition: "",
+          payment_date: "",
+          payment_method: "",
+          ref: "",
+          comment: ""
+        })
+        dispatch(setSelectedCustomer({
+          _id: "",
+          case_id: "",
+          account_id: "",
+          endorsement_date: "",
+          credit_customer_id: "",
+          bill_due_day: 0,
+          max_dpd: 0,
+          out_standing_details: {
+            principal_os: 0,
+            interest_os: 0,
+            admin_fee_os: 0,
+            txn_fee_os: 0,
+            late_charge_os: 0,
+            dst_fee_os: 0,
+            total_os: 0
+          },
+          grass_details: {
+            grass_region: "",
+            vendor_endorsement: "",
+            grass_date: ""
+          },
+          account_bucket: {
+            name: "",
+            dept: ""
+          },
+          customer_info: {
+            fullName:"",
+            dob:"",
+            gender:"",
+            contact_no:[],
+            emails:[],
+            addresses:[],
+            _id:""
+          }
+        }))
+      } catch (error) {
+        console.log(error)
+      }
+    },
+  })
+
   const handleOnChangeAmount = (e:React.ChangeEvent<HTMLInputElement>) => {
     let inputValue = e.target.value
     inputValue = inputValue.replace(/\D/g,"");
     inputValue = inputValue.replace(/^0+/,"") || "0"
     setData({...data, amount: inputValue})
   }
+
   const Form = useRef<HTMLFormElement | null>(null)
   const [required, setRequired] = useState(false)
   const [confirm, setConfirm] = useState(false)
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "LOGOUT",
+    toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "LOGOUT" | "UPLOADED",
     yes: () => {},
     no: () => {}
   })
@@ -41,17 +114,33 @@ const DispositionForm = () => {
       setRequired(false)
       setConfirm(true)
       setModalProps({
-        message: "Do you want to update the disposition?",
-        toggle: "UPDATE",
-        yes: () => {},
+        message: "Do you want to create the disposition?",
+        toggle: "UPLOADED",
+        yes: async() => {
+          try {
+            await createDisposition({variables: {...data , customerAccountId:selectedCustomer._id, userId: userLogged._id}})
+          } catch (error) {
+            console.log(error)
+          }
+
+        },
         no: () => {setConfirm(false)}
       })
     }
   }
+
   return (
     <>
+      {
+        success?.success &&
+        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
+      }
+
       <form ref={Form} className="flex flex-col" noValidate onSubmit={handleSubmitForm}>
         <h1 className="text-center text-lg text-slate-700 font-bold">Customer Disposition</h1>
+        {
+          selectedCustomer._id &&
+
         <div className="grid grid-cols-2 lg:gap-5 2xl:gap-10 mt-10 2xl:text-sm lg:text-xs">
           <div className="flex flex-col gap-2">
             <label className="grid grid-cols-4 items-center">
@@ -111,7 +200,6 @@ const DispositionForm = () => {
                 value={data.payment_date}
                 onChange={(e)=> setData({...data, payment_date: e.target.value})}
                 className="bg-gray-50 border border-gray-500 text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3"
-                required 
               />
             </label>
             <label className="grid grid-cols-4 items-center">
@@ -120,7 +208,6 @@ const DispositionForm = () => {
                 name="payment_method" 
                 id="payment_method" 
                 value={data.payment_method}
-                required
                 onChange={(e)=> setData({...data, payment_method: e.target.value})}
                 className="bg-gray-50 border border-gray-500 text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3">
                 <option value="">Select Method</option>
@@ -154,12 +241,15 @@ const DispositionForm = () => {
           
             </label>
             <div className="ms-5 flex justify-end mt-5">
+         
               <button 
                 type="submit" 
-                className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg px-5 py-2.5 me-2 mb-2 cursor-pointer`}>Submit</button>
+                className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white  focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 py-2.5 me-2 mb-2 cursor-pointer`}>Submit</button>
+  
             </div>
           </div>
         </div>
+        }
       </form>
       { confirm &&
         <Confirmation {...modalProps}/>

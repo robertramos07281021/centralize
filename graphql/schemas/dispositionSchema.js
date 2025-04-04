@@ -20,50 +20,10 @@ const dispositionTypeDefs = gql`
 
   }
 
-  # type Mutation {
-
-  # }
+  type Mutation {
+    createDisposition(customerAccountId:ID!,userId:ID!,amount:String, payment:String, disposition: String!, payment_date:String, payment_method:String,ref_no:String, comment:String ): Success
+  }
 `
 
 export default dispositionTypeDefs
 
-
-
-// mount: {
-//       type: Number,
-//       required: true,
-//     },
-
-//     customer_account: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "CustomerAccount",
-//       required: true
-//     },
-//     disposition: {
-//       type: String,
-//       required: true
-//     },
-//     payment_date: {
-//       type: String,
-//       required: true
-//     },
-//     payment_method: {
-//       type: String,
-//       required: true
-//     },
-//     ref_no: {
-//       type: String,
-//       required: true
-//     },
-//     comment: {
-//       type: String
-//     },
-//     existing: {
-//       type: Boolean,
-//       default: true
-//     },
-//     user: {
-//       type: mongoose.Schema.Types.ObjectId,
-//       ref: "User",
-//       required: true
-//     }

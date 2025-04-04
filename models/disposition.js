@@ -5,12 +5,14 @@ const dispositionSchema = new Schema(
   {
     amount: {
       type: Number,
-      required: true
     },
     customer_account: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CustomerAccount",
       required: true
+    },
+    payment: {
+      type:String,
     },
     disposition: {
       type: String,
@@ -18,11 +20,10 @@ const dispositionSchema = new Schema(
     },
     payment_date: {
       type: String,
-      required: true
+
     },
     payment_method: {
       type: String,
-      required: true
     },
     ref_no: {
       type: String,
