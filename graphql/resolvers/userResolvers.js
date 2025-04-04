@@ -94,7 +94,7 @@ const userResolvers = {
   Mutation: {
     createUser: async (
       _,
-      { name, username, branch, department, type}, {user}) => {
+      { name, username, branch, department, type, id_number}, {user}) => {
       
         try {
 
@@ -109,7 +109,7 @@ const userResolvers = {
           const saltPassword = await bcrypt.genSalt(10)
           const hashPassword = await bcrypt.hash(type === "admin" ? "adminadmin" :"Bernales2025", saltPassword)
 
-          const newUser = new User({ name, username, password:hashPassword , branch, department, type});
+          const newUser = new User({ name, username, password:hashPassword , branch, department, type,user_id: id_number });
           await newUser.save();
 
           await ModifyRecord.create({name: "Created", user: newUser._id})

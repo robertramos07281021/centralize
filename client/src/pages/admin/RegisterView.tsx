@@ -16,6 +16,7 @@ const RegisterView = () => {
     username: "",
     branch: "",
     department: "",
+    id_number: ""
   })
   const [success, setSuccess] = useState({
     success: false,
@@ -39,6 +40,7 @@ const RegisterView = () => {
           username: "",
           branch: "",
           department: "",
+          id_number: ""
         })
         setSuccess({
           success: true,
@@ -71,6 +73,7 @@ const RegisterView = () => {
             username: "",
             branch: "",
             department: "",
+            id_number: ""
           })
           setConfirm(false)
         }
@@ -123,14 +126,15 @@ const RegisterView = () => {
   }
 
   useEffect(() => {
-    if (data.type === "" && (data.name || data.username || data.branch || data.department)) {
+    if (data.type === "" && (data.name || data.username || data.branch || data.department || data.id_number)) {
       setData(prev => ({
         ...prev,
         name: "",
         username: "",
         branch: "",
         department: "",
-        bucket: ""
+        bucket: "",
+        id_number: ""
       }));
     }
   }, [data.type, data])
@@ -191,6 +195,19 @@ const RegisterView = () => {
               autoComplete="username"
               value={data.username}
               onChange={(e)=> setData({...data,username: e.target.value})}
+              disabled={data.type.trim() === "" }
+              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-96 p-2.5`}  
+              />
+          </label>
+          <label className="w-96">
+            <p className="w-96 text-base font-medium text-slate-500">User Id</p>
+            <input 
+              type="text" 
+              name="id_number" 
+              id="id_number" 
+              autoComplete="id_number"
+              value={data.id_number}
+              onChange={(e)=> setData({...data,id_number: e.target.value})}
               disabled={data.type.trim() === "" }
               className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-96 p-2.5`}  
               />

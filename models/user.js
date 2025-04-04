@@ -44,6 +44,9 @@ const userSchema = new Schema(
         type: String,
       }
     }],
+    user_id: {
+      type: String,
+    },
     active: {
       type: Boolean,
       default:true 

@@ -11,6 +11,7 @@ import { SEARCH } from "../apollo/query"
 import { Search } from "../middleware/types"
 import { setSelectedCustomer } from "../redux/slices/authSlice"
 import AgentTimer from "../components/AgentTimer"
+import DispositionRecords from "../components/DispositionRecords"
 
 
 const CustomerDisposition = () => {
@@ -56,6 +57,45 @@ const CustomerDisposition = () => {
       })
     }
   },[location.search])
+
+  const clearSelectedCustomer = () => {
+    dispatch(setSelectedCustomer({
+      _id: "",
+      case_id: "",
+      account_id: "",
+      endorsement_date: "",
+      credit_customer_id: "",
+      bill_due_day: 0,
+      max_dpd: 0,
+      out_standing_details: {
+        principal_os: 0,
+        interest_os: 0,
+        admin_fee_os: 0,
+        txn_fee_os: 0,
+        late_charge_os: 0,
+        dst_fee_os: 0,
+        total_os: 0
+      },
+      grass_details: {
+        grass_region: "",
+        vendor_endorsement: "",
+        grass_date: ""
+      },
+      account_bucket: {
+        name: "",
+        dept: ""
+      },
+      customer_info: {
+        fullName:"",
+        dob:"",
+        gender:"",
+        contact_no:[],
+        emails:[],
+        addresses:[],
+        _id:""
+      }
+    })) 
+  }
   
   return userLogged._id ? (
     <>
@@ -187,7 +227,7 @@ const CustomerDisposition = () => {
                 </button>
                 <button 
                   type="button" 
-                  onClick={()=> setIsUpdate(true)}
+                  onClick={clearSelectedCustomer}
                   className={`bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}>
                   Clear
                 </button>
@@ -207,6 +247,7 @@ const CustomerDisposition = () => {
         <AccountInfo/>
         <DispositionForm/>
       </div>
+      <DispositionRecords/>
     </>
   ) : (<Navigate to="/"/>)
 }

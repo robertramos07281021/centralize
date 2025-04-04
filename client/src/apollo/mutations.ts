@@ -19,8 +19,8 @@ export const LOGOUT = gql `mutation logout { logout { message success } }`;
 export const UPDATEPASSWORD = gql `mutation changePassword($password: String!, $confirmPassword:String!) {updatePassword(password: $password, confirmPass: $confirmPassword) {  branch username type name department id change_password }}`;
 
 
-export const CREATE_ACCOUNT = gql`mutation createUser($username: String!, $name: String!, $type: String!, $branch: String!, $department: String!) {
-  createUser(username: $username, name:$name, type: $type, branch: $branch, department: $department) {
+export const CREATE_ACCOUNT = gql`mutation createUser($username: String!, $name: String!, $type: String!, $branch: String!, $department: String!, $id_number:String!) {
+  createUser(username: $username, name:$name, type: $type, branch: $branch, department: $department, id_number: $id_number) {
     id
     name
     username
@@ -186,8 +186,8 @@ export const UPDATE_CUSTOMER = gql` mutation
 `
 
 export const CREATE_DISPOSITION = gql`
-  mutation CreateDisposition($customerAccountId: ID!, $userId: ID!, $disposition: String!, $amount: String, $payment: String, $paymentDate: String, $paymentMethod: String, $refNo: String, $comment: String) {
-  createDisposition(customerAccountId: $customerAccountId, userId: $userId, disposition: $disposition, amount: $amount, payment: $payment, payment_date: $paymentDate, payment_method: $paymentMethod, ref_no: $refNo, comment: $comment) {
+  mutation CreateDisposition($customerAccountId: ID!, $userId: ID!, $disposition: String!, $amount: String, $payment: String, $payment_date: String, $payment_method: String, $ref_no: String, $comment: String) {
+  createDisposition(customerAccountId: $customerAccountId, userId: $userId, disposition: $disposition, amount: $amount, payment: $payment, payment_date: $payment_date, payment_method: $payment_method, ref_no: $ref_no, comment: $comment) {
     success
     message
   }

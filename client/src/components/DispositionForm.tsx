@@ -25,7 +25,7 @@ const DispositionForm = () => {
     disposition: "",
     payment_date: "",
     payment_method: "",
-    ref: "",
+    ref_no: "",
     comment: ""
   })
 
@@ -43,7 +43,7 @@ const DispositionForm = () => {
           disposition: "",
           payment_date: "",
           payment_method: "",
-          ref: "",
+          ref_no: "",
           comment: ""
         })
         dispatch(setSelectedCustomer({
@@ -118,11 +118,13 @@ const DispositionForm = () => {
         toggle: "UPLOADED",
         yes: async() => {
           try {
-            await createDisposition({variables: {...data , customerAccountId:selectedCustomer._id, userId: userLogged._id}})
+            await createDisposition({variables: {
+              ...data,
+              customerAccountId:selectedCustomer._id, 
+              userId: userLogged._id}})
           } catch (error) {
             console.log(error)
           }
-
         },
         no: () => {setConfirm(false)}
       })
@@ -136,13 +138,32 @@ const DispositionForm = () => {
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
       }
 
-      <form ref={Form} className="flex flex-col" noValidate onSubmit={handleSubmitForm}>
+      <form ref={Form} className="flex flex-col p-4" noValidate onSubmit={handleSubmitForm}>
         <h1 className="text-center text-lg text-slate-700 font-bold">Customer Disposition</h1>
         {
           selectedCustomer._id &&
 
-        <div className="grid grid-cols-2 lg:gap-5 2xl:gap-10 mt-10 2xl:text-sm lg:text-xs">
+        <div className="grid grid-cols-2 lg:gap-5 2xl:gap-10 mt-8 2xl:text-sm lg:text-xs">
           <div className="flex flex-col gap-2">
+
+
+          <label className="grid grid-cols-4 items-center">
+              <p className="text-gray-800 font-bold ">Disposition</p>
+              <select 
+                name="disposition" 
+                id="disposition" 
+                value={data.disposition}
+                required
+                onChange={(e)=> setData({...data, disposition: e.target.value})}
+                className={`${required && !data.disposition ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block col-span-3 p-2 `}>
+                <option value="">Select Disposition</option>
+                {
+                  disposition.map((dispo,index)=> (
+                    <option key={index} value={dispo}>{dispo}</option>
+                  ))
+                }
+              </select>
+            </label>
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Amount</p>
               <div className="relative col-span-3">
@@ -171,23 +192,7 @@ const DispositionForm = () => {
                 <option value="full">Full</option>
               </select>
             </label>
-            <label className="grid grid-cols-4 items-center">
-              <p className="text-gray-800 font-bold ">Disposition</p>
-              <select 
-                name="disposition" 
-                id="disposition" 
-                value={data.disposition}
-                required
-                onChange={(e)=> setData({...data, disposition: e.target.value})}
-                className={`${required && !data.disposition ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block col-span-3 p-2 `}>
-                <option value="">Select Disposition</option>
-                {
-                  disposition.map((dispo,index)=> (
-                    <option key={index} value={dispo}>{dispo}</option>
-                  ))
-                }
-              </select>
-            </label>
+            
             
           </div>
           <div className="flex flex-col gap-2"> 
@@ -218,14 +223,14 @@ const DispositionForm = () => {
               </select>
             </label>
             <label className="grid grid-cols-4 items-center">
-              <p className="text-gray-800 font-bold ">Ref.</p>
+              <p className="text-gray-800 font-bold ">Ref. No</p>
 
               <input 
                 type="text" 
                 name="ref" 
                 id="ref"
-                value={data.ref}
-                onChange={(e)=> setData({...data, ref: e.target.value})}
+                value={data.ref_no}
+                onChange={(e)=> setData({...data, ref_no: e.target.value})}
                 className="p-1.5 border rounded-lg border-slate-500 col-span-3"/>
            
             </label>
@@ -241,11 +246,13 @@ const DispositionForm = () => {
           
             </label>
             <div className="ms-5 flex justify-end mt-5">
-         
+            {
+              data.disposition &&
               <button 
                 type="submit" 
                 className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white  focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 py-2.5 me-2 mb-2 cursor-pointer`}>Submit</button>
-  
+
+            }
             </div>
           </div>
         </div>
