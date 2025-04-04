@@ -1,4 +1,4 @@
-import { useRef, useState } from "react"
+import {  useRef, useState } from "react"
 import Confirmation from "./Confirmation"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
@@ -28,6 +28,8 @@ const DispositionForm = () => {
     ref_no: "",
     comment: ""
   })
+
+
 
   const [createDisposition] = useMutation(CREATE_DISPOSITION,{
     onCompleted: async() => {
@@ -145,9 +147,7 @@ const DispositionForm = () => {
 
         <div className="grid grid-cols-2 lg:gap-5 2xl:gap-10 mt-8 2xl:text-sm lg:text-xs">
           <div className="flex flex-col gap-2">
-
-
-          <label className="grid grid-cols-4 items-center">
+            <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Disposition</p>
               <select 
                 name="disposition" 
@@ -166,20 +166,29 @@ const DispositionForm = () => {
             </label>
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Amount</p>
-              <div className="relative col-span-3">
-                <input 
-                  type="text" 
-                  name="amount" 
-                  id="amount"
-                  value={data.amount}
-                  onChange={handleOnChangeAmount}
-                  pattern="[0-9]*"
-                  className="w-full 2xl:text-sm lg:text-xs bg-gray-50 border border-gray-500 text-gray-900 text-sm rounded-lg pl-8 focus:ring-blue-500 focus:border-blue-500 block p-2 "/>
-                <p className="absolute top-2 left-4">&#x20B1;</p>
-              </div>
+              {
+                data.disposition === "Paid" ? 
+                <div className="relative col-span-3">
+                  <input 
+                    type="text" 
+                    name="amount" 
+                    id="amount"
+                    value={data.amount}
+                    onChange={handleOnChangeAmount}
+                    pattern="[0-9]*"
+                    className="w-full 2xl:text-sm lg:text-xs bg-gray-50 border border-gray-500 text-gray-900 text-sm rounded-lg pl-8 focus:ring-blue-500 focus:border-blue-500 block p-2 "/>
+                  <p className="absolute top-2 left-4">&#x20B1;</p>
+                </div> 
+                : 
+                <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
+                </div>
+              }
             </label>
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Payment</p>
+              {
+                data.disposition === "Paid" ? 
+
               <select 
                 name="payment" 
                 id="payment" 
@@ -191,9 +200,11 @@ const DispositionForm = () => {
                 <option value="partial">Partial</option>
                 <option value="full">Full</option>
               </select>
+              :
+              <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
+              </div>
+              }
             </label>
-            
-            
           </div>
           <div className="flex flex-col gap-2"> 
             <label className="grid grid-cols-4 items-center">
@@ -224,7 +235,6 @@ const DispositionForm = () => {
             </label>
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Ref. No</p>
-
               <input 
                 type="text" 
                 name="ref" 
@@ -232,7 +242,6 @@ const DispositionForm = () => {
                 value={data.ref_no}
                 onChange={(e)=> setData({...data, ref_no: e.target.value})}
                 className="p-1.5 border rounded-lg border-slate-500 col-span-3"/>
-           
             </label>
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Comment</p>
