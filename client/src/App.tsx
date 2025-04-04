@@ -18,7 +18,6 @@ import AccountsView from "./pages/admin/AccountsView"
 import RegisterView from "./pages/admin/RegisterView"
 import SetupView from "./pages/admin/SetupView"
 import UserView from "./pages/admin/UserView"
-import Disposition from "./pages/Disposition"
 import ExtractorView from "./pages/tl/ExtractorView"
 import CustomerDisposition from "./pages/CustomerDisposition"
 
@@ -55,8 +54,8 @@ function App() {
         </Route>
         <Route element={<TlRoute/>}>
           <Route path="/tl-dashboard" element={<TlDashboard/>}/>
-          <Route path="/tl-production-area" element={<Disposition/>}/>
-          {/* <Route path="/tl-production-area" element={<CustomerDisposition/>}/> */}
+          {/* <Route path="/tl-production-area" element={<Disposition/>}/> */}
+          <Route path="/tl-production-area" element={<CustomerDisposition/>}/>
           <Route path="/outcome-extractor" element={<ExtractorView/>}/>
 
         </Route>

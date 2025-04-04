@@ -35,8 +35,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
     setMobiles([...mobiles, ""])
   }
 
-
-
   const validatePhone = (phone: string): boolean => /^09\d{9}$/.test(phone);
 
   const handleMinusMobile = (index: number) => {

@@ -22,7 +22,6 @@ type search = {
 interface UserState {
   error: boolean
   need_login: boolean
-  page: number
   userLogged: User
   search: search
   selectedCustomer:Search
@@ -31,7 +30,6 @@ interface UserState {
 const initialState:UserState = {
   error: false,
   need_login: false,
-  page: 1,
   userLogged: {
     _id: "",
     change_password: false,
@@ -105,9 +103,6 @@ const authSlice = createSlice({
     setUserLogged: (state, action: PayloadAction<User>) => {
       state.userLogged = action.payload
     },
-    setPage: (state, action:PayloadAction<number>) => {
-      state.page = action.payload
-    },
     setSearch: (state, action:PayloadAction<search>) => {
       state.search = action.payload
     },
@@ -117,5 +112,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logoutUser, setError, setNeedLogin , setUserLogged, setPage, setSearch, setSelectedCustomer} = authSlice.actions;
+export const { logoutUser, setError, setNeedLogin , setUserLogged, setSearch, setSelectedCustomer} = authSlice.actions;
 export default authSlice.reducer;
