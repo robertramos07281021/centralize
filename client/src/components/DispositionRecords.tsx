@@ -62,16 +62,16 @@ const DispositionRecords = () => {
                 <div className="p-2 text-slate-700 bg-white">{date(gad.createdAt)}</div>
               </div>
               <div className=" grid grid-cols-3 gap-2 ">
+                <div className="text-gray-800 font-bold p-2 text-end">Disposition</div>
+                <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 capitalize bg-white font-bold">{gad.disposition}</div>
+              </div>
+              <div className=" grid grid-cols-3 gap-2 ">
                 <div className="text-gray-800 font-bold p-2 text-end">Amount</div>
                 <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 bg-white">{gad.amount | 0}</div>
               </div>
               <div className=" grid grid-cols-3 gap-2">
                 <div className="text-gray-800 font-bold p-2 text-end">Payment</div>
                 <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 capitalize bg-white">{gad.payment}</div>
-              </div>
-              <div className=" grid grid-cols-3 gap-2 ">
-                <div className="text-gray-800 font-bold p-2 text-end">Disposition</div>
-                <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 capitalize bg-white">{gad.disposition}</div>
               </div>
               <div className=" grid grid-cols-3 gap-2 ">
                 <div className="text-gray-800 font-bold p-2 text-end">Payment Date</div>

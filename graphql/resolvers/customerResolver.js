@@ -80,6 +80,7 @@ const customerResolver = {
           $match: {
             $or: [
               { "customer_info.fullName": { $regex: search, $options: "i" } },
+              { "customer_info.dob": { $regex: search, $options: "i" } },
               { "customer_info.contact_no": { $elemMatch: { $regex: search, $options: "i" } } },
               { "customer_info.emails": { $elemMatch: { $regex: search, $options: "i" } } },
               { "customer_info.addresses": { $elemMatch: { $regex: search, $options: "i" } } },

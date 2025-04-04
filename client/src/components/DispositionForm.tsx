@@ -1,4 +1,4 @@
-import {  useRef, useState } from "react"
+import {  useEffect, useRef, useState } from "react"
 import Confirmation from "./Confirmation"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
@@ -132,7 +132,21 @@ const DispositionForm = () => {
       })
     }
   }
-
+  useEffect(()=> {
+    if(!selectedCustomer?._id || data?.disposition !== "Paid") {
+      setRequired(false)
+      setData((prev)=> ({
+        ... prev,
+        amount: "",
+        payment: "",
+        payment_date: "",
+        payment_method: "",
+        ref_no: "",
+        comment: ""
+      }))
+    }
+  },[selectedCustomer?._id, data?.disposition])
+  
   return (
     <>
       {
@@ -176,7 +190,9 @@ const DispositionForm = () => {
                     value={data.amount}
                     onChange={handleOnChangeAmount}
                     pattern="[0-9]*"
-                    className="w-full 2xl:text-sm lg:text-xs bg-gray-50 border border-gray-500 text-gray-900 text-sm rounded-lg pl-8 focus:ring-blue-500 focus:border-blue-500 block p-2 "/>
+                    placeholder="Enter amount"
+                    required={data.disposition === "Paid"}
+                    className={`${required && !data.amount ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} w-full 2xl:text-sm lg:text-xs border  text-gray-900 text-sm rounded-lg pl-8 focus:ring-blue-500 focus:border-blue-500 block p-2 `}/>
                   <p className="absolute top-2 left-4">&#x20B1;</p>
                 </div> 
                 : 
@@ -188,71 +204,93 @@ const DispositionForm = () => {
               <p className="text-gray-800 font-bold ">Payment</p>
               {
                 data.disposition === "Paid" ? 
-
-              <select 
-                name="payment" 
-                id="payment" 
-                value={data.payment}
-        
-                onChange={(e)=> setData({...data, payment: e.target.value})}
-                className="bg-gray-50 border border-gray-500 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block col-span-3 p-2 ">
-                <option value="">Select Payment</option>
-                <option value="partial">Partial</option>
-                <option value="full">Full</option>
-              </select>
-              :
-              <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
-              </div>
+                <select 
+                  name="payment" 
+                  id="payment" 
+                  value={data.payment}
+                  required={data.disposition === "Paid"}
+                  onChange={(e)=> setData({...data, payment: e.target.value})}
+                  className={`${required && !data.payment ? "bg-red-100 border-red-500" : "bg-gray-50 border-gray-500"} border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block col-span-3 p-2`}>
+                  <option value="">Select Payment</option>
+                  <option value="partial">Partial</option>
+                  <option value="full">Full</option>
+                </select>
+                :
+                <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
+                </div>
               }
             </label>
           </div>
           <div className="flex flex-col gap-2"> 
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold">Payment Date</p>
-              <input 
-                type="date" 
-                id="payment_date" 
-                name="payment_date"
-                value={data.payment_date}
-                onChange={(e)=> setData({...data, payment_date: e.target.value})}
-                className="bg-gray-50 border border-gray-500 text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3"
-              />
+              {
+                data.disposition === "Paid" ? 
+                <input 
+                  type="date" 
+                  id="payment_date" 
+                  name="payment_date"
+                  required={data.disposition === "Paid"}
+                  value={data.payment_date}
+                  onChange={(e)=> setData({...data, payment_date: e.target.value})}
+                  className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
+                />
+                  :
+                <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
+                </div>
+              }
             </label>
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Payment Method</p>
-              <select 
-                name="payment_method" 
-                id="payment_method" 
-                value={data.payment_method}
-                onChange={(e)=> setData({...data, payment_method: e.target.value})}
-                className="bg-gray-50 border border-gray-500 text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3">
-                <option value="">Select Method</option>
-                <option value="Bank to Bank Transfer">Bank to Bank Transfer</option>
-                <option value="7/11">7/11</option>
-                <option value="Gcash/PAY Maya">Gcash/PAY Maya</option>
-                <option value="CASH">CASH</option>
-              </select>
+              {
+                data.disposition === "Paid" ? 
+                <select 
+                  name="payment_method" 
+                  id="payment_method" 
+                  value={data.payment_method}
+                  required={data.disposition === "Paid"}
+                  onChange={(e)=> setData({...data, payment_method: e.target.value})}
+                  className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}>
+                  <option value="">Select Method</option>
+                  <option value="Bank to Bank Transfer">Bank to Bank Transfer</option>
+                  <option value="7/11">7/11</option>
+                  <option value="Gcash/PAY Maya">Gcash/PAY Maya</option>
+                  <option value="CASH">CASH</option>
+                </select>
+                :
+                <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
+                </div>
+              }
             </label>
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Ref. No</p>
-              <input 
-                type="text" 
-                name="ref" 
-                id="ref"
-                value={data.ref_no}
-                onChange={(e)=> setData({...data, ref_no: e.target.value})}
-                className="p-1.5 border rounded-lg border-slate-500 col-span-3"/>
+              {
+                data.disposition === "Paid" ?
+                <input 
+                  type="text" 
+                  name="ref" 
+                  id="ref"
+                  required={data.disposition === "Paid"}
+                  value={data.ref_no}
+                  placeholder="Enter reference no."
+                  onChange={(e)=> setData({...data, ref_no: e.target.value})}
+                  className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} p-2.5 border rounded-lg col-span-3`}/>
+                :
+                <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
+                </div>
+              }
             </label>
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Comment</p>
               <textarea 
                 name="comment"
                 id="comment"
+                placeholder="Comment here..."
                 value={data.comment}
                 onChange={(e)=> setData({...data, comment: e.target.value})}
                 className="bg-gray-50 border border-gray-500 text-gray-900 rounded-lg h-24 focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3 resize-none"  
               ></textarea>
-          
+
             </label>
             <div className="ms-5 flex justify-end mt-5">
             {

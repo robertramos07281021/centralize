@@ -3,15 +3,13 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import {  useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
 import { LOGIN, LOGOUT } from "../apollo/mutations";
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation } from "@apollo/client";
 import {  setError, setUserLogged } from "../redux/slices/authSlice";
-import { myUserInfos } from "../apollo/query";
-import { UserInfo } from "../middleware/types";
 import Loading from "./Loading";
 import { useSelector } from "react-redux";
 
 const Login = () => {
- 
+  const {userLogged} = useSelector((state:RootState)=> state.auth)
   const navigate = useNavigate() 
   const dispatch = useAppDispatch()
   const userRoutes = useMemo(() => ({
@@ -29,12 +27,10 @@ const Login = () => {
   const loginForm = useRef<HTMLFormElement | null>(null)
   const [username, setUsername] = useState<string>("")
   const [password, setPassword] = useState<string>("") 
-  const needLogin = useSelector((state:RootState)=> state.auth.need_login)
-  const {data, error, refetch} = useQuery<{ getMe: UserInfo }>(myUserInfos)
+
   const [logout] = useMutation(LOGOUT)
   const [login, {loading}] = useMutation(LOGIN, {
     onCompleted: (res) => {
-      refetch()
       dispatch(setUserLogged(res.login.user))
       if(!res.login.user.change_password) {
         navigate('/change-password')
@@ -73,17 +69,16 @@ const Login = () => {
 
 
   useEffect(()=> {
-    refetch()
-    if(data?.getMe?.id && data && data?.getMe?.change_password && !needLogin && !error) {
-      const userType = data.getMe.type as keyof typeof userRoutes;
+    if(userLogged) {
+      const userType = userLogged.type as keyof typeof userRoutes;
       if(userRoutes[userType]) navigate(userRoutes[userType])
     }
-  },[navigate, data, needLogin, error, refetch, userRoutes])
+  },[userLogged,userRoutes, navigate])
 
 
   useEffect(()=> {
       const timer = setTimeout(async() =>  {
-        if(data?.getMe && !data.getMe.change_password)
+        if(userLogged?._id && !userLogged.change_password)
         try {
           await logout()
           dispatch(setUserLogged({
@@ -96,14 +91,13 @@ const Login = () => {
             department: "",
             bucket: ""
           }))
-          refetch()
         } catch (error) {
           console.log(error)
           dispatch(setError(true))
         }
       })
       return () => clearTimeout(timer) 
-  },[dispatch, data, logout, refetch])
+  },[dispatch, userLogged, logout])
 
   if(loading) return <Loading/>
 

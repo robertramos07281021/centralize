@@ -47,6 +47,11 @@ const dispositionResolver = {
   Mutation: {
     createDisposition: async(_,{customerAccountId, userId, amount, payment, disposition, payment_date, payment_method, ref_no, comment}) => {
       try {
+        if(disposition === "Paid" && (!amount || !payment || !payment_date || !payment_method || !ref_no)) {
+          throw new CustomError("All fields are required",400)
+        } 
+
+
         const newDisposition = await Disposition.create({
           customer_account: customerAccountId, user:userId, amount:parseFloat(amount) || 0, payment, disposition, payment_date, payment_method, ref_no, comment
         })
