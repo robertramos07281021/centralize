@@ -123,12 +123,15 @@ const Navbar = () => {
   if(loading) return <Loading/>
 
   return (
-    <div className="sticky top-0 z-40">
+    <div className="sticky top-0 z-40 print:hidden">
       <div className="p-2 bg-blue-500 flex justify-between items-center ">
-        <img src="/bernalesLogo.png" alt="Bernales Logo" className="w-1/12" />
+        <div className="flex text-2xl gap-2 font-medium items-center text-white italic">
+          <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
+          Bernales & Associates
+        </div>
         <div className="p-1 flex gap-2">
-          <p className="font-medium text-white">Hello {data?.getMe.name.toUpperCase()}!</p>
-          <BsFillPersonVcardFill className="text-4xl cursor-pointer" onClick={()=> setPopUpUser(!poPupUser)}/>
+          <p className="font-medium text-white italic flex items-center">Hello&nbsp;<span className="uppercase">{data?.getMe.name}</span></p>
+          <BsFillPersonVcardFill className="text-4xl cursor-pointer border " onClick={()=> setPopUpUser(!poPupUser)}/>
           { poPupUser &&
             <div className="w-40 h-40 border border-slate-200 shadow-xl shadow-black/8 rounded-xl top-13 end-5 bg-white absolute flex flex-col p-2 text-slate-500 font-medium">
               <div className="grow px-2 border-b border-slate-200 flex items-center hover:text-white hover:bg-slate-500 duration-200 ease-in-out cursor-pointer rounded-t-lg">

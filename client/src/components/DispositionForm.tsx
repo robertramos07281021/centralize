@@ -159,7 +159,7 @@ const DispositionForm = () => {
         {
           selectedCustomer._id &&
 
-        <div className="grid grid-cols-2 lg:gap-5 2xl:gap-10 mt-8 2xl:text-sm lg:text-xs">
+        <div className="grid grid-cols-2 lg:gap-5 2xl:gap-10 mt-5 2xl:text-sm lg:text-xs">
           <div className="flex flex-col gap-2">
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Disposition</p>

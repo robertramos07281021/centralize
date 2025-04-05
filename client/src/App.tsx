@@ -18,8 +18,11 @@ import AccountsView from "./pages/admin/AccountsView"
 import RegisterView from "./pages/admin/RegisterView"
 import SetupView from "./pages/admin/SetupView"
 import UserView from "./pages/admin/UserView"
-import ExtractorView from "./pages/tl/ExtractorView"
+
 import CustomerDisposition from "./pages/CustomerDisposition"
+import TaskView from "./pages/agent/TaskView"
+import StatisticsView from "./pages/agent/StatisticsView"
+import BacklogManagementView from "./pages/tl/BacklogManagementView"
 
 function App() {
 
@@ -42,6 +45,8 @@ function App() {
           <Route path="/agent-dashboard" element={<AgentDashboard/>}/>
           {/* <Route path="/agent-production-area" element={<Disposition/>}/> */}
           <Route path="/agent-production-area" element={<CustomerDisposition/>}/>
+          <Route path="/agent-tasks" element={<TaskView/>}/>
+          <Route path="/agent-statistics" element={<StatisticsView/>}/>
 
         </Route>
         <Route element={<AomRoute/>}>
@@ -56,8 +61,7 @@ function App() {
           <Route path="/tl-dashboard" element={<TlDashboard/>}/>
           {/* <Route path="/tl-production-area" element={<Disposition/>}/> */}
           <Route path="/tl-production-area" element={<CustomerDisposition/>}/>
-          <Route path="/outcome-extractor" element={<ExtractorView/>}/>
-
+          <Route path="/backlog-management" element={<BacklogManagementView/>}/>
         </Route>
         <Route element={<CeoRoute/>}>
           <Route path="/ceo-dashboard" element={<CeoDashboard/>}/>
