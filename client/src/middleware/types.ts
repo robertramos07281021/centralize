@@ -7,7 +7,7 @@ export type UserInfo = {
   change_password: boolean
   department: string
   bucket: string
-  
+  user_id:string
 };
 
 export type Department = {
@@ -59,6 +59,7 @@ export type Users = {
   isOnline: boolean
   active: boolean
   createdAt: string
+  user_id: string
 }
 
 export type ModifyRecords = {
@@ -99,6 +100,8 @@ export type ExcelFile = {
   txn_fee_os:number
   vendor_endorsement:string
 }
+
+
 
 export type CustomerData = {
   address: string

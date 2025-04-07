@@ -86,10 +86,14 @@ const userResolvers = {
         total: res[0].total.length > 0 ? res[0].total[0].totalUser : 0,
       };
     },
-    // getProd: async()=> {
-      
-    //   return 
-    // }
+    findAgents: async(_,{department})=> {
+      try {
+        const agent = await User.find({$and: [{department}, {type: {$ne: "TL"}}]})
+        return [...agent]
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    }
   },
   Mutation: {
     createUser: async (

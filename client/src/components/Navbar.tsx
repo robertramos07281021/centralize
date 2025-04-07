@@ -131,7 +131,7 @@ const Navbar = () => {
         </div>
         <div className="p-1 flex gap-2">
           <p className="font-medium text-white italic flex items-center">Hello&nbsp;<span className="uppercase">{data?.getMe.name}</span></p>
-          <BsFillPersonVcardFill className="text-4xl cursor-pointer border " onClick={()=> setPopUpUser(!poPupUser)}/>
+          <BsFillPersonVcardFill className="text-4xl cursor-pointer " onClick={()=> setPopUpUser(!poPupUser)}/>
           { poPupUser &&
             <div className="w-40 h-40 border border-slate-200 shadow-xl shadow-black/8 rounded-xl top-13 end-5 bg-white absolute flex flex-col p-2 text-slate-500 font-medium">
               <div className="grow px-2 border-b border-slate-200 flex items-center hover:text-white hover:bg-slate-500 duration-200 ease-in-out cursor-pointer rounded-t-lg">

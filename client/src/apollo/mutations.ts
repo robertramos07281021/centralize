@@ -8,10 +8,11 @@ export const LOGIN = gql `mutation login($username: String!, $password: String!)
   department
   branch
   change_password
-  bucket
+  buckets
   isOnline
   active
   createdAt
+  user_id
   } } }`;
 
 export const LOGOUT = gql `mutation logout { logout { message success } }`;
@@ -29,6 +30,7 @@ export const CREATE_ACCOUNT = gql`mutation createUser($username: String!, $name:
     branch
     change_password
     bucket
+    user_id
   }
 }
 `
@@ -44,10 +46,11 @@ export const UPDATE_USER = gql`mutation updateUser( $name:String!, $type: String
       department
       branch
       change_password
-      bucket
+      buckets
       isOnline
       active
       createdAt
+      user_id
     }
   }
 }`
@@ -73,7 +76,7 @@ export const STATUS_UPDATE = gql`mutation Mutation($id:ID!) {
       department
       branch
       change_password
-      bucket
+      buckets
       isOnline
       active
       createdAt

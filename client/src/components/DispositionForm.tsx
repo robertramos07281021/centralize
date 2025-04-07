@@ -7,13 +7,13 @@ import { CREATE_DISPOSITION } from "../apollo/mutations"
 import { Success } from "../middleware/types"
 import SuccessToast from "./SuccessToast"
 import { setSelectedCustomer } from "../redux/slices/authSlice"
-
+import { disposition } from "../middleware/exports"
 
 
 
 const DispositionForm = () => {
   const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
-  const disposition = ["Bill Dispute","Follow Up Payment","Failed Verification", "Hung Up", "In Capacity To Pay", "Leave Message", "Paid", "Promise To Pay", "RPC Call Back", "Refuse To Pay", "Undernego", "Answering Machine", "Wrong Number", "No Answer"]
+ 
     const [success, setSuccess] = useState<Success | null>({
       success: false,
       message: ""

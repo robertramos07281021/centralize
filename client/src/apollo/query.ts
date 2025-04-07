@@ -56,8 +56,9 @@ export const FIND_QUERY = gql`
         change_password
         active
         isOnline
-        bucket
+        buckets
         createdAt
+        user_id
       }
     }
   }
@@ -77,12 +78,34 @@ export const GET_ALL_USERS = gql`
         change_password
         active
         isOnline
-        bucket
+        buckets
         createdAt
+        user_id
       }
     }
   }
 `
+
+export const GET_DEPARTMENT_AGENT = gql`
+  query Query($department: String!) {
+  findAgents(department: $department) {
+    _id
+    name
+    username
+    type
+    department
+    branch
+    change_password
+    buckets
+    isOnline
+    active
+    createdAt
+    user_id
+  }
+}
+`
+
+
 // ===========================================================
 // branch query
 export const BRANCH_QUERY = gql`
@@ -140,19 +163,13 @@ export const DEPT_BUCKET_QUERY = gql`
 
 
 //bucket query ==============================================================================================
-export const BUCKET_QUERY = gql`
-  query bucketQuery($dept:String, $name:String) {
+export const DEPARTMENT_BUCKET = gql`
+  query bucketQuery($dept:String) {
     getBuckets(dept:$dept) {
       id
       name
       dept
     }
-    getBucket(name:$name) {
-      id
-      name
-      dept
-    }
-    
   }
 `
 //modify record query ============================================================================================
@@ -170,80 +187,92 @@ export const MODIFY_RECORD_QUERY = gql`
 //customer query ===========================================================================================
 export const ALL_CUSTOMER = gql`
 # not used
-query Query($page: Int) {
-  getCustomers(page: $page) {
-    customers {
-      fullName
-      dob
-      gender
-      contact_no
-      emails
-      addresses
-      _id
+  query Query($page: Int) {
+    getCustomers(page: $page) {
+      customers {
+        fullName
+        dob
+        gender
+        contact_no
+        emails
+        addresses
+        _id
+      }
+      total
     }
-    total
   }
-}
 `
 export const SEARCH = gql`
-query Search($search: String) {
-  search(search: $search) {
-    _id
-    case_id
-    account_id
-    endorsement_date
-    credit_customer_id
-    bill_due_day
-    max_dpd
-    out_standing_details {
-      principal_os
-      interest_os
-      admin_fee_os
-      txn_fee_os
-      late_charge_os
-      dst_fee_os
-      total_os
-    }
-    grass_details {
-      grass_region
-      vendor_endorsement
-      grass_date
-    }
-    account_bucket {
-      name
-      dept
-    }
-    customer_info {
-      fullName
-      dob
-      gender
-      contact_no
-      emails
-      addresses
+  query Search($search: String) {
+    search(search: $search) {
       _id
+      case_id
+      account_id
+      endorsement_date
+      credit_customer_id
+      bill_due_day
+      max_dpd
+      out_standing_details {
+        principal_os
+        interest_os
+        admin_fee_os
+        txn_fee_os
+        late_charge_os
+        dst_fee_os
+        total_os
+      }
+      grass_details {
+        grass_region
+        vendor_endorsement
+        grass_date
+      }
+      account_bucket {
+        name
+        dept
+      }
+      customer_info {
+        fullName
+        dob
+        gender
+        contact_no
+        emails
+        addresses
+        _id
+      }
     }
   }
-}
 `
 
 // disposition =================================================================================
 export const DISPOSITION_RECORDS = gql`
   query Query($id: ID!, $limit:Int) {
-  getAccountDispositions(id: $id, limit: $limit) {
-    _id
-    amount
-    disposition
-    payment_date
-    ref_no
-    existing
-    payment
-    comment
-    payment_method
-    createdAt
-    created_by {
-      user_id
+    getAccountDispositions(id: $id, limit: $limit) {
+      _id
+      amount
+      disposition
+      payment_date
+      ref_no
+      existing
+      payment
+      comment
+      payment_method
+      createdAt
+      created_by {
+        user_id
+      }
     }
   }
-}
 
+`
+
+
+//disposition types
+export const GET_DISPOSITION_TYPES = gql`
+  query Query {
+    getDispositionTypes {
+      id
+      name
+      code
+    }
+  }
 `

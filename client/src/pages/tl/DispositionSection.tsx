@@ -25,8 +25,8 @@ const DispositionSection = () => {
           </tr>
         </thead>
         <tbody>
-          { Array.from({ length: 30 }, () => (
-            <tr className='odd:bg-gray-100 even:bg-white text-center text-sm text-slate-500'>
+          { Array.from({ length: 30 }, (_,index) => (
+            <tr key={index} className='odd:bg-gray-100 even:bg-white text-center text-sm text-slate-500'>
               <th className="py-1.5">M2</th>
               <td>5</td>
               <td>6</td>

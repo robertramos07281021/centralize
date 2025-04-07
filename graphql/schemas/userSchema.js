@@ -9,7 +9,7 @@ const userTypeDefs = gql`
     department: String
     branch: String
     change_password: Boolean
-    bucket: String
+    buckets: [String]
   }
 
   type Success {
@@ -31,10 +31,11 @@ const userTypeDefs = gql`
     department: String
     branch: String
     change_password: Boolean
-    bucket: String
+    buckets: [String]
     isOnline: Boolean
     active: Boolean
     createdAt: DateTime
+    user_id: String
   }
 
   type PaginatedUsers {
@@ -56,7 +57,7 @@ const userTypeDefs = gql`
     getMe:User
     getAomUser: [User]
     findUsers(search: String!, page: Int!): PaginatedUsers!
-
+    findAgents(department:String!):[Users]
   }
 
   type Mutation {

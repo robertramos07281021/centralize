@@ -1,7 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery } from "@apollo/client"
 import { Bucket, Department, Success } from "../middleware/types"
-import { BUCKET_QUERY, DEPARTMENT_QUERY } from "../apollo/query"
+import { DEPARTMENT_BUCKET, DEPARTMENT_QUERY } from "../apollo/query"
 import { useEffect, useMemo, useState } from "react";
 import { CREATEBUCKET, DELETEBUCKET, UPDATEBUCKET } from "../apollo/mutations";
 import Confirmation from "./Confirmation";
@@ -44,8 +44,8 @@ const BucketSection = () => {
     setIsUpdate(false)
   }
 
-  const {data:bucketData,refetch:bucketRefetch} = useQuery<{getBuckets:Bucket[],getBucket:Bucket}>(BUCKET_QUERY,{
-    variables: {dept: deptSelected, name: "" },
+  const {data:bucketData,refetch:bucketRefetch} = useQuery<{getBuckets:Bucket[],getBucket:Bucket}>(DEPARTMENT_BUCKET,{
+    variables: {dept: deptSelected},
     skip: !deptSelected
   })
 
