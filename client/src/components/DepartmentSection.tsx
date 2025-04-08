@@ -36,7 +36,8 @@ const DepartmentSection = () => {
       name: "",
       change_password: false,
       department: "",
-      bucket: ""
+      bucket: "",
+      user_id: ""
     }
   }) 
 
@@ -86,7 +87,8 @@ const DepartmentSection = () => {
             name: "",
             change_password: false,
             department: "",
-            bucket: ""
+            bucket: "",
+            user_id: ""
           }
         })
       } catch (error) {
@@ -211,7 +213,8 @@ const DepartmentSection = () => {
         name: "",
         change_password: false,
         department: "",
-        bucket: ""
+        bucket: "",
+        user_id: ""
       }
     })
     setName("")
@@ -252,7 +255,8 @@ const DepartmentSection = () => {
         name: "",
         change_password: false,
         department: "",
-        bucket: ""
+        bucket: "",
+        user_id: ""
       }
     })
     setName("")

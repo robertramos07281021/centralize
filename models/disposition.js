@@ -15,7 +15,8 @@ const dispositionSchema = new Schema(
       type:String,
     },
     disposition: {
-      type: String,
+      type:mongoose.Schema.Types.ObjectId,
+      ref: "DispoType",
       required: true
     },
     payment_date: {

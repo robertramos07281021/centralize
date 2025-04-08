@@ -1,14 +1,20 @@
 import { useSelector } from "react-redux"
 import { RootState } from "../redux/store"
-import { useQuery } from "@apollo/client"
-import { DISPOSITION_RECORDS } from "../apollo/query"
+import { useQuery, gql } from "@apollo/client"
 import { useEffect, useState } from "react"
 import { ImSpinner9 } from "react-icons/im";
+
+type DispoType = {
+  name: string
+  code: string
+  _id: string
+
+}
 
 type Disposition =  {
   _id:string
   amount: number
-  disposition: string
+  ca_disposition: DispoType
   payment_date: string
   ref_no: string
   comment: string
@@ -21,12 +27,33 @@ type Disposition =  {
   }
 }
 
-
+const DISPOSITION_RECORDS = gql`
+  query Query($id: ID!, $limit:Int) {
+    getAccountDispositions(id: $id, limit: $limit) {
+      _id
+      amount
+      ca_disposition {
+        name
+        code
+        _id
+      }
+      payment_date
+      ref_no
+      existing
+      payment
+      comment
+      payment_method
+      createdAt
+      created_by {
+        user_id
+      }
+    }
+  }
+`
 const DispositionRecords = () => {
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth )
   const [limit, setLimit] = useState(3)
-
-
+  
   const {data:dispositions,refetch, loading} = useQuery<{getAccountDispositions:Disposition[]}>(DISPOSITION_RECORDS,{variables: {id: selectedCustomer._id, limit: limit} })
 
   const date = (date:string) => {
@@ -63,7 +90,7 @@ const DispositionRecords = () => {
               </div>
               <div className=" grid grid-cols-3 gap-2 ">
                 <div className="text-gray-800 font-bold p-2 text-end">Disposition</div>
-                <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 capitalize bg-white font-bold">{gad.disposition}</div>
+                <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 capitalize bg-white font-bold">{gad.ca_disposition.name}</div>
               </div>
               <div className=" grid grid-cols-3 gap-2 ">
                 <div className="text-gray-800 font-bold p-2 text-end">Amount</div>

@@ -4,8 +4,10 @@ import PerDayDispositionSection from './PerDayDispositionSection';
 import DoughnutSection from './DoughnutSection';
 import DispositionSection from './DispositionSection';
 import AgentDisposition from './AgentDisposition';
+import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(...registerables);
+Chart.register(...registerables, ChartDataLabels);
+
 
 const TlDashboard  = () => {
 

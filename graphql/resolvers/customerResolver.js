@@ -98,10 +98,21 @@ const customerResolver = {
   },
   Mutation: {
     createCustomer: async(_,{input},{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
 
-      Array.from(input).forEach(async(element)=> {
-        try {
+
+      if(!user) throw new CustomError("Unauthorized",401)
+      try {
+        const buckets = await Bucket.find({dept: user.department})
+        const bucketsNames = buckets.map((bucket) => bucket.name)
+        const inputBucket = [...new Set(input.map((i) => i.bucket))]
+
+        Array.from(inputBucket).forEach((ib) => {
+          if(!bucketsNames.includes(ib)) {
+            throw new CustomError("Not Included")
+          }
+        })
+
+        Array.from(input).forEach(async(element)=> {
           const bucket = await Bucket.findOne({name : element.bucket})
           if(!bucket) throw new CustomError("Bucket not found",404)
           const findCustomer = await Customer.findOne({platform_customer_id: element.platform_user_id})
@@ -138,11 +149,12 @@ const customerResolver = {
               "grass_details.grass_date": element.grass_date
             })
           }
-        } catch (error) {
-          throw new CustomError(error.message, 500)
-        }
-      })
-      return {success: true, message: "successfully add"}
+          return {success: true, message: "successfully add"}
+        })
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+
     },
     updateCustomer: async(_,{fullName, dob, gender, addresses, mobiles, emails, id},{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)

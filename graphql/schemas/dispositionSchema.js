@@ -2,14 +2,21 @@ import { gql } from "graphql-tag";
 
 const dispositionTypeDefs = gql`
   scalar DateTime
+
   type User {
     user_id: String
+  }
+
+  type DispoType {
+    name: String!,
+    code: String!,
+    _id: ID!,
   }
 
   type Disposition {
     _id:ID
     amount: Float
-    disposition: String
+    ca_disposition: DispoType
     payment_date: String
     ref_no: String
     existing: Boolean
@@ -24,9 +31,32 @@ const dispositionTypeDefs = gql`
     success: Boolean!
     message: String!
   }
-  
+
+
+  type Agent {
+    id: String
+    name: String
+    branch: String
+    department: String
+    user_id: String
+    buckets: [String]
+  }
+
+  type DispoData {
+    code: String
+    name: String
+    count: Int
+  }
+
+  type Reports {
+    agent: Agent
+    bucket: String
+    disposition: [DispoData]
+  }
+
   type Query {
     getAccountDispositions(id:ID!, limit:Int):[Disposition]
+    getDispositionReports(agent:String, bucket:String, disposition:[String], from:String, to:String): Reports
   }
 
   type Mutation {

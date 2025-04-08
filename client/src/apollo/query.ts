@@ -244,35 +244,4 @@ export const SEARCH = gql`
 `
 
 // disposition =================================================================================
-export const DISPOSITION_RECORDS = gql`
-  query Query($id: ID!, $limit:Int) {
-    getAccountDispositions(id: $id, limit: $limit) {
-      _id
-      amount
-      disposition
-      payment_date
-      ref_no
-      existing
-      payment
-      comment
-      payment_method
-      createdAt
-      created_by {
-        user_id
-      }
-    }
-  }
 
-`
-
-
-//disposition types
-export const GET_DISPOSITION_TYPES = gql`
-  query Query {
-    getDispositionTypes {
-      id
-      name
-      code
-    }
-  }
-`

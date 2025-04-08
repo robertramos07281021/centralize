@@ -9,7 +9,7 @@ import Confirmation from "../../components/Confirmation"
 
 const RegisterView = () => {
 
-  const {data:branchQuery} = useQuery<{getBranches:[Branch], getBranch:Branch}>(BRANCH_QUERY,{ variables: {name: ""}})
+  const {data:branchQuery} = useQuery<{getBranches:Branch[], getBranch:Branch}>(BRANCH_QUERY,{ variables: {name: ""}})
   const [data, setData] = useState({
     type: "",
     name: "",
@@ -23,7 +23,7 @@ const RegisterView = () => {
     message: ""
   })
 
-  const {data:branchDeptData} = useQuery<{getBranchDept:[DeptAomId]}>(
+  const {data:branchDeptData} = useQuery<{getBranchDept:DeptAomId[]}>(
     BRANCH_DEPARTMENT_QUERY, 
     {
       variables: {branch: data.branch},
