@@ -61,7 +61,7 @@ function App() {
           <Route path="/tl-dashboard" element={<TlDashboard/>}/>
           {/* <Route path="/tl-production-area" element={<Disposition/>}/> */}
           <Route path="/tl-production-area" element={<CustomerDisposition/>}/>
-          <Route path="/backlog-management" element={<BacklogManagementView/>}/>
+          <Route path="/tl-reports" element={<BacklogManagementView/>}/>
         </Route>
         <Route element={<CeoRoute/>}>
           <Route path="/ceo-dashboard" element={<CeoDashboard/>}/>

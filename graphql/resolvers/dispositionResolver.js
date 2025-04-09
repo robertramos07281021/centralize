@@ -58,35 +58,41 @@ const dispositionResolver = {
     },
     getDispositionReports: async(_,{agent, bucket, disposition, from, to}) => {
       try {
-        const agentUser = await User.findOne({user_id: agent})
-        if (!agentUser) throw new CustomError("Agent not found", 404);
         
-        const findDispositions = await DispoType.find({name: {$in: disposition}});
-        const dispoTypesIds = findDispositions.map((dt)=> dt._id);
-
-        const findBucket = await Bucket.findOne({name: bucket})
-        if (!findBucket) throw new CustomError("Bucket not found", 404);
+        const agentUser = agent && await User.findOne({user_id: agent}) 
         
-       
-        const customerAccount = await CustomerAccount.find({bucket: findBucket._id});
-        const customerAccountIds = customerAccount.map((ca)=> ca._id);
+        if (!agentUser && agent) throw new CustomError("Agent not found", 404);
+        
+        const findDispositions = disposition.length > 0 ? await DispoType.find({name: {$in: disposition}}) : [];
 
-        const start = new Date(from)
-        start.setHours(0,0,0,0)
+        const dispoTypesIds = disposition.length > 0 ? findDispositions.map((dt)=> dt._id) : []
+   
+        const findBucket = bucket && await Bucket.findOne({name: bucket}) 
+        if (!findBucket && bucket) throw new CustomError("Bucket not found", 404);
+        
+        const customerAccountIds = findBucket
+        ? (await CustomerAccount.find({ bucket: findBucket._id })).map(ca => ca._id)
+        : [];
+     
+        const query = [{}]
 
-        const end = new Date(to)
-        end.setHours(23, 59, 59, 999)
+        if(agent) query.push({user: new mongoose.Types.ObjectId(agentUser._id)})
 
+        if(disposition.length > 0) query.push({disposition: {$in: dispoTypesIds}})
+          
+        if (from || to) {
+          const startDate = from ? new Date(from) : new Date();
+          const endDate = to ? new Date(to) : new Date();
+          startDate.setHours(0, 0, 0, 0);
+          endDate.setHours(23, 59, 59, 999);
+          query.push({ createdAt: { $gte: startDate, $lte: endDate } });
+        }
+
+        if(bucket) query.push({customer_account: {$in: customerAccountIds}})
         const dispositionReport = await Disposition.aggregate([
           {
             $match: {
-              $and: [
-                {user: new mongoose.Types.ObjectId(agentUser._id)},
-                {existing: true},
-                {createdAt: {$gte: start, $lte: end}},
-                {disposition: {$in: dispoTypesIds}},
-                {customer_account: {$in: customerAccountIds}}
-              ]
+              $and: query
             },
           },
           {
@@ -94,7 +100,10 @@ const dispositionResolver = {
               from: "dispotypes",
               localField: "disposition",
               foreignField: "_id",
-              as: "ca_disposition"
+              as: "ca_disposition",
+              pipeline: [
+                { $project: { name: 1, code: 1 } }
+              ]
             }
           },
           { $unwind: "$ca_disposition" },
@@ -115,23 +124,110 @@ const dispositionResolver = {
             }
           }
         ])
-
+        
         return { 
-          agent: {
+          agent: agentUser && agent ? {
             id: agentUser._id,
             name: agentUser.name,
             branch: agentUser.branch,
             department: agentUser.department,
             user_id: agentUser.user_id,
             buckets: agentUser.buckets
-          }, 
-          bucket: findBucket.name,
+          } : {
+            id: "",
+            name: "",
+            branch: "",
+            department: "",
+            user_id: "",
+            buckets: []
+          }
+          , 
+          bucket: findBucket && bucket ? findBucket.name : "" ,
           disposition: dispositionReport
         }
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
-    } 
+    },
+    getAgentDispositions: async()=> {
+      try {
+        const start = new Date("2025-04-08");
+        start.setHours(0, 0, 0, 0);
+        const end = new Date("2025-04-08");  
+        end.setHours(23, 59, 59, 999);
+
+        const agentDispositions = await Disposition.aggregate([
+          {
+            $match: {
+              createdAt: { $gte: start, $lte: end }
+            }
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "user",
+              foreignField: "_id",
+              as: "agent",
+              pipeline: [
+                { $project: { name: 1, user_id: 1 } }
+              ]
+            }
+          },
+          { $unwind: "$agent" },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "disposition_type",
+              pipeline: [
+                { $project: { name: 1, code: 1 } }
+              ]
+            }
+          },
+          { $unwind: "$disposition_type" },
+          {
+            $group: {
+              _id: {
+                agent_id: "$agent._id",
+                disposition_id: "$disposition_type._id"
+              },
+              agent: { $first: "$agent.name" },
+              user_id: { $first: "$agent.user_id" },
+              dispositionName: { $first: "$disposition_type.name" },
+              dispositionCode: { $first: "$disposition_type.code" },
+              count: { $sum: 1 }
+            }
+          },
+          {
+            $group: {
+              _id: "$_id.agent_id",
+              agent: { $first: "$agent" },
+              user_id: { $first: "$user_id" },
+              dispositions: {
+                $push: {
+                  code: "$dispositionCode",
+                  name: "$dispositionName",
+                  count: "$count"
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id:  "$_id",
+              agent: 1,
+              user_id: 1,
+              dispositions: 1
+            }
+          }
+        ])
+        return [...agentDispositions]
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    }
+
   },
   Mutation: {
     createDisposition: async(_,{customerAccountId, userId, amount, payment, disposition, payment_date, payment_method, ref_no, comment}) => {

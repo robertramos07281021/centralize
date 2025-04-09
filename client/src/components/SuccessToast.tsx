@@ -32,6 +32,10 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
     UPLOADED: {
       toast: "bg-green-400",
       close: "text-green-400"
+    },
+    "NOT INCLUDED" : {
+      toast: "bg-red-400",
+      close: "text-red-400"
     }
   } as const;
   useEffect(()=> {
@@ -50,6 +54,7 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
   if (messageText.includes("DELETED")) successType = "DELETED";
   if (messageText.includes("EXISTS")) successType = "EXISTS";
   if (messageText.includes("UPLOADED")) successType = "UPLOADED";
+  if (messageText.includes("NOT INCLUDED")) successType = "NOT INCLUDED";
 
   return (
     <div className={`${toastColor[successType].toast} w-96 h-13 rounded-xl border-slate-100 shadow shadow-black/20 border fixed right-5 top-20 z-50 flex items-center px-4 font-medium text-white justify-between`}>

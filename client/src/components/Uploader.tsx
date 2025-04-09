@@ -61,16 +61,12 @@ const Uploader:React.FC = () => {
   
     const [createCustomer] = useMutation(CREATE_CUSTOMER, {
       onCompleted: async() => {
-        try {
-          setSuccess({
-            success: true,
-            message: "File successfully uploaded"
-          })
-          setExcelData([])
-          setFile([])
-        } catch (error) {
-          console.log(error)
-        }
+        setSuccess({
+          success: true,
+          message: "File successfully uploaded"
+        })
+        setExcelData([])
+        setFile([])
       },
     })
     const [confirm, setConfirm] = useState(false)
@@ -95,8 +91,21 @@ const Uploader:React.FC = () => {
           message: "You uploaded a file?",
           toggle: "UPLOADED",
           yes: async() => {
-            await createCustomer({variables: {input:excelData}});
-            setConfirm(false);
+            try {
+              await createCustomer({variables: {input:excelData}});
+              setConfirm(false);
+            } catch (error:any) {
+              const errorMessage = error?.graphQLErrors?.[0]?.message;
+              if (errorMessage?.includes("Not Included")) {
+                setSuccess({
+                  success: true,
+                  message: "There is a buckets not included"
+                })
+                setExcelData([])
+                setFile([])
+                setConfirm(false)
+              }
+            }
           },
           no: () => {setConfirm(false)}
         })

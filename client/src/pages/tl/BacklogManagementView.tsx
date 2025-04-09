@@ -14,7 +14,8 @@ import {  useEffect, useRef, useState } from "react";
 interface DispositionType  {
   id: string
   name: string
-  code: string
+  code: string,
+  count: string
 }
 
 interface Bucket {
@@ -28,6 +29,25 @@ interface Dispositions {
   code: string
   count: number
   color: string
+}
+
+
+
+
+interface Agent {
+  id: string
+  name: string
+  branch: string
+  department: string
+  user_id: string
+  buckets: string[]
+}
+
+
+interface Reports {
+  agent: Agent
+  bucket: string
+  disposition: DispositionType[]
 }
 
 const DEPT_BUCKET_QUERY = gql`
@@ -67,6 +87,28 @@ const GET_DISPOSITION_TYPES = gql`
   }
 `
 
+const GET_DISPOSITION_REPORTS = gql`
+  query GetDispositionReports($agent: String, $bucket: String, $disposition: [String], $from: String, $to: String) {
+    getDispositionReports(agent: $agent, bucket: $bucket, disposition: $disposition, from: $from, to: $to) {
+      agent {
+        id
+        name
+        branch
+        department
+        user_id
+        buckets
+      }
+      bucket
+      disposition {
+        code
+        name
+        count
+      }
+    }
+  }
+`
+
+
 
 const colorDispo: { [key: string]: string } = {
   DISP: "oklch(0.704 0.191 22.216)",
@@ -95,6 +137,7 @@ const BacklogManagementView = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
   const {data:agentSelector} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT, {variables: {department:userLogged.department}})
   const {data:departmentBucket} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY,{variables: {dept: userLogged?.department}, skip: !userLogged?.department})
+
   const [buckets, setBuckets] = useState<Bucket[] | null>(null)
   const [searchBucket, setSearchBucket] = useState<string>("")
   const [bucketDropdown, setBucketDropdown] = useState<boolean>(false)
@@ -102,11 +145,31 @@ const BacklogManagementView = () => {
   const [agentDropdown, setAgentDropdown] = useState<boolean>(false)
   const [agents, setAgents] = useState<Users[] | null>(null)
   const [searchAgent, setSearchAgent] = useState<string>("")
-
-  const {data:disposition} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
-
-
   
+  const {data:disposition} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
+  const [dateDistance, setDateDistance] = useState({
+    from: "",
+    to: ""
+  })
+
+
+  const {data:reportsData } = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: searchAgent, bucket: searchBucket, disposition: selectedDisposition, from: dateDistance.from, to: dateDistance.to}})
+
+  const [newReportsDispo, setNewReportsDispo] = useState<Record<string,string>>({})
+  
+  useEffect(()=> {
+
+    if(reportsData) {
+      const reportsDispo: Record<string, string> = {};
+      reportsData.getDispositionReports.disposition.forEach((element: DispositionType) => {
+        reportsDispo[element.code] = element.count;
+      });
+      setNewReportsDispo(reportsDispo)
+    }
+
+  },[reportsData])
+
+
   useEffect(()=> {
     const filteredAgent = searchAgent.trim() != "" ? agentSelector?.findAgents?.filter((e) => e.name.toLowerCase().includes(searchAgent.toLowerCase()) || e.user_id.includes(searchAgent)) : agentSelector?.findAgents
     setAgents(filteredAgent || null)
@@ -119,9 +182,8 @@ const BacklogManagementView = () => {
   },[searchAgent,agentSelector])
 
 
-
   useEffect(()=> {
-    const filteredBucket = searchBucket.trim() !== "" ? departmentBucket?.getDeptBucket.filter((e)=> e.name.toLowerCase().includes(searchBucket)) : departmentBucket?.getDeptBucket
+    const filteredBucket = searchBucket.trim() !== "" ? departmentBucket?.getDeptBucket.filter((e)=> e.name.includes(searchBucket)) : departmentBucket?.getDeptBucket
     setBuckets(filteredBucket || null)
 
     const dropdownBucket = filteredBucket?.length.valueOf() && searchBucket.trim() !== "" ? true : false
@@ -138,17 +200,16 @@ const BacklogManagementView = () => {
 
 
   useEffect(()=> {
-
-
-    function getRandomInt(min: number, max: number): number {
-      return Math.floor(Math.random() * (max - min + 1)) + min;
+    if (disposition?.getDispositionTypes) {
+      const updatedData = disposition.getDispositionTypes.map((e) => ({
+        code: e.code,
+        count: Number(newReportsDispo[e.code]) || 0,
+        color: colorDispo[e.code] || '#ccc', 
+      }));
+      
+      setDispositionData(updatedData);
     }
-    if(disposition?.getDispositionTypes) {
-      Array.from(disposition.getDispositionTypes).forEach((e) => {
-        setDispositionData((prev) => [...prev,{code: e.code, count: getRandomInt(1,100), color: colorDispo[e.code]}])
-      })
-    }
-  },[disposition])
+  },[disposition,newReportsDispo])
 
 
 
@@ -161,7 +222,7 @@ const BacklogManagementView = () => {
       label: 'My First Dataset',
       data: dataCount,
       backgroundColor: dataColor,
-      hoverOffset: 50,
+      hoverOffset: 30,
     }],
   };
 
@@ -173,7 +234,7 @@ const BacklogManagementView = () => {
           weight: "bold", 
           size: 12,
         } as const,
-        formatter: (value: number) => `${value}`,
+        formatter: (value: number) => {return value === 0 ? "" :  `${value}`},
       },
       legend: {
         position: 'bottom' as const,
@@ -189,11 +250,6 @@ const BacklogManagementView = () => {
   const onClickChart = () => {
     // console.log(`${chartRef?.current?.tooltip?.title}`)
   }
-
-  const [dateDistance, setDateDistance] = useState({
-    from: "",
-    to: ""
-  })
 
   const handleCheckBox= (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
     const check = e.target.checked ? [...selectedDisposition, value] : selectedDisposition.filter((d) => d !== value )
@@ -242,7 +298,7 @@ const BacklogManagementView = () => {
                 <div className={`${agents?.length === 0 ? "h-10" : "max-h-96"} border w-full absolute top-10  overflow-y-auto z-50 border-slate-500 bg-white  rounded`}>
                   {
                   agents?.map((agent) => 
-                    <div key={agent._id} className="flex flex-col font-medium text-slate-600 p-2" onClick={()=> {setSearchAgent(agent.name); setAgentDropdown(false)} }>
+                    <div key={agent._id} className="flex flex-col font-medium text-slate-600 p-2" onClick={()=> {setSearchAgent(agent.user_id); setAgentDropdown(false)} }>
                       <div className=" text-sm">
                         {agent.name.toUpperCase()}
                       </div>
@@ -337,25 +393,40 @@ const BacklogManagementView = () => {
           <h1 className="text-sm text-slate-600"><span className=" font-medium">Note: </span>Report can be generated by Daily, Weekly and Monthly</h1>
           <div className="flex gap-5">
             <button type="button" className='bg-blue-400 hover:bg-blue-500 focus:outline-none text-white  focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer'>Export</button>
-            <button type="button" className='bg-blue-400 hover:bg-blue-500 focus:outline-none text-white  focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer'>Preview</button>
+            {/* <button type="button" className='bg-blue-400 hover:bg-blue-500 focus:outline-none text-white  focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer' onClick={()=> refetch()}>Preview</button> */}
           </div>
         </div>
         <Uploader/>
       </div>
-      <div className="print:hidden flex justify-between col-span-2 p-2">
-        <div  className="flex flex-col justify-center">
-          {disposition?.getDispositionTypes.map((d)=> 
-          
-          <div key={d.id} className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 hover:bg-slate-100 py-0.5 hover:scale-105 cursor-default hover:font-bold">
-            <div style={{backgroundColor: `${colorDispo[d.code]}`}} className="px-2">{d.code} </div>
-            <div>{d.name}</div>
-            <div className="text-center">{dispositionCount(d.code)}</div>
+      <div className="print:hidden flex justify-between flex-col col-span-2 p-2">
+        <div className="text-center uppercase font-medium 2xl:text-lg lg:text-base text-slate-500 flex item-center justify-center gap-5 py-5">
+          <div>
+            { reportsData?.getDispositionReports?.bucket &&
+            <span>Bucket: </span>
+            }
+          {reportsData?.getDispositionReports?.bucket ? reportsData?.getDispositionReports?.bucket: "" }
           </div>
-        )
-          }
+          <div>
+            {
+              reportsData?.getDispositionReports?.agent.name &&
+            <span>Agent Name: </span>
+            }
+          {reportsData?.getDispositionReports?.agent ? reportsData?.getDispositionReports?.agent.name: "" }</div>
         </div>
-        <div className="w-6/12 ">
-           <Doughnut ref={chartRef} data={data} onClick={onClickChart} options={options}/>
+        <div className="flex justify-between">
+
+          <div  className="flex flex-col justify-center">
+            {disposition?.getDispositionTypes.map((d)=> 
+              <div key={d.id} className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 hover:bg-slate-100 py-0.5 hover:scale-105 cursor-default hover:font-bold">
+                <div style={{backgroundColor: `${colorDispo[d.code]}`}} className="px-2">{d.code} </div>
+                <div>{d.name}</div>
+                <div className="text-center">{dispositionCount(d.code)}</div>
+              </div>
+            )}
+          </div>
+          <div className="w-6/12 ">
+            <Doughnut ref={chartRef} data={data} onClick={onClickChart} options={options}/>
+          </div>
         </div>
       </div>
 

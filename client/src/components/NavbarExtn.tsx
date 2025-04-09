@@ -31,7 +31,7 @@ const NavbarExtn = () => {
         link: "/agent-production-area"
       },
       {
-        name: "Tasks",
+        name: "My Tasks",
         link: "/agent-tasks"
       },
       {
@@ -49,8 +49,8 @@ const NavbarExtn = () => {
         link: "/tl-production-area"
       },
       {
-        name: "Backlog Management",
-        link: "/backlog-management"
+        name: "Reports",
+        link: "/tl-reports"
       }
     ]
   }
