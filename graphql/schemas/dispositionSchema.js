@@ -32,7 +32,6 @@ const dispositionTypeDefs = gql`
     message: String!
   }
 
-
   type Agent {
     id: String
     name: String
@@ -60,10 +59,17 @@ const dispositionTypeDefs = gql`
     dispositions: [DispoData]
   }
 
+  type BucketDisposition {
+    bucket: String
+    dispositions: [DispoData]
+  } 
+
+
   type Query {
     getAccountDispositions(id:ID!, limit:Int):[Disposition]
     getDispositionReports(agent:String, bucket:String, disposition:[String], from:String, to:String): Reports
     getAgentDispositions:[AgentDisposition]
+    getBucketDisposition(dept:String!):[BucketDisposition]
   }
 
   type Mutation {

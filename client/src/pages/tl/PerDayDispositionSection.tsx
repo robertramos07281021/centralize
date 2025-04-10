@@ -49,11 +49,11 @@ const PerDayDispositionSection = () => {
   };
 
   return (
-<div className="row-start-4 row-span-4 col-span-4  ">
+      <div className="row-start-4 row-span-3 col-span-4">
         <p>
           {monthToDate()}
         </p>
-        <div className='w-full h-11/12 '>
+        <div className=' bg-white rounded-md border border-slate-300 p-2'>
           <Bar options={options}
             data={{
               labels: monthlyDate(month[todayMonth]),

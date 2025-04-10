@@ -32,7 +32,7 @@ const TlDashboard  = () => {
   const count = Disposition.map((d)=> d.count).reduce((total, value)=> {return total+value })
  
   return (
-    <div className="p-5 grid grid-rows-7 bg-slate-600/4 grid-cols-8 gap-5 h-full">
+    <div className="h-full p-5 grid grid-rows-6 grid-cols-8 bg-slate-600/10  gap-5">
       <AgentDisposition/>
       <PerDayDispositionSection/>
       <div className="row-span-3 text-xs">

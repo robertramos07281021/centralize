@@ -151,15 +151,7 @@ export const BRANCH_DEPARTMENT_QUERY = gql`
     }
   }
 `
-export const DEPT_BUCKET_QUERY = gql`
-  query Query($dept: String) {
-    getDeptBucket(dept: $dept) {
-      id
-      name
-      dept
-    }
-  }
-`
+
 
 
 //bucket query ==============================================================================================

@@ -14,7 +14,7 @@ import {  useEffect, useRef, useState } from "react";
 interface DispositionType  {
   id: string
   name: string
-  code: string,
+  code: string
   count: string
 }
 
@@ -158,15 +158,13 @@ const BacklogManagementView = () => {
   const [newReportsDispo, setNewReportsDispo] = useState<Record<string,string>>({})
   
   useEffect(()=> {
-
+    const reportsDispo: Record<string, string> = {};
     if(reportsData) {
-      const reportsDispo: Record<string, string> = {};
       reportsData.getDispositionReports.disposition.forEach((element: DispositionType) => {
         reportsDispo[element.code] = element.count;
       });
       setNewReportsDispo(reportsDispo)
     }
-
   },[reportsData])
 
 
@@ -181,7 +179,6 @@ const BacklogManagementView = () => {
     }
   },[searchAgent,agentSelector])
 
-
   useEffect(()=> {
     const filteredBucket = searchBucket.trim() !== "" ? departmentBucket?.getDeptBucket.filter((e)=> e.name.includes(searchBucket)) : departmentBucket?.getDeptBucket
     setBuckets(filteredBucket || null)
@@ -194,10 +191,7 @@ const BacklogManagementView = () => {
     }
   },[departmentBucket, searchBucket])
 
- 
   const [dispositionData, setDispositionData] = useState<Dispositions[]>([])
-
-
 
   useEffect(()=> {
     if (disposition?.getDispositionTypes) {
@@ -210,8 +204,6 @@ const BacklogManagementView = () => {
       setDispositionData(updatedData);
     }
   },[disposition,newReportsDispo])
-
-
 
   const dataLabels = dispositionData.map(d=> d.code)
   const dataCount = dispositionData.map(d => d.count)
@@ -248,7 +240,7 @@ const BacklogManagementView = () => {
 
 
   const onClickChart = () => {
-    // console.log(`${chartRef?.current?.tooltip?.title}`)
+    console.log(`${chartRef?.current?.tooltip?.title}`)
   }
 
   const handleCheckBox= (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -268,6 +260,11 @@ const BacklogManagementView = () => {
   const dispositionCount = (code:string) =>  {
     const newFilter = dispositionData?.filter((e)=> e.code === code)
     return newFilter[0]?.count
+  }
+
+  const [chartFull, setChartFull] = useState(false)
+  const handleChartFullScreen = ()=> {
+    setChartFull(!chartFull)
   }
 
   return (
@@ -398,37 +395,60 @@ const BacklogManagementView = () => {
         </div>
         <Uploader/>
       </div>
-      <div className="print:hidden flex justify-between flex-col col-span-2 p-2">
-        <div className="text-center uppercase font-medium 2xl:text-lg lg:text-base text-slate-500 flex item-center justify-center gap-5 py-5">
-          <div>
-            { reportsData?.getDispositionReports?.bucket &&
-            <span>Bucket: </span>
-            }
-          {reportsData?.getDispositionReports?.bucket ? reportsData?.getDispositionReports?.bucket: "" }
-          </div>
-          <div>
+      {/* fixed top-0 bg-white z-50 items-center justify-center w-full h-full*/}
+        <div className={`print:hidden col-span-2 flex flex-col ${chartFull ? "fixed top-0 bg-white z-50 items-center justify-center w-full h-full px-10" : "h-5/6"}`}>
+          <div className="text-center uppercase font-medium 2xl:text-lg lg:text-base text-slate-500 flex item-center justify-center gap-5 py-5">
+            <div>
+              { reportsData?.getDispositionReports?.bucket &&
+              <span>Bucket: </span>
+              }
+            {reportsData?.getDispositionReports?.bucket ? reportsData?.getDispositionReports?.bucket: "" }
+            </div>
+            <div>
+              {
+                reportsData?.getDispositionReports?.agent.name &&
+              <span>Agent Name: </span>
+              }
+            {reportsData?.getDispositionReports?.agent ? reportsData?.getDispositionReports?.agent.name: "" }</div>
             {
-              reportsData?.getDispositionReports?.agent.name &&
-            <span>Agent Name: </span>
+              dateDistance.from && dateDistance.to && dateDistance.from !== dateDistance.to &&
+            <div>From: {dateDistance.from } to {dateDistance.to}</div>
             }
-          {reportsData?.getDispositionReports?.agent ? reportsData?.getDispositionReports?.agent.name: "" }</div>
-        </div>
-        <div className="flex justify-between">
+            {
+              ((dateDistance.from && !dateDistance.to) || (!dateDistance.from && dateDistance.to) || ((dateDistance.from === dateDistance.to) && dateDistance.from && dateDistance.to))  &&
+              <div>Date: {dateDistance.from ? dateDistance.from : dateDistance.to } </div>
+            }
+          </div>
 
-          <div  className="flex flex-col justify-center">
-            {disposition?.getDispositionTypes.map((d)=> 
-              <div key={d.id} className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 hover:bg-slate-100 py-0.5 hover:scale-105 cursor-default hover:font-bold">
-                <div style={{backgroundColor: `${colorDispo[d.code]}`}} className="px-2">{d.code} </div>
-                <div>{d.name}</div>
-                <div className="text-center">{dispositionCount(d.code)}</div>
+          <div className="flex justify-between w-full h-full">
+            <div className="w-full flex justify-center item-center flex-col ">
+              <div  className="flex flex-col justify-center h-5/6 ">
+                {disposition?.getDispositionTypes.map((d)=> 
+                  <div key={d.id}>
+                  {
+                    dispositionCount(d.code) !== 0 &&
+                    <div className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 py-0.5 hover:scale-105 cursor-default hover:font-bold">
+                      <div style={{backgroundColor: `${colorDispo[d.code]}`}} className="px-2">{d.code} </div>
+                      <div>{d.name}</div>
+                      <div className="text-center">{dispositionCount(d.code)}</div>
+                    </div>
+                  }
+                  </div>
+                )}
+                
               </div>
-            )}
-          </div>
-          <div className="w-6/12 ">
-            <Doughnut ref={chartRef} data={data} onClick={onClickChart} options={options}/>
+              <div className="flex justify-center">
+                <button type="button" className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5  cursor-pointer" 
+                onClick={handleChartFullScreen}
+                >{chartFull ? "Minimize" : "Maximize"}</button>
+              </div>
+            </div>
+            <div className="w-8/10 flex justify-center h-full">
+              <Doughnut ref={chartRef} data={data} onClick={onClickChart} options={options} />
+            </div>
           </div>
         </div>
-      </div>
+    
 
     </div>
   )

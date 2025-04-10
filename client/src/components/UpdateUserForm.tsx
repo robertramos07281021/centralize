@@ -1,8 +1,8 @@
 
-import { useMutation, useQuery } from "@apollo/client"
+import { gql, useMutation, useQuery } from "@apollo/client"
 import { useState } from "react"
-import { Branch, Bucket, DeptAomId, Success, Users } from "../middleware/types"
-import { BRANCH_DEPARTMENT_QUERY, BRANCH_QUERY, DEPT_BUCKET_QUERY } from "../apollo/query"
+import { Branch, DeptAomId, Success, Users } from "../middleware/types"
+import { BRANCH_DEPARTMENT_QUERY, BRANCH_QUERY } from "../apollo/query"
 import { RESET_PASSWORD, STATUS_UPDATE, UPDATE_USER } from "../apollo/mutations"
 import Confirmation from "./Confirmation"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -11,6 +11,24 @@ import SuccessToast from "./SuccessToast"
 interface modalProps {
   state: Users
 }
+
+
+interface Bucket {
+  name: string
+  dept: string
+  id: string
+}
+
+
+const DEPT_BUCKET_QUERY = gql`
+  query Query($dept: String) {
+    getDeptBucket(dept: $dept) {
+      id
+      name
+      dept
+    }
+  }
+`
 
 const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   const location = useLocation()

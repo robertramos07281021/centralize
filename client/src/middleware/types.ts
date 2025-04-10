@@ -41,11 +41,7 @@ export type Dept = {
   aom: string
 }
 
-export type Bucket = {
-  name: string,
-  dept: string,
-  id: string,
-}
+
 
 export type Users = {
   _id: string;
@@ -132,6 +128,58 @@ export type CustomerData = {
   txn_fee_os:number
   vendor_endorsement:string
 }
+
+
+
+// =======================
+// customer update form, customer disposition
+// =====================================
+type outStandingDetails = {
+  principal_os: number
+  interest_os: number
+  admin_fee_os: number
+  txn_fee_os: number
+  late_charge_os: number
+  dst_fee_os: number
+  total_os: number
+}
+
+type grassDetails = {
+  grass_region: string
+  vendor_endorsement: string
+  grass_date: string
+}
+
+type  AccountBucket = {
+  name: string
+  dept: string
+}
+
+type CustomerRegistered = {
+  fullName:string
+  dob:string
+  gender:string
+  contact_no:string[]
+  emails:string[]
+  addresses:string[]
+  _id:string
+}
+
+export type Search = {
+    _id: string
+    case_id: string
+    account_id: string
+    endorsement_date: string
+    credit_customer_id: string
+    bill_due_day: number
+    max_dpd: number
+    out_standing_details: outStandingDetails
+    grass_details: grassDetails
+    account_bucket: AccountBucket
+    customer_info: CustomerRegistered
+}
+
+
 
 
 // export type AllCustomers = {

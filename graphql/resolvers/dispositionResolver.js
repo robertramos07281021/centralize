@@ -7,6 +7,7 @@ import Production from "../../models/production.js"
 import User from "../../models/user.js"
 import Bucket from "../../models/bucket.js"
 import DispoType from "../../models/dispoType.js"
+import Department from "../../models/department.js"
 
 
 const dispositionResolver = {
@@ -151,9 +152,9 @@ const dispositionResolver = {
     },
     getAgentDispositions: async()=> {
       try {
-        const start = new Date("2025-04-08");
+        const start = new Date();
         start.setHours(0, 0, 0, 0);
-        const end = new Date("2025-04-08");  
+        const end = new Date();  
         end.setHours(23, 59, 59, 999);
 
         const agentDispositions = await Disposition.aggregate([
@@ -226,6 +227,90 @@ const dispositionResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
+    },
+    getBucketDisposition: async(_, {dept}) => {
+      try {
+        const bucket = await Bucket.find({dept})
+        const newArrayBucket = bucket.map((b)=> b.name)
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        const end = new Date();  
+        end.setHours(23, 59, 59, 999);
+        const bucketDisposition = await Disposition.aggregate([
+          {
+            $match: {createdAt: { $gte: start, $lte: end }},
+          },
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount",
+            }
+          },
+          { $unwind: "$customerAccount" },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          { $unwind: "$bucket" },
+          {
+            $match: {"bucket.name": {$in: newArrayBucket}},
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "disposition_type",
+              pipeline: [
+                { $project: { name: 1, code: 1 } }
+              ]
+            }
+          },
+          { $unwind: "$disposition_type" },
+          {
+            $group: {
+              _id: {
+                bucket_id: "$bucket._id",
+                disposition_id: "$disposition_type._id"
+              },
+              bucket: {$first: "$bucket.name"},
+              dispositionName: { $first: "$disposition_type.name" },
+              dispositionCode: { $first: "$disposition_type.code" },
+              count: { $sum: 1 }
+            }
+          },
+          {
+            $group: {
+              _id: "$_id.bucket_id",
+              bucket: { $first: "$bucket" },
+              dispositions: {
+                $push: {
+                  code: "$dispositionCode",
+                  name: "$dispositionName",
+                  count: "$count"
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: "$_id",
+              bucket: 1,
+              dispositions: 1
+            }
+          }
+        ])
+
+        return [...bucketDisposition]
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      } 
     }
 
   },

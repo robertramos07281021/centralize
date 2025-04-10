@@ -9,59 +9,12 @@ import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../redux/store";
 import { setSelectedCustomer } from "../redux/slices/authSlice";
 import { SEARCH } from "../apollo/query";
+import { Search } from "../middleware/types";
 
 
 interface CustomerUpdateFormProps {
   cancel: () => void, 
 }
-
-type outStandingDetails = {
-  principal_os: number
-  interest_os: number
-  admin_fee_os: number
-  txn_fee_os: number
-  late_charge_os: number
-  dst_fee_os: number
-  total_os: number
-}
-
-type grassDetails = {
-  grass_region: string
-  vendor_endorsement: string
-  grass_date: string
-}
-
-type  AccountBucket = {
-  name: string
-  dept: string
-}
-
-type CustomerRegistered = {
-  fullName:string
-  dob:string
-  gender:string
-  contact_no:string[]
-  emails:string[]
-  addresses:string[]
-  _id:string
-}
-
-type Search = {
-    _id: string
-    case_id: string
-    account_id: string
-    endorsement_date: string
-    credit_customer_id: string
-    bill_due_day: number
-    max_dpd: number
-    out_standing_details: outStandingDetails
-    grass_details: grassDetails
-    account_bucket: AccountBucket
-    customer_info: CustomerRegistered
-}
-
-
-
 
 const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const navigate = useNavigate()

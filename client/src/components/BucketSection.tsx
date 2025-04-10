@@ -1,12 +1,20 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useMutation, useQuery } from "@apollo/client"
-import { Bucket, Department, Success } from "../middleware/types"
+import {  Department, Success } from "../middleware/types"
 import { DEPARTMENT_BUCKET, DEPARTMENT_QUERY } from "../apollo/query"
 import { useEffect, useMemo, useState } from "react";
 import { CREATEBUCKET, DELETEBUCKET, UPDATEBUCKET } from "../apollo/mutations";
 import Confirmation from "./Confirmation";
 import { PiNotePencilBold, PiTrashFill  } from "react-icons/pi";
 import SuccessToast from "./SuccessToast";
+
+
+
+interface Bucket {
+  name: string
+  dept: string
+  id: string
+}
 
 
 const BucketSection = () => {

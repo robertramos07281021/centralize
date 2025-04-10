@@ -30,7 +30,6 @@ const AgentDashboard = () => {
         </div>
       </div>
       <div className="h-full">
-        
       </div>
   </div>
   )
