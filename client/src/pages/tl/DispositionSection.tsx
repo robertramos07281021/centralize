@@ -60,10 +60,15 @@ const DEPT_BUCKET_QUERY = gql`
 
 const DispositionSection = () => {
   const {userLogged} = useSelector((state:RootState)=>state.auth)
-  const {data:bucketDispoData} = useQuery<{getBucketDisposition:BucketDisposition[]}>(BUCKET_DISPOSITIONS,{variables: {dept: userLogged.department}})
+  const {data:bucketDispoData, refetch} = useQuery<{getBucketDisposition:BucketDisposition[]}>(BUCKET_DISPOSITIONS,{variables: {dept: userLogged.department}})
 
   const {data:deptBucket} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY,{variables: {dept: userLogged.department}})
 
+  useEffect(()=> {
+    refetch()
+    const refetchInterval = setInterval(refetch,1000)
+    return () => clearInterval(refetchInterval)
+  },[refetch])
 
   const [existsDispo, setExistsDispo] = useState<string[]>([])
 
@@ -71,7 +76,6 @@ const DispositionSection = () => {
     const newArray = bucketDispoData?.getBucketDisposition.map((bd) => bd.dispositions.map((d)=> d.code) )
     const flatArray = newArray?.flat()
     setExistsDispo([...new Set(flatArray)])
-
   },[bucketDispoData])
 
   const {data:disposition} = useQuery<{getDispositionTypes:DispoData[]}>(GET_DISPOSITION_TYPES)
@@ -111,7 +115,7 @@ const DispositionSection = () => {
                       {found && found.count}
                     </td>
                   )
-                } )
+                })
               }
             </tr>
           )})}

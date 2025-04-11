@@ -311,8 +311,209 @@ const dispositionResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       } 
-    }
+    },
+    getDispositionPerDay: async(_,{dept}) => {
+      try {
+        const findDept = await Department.findOne({name: dept})
+        if(!findDept) throw new CustomError("Dept not found", 404)
 
+        const year = new Date().getFullYear()
+        const month = new Date().getMonth();
+
+        const firstDay = new Date(year,month, 1)
+        const lastDay = new Date(year,month + 1,0)
+
+        const dispositionPerDayOfTheMonth = await Disposition.aggregate([
+          {
+            $match: {
+              createdAt: { $gte: firstDay, $lte: lastDay }
+            }
+          },
+      
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount",
+            }
+          },
+          {
+            $unwind: "$customerAccount"
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "customerBucket"
+            }
+          },
+          {
+            $unwind: "$customerBucket"
+          },
+          {
+            $match: {
+              "customerBucket.dept": findDept.name
+            }
+          },
+          {
+            $group: {
+              _id: {
+                day: { $dayOfMonth: "$createdAt" }
+              },
+              count: { $sum: 1 }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              day: "$_id.day",
+              count: 1
+            }
+          },
+          {
+            $sort: { date: 1 }
+          }
+        ])     
+
+        return {month: month, dispositionsCount:[...dispositionPerDayOfTheMonth]}
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getDispositionPerMonth: async(_,{dept}) => {
+      try {
+        const findDept = await Department.findOne({name: dept})
+        if(!findDept) throw new CustomError("Dept not found", 404)
+        const year = new Date().getFullYear()
+        const firstMonth = new Date(year, 0, 1)
+        const lastMonth = new Date(year, 11, 31, 23, 59, 59, 999)
+
+        const dispositionPerMonth = await Disposition.aggregate([
+          {
+            $match: {
+              createdAt:  { $gte: firstMonth, $lte: lastMonth }
+            }
+          },
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount",
+            }
+          },
+          {
+            $unwind: "$customerAccount"
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "customerBucket"
+            }
+          },
+          {
+            $unwind: "$customerBucket"
+          },
+          {
+            $match: {
+              "customerBucket.dept": findDept.name
+            }
+          },
+          {
+            $group: {
+              _id: {
+                month: { $month: "$createdAt" }
+              },
+              count: { $sum: 1 }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              month: "$_id.month",
+              count: 1
+            }
+          },
+          {
+            $sort: { month: 1 }
+          }
+        ])
+        return {year:year, dispositionsCount: [...dispositionPerMonth] }
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getDeptDispositionCount: async(_,{dept}) => {
+      try {
+        const findDept = await Department.findOne({name: dept})
+        if(!findDept) throw new CustomError("Dept not found", 404)
+
+        const DepartmentDispositionCount = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount",
+            }
+          },
+          {
+            $unwind: "$customerAccount"
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "customerBucket"
+            }
+          },
+          {
+            $unwind: "$customerBucket"
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "accountDisposition",
+              pipeline: [
+                { $project: { code: 1}}
+              ]
+            }
+          },
+          {
+            $unwind: "$accountDisposition"
+          },
+          {
+            $match: {
+              "customerBucket.dept": findDept.name
+            }
+          },
+          {
+            $group: {
+              _id:"$accountDisposition._id",
+              code: {$first: "$accountDisposition.code"},
+              count: {$sum: 1}
+            }
+          },
+          {
+            $project: {
+              _id: "$_id",
+              code: 1,
+              count: 1
+            }
+          }
+        ])
+        return DepartmentDispositionCount
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
   },
   Mutation: {
     createDisposition: async(_,{customerAccountId, userId, amount, payment, disposition, payment_date, payment_method, ref_no, comment}) => {

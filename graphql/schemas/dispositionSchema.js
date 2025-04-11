@@ -63,6 +63,31 @@ const dispositionTypeDefs = gql`
     bucket: String
     dispositions: [DispoData]
   } 
+  type PerDay {
+    day: String
+    count: String
+  }
+
+  type PerMonth {
+    month: String
+    count: String
+  }
+
+
+  type DispositionPerDay {
+    month: String,
+    dispositionsCount: [PerDay]
+  }
+
+  type DispositionPerYear {
+    year: String,
+    dispositionsCount: [PerMonth]
+  }
+
+  type DispositionCount {
+    count: String
+    code: String
+  }
 
 
   type Query {
@@ -70,6 +95,9 @@ const dispositionTypeDefs = gql`
     getDispositionReports(agent:String, bucket:String, disposition:[String], from:String, to:String): Reports
     getAgentDispositions:[AgentDisposition]
     getBucketDisposition(dept:String!):[BucketDisposition]
+    getDispositionPerDay(dept:String):DispositionPerDay
+    getDispositionPerMonth(dept:String):DispositionPerYear
+    getDeptDispositionCount(dept:String):[DispositionCount]
   }
 
   type Mutation {
