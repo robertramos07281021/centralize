@@ -204,6 +204,8 @@ export const SEARCH = gql`
       credit_customer_id
       bill_due_day
       max_dpd
+      balance
+      paid_amount
       out_standing_details {
         principal_os
         interest_os

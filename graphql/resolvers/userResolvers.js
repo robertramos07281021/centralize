@@ -88,7 +88,7 @@ const userResolvers = {
     },
     findAgents: async(_,{department})=> {
       try {
-        const agent = await User.find({$and: [{department}, {type: {$ne: "TL"}}]})
+        const agent = await User.find({department})
         return [...agent]
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -167,28 +167,26 @@ const userResolvers = {
         user.isOnline = true
         await user.save()
 
-        if(user.type === "AGENT") {
-          const findProd = await Production.find({user: user._id}).sort({"createdAt": -1})
-          if (findProd.length > 0) {
-            const newDateFindProd = new Date(findProd[0].createdAt);
-            const newDateToDay = new Date();
-          
-            // Remove time (set hours, minutes, seconds to 0)
-            newDateFindProd.setHours(0, 0, 0, 0);
-            newDateToDay.setHours(0, 0, 0, 0);
-          
-            if (newDateFindProd.getTime() !== newDateToDay.getTime()) {
-              await Production.create({
-                user: user._id,
-              });
-            }
-          } else {
-            // If no previous production exists, create a new one
+        const findProd = await Production.find({user: user._id}).sort({"createdAt": -1})
+        if (findProd.length > 0) {
+          const newDateFindProd = new Date(findProd[0].createdAt);
+          const newDateToDay = new Date();
+        
+
+          newDateFindProd.setHours(0, 0, 0, 0);
+          newDateToDay.setHours(0, 0, 0, 0);
+        
+          if (newDateFindProd.getTime() !== newDateToDay.getTime()) {
             await Production.create({
               user: user._id,
             });
           }
+        } else {
+          await Production.create({
+            user: user._id,
+          });
         }
+
         
         res.cookie("token",token, { httpOnly: true,
         })

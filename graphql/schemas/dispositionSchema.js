@@ -3,10 +3,6 @@ import { gql } from "graphql-tag";
 const dispositionTypeDefs = gql`
   scalar DateTime
 
-  type User {
-    user_id: String
-  }
-
   type DispoType {
     name: String!
     code: String!
@@ -24,7 +20,7 @@ const dispositionTypeDefs = gql`
     payment: String
     payment_method: String
     createdAt: DateTime
-    created_by: User
+    created_by: String
   }
   
   type Success {
@@ -65,12 +61,12 @@ const dispositionTypeDefs = gql`
   } 
   type PerDay {
     day: String
-    count: String
+    amount: String
   }
 
   type PerMonth {
     month: String
-    count: String
+    amount: String
   }
 
 

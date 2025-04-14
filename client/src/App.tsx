@@ -23,6 +23,7 @@ import CustomerDisposition from "./pages/CustomerDisposition"
 import TaskView from "./pages/agent/TaskView"
 import StatisticsView from "./pages/agent/StatisticsView"
 import BacklogManagementView from "./pages/tl/BacklogManagementView"
+import TaskManagerView from "./pages/tl/TaskManagerView"
 
 function App() {
 
@@ -59,7 +60,7 @@ function App() {
         </Route>
         <Route element={<TlRoute/>}>
           <Route path="/tl-dashboard" element={<TlDashboard/>}/>
-          {/* <Route path="/tl-production-area" element={<Disposition/>}/> */}
+          <Route path="/tl-task-manager" element={<TaskManagerView/>}/>
           <Route path="/tl-production-area" element={<CustomerDisposition/>}/>
           <Route path="/tl-reports" element={<BacklogManagementView/>}/>
         </Route>

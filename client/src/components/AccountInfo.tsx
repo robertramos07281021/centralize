@@ -55,10 +55,24 @@ const AccountInfo = () => {
         </div>
       </div>
       <div className="flex items-center justify-center gap-5 mt-5 text-slate-500 font-medium">
-      <p className="font-medium 2xl:text-lg lg:text-base ">Outstanding Balance</p>
-      <div className="min-w-80 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
-        {selectedCustomer?.out_standing_details.total_os}
-      </div>
+        <div>
+          <p className="font-medium 2xl:text-lg lg:text-base ">Outstanding Balance</p>
+          <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
+            {selectedCustomer?.out_standing_details.total_os}
+          </div>
+        </div>
+        <div>
+          <p className="font-medium 2xl:text-base lg:text-md ">Balance</p>
+          <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
+            {selectedCustomer?.balance}
+          </div>
+        </div>
+        <div>
+          <p className="font-medium 2xl:text-lg lg:text-base ">Total Paid</p>
+          <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
+            {selectedCustomer?.paid_amount}
+          </div>
+        </div>
       </div>
 
     </div>

@@ -74,18 +74,20 @@ const customerTypeDefs = gql`
     dept: String
   }
 
-  type AccountInfo {
-    id: ID
-    case_id: String,
-    account_id: String
-    endorsement_date: String
-    credit_customer_id: String
-    bill_due_day: Int
-    max_dpd: Int
-    out_standing_details: outStandingDetails
-    grass_details: grassDetails
-    account_bucket: AccountBucket
-  } 
+  # type AccountInfo {
+  #   id: ID
+  #   case_id: String,
+  #   account_id: String
+  #   endorsement_date: String
+  #   credit_customer_id: String
+  #   bill_due_day: Int
+  #   max_dpd: Int
+  #   balance: Int
+  #   paid_amount: Int
+  #   out_standing_details: outStandingDetails
+  #   grass_details: grassDetails
+  #   account_bucket: AccountBucket
+  # } 
 
   type Search {
     _id: ID
@@ -95,6 +97,8 @@ const customerTypeDefs = gql`
     credit_customer_id: String
     bill_due_day: Int
     max_dpd: Int
+    balance: Float
+    paid_amount: Float
     out_standing_details: outStandingDetails
     grass_details: grassDetails
     account_bucket: AccountBucket

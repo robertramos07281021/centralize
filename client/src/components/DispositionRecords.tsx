@@ -22,9 +22,7 @@ type Disposition =  {
   payment: string
   payment_method: string,
   createdAt: string
-  created_by: {
-    user_id: string
-  }
+  created_by: string
 }
 
 const DISPOSITION_RECORDS = gql`
@@ -44,9 +42,7 @@ const DISPOSITION_RECORDS = gql`
       comment
       payment_method
       createdAt
-      created_by {
-        user_id
-      }
+      created_by 
     }
   }
 `
@@ -55,6 +51,8 @@ const DispositionRecords = () => {
   const [limit, setLimit] = useState(3)
   
   const {data:dispositions,refetch, loading} = useQuery<{getAccountDispositions:Disposition[]}>(DISPOSITION_RECORDS,{variables: {id: selectedCustomer._id, limit: limit} })
+
+  console.log(dispositions)
 
   const date = (date:string) => {
     const createdDate = new Date(date).toLocaleDateString()
@@ -82,7 +80,7 @@ const DispositionRecords = () => {
             <div key={gad._id} className={`w-2/7 2xl:text-sm lg:text-xs flex flex-col gap-2 border p-2 rounded-xl border-slate-400 ${gad.existing && "bg-slate-200"}`}>
               <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white">
                 <div className="text-gray-800 font-bold p-2 text-end">Agent</div>
-                <div className="p-2 font-medium capitalize text-slate-600 ">{gad.created_by.user_id || "No agent id"}</div>
+                <div className="p-2 font-medium capitalize text-slate-600 ">{gad.created_by || "No agent id"}</div>
               </div>
               <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white">
                 <div className="text-gray-800 font-bold p-2 text-end">Date & Time</div>

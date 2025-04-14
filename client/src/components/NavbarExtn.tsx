@@ -49,9 +49,13 @@ const NavbarExtn = () => {
         link: "/tl-production-area"
       },
       {
+        name: "Task Manager",
+        link: "/tl-task-manager"
+      },
+      {
         name: "Reports",
         link: "/tl-reports"
-      }
+      },
     ]
   }
 

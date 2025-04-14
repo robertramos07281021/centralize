@@ -8,7 +8,7 @@ import { useEffect } from 'react';
 
 type PerDay = {
   day: string
-  count: string
+  amount: string
 }
 
 type DispositionPerDay = {
@@ -18,7 +18,7 @@ type DispositionPerDay = {
 
 type PerMonth = {
   month: string
-  count: string
+  amount: string
 }
 
 type DispositionPerMonth = {
@@ -31,7 +31,7 @@ const PER_DAY_DISPOSITION = gql`
     getDispositionPerDay(dept:$dept) {
       dispositionsCount {
         day
-        count
+        amount
       }
       month
     }
@@ -43,7 +43,7 @@ const PER_MONTH_DISPOSITION = gql`
     getDispositionPerMonth(dept:$dept){
       dispositionsCount {
         month
-        count
+        amount
       }
       year
     }
@@ -65,9 +65,24 @@ const PerDayDispositionSection = () => {
     return () => clearInterval(refetchInterval)
   },[perDayRefetch,perMonthRefetch])
 
+
+
   const options = {
+    plugins: {
+      datalabels: {
+        color: 'oklch(0 0 0)',
+        font: {
+          weight: "bold", 
+          size: 8,
+        } as const,
+      },
+    },
+    responsive: true,
     maintainAspectRatio: false,
   };
+  
+
+
 
   const month = [ 
     "January",
@@ -98,6 +113,9 @@ const PerDayDispositionSection = () => {
     December: 31
   }
 
+
+  
+
   const todayMonth = new Date().getMonth()
 
   const BarDataPerDay = (totalDay:number) =>  {
@@ -106,7 +124,7 @@ const PerDayDispositionSection = () => {
     perDayDispostiion?.getDispositionPerDay.dispositionsCount.forEach((e) => {
       const dayIndex = parseInt(e.day) - 1; 
       if (dayIndex >= 0 && dayIndex < totalDay) {
-        data[dayIndex] = e.count;
+        data[dayIndex] = e.amount === '0' ? "" : e.amount ;
       }
     })
 
@@ -118,14 +136,12 @@ const PerDayDispositionSection = () => {
     perMonthDisposition?.getDispositionPerMonth.dispositionsCount.forEach((e)=> {
       const monthIndex = parseInt(e.month) - 1
       if(monthIndex >= 0 && monthIndex < totalMonth) {
-        data[monthIndex] = e.count
+        data[monthIndex] = e.amount
       }
     })
     
     return data
   }
-
-  
 
   const monthlyDate = (month:string) => {
     const days = [];

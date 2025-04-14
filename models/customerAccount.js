@@ -29,6 +29,19 @@ const customerAccountSchema = new Schema(
     max_dpd: {
       type: Number
     },
+    paid_amount: {
+      type: Number,
+      default: 0
+    },
+    balance: {
+      type: Number,
+      default: 0
+    },
+    assigned: {
+      type: Boolean,
+      default: false
+    }
+    ,
     out_standing_details: {
       principal_os: {
         type: Number,

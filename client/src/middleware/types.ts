@@ -173,6 +173,8 @@ export type Search = {
     credit_customer_id: string
     bill_due_day: number
     max_dpd: number
+    balance: number
+    paid_amount: number
     out_standing_details: outStandingDetails
     grass_details: grassDetails
     account_bucket: AccountBucket

@@ -69,8 +69,10 @@ const AgentDisposition = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
   const {data:agentSelector} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT, {variables: {department:userLogged.department}})
 
+  
   const {data:dataDispo,refetch} = useQuery<{getAgentDispositions:AgentDisposition[]}>(AGENT_DISPOSITION)
-
+  
+  console.log(dataDispo)
   useEffect(()=> {
     refetch()
     const refetchIntervals = setInterval(refetch,1000)
@@ -113,8 +115,8 @@ const AgentDisposition = () => {
 
           return (
             <tr key={agent.user_id} className="odd:bg-gray-100 even:bg-white text-center 2xl:text-sm lg:text-xs text-slate-500  hover:bg-slate-200">
-              <td className="w-24 font-medium py-1.5 2xl:text-sm lg:text-xs">{agent.user_id}</td>
-              <td className="w-50 font-medium">{agent.name}</td>
+              <td className="w-24 font-medium py-1.5 2xl:text-sm lg:text-xs ">{agent.user_id || "TL"}</td>
+              <td className="w-50 font-medium uppercase">{agent.name}</td>
               {
                 disposition?.getDispositionTypes.map((dispo) => {
                   const found = matchedAgent?.dispositions.find((d) => d.code === dispo.code);

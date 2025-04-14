@@ -35,7 +35,6 @@ const colorDispo: { [key: string]: string } = {
   UNK: "oklch(0.78 0.18 350.0)"
 }
 
-
 const GET_DISPOSITION_TYPES = gql`
   query Query {
     getDispositionTypes {
@@ -55,19 +54,10 @@ const GET_ALL_DISPOSITION_COUNT = gql`
   }
 `
 
-
-
-
 const DoughnutSection = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
-
   const {data:disposition} = useQuery<{getDispositionTypes:DispositionCount[]}>(GET_DISPOSITION_TYPES)
-
   const {data:dispositionCount} = useQuery<{getDeptDispositionCount:DispositionCount[]}>(GET_ALL_DISPOSITION_COUNT,{variables: {dept:userLogged.department}})
-
-
-
-
   const [dispositionData, setDispositionData] = useState<DispositionCount[]>([])
   const [dispositionDataObj, setDispositionDataObj] = useState<{[key: string]:string}>({})
   const [total, setTotal] = useState<number>(0)
@@ -82,28 +72,27 @@ const DoughnutSection = () => {
       }))
       const newDataObject:{[key: string]:string} = {}
 
-      dispositionCount?.getDeptDispositionCount.forEach((ddc)=> {
+      dispositionCount?.getDeptDispositionCount?.forEach((ddc)=> {
         newDataObject[ddc.code] = ddc.count
       })
       
-      setTotal(dispositionCount?.getDeptDispositionCount.map((ddc)=> parseInt(ddc.count)).reduce((total, value)=> {
-        return total + value;
-      }))
+      setTotal(dispositionCount?.getDeptDispositionCount?.map((ddc)=> parseInt(ddc.count)).reduce((total, value)=> 
+       total + value
+      ,0))
 
       setDispositionDataObj(newDataObject)
       setDispositionData(newData)
     }
-
   },[dispositionCount])
 
+  const dataLabels = dispositionData?.map(d=> d.code)
+  const dataCount = dispositionData?.map(d => parseInt(Math.floor(Number(d.count)/total * 100).toPrecision(2)) === 1 ? 100 : parseInt(Math.floor(Number(d.count)/total * 100).toPrecision(2)))
+  const dataColor = dispositionData?.map(d=> d.color)
 
-  const dataLabels = dispositionData.map(d=> d.code)
-  const dataCount = dispositionData.map(d => d.count)
-  const dataColor = dispositionData.map(d=> d.color)
   const data = {
     labels: dataLabels,
     datasets: [{
-      label: 'Count',
+      label: 'Percentage',
       data: dataCount,
       backgroundColor: dataColor,
       hoverOffset: 4
@@ -118,7 +107,7 @@ const DoughnutSection = () => {
           weight: "bold", 
           size: 12,
         } as const,
-        formatter: (value: number) => {return value === 0 ? "" :  `${value}`},
+        formatter: (value: number) => {return value === 0 ? "" : Math.ceil(value/100 * total)},
       },
       legend: {
         position: 'bottom' as const,
@@ -131,7 +120,7 @@ const DoughnutSection = () => {
 
 
 
-
+  
   return (
     <div className="col-span-3 row-span-3 flex items-center justify-between text-center">
       <div className="text-xs">
@@ -152,7 +141,13 @@ const DoughnutSection = () => {
                 <div>-</div>
                 <div>{dispositionDataObj[d.code] || 0}</div>
                 <div>-</div>
-                <div>{(parseInt(dispositionDataObj[d.code])/total * 100).toPrecision(4)}%</div>
+                <div>  {
+                  (() => {
+                    const percent = (parseInt(dispositionDataObj[d.code]) / total) * 100;
+                    const formatted = Math.floor(percent).toPrecision(2);
+                    return formatted === "1.0e+2" ? "100" : formatted;
+                  })()
+                }%</div>
               </div>
             )
           } 

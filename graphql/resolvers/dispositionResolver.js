@@ -28,7 +28,10 @@ const dispositionResolver = {
               from: "users",
               localField: "user",
               foreignField: "_id",
-              as: "created_by"
+              as: "created_by",
+              pipeline: [
+                { $project: { agent_id: 1, name: 1 } }
+              ]
             }
           },
           {
@@ -39,7 +42,10 @@ const dispositionResolver = {
               from: "dispotypes",
               localField: "disposition",
               foreignField: "_id",
-              as: "ca_disposition"
+              as: "ca_disposition",
+              pipeline: [
+                {$project: {name: 1, code: 1, _id: 1}}
+              ]
             }
           },
           {
@@ -47,6 +53,48 @@ const dispositionResolver = {
           },
           {
             $sort: { createdAt: -1 }
+          },
+
+          {
+            $group:{
+              _id: "$_id",
+              ca_disposition: {
+                $first: "$ca_disposition"
+              },
+              amount: {$first: "$amount"},
+              payment_date:{$first: "$payment_date"},
+              ref_no: {$first: "$ref_no"},
+              existing: {$first: "$existing"},
+              comment: {$first: "$comment"},
+              payment: {$first: "$payment"},
+              payment_method: {$first : "$payment_method"},
+              createdAt: {$first : "$createdAt"},
+              created_by: {
+                $first: {
+                  $cond: [
+                    { $ifNull: ["$created_by.agent_id", false] },
+                    "$created_by.agent_id",
+                    "$created_by.name" 
+                  ]
+                }
+              }
+            }
+          },
+
+          {
+            $project: {
+              _id: 1,
+              amount: 1,
+              ca_disposition: 1,
+              payment_date: 1,
+              ref_no: 1,
+              existing: 1,
+              comment: 1,
+              payment: 1,
+              payment_method: 1,
+              createdAt: 1,
+              created_by: 1,
+            } 
           },
           {
             $limit: limit === 3 ? limit : dispositionCount
@@ -362,21 +410,20 @@ const dispositionResolver = {
               _id: {
                 day: { $dayOfMonth: "$createdAt" }
               },
-              count: { $sum: 1 }
+              amount: { $sum: "$amount" }
             }
           },
           {
             $project: {
               _id: 0,
               day: "$_id.day",
-              count: 1
+              amount: 1
             }
           },
           {
             $sort: { date: 1 }
           }
         ])     
-
         return {month: month, dispositionsCount:[...dispositionPerDayOfTheMonth]}
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -428,14 +475,14 @@ const dispositionResolver = {
               _id: {
                 month: { $month: "$createdAt" }
               },
-              count: { $sum: 1 }
+              amount: { $sum: "$amount" }
             }
           },
           {
             $project: {
               _id: 0,
               month: "$_id.month",
-              count: 1
+              amount: 1
             }
           },
           {
@@ -516,8 +563,28 @@ const dispositionResolver = {
     },
   },
   Mutation: {
-    createDisposition: async(_,{customerAccountId, userId, amount, payment, disposition, payment_date, payment_method, ref_no, comment}) => {
+    createDisposition: async(_,{customerAccountId, userId, amount, payment, disposition, payment_date, payment_method, ref_no, comment},{user}) => {
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
+        
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        const end = new Date();  
+        end.setHours(23, 59, 59, 999);
+
+        const findProd = await Production.findOne({
+          $and: [
+            {user: user._id},
+            {createdAt: {$gte: start, $lte: end}}
+          ]
+        })
+
+        if(!findProd) {
+          await Production.create({
+            user: user._id,
+          });
+        }
+
         if(disposition === "PAID" && (!amount || !payment || !payment_date || !payment_method || !ref_no)) {
           throw new CustomError("All fields are required",400)
         } 
@@ -530,6 +597,20 @@ const dispositionResolver = {
 
         const customerAccount = await CustomerAccount.findById(customerAccountId)
         
+        if (amount && disposition === "PAID") {
+          const amountPaid = customerAccount.amount_paid || 0;
+          const totalOS = customerAccount.out_standing_details?.total_os || 0;
+
+          const newBalance = totalOS - (amountPaid + amount);
+          await CustomerAccount.updateOne(
+            { _id: customerAccount._id },
+            {
+              $inc: { paid_amount: amount },
+              $set: { balance: newBalance }
+            }
+          );
+        }
+
         await Disposition.findByIdAndUpdate(customerAccount.current_disposition,
         {
           $set: {
@@ -538,11 +619,6 @@ const dispositionResolver = {
         })
         customerAccount.current_disposition = newDisposition._id
         await customerAccount.save()
-
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
-        const end = new Date();  
-        end.setHours(23, 59, 59, 999);
 
         const userProd = await Production.findOne({
           $and: [
@@ -562,6 +638,7 @@ const dispositionResolver = {
           message: "Disposition successfully created"
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

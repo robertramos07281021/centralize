@@ -2,13 +2,12 @@ import Uploader from "../../components/Uploader"
 import { IoMdArrowDropdown } from "react-icons/io";
 import { IoMdArrowDropup } from "react-icons/io";
 import { Doughnut } from 'react-chartjs-2';
-import { Chart } from 'chart.js';
 import {gql} from "@apollo/client"
 import { useQuery } from "@apollo/client";
 import {  Users } from "../../middleware/types";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
-import {  useEffect, useRef, useState } from "react";
+import {  useEffect, useState } from "react";
 
 
 interface DispositionType  {
@@ -137,24 +136,19 @@ const BacklogManagementView = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
   const {data:agentSelector} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT, {variables: {department:userLogged.department}})
   const {data:departmentBucket} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY,{variables: {dept: userLogged?.department}, skip: !userLogged?.department})
-
   const [buckets, setBuckets] = useState<Bucket[] | null>(null)
   const [searchBucket, setSearchBucket] = useState<string>("")
   const [bucketDropdown, setBucketDropdown] = useState<boolean>(false)
   const [selectedDisposition, setSelectedDisposition] = useState<string[]>([])
   const [agentDropdown, setAgentDropdown] = useState<boolean>(false)
   const [agents, setAgents] = useState<Users[] | null>(null)
-  const [searchAgent, setSearchAgent] = useState<string>("")
-  
+  const [searchAgent, setSearchAgent] = useState<string>("")  
   const {data:disposition} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
   const [dateDistance, setDateDistance] = useState({
     from: "",
     to: ""
   })
-
-
   const {data:reportsData } = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: searchAgent, bucket: searchBucket, disposition: selectedDisposition, from: dateDistance.from, to: dateDistance.to}})
-
   const [newReportsDispo, setNewReportsDispo] = useState<Record<string,string>>({})
   
   useEffect(()=> {
@@ -166,7 +160,6 @@ const BacklogManagementView = () => {
       setNewReportsDispo(reportsDispo)
     }
   },[reportsData])
-
 
   useEffect(()=> {
     const filteredAgent = searchAgent.trim() != "" ? agentSelector?.findAgents?.filter((e) => e.name.toLowerCase().includes(searchAgent.toLowerCase()) || e.user_id.includes(searchAgent)) : agentSelector?.findAgents
@@ -192,6 +185,7 @@ const BacklogManagementView = () => {
   },[departmentBucket, searchBucket])
 
   const [dispositionData, setDispositionData] = useState<Dispositions[]>([])
+  const [totalCount, setTotalCount] = useState<number>(0)
 
   useEffect(()=> {
     if (disposition?.getDispositionTypes) {
@@ -200,18 +194,21 @@ const BacklogManagementView = () => {
         count: Number(newReportsDispo[e.code]) || 0,
         color: colorDispo[e.code] || '#ccc', 
       }));
-      
+       
+      setTotalCount(updatedData.map((e)=> e.count).reduce((total, value)=> 
+        total + value, 0))
+
       setDispositionData(updatedData);
     }
   },[disposition,newReportsDispo])
 
   const dataLabels = dispositionData.map(d=> d.code)
-  const dataCount = dispositionData.map(d => d.count)
+  const dataCount = dispositionData.map(d =>  parseInt(Math.floor(d.count/totalCount * 100).toPrecision(2)) === 1 ? 100 : parseInt(Math.floor(d.count/totalCount * 100).toPrecision(2)) )
   const dataColor = dispositionData.map(d=> d.color)
   const data = {
     labels: dataLabels,
     datasets: [{
-      label: 'Count',
+      label: 'Percentage',
       data: dataCount,
       backgroundColor: dataColor,
       hoverOffset: 30,
@@ -226,7 +223,7 @@ const BacklogManagementView = () => {
           weight: "bold", 
           size: 12,
         } as const,
-        formatter: (value: number) => {return value === 0 ? "" :  `${value}`},
+        formatter: (value: number) => {return value === 0 ? "" : Math.ceil(value/100 * totalCount)}
       },
       legend: {
         position: 'bottom' as const,
@@ -236,13 +233,6 @@ const BacklogManagementView = () => {
     responsive: true,
     maintainAspectRatio: false,
   };
-
-  const chartRef = useRef<Chart<"doughnut"> | null>(null);
-
-
-  const onClickChart = () => {
-    console.log(`${chartRef?.current?.tooltip?.title}`)
-  }
 
   const handleCheckBox= (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
     const check = e.target.checked ? [...selectedDisposition, value] : selectedDisposition.filter((d) => d !== value )
@@ -420,7 +410,7 @@ const BacklogManagementView = () => {
             }
           </div>
 
-          <div className="flex justify-between w-full h-full">
+          <div className="flex justify-between w-full h-full pr-5">
             <div className="w-full flex justify-center item-center flex-col ">
               <div  className="flex flex-col justify-center h-5/6 ">
                 {disposition?.getDispositionTypes.map((d)=> 
@@ -444,7 +434,7 @@ const BacklogManagementView = () => {
               </div>
             </div>
             <div className="w-8/10 flex justify-center h-full">
-              <Doughnut ref={chartRef} data={data} onClick={onClickChart} options={options} />
+              <Doughnut data={data} options={options} />
             </div>
           </div>
         </div>
