@@ -1,8 +1,9 @@
 import { useSelector } from "react-redux"
-import { RootState } from "../redux/store"
+import { RootState, useAppDispatch } from "../redux/store"
 import { useQuery, gql } from "@apollo/client"
 import { useEffect, useState } from "react"
 import { ImSpinner9 } from "react-icons/im";
+import { setSettled } from "../redux/slices/authSlice";
 
 type DispoType = {
   name: string
@@ -47,12 +48,10 @@ const DISPOSITION_RECORDS = gql`
   }
 `
 const DispositionRecords = () => {
-  const {selectedCustomer} = useSelector((state:RootState)=> state.auth )
+  const {selectedCustomer,} = useSelector((state:RootState)=> state.auth )
   const [limit, setLimit] = useState(3)
-  
+  const dispatch = useAppDispatch()
   const {data:dispositions,refetch, loading} = useQuery<{getAccountDispositions:Disposition[]}>(DISPOSITION_RECORDS,{variables: {id: selectedCustomer._id, limit: limit} })
-
-  console.log(dispositions)
 
   const date = (date:string) => {
     const createdDate = new Date(date).toLocaleDateString()
@@ -66,6 +65,17 @@ const DispositionRecords = () => {
       setLimit(3)
     }
   }
+  useEffect(()=> {
+    if(dispositions) {
+
+      const exisist =  dispositions.getAccountDispositions.find((e)=>e.existing === true)
+      if(exisist?.ca_disposition.code === "SET") {
+        dispatch(setSettled(true))
+      }
+    }
+
+  },[dispositions,dispatch])
+
 
   useEffect(()=> {
     refetch()

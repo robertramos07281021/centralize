@@ -6,7 +6,7 @@ import { gql, useMutation, useQuery } from "@apollo/client"
 import { CREATE_DISPOSITION } from "../apollo/mutations"
 import { Success } from "../middleware/types"
 import SuccessToast from "./SuccessToast"
-import { setSelectedCustomer } from "../redux/slices/authSlice"
+import { setSelectedCustomer, setSettled } from "../redux/slices/authSlice"
 
 
 interface Disposition {
@@ -54,6 +54,7 @@ const DispositionForm = () => {
           message: "Disposition successfully created"
         })
         setConfirm(false)
+        dispatch(setSettled(false))
         setData({
           amount: "",
           payment: "",
@@ -164,7 +165,7 @@ const DispositionForm = () => {
     }
   },[selectedCustomer?._id, data?.disposition])
   
-  return (
+  return  (
     <>
       {
         success?.success &&
@@ -198,7 +199,7 @@ const DispositionForm = () => {
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Amount</p>
               {
-                data.disposition === "PAID" ? 
+                data.disposition === "PAID" || data.disposition === "SETTLED" ? 
                 <div className="relative col-span-3">
                   <input 
                     type="text" 
@@ -208,7 +209,7 @@ const DispositionForm = () => {
                     onChange={handleOnChangeAmount}
                     pattern="[0-9]*"
                     placeholder="Enter amount"
-                    required={data.disposition === "PAID"}
+                    required={data.disposition === "PAID" || data.disposition === "SETTLED"}
                     className={`${required && !data.amount ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} w-full 2xl:text-sm lg:text-xs border  text-gray-900 text-sm rounded-lg pl-8 focus:ring-blue-500 focus:border-blue-500 block p-2 `}/>
                   <p className="absolute top-2 left-4">&#x20B1;</p>
                 </div> 
@@ -220,12 +221,12 @@ const DispositionForm = () => {
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Payment</p>
               {
-                data.disposition === "PAID" ? 
+                data.disposition === "PAID" ||  data.disposition === "SETTLED" ? 
                 <select 
                   name="payment" 
                   id="payment" 
                   value={data.payment}
-                  required={data.disposition === "PAID"}
+                  required={data.disposition === "PAID" || data.disposition === "SETTLED"}
                   onChange={(e)=> setData({...data, payment: e.target.value})}
                   className={`${required && !data.payment ? "bg-red-100 border-red-500" : "bg-gray-50 border-gray-500"} border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block col-span-3 p-2`}>
                   <option value="">Select Payment</option>
@@ -242,12 +243,12 @@ const DispositionForm = () => {
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold">Payment Date</p>
               {
-                data.disposition === "PAID" ? 
+                data.disposition === "PAID" ||  data.disposition === "SETTLED" ? 
                 <input 
                   type="date" 
                   id="payment_date" 
                   name="payment_date"
-                  required={data.disposition === "PAID"}
+                  required={data.disposition === "PAID" ||  data.disposition === "SETTLED"}
                   value={data.payment_date}
                   onChange={(e)=> setData({...data, payment_date: e.target.value})}
                   className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
@@ -260,12 +261,12 @@ const DispositionForm = () => {
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Payment Method</p>
               {
-                data.disposition === "PAID" ? 
+                data.disposition === "PAID" ||  data.disposition === "SETTLED" ? 
                 <select 
                   name="payment_method" 
                   id="payment_method" 
                   value={data.payment_method}
-                  required={data.disposition === "PAID"}
+                  required={data.disposition === "PAID" ||  data.disposition === "SETTLED"}
                   onChange={(e)=> setData({...data, payment_method: e.target.value})}
                   className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}>
                   <option value="">Select Method</option>
@@ -282,12 +283,12 @@ const DispositionForm = () => {
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Ref. No</p>
               {
-                data.disposition === "PAID" ?
+                data.disposition === "PAID" ||  data.disposition === "SETTLED" ?
                 <input 
                   type="text" 
                   name="ref" 
                   id="ref"
-                  required={data.disposition === "PAID"}
+                  required={data.disposition === "PAID" ||  data.disposition === "SETTLED"}
                   value={data.ref_no}
                   placeholder="Enter reference no."
                   onChange={(e)=> setData({...data, ref_no: e.target.value})}

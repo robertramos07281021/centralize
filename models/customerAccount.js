@@ -40,6 +40,10 @@ const customerAccountSchema = new Schema(
     assigned: {
       type: Boolean,
       default: false
+    },
+    complete: {
+      type: Boolean,
+      default: false
     }
     ,
     out_standing_details: {

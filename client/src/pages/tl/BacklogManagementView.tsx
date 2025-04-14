@@ -149,17 +149,19 @@ const BacklogManagementView = () => {
     to: ""
   })
   const {data:reportsData } = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: searchAgent, bucket: searchBucket, disposition: selectedDisposition, from: dateDistance.from, to: dateDistance.to}})
-  const [newReportsDispo, setNewReportsDispo] = useState<Record<string,string>>({})
+  const [newReportsDispo, setNewReportsDispo] = useState<Record<string,number>>({})
   
   useEffect(()=> {
-    const reportsDispo: Record<string, string> = {};
+    const reportsDispo:{[key: string]: number} = {};
     if(reportsData) {
       reportsData.getDispositionReports.disposition.forEach((element: DispositionType) => {
-        reportsDispo[element.code] = element.count;
+        reportsDispo[element.code] = element.count ? Number(element.count) : 0;
       });
       setNewReportsDispo(reportsDispo)
     }
   },[reportsData])
+
+
 
   useEffect(()=> {
     const filteredAgent = searchAgent.trim() != "" ? agentSelector?.findAgents?.filter((e) => e.name.toLowerCase().includes(searchAgent.toLowerCase()) || e.user_id.includes(searchAgent)) : agentSelector?.findAgents
@@ -191,7 +193,7 @@ const BacklogManagementView = () => {
     if (disposition?.getDispositionTypes) {
       const updatedData = disposition.getDispositionTypes.map((e) => ({
         code: e.code,
-        count: Number(newReportsDispo[e.code]) || 0,
+        count: Number(newReportsDispo[e.code]) ? Number(newReportsDispo[e.code]) : 0 ,
         color: colorDispo[e.code] || '#ccc', 
       }));
        
@@ -202,8 +204,18 @@ const BacklogManagementView = () => {
     }
   },[disposition,newReportsDispo])
 
+ 
+
   const dataLabels = dispositionData.map(d=> d.code)
-  const dataCount = dispositionData.map(d =>  parseInt(Math.floor(d.count/totalCount * 100).toPrecision(2)) === 1 ? 100 : parseInt(Math.floor(d.count/totalCount * 100).toPrecision(2)) )
+  const dataCount = dispositionData.map(d => { 
+    const count = d.count;
+    if (!totalCount || totalCount === 0) return 0; 
+    const percent = Math.floor((count / totalCount) * 100);
+    const parsed = parseInt(percent.toPrecision(2));
+    return parsed === 1 ? 100 : parsed;
+  } 
+  
+  )
   const dataColor = dispositionData.map(d=> d.color)
   const data = {
     labels: dataLabels,
@@ -214,6 +226,7 @@ const BacklogManagementView = () => {
       hoverOffset: 30,
     }],
   };
+
 
   const options = {
     plugins: {

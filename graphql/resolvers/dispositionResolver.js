@@ -138,6 +138,7 @@ const dispositionResolver = {
         }
 
         if(bucket) query.push({customer_account: {$in: customerAccountIds}})
+          
         const dispositionReport = await Disposition.aggregate([
           {
             $match: {

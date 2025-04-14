@@ -9,7 +9,7 @@ import DispositionForm from "../components/DispositionForm"
 import { useQuery } from "@apollo/client"
 import { SEARCH } from "../apollo/query"
 import { Search } from "../middleware/types"
-import { setSelectedCustomer } from "../redux/slices/authSlice"
+import { setSelectedCustomer, setSettled } from "../redux/slices/authSlice"
 import AgentTimer from "../components/AgentTimer"
 import DispositionRecords from "../components/DispositionRecords"
 
@@ -17,7 +17,7 @@ import DispositionRecords from "../components/DispositionRecords"
 
 
 const CustomerDisposition = () => {
-  const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
+  const {userLogged, selectedCustomer, settled} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -34,9 +34,6 @@ const CustomerDisposition = () => {
 
   const length = searchData?.search?.length || 0;
 
-
-  console.log(searchData)
-
   useEffect(()=> {
     refetch()
   },[search,refetch])
@@ -46,7 +43,7 @@ const CustomerDisposition = () => {
     setSearch("")
     refetch()
   }
-  
+  console.log(typeof settled)
   useEffect(()=> {
     if(!success.success){
       navigate(location.pathname)
@@ -64,6 +61,7 @@ const CustomerDisposition = () => {
   },[location.search])
 
   const clearSelectedCustomer = () => {
+    dispatch(setSettled(false))
     dispatch(setSelectedCustomer({
       _id: "",
       case_id: "",
@@ -294,7 +292,10 @@ const CustomerDisposition = () => {
       </div>
       <div className="p-5 grid grid-cols-2 gap-5">
         <AccountInfo/>
-        <DispositionForm/>
+        {
+          !settled &&
+          <DispositionForm/>
+        }
       </div>
       <DispositionRecords/>
     </>
