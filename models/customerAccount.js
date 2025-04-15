@@ -38,14 +38,10 @@ const customerAccountSchema = new Schema(
       default: 0
     },
     assigned: {
-      type: Boolean,
-      default: false
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group"
     },
-    complete: {
-      type: Boolean,
-      default: false
-    }
-    ,
+
     out_standing_details: {
       principal_os: {
         type: Number,

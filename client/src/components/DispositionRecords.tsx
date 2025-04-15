@@ -102,7 +102,7 @@ const DispositionRecords = () => {
               </div>
               <div className=" grid grid-cols-3 gap-2 ">
                 <div className="text-gray-800 font-bold p-2 text-end">Amount</div>
-                <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 bg-white">{gad.amount | 0}</div>
+                <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 bg-white">{gad.amount.toFixed(2)}</div>
               </div>
               <div className=" grid grid-cols-3 gap-2">
                 <div className="text-gray-800 font-bold p-2 text-end">Payment</div>

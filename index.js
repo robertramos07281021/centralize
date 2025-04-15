@@ -35,7 +35,7 @@ const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, b
 const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs]);
 
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: "http://172.16.24.31:3000",
   credentials: true,              
 }));
 app.use(bodyParser.json());

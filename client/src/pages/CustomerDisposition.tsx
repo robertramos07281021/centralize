@@ -43,7 +43,7 @@ const CustomerDisposition = () => {
     setSearch("")
     refetch()
   }
-  console.log(typeof settled)
+
   useEffect(()=> {
     if(!success.success){
       navigate(location.pathname)
@@ -163,7 +163,7 @@ const CustomerDisposition = () => {
               type="text"
               name="search" 
               value={search}
-              onChange={(e)=> setSearch(e.target.value)}
+              onChange={(e)=> {setSearch(e.target.value); dispatch(setSettled(false))}}
               id="search"
               placeholder="Search" 
               className="w-96 p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "/>

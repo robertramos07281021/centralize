@@ -72,7 +72,6 @@ const AgentDisposition = () => {
   
   const {data:dataDispo,refetch} = useQuery<{getAgentDispositions:AgentDisposition[]}>(AGENT_DISPOSITION)
   
-  console.log(dataDispo)
   useEffect(()=> {
     refetch()
     const refetchIntervals = setInterval(refetch,1000)

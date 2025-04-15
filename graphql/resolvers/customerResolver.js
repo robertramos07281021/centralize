@@ -57,44 +57,131 @@ const customerResolver = {
       const isValidObjectId = mongoose.Types.ObjectId.isValid(search);
       const checkId = isValidObjectId ? new mongoose.Types.ObjectId(search) : null;
 
-      const accounts = await CustomerAccount.aggregate([
-        {
-          $lookup: {
-            from: "customers",
-            localField: "customer",
-            foreignField: "_id",
-            as: "customer_info",
+      try {
+        const accounts = await CustomerAccount.aggregate([
+          {
+            $lookup: {
+              from: "customers",
+              localField: "customer",
+              foreignField: "_id",
+              as: "customer_info",
+            },
           },
-        },
-        { $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } },
-        {
-          $lookup: {
-            from: "buckets",
-            localField: "bucket",
-            foreignField: "_id",
-            as: "account_bucket",
+          { $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "bucket",
+              foreignField: "_id",
+              as: "account_bucket",
+            },
           },
-        },
-        { $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } },
-        {
-          $match: {
-            $or: [
-              { "customer_info.fullName": { $regex: search, $options: "i" } },
-              { "customer_info.dob": { $regex: search, $options: "i" } },
-              { "customer_info.contact_no": { $elemMatch: { $regex: search, $options: "i" } } },
-              { "customer_info.emails": { $elemMatch: { $regex: search, $options: "i" } } },
-              { "customer_info.addresses": { $elemMatch: { $regex: search, $options: "i" } } },
-              { credit_customer_id: { $regex: search} },
-              { account_id: { $regex: search, $options: "i" } },
-              { "out_standing_details.total_os": { $regex: search, } },
-              { case_id: { $regex: search, $options: "i" } },
-              ...(checkId ? [{ "customer_info._id": checkId }] : []),
-            ],
+          { $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } },
+          {
+            $match: {
+              $or: [
+                { "customer_info.fullName": { $regex: search, $options: "i" } },
+                { "customer_info.dob": { $regex: search, $options: "i" } },
+                { "customer_info.contact_no": { $elemMatch: { $regex: search, $options: "i" } } },
+                { "customer_info.emails": { $elemMatch: { $regex: search, $options: "i" } } },
+                { "customer_info.addresses": { $elemMatch: { $regex: search, $options: "i" } } },
+                { credit_customer_id: { $regex: search} },
+                { account_id: { $regex: search, $options: "i" } },
+                { "out_standing_details.total_os": { $regex: search, } },
+                { case_id: { $regex: search, $options: "i" } },
+                ...(checkId ? [{ "customer_info._id": checkId }] : []),
+              ],
+            },
           },
-        },
-      ])
-
-      return [...accounts]
+        ])
+  
+        return [...accounts]
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+     
+    },
+    findCustomerAccount: async(_,{disposition,dept}) => {
+      try {
+        const bucket = (await Bucket.find({dept})).map(e => e.name)
+        
+        const accounts = await CustomerAccount.aggregate([
+          {
+            $lookup: {
+              from: "customers",
+              localField: "customer",
+              foreignField: "_id",
+              as: "customer_info",
+            },
+          },
+          { $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "bucket",
+              foreignField: "_id",
+              as: "account_bucket",
+            },
+          },
+          { $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "current_disposition",
+              foreignField: "_id",
+              as: "currentDisposition",
+            }
+          },
+          { $unwind: { path: "$currentDisposition", preserveNullAndEmptyArrays: true } },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "currentDisposition.disposition",
+              foreignField: "_id",
+              as: "dispoType",
+            }
+          },
+          {
+            $match: {
+              "dispoType.0": { $exists: true }
+            }
+          },
+          { $unwind: { path: "$dispoType", preserveNullAndEmptyArrays: true } },
+          {
+            $lookup: {
+              from: "groups",
+              localField: "assgined",
+              foreignField: "_id",
+              as: "group_assigned",
+            }
+          },
+          { $unwind: { path: "$group_assigned", preserveNullAndEmptyArrays: true } },
+          
+          {
+            $match: {
+              $or: [
+      
+                {
+                  "account_bucket.name": {$in: bucket}
+                },
+                // { $and: [
+                { "dispoType.name": {$in:disposition }}, 
+                //     {"currentDisposition": {$ne: null}},
+                //   ]
+                // }
+                
+      
+              ]
+            },
+       
+          }
+        ])
+        return [...accounts]
+        
+      } catch (error) {
+        console.log(error)
+        throw new CustomError(error.message, 500)
+      }
     }
   },
   Mutation: {
@@ -137,6 +224,8 @@ const customerResolver = {
               endorsement_date: element.endorsement_date,
               bill_due_day: element.bill_due_day,
               max_dpd: element.max_dpd,
+              balance: element.total_os,
+              paid_amount: 0,
               account_id: element.account_id || null,
               "out_standing_details.principal_os" : element.principal_os,
               "out_standing_details.interest_os" : element.interest_os,

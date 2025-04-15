@@ -94,6 +94,7 @@ const dispositionTypeDefs = gql`
     getDispositionPerDay(dept:String):DispositionPerDay
     getDispositionPerMonth(dept:String):DispositionPerYear
     getDeptDispositionCount(dept:String):[DispositionCount]
+    getAllDispositionTypes:[DispoType]
   }
 
   type Mutation {

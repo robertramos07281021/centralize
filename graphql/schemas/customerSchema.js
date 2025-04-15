@@ -74,20 +74,47 @@ const customerTypeDefs = gql`
     dept: String
   }
 
-  # type AccountInfo {
-  #   id: ID
-  #   case_id: String,
-  #   account_id: String
-  #   endorsement_date: String
-  #   credit_customer_id: String
-  #   bill_due_day: Int
-  #   max_dpd: Int
-  #   balance: Int
-  #   paid_amount: Int
-  #   out_standing_details: outStandingDetails
-  #   grass_details: grassDetails
-  #   account_bucket: AccountBucket
-  # } 
+  type DispoType {
+    name: String
+    code: String
+    _id: ID
+  }
+
+  
+  type CurrentDispo {
+    _id:ID
+    amount: Float
+    disposition: DispoType
+    payment_date: String
+    ref_no: String
+    existing: Boolean
+    comment: String
+    payment: String
+    payment_method: String
+    created_by: String
+  }
+
+  
+
+  type CustomerAccount {
+    _id: ID
+    case_id: String
+    account_id: String
+    endorsement_date: String
+    credit_customer_id: String
+    bill_due_day: Int
+    max_dpd: Int
+    balance: Float
+    paid_amount: Float
+    out_standing_details: outStandingDetails
+    grass_details: grassDetails
+    account_bucket: AccountBucket
+    customer_info: CustomerInfo
+    currentDisposition:CurrentDispo 
+    
+  }
+
+
 
   type Search {
     _id: ID
@@ -109,6 +136,7 @@ const customerTypeDefs = gql`
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
     getCustomers(page:Int): getCustomers!
     search(search:String):[Search]
+    findCustomerAccount(disposition:[String],dept:String!):[CustomerAccount]
   }
 
   type Mutation {

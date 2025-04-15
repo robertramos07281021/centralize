@@ -45,6 +45,8 @@ const Navbar = () => {
         credit_customer_id: "",
         bill_due_day: 0,
         max_dpd: 0,
+        balance: 0,
+        paid_amount: 0,
         out_standing_details: {
           principal_os: 0,
           interest_os: 0,

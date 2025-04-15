@@ -138,7 +138,7 @@ const dispositionResolver = {
         }
 
         if(bucket) query.push({customer_account: {$in: customerAccountIds}})
-          
+
         const dispositionReport = await Disposition.aggregate([
           {
             $match: {
@@ -562,7 +562,16 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
+    getAllDispositionTypes: async() => {
+      try {
+        const dispoTypes = await DispoType.find({code: {$ne: "SET"}})
+        return dispoTypes
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    }
   },
+
   Mutation: {
     createDisposition: async(_,{customerAccountId, userId, amount, payment, disposition, payment_date, payment_method, ref_no, comment},{user}) => {
       try {
@@ -598,11 +607,12 @@ const dispositionResolver = {
 
         const customerAccount = await CustomerAccount.findById(customerAccountId)
         
-        if (amount && disposition === "PAID") {
+        if (amount && (disposition === "PAID" || disposition === "SETTLED"  )) {
           const amountPaid = customerAccount.amount_paid || 0;
           const totalOS = customerAccount.out_standing_details?.total_os || 0;
 
-          const newBalance = totalOS - (amountPaid + amount);
+          const newBalance = disposition === "PAID" ? (totalOS - (amountPaid + amount)).toFixed(2) : 0;
+
           await CustomerAccount.updateOne(
             { _id: customerAccount._id },
             {

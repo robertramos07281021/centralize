@@ -1,4 +1,4 @@
-import {  useEffect, useRef, useState } from "react"
+import {   useRef, useState } from "react"
 import Confirmation from "./Confirmation"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
@@ -29,11 +29,13 @@ const GET_DISPOSITION_TYPES = gql`
 const DispositionForm = () => {
   const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
  
-    const [success, setSuccess] = useState<Success | null>({
-      success: false,
-      message: ""
-    })
+  const [success, setSuccess] = useState<Success | null>({
+    success: false,
+    message: ""
+  })
+
   const dispatch = useAppDispatch()
+
   const [data, setData] = useState({
     amount: "",
     payment: "",
@@ -43,6 +45,7 @@ const DispositionForm = () => {
     ref_no: "",
     comment: ""
   })
+
 
   const {data:disposition} = useQuery<{getDispositionTypes:Disposition[]}>(GET_DISPOSITION_TYPES)
 
@@ -150,21 +153,20 @@ const DispositionForm = () => {
       })
     }
   }
-  useEffect(()=> {
-    if(!selectedCustomer?._id || data?.disposition !== "Paid") {
+
+  const handleChangeDisposition = (value:string) => {
+    console.log(value === "SETTLED")
+    if(value === "SETTLED") {
+      setData({...data, disposition: value, amount: selectedCustomer.balance.toString(), payment: "full"})
+    } else if(value === "PAID") {
+      setData({...data, disposition: value, payment: "partial"})
+    } else {
+      setData({...data, disposition: value, payment: "" , amount: ""})
       setRequired(false)
-      setData((prev)=> ({
-        ... prev,
-        amount: "",
-        payment: "",
-        payment_date: "",
-        payment_method: "",
-        ref_no: "",
-        comment: ""
-      }))
     }
-  },[selectedCustomer?._id, data?.disposition])
-  
+  }
+
+
   return  (
     <>
       {
@@ -186,7 +188,7 @@ const DispositionForm = () => {
                 id="disposition" 
                 value={data.disposition}
                 required
-                onChange={(e)=> setData({...data, disposition: e.target.value})}
+                onChange={(e) => handleChangeDisposition(e.target.value)}
                 className={`${required && !data.disposition ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block col-span-3 p-2 `}>
                 <option value="">Select Disposition</option>
                 {
@@ -208,6 +210,7 @@ const DispositionForm = () => {
                     value={data.amount}
                     onChange={handleOnChangeAmount}
                     pattern="[0-9]*"
+                    disabled={data.disposition === "SETTLED"}
                     placeholder="Enter amount"
                     required={data.disposition === "PAID" || data.disposition === "SETTLED"}
                     className={`${required && !data.amount ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} w-full 2xl:text-sm lg:text-xs border  text-gray-900 text-sm rounded-lg pl-8 focus:ring-blue-500 focus:border-blue-500 block p-2 `}/>
@@ -222,17 +225,10 @@ const DispositionForm = () => {
               <p className="text-gray-800 font-bold ">Payment</p>
               {
                 data.disposition === "PAID" ||  data.disposition === "SETTLED" ? 
-                <select 
-                  name="payment" 
-                  id="payment" 
-                  value={data.payment}
-                  required={data.disposition === "PAID" || data.disposition === "SETTLED"}
-                  onChange={(e)=> setData({...data, payment: e.target.value})}
-                  className={`${required && !data.payment ? "bg-red-100 border-red-500" : "bg-gray-50 border-gray-500"} border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block col-span-3 p-2`}>
-                  <option value="">Select Payment</option>
-                  <option value="partial">Partial</option>
-                  <option value="full">Full</option>
-                </select>
+                <div 
+                  className={`bg-gray-50 border-gray-500 border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block col-span-3 p-2 capitalize`}>
+                  {data.payment}
+                </div>
                 :
                 <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
                 </div>
@@ -316,7 +312,6 @@ const DispositionForm = () => {
               <button 
                 type="submit" 
                 className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white  focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 py-2.5 me-2 mb-2 cursor-pointer`}>Submit</button>
-
             }
             </div>
           </div>

@@ -32,7 +32,8 @@ const colorDispo: { [key: string]: string } = {
   NIS: "oklch(0.7 0.2 340.0)",
   BUSY: "oklch(0.73 0.19 10.0)",
   DEC: "oklch(0.76 0.185 30.0)",
-  UNK: "oklch(0.78 0.18 350.0)"
+  UNK: "oklch(0.78 0.18 350.0)",
+  SET: "oklch(0.76 0.19 20.0)"
 }
 
 const GET_DISPOSITION_TYPES = gql`
@@ -88,6 +89,9 @@ const DoughnutSection = () => {
   const dataLabels = dispositionData?.map(d=> d.code)
   const dataCount = dispositionData?.map(d => parseInt(Math.floor(Number(d.count)/total * 100).toPrecision(2)) === 1 ? 100 : parseInt(Math.floor(Number(d.count)/total * 100).toPrecision(2)))
   const dataColor = dispositionData?.map(d=> d.color)
+
+  console.log(dispositionData)
+
 
   const data = {
     labels: dataLabels,
