@@ -575,6 +575,7 @@ const dispositionResolver = {
   Mutation: {
     createDisposition: async(_,{customerAccountId, userId, amount, payment, disposition, payment_date, payment_method, ref_no, comment},{user}) => {
       try {
+
         if(!user) throw new CustomError("Unauthorized",401)
         
         const start = new Date();

@@ -49,8 +49,6 @@ const userTypeDefs = gql`
     user: Users!
   }
 
-  
-
   type Query {
     getUsers(page: Int!): PaginatedUsers!
     getUser(id: ID): User

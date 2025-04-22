@@ -90,9 +90,6 @@ const DoughnutSection = () => {
   const dataCount = dispositionData?.map(d => parseInt(Math.floor(Number(d.count)/total * 100).toPrecision(2)) === 1 ? 100 : parseInt(Math.floor(Number(d.count)/total * 100).toPrecision(2)))
   const dataColor = dispositionData?.map(d=> d.color)
 
-  console.log(dispositionData)
-
-
   const data = {
     labels: dataLabels,
     datasets: [{

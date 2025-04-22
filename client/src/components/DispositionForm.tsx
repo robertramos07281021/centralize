@@ -155,7 +155,6 @@ const DispositionForm = () => {
   }
 
   const handleChangeDisposition = (value:string) => {
-    console.log(value === "SETTLED")
     if(value === "SETTLED") {
       setData({...data, disposition: value, amount: selectedCustomer.balance.toString(), payment: "full"})
     } else if(value === "PAID") {

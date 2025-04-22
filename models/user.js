@@ -43,6 +43,10 @@ const userSchema = new Schema(
     user_id: {
       type: String,
     },
+    group: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group"
+    },
     active: {
       type: Boolean,
       default:true 

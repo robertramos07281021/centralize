@@ -75,26 +75,30 @@ const customerTypeDefs = gql`
   }
 
   type DispoType {
+    _id: ID
     name: String
     code: String
-    _id: ID
   }
 
+  type User {
+    _id: ID
+    name: String
+    user_id: String
+  }
   
   type CurrentDispo {
     _id:ID
     amount: Float
-    disposition: DispoType
+    disposition: ID
     payment_date: String
     ref_no: String
     existing: Boolean
     comment: String
     payment: String
     payment_method: String
-    created_by: String
+    user: ID
   }
 
-  
 
   type CustomerAccount {
     _id: ID
@@ -111,9 +115,14 @@ const customerTypeDefs = gql`
     account_bucket: AccountBucket
     customer_info: CustomerInfo
     currentDisposition:CurrentDispo 
-    
+    dispoType: DispoType
+    disposition_user: User
   }
 
+  type FindCustomerAccount {
+    CustomerAccounts: [CustomerAccount],
+    totalCountCustomerAccounts: Int
+  }
 
 
   type Search {
@@ -136,7 +145,7 @@ const customerTypeDefs = gql`
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
     getCustomers(page:Int): getCustomers!
     search(search:String):[Search]
-    findCustomerAccount(disposition:[String],dept:String!):[CustomerAccount]
+    findCustomerAccount(disposition:[String],dept:String!,page:Int):FindCustomerAccount
   }
 
   type Mutation {

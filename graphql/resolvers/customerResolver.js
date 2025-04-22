@@ -3,6 +3,8 @@ import CustomError from "../../middlewares/errors.js";
 import Bucket from "../../models/bucket.js";
 import Customer from "../../models/customer.js";
 import CustomerAccount from "../../models/customerAccount.js";
+import DispoType from "../../models/dispoType.js";
+import Group from "../../models/group.js";
 import ModifyRecord from "../../models/modifyRecord.js";
 import mongoose from "mongoose";
 
@@ -101,10 +103,12 @@ const customerResolver = {
       }
      
     },
-    findCustomerAccount: async(_,{disposition,dept}) => {
+    findCustomerAccount: async(_,{disposition,dept,page}) => {
       try {
         const bucket = (await Bucket.find({dept})).map(e => e.name)
-        
+        const search = disposition.length > 0 ? [{assigned: {$eq: null}},
+          {"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }}] : [{assigned: {$eq: null}},{"account_bucket.name": {$in: bucket}}]
+
         const accounts = await CustomerAccount.aggregate([
           {
             $lookup: {
@@ -141,12 +145,16 @@ const customerResolver = {
               as: "dispoType",
             }
           },
+          { $unwind: { path: "$dispoType", preserveNullAndEmptyArrays: true } },
           {
-            $match: {
-              "dispoType.0": { $exists: true }
+            $lookup: {
+              from: "users",
+              localField: "currentDisposition.user",
+              foreignField: "_id",
+              as: "disposition_user",
             }
           },
-          { $unwind: { path: "$dispoType", preserveNullAndEmptyArrays: true } },
+          { $unwind: { path: "$disposition_user", preserveNullAndEmptyArrays: true } },
           {
             $lookup: {
               from: "groups",
@@ -156,27 +164,26 @@ const customerResolver = {
             }
           },
           { $unwind: { path: "$group_assigned", preserveNullAndEmptyArrays: true } },
-          
           {
             $match: {
-              $or: [
-      
-                {
-                  "account_bucket.name": {$in: bucket}
-                },
-                // { $and: [
-                { "dispoType.name": {$in:disposition }}, 
-                //     {"currentDisposition": {$ne: null}},
-                //   ]
-                // }
-                
-      
-              ]
+              $and: search 
             },
-       
+          },
+          {
+            $facet: {
+              FindCustomerAccount: [
+                { $skip: (page - 1) * 20 },
+                { $limit: 20 }
+              ],
+              total: [{$count: "totalCustomerAccounts"}]
+            }
           }
         ])
-        return [...accounts]
+        
+        return {
+          CustomerAccounts: [...accounts[0].FindCustomerAccount],
+          totalCountCustomerAccounts: accounts[0].total[0].totalCustomerAccounts > 0 ? accounts[0].total[0].totalCustomerAccounts : 0
+        }
         
       } catch (error) {
         console.log(error)
@@ -257,7 +264,6 @@ const customerResolver = {
         if(!customer) throw new CustomError("Customer not found",404)
         return {success: true, message: "Customer successfully updated", customer: customer }
       } catch (error) {
-        console.log(error.message)
         throw new CustomError(error.message, 500)
       }
     }

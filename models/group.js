@@ -12,7 +12,7 @@ const groupSchema = new Schema(
       uppercase: true,
       unique: true
     },
-    member: [
+    members: [
     {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
@@ -20,8 +20,11 @@ const groupSchema = new Schema(
     ],
     description: {
       type: String,
+    },
+    department: {
+      type: String,
+      required: true
     }
-    
   },
 );
 

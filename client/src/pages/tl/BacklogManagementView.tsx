@@ -129,7 +129,8 @@ const colorDispo: { [key: string]: string } = {
   NIS: "oklch(0.7 0.2 340.0)",
   BUSY: "oklch(0.73 0.19 10.0)",
   DEC: "oklch(0.76 0.185 30.0)",
-  UNK: "oklch(0.78 0.18 350.0)"
+  UNK: "oklch(0.78 0.18 350.0)",
+  SET: "oklch(0.76 0.19 20.0)"
 }
 
 const BacklogManagementView = () => {
@@ -164,10 +165,11 @@ const BacklogManagementView = () => {
 
 
   useEffect(()=> {
-    const filteredAgent = searchAgent.trim() != "" ? agentSelector?.findAgents?.filter((e) => e.name.toLowerCase().includes(searchAgent.toLowerCase()) || e.user_id.includes(searchAgent)) : agentSelector?.findAgents
+    const filteredAgent = searchAgent?.trim() != "" ? agentSelector?.findAgents?.filter((e) => e.name.toLowerCase()?.includes(searchAgent?.toLowerCase()) || e.user_id?.includes(searchAgent ? searchAgent: "")) : agentSelector?.findAgents
     setAgents(filteredAgent || null)
  
-    const dropdownAgent = filteredAgent?.length.valueOf() && searchAgent.trim() !== "" ? true : false
+
+    const dropdownAgent = filteredAgent?.length.valueOf() && searchAgent?.trim() !== "" ? true : false
     setAgentDropdown(dropdownAgent)
     if(dropdownAgent) {
       setBucketDropdown(!dropdownAgent)
