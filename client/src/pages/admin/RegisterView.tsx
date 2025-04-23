@@ -60,7 +60,6 @@ const RegisterView = () => {
       try {
         await createUser({variables:  {...data}});
       } catch (error:any) {
-        console.log(error)
         const errorMessage = error?.graphQLErrors?.[0]?.message;
         if (errorMessage?.includes("E11000")) {
           setSuccess({

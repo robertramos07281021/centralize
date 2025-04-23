@@ -29,6 +29,8 @@ import dispositionTypeTypeDefs from "./graphql/schemas/dispositionTypeSchema.js"
 import groupResolver from "./graphql/resolvers/groupResolver.js";
 import groupTypeDefs from "./graphql/schemas/groupSchema.js";
 
+
+
 const app = express()
 connectDB()
 
@@ -45,8 +47,7 @@ app.use(cookieParser())
 
 const startServer = async() => {
   const server = new ApolloServer({
-    typeDefs,
-    resolvers
+    typeDefs, resolvers
   })
   try {
     await server.start()

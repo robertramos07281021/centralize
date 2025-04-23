@@ -1,8 +1,6 @@
 import gql from "graphql-tag"
 import { Users } from "../../middleware/types"
 import { useQuery } from "@apollo/client"
-import { RootState } from "../../redux/store"
-import { useSelector } from "react-redux"
 import { useEffect, useState } from "react"
 
 
@@ -47,8 +45,8 @@ const AGENT_DISPOSITION = gql`
 
 
 const GET_DEPARTMENT_AGENT = gql`
-query Query($department: String!) {
-  findAgents(department: $department) {
+query Query {
+  findAgents{
     _id
     name
     username
@@ -66,12 +64,10 @@ query Query($department: String!) {
 `
 
 const AgentDisposition = () => {
-  const {userLogged} = useSelector((state:RootState)=> state.auth)
-  const {data:agentSelector} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT, {variables: {department:userLogged.department}})
-
-  
+  const {data:agentSelector} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT)
+ 
   const {data:dataDispo,refetch} = useQuery<{getAgentDispositions:AgentDisposition[]}>(AGENT_DISPOSITION)
-  
+
   useEffect(()=> {
     refetch()
     const refetchIntervals = setInterval(refetch,1000)

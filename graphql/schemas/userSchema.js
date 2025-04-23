@@ -49,13 +49,21 @@ const userTypeDefs = gql`
     user: Users!
   }
 
+  type DeptUser {
+    _id: ID
+    name: String
+    user_id: String,
+    group: ID 
+  }
+
   type Query {
     getUsers(page: Int!): PaginatedUsers!
     getUser(id: ID): User
     getMe:User
     getAomUser: [User]
     findUsers(search: String!, page: Int!): PaginatedUsers!
-    findAgents(department:String!):[Users]
+    findDeptAgents:[DeptUser]
+    findAgents:[Users]
   }
 
   type Mutation {

@@ -103,9 +103,11 @@ const customerResolver = {
       }
      
     },
-    findCustomerAccount: async(_,{disposition,dept,page}) => {
+    findCustomerAccount: async(_,{disposition,page}, {user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
+
       try {
-        const bucket = (await Bucket.find({dept})).map(e => e.name)
+        const bucket = (await Bucket.find({dept: user.department})).map(e => e.name)
         const search = disposition.length > 0 ? [{assigned: {$eq: null}},
           {"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }}] : [{assigned: {$eq: null}},{"account_bucket.name": {$in: bucket}}]
 
@@ -181,12 +183,35 @@ const customerResolver = {
         ])
         
         return {
-          CustomerAccounts: [...accounts[0].FindCustomerAccount],
-          totalCountCustomerAccounts: accounts[0].total[0].totalCustomerAccounts > 0 ? accounts[0].total[0].totalCustomerAccounts : 0
+          CustomerAccounts: [...accounts[0]?.FindCustomerAccount],
+          totalCountCustomerAccounts: accounts[0]?.total[0]?.totalCustomerAccounts > 0 ? accounts[0]?.total[0]?.totalCustomerAccounts : 0
         }
         
       } catch (error) {
-        console.log(error)
+        throw new CustomError(error.message, 500)
+      }
+    }
+  },
+  CustomerAccount: {
+    assigned: async(parent)=> {
+      try {
+        const group = await Group.aggregate([
+          {
+            $match: {
+              _id: new mongoose.Types.ObjectId(parent.assigned) 
+            }
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "members",
+              foreignField: "_id",
+              as: "members"
+            }
+          }
+        ])
+        return group
+      } catch (error) {
         throw new CustomError(error.message, 500)
       }
     }

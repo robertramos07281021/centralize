@@ -86,12 +86,23 @@ const userResolvers = {
         total: res[0].total.length > 0 ? res[0].total[0].totalUser : 0,
       };
     },
-    findAgents: async(_,{department})=> {
+    findDeptAgents: async(_,__,{user})=> {
+      if (!user) throw new CustomError("Not authenticated",401);
       try {
-        const agent = await User.find({department})
-        return [...agent]
+        const agent = await User.find({department: user.department})
+        return agent
       } catch (error) {
+
         throw new CustomError(error.message, 500)
+      }
+    },
+    findAgents: async(_,__,{user}) => {
+      if (!user) throw new CustomError("Not authenticated",401);
+      try {
+        const agent = await User.find({department: user.department})
+        return agent
+      } catch (error) {
+        throw new CustomError(error.message, 500) 
       }
     }
   },

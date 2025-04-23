@@ -99,6 +99,18 @@ const customerTypeDefs = gql`
     user: ID
   }
 
+  type GroupMember {
+    _id: ID
+    name: String
+    user_id: String
+  }
+
+  type Assigned {
+    _id: ID
+    name: String
+    description: String
+    members: [GroupMember]
+  }
 
   type CustomerAccount {
     _id: ID
@@ -117,6 +129,7 @@ const customerTypeDefs = gql`
     currentDisposition:CurrentDispo 
     dispoType: DispoType
     disposition_user: User
+    assigned: Assigned
   }
 
   type FindCustomerAccount {
@@ -124,6 +137,7 @@ const customerTypeDefs = gql`
     totalCountCustomerAccounts: Int
   }
 
+  
 
   type Search {
     _id: ID
@@ -145,7 +159,7 @@ const customerTypeDefs = gql`
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
     getCustomers(page:Int): getCustomers!
     search(search:String):[Search]
-    findCustomerAccount(disposition:[String],dept:String!,page:Int):FindCustomerAccount
+    findCustomerAccount(disposition:[String],page:Int):FindCustomerAccount
   }
 
   type Mutation {

@@ -27,6 +27,7 @@ const groupResolver = {
       }
     }
   },
+
   Mutation: {
     createGroup: async(_,{name,description}, {user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
@@ -46,15 +47,66 @@ const groupResolver = {
         throw new CustomError(error.message, 500)
       } 
     },
+    deleteGroup: async(_,{id},{user})=> {
+      if(!user) throw new CustomError("Unauthorized",401)
+      try {
+        const deletedGroup = await Group.findByIdAndDelete(id)
+        if(!deletedGroup) throw new CustomError("Group successfully deleted")
+
+        await Promise.all(
+          deletedGroup.members.map(e =>
+            User.findByIdAndUpdate(e, { $set: { group: null } })
+          )
+        );
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
     addGroupMember: async(_,{id,member},{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
+
+        const findGroup = await Group.findById(id)
+        if(!findGroup) throw new CustomError("Group not found", 404)
+
+        const updateAgentGroup = await User.findByIdAndUpdate(member,{$set: {group: findGroup._id}})
         
+        if(!updateAgentGroup) throw new CustomError("Username not found", 404)
+
+        findGroup.members.push(member)
+        await findGroup.save()
+        return {
+          success: true,
+          message: `Member successfully added`
+        }
       } catch (error) {
         throw new CustomError(error.message, 500) 
       }
-      
-    }
+    },
+    deleteGroupMember: async(_,{id,member}, {user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
+      try {
+
+        const updateGroup = await Group.findByIdAndUpdate(
+          id,
+          { $pull: { members: member } }
+        );
+
+        if(!updateGroup) throw new CustomError("Group not found", 404)
+
+        const updateUser = await User.findByIdAndUpdate(member, {$set: {group: null}})
+        if(!updateUser) throw new CustomError("User not found", 404)
+
+        return {
+          success: true,
+          message: `Member successfully deleted`
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500) 
+      }
+    },
+    
+    
   }
 }
 
