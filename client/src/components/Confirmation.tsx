@@ -19,6 +19,10 @@ const color = {
   UPLOADED: {
     title: "bg-green-500",
     button: "bg-green-500 hover:bg-green-600 focus:ring-green-300"
+  },
+  ADDED: {
+    title: "bg-green-500",
+    button: "bg-green-500 hover:bg-green-600 focus:ring-green-300"
   }
 }
 

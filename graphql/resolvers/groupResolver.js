@@ -2,6 +2,7 @@ import mongoose from "mongoose"
 import CustomError from "../../middlewares/errors.js"
 import Group from "../../models/group.js"
 import User from "../../models/user.js"
+import CustomerAccount from "../../models/customerAccount.js"
 
 const groupResolver = {
 
@@ -105,8 +106,35 @@ const groupResolver = {
         throw new CustomError(error.message, 500) 
       }
     },
-    
-    
+    addGroupTask: async(_,{groupId,task}, {user}) =>  {
+      if(!user) throw new CustomError("Unauthorized",401)
+      try {
+        const findGroup = await Group.findById(groupId)
+        await CustomerAccount.updateMany({_id: {$in: task}}, {$set: {assigned: findGroup._id}})
+        return {
+          success: true,
+          message: "Task successfully added"
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500) 
+      }
+
+    },
+    deleteGroupTask: async(_,{caIds},{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
+      try {
+        await CustomerAccount.updateMany({_id: {$in: caIds}},{$set: {
+          assigned: null
+        }})
+        
+        return {
+          success: true,
+          message: "Assigned successfully removed"
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500)  
+      }
+    },
   }
 }
 

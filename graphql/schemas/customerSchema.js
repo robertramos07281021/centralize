@@ -128,16 +128,14 @@ const customerTypeDefs = gql`
     customer_info: CustomerInfo
     currentDisposition:CurrentDispo 
     dispoType: DispoType
-    disposition_user: User
     assigned: Assigned
+    disposition_user: User
   }
 
   type FindCustomerAccount {
     CustomerAccounts: [CustomerAccount],
     totalCountCustomerAccounts: Int
   }
-
-  
 
   type Search {
     _id: ID
@@ -155,11 +153,16 @@ const customerTypeDefs = gql`
     customer_info: CustomerInfo
   }
 
+  type SelectAllCustomerAccount {
+    _id: ID
+  }
+
   type Query {
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
     getCustomers(page:Int): getCustomers!
     search(search:String):[Search]
-    findCustomerAccount(disposition:[String],page:Int):FindCustomerAccount
+    findCustomerAccount(disposition:[String],groupId:ID,page:Int, assigned:String):FindCustomerAccount
+    selectAllCustomerAccount(disposition:[String],groupId:ID,assigned:String):[ID]
   }
 
   type Mutation {

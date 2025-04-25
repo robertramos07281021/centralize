@@ -41,7 +41,9 @@ const customerAccountSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Group"
     },
-
+    assigned_date: {
+      type: String
+    },
     out_standing_details: {
       principal_os: {
         type: Number,

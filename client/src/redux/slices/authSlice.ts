@@ -26,12 +26,14 @@ interface UserState {
   userLogged: User
   search: search
   selectedCustomer:Search
+  selectedGroup: string
 }
 
 const initialState:UserState = {
   error: false,
   need_login: false,
   settled: false,
+  selectedGroup: "",
   userLogged: {
     _id: "",
     change_password: false,
@@ -115,9 +117,12 @@ const authSlice = createSlice({
     },
     setSettled: (state, action:PayloadAction<boolean>) => {
       state.settled = action.payload
+    },
+    setSelectedGroup: (state, action:PayloadAction<string>)=> {
+      state.selectedGroup = action.payload
     }
   },
 });
 
-export const { logoutUser, setError, setNeedLogin , setUserLogged, setSearch, setSelectedCustomer, setSettled} = authSlice.actions;
+export const { logoutUser, setError, setNeedLogin , setUserLogged, setSearch, setSelectedCustomer, setSettled, setSelectedGroup} = authSlice.actions;
 export default authSlice.reducer;

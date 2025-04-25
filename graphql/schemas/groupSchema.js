@@ -29,6 +29,9 @@ const groupTypeDefs = gql`
     addGroupMember(id:ID,member:ID): Success
     deleteGroupMember(id:ID!, member:ID!): Success
     deleteGroup(id:ID!): Success
+    addGroupTask(groupId:ID!,task:[ID] ):Success
+    deleteGroupTask(caIds:[ID]):Success
+
   }
 `
 

@@ -1,6 +1,16 @@
-import { useQuery } from "@apollo/client"
+import { useMutation, useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useState } from "react"
+import { useEffect, useState } from "react"
+import { useSelector } from "react-redux"
+import { RootState } from "../redux/store"
+import Confirmation from "./Confirmation"
+import { FaMinusCircle  } from "react-icons/fa";
+import SuccessToast from "./SuccessToast"
+
+interface Success {
+  success: boolean,
+  message: string
+}
 
 interface OutStandingDetails {
   principal_os:number
@@ -72,7 +82,7 @@ interface Assigned {
   members: [Member]
 }
 
-interface CustomerAccount {
+interface CustomerAccounts {
     _id: string
     case_id: string
     account_id: string
@@ -92,11 +102,16 @@ interface CustomerAccount {
     disposition_user : Disposition_user
 }
 
+interface FindCustomerAccount {
+  CustomerAccounts: CustomerAccounts[],
+  totalCountCustomerAccounts: number
+}
+
 
 
 const FIND_CUSTOMER_ACCOUNTS = gql`
-query Query($page: Int, $disposition: [String]) {
-  findCustomerAccount(page: $page, disposition: $disposition) {
+query Query($page: Int, $disposition: [String], $groupId: ID, $assigned:String) {
+  findCustomerAccount(page: $page, disposition: $disposition, groupId: $groupId,assigned:$assigned ) {
     CustomerAccounts {
       _id
       case_id
@@ -171,21 +186,327 @@ query Query($page: Int, $disposition: [String]) {
   }
 }
 `
-interface modalProps {
-  selectedDisposition: string[]
- 
+const SELECT_ALL_CUSTOMER_ACCOUNT = gql`
+  query Query($disposition: [String], $groupId:ID, $assigned:String) {
+    selectAllCustomerAccount(disposition: $disposition,groupId: $groupId, assigned: $assigned )
+  }
+`
+const ADD_GROUP_TASK = gql`
+  mutation Mutation($groupId: ID!, $task: [ID]) {
+  addGroupTask(groupId: $groupId, task: $task) {
+    message
+    success
+  }
+}
+`
+interface Member {
+  _id: string
+  name: string
+  user_id: string
+}
+interface Group {
+  _id:string
+  name:string
+  description:string
+  members: Member[]
 }
 
+const DEPT_GROUP = gql`
+  query Query {
+    findGroup {
+      _id
+      name
+      description
+      members {
+        _id
+        name
+        user_id
+      }
+    }
+  }
+`
+const DELETE_GROUP_TASK = gql`
+  mutation Mutation($caIds: [ID]) {
+    deleteGroupTask(caIds: $caIds) {
+      message
+      success
+    }
+  }
+`
 
-const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition}) => {
+interface modalProps {
+  selectedDisposition: string[]
+  selectedTasking: string
+  selectedAssigned: string
+}
 
-    const [page, setPage] = useState<number>(1)
-    const {data:CustomerAccountsData} = useQuery<{findCustomerAccount:CustomerAccount[]}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page }})
+const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTasking ,selectedAssigned}) => {
+  const [groupDataNewObject, setGroupDataNewObject] = useState<{[key:string]:string}>({})
+  const [page, setPage] = useState<number>(1)
+  const {selectedGroup} = useSelector((state:RootState)=> state.auth)
+  const {data:CustomerAccountsData, refetch:CADRefetch,} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId:groupDataNewObject[selectedGroup], assigned: selectedAssigned}})
+
+  const [handleCheckAll, setHandleCheckAll] = useState<boolean>(false)
+  const [taskToAdd, setTaskToAdd] = useState<string[]>([])
+  const {data:selectAllCustomerAccountData, refetch:SACARefetch} = useQuery<{selectAllCustomerAccount:string[]}>(SELECT_ALL_CUSTOMER_ACCOUNT,{variables: {disposition: selectedDisposition, groupId:groupDataNewObject[selectedGroup], assigned: selectedAssigned }})
+  const [required, setRequired] = useState<boolean>(false)
+  const [confirm, setConfirm] = useState<boolean>(false)
+  const {data:GroupData} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
+  const [success, setSuccess] = useState<Success>({
+    success:false,
+    message: ""
+  })
+
+  console.log(selectAllCustomerAccountData)
+
+  useEffect(()=> {
+    setRequired(false)
+    CADRefetch()
+    setTaskToAdd([])
+    setHandleCheckAll(false)
+    SACARefetch()
+  },[selectedGroup,CADRefetch,selectedTasking, selectedAssigned,SACARefetch])
+
+
+  useEffect(()=> {
+    const newObject:{[key:string]:string}= {}
+    if(GroupData){
+      GroupData.findGroup.map((e)=> {
+        newObject[e.name] = e._id
+      })
+    }
+    setGroupDataNewObject(newObject)
+  },[GroupData])
+
+  
+
+  const [modalProps, setModalProps] = useState({
+    message: "",
+    toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "LOGOUT" | "ADDED",
+    yes: () => {},
+    no: () => {}
+  })
+
+  // const addPage = () => {
+  //   if(CustomerAccountsData?.findCustomerAccount.totalCountCustomerAccounts && (CustomerAccountsData?.findCustomerAccount.totalCountCustomerAccounts/20) > 1 ) {
+  //     setPage(prev => prev + 1)
+  //   }
+  // }
+
+  // const minusPage = () => {
+  //   if(page > 0) {
+  //     setPage(prev => (prev > 1 ? prev - 1 : 1))
+  //   }
+  // }
+
+  const [deleteGroupTask] = useMutation(DELETE_GROUP_TASK, {
+    onCompleted:() => {
+      CADRefetch()
+      setConfirm(false)
+      setTaskToAdd([])
+      setHandleCheckAll(false)
+      SACARefetch()
+      setSuccess({
+        success:true,
+        message: "Task successfully removed"
+      })
+    },
+  })
+
+  const handleClickDeleteGroupTaskButton = ()=> {
+    if(selectAllCustomerAccountData && selectAllCustomerAccountData?.selectAllCustomerAccount?.length < 1 ) {
+      setRequired(true)
+    } else {
+    setConfirm(true)
+    setModalProps({
+      message: `Remove this task?`,
+      toggle: "DELETE",
+      yes: async() => {
+        try {
+          await deleteGroupTask({variables: {caIds: taskToAdd}})
+        } catch (error) {
+          console.log(error)
+        }
+      },
+      no: () => {
+        setConfirm(false)
+      }
+    })
+    }
+  }
+
+
+
+  const handleSelectAllToAdd = (e:React.ChangeEvent<HTMLInputElement>) => {
+    const newArray = selectAllCustomerAccountData?.selectAllCustomerAccount.map(e => e.toString())
+    if(e.target.checked){
+      setTaskToAdd(newArray ?? [])
+      setHandleCheckAll(true)
+    } else {
+      setHandleCheckAll(false)
+      setTaskToAdd([])
+    }
+  }
+
+  const handleCheckBox= (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
+    const check = e.target.checked ? [...taskToAdd, value] : taskToAdd.filter((d) => d !== value )
+    setTaskToAdd(check)
+  }
+
+  const [addGroupTask] = useMutation(ADD_GROUP_TASK,{
+    onCompleted:() => {
+      CADRefetch()
+      setConfirm(false)
+      setRequired(false)
+      setTaskToAdd([])
+      SACARefetch()
+      setHandleCheckAll(false)
+      setSuccess({
+        success:true,
+        message: "Task successfully added"
+      })
+    },
+  })
+
+  const handleAddTask = () => {
+    if(taskToAdd.length === 0) {
+      setRequired(true)
+    } else {
+      setRequired(false)
+      setConfirm(true)
+      setModalProps({
+        message: `You assigning the task to ${selectedGroup}?`,
+        toggle: "CREATE",
+        yes: async() => {
+          try {
+            await addGroupTask({variables: {groupId: groupDataNewObject[selectedGroup],task: taskToAdd}})
+          } catch (error) {
+            console.log(error)
+          }
+        },
+        no: () => {
+          setConfirm(false)
+        }
+      })
+    }
+  }
 
   return (
-    <div className="border h-full">
+    <>
+      {
+        success?.success &&
+        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
+      }
+      <div className="min-h-7/8 p-5 pb-10">
+        {
+          selectedGroup && (selectedTasking === "group") &&
+          <div className={`flex ${required ? "justify-between" : "justify-end"}  items-center`}>
+            { required &&
+              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+              <span className="font-medium">No Item Selected!</span> Please add one or more task.
+            </div>
+            }
+            <div className="flex gap-2">
+              { selectedAssigned !== "assigned" ? 
+                <button type="button" className="focus:outline-none text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xs px-5 h-10 me-2 mb-2" onClick={handleAddTask}>Add Task</button> : 
 
-    </div>
+                <button type="button" className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-xs px-5 h-10 me-2 mb-2" onClick={handleClickDeleteGroupTaskButton}>Remove task</button>
+              }
+            </div>
+          </div>
+        }
+        
+        <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
+          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+            <tr>
+                <th scope="col" className="px-6 py-3">
+                  Customer Name
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  Current Disposition
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  
+                </th>
+                <th scope="col" className="px-6 py-3">
+                  assigned
+                </th>
+                {
+                  selectedGroup &&
+                  <th scope="col" className="px-6 py-3 w-70 text-end">
+                    Action
+                  </th>
+
+                }
+            </tr>
+          </thead>
+          <tbody>
+            { 
+              selectedGroup &&
+              <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-blue-100">
+                <th scope="row" className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
+                    
+                </th>
+                <td className="px-6">
+                    
+                </td>
+                <td className="px-6 ">
+                    
+                </td>
+                <td className="px-6">
+                
+                </td>
+                <td className=" flex gap-2 ps-6 justify-end w-70"> 
+                  <label>
+                    <input type="checkbox" name="all" id="all" 
+                    checked={handleCheckAll}
+                    onChange={(e)=> handleSelectAllToAdd(e)} className={`${selectedAssigned === "assigned" && "accent-red-600"}`}/>
+                    <span className="ps-2">Select All</span>
+                  </label>
+                </td>
+              </tr>
+
+            }
+            {
+              CustomerAccountsData?.findCustomerAccount.CustomerAccounts.map((ca)=> ( 
+              <tr key={ca._id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-blue-100">
+                <th scope="row" className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
+                    {ca.customer_info.fullName}
+                </th>
+                <td className="px-6">
+                    {ca.currentDisposition ? (ca.dispoType.code === "PAID" ? `${ca.dispoType.code} (Not Settled)` : ca.dispoType.code) : "New Endorsed"}
+                </td>
+                <td className="px-6 ">
+                    Details
+                </td>
+                <td className="px-6">
+                  {ca.assigned?.name}
+                </td>
+                {
+                  selectedGroup &&
+                  <td className="px-6 flex items-center py-4 justify-end ">
+                    {
+                      !ca.assigned?._id && 
+                      <input type="checkbox" name={ca.customer_info.fullName} id={ca.customer_info.fullName} onChange={(e)=> handleCheckBox(ca._id, e)} checked={taskToAdd.includes(ca._id)}/>
+                    }
+                    {
+                      ca.assigned?._id &&  
+                      <input type="checkbox" name={ca.customer_info.fullName} id={ca.customer_info.fullName} onChange={(e)=> handleCheckBox(ca._id, e)} checked={taskToAdd.includes(ca._id)} className="accent-red-600"/>
+                    }
+                  </td>
+
+                }
+              </tr>
+              ))
+            }
+          </tbody>
+      </table>
+
+      </div>
+      { confirm &&
+      <Confirmation {...modalProps}/>
+      }
+    </>
   )
 }
 

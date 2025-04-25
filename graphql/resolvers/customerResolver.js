@@ -103,14 +103,22 @@ const customerResolver = {
       }
      
     },
-    findCustomerAccount: async(_,{disposition,page}, {user}) => {
+    findCustomerAccount: async(_,{disposition, groupId ,page, assigned}, {user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
-
       try {
         const bucket = (await Bucket.find({dept: user.department})).map(e => e.name)
-        const search = disposition.length > 0 ? [{assigned: {$eq: null}},
-          {"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }}] : [{assigned: {$eq: null}},{"account_bucket.name": {$in: bucket}}]
+        let search = []
+        if(Boolean(disposition.length > 0 && groupId)){
+          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }}, {assigned: assigned == "assigned" ? new mongoose.Types.ObjectId(groupId) : null}]
+        } else if (Boolean(disposition.length === 0 && !groupId)) {
+          search = [{"account_bucket.name": {$in: bucket}}, {assigned: assigned == "assigned" ? {$ne: null} : null}]
+        } else if (disposition.length > 0 && !groupId) {
+          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }},{assigned: assigned == "assigned" ? new mongoose.Types.ObjectId(groupId) : null}]
+        } else if(Boolean(disposition.length === 0 && groupId)) {
+          search = [{"account_bucket.name": {$in: bucket}},{assigned: assigned == "assigned" ? new mongoose.Types.ObjectId(groupId) : null}]
+        }
 
+        
         const accounts = await CustomerAccount.aggregate([
           {
             $lookup: {
@@ -158,18 +166,9 @@ const customerResolver = {
           },
           { $unwind: { path: "$disposition_user", preserveNullAndEmptyArrays: true } },
           {
-            $lookup: {
-              from: "groups",
-              localField: "assgined",
-              foreignField: "_id",
-              as: "group_assigned",
-            }
-          },
-          { $unwind: { path: "$group_assigned", preserveNullAndEmptyArrays: true } },
-          {
             $match: {
-              $and: search 
-            },
+              $and: search
+            }
           },
           {
             $facet: {
@@ -181,7 +180,6 @@ const customerResolver = {
             }
           }
         ])
-        
         return {
           CustomerAccounts: [...accounts[0]?.FindCustomerAccount],
           totalCountCustomerAccounts: accounts[0]?.total[0]?.totalCustomerAccounts > 0 ? accounts[0]?.total[0]?.totalCustomerAccounts : 0
@@ -190,7 +188,61 @@ const customerResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
-    }
+    },
+    selectAllCustomerAccount: async(_,{disposition,groupId,assigned},{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401) 
+      try {
+        const bucket = (await Bucket.find({dept: user.department})).map(e => e.name)
+        let search = []
+        if(Boolean(disposition.length > 0 && groupId)){
+          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }}, {assigned: assigned == "assigned" ? new mongoose.Types.ObjectId(groupId) : null}]
+        } else if (Boolean(disposition.length === 0 && !groupId)) {
+          search = [{"account_bucket.name": {$in: bucket}}, {assigned: assigned == "assigned" ? {$ne: null} : null}]
+        } else if (disposition.length > 0 && !groupId) {
+          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }},{assigned: assigned == "assigned" ? new mongoose.Types.ObjectId(groupId) : null}]
+        } else if(Boolean(disposition.length === 0 && groupId)) {
+          search = [{"account_bucket.name": {$in: bucket}},{assigned: assigned == "assigned" ? new mongoose.Types.ObjectId(groupId) : null}]
+        }
+
+        const accounts = await CustomerAccount.aggregate([
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "bucket",
+              foreignField: "_id",
+              as: "account_bucket",
+            },
+          },
+          { $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "current_disposition",
+              foreignField: "_id",
+              as: "currentDisposition",
+            }
+          },
+          { $unwind: { path: "$currentDisposition", preserveNullAndEmptyArrays: true } },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "currentDisposition.disposition",
+              foreignField: "_id",
+              as: "dispoType",
+            }
+          },
+          {
+            $match: {
+              $and: search
+            }
+          }
+        ])
+        return accounts ? accounts.map(e => e._id) : []
+      } catch (error) {
+        throw new CustomError(error.message, 500) 
+      }
+    
+    },
   },
   CustomerAccount: {
     assigned: async(parent)=> {
@@ -210,16 +262,16 @@ const customerResolver = {
             }
           }
         ])
-        return group
+        return group[0] ? group[0] : null
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
     }
   },
+  
+  
   Mutation: {
     createCustomer: async(_,{input},{user}) => {
-
-
       if(!user) throw new CustomError("Unauthorized",401)
       try {
         const buckets = await Bucket.find({dept: user.department})

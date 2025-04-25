@@ -4,6 +4,8 @@ import { useEffect, useState } from "react";
 import { FaPlusCircle, FaMinusCircle  } from "react-icons/fa";
 import SuccessToast from "./SuccessToast";
 import Confirmation from "./Confirmation";
+import { setSelectedGroup } from "../redux/slices/authSlice";
+import { useAppDispatch } from "../redux/store";
 
 
 interface Success {
@@ -82,7 +84,7 @@ const DELETE_GROUP_MEMBER = gql`
 `
 
 const GroupSection = () => {
-
+  const dispatch = useAppDispatch()
   const [success, setSuccess] = useState<Success>({
     success:false,
     message: ""
@@ -100,7 +102,9 @@ const GroupSection = () => {
   const selectedGroup = deptGroupData?.findGroup.find((dgd)=> dgd.name === groupName)
   const [dgdObjectName, setdgdObjectName] = useState<{[key: string]:string}>({})
 
-
+  useEffect(()=> {
+    dispatch(setSelectedGroup(groupName))
+  },[groupName,dispatch])
 
   useEffect(()=> {
     if(deptGroupData) {
@@ -218,7 +222,7 @@ const GroupSection = () => {
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
       }
-      <div className=" flex justify-end w-full gap-10 items-end">
+      <div className=" flex justify-end w-full gap-5 items-end flex-col">
         <div className="flex gap-5">
           <input 
             type="text" 
@@ -238,7 +242,7 @@ const GroupSection = () => {
             className="border border-slate-300 bg-slate-50 rounded-md lg:px-1.5 lg:py-1  2xl:py-1.5 2xl:px-2 lg:w-70 2xl:w-96 2xl:text-xs lg:text-[0.6em]"
             onChange={(e)=> setDescription(e.target.value)}
             placeholder="Enter Group Description..."/>
-          <button type="button" className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs px-5 h-10 me-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800" onClick={onSubmitCreateGroup}>Add Group</button>
+          <button type="button" className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs px-5 h-10 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800" onClick={onSubmitCreateGroup}>Add Group</button>
         </div>
         <div className="flex items-center gap-5 relative lg:text-[0.6em] 2xl:text-xs">
           {
@@ -246,11 +250,11 @@ const GroupSection = () => {
             <>
               <div>
                 <FaPlusCircle  className={`${addMember && "rotate-45"} peer text-3xl transition-transform `} onClick={handleAddMemberTransition}/>
-                <p className="peer-hover:block hidden absolute text-xs -translate-x-1/2 left-4 -top-5 font-bold text-slate-700">{addMember ? "Close" : "Add Member"}</p>
+                <p className="peer-hover:block hidden absolute text-xs -translate-x-1/2 left-4 -top-5 font-bold text-slate-700 bg-white">{addMember ? "Close" : "Add Member"}</p>
               </div>
               <div>
                 <FaMinusCircle className="peer text-3xl text-red-700"/>
-                <p className="peer-hover:block hidden absolute text-xs translate-x-1/2 -left-2  -top-5 font-bold text-slate-700">Delete Group</p>
+                <p className="peer-hover:block hidden absolute text-xs translate-x-1/2 -left-2  -top-5 font-bold text-slate-700 bg-white">Delete Group</p>
               </div>
             </>
           }
@@ -308,7 +312,7 @@ const GroupSection = () => {
                   <div className="h-full flex flex-col overflow-y-auto">
                     {
                       selectedGroup?.members.map((m)=> (
-                        <div key={m._id} className="grid grid-cols-3 text-center even:bg-slate-100 py-1">
+                        <div key={m._id} className="grid grid-cols-3 text-center odd:bg-slate-100 py-1">
                           <div>
                             {m.name}
                           </div>

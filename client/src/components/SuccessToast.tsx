@@ -36,6 +36,15 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
     "NOT INCLUDED" : {
       toast: "bg-red-400",
       close: "text-red-400"
+    },
+    REMOVED: {
+      toast: "bg-red-400",
+      close: "text-red-400"
+    },
+    ADDED: {
+      toast: "bg-green-400",
+      close: "text-green-400"
+
     }
   } as const;
   useEffect(()=> {
@@ -54,6 +63,8 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
   if (messageText.includes("DELETED")) successType = "DELETED";
   if (messageText.includes("EXISTS")) successType = "EXISTS";
   if (messageText.includes("UPLOADED")) successType = "UPLOADED";
+  if (messageText.includes("REMOVED")) successType = "REMOVED";
+  if (messageText.includes("ADDED")) successType = "ADDED";
   if (messageText.includes("NOT INCLUDED")) successType = "NOT INCLUDED";
 
   return (

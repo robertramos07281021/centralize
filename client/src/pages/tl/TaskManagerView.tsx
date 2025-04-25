@@ -23,13 +23,12 @@ const GET_ALL_DISPOSITION_TYPE = gql`
   }
 }
 `
-
-
 const TaskManagerView = () => {
   const {data:DispositionTypes} = useQuery<{getDispositionTypes:DispositionTypes[]}>(GET_ALL_DISPOSITION_TYPE)
   const [selectedDisposition, setSelectedDisposition] = useState<string[]>([])
-  // const [page, setPage] = useState<number>(1)
-  // const {data:CustomerAccountsData} = useQuery<{findCustomerAccount:CustomerAccount[]}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, dept: userLogged.department, page:page }})
+  
+  const [selectedTasking, setSelectedTasking] = useState<string>("group") 
+  const [selectedAssigned, setSelectedAssigned] = useState<string>("assigned")
 
   const handleCheckBox= (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
     const check = e.target.checked ? [...selectedDisposition, value] : selectedDisposition.filter((d) => d !== value )
@@ -42,22 +41,75 @@ const TaskManagerView = () => {
   }
 
   return (
-    <div className="h-full w-full flex flex-col ">
-      <div className="flex gap-10 p-5 mt-5">
-        <div className=" flex lg:gap-5 2xl:gap-10 lg:text-[0.6em] 2xl:text-xs items-end w-full">
-          <div className="lg:w-70 2xl:w-96 border rounded-md h-10 border-slate-500 relative cursor-default " title={selectedDisposition.toString()} >
+    <div className="h-full w-full flex flex-col relative">
+      <div className="flex gap-10 p-5 mt-5 items-start">
+        <div className=" flex gap-5 lg:text-[0.6em] 2xl:text-xs w-full flex-col">
+         
+          <div className="flex gap-5">
+            <fieldset className="flex p-1.5 gap-4 px-4 border rounded-md border-slate-300">
+              <legend className="font-medium text-slate-600 px-2">Tasker</legend>
+              <label className="text-sm font-medium text-gray-900 flex items-center gap-1">
+                <input 
+                  id="default-radio-1" 
+                  type="radio" 
+                  value="group" 
+                  name="default-radio"
+                  checked={selectedTasking === "group"}
+                  onChange={(e)=> setSelectedTasking(e.target.value)}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300"/>
+                <span >Group</span>
+              </label>
+              <label className="text-sm font-medium text-gray-900 flex items-center gap-1">
+                <input 
+                  id="default-radio-2" 
+                  type="radio" 
+                  value="individual" 
+                  name="default-radio"
+                  checked={selectedTasking === "individual"}
+                  onChange={(e)=> setSelectedTasking(e.target.value)}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 "/>
+                <span>Individual</span>
+              </label>
+            </fieldset>
+            <fieldset className="flex p-1.5 gap-4 px-4 border rounded-md border-slate-300">
+              <legend className="font-medium text-slate-600 px-2">Assign Filter</legend>
+              <label className="text-sm font-medium text-gray-900 flex items-center gap-1">
+                <input 
+                  id="default-radio-3" 
+                  type="radio" 
+                  value="assigned" 
+                  name="default-radio-1"
+                  checked={selectedAssigned === "assigned"}
+                  onChange={(e)=> setSelectedAssigned(e.target.value)}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300"/>
+                <span >Assigned</span>
+              </label>
+              <label className="text-sm font-medium text-gray-900 flex items-center gap-1">
+                <input 
+                  id="default-radio-4" 
+                  type="radio" 
+                  value="unassigned" 
+                  name="default-radio-1"
+                  checked={selectedAssigned === "unassigned"}
+                  onChange={(e)=> setSelectedAssigned(e.target.value)}
+                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 "/>
+                <span>Unassigned</span>
+              </label>
+            </fieldset>
+          </div>
+          <div className="lg:w-70 2xl:w-96 border rounded-md h-10 border-slate-300 relative cursor-default " title={selectedDisposition.toString()} >
             {
               showSelection ?
-              <RiArrowUpSFill  className="absolute right-2 top-2 text-2xl" onClick={onClick} />
+              <RiArrowUpSFill  className="absolute right-2 top-2 text-2xl"  onClick={onClick}/>
               :
               <RiArrowDownSFill className="absolute right-2 top-2 text-2xl" onClick={onClick}/>
             }
-            <div className="lg:w-60 2xl:w-80 h-full px-2 truncate font-bold text-slate-500 flex items-center">
+            <div className="lg:w-60 2xl:w-80 h-full px-2 truncate font-bold text-slate-500 flex items-center" onClick={onClick}>
               {selectedDisposition.length > 0 ? selectedDisposition.toString(): "Select Disposition"}
             </div>
             {
               showSelection &&
-              <div className="w-full h-96  border overflow-y-auto absolute top-10 flex gap-5 p-5 text-xs flex-col border-slate-500">
+              <div className="w-full h-96  border overflow-y-auto absolute top-10 flex gap-5 p-5 text-xs flex-col border-slate-300 bg-white">
               {
                 DispositionTypes?.getDispositionTypes.filter((e)=> e.name !== "SETTLED").map((e) =>
                   <label key={e.id} className="flex gap-2 text-slate-500">
@@ -75,20 +127,15 @@ const TaskManagerView = () => {
               </div>
             }
           </div>
-          <label className="flex gap-2 text-slate-500 items-center">
-            <input   
-              disabled
-              type="checkbox" 
-              name="due_date" 
-              id="due_date"
-              value="due date"
-            />
-            <p>Due Date</p>
-          </label>
         </div>
-        <GroupSection/>
+        {
+          selectedTasking === "group" ? <GroupSection/> : 
+          <div className="w-full flex justify-end items-center ">
+          
+          </div>
+        }
       </div>
-      <TaskDispoSection selectedDisposition={selectedDisposition}/>
+      <TaskDispoSection selectedDisposition={selectedDisposition} selectedTasking={selectedTasking} selectedAssigned={selectedAssigned}/>
     </div>
   )
 }
