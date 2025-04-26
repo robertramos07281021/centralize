@@ -1,9 +1,12 @@
 import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { RiArrowDownSFill, RiArrowUpSFill   } from "react-icons/ri";
 import GroupSection from "../../components/GroupSection";
 import TaskDispoSection from "../../components/TaskDispoSection";
+import AgentSection from "../../components/AgentSection";
+import { useAppDispatch } from "../../redux/store";
+import { setAgent, setSelectedGroup } from "../../redux/slices/authSlice";
 
 
 interface DispositionTypes {
@@ -24,11 +27,20 @@ const GET_ALL_DISPOSITION_TYPE = gql`
 }
 `
 const TaskManagerView = () => {
+  const dispatch = useAppDispatch()
   const {data:DispositionTypes} = useQuery<{getDispositionTypes:DispositionTypes[]}>(GET_ALL_DISPOSITION_TYPE)
   const [selectedDisposition, setSelectedDisposition] = useState<string[]>([])
   
   const [selectedTasking, setSelectedTasking] = useState<string>("group") 
   const [selectedAssigned, setSelectedAssigned] = useState<string>("assigned")
+
+
+  useEffect(()=> {
+    dispatch(setSelectedGroup(""))
+    dispatch(setAgent(""))
+    dispatch()
+  },[selectedTasking,dispatch])
+
 
   const handleCheckBox= (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
     const check = e.target.checked ? [...selectedDisposition, value] : selectedDisposition.filter((d) => d !== value )
@@ -72,7 +84,7 @@ const TaskManagerView = () => {
               </label>
             </fieldset>
             <fieldset className="flex p-1.5 gap-4 px-4 border rounded-md border-slate-300">
-              <legend className="font-medium text-slate-600 px-2">Assign Filter</legend>
+              <legend className="font-medium text-slate-600 px-2">Tasks Filter</legend>
               <label className="text-sm font-medium text-gray-900 flex items-center gap-1">
                 <input 
                   id="default-radio-3" 
@@ -130,12 +142,10 @@ const TaskManagerView = () => {
         </div>
         {
           selectedTasking === "group" ? <GroupSection/> : 
-          <div className="w-full flex justify-end items-center ">
-          
-          </div>
+          <AgentSection/>
         }
       </div>
-      <TaskDispoSection selectedDisposition={selectedDisposition} selectedTasking={selectedTasking} selectedAssigned={selectedAssigned}/>
+      <TaskDispoSection selectedDisposition={selectedDisposition} selectedAssigned={selectedAssigned}/>
     </div>
   )
 }

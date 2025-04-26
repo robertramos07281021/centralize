@@ -25,7 +25,7 @@ const groupTypeDefs = gql`
 
   type Mutation {
     createGroup(name: String!,description: String): Success
-    updateGroup(id:ID!,name: String,description: String, members:[ID]): Success
+    updateGroup(id:ID!,name: String,description: String): Success
     addGroupMember(id:ID,member:ID): Success
     deleteGroupMember(id:ID!, member:ID!): Success
     deleteGroup(id:ID!): Success

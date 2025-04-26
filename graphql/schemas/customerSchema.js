@@ -104,13 +104,21 @@ const customerTypeDefs = gql`
     name: String
     user_id: String
   }
-
-  type Assigned {
+  
+  type Group {
     _id: ID
     name: String
     description: String
     members: [GroupMember]
   }
+
+  type User {
+    _id: ID
+    name: String
+    user_id: String
+  }
+
+  union Assigned = Group | User
 
   type CustomerAccount {
     _id: ID

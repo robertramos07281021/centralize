@@ -7,6 +7,7 @@ import DispoType from "../../models/dispoType.js";
 import Group from "../../models/group.js";
 import ModifyRecord from "../../models/modifyRecord.js";
 import mongoose from "mongoose";
+import User from "../../models/user.js";
 
 const customerResolver = {
   DateTime,
@@ -106,19 +107,27 @@ const customerResolver = {
     findCustomerAccount: async(_,{disposition, groupId ,page, assigned}, {user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
+        let selected = ''
+        if(groupId) {
+          const group = await Group.findOne({_id: groupId})
+        
+          const userSelected = await User.findOne({_id: groupId})
+          selected = group ? group._id : userSelected._id
+        }
+
+
         const bucket = (await Bucket.find({dept: user.department})).map(e => e.name)
         let search = []
         if(Boolean(disposition.length > 0 && groupId)){
-          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }}, {assigned: assigned == "assigned" ? new mongoose.Types.ObjectId(groupId) : null}]
+          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }}, {assigned: assigned == "assigned" ? selected : null}]
         } else if (Boolean(disposition.length === 0 && !groupId)) {
           search = [{"account_bucket.name": {$in: bucket}}, {assigned: assigned == "assigned" ? {$ne: null} : null}]
         } else if (disposition.length > 0 && !groupId) {
-          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }},{assigned: assigned == "assigned" ? new mongoose.Types.ObjectId(groupId) : null}]
+          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }},{assigned: assigned == "assigned" ? selected : null}]
         } else if(Boolean(disposition.length === 0 && groupId)) {
-          search = [{"account_bucket.name": {$in: bucket}},{assigned: assigned == "assigned" ? new mongoose.Types.ObjectId(groupId) : null}]
+          search = [{"account_bucket.name": {$in: bucket}},{assigned: assigned == "assigned" ? selected : null}]
         }
 
-        
         const accounts = await CustomerAccount.aggregate([
           {
             $lookup: {
@@ -173,18 +182,18 @@ const customerResolver = {
           {
             $facet: {
               FindCustomerAccount: [
-                { $skip: (page - 1) * 20 },
-                { $limit: 20 }
+                { $skip: (page - 1) * 5 },
+                { $limit: 5 }
               ],
               total: [{$count: "totalCustomerAccounts"}]
             }
           }
         ])
+        
         return {
           CustomerAccounts: [...accounts[0]?.FindCustomerAccount],
           totalCountCustomerAccounts: accounts[0]?.total[0]?.totalCustomerAccounts > 0 ? accounts[0]?.total[0]?.totalCustomerAccounts : 0
         }
-        
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
@@ -192,16 +201,25 @@ const customerResolver = {
     selectAllCustomerAccount: async(_,{disposition,groupId,assigned},{user}) => {
       if(!user) throw new CustomError("Unauthorized",401) 
       try {
+        let selected = ''
+        if(groupId) {
+          const group = await Group.findOne({_id: groupId})
+        
+          const userSelected = await User.findOne({_id: groupId})
+          selected = group ? group._id : userSelected._id
+        }
+
+
         const bucket = (await Bucket.find({dept: user.department})).map(e => e.name)
         let search = []
         if(Boolean(disposition.length > 0 && groupId)){
-          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }}, {assigned: assigned == "assigned" ? new mongoose.Types.ObjectId(groupId) : null}]
+          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }}, {assigned: assigned == "assigned" ? selected : null}]
         } else if (Boolean(disposition.length === 0 && !groupId)) {
           search = [{"account_bucket.name": {$in: bucket}}, {assigned: assigned == "assigned" ? {$ne: null} : null}]
         } else if (disposition.length > 0 && !groupId) {
-          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }},{assigned: assigned == "assigned" ? new mongoose.Types.ObjectId(groupId) : null}]
+          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }},{assigned: assigned == "assigned" ? selected : null}]
         } else if(Boolean(disposition.length === 0 && groupId)) {
-          search = [{"account_bucket.name": {$in: bucket}},{assigned: assigned == "assigned" ? new mongoose.Types.ObjectId(groupId) : null}]
+          search = [{"account_bucket.name": {$in: bucket}},{assigned: assigned == "assigned" ? selected : null}]
         }
 
         const accounts = await CustomerAccount.aggregate([
@@ -262,13 +280,25 @@ const customerResolver = {
             }
           }
         ])
-        return group[0] ? group[0] : null
+
+        if (group.length > 0) return group[0]
+
+        const user = await User.findById(parent.assigned)
+        return user
+
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
     }
   },
-  
+
+  Assigned: {
+    __resolveType(obj) {
+      if (obj.members) return 'Group';
+      if (obj.user_id) return 'User';
+      return null;
+    }
+  },
   
   Mutation: {
     createCustomer: async(_,{input},{user}) => {

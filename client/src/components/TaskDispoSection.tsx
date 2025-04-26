@@ -4,8 +4,8 @@ import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { RootState } from "../redux/store"
 import Confirmation from "./Confirmation"
-import { FaMinusCircle  } from "react-icons/fa";
 import SuccessToast from "./SuccessToast"
+import Pagination from "./Pagination"
 
 interface Success {
   success: boolean,
@@ -75,12 +75,20 @@ interface Member {
 }
 
 
-interface Assigned {
+interface Group {
   _id: string
   name: string
-  description: string
-  members: [Member]
+  description?: string
+  members?: Member[]
 }
+
+interface User {
+  _id: string
+  name: string
+  user_id: string
+}
+
+type Assigned = Group | User
 
 interface CustomerAccounts {
     _id: string
@@ -107,11 +115,9 @@ interface FindCustomerAccount {
   totalCountCustomerAccounts: number
 }
 
-
-
 const FIND_CUSTOMER_ACCOUNTS = gql`
 query Query($page: Int, $disposition: [String], $groupId: ID, $assigned:String) {
-  findCustomerAccount(page: $page, disposition: $disposition, groupId: $groupId,assigned:$assigned ) {
+  findCustomerAccount(page: $page, disposition: $disposition, groupId: $groupId, assigned:$assigned ) {
     CustomerAccounts {
       _id
       case_id
@@ -123,13 +129,19 @@ query Query($page: Int, $disposition: [String], $groupId: ID, $assigned:String) 
       balance
       paid_amount
       assigned {
-        _id
-        name
-        description
-        members {
-          _id
+        ... on User {
           name
           user_id
+        } 
+        ... on Group {
+          _id
+          name
+          description
+          members {
+            _id
+            name
+            user_id
+          }
         }
       }
       out_standing_details {
@@ -204,12 +216,7 @@ interface Member {
   name: string
   user_id: string
 }
-interface Group {
-  _id:string
-  name:string
-  description:string
-  members: Member[]
-}
+
 
 const DEPT_GROUP = gql`
   query Query {
@@ -236,19 +243,18 @@ const DELETE_GROUP_TASK = gql`
 
 interface modalProps {
   selectedDisposition: string[]
-  selectedTasking: string
   selectedAssigned: string
 }
 
-const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTasking ,selectedAssigned}) => {
+const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedAssigned}) => {
   const [groupDataNewObject, setGroupDataNewObject] = useState<{[key:string]:string}>({})
-  const [page, setPage] = useState<number>(1)
-  const {selectedGroup} = useSelector((state:RootState)=> state.auth)
-  const {data:CustomerAccountsData, refetch:CADRefetch,} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId:groupDataNewObject[selectedGroup], assigned: selectedAssigned}})
+  const {selectedGroup, selectedAgent, page, tasker, taskFilter} = useSelector((state:RootState)=> state.auth)
+  const selected = selectedGroup ? groupDataNewObject[selectedGroup] : selectedAgent
+  const {data:CustomerAccountsData, refetch:CADRefetch,} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId: selected, assigned: selectedAssigned}})
 
   const [handleCheckAll, setHandleCheckAll] = useState<boolean>(false)
   const [taskToAdd, setTaskToAdd] = useState<string[]>([])
-  const {data:selectAllCustomerAccountData, refetch:SACARefetch} = useQuery<{selectAllCustomerAccount:string[]}>(SELECT_ALL_CUSTOMER_ACCOUNT,{variables: {disposition: selectedDisposition, groupId:groupDataNewObject[selectedGroup], assigned: selectedAssigned }})
+  const {data:selectAllCustomerAccountData, refetch:SACARefetch} = useQuery<{selectAllCustomerAccount:string[]}>(SELECT_ALL_CUSTOMER_ACCOUNT,{variables: {disposition: selectedDisposition, groupId:selected, assigned: selectedAssigned }})
   const [required, setRequired] = useState<boolean>(false)
   const [confirm, setConfirm] = useState<boolean>(false)
   const {data:GroupData} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
@@ -257,16 +263,13 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTa
     message: ""
   })
 
-  console.log(selectAllCustomerAccountData)
-
   useEffect(()=> {
     setRequired(false)
     CADRefetch()
     setTaskToAdd([])
     setHandleCheckAll(false)
     SACARefetch()
-  },[selectedGroup,CADRefetch,selectedTasking, selectedAssigned,SACARefetch])
-
+  },[selectedGroup,CADRefetch,tasker, selectedAssigned,SACARefetch, selectedAgent])
 
   useEffect(()=> {
     const newObject:{[key:string]:string}= {}
@@ -278,8 +281,6 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTa
     setGroupDataNewObject(newObject)
   },[GroupData])
 
-  
-
   const [modalProps, setModalProps] = useState({
     message: "",
     toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "LOGOUT" | "ADDED",
@@ -287,25 +288,13 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTa
     no: () => {}
   })
 
-  // const addPage = () => {
-  //   if(CustomerAccountsData?.findCustomerAccount.totalCountCustomerAccounts && (CustomerAccountsData?.findCustomerAccount.totalCountCustomerAccounts/20) > 1 ) {
-  //     setPage(prev => prev + 1)
-  //   }
-  // }
-
-  // const minusPage = () => {
-  //   if(page > 0) {
-  //     setPage(prev => (prev > 1 ? prev - 1 : 1))
-  //   }
-  // }
-
   const [deleteGroupTask] = useMutation(DELETE_GROUP_TASK, {
     onCompleted:() => {
       CADRefetch()
+      SACARefetch()
       setConfirm(false)
       setTaskToAdd([])
       setHandleCheckAll(false)
-      SACARefetch()
       setSuccess({
         success:true,
         message: "Task successfully removed"
@@ -335,8 +324,6 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTa
     }
   }
 
-
-
   const handleSelectAllToAdd = (e:React.ChangeEvent<HTMLInputElement>) => {
     const newArray = selectAllCustomerAccountData?.selectAllCustomerAccount.map(e => e.toString())
     if(e.target.checked){
@@ -356,10 +343,10 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTa
   const [addGroupTask] = useMutation(ADD_GROUP_TASK,{
     onCompleted:() => {
       CADRefetch()
+      SACARefetch()
       setConfirm(false)
       setRequired(false)
       setTaskToAdd([])
-      SACARefetch()
       setHandleCheckAll(false)
       setSuccess({
         success:true,
@@ -375,11 +362,11 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTa
       setRequired(false)
       setConfirm(true)
       setModalProps({
-        message: `You assigning the task to ${selectedGroup}?`,
+        message: `You assigning the task?`,
         toggle: "CREATE",
         yes: async() => {
           try {
-            await addGroupTask({variables: {groupId: groupDataNewObject[selectedGroup],task: taskToAdd}})
+            await addGroupTask({variables: {groupId: selected ,task: taskToAdd}})
           } catch (error) {
             console.log(error)
           }
@@ -399,7 +386,7 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTa
       }
       <div className="min-h-7/8 p-5 pb-10">
         {
-          selectedGroup && (selectedTasking === "group") &&
+          (selectedGroup || selectedAgent) &&
           <div className={`flex ${required ? "justify-between" : "justify-end"}  items-center`}>
             { required &&
               <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
@@ -432,7 +419,7 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTa
                   assigned
                 </th>
                 {
-                  selectedGroup &&
+                  (selectedGroup || selectedAgent) &&
                   <th scope="col" className="px-6 py-3 w-70 text-end">
                     Action
                   </th>
@@ -442,7 +429,7 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTa
           </thead>
           <tbody>
             { 
-              selectedGroup &&
+              (selectedGroup || selectedAgent) &&
               <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-blue-100">
                 <th scope="row" className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
                     
@@ -465,10 +452,9 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTa
                   </label>
                 </td>
               </tr>
-
             }
             {
-              CustomerAccountsData?.findCustomerAccount.CustomerAccounts.map((ca)=> ( 
+              CustomerAccountsData?.findCustomerAccount.CustomerAccounts.map((ca,index)=> ( 
               <tr key={ca._id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-blue-100">
                 <th scope="row" className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
                     {ca.customer_info.fullName}
@@ -477,22 +463,20 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTa
                     {ca.currentDisposition ? (ca.dispoType.code === "PAID" ? `${ca.dispoType.code} (Not Settled)` : ca.dispoType.code) : "New Endorsed"}
                 </td>
                 <td className="px-6 ">
-                    Details
+                    {index + 1}
                 </td>
                 <td className="px-6">
                   {ca.assigned?.name}
                 </td>
                 {
-                  selectedGroup &&
-                  <td className="px-6 flex items-center py-4 justify-end ">
-                    {
-                      !ca.assigned?._id && 
-                      <input type="checkbox" name={ca.customer_info.fullName} id={ca.customer_info.fullName} onChange={(e)=> handleCheckBox(ca._id, e)} checked={taskToAdd.includes(ca._id)}/>
-                    }
-                    {
+                  (selectedGroup || selectedAgent) &&
+                  <td className="px-6 flex items-center py-4 justify-end">
+                      <input type="checkbox" name={ca.customer_info.fullName} id={ca.customer_info.fullName} onChange={(e)=> handleCheckBox(ca._id, e)} checked={taskToAdd.includes(ca._id)} className={`${selectedAssigned === "assigned" && "accent-red-600" }`}/>
+                    
+                    {/* {
                       ca.assigned?._id &&  
                       <input type="checkbox" name={ca.customer_info.fullName} id={ca.customer_info.fullName} onChange={(e)=> handleCheckBox(ca._id, e)} checked={taskToAdd.includes(ca._id)} className="accent-red-600"/>
-                    }
+                    } */}
                   </td>
 
                 }
@@ -500,8 +484,8 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedTa
               ))
             }
           </tbody>
-      </table>
-
+        </table>
+        <Pagination/>
       </div>
       { confirm &&
       <Confirmation {...modalProps}/>

@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+
 import CustomError from "../../middlewares/errors.js"
 import Group from "../../models/group.js"
 import User from "../../models/user.js"
@@ -7,8 +7,7 @@ import CustomerAccount from "../../models/customerAccount.js"
 const groupResolver = {
 
   Query: {
-    findGroup: async(_,args,context) => {
-      const {user} = context
+    findGroup: async(_,__,{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
         const getAllGroup = await Group.find({department: user.department})
@@ -42,7 +41,7 @@ const groupResolver = {
     updateGroup: async(_,{id,name, description}, {user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try { 
-        await Group.findByIdAndUpdate(id, {$set: {name, description, members: member}})
+        await Group.findByIdAndUpdate(id, {$set: {name, description}})
         return {success: true, message: `Group successfully updated`}
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -54,11 +53,12 @@ const groupResolver = {
         const deletedGroup = await Group.findByIdAndDelete(id)
         if(!deletedGroup) throw new CustomError("Group successfully deleted")
 
-        await Promise.all(
-          deletedGroup.members.map(e =>
-            User.findByIdAndUpdate(e, { $set: { group: null } })
-          )
-        );
+        await User.updateMany({_id: {$in: deletedGroup.members}},{$set: {group: null}})
+        await CustomerAccount.updateMany({assigned: deletedGroup._id}, {$set: {assigned: null}})
+        return {
+          success: true,
+          message: "Group successfully deleted"
+        }
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
@@ -110,7 +110,10 @@ const groupResolver = {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
         const findGroup = await Group.findById(groupId)
-        await CustomerAccount.updateMany({_id: {$in: task}}, {$set: {assigned: findGroup._id}})
+        const user = await User.findById(groupId)
+        const id = findGroup ? findGroup._id : user._id
+
+        await CustomerAccount.updateMany({_id: {$in: task}}, {$set: {assigned: id}})
         return {
           success: true,
           message: "Task successfully added"

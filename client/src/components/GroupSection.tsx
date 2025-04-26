@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { useEffect, useState } from "react";
-import { FaPlusCircle, FaMinusCircle  } from "react-icons/fa";
+import { FaPlusCircle, FaMinusCircle, FaEdit  } from "react-icons/fa";
 import SuccessToast from "./SuccessToast";
 import Confirmation from "./Confirmation";
 import { setSelectedGroup } from "../redux/slices/authSlice";
@@ -33,13 +33,33 @@ interface DeptAgent {
 }
 
 const CREATE_GROUP = gql`
-mutation CreateGroup($name: String!, $description: String!) {
-  createGroup(name: $name, description: $description) {
-    message
-    success
+  mutation CreateGroup($name: String!, $description: String!) {
+    createGroup(name: $name, description: $description) {
+      message
+      success
+    }
   }
-}
 `
+
+const DELETE_GROUP = gql`
+  mutation DeleteGroup($id: ID!) {
+    deleteGroup(id: $id) {
+      success
+      message
+    }
+  }
+`
+const UPDATE_GROUP = gql`
+  mutation DeleteGroup($id: ID!, $name: String, $description: String) {
+    updateGroup(id: $id, name: $name, description: $description) {
+      message
+      success
+    }
+  }
+
+`
+
+
 const DEPT_GROUP = gql`
   query Query {
     findGroup {
@@ -83,6 +103,8 @@ const DELETE_GROUP_MEMBER = gql`
 }
 `
 
+
+
 const GroupSection = () => {
   const dispatch = useAppDispatch()
   const [success, setSuccess] = useState<Success>({
@@ -101,10 +123,24 @@ const GroupSection = () => {
   const [dgdObject, setDgdObject] = useState<{[key: string]:string}>({})
   const selectedGroup = deptGroupData?.findGroup.find((dgd)=> dgd.name === groupName)
   const [dgdObjectName, setdgdObjectName] = useState<{[key: string]:string}>({})
+  const [updatedGroup, setUpdateGroup] = useState<boolean>(false)
 
   useEffect(()=> {
     dispatch(setSelectedGroup(groupName))
+    setUpdateGroup(false)
   },[groupName,dispatch])
+
+  useEffect(()=> {
+ 
+    if(updatedGroup){
+      setName(selectedGroup? selectedGroup?.name : "")
+      setDescription(selectedGroup ? selectedGroup?.description : "")
+    } else {
+      setName("")
+      setDescription("")
+    }
+  },[updatedGroup,selectedGroup])
+
 
   useEffect(()=> {
     if(deptGroupData) {
@@ -127,13 +163,41 @@ const GroupSection = () => {
       setName("")
       setDescription("")
       setConfirm(false)
+      deptGroupDataRefetch()
       setSuccess({
         success: result.createGroup.success,
         message: result.createGroup.message
       })
-      deptGroupDataRefetch()
     },
   })
+
+  const [updateGroup] = useMutation(UPDATE_GROUP, {
+    onCompleted:(result) => {
+      setName("")
+      setDescription("")
+      setConfirm(false)
+      deptGroupDataRefetch()
+      setUpdateGroup(false)
+      setSuccess({
+        success: result.updateGroup.success,
+        message: result.updateGroup.message
+      })
+    },
+  })
+
+  const [deleteGroup] = useMutation(DELETE_GROUP,{
+    onCompleted:(result) => {
+      setName("")
+      setDescription("")
+      setConfirm(false)
+      deptGroupDataRefetch()
+      setSuccess({
+        success: result.deleteGroup.success,
+        message: result.deleteGroup.message
+      })
+    },
+  })
+  
 
   const [addGroupMember] = useMutation(ADD_GROUP_MEMBER,{
     onCompleted:() => {
@@ -216,6 +280,52 @@ const GroupSection = () => {
     }
   } 
 
+  const handleClickDeleteGroup = () => {
+    setConfirm(true)  
+    setModalProps({
+      message: "Do you want to delete this group?",
+      toggle: "DELETE",
+      yes: async() => {
+        try {
+          await deleteGroup({variables: {id: dgdObject[groupName]}})
+        } catch (error) {
+         console.log(error)
+        }
+      },
+      no: ()=> {setConfirm(false)}
+    })
+  }
+
+  const handleClickUpdateGroupSubmit = () => {
+    if (!name) {
+      setRequire(true)
+    } else {
+      setRequire(false)
+      setConfirm(true)  
+      setModalProps({
+        message: "Do you want to update this group?",
+        toggle: "UPDATE",
+        yes: async() => {
+          try {
+            await updateGroup({variables: {id: dgdObject[groupName], name: name, description: description}})
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          } catch (error:any) {
+            const errorMessage = error?.graphQLErrors?.[0]?.message;
+            if (errorMessage?.includes("E11000")) {
+              setSuccess({
+                success: true,
+                message: "Group name already exists"
+              })
+              setConfirm(false)
+            }
+          }
+        },
+        no: ()=> {setConfirm(false)}
+      })
+
+    }
+  }
+
   return (
     <>
       {
@@ -242,25 +352,38 @@ const GroupSection = () => {
             className="border border-slate-300 bg-slate-50 rounded-md lg:px-1.5 lg:py-1  2xl:py-1.5 2xl:px-2 lg:w-70 2xl:w-96 2xl:text-xs lg:text-[0.6em]"
             onChange={(e)=> setDescription(e.target.value)}
             placeholder="Enter Group Description..."/>
-          <button type="button" className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs px-5 h-10 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800" onClick={onSubmitCreateGroup}>Add Group</button>
+            {
+              !updatedGroup ? 
+              <button type="button" className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs px-5 h-10 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800" onClick={onSubmitCreateGroup}>Add Group</button> : 
+              <div className="flex gap-4 ">
+
+                <button type="button" className="focus:outline-none text-white bg-orange-700 hover:bg-orange-800 focus:ring-4 focus:ring-orange-300 font-medium rounded-lg text-xs px-5 h-10 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-green-800" onClick={handleClickUpdateGroupSubmit}>Submit</button>  
+                <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={()=> setUpdateGroup(false)}>Cancel</button>  
+              </div>
+            }
         </div>
         <div className="flex items-center gap-5 relative lg:text-[0.6em] 2xl:text-xs">
           {
             groupName &&
             <>
               <div>
-                <FaPlusCircle  className={`${addMember && "rotate-45"} peer text-3xl transition-transform `} onClick={handleAddMemberTransition}/>
-                <p className="peer-hover:block hidden absolute text-xs -translate-x-1/2 left-4 -top-5 font-bold text-slate-700 bg-white">{addMember ? "Close" : "Add Member"}</p>
+                <FaPlusCircle  className={`${addMember && "rotate-45"} peer text-3xl transition-transform hover:scale-105 cursor-pointer `} onClick={handleAddMemberTransition}/>
+                <p className="peer-hover:block hidden absolute text-xs -translate-x-1/2 left-4 -top-5 font-bold text-slate-700 bg-white ">{addMember ? "Close" : "Add Member"}</p>
               </div>
               <div>
-                <FaMinusCircle className="peer text-3xl text-red-700"/>
-                <p className="peer-hover:block hidden absolute text-xs translate-x-1/2 -left-2  -top-5 font-bold text-slate-700 bg-white">Delete Group</p>
+                <FaEdit className="peer w-8 h-8 border rounded-full p-1 bg-orange-400 text-white hover:scale-105 cursor-pointer " onClick={()=> setUpdateGroup(true)}/>
+                <p className="peer-hover:block hidden absolute text-xs -translate-x-1/2 left-16 -top-5 font-bold text-slate-700 bg-white">Update Group</p>
               </div>
+              <div>
+                <FaMinusCircle className="peer text-3xl text-red-700 hover:scale-105 cursor-pointer" onClick={handleClickDeleteGroup}/>
+                <p className="peer-hover:block hidden absolute text-xs translate-x-1/2 left-10 -top-5 font-bold text-slate-700 bg-white">Delete Group</p>
+              </div>
+              
             </>
           }
           {
             !addMember ? (
-            <label>
+        
               <select 
                 id="group" 
                 name="group" 
@@ -275,7 +398,7 @@ const GroupSection = () => {
                   ))
                 }
               </select>
-            </label>
+            
             ) : (
               <div className=" ps-3.5 h-10 pe-0 lg:w-50 2xl:w-96 border border-slate-300 rounded-lg bg-slate-50 cursor-default flex justify-between items-center"><p>{groupName}</p> </div>
             )
@@ -327,12 +450,7 @@ const GroupSection = () => {
                     }
                   </div>
                 </div>
-                <div className="flex flex-col">
-                  <h1 className="font-bold text-slate-700">Tasks</h1>
-                  <div className="mt-2 flex flex-col overflow-y-auto">
-
-                  </div>
-                </div>
+                
               </div>
             </>
           }

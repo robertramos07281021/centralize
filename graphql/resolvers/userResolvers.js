@@ -96,6 +96,7 @@ const userResolvers = {
         throw new CustomError(error.message, 500)
       }
     },
+    
     findAgents: async(_,__,{user}) => {
       if (!user) throw new CustomError("Not authenticated",401);
       try {
