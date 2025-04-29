@@ -21,16 +21,21 @@ const customerResolver = {
     },
     findCustomer: async(_,{fullName, dob, email, contact_no}) => {
       {
-        const searchQuery = await Customer.aggregate([
-          {
-            $match: [
-              {fullName : {$regex: fullName, $options: "i"}},
-              {dob : {$regex: dob, $options: "i"}},
-              {email : { $elemMatch : { $regex: email, $options: "i"} }},
-              {contact_no :{ $elemMatch: {$regex: contact_no, $options: "i"}} },
-            ]
-          }
-        ])
+        try {
+          const searchQuery = await Customer.aggregate([
+            {
+              $match: [
+                {fullName : {$regex: fullName, $options: "i"}},
+                {dob : {$regex: dob, $options: "i"}},
+                {email : { $elemMatch : { $regex: email, $options: "i"} }},
+                {contact_no :{ $elemMatch: {$regex: contact_no, $options: "i"}} },
+              ]
+            }
+          ])
+          return searchQuery
+        } catch (error) {
+          throw new CustomError(error.message, 500)
+        }
       }
     },
     getCustomers: async(_,{page}) => {
@@ -104,7 +109,7 @@ const customerResolver = {
       }
      
     },
-    findCustomerAccount: async(_,{disposition, groupId ,page, assigned}, {user}) => {
+    findCustomerAccount: async(_,{disposition, groupId ,page, assigned, limit}, {user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
         let selected = ''
@@ -112,22 +117,23 @@ const customerResolver = {
           const group = await Group.findOne({_id: groupId})
         
           const userSelected = await User.findOne({_id: groupId})
+
           selected = group ? group._id : userSelected._id
         }
-
-
+      
         const bucket = (await Bucket.find({dept: user.department})).map(e => e.name)
         let search = []
         if(Boolean(disposition.length > 0 && groupId)){
           search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }}, {assigned: assigned == "assigned" ? selected : null}]
         } else if (Boolean(disposition.length === 0 && !groupId)) {
           search = [{"account_bucket.name": {$in: bucket}}, {assigned: assigned == "assigned" ? {$ne: null} : null}]
-        } else if (disposition.length > 0 && !groupId) {
-          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }},{assigned: assigned == "assigned" ? selected : null}]
+        } else if (Boolean(disposition.length > 0 && !groupId)) {
+          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }},{assigned: assigned == "assigned" ? {$ne: null} : null}]
         } else if(Boolean(disposition.length === 0 && groupId)) {
           search = [{"account_bucket.name": {$in: bucket}},{assigned: assigned == "assigned" ? selected : null}]
         }
 
+        
         const accounts = await CustomerAccount.aggregate([
           {
             $lookup: {
@@ -182,14 +188,13 @@ const customerResolver = {
           {
             $facet: {
               FindCustomerAccount: [
-                { $skip: (page - 1) * 5 },
-                { $limit: 5 }
+                { $skip: (page - 1) * limit },
+                { $limit: limit }
               ],
               total: [{$count: "totalCustomerAccounts"}]
             }
           }
         ])
-        
         return {
           CustomerAccounts: [...accounts[0]?.FindCustomerAccount],
           totalCountCustomerAccounts: accounts[0]?.total[0]?.totalCustomerAccounts > 0 ? accounts[0]?.total[0]?.totalCustomerAccounts : 0

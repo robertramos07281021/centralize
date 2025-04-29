@@ -44,6 +44,10 @@ const customerAccountSchema = new Schema(
     assigned_date: {
       type: String
     },
+    on_hands: {
+      type: Boolean,
+      default: false
+    },
     out_standing_details: {
       principal_os: {
         type: Number,

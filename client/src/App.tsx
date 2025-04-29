@@ -46,7 +46,6 @@ function App() {
           <Route path="/agent-dashboard" element={<AgentDashboard/>}/>
           {/* <Route path="/agent-production-area" element={<Disposition/>}/> */}
           <Route path="/agent-production-area" element={<CustomerDisposition/>}/>
-          <Route path="/agent-tasks" element={<TaskView/>}/>
           <Route path="/agent-statistics" element={<StatisticsView/>}/>
 
         </Route>

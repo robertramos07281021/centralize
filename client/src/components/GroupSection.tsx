@@ -5,7 +5,8 @@ import { FaPlusCircle, FaMinusCircle, FaEdit  } from "react-icons/fa";
 import SuccessToast from "./SuccessToast";
 import Confirmation from "./Confirmation";
 import { setSelectedGroup } from "../redux/slices/authSlice";
-import { useAppDispatch } from "../redux/store";
+import { RootState, useAppDispatch } from "../redux/store";
+import { useSelector } from "react-redux";
 
 
 interface Success {
@@ -107,6 +108,7 @@ const DELETE_GROUP_MEMBER = gql`
 
 const GroupSection = () => {
   const dispatch = useAppDispatch()
+  const {selectedGroup} = useSelector((state:RootState)=> state.auth)
   const [success, setSuccess] = useState<Success>({
     success:false,
     message: ""
@@ -115,31 +117,28 @@ const GroupSection = () => {
   const [description, setDescription] = useState<string>("")
   const [confirm, setConfirm] = useState<boolean>(false)
   const [addMember, setAddMember] = useState(false)
-  const [groupName, setGroupName] = useState<string>("")
   const [required, setRequire] = useState(false)
   const [groupRequired, setGroupRequired] = useState(false)
   const {data:deptGroupData, refetch:deptGroupDataRefetch} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
   const {data:deptAgentData, refetch:deptAgentDataRefetch} = useQuery<{findDeptAgents:DeptAgent[]}>(DEPT_AGENT)
+  const selectedGroupData = deptGroupData?.findGroup.find((dgd)=> dgd.name === selectedGroup)
   const [dgdObject, setDgdObject] = useState<{[key: string]:string}>({})
-  const selectedGroup = deptGroupData?.findGroup.find((dgd)=> dgd.name === groupName)
   const [dgdObjectName, setdgdObjectName] = useState<{[key: string]:string}>({})
   const [updatedGroup, setUpdateGroup] = useState<boolean>(false)
 
   useEffect(()=> {
-    dispatch(setSelectedGroup(groupName))
     setUpdateGroup(false)
-  },[groupName,dispatch])
-
+  },[selectedGroup])
+  
   useEffect(()=> {
- 
     if(updatedGroup){
-      setName(selectedGroup? selectedGroup?.name : "")
-      setDescription(selectedGroup ? selectedGroup?.description : "")
+      setName(selectedGroupData? selectedGroupData?.name : "")
+      setDescription(selectedGroupData ? selectedGroupData?.description : "")
     } else {
       setName("")
       setDescription("")
     }
-  },[updatedGroup,selectedGroup])
+  },[updatedGroup,selectedGroupData])
 
 
   useEffect(()=> {
@@ -253,7 +252,7 @@ const GroupSection = () => {
   
   const handleAddGroupMember = async(memberId:string) => {
     try {
-      await addGroupMember({variables: {addGroupMemberId: dgdObject[groupName],member:memberId}})
+      await addGroupMember({variables: {addGroupMemberId: dgdObject[selectedGroup],member:memberId}})
     } catch (error) {
       console.log(error)
     }
@@ -261,7 +260,7 @@ const GroupSection = () => {
 
   const handleAddMemberTransition = () => {
     if(!addMember) {
-      if(!groupName) {
+      if(!selectedGroup) {
         setGroupRequired(true)
       } else {
         setGroupRequired(false)
@@ -274,7 +273,7 @@ const GroupSection = () => {
 
   const handleDeleteMember = async(memberId:string) => {
     try {
-      await deleteGroupMember({variables: {id: dgdObject[groupName], member: memberId}})
+      await deleteGroupMember({variables: {id: dgdObject[selectedGroup], member: memberId}})
     } catch (error) {
       console.log(error) 
     }
@@ -287,7 +286,7 @@ const GroupSection = () => {
       toggle: "DELETE",
       yes: async() => {
         try {
-          await deleteGroup({variables: {id: dgdObject[groupName]}})
+          await deleteGroup({variables: {id: dgdObject[selectedGroup]}})
         } catch (error) {
          console.log(error)
         }
@@ -307,7 +306,7 @@ const GroupSection = () => {
         toggle: "UPDATE",
         yes: async() => {
           try {
-            await updateGroup({variables: {id: dgdObject[groupName], name: name, description: description}})
+            await updateGroup({variables: {id: dgdObject[selectedGroup], name: name, description: description}})
           // eslint-disable-next-line @typescript-eslint/no-explicit-any
           } catch (error:any) {
             const errorMessage = error?.graphQLErrors?.[0]?.message;
@@ -325,7 +324,6 @@ const GroupSection = () => {
 
     }
   }
-
   return (
     <>
       {
@@ -364,7 +362,7 @@ const GroupSection = () => {
         </div>
         <div className="flex items-center gap-5 relative lg:text-[0.6em] 2xl:text-xs">
           {
-            groupName &&
+            selectedGroup &&
             <>
               <div>
                 <FaPlusCircle  className={`${addMember && "rotate-45"} peer text-3xl transition-transform hover:scale-105 cursor-pointer `} onClick={handleAddMemberTransition}/>
@@ -387,11 +385,11 @@ const GroupSection = () => {
               <select 
                 id="group" 
                 name="group" 
-                value={groupName}
+                value={selectedGroup}
                 className={`${groupRequired ? "border-red-500 bg-red-50" : "bg-gray-50 border-gray-300"} border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block lg:w-50 2xl:w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
-                onChange={(e) => {setGroupName(e.target.value); setGroupRequired(false)}}
+                onChange={(e) => { dispatch(setSelectedGroup(e.target.value)); setGroupRequired(false)}}
                 >
-                <option value="">Select Group</option>
+                <option value="" >Select Group</option>
                 {
                   deptGroupData?.findGroup?.map((dgd) => (
                     <option key={dgd._id} value={dgd.name}>{dgd.name}</option>
@@ -400,7 +398,7 @@ const GroupSection = () => {
               </select>
             
             ) : (
-              <div className=" ps-3.5 h-10 pe-0 lg:w-50 2xl:w-96 border border-slate-300 rounded-lg bg-slate-50 cursor-default flex justify-between items-center"><p>{groupName}</p> </div>
+              <div className=" ps-3.5 h-10 pe-0 lg:w-50 2xl:w-96 border border-slate-300 rounded-lg bg-slate-50 cursor-default flex justify-between items-center"><p>{selectedGroup}</p> </div>
             )
           }
           {
@@ -425,16 +423,16 @@ const GroupSection = () => {
                   <h1 className="font-bold text-slate-700">Description</h1>
                   <div className="indent-5 mt-2 flex flex-col overflow-y-auto text-justify px-2">
                     {
-                      selectedGroup?.description
+                      selectedGroupData?.description
                     }
                   </div>
 
                 </div>
                 <div className=" flex flex-col ">
-                  <h1 className="font-bold text-slate-700">Member{selectedGroup?.members &&  selectedGroup?.members?.length > 1 ? "s" : ""}</h1>
+                  <h1 className="font-bold text-slate-700">Member{selectedGroupData?.members &&  selectedGroupData?.members?.length > 1 ? "s" : ""}</h1>
                   <div className="h-full flex flex-col overflow-y-auto">
                     {
-                      selectedGroup?.members.map((m)=> (
+                      selectedGroupData?.members.map((m)=> (
                         <div key={m._id} className="grid grid-cols-3 text-center odd:bg-slate-100 py-1">
                           <div>
                             {m.name}

@@ -48,7 +48,7 @@ const DISPOSITION_RECORDS = gql`
   }
 `
 const DispositionRecords = () => {
-  const {selectedCustomer,} = useSelector((state:RootState)=> state.auth )
+  const {selectedCustomer} = useSelector((state:RootState)=> state.auth )
   const [limit, setLimit] = useState(3)
   const dispatch = useAppDispatch()
   const {data:dispositions,refetch, loading} = useQuery<{getAccountDispositions:Disposition[]}>(DISPOSITION_RECORDS,{variables: {id: selectedCustomer._id, limit: limit} })

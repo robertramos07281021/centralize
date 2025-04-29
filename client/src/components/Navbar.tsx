@@ -16,66 +16,78 @@ import NavbarExtn from "./NavbarExtn";
 const Navbar = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const {data, refetch, error} = useQuery<{ getMe: UserInfo }>(myUserInfos)
+  const {data, error} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 15000})
   const [poPupUser, setPopUpUser] = useState<boolean>(false)  
-  const [logout, {loading}] = useMutation(LOGOUT)
+  const [logout, {loading}] = useMutation(LOGOUT,{
+    onCompleted: async() => {
+      try {
+        dispatch(setNeedLogin(true))
+        dispatch(setUserLogged(
+          {
+            _id: "",
+            change_password: false,
+            name: "",
+            type: "",
+            username: "",
+            branch: "",
+            department: "",
+            bucket: ""
+          }
+        ))
+
+        dispatch(setSelectedCustomer({
+          _id: "",
+          case_id: "",
+          account_id: "",
+          endorsement_date: "",
+          credit_customer_id: "",
+          bill_due_day: 0,
+          max_dpd: 0,
+          balance: 0,
+          paid_amount: 0,
+          out_standing_details: {
+            principal_os: 0,
+            interest_os: 0,
+            admin_fee_os: 0,
+            txn_fee_os: 0,
+            late_charge_os: 0,
+            dst_fee_os: 0,
+            total_os: 0
+          },
+          grass_details: {
+            grass_region: "",
+            vendor_endorsement: "",
+            grass_date: ""
+          },
+          account_bucket: {
+            name: "",
+            dept: ""
+          },
+          customer_info: {
+            fullName:"",
+            dob:"",
+            gender:"",
+            contact_no:[],
+            emails:[],
+            addresses:[],
+            _id:""
+          }
+        }))
+        navigate('/')
+      } catch (error) {
+        console.log(error)
+      }
+    },
+  })
   const [confirmation, setConfirmation] = useState<boolean>(false)
 
   const confirmationFunction: Record<string, () => Promise<void>> = {
     LOGOUT: async () => {
-      await logout();
-      dispatch(setNeedLogin(true))
-      dispatch(setUserLogged(
-        {
-          _id: "",
-          change_password: false,
-          name: "",
-          type: "",
-          username: "",
-          branch: "",
-          department: "",
-          bucket: ""
-        }
-      ))
-      dispatch(setSelectedCustomer({
-        _id: "",
-        case_id: "",
-        account_id: "",
-        endorsement_date: "",
-        credit_customer_id: "",
-        bill_due_day: 0,
-        max_dpd: 0,
-        balance: 0,
-        paid_amount: 0,
-        out_standing_details: {
-          principal_os: 0,
-          interest_os: 0,
-          admin_fee_os: 0,
-          txn_fee_os: 0,
-          late_charge_os: 0,
-          dst_fee_os: 0,
-          total_os: 0
-        },
-        grass_details: {
-          grass_region: "",
-          vendor_endorsement: "",
-          grass_date: ""
-        },
-        account_bucket: {
-          name: "",
-          dept: ""
-        },
-        customer_info: {
-          fullName:"",
-          dob:"",
-          gender:"",
-          contact_no:[],
-          emails:[],
-          addresses:[],
-          _id:""
-        }
-      }))
-      navigate('/')
+      try {
+        await logout();
+      } catch (error) {
+        console.log(error)
+      }
     }
   };
   
@@ -95,12 +107,6 @@ const Navbar = () => {
       toggle: action
     })
   }
-
-  useEffect(()=> {
-    refetch()
-    const refetchInterval = setInterval(refetch,2000)
-    return () => clearInterval(refetchInterval)
-  },[refetch,data])
 
   useEffect(()=> {
     if (error instanceof Error) {
@@ -131,7 +137,7 @@ const Navbar = () => {
           <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
           Bernales & Associates
         </div>
-        <div className="p-1 flex gap-2 text-xs">
+        <div className="p-1 flex gap-2 text-xs z-50">
           <p className="font-medium text-white italic flex items-center">Hello&nbsp;<span className="uppercase">{data?.getMe.name}</span></p>
           <BsFillPersonVcardFill className="text-4xl cursor-pointer " onClick={()=> setPopUpUser(!poPupUser)}/>
           { poPupUser &&

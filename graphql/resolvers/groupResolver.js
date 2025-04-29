@@ -113,7 +113,7 @@ const groupResolver = {
         const user = await User.findById(groupId)
         const id = findGroup ? findGroup._id : user._id
 
-        await CustomerAccount.updateMany({_id: {$in: task}}, {$set: {assigned: id}})
+        await CustomerAccount.updateMany({_id: {$in: task}}, {$set: {assigned: id, assigned_date: new Date() }})
         return {
           success: true,
           message: "Task successfully added"
@@ -127,7 +127,8 @@ const groupResolver = {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
         await CustomerAccount.updateMany({_id: {$in: caIds}},{$set: {
-          assigned: null
+          assigned: null,
+          assigned_date: null
         }})
         
         return {

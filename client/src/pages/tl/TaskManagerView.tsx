@@ -5,17 +5,15 @@ import { RiArrowDownSFill, RiArrowUpSFill   } from "react-icons/ri";
 import GroupSection from "../../components/GroupSection";
 import TaskDispoSection from "../../components/TaskDispoSection";
 import AgentSection from "../../components/AgentSection";
-import { useAppDispatch } from "../../redux/store";
-import { setAgent, setSelectedGroup } from "../../redux/slices/authSlice";
-
+import { RootState, useAppDispatch } from "../../redux/store";
+import { setAgent, setSelectedDisposition, setSelectedGroup, setTasker, setTaskFilter } from "../../redux/slices/authSlice";
+import { useSelector } from "react-redux";
 
 interface DispositionTypes {
   id:string
   name: string
   code: string
 }
-
-
 
 const GET_ALL_DISPOSITION_TYPE = gql`
   query GetDispositionTypes {
@@ -28,23 +26,22 @@ const GET_ALL_DISPOSITION_TYPE = gql`
 `
 const TaskManagerView = () => {
   const dispatch = useAppDispatch()
+  const {tasker, taskFilter, selectedDisposition} = useSelector((state:RootState)=> state.auth)
   const {data:DispositionTypes} = useQuery<{getDispositionTypes:DispositionTypes[]}>(GET_ALL_DISPOSITION_TYPE)
-  const [selectedDisposition, setSelectedDisposition] = useState<string[]>([])
+ 
   
-  const [selectedTasking, setSelectedTasking] = useState<string>("group") 
-  const [selectedAssigned, setSelectedAssigned] = useState<string>("assigned")
-
-
   useEffect(()=> {
     dispatch(setSelectedGroup(""))
     dispatch(setAgent(""))
-    dispatch()
-  },[selectedTasking,dispatch])
-
+  },[tasker,dispatch])
 
   const handleCheckBox= (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
-    const check = e.target.checked ? [...selectedDisposition, value] : selectedDisposition.filter((d) => d !== value )
-    setSelectedDisposition(check)
+    const dispositions = selectedDisposition || [];
+    if (e.target.checked) {
+      dispatch(setSelectedDisposition([...dispositions, value]));
+    } else {
+      dispatch(setSelectedDisposition(dispositions.filter((d) => d !== value)));
+    }
   }
 
   const [showSelection, setShowSelection] = useState<boolean>(false)
@@ -66,8 +63,8 @@ const TaskManagerView = () => {
                   type="radio" 
                   value="group" 
                   name="default-radio"
-                  checked={selectedTasking === "group"}
-                  onChange={(e)=> setSelectedTasking(e.target.value)}
+                  checked={tasker === "group"}
+                  onChange={(e)=>  dispatch(setTasker(e.target.value))}
                   className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300"/>
                 <span >Group</span>
               </label>
@@ -77,8 +74,8 @@ const TaskManagerView = () => {
                   type="radio" 
                   value="individual" 
                   name="default-radio"
-                  checked={selectedTasking === "individual"}
-                  onChange={(e)=> setSelectedTasking(e.target.value)}
+                  checked={tasker === "individual"}
+                  onChange={(e)=> dispatch(setTasker(e.target.value))}
                   className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 "/>
                 <span>Individual</span>
               </label>
@@ -91,8 +88,8 @@ const TaskManagerView = () => {
                   type="radio" 
                   value="assigned" 
                   name="default-radio-1"
-                  checked={selectedAssigned === "assigned"}
-                  onChange={(e)=> setSelectedAssigned(e.target.value)}
+                  checked={taskFilter === "assigned"}
+                  onChange={(e)=> dispatch(setTaskFilter(e.target.value))}
                   className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300"/>
                 <span >Assigned</span>
               </label>
@@ -102,14 +99,14 @@ const TaskManagerView = () => {
                   type="radio" 
                   value="unassigned" 
                   name="default-radio-1"
-                  checked={selectedAssigned === "unassigned"}
-                  onChange={(e)=> setSelectedAssigned(e.target.value)}
+                  checked={taskFilter === "unassigned"}
+                  onChange={(e)=> dispatch(setTaskFilter(e.target.value))}
                   className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 "/>
                 <span>Unassigned</span>
               </label>
             </fieldset>
           </div>
-          <div className="lg:w-70 2xl:w-96 border rounded-md h-10 border-slate-300 relative cursor-default " title={selectedDisposition.toString()} >
+          <div className="lg:w-70 2xl:w-96 border rounded-md h-10 border-slate-300 relative cursor-default " title={selectedDisposition?.toString()} >
             {
               showSelection ?
               <RiArrowUpSFill  className="absolute right-2 top-2 text-2xl"  onClick={onClick}/>
@@ -117,7 +114,7 @@ const TaskManagerView = () => {
               <RiArrowDownSFill className="absolute right-2 top-2 text-2xl" onClick={onClick}/>
             }
             <div className="lg:w-60 2xl:w-80 h-full px-2 truncate font-bold text-slate-500 flex items-center" onClick={onClick}>
-              {selectedDisposition.length > 0 ? selectedDisposition.toString(): "Select Disposition"}
+              {selectedDisposition?.length > 0 ? selectedDisposition?.toString(): "Select Disposition"}
             </div>
             {
               showSelection &&
@@ -130,7 +127,7 @@ const TaskManagerView = () => {
                     name={e.name} 
                     id={e.name} 
                     value={e.name}
-                    checked={selectedDisposition.includes(e.name)}
+                    checked={selectedDisposition?.includes(e.name)}
                     onChange={(e)=> handleCheckBox(e.target.value, e)} />
                     <p>{e.name}{e.name === "PAID" ? " (Not Completely Settled)":""}</p>
                   </label>
@@ -141,11 +138,11 @@ const TaskManagerView = () => {
           </div>
         </div>
         {
-          selectedTasking === "group" ? <GroupSection/> : 
+          tasker === "group" ? <GroupSection/> : 
           <AgentSection/>
         }
       </div>
-      <TaskDispoSection selectedDisposition={selectedDisposition} selectedAssigned={selectedAssigned}/>
+      <TaskDispoSection/>
     </div>
   )
 }

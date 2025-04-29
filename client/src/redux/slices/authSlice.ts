@@ -31,6 +31,8 @@ interface UserState {
   selectedAgent: string
   tasker: string
   taskFilter: string
+  selectedDisposition: string[] 
+  limit: number
 }
 
 const initialState:UserState = {
@@ -42,6 +44,8 @@ const initialState:UserState = {
   page: 1,
   tasker: "group",
   taskFilter: "assigned",
+  selectedDisposition: [] as string[],
+  limit: 5,
   userLogged: {
     _id: "",
     change_password: false,
@@ -140,9 +144,12 @@ const authSlice = createSlice({
     },
     setTaskFilter: (state, action:PayloadAction<string>) => {
       state.taskFilter = action.payload
-    }
+    },
+    setSelectedDisposition: (state, action:PayloadAction<string[]>) => {
+     state.selectedDisposition =action.payload 
+    },
   },
 });
 
-export const { logoutUser, setError, setNeedLogin , setUserLogged, setSearch, setSelectedCustomer, setSettled, setSelectedGroup, setAgent, setPage, setTasker ,setTaskFilter} = authSlice.actions;
+export const { logoutUser, setError, setNeedLogin , setUserLogged, setSearch, setSelectedCustomer, setSettled, setSelectedGroup, setAgent, setPage, setTasker ,setTaskFilter, setSelectedDisposition} = authSlice.actions;
 export default authSlice.reducer;

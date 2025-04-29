@@ -6,6 +6,7 @@ import { RootState } from "../redux/store"
 import Confirmation from "./Confirmation"
 import SuccessToast from "./SuccessToast"
 import Pagination from "./Pagination"
+import Loading from "../pages/Loading"
 
 interface Success {
   success: boolean,
@@ -116,8 +117,8 @@ interface FindCustomerAccount {
 }
 
 const FIND_CUSTOMER_ACCOUNTS = gql`
-query Query($page: Int, $disposition: [String], $groupId: ID, $assigned:String) {
-  findCustomerAccount(page: $page, disposition: $disposition, groupId: $groupId, assigned:$assigned ) {
+query Query($page: Int, $disposition: [String], $groupId: ID, $assigned:String,$limit: Int) {
+  findCustomerAccount(page: $page, disposition: $disposition, groupId: $groupId, assigned:$assigned, limit:$limit ) {
     CustomerAccounts {
       _id
       case_id
@@ -241,20 +242,16 @@ const DELETE_GROUP_TASK = gql`
   }
 `
 
-interface modalProps {
-  selectedDisposition: string[]
-  selectedAssigned: string
-}
 
-const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedAssigned}) => {
+
+const TaskDispoSection = () => {
   const [groupDataNewObject, setGroupDataNewObject] = useState<{[key:string]:string}>({})
-  const {selectedGroup, selectedAgent, page, tasker, taskFilter} = useSelector((state:RootState)=> state.auth)
+  const {selectedGroup, selectedAgent, page, tasker, taskFilter, selectedDisposition, limit} = useSelector((state:RootState)=> state.auth)
   const selected = selectedGroup ? groupDataNewObject[selectedGroup] : selectedAgent
-  const {data:CustomerAccountsData, refetch:CADRefetch,} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId: selected, assigned: selectedAssigned}})
-
+  const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId: selected, assigned: taskFilter, limit: limit}})
   const [handleCheckAll, setHandleCheckAll] = useState<boolean>(false)
   const [taskToAdd, setTaskToAdd] = useState<string[]>([])
-  const {data:selectAllCustomerAccountData, refetch:SACARefetch} = useQuery<{selectAllCustomerAccount:string[]}>(SELECT_ALL_CUSTOMER_ACCOUNT,{variables: {disposition: selectedDisposition, groupId:selected, assigned: selectedAssigned }})
+  const {data:selectAllCustomerAccountData, refetch:SACARefetch} = useQuery<{selectAllCustomerAccount:string[]}>(SELECT_ALL_CUSTOMER_ACCOUNT,{variables: {disposition: selectedDisposition, groupId:selected, assigned: taskFilter }})
   const [required, setRequired] = useState<boolean>(false)
   const [confirm, setConfirm] = useState<boolean>(false)
   const {data:GroupData} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
@@ -262,14 +259,15 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedAs
     success:false,
     message: ""
   })
-
+  
+console.log(CustomerAccountsData)
   useEffect(()=> {
     setRequired(false)
     CADRefetch()
     setTaskToAdd([])
     setHandleCheckAll(false)
     SACARefetch()
-  },[selectedGroup,CADRefetch,tasker, selectedAssigned,SACARefetch, selectedAgent])
+  },[selectedGroup,CADRefetch,tasker, taskFilter,SACARefetch, selectedAgent, selectedDisposition])
 
   useEffect(()=> {
     const newObject:{[key:string]:string}= {}
@@ -378,114 +376,115 @@ const TaskDispoSection:React.FC<modalProps>  = ({selectedDisposition ,selectedAs
     }
   }
 
+  if(loading) return (<Loading/>)
+
   return (
     <>
       {
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
       }
-      <div className="min-h-7/8 p-5 pb-10">
-        {
-          (selectedGroup || selectedAgent) &&
-          <div className={`flex ${required ? "justify-between" : "justify-end"}  items-center`}>
-            { required &&
-              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-              <span className="font-medium">No Item Selected!</span> Please add one or more task.
-            </div>
-            }
-            <div className="flex gap-2">
-              { selectedAssigned !== "assigned" ? 
-                <button type="button" className="focus:outline-none text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xs px-5 h-10 me-2 mb-2" onClick={handleAddTask}>Add Task</button> : 
-
-                <button type="button" className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-xs px-5 h-10 me-2 mb-2" onClick={handleClickDeleteGroupTaskButton}>Remove task</button>
+      <div className="p-5 h-full flex flex-col justify-between">
+        <div className="flex flex-col">
+          {
+            (selectedGroup || selectedAgent) &&
+            <div className={`flex ${required ? "justify-between" : "justify-end"}  items-center`}>
+              { required &&
+                <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+                <span className="font-medium">No Item Selected!</span> Please add one or more task.
+              </div>
               }
+              <div className="flex gap-2">
+                { taskFilter !== "assigned" ? 
+                  <button type="button" className="focus:outline-none text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xs px-5 h-10 me-2 mb-2" onClick={handleAddTask}>Add Task</button> : 
+
+                  <button type="button" className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-xs px-5 h-10 me-2 mb-2" onClick={handleClickDeleteGroupTaskButton}>Remove task</button>
+                }
+              </div>
             </div>
-          </div>
-        }
-        
-        <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-            <tr>
-                <th scope="col" className="px-6 py-3">
-                  Customer Name
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  Current Disposition
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  
-                </th>
-                <th scope="col" className="px-6 py-3">
-                  assigned
-                </th>
-                {
-                  (selectedGroup || selectedAgent) &&
-                  <th scope="col" className="px-6 py-3 w-70 text-end">
-                    Action
+          }
+      
+          <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 ">
+            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
+              <tr>
+                  <th scope="col" className="px-6 py-3">
+                    Customer Name
                   </th>
+                  <th scope="col" className="px-6 py-3">
+                    Current Disposition
+                  </th>
+                  <th scope="col" className="px-6 py-3">
+                    
+                  </th>
+                  <th scope="col" className="px-6 py-3">
+                    assigned
+                  </th>
+                  {
+                    (selectedGroup || selectedAgent) &&
+                    <th scope="col" className="px-6 py-3 w-70 text-end">
+                      Action
+                    </th>
 
-                }
-            </tr>
-          </thead>
-          <tbody>
-            { 
-              (selectedGroup || selectedAgent) &&
-              <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-blue-100">
-                <th scope="row" className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
-                    
-                </th>
-                <td className="px-6">
-                    
-                </td>
-                <td className="px-6 ">
-                    
-                </td>
-                <td className="px-6">
-                
-                </td>
-                <td className=" flex gap-2 ps-6 justify-end w-70"> 
-                  <label>
-                    <input type="checkbox" name="all" id="all" 
-                    checked={handleCheckAll}
-                    onChange={(e)=> handleSelectAllToAdd(e)} className={`${selectedAssigned === "assigned" && "accent-red-600"}`}/>
-                    <span className="ps-2">Select All</span>
-                  </label>
-                </td>
+                  }
               </tr>
-            }
-            {
-              CustomerAccountsData?.findCustomerAccount.CustomerAccounts.map((ca,index)=> ( 
-              <tr key={ca._id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-blue-100">
-                <th scope="row" className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
-                    {ca.customer_info.fullName}
-                </th>
-                <td className="px-6">
-                    {ca.currentDisposition ? (ca.dispoType.code === "PAID" ? `${ca.dispoType.code} (Not Settled)` : ca.dispoType.code) : "New Endorsed"}
-                </td>
-                <td className="px-6 ">
-                    {index + 1}
-                </td>
-                <td className="px-6">
-                  {ca.assigned?.name}
-                </td>
-                {
-                  (selectedGroup || selectedAgent) &&
-                  <td className="px-6 flex items-center py-4 justify-end">
-                      <input type="checkbox" name={ca.customer_info.fullName} id={ca.customer_info.fullName} onChange={(e)=> handleCheckBox(ca._id, e)} checked={taskToAdd.includes(ca._id)} className={`${selectedAssigned === "assigned" && "accent-red-600" }`}/>
-                    
-                    {/* {
-                      ca.assigned?._id &&  
-                      <input type="checkbox" name={ca.customer_info.fullName} id={ca.customer_info.fullName} onChange={(e)=> handleCheckBox(ca._id, e)} checked={taskToAdd.includes(ca._id)} className="accent-red-600"/>
-                    } */}
+            </thead>
+            <tbody>
+              { 
+                (selectedGroup || selectedAgent) &&
+                <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-blue-100">
+                  <th scope="row" className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
+                      
+                  </th>
+                  <td className="px-6">
+                      
                   </td>
-
-                }
-              </tr>
-              ))
-            }
-          </tbody>
-        </table>
-        <Pagination/>
+                  <td className="px-6 ">
+                      
+                  </td>
+                  <td className="px-6">
+                  
+                  </td>
+                  <td className=" flex gap-2 ps-6 justify-end w-70"> 
+                    <label>
+                      <input type="checkbox" name="all" id="all" 
+                      checked={handleCheckAll}
+                      onChange={(e)=> handleSelectAllToAdd(e)} className={`${taskFilter === "assigned" && "accent-red-600"}`}/>
+                      <span className="ps-2">Select All</span>
+                    </label>
+                  </td>
+                </tr>
+              }
+              {
+                CustomerAccountsData?.findCustomerAccount.CustomerAccounts.map((ca,index)=> ( 
+                <tr key={ca._id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-blue-100">
+                  <th scope="row" className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
+                      {ca.customer_info.fullName}
+                  </th>
+                  <td className="px-6">
+                      {ca.currentDisposition ? (ca.dispoType.code === "PAID" ? `${ca.dispoType.code} (Not Settled)` : ca.dispoType.code) : "New Endorsed"}
+                  </td>
+                  <td className="px-6 ">
+                      {index + 1}
+                  </td>
+                  <td className="px-6">
+                    {ca.assigned?.name}
+                  </td>
+                  {
+                    (selectedGroup || selectedAgent) &&
+                    <td className="px-6 flex items-center py-4 justify-end">
+                        <input type="checkbox" name={ca.customer_info.fullName} id={ca.customer_info.fullName} onChange={(e)=> handleCheckBox(ca._id, e)} checked={taskToAdd.includes(ca._id)} className={`${taskFilter === "assigned" && "accent-red-600" }`}/>
+                    </td>
+                  }
+                </tr>
+                ))
+              }
+            </tbody>
+          </table>
+        </div>
+        { Math.ceil(CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts ? CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts/limit : 1) > 1 &&
+          <Pagination totalPage={CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts ? CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts : 1 }/>
+        }
+    
       </div>
       { confirm &&
       <Confirmation {...modalProps}/>

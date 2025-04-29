@@ -28,18 +28,20 @@ import dispositionTypeResolver from "./graphql/resolvers/dispositionTypesResolve
 import dispositionTypeTypeDefs from "./graphql/schemas/dispositionTypeSchema.js";
 import groupResolver from "./graphql/resolvers/groupResolver.js";
 import groupTypeDefs from "./graphql/schemas/groupSchema.js";
+import taskResolver from "./graphql/resolvers/taskResolver.js";
+import taskTypeDefs from "./graphql/schemas/taskSchema.js";
 
 
 
 const app = express()
 connectDB()
 
-const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver]);
+const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver]);
 
-const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs]);
+const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs]);
 
 app.use(cors({
-  origin: "http://172.16.24.31:3000",
+  origin: "http://localhost:3000",
   credentials: true,              
 }));
 app.use(bodyParser.json());

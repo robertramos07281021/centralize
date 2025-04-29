@@ -31,7 +31,6 @@ const groupTypeDefs = gql`
     deleteGroup(id:ID!): Success
     addGroupTask(groupId:ID!,task:[ID] ):Success
     deleteGroupTask(caIds:[ID]):Success
-
   }
 `
 

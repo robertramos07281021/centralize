@@ -169,7 +169,7 @@ const customerTypeDefs = gql`
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
     getCustomers(page:Int): getCustomers!
     search(search:String):[Search]
-    findCustomerAccount(disposition:[String],groupId:ID,page:Int, assigned:String):FindCustomerAccount
+    findCustomerAccount(disposition:[String],groupId:ID,page:Int, assigned:String, limit:Int):FindCustomerAccount
     selectAllCustomerAccount(disposition:[String],groupId:ID,assigned:String):[ID]
   }
 
