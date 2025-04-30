@@ -1,16 +1,94 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 
-import { useMutation, useQuery } from "@apollo/client"
+import { gql, useMutation, useQuery } from "@apollo/client"
 import { useEffect, useState } from "react"
 import { Branch, Department, Success, UserInfo } from "../middleware/types"
-import { BRANCH_QUERY, DEPARTMENT_QUERY, USER_QUERY } from "../apollo/query"
-import { CREATEDEPT, DELETEDEPT, UPDATEDEPT } from "../apollo/mutations"
 import Confirmation from "./Confirmation"
 import { PiNotePencilBold, PiTrashFill  } from "react-icons/pi";
 import SuccessToast from "./SuccessToast"
 
+const CREATEDEPT = gql`mutation
+  createDept($name:String!, $branch:String!, $aom:String!) {
+    createDept(branch:$branch, name:$name, aom:$aom) {
+      success
+      message
+    }
+  }
+`
+const UPDATEDEPT = gql`mutation
+  updateDept($name:String!, $branch:String!, $aom:String!, $id:ID!) {
+    updateDept(branch:$branch, name:$name, aom:$aom, id:$id){
+      success
+      message
+    }
+  }
+`
+const DELETEDEPT = gql `mutation
+  deleteDept($id:ID!) {
+    deleteDept(id:$id) {
+      success
+      message
+    }
+  }
+`
+
+
+const BRANCH_QUERY = gql`
+  query branchQuery {
+    getBranches {
+      id
+      name
+    }
+  } 
+`
+
+const USER_QUERY = gql`
+  query userQuery($id:ID) {
+    getAomUser {
+      id
+      name
+      username
+      type
+      department
+      branch
+      change_password
+    }
+
+    getUser(id: $id) {
+      id
+      name
+      username
+      type
+      department
+      branch
+      change_password
+    }
+  }
+`
+
+const DEPARTMENT_QUERY = gql`
+  query departmentQuery($name: String){
+    getDepts {
+      id
+      name
+      branch
+      aom { id name username type department branch change_password }
+    }
+
+    getDept(name: $name) {
+      id
+      name
+      branch
+      aom 
+    }
+
+  }
+`
+
+
+
 const DepartmentSection = () => {
-  const {data, refetch } = useQuery<{getBranches:Branch[], getBranch:Branch}>(BRANCH_QUERY,{ variables: {name: ""}})
+  const {data, refetch } = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
 
   const {data:dept, refetch:refetchDept} = useQuery<{getDepts:Department[], getDept:Department}>(DEPARTMENT_QUERY,{ variables: { name: "admin" } })
   

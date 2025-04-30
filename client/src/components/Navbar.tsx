@@ -1,16 +1,38 @@
-import { useMutation, useQuery } from "@apollo/client"
-import { myUserInfos } from "../apollo/query"
+import { gql, useMutation, useQuery } from "@apollo/client"
+
 import { UserInfo } from "../middleware/types"
 import { BsFillPersonVcardFill } from "react-icons/bs";
 import { IoMdLogOut } from "react-icons/io";
 import { useEffect, useState } from "react";
-import { LOGOUT } from "../apollo/mutations";
 import Confirmation from "./Confirmation";
 import Loading from "../pages/Loading";
 import { useNavigate } from "react-router-dom";
 import { useAppDispatch } from "../redux/store";
 import { setNeedLogin, setSelectedCustomer, setUserLogged } from "../redux/slices/authSlice";
 import NavbarExtn from "./NavbarExtn";
+
+const myUserInfos = gql` 
+  query GetMe { 
+    getMe {
+      id
+      name
+      username
+      type
+      department
+      branch
+      change_password
+    }
+  } 
+`
+
+const LOGOUT = gql `
+  mutation logout { 
+    logout { 
+      message 
+      success 
+    } 
+  }
+`;
 
 
 const Navbar = () => {

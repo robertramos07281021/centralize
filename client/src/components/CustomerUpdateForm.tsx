@@ -1,16 +1,72 @@
 import { useEffect, useRef, useState } from "react";
 import { CiSquarePlus, CiSquareMinus } from "react-icons/ci";
 import Confirmation from "./Confirmation";
-import { useMutation, useQuery } from "@apollo/client";
-import { UPDATE_CUSTOMER } from "../apollo/mutations";
-
+import { gql, useMutation, useQuery } from "@apollo/client";
 import {  useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../redux/store";
 import { setSelectedCustomer } from "../redux/slices/authSlice";
-import { SEARCH } from "../apollo/query";
 import { Search } from "../middleware/types";
 
+const UPDATE_CUSTOMER = gql` mutation
+  updateCustomer($fullName:String!, $dob:String!, $gender:String!, $mobiles:[String], $emails:[String], $addresses:[String],$id:ID!) {
+    updateCustomer(fullName:$fullName, dob:$dob, gender:$gender, mobiles:$mobiles, emails:$emails, addresses:$addresses, id:$id) {
+      success
+      message
+      customer {
+        fullName
+        dob
+        gender
+        contact_no
+        emails
+        addresses
+        _id
+      }
+    }
+  }
+`
+const SEARCH = gql`
+  query Search($search: String) {
+    search(search: $search) {
+      _id
+      case_id
+      account_id
+      endorsement_date
+      credit_customer_id
+      bill_due_day
+      max_dpd
+      balance
+      paid_amount
+      out_standing_details {
+        principal_os
+        interest_os
+        admin_fee_os
+        txn_fee_os
+        late_charge_os
+        dst_fee_os
+        total_os
+      }
+      grass_details {
+        grass_region
+        vendor_endorsement
+        grass_date
+      }
+      account_bucket {
+        name
+        dept
+      }
+      customer_info {
+        fullName
+        dob
+        gender
+        contact_no
+        emails
+        addresses
+        _id
+      }
+    }
+  }
+`
 
 interface CustomerUpdateFormProps {
   cancel: () => void, 

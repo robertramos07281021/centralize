@@ -7,7 +7,6 @@ import SuccessToast from "../components/SuccessToast"
 import AccountInfo from "../components/AccountInfo"
 import DispositionForm from "../components/DispositionForm"
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { SEARCH } from "../apollo/query"
 import { Search } from "../middleware/types"
 import { setSelectedCustomer, setSettled } from "../redux/slices/authSlice"
 import AgentTimer from "../components/AgentTimer"
@@ -22,10 +21,49 @@ const DESELECT_TASK = gql`
       success
     }
   }
-
-
 `
-
+const SEARCH = gql`
+  query Search($search: String) {
+    search(search: $search) {
+      _id
+      case_id
+      account_id
+      endorsement_date
+      credit_customer_id
+      bill_due_day
+      max_dpd
+      balance
+      paid_amount
+      out_standing_details {
+        principal_os
+        interest_os
+        admin_fee_os
+        txn_fee_os
+        late_charge_os
+        dst_fee_os
+        total_os
+      }
+      grass_details {
+        grass_region
+        vendor_endorsement
+        grass_date
+      }
+      account_bucket {
+        name
+        dept
+      }
+      customer_info {
+        fullName
+        dob
+        gender
+        contact_no
+        emails
+        addresses
+        _id
+      }
+    }
+  }
+`
 
 
 

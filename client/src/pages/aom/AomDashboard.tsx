@@ -3,7 +3,7 @@
 const AomDashboard = () => {
   return (
     <div>
-      aom
+      
     </div>
   )
 }

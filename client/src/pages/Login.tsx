@@ -2,11 +2,41 @@ import {  RootState, useAppDispatch } from "../redux/store"
 import { useEffect, useMemo, useRef, useState } from "react"
 import {  useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
-import { LOGIN, LOGOUT } from "../apollo/mutations";
-import { useMutation } from "@apollo/client";
+import { gql, useMutation } from "@apollo/client";
 import {  setError, setUserLogged } from "../redux/slices/authSlice";
 import Loading from "./Loading";
 import { useSelector } from "react-redux";
+
+const LOGIN = gql `
+  mutation login($username: String!, $password: String!) { 
+    login(username: $username, password: $password) { 
+      message success user { 
+        _id
+        name
+        username
+        type
+        department
+        branch
+        change_password
+        buckets
+        isOnline
+        active
+        createdAt
+        user_id
+      }
+    }
+  }
+`;
+
+const LOGOUT = gql`
+  mutation logout { 
+    logout { 
+      message 
+      success 
+    } 
+  }
+`;
+
 
 const Login = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
@@ -29,6 +59,7 @@ const Login = () => {
   const [password, setPassword] = useState<string>("") 
 
   const [logout] = useMutation(LOGOUT)
+
   const [login, {loading}] = useMutation(LOGIN, {
     onCompleted: (res) => {
       dispatch(setUserLogged(res.login.user))
@@ -59,7 +90,8 @@ const Login = () => {
           setUsername("")
           setPassword("")
         }
-      } else {        console.log("An unknown error occurred",error);
+      } else {        
+        console.log("An unknown error occurred",error);
         dispatch(setError(true))
 
       }

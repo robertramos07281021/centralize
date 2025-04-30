@@ -2,12 +2,20 @@
 import { useCallback, useState } from "react";
 import * as XLSX from "xlsx";
 import { useDropzone } from "react-dropzone";
-
-import { useMutation } from "@apollo/client";
-import { CREATE_CUSTOMER } from "../apollo/mutations";
+import { gql, useMutation } from "@apollo/client";
 import Confirmation from "../components/Confirmation";
 import { CustomerData, ExcelFile, Success } from "../middleware/types";
 import SuccessToast from "./SuccessToast";
+
+const CREATE_CUSTOMER = gql `mutation
+  createCustomer($input:[CustomerData!]!) {
+    createCustomer(input:$input) {
+      success
+      message
+    }
+  }
+`
+
 
 
 const Uploader:React.FC = () => {

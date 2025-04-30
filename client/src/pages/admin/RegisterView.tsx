@@ -1,15 +1,51 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMutation, useQuery } from "@apollo/client"
+import { gql, useMutation, useQuery } from "@apollo/client"
 import { useEffect, useState } from "react"
 import { Branch, DeptAomId } from "../../middleware/types"
-import { BRANCH_DEPARTMENT_QUERY, BRANCH_QUERY } from "../../apollo/query"
-import { CREATE_ACCOUNT } from "../../apollo/mutations"
 import SuccessToast from "../../components/SuccessToast"
 import Confirmation from "../../components/Confirmation"
 
+const CREATE_ACCOUNT = gql`
+  mutation createUser($username: String!, $name: String!, $type: String!, $branch: String!, $department: String!, $id_number:String!) {
+    createUser(username: $username, name:$name, type: $type, branch: $branch, department: $department, id_number: $id_number) {
+      id
+      name
+      username
+      type
+      department
+      branch
+      change_password
+      bucket
+      user_id
+    }
+  }
+`
+
+const BRANCH_QUERY = gql`
+  query branchQuery {
+    getBranches {
+      id
+      name
+    }
+  } 
+`
+const BRANCH_DEPARTMENT_QUERY = gql`
+  query Query($branch: String) {
+    getBranchDept(branch: $branch){
+      id
+      name
+      branch
+      aom
+    }
+  }
+`
+
+
+
+
 const RegisterView = () => {
 
-  const {data:branchQuery} = useQuery<{getBranches:Branch[], getBranch:Branch}>(BRANCH_QUERY,{ variables: {name: ""}})
+  const {data:branchQuery} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
   const [data, setData] = useState({
     type: "",
     name: "",

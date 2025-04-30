@@ -2,8 +2,6 @@
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { useState } from "react"
 import { Branch, DeptAomId, Success, Users } from "../middleware/types"
-import { BRANCH_DEPARTMENT_QUERY, BRANCH_QUERY } from "../apollo/query"
-import { RESET_PASSWORD, STATUS_UPDATE, UPDATE_USER } from "../apollo/mutations"
 import Confirmation from "./Confirmation"
 import { useLocation, useNavigate } from "react-router-dom"
 import SuccessToast from "./SuccessToast"
@@ -19,7 +17,6 @@ interface Bucket {
   id: string
 }
 
-
 const DEPT_BUCKET_QUERY = gql`
   query Query($dept: String) {
     getDeptBucket(dept: $dept) {
@@ -30,10 +27,82 @@ const DEPT_BUCKET_QUERY = gql`
   }
 `
 
+const BRANCH_QUERY = gql`
+  query branchQuery {
+    getBranches {
+      id
+      name
+    }
+  } 
+`
+
+const BRANCH_DEPARTMENT_QUERY = gql`
+  query Query($branch: String) {
+    getBranchDept(branch: $branch){
+      id
+      name
+      branch
+      aom
+    }
+  }
+`
+const RESET_PASSWORD = gql`
+  mutation resetPassword($id:ID!) {
+    resetPassword(id:$id) {
+      success
+      message
+    }
+  }
+`
+const UPDATE_USER = gql`
+  mutation updateUser( $name:String!, $type: String!, $branch:String!, $department: String!, $bucket:String, $id: ID!) {
+    updateUser( name:$name, type:$type, branch:$branch, department:$department, bucket:$bucket, id:$id){
+      success
+      message
+      user {
+        _id
+        name
+        username
+        type
+        department
+        branch
+        change_password
+        buckets
+        isOnline
+        active
+        createdAt
+        user_id
+      }
+    }
+  }
+`
+
+const STATUS_UPDATE = gql`
+  mutation Mutation($id:ID!) {
+    updateActiveStatus(id:$id) {
+      success
+      message
+      user {
+        _id
+        name
+        username
+        type
+        department
+        branch
+        change_password
+        buckets
+        isOnline
+        active
+        createdAt
+      }
+    }
+  }
+`
+
 const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   const location = useLocation()
   const navigate = useNavigate()
-  const {data:branchesData} = useQuery<{getBranches:Branch[], getBranch:Branch}>(BRANCH_QUERY,{ variables: {name: ""}})
+  const {data:branchesData} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
 
   const [isUpdate, setIsUpdate] = useState(false)
   const [required, setRequired] = useState(false)

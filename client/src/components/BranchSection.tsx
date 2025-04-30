@@ -1,59 +1,79 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMutation, useQuery } from "@apollo/client"
-import {  CREATEBRANCH, DELETEBRANCH, UPDATEBRANCH } from "../apollo/mutations"
+import { gql, useMutation, useQuery } from "@apollo/client"
+
 import {  useRef, useState } from "react"
-import { BRANCH_QUERY } from "../apollo/query"
+
 import { Branch, Success } from "../middleware/types"
 import { PiNotePencilBold, PiTrashFill  } from "react-icons/pi";
 import Confirmation from "./Confirmation"
 import SuccessToast from "./SuccessToast"
 
+
+const BRANCH_QUERY = gql`
+  query branchQuery {
+    getBranches {
+      id
+      name
+    }
+  } 
+`
+const CREATEBRANCH = gql`mutation createBranch($name: String!) {
+  createBranch(name:$name) {
+    success
+    message
+  }
+}
+`
+const UPDATEBRANCH = gql`mutation updateBranch($name: String!, $id: ID!) {
+  updateBranch(name:$name, id: $id) {
+    success
+    message
+  }
+  }
+`
+const DELETEBRANCH = gql`mutation deleteBranch($id: ID!) {
+  deleteBranch(id:$id) {
+    success
+    message
+  } 
+}
+`
+
 const BranchSection = () => {
 
-  const {data,refetch} = useQuery<{getBranches:Branch[], getBranch:Branch}>(BRANCH_QUERY,{ variables: {name: ""}})
+  const {data,refetch} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
 
   const [createBranch] = useMutation(CREATEBRANCH,{
     onCompleted: async() => {
-      try {
-        await refetch();
-        setSuccess({
-          success: true,
-          message: "Branch successfully created"
-        })
-        setName("")
-      } catch (error) {
-        console.log(error)
-      }
+      refetch();
+      setSuccess({
+        success: true,
+        message: "Branch successfully created"
+      })
+      setName("")
     },
   })
 
   const [updateBranch] = useMutation(UPDATEBRANCH, {
-    onCompleted: async() => {
-      try {
-        await refetch();
-        setSuccess({
-          success: true,
-          message: "Branch successfully updated"
-        })
-        setName("")
-        setBranchToUpdate(null)
-      } catch (error) {
-        console.log(error)
-      }
+    onCompleted: () => {
+      refetch();
+      setSuccess({
+        success: true,
+        message: "Branch successfully updated"
+      })
+      setName("")
+      setBranchToUpdate(null)
+     
     },
   })
   const [deleteBranch] = useMutation(DELETEBRANCH, {
-    onCompleted: async() => {
-      try {
-        refetch();
-        setSuccess({
-          success: true,
-          message: "Branch successfully deleted"
-        })
-        setName("")
-      } catch (error) {
-        console.log(error)
-      }
+    onCompleted: () => {
+      refetch();
+      setSuccess({
+        success: true,
+        message: "Branch successfully deleted"
+      })
+      setName("")
     },
   })
 

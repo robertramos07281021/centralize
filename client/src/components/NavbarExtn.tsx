@@ -51,6 +51,17 @@ const NavbarExtn = () => {
         name: "Reports",
         link: "/tl-reports"
       },
+    ],
+    AOM: [
+      {
+        name: "Dashboard",
+        link: "/aom-dashboard"
+      },
+      {
+        name: "Report",
+        link: "/aom-report"
+      }
+
     ]
   }
 

@@ -3,7 +3,6 @@ import Confirmation from "./Confirmation"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { CREATE_DISPOSITION } from "../apollo/mutations"
 import { Success } from "../middleware/types"
 import SuccessToast from "./SuccessToast"
 import { setSelectedCustomer, setSettled } from "../redux/slices/authSlice"
@@ -22,6 +21,15 @@ const GET_DISPOSITION_TYPES = gql`
       id
       name
       code
+    }
+  }
+`
+
+const CREATE_DISPOSITION = gql`
+  mutation CreateDisposition($customerAccountId: ID!, $userId: ID!, $disposition: String!, $amount: String, $payment: String, $payment_date: String, $payment_method: String, $ref_no: String, $comment: String) {
+    createDisposition(customerAccountId: $customerAccountId, userId: $userId, disposition: $disposition, amount: $amount, payment: $payment, payment_date: $payment_date, payment_method: $payment_method, ref_no: $ref_no, comment: $comment) {
+      success
+      message
     }
   }
 `

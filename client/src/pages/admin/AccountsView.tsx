@@ -1,11 +1,53 @@
-
-import { useQuery } from "@apollo/client"
+import { gql, useQuery } from "@apollo/client"
 import { Link, useNavigate } from "react-router-dom"
 import { Users } from "../../middleware/types"
-import { FIND_QUERY, GET_ALL_USERS } from "../../apollo/query"
 import { FaCircle } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { CiSearch } from "react-icons/ci";
+
+const GET_ALL_USERS = gql`
+  query Query($page: Int!) {
+    getUsers(page:$page) {
+      total
+      users {
+        _id
+        name
+        username
+        type
+        department
+        branch
+        change_password
+        active
+        isOnline
+        buckets
+        createdAt
+        user_id
+      }
+    }
+  }
+`
+const FIND_QUERY = gql` 
+  query Query($search: String!, $page: Int!) {
+    findUsers(search: $search, page:$page ) {
+      total
+      users {
+        _id
+        name
+        username
+        type
+        department
+        branch
+        change_password
+        active
+        isOnline
+        buckets
+        createdAt
+        user_id
+      }
+    }
+  }
+`
+
 
 const AccountsView = () => {
   const [page] = useState<number>(1)

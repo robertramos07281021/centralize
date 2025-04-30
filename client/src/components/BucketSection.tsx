@@ -1,20 +1,69 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-import { useMutation, useQuery } from "@apollo/client"
+import { gql, useMutation, useQuery } from "@apollo/client"
 import {  Department, Success } from "../middleware/types"
-import { DEPARTMENT_BUCKET, DEPARTMENT_QUERY } from "../apollo/query"
 import { useEffect, useMemo, useState } from "react";
-import { CREATEBUCKET, DELETEBUCKET, UPDATEBUCKET } from "../apollo/mutations";
 import Confirmation from "./Confirmation";
 import { PiNotePencilBold, PiTrashFill  } from "react-icons/pi";
 import SuccessToast from "./SuccessToast";
-
-
 
 interface Bucket {
   name: string
   dept: string
   id: string
 }
+
+const DEPARTMENT_QUERY = gql`
+  query departmentQuery($name: String){
+    getDepts {
+      id
+      name
+      branch
+      aom { id name username type department branch change_password }
+    }
+
+    getDept(name: $name) {
+      id
+      name
+      branch
+      aom 
+    }
+
+  }
+`
+const DEPARTMENT_BUCKET = gql`
+  query bucketQuery($dept:String) {
+    getBuckets(dept:$dept) {
+      id
+      name
+      dept
+    }
+  }
+`
+
+const CREATEBUCKET = gql`mutation
+  createBucket($name: String!, $dept:String!){
+    createBucket(name:$name, dept:$dept) {
+      success
+      message
+    }
+  }
+`
+const UPDATEBUCKET = gql `mutation
+  updateBucket($name: String!,$id:ID!) {
+    updateBucket(name: $name id:$id) {
+      success
+      message
+    }
+  }
+`
+const DELETEBUCKET = gql `mutation
+  deleteBucket($id:ID!) {
+    deleteBucket(id:$id) {
+      success
+      message
+    }
+  }
+`
 
 
 const BucketSection = () => {

@@ -1,16 +1,50 @@
-import { useMutation, useQuery } from "@apollo/client"
+import { gql, useMutation, useQuery } from "@apollo/client"
 import { UserInfo } from "../middleware/types"
-import { myUserInfos } from "../apollo/query"
+
 import { Navigate, useLocation, useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
 import { RootState, useAppDispatch } from "../redux/store";
 import { useEffect, useRef, useState } from "react";
 import Loading from "./Loading";
-import { LOGOUT, UPDATEPASSWORD } from "../apollo/mutations";
 import { setNeedLogin, setError } from "../redux/slices/authSlice";
 import { useSelector } from "react-redux";
 
+ const UPDATEPASSWORD = gql `
+  mutation changePassword($password: String!, $confirmPassword:String!) {
+    updatePassword(password: $password, confirmPass: $confirmPassword) {
+      branch 
+      username 
+      type 
+      name 
+      department 
+      id 
+      change_password 
+    }
+  }
+`;
 
+
+const myUserInfos = gql` 
+  query GetMe { 
+    getMe {
+      id
+      name
+      username
+      type
+      department
+      branch
+      change_password
+    }
+  } 
+`
+const LOGOUT = gql`
+  mutation logout { 
+    logout { 
+      message 
+      success 
+    } 
+  }
+`;
 
 
 const ChangePassword = () => {
@@ -28,7 +62,7 @@ const ChangePassword = () => {
   const [notMatch, setNotMatch] = useState<boolean>(false)
   const [logout] = useMutation(LOGOUT)
   const [changePassword, {loading:changePassLoading}] = useMutation<{updatePassword: UserInfo}>(UPDATEPASSWORD, {
-    onCompleted: async(res) => {
+      onCompleted: async(res) => {
       refetch();
       navigate("/")
       dispatch(setNeedLogin(res.updatePassword.change_password))
