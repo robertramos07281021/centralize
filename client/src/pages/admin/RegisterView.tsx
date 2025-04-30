@@ -6,8 +6,8 @@ import SuccessToast from "../../components/SuccessToast"
 import Confirmation from "../../components/Confirmation"
 
 const CREATE_ACCOUNT = gql`
-  mutation createUser($username: String!, $name: String!, $type: String!, $branch: String!, $department: String!, $id_number:String!) {
-    createUser(username: $username, name:$name, type: $type, branch: $branch, department: $department, id_number: $id_number) {
+  mutation Mutation($name: String!, $username: String!, $type: String!, $department: String!, $branch: String!, $idNumber: String) {
+    createUser(name: $name, username: $username, type: $type, department: $department, branch: $branch, id_number: $idNumber) {
       id
       name
       username
@@ -15,7 +15,8 @@ const CREATE_ACCOUNT = gql`
       department
       branch
       change_password
-      bucket
+      buckets
+      _id
       user_id
     }
   }
@@ -39,9 +40,6 @@ const BRANCH_DEPARTMENT_QUERY = gql`
     }
   }
 `
-
-
-
 
 const RegisterView = () => {
 
@@ -87,6 +85,7 @@ const RegisterView = () => {
       }
     },
   })
+
   const [required, setRequired] = useState(false)
 
   const [confirm,setConfirm] = useState(false)
@@ -142,7 +141,7 @@ const RegisterView = () => {
           })
         }
       } else {
-        if(!data.branch || !data.name || !data.username || !data.department ) {
+        if( !data.name || !data.username ) {
           setRequired(true)
         } else {
           setRequired(false)
@@ -197,11 +196,11 @@ const RegisterView = () => {
               onChange={(e)=> setData({...data, type: e.target.value})}
               className={`bg-slate-50 border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}
               >
-              <option value="">Choose a bucket</option>
+              <option value="">Choose a type</option>
               <option value="AGENT">AGENT</option>
               <option value="TL">TL</option>
               <option value="AOM">AOM</option>
-              {/* <option value="MIS">MIS</option> */}
+              <option value="MIS">MIS</option>
               <option value="CEO">CEO</option>
               <option value="ADMIN">ADMIN</option>
               <option value="OPERATION">OPERATION</option>
@@ -254,7 +253,7 @@ const RegisterView = () => {
               name="branch"
               value={data.branch}
               onChange={(e)=> setData({...data, branch: e.target.value})}
-              disabled={data.type.trim() === ""}
+              disabled={data.type.trim() === "" }
               className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}
             >
               <option value="">Choose a branch</option>
@@ -279,8 +278,8 @@ const RegisterView = () => {
               {
                 branchDeptData?.getBranchDept?.map((dept)=> 
                   <option key={dept.id} value={dept.name}>{dept.name.toUpperCase()}</option>
-              )
-            }
+                )
+              }
             </select>
           </label>
           <div>

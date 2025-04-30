@@ -96,7 +96,7 @@ const userResolvers = {
         throw new CustomError(error.message, 500)
       }
     },
-    
+
     findAgents: async(_,__,{user}) => {
       if (!user) throw new CustomError("Not authenticated",401);
       try {
@@ -111,16 +111,17 @@ const userResolvers = {
     createUser: async (
       _,
       { name, username, branch, department, type, id_number}, {user}) => {
-      
         try {
 
           if(!user) throw new CustomError("Unauthorized",401)
-
-          const findBranch = await Branch.findOne({name: branch})
-          if(!findBranch) throw new Error("Branch not found")
-    
-          const findDept = await Department.findOne({name: department})
-          if(!findDept) throw new Error("Department not found")
+          
+          if(type === "AGENT") {
+            const findBranch = await Branch.findOne({name: branch})
+            if(!findBranch) throw new Error("Branch not found")
+      
+            const findDept = await Department.findOne({name: department})
+            if(!findDept) throw new Error("Department not found")
+          }
           
           const saltPassword = await bcrypt.genSalt(10)
           const hashPassword = await bcrypt.hash(type === "admin" ? "adminadmin" :"Bernales2025", saltPassword)
@@ -133,6 +134,7 @@ const userResolvers = {
           return newUser;
           
         } catch (error) {
+          console.log(error)
           throw new CustomError(error.message,500)
         }
     },

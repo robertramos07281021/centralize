@@ -6,7 +6,7 @@ import { FaEye, FaEyeSlash  } from "react-icons/fa";
 import { RootState, useAppDispatch } from "../redux/store";
 import { useEffect, useRef, useState } from "react";
 import Loading from "./Loading";
-import { setNeedLogin, setError } from "../redux/slices/authSlice";
+import { setNeedLogin, setError, setUserLogged } from "../redux/slices/authSlice";
 import { useSelector } from "react-redux";
 
  const UPDATEPASSWORD = gql `
@@ -60,7 +60,24 @@ const ChangePassword = () => {
   const [password, setPassword] = useState<string>("")
   const [confirmPassword, setConfirmPassword] = useState<string>("")
   const [notMatch, setNotMatch] = useState<boolean>(false)
-  const [logout] = useMutation(LOGOUT)
+
+  const [logout] = useMutation(LOGOUT,{
+    onCompleted: ()=> {
+      dispatch(setUserLogged(
+        {
+          _id: "",
+          change_password: false,
+          name: "",
+          type: "",
+          username: "",
+          branch: "",
+          department: "",
+          bucket: ""
+        }
+      ))
+    }
+  })
+
   const [changePassword, {loading:changePassLoading}] = useMutation<{updatePassword: UserInfo}>(UPDATEPASSWORD, {
       onCompleted: async(res) => {
       refetch();
@@ -78,7 +95,6 @@ const ChangePassword = () => {
   useEffect(()=> {
     refetch()
   },[navigate, refetch, data])
-
 
   const submitForm = async(e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -115,7 +131,7 @@ const ChangePassword = () => {
     OPERATION: "/operation-dashboard",
     MIS: "/mis-dashboard"
   }
-  const userType = data?.getMe?.type as keyof typeof userRoutes ?? "ADMIN";
+  const userType = userLogged.type as keyof typeof userRoutes ?? "ADMIN";
   const sample = location.state !== null ? userRoutes[userType] : "/"
 
  if(loading || changePassLoading) return (
@@ -128,7 +144,7 @@ const ChangePassword = () => {
         <img src="/bernalesLogo.png" alt="Bernales Logo" className="w-56" />
       </div>
       <div className="flex items-center justify-center h-full bg-[url(/BGBernLogo.jpg)] bg-fixed bg-no-repeat bg-cover">
-        <div className="w-96 min-h-96 py-10 border bg-white border-slate-100 rounded shadow-xl shadow-black/50 flex items-center justify-center flex-col gap-10 px-10">
+        <div className="w-96 min-h-96 py-10 border bg-white/85 border-slate-100 rounded shadow-xl shadow-black/50 flex items-center justify-center flex-col gap-10 px-10">
           <h1 className="text-2xl font-bold text-slate-900">Change Password</h1>
           { required &&
             <h1 className="text-xs text-red-500 font-medium">All fields are required.</h1>

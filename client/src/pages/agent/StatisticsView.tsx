@@ -100,11 +100,11 @@ const AGENT_TOTAL_DISPO = gql`
 `
 
 const StatisticsView = () => {
-  const {data:productionData} = useQuery<{getProductions:Production}>(TODAY_DISPOSITION)
-  const {data:dispotypeData} = useQuery<{getDispositionTypes:DispositionType[]}>(DISPO_TYPES)
-  const {data:agentProdPerDayData} = useQuery<{getAgentProductionPerDay:AgentProdPerDay[]}>(AGENT_PER_DAY_PROD)
-  const {data:agentProdPerMonthData} = useQuery<{getAgentProductionPerMonth:AgentProdPerMonth[]}>(AGENT_PER_MONTH_PROD)
-  const {data:agentTotalDispoData} = useQuery<{getAgentTotalDispositions:AgentTotalDispo[]}>(AGENT_TOTAL_DISPO)
+  const {data:productionData} = useQuery<{getProductions:Production}>(TODAY_DISPOSITION,{pollInterval: 1000})
+  const {data:dispotypeData} = useQuery<{getDispositionTypes:DispositionType[]}>(DISPO_TYPES,{pollInterval: 1000})
+  const {data:agentProdPerDayData} = useQuery<{getAgentProductionPerDay:AgentProdPerDay[]}>(AGENT_PER_DAY_PROD,{pollInterval: 1000})
+  const {data:agentProdPerMonthData} = useQuery<{getAgentProductionPerMonth:AgentProdPerMonth[]}>(AGENT_PER_MONTH_PROD, {pollInterval: 1000})
+  const {data:agentTotalDispoData} = useQuery<{getAgentTotalDispositions:AgentTotalDispo[]}>(AGENT_TOTAL_DISPO, {pollInterval: 1000})
   
   const [totalCollection,setTotalCollection] = useState<number|null>(null)
 
@@ -136,9 +136,6 @@ const StatisticsView = () => {
     ],
   };
  
-
-
-
   const dataPerMonth = {
     labels: month.map((m)=> {return m.slice(0,3)}),
     datasets: [
@@ -159,12 +156,13 @@ const StatisticsView = () => {
       },
     ],
   }
+
   useEffect(()=> {
-    if(productionData?.getProductions){
-      const newArray = productionData.getProductions.dispositions.map((d)=> d.collection)
-      setTotalCollection(newArray.reduce((t,v) => {
+    if(productionData?.getProductions?.dispositions){
+      const newArray = productionData?.getProductions?.dispositions?.map((d)=> d.collection)
+      setTotalCollection(newArray.length > 1 ? newArray.reduce((t,v) => {
         return t + v
-      }))
+      }) : null)
     }
   },[productionData])
 

@@ -12,6 +12,8 @@ interface DispoData {
   count: string
 }
 
+
+
 interface BucketDisposition {
   bucket: string
   dispositions: [DispoData]
@@ -60,15 +62,11 @@ const DEPT_BUCKET_QUERY = gql`
 
 const DispositionSection = () => {
   const {userLogged} = useSelector((state:RootState)=>state.auth)
-  const {data:bucketDispoData, refetch} = useQuery<{getBucketDisposition:BucketDisposition[]}>(BUCKET_DISPOSITIONS,{variables: {dept: userLogged.department}})
+  const {data:bucketDispoData} = useQuery<{getBucketDisposition:BucketDisposition[]}>(BUCKET_DISPOSITIONS,{variables: {dept: userLogged.department}, pollInterval: 1000})
 
   const {data:deptBucket} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY,{variables: {dept: userLogged.department}})
 
-  useEffect(()=> {
-    refetch()
-    const refetchInterval = setInterval(refetch,1000)
-    return () => clearInterval(refetchInterval)
-  },[refetch])
+
 
   const [existsDispo, setExistsDispo] = useState<string[]>([])
 

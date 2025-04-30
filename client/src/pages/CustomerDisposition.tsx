@@ -251,7 +251,6 @@ const CustomerDisposition = () => {
                       <span>
                         {data.credit_customer_id}
                       </span>
-                      
                     </div>
                   </div>
                 )) 

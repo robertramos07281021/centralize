@@ -64,7 +64,7 @@ const Login = () => {
     onCompleted: (res) => {
       dispatch(setUserLogged(res.login.user))
       if(!res.login.user.change_password) {
-        navigate('/change-password')
+        navigate('/change-password', {state: res.login.user})
       } else {
         navigate(userRoutes[res.login.user.type  as keyof typeof userRoutes])
       }
@@ -98,15 +98,12 @@ const Login = () => {
     }
   }
 
-
-
   useEffect(()=> {
-    if(userLogged) {
+    if(userLogged._id && userLogged.change_password) {
       const userType = userLogged.type as keyof typeof userRoutes;
       if(userRoutes[userType]) navigate(userRoutes[userType])
     }
-  },[userLogged,userRoutes, navigate])
-
+  },[userLogged,userRoutes,navigate])
 
   useEffect(()=> {
       const timer = setTimeout(async() =>  {

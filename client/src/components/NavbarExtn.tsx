@@ -59,7 +59,7 @@ const NavbarExtn = () => {
       },
       {
         name: "Report",
-        link: "/aom-report"
+        link: "/aom-reports"
       }
 
     ]

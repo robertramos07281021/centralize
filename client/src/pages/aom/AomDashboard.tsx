@@ -2,7 +2,7 @@
 
 const AomDashboard = () => {
   return (
-    <div>
+    <div className="h-full">
       
     </div>
   )

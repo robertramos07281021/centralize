@@ -23,6 +23,7 @@ import CustomerDisposition from "./pages/CustomerDisposition"
 import StatisticsView from "./pages/agent/StatisticsView"
 import BacklogManagementView from "./pages/tl/BacklogManagementView"
 import TaskManagerView from "./pages/tl/TaskManagerView"
+import Reports from "./pages/Reports"
 
 function App() {
 
@@ -48,10 +49,12 @@ function App() {
         </Route>
         <Route element={<AomRoute/>}>
           <Route path="/aom-dashboard" element={<AomDashboard/>}/>
+          <Route path="/aom-reports" element={<Reports/>} />
 
         </Route>
         <Route element={<OpsRoute/>}>
           <Route path="/operation-dashboard" element={<OperationDashboard/>}/>
+          <Route path="/operation-reports" element={<Reports/>} />
 
         </Route>
         <Route element={<TlRoute/>}>

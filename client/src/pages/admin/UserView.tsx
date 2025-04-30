@@ -22,15 +22,6 @@ const UserView = () => {
     refetch()
   },[state, refetch])
 
-  const dateFormat = (created:string) => {
-    const month = new Date(created).getMonth()
-    const date = new Date(created).getDate()
-    const year = new Date(created).getFullYear()
-    const hour = new Date(created).getHours()
-    const minute = new Date(created).getMinutes()
-    return month + "/" + date + "/" + year + " - " + (hour > 9 ? "0" + (Math.floor(hour/24 * 10)) : (Math.floor(hour/24 * 10))) + " : " + (minute > 9 ? minute : "0" + minute ) + (hour>12 ? " pm" : " am") 
-  }
-
   return (
     <div className="p-5 h-screen flex flex-col">
       <h1 className="text-2xl font-medium text-slate-500">User Account</h1>
@@ -43,7 +34,7 @@ const UserView = () => {
                 data?.getModifyReport?.map( mr => 
                   <div key={mr.id} className="grid grid-cols-2 py-1.5 px-2 odd:bg-slate-100">
                     <div className="text-slate-700 font-medium text-base">{mr.name}</div>
-                    <div className="text-slate-600 text-sm">{dateFormat(mr.createdAt)}</div>
+                    <div className="text-slate-600 text-sm">{new Date(mr.createdAt).toLocaleDateString()} - {new Date(mr.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}</div>
                   </div>
                 )
               }

@@ -7,9 +7,10 @@ import { useEffect, useState } from "react";
 import Confirmation from "./Confirmation";
 import Loading from "../pages/Loading";
 import { useNavigate } from "react-router-dom";
-import { useAppDispatch } from "../redux/store";
-import { setNeedLogin, setSelectedCustomer, setUserLogged } from "../redux/slices/authSlice";
+import { RootState, useAppDispatch } from "../redux/store";
+import { setNeedLogin, setPage, setSelectedCustomer, setSelectedDisposition, setTasker, setTaskFilter, setUserLogged } from "../redux/slices/authSlice";
 import NavbarExtn from "./NavbarExtn";
+import { useSelector } from "react-redux";
 
 const myUserInfos = gql` 
   query GetMe { 
@@ -37,8 +38,9 @@ const LOGOUT = gql `
 
 const Navbar = () => {
   const navigate = useNavigate()
+  const {userLogged} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
-  const {data, error} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
+  const {error} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
   const [poPupUser, setPopUpUser] = useState<boolean>(false)  
   const [logout, {loading}] = useMutation(LOGOUT,{
     onCompleted: async() => {
@@ -56,7 +58,10 @@ const Navbar = () => {
             bucket: ""
           }
         ))
-
+        dispatch(setPage(1))
+        dispatch(setTasker('group'))
+        dispatch(setTaskFilter('assigned'))
+        dispatch(setSelectedDisposition([]))
         dispatch(setSelectedCustomer({
           _id: "",
           case_id: "",
@@ -129,7 +134,6 @@ const Navbar = () => {
       toggle: action
     })
   }
-
   useEffect(()=> {
     if (error instanceof Error) {
       if(error?.message === "Not authenticated") {
@@ -160,12 +164,12 @@ const Navbar = () => {
           Bernales & Associates
         </div>
         <div className="p-1 flex gap-2 text-xs z-50">
-          <p className="font-medium text-white italic flex items-center">Hello&nbsp;<span className="uppercase">{data?.getMe.name}</span></p>
+          <p className="font-medium text-white italic flex items-center">Hello&nbsp;<span className="uppercase">{userLogged.name}</span></p>
           <BsFillPersonVcardFill className="text-4xl cursor-pointer " onClick={()=> setPopUpUser(!poPupUser)}/>
           { poPupUser &&
             <div className="w-40 h-40 border border-slate-200 shadow-xl shadow-black/8 rounded-xl top-13 end-5 bg-white absolute flex flex-col p-2 text-slate-500 font-medium">
               <div className="grow px-2 border-b border-slate-200 flex items-center hover:text-white hover:bg-slate-500 duration-200 ease-in-out cursor-pointer rounded-t-lg ">
-                {data?.getMe.name.toLocaleUpperCase()}
+                {userLogged.name.toLocaleUpperCase()}
               </div>
               <div className="grow px-2 border-b border-slate-200 flex items-center hover:text-white hover:bg-slate-500 duration-200 ease-in-out cursor-pointer">
                 Dashboard

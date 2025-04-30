@@ -62,7 +62,7 @@ const AccountsView = () => {
   },[navigate,refetch])
 
   return (
-    <div className="min-h-screen">
+    <div className="h-full">
       <div className="p-5 flex justify-between">
         <h1 className="text-2xl font-medium text-slate-500">Account</h1>
         <Link to="/register">
@@ -85,7 +85,7 @@ const AccountsView = () => {
             required />
         </div>
       </form>
-      <div className="h-full p-5">
+      <div className=" p-5">
         <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
           <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
             <tr>

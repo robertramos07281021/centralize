@@ -25,11 +25,9 @@ const userSchema = new Schema(
     },
     department: {
       type: String,
-      required: true
     }, 
     branch: {
       type: String,
-      required: true
     },
     isOnline: {
       type: Boolean,
