@@ -1,10 +1,9 @@
-import { useQuery } from "@apollo/client"
 import { Link, useLocation } from "react-router-dom"
-import { UserInfo } from "../middleware/types"
-import { myUserInfos } from "../apollo/query"
+import { useSelector } from "react-redux"
+import { RootState } from "../redux/store"
 
 const NavbarExtn = () => {
-  const {data} = useQuery<{ getMe: UserInfo }>(myUserInfos)
+  const {userLogged} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
   const accountsNavbar = {
     ADMIN: [
@@ -55,7 +54,7 @@ const NavbarExtn = () => {
     ]
   }
 
-  const userType = data?.getMe?.type as keyof typeof accountsNavbar;
+  const userType = userLogged?.type as keyof typeof accountsNavbar;
 
   if (!userType || !accountsNavbar[userType]) return null; 
 

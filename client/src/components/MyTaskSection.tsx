@@ -311,8 +311,10 @@ const MyTaskSection = () => {
   useEffect(()=> {
     if(selectedCustomer._id) {
       setSelection("")
+    } else {
+      groupTaskRefetch()
     }
-  },[selectedCustomer])
+  },[selectedCustomer,groupTaskRefetch])
 
   return (
     <div className="p-2 flex justify-end gap-5 relative">

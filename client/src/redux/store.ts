@@ -25,9 +25,9 @@ export const store = configureStore({
       ignoredActions: [
         "persist/PERSIST",
         "persist/REHYDRATE",
-        // "persist/PAUSE",
-        // "persist/FLUSH",
-        // "persist/PURGE",
+        "persist/PAUSE",
+        "persist/FLUSH",
+        "persist/PURGE",
         "persist/REGISTER"
       ],
     }}),

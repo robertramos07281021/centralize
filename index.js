@@ -30,18 +30,20 @@ import groupResolver from "./graphql/resolvers/groupResolver.js";
 import groupTypeDefs from "./graphql/schemas/groupSchema.js";
 import taskResolver from "./graphql/resolvers/taskResolver.js";
 import taskTypeDefs from "./graphql/schemas/taskSchema.js";
+import productionResolver from "./graphql/resolvers/productionResolver.js";
+import productionTypeDefs from "./graphql/schemas/productionSchema.js";
 
 
 
 const app = express()
 connectDB()
 
-const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver]);
+const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver]);
 
-const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs]);
+const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs, productionTypeDefs]);
 
 app.use(cors({
-  origin: "http://localhost:3000",
+  origin: "http://172.16.24.31:3000",
   credentials: true,              
 }));
 app.use(bodyParser.json());
@@ -76,7 +78,7 @@ const startServer = async() => {
     
 
     app.listen(4000, () => {
-      console.log("🚀 Server running at http://localhost:4000/graphql");
+      console.log("🚀 Server running at http://172.16.24.31:4000/graphql");
       console.log("📂 Serving static files from /public");
     });
 

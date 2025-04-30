@@ -618,7 +618,12 @@ const dispositionResolver = {
             { _id: customerAccount._id },
             {
               $inc: { paid_amount: amount },
-              $set: { balance: newBalance }
+              $set: { 
+                balance: newBalance,
+                assigned: null,
+                assigned_date: null,
+                on_hands: false
+               }
             }
           );
         }

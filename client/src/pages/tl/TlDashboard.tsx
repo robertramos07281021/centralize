@@ -1,12 +1,27 @@
 
-import { Chart, registerables } from 'chart.js';
+import { Chart,
+  registerables, 
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend } from 'chart.js';
 import PerDayDispositionSection from './PerDayDispositionSection';
 import DoughnutSection from './DoughnutSection';
 import DispositionSection from './DispositionSection';
 import AgentDisposition from './AgentDisposition';
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 
-Chart.register(...registerables, ChartDataLabels);
+Chart.register(...registerables,
+  ChartDataLabels,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 
 const TlDashboard  = () => {

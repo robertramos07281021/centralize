@@ -20,7 +20,6 @@ import SetupView from "./pages/admin/SetupView"
 import UserView from "./pages/admin/UserView"
 
 import CustomerDisposition from "./pages/CustomerDisposition"
-import TaskView from "./pages/agent/TaskView"
 import StatisticsView from "./pages/agent/StatisticsView"
 import BacklogManagementView from "./pages/tl/BacklogManagementView"
 import TaskManagerView from "./pages/tl/TaskManagerView"
@@ -44,10 +43,8 @@ function App() {
         </Route>
         <Route element={<AgentRoute/>}>
           <Route path="/agent-dashboard" element={<AgentDashboard/>}/>
-          {/* <Route path="/agent-production-area" element={<Disposition/>}/> */}
           <Route path="/agent-production-area" element={<CustomerDisposition/>}/>
           <Route path="/agent-statistics" element={<StatisticsView/>}/>
-
         </Route>
         <Route element={<AomRoute/>}>
           <Route path="/aom-dashboard" element={<AomDashboard/>}/>

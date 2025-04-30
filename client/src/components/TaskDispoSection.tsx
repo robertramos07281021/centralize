@@ -260,7 +260,6 @@ const TaskDispoSection = () => {
     message: ""
   })
   
-console.log(CustomerAccountsData)
   useEffect(()=> {
     setRequired(false)
     CADRefetch()

@@ -110,7 +110,7 @@ const DispositionSection = () => {
               {
                 disposition?.getDispositionTypes.map((dispo)=> {
                   const found = matchBucket?.dispositions.find((d)=> d.code === dispo.code);
-                  return  existsDispo.includes(dispo.code) && (
+                  return existsDispo.includes(dispo.code) && (
                     <td key={dispo.code} className="2xl:text-xs lg:text-[0.6rem]">
                       {found && found.count}
                     </td>

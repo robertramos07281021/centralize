@@ -4,6 +4,7 @@ import { Bar } from 'react-chartjs-2';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
 import { useEffect } from 'react';
+import { date, month, options } from '../../middleware/exports';
 
 
 type PerDay = {
@@ -67,55 +68,8 @@ const PerDayDispositionSection = () => {
 
 
 
-  const options = {
-    plugins: {
-      datalabels: {
-        color: 'oklch(0 0 0)',
-        font: {
-          weight: "bold", 
-          size: 8,
-        } as const,
-      },
-    },
-    responsive: true,
-    maintainAspectRatio: false,
-  };
-  
-
-
-
-  const month = [ 
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December"
-  ]
-  const date:Record<string, number> = {
-    January: 31,
-    February: 29,
-    March: 31,
-    April: 30,
-    May: 31,
-    June: 30,
-    July: 31,
-    August: 31,
-    September: 30,
-    October: 31,
-    November: 31,
-    December: 31
-  }
-
 
   
-
   const todayMonth = new Date().getMonth()
 
   const BarDataPerDay = (totalDay:number) =>  {
@@ -124,23 +78,31 @@ const PerDayDispositionSection = () => {
     perDayDispostiion?.getDispositionPerDay.dispositionsCount.forEach((e) => {
       const dayIndex = parseInt(e.day) - 1; 
       if (dayIndex >= 0 && dayIndex < totalDay) {
-        data[dayIndex] = e.amount === '0' ? "" : e.amount ;
+        data[dayIndex] = e.amount === '0' ? "" : (parseFloat(e.amount).toFixed(2)).toString() ;
       }
     })
-
     return data
   }
 
-  const BarDataPerMonth = (totalMonth:number) => {
-    const data = new Array(12).fill("")
-    perMonthDisposition?.getDispositionPerMonth.dispositionsCount.forEach((e)=> {
-      const monthIndex = parseInt(e.month) - 1
-      if(monthIndex >= 0 && monthIndex < totalMonth) {
-        data[monthIndex] = e.amount
-      }
-    })
-    
-    return data
+  const dataPerMonth = {
+    labels: month.map((element)=> {return element.slice(0,3)}),
+    datasets: [
+      {
+        label: `${new Date().getFullYear()}`,
+        data: (() => {
+            const data = new Array(month.length).fill("")
+            perMonthDisposition?.getDispositionPerMonth.dispositionsCount.forEach((e)=> {
+              const monthIndex = parseInt(e.month) - 1
+              if(monthIndex >= 0 && monthIndex < month.length) {
+                data[monthIndex] = (parseFloat(e.amount).toFixed(2)).toString()
+              }
+            })
+            return data
+          }
+        )(),
+        backgroundColor: "rgba(255,0,22,.6)"
+      },
+    ]
   }
 
   const monthlyDate = (month:string) => {
@@ -170,16 +132,7 @@ const PerDayDispositionSection = () => {
         </div>
         <div className='bg-white rounded-md border border-slate-300 p-2'>
         <Bar options={options}
-            data={{
-              labels: month.map((element)=> {return element.slice(0,3)}),
-              datasets: [
-                {
-                  label: `${new Date().getFullYear()}`,
-                  data: BarDataPerMonth(12),
-                  backgroundColor: "rgba(255,0,22,.6)"
-                },
-              ]
-            }}
+            data={dataPerMonth}
           />
         </div>
       </div>

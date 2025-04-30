@@ -16,7 +16,7 @@ import NavbarExtn from "./NavbarExtn";
 const Navbar = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const {data, error} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 15000})
+  const {data, error} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
   const [poPupUser, setPopUpUser] = useState<boolean>(false)  
   const [logout, {loading}] = useMutation(LOGOUT,{
     onCompleted: async() => {
