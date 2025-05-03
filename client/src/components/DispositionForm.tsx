@@ -26,8 +26,8 @@ const GET_DISPOSITION_TYPES = gql`
 `
 
 const CREATE_DISPOSITION = gql`
-  mutation CreateDisposition($customerAccountId: ID!, $userId: ID!, $disposition: String!, $amount: String, $payment: String, $payment_date: String, $payment_method: String, $ref_no: String, $comment: String) {
-    createDisposition(customerAccountId: $customerAccountId, userId: $userId, disposition: $disposition, amount: $amount, payment: $payment, payment_date: $payment_date, payment_method: $payment_method, ref_no: $ref_no, comment: $comment) {
+  mutation CreateDisposition($customerAccountId: ID!, $disposition: String!, $amount: String, $payment: String, $payment_date: String, $payment_method: String, $ref_no: String, $comment: String) {
+    createDisposition(customerAccountId: $customerAccountId, disposition: $disposition, amount: $amount, payment: $payment, payment_date: $payment_date, payment_method: $payment_method, ref_no: $ref_no, comment: $comment) {
       success
       message
     }
@@ -35,7 +35,7 @@ const CREATE_DISPOSITION = gql`
 `
 
 const DispositionForm = () => {
-  const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
+  const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
  
   const [success, setSuccess] = useState<Success | null>({
     success: false,
@@ -151,8 +151,7 @@ const DispositionForm = () => {
           try {
             await createDisposition({variables: {
               ...data,
-              customerAccountId:selectedCustomer._id, 
-              userId: userLogged._id}})
+              customerAccountId:selectedCustomer._id}})
           } catch (error) {
             console.log(error)
           }

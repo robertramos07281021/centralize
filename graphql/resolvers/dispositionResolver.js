@@ -8,7 +8,10 @@ import User from "../../models/user.js"
 import Bucket from "../../models/bucket.js"
 import DispoType from "../../models/dispoType.js"
 import Department from "../../models/department.js"
-
+import { PubSub } from "graphql-subscriptions"
+import Group from "../../models/group.js"
+const pubsub = new PubSub()
+const SOMETHING_CHANGED_TOPIC = "something_changed";
 
 const dispositionResolver = {
   DateTime,
@@ -156,7 +159,9 @@ const dispositionResolver = {
               ]
             }
           },
-          { $unwind: "$ca_disposition" },
+          {
+            $unwind: {path: "$ca_disposition",preserveNullAndEmptyArrays: true}
+          },
           {
             $group: {
               _id:"$ca_disposition._id",
@@ -199,7 +204,8 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getAgentDispositions: async()=> {
+    getAgentDispositions: async(_,__,{user})=> {
+      if(!user) throw new CustomError("Unauthorized",401)
       try {
         const start = new Date();
         start.setHours(0, 0, 0, 0);
@@ -223,7 +229,9 @@ const dispositionResolver = {
               ]
             }
           },
-          { $unwind: "$agent" },
+          {
+            $unwind: {path: "$agent",preserveNullAndEmptyArrays: true}
+          },
           {
             $lookup: {
               from: "dispotypes",
@@ -235,7 +243,9 @@ const dispositionResolver = {
               ]
             }
           },
-          { $unwind: "$disposition_type" },
+          {
+            $unwind: {path: "$disposition_type",preserveNullAndEmptyArrays: true}
+          },
           {
             $group: {
               _id: {
@@ -277,9 +287,10 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getBucketDisposition: async(_, {dept}) => {
+    getBucketDisposition: async(_,__,{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const bucket = await Bucket.find({dept})
+        const bucket = await Bucket.find({dept:user.department})
         const newArrayBucket = bucket.map((b)=> b.name)
         const start = new Date();
         start.setHours(0, 0, 0, 0);
@@ -297,16 +308,23 @@ const dispositionResolver = {
               as: "customerAccount",
             }
           },
-          { $unwind: "$customerAccount" },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
           {
             $lookup: {
               from: "buckets",
               localField: "customerAccount.bucket",
               foreignField: "_id",
               as: "bucket",
+              pipeline: [
+                {$project: {name: 1}}
+              ]
             }
           },
-          { $unwind: "$bucket" },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
           {
             $match: {"bucket.name": {$in: newArrayBucket}},
           },
@@ -321,7 +339,9 @@ const dispositionResolver = {
               ]
             }
           },
-          { $unwind: "$disposition_type" },
+          {
+            $unwind: {path: "$disposition_type",preserveNullAndEmptyArrays: true}
+          },
           {
             $group: {
               _id: {
@@ -355,15 +375,15 @@ const dispositionResolver = {
             }
           }
         ])
-
         return [...bucketDisposition]
       } catch (error) {
         throw new CustomError(error.message, 500)
       } 
     },
-    getDispositionPerDay: async(_,{dept}) => {
+    getDispositionPerDay: async(_,__,{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const findDept = await Department.findOne({name: dept})
+        const findDept = await Department.findOne({name: user.department})
         if(!findDept) throw new CustomError("Dept not found", 404)
 
         const year = new Date().getFullYear()
@@ -388,7 +408,7 @@ const dispositionResolver = {
             }
           },
           {
-            $unwind: "$customerAccount"
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
           },
           {
             $lookup: {
@@ -399,7 +419,7 @@ const dispositionResolver = {
             }
           },
           {
-            $unwind: "$customerBucket"
+            $unwind: {path: "$customerBucket",preserveNullAndEmptyArrays: true}
           },
           {
             $match: {
@@ -430,9 +450,10 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getDispositionPerMonth: async(_,{dept}) => {
+    getDispositionPerMonth: async(_,__,{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const findDept = await Department.findOne({name: dept})
+        const findDept = await Department.findOne({name: user.department})
         if(!findDept) throw new CustomError("Dept not found", 404)
         const year = new Date().getFullYear()
         const firstMonth = new Date(year, 0, 1)
@@ -453,7 +474,7 @@ const dispositionResolver = {
             }
           },
           {
-            $unwind: "$customerAccount"
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
           },
           {
             $lookup: {
@@ -464,7 +485,7 @@ const dispositionResolver = {
             }
           },
           {
-            $unwind: "$customerBucket"
+            $unwind: {path: "$customerBucket",preserveNullAndEmptyArrays: true}
           },
           {
             $match: {
@@ -495,9 +516,10 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getDeptDispositionCount: async(_,{dept}) => {
+    getDeptDispositionCount: async(_,__,{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const findDept = await Department.findOne({name: dept})
+        const findDept = await Department.findOne({name: user.department})
         if(!findDept) throw new CustomError("Dept not found", 404)
 
         const DepartmentDispositionCount = await Disposition.aggregate([
@@ -521,7 +543,7 @@ const dispositionResolver = {
             }
           },
           {
-            $unwind: "$customerBucket"
+            $unwind: {path: "$customerBucket",preserveNullAndEmptyArrays: true}
           },
           {
             $lookup: {
@@ -535,7 +557,7 @@ const dispositionResolver = {
             }
           },
           {
-            $unwind: "$accountDisposition"
+            $unwind: {path: "$accountDisposition",preserveNullAndEmptyArrays: true}
           },
           {
             $match: {
@@ -573,7 +595,7 @@ const dispositionResolver = {
   },
 
   Mutation: {
-    createDisposition: async(_,{customerAccountId, userId, amount, payment, disposition, payment_date, payment_method, ref_no, comment},{user}) => {
+    createDisposition: async(_,{customerAccountId, amount, payment, disposition, payment_date, payment_method, ref_no, comment},{user}) => {
       try {
 
         if(!user) throw new CustomError("Unauthorized",401)
@@ -596,14 +618,14 @@ const dispositionResolver = {
           });
         }
 
-        if(disposition === "PAID" && (!amount || !payment || !payment_date || !payment_method || !ref_no)) {
+        if((disposition === "PAID" || disposition === "SETTLED") && (!amount || !payment || !payment_date || !payment_method || !ref_no)) {
           throw new CustomError("All fields are required",400)
         } 
 
         const findDispoType = await DispoType.findOne({name: disposition})
 
         const newDisposition = await Disposition.create({
-          customer_account: customerAccountId, user:userId, amount:parseFloat(amount) || 0, payment, disposition: findDispoType._id, payment_date, payment_method, ref_no, comment
+          customer_account: customerAccountId, user: user._id, amount:parseFloat(amount) || 0, payment, disposition: findDispoType._id, payment_date, payment_method, ref_no, comment
         })
 
         const customerAccount = await CustomerAccount.findById(customerAccountId)
@@ -614,6 +636,17 @@ const dispositionResolver = {
 
           const newBalance = disposition === "PAID" ? (totalOS - (amountPaid + amount)).toFixed(2) : 0;
 
+          const group = await Group.findById(customerAccount.assigned)
+
+          const assigned = customerAccount.assigned ? (group ? group.members : [...customerAccount.assigned]) : []
+  
+          await pubsub.publish(SOMETHING_CHANGED_TOPIC, {
+            somethingChanged: {
+              members: [...new Set([...assigned, user._id])],
+              message: "NEW_DISPOSITION"
+            },
+          });
+  
           await CustomerAccount.updateOne(
             { _id: customerAccount._id },
             {
@@ -634,13 +667,14 @@ const dispositionResolver = {
             existing: false
           }
         })
+        
         customerAccount.current_disposition = newDisposition._id
         await customerAccount.save()
 
         const userProd = await Production.findOne({
           $and: [
             {
-              user: new mongoose.Types.ObjectId(userId)
+              user: new mongoose.Types.ObjectId(user._id)
             },
             {
               createdAt: { $gte: start, $lte: end }
@@ -649,7 +683,7 @@ const dispositionResolver = {
         })
         userProd.dispositions.push(newDisposition._id)
         await userProd.save()
-
+     
         return {
           success: true,
           message: "Disposition successfully created"
@@ -660,6 +694,11 @@ const dispositionResolver = {
       }
     }
   },
+  Subscription: {
+    somethingChanged: {
+      subscribe:() => pubsub.asyncIterableIterator([SOMETHING_CHANGED_TOPIC])
+    }
+  }
 }
 
 export default dispositionResolver

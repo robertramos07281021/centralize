@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom"
 import  Login  from "./pages/Login"
-import { Error } from "./pages/Error"
+// import { Error } from "./pages/Error"
 import { AdminRoute } from "./routes/AdminRoute"
 import ChangePassword from "./pages/ChangePassword"
 import { AgentRoute } from "./routes/AgentRoute"
@@ -32,7 +32,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login/>}/>
-        <Route path="*" element={<Error/>}/>
+        {/* <Route path="*" element={<Error/>}/> */}
         <Route path="/change-password" element={<ChangePassword/>}/>
     
         <Route element={<AdminRoute/>}>

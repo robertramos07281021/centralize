@@ -8,7 +8,7 @@ import Confirmation from "./Confirmation";
 import Loading from "../pages/Loading";
 import { useNavigate } from "react-router-dom";
 import { RootState, useAppDispatch } from "../redux/store";
-import { setNeedLogin, setPage, setSelectedCustomer, setSelectedDisposition, setTasker, setTaskFilter, setUserLogged } from "../redux/slices/authSlice";
+import { setNeedLogin, setPage, setSelectedCustomer, setSelectedDispoReport, setSelectedDisposition, setTasker, setTaskFilter, setUserLogged } from "../redux/slices/authSlice";
 import NavbarExtn from "./NavbarExtn";
 import { useSelector } from "react-redux";
 
@@ -35,13 +35,77 @@ const LOGOUT = gql `
   }
 `;
 
+const DESELECT_TASK = gql`
+  mutation DeselectTask($id: ID!, $user_id:ID!) {
+    deselectTask(id: $id, user_id:$user_id) {
+      message
+      success
+    }
+  }
+`
+
+const LOGOUT_USING_PERSIST = gql`
+  mutation LogoutUsingPersist($id:ID!) {
+    logoutToPersist(id: $id) {
+      message
+      success
+    }
+  }
+`
+
 
 const Navbar = () => {
   const navigate = useNavigate()
-  const {userLogged} = useSelector((state:RootState)=> state.auth)
+  const {userLogged,selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const {error} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
-  const [poPupUser, setPopUpUser] = useState<boolean>(false)  
+
+  const [poPupUser, setPopUpUser] = useState<boolean>(false) 
+
+  const [deselectTask] = useMutation(DESELECT_TASK,{
+    onCompleted: ()=> {
+      dispatch(setSelectedCustomer({
+        _id: "",
+        case_id: "",
+        account_id: "",
+        endorsement_date: "",
+        credit_customer_id: "",
+        bill_due_day: 0,
+        max_dpd: 0,
+        balance: 0,
+        paid_amount: 0,
+        out_standing_details: {
+          principal_os: 0,
+          interest_os: 0,
+          admin_fee_os: 0,
+          txn_fee_os: 0,
+          late_charge_os: 0,
+          dst_fee_os: 0,
+          total_os: 0
+        },
+        grass_details: {
+          grass_region: "",
+          vendor_endorsement: "",
+          grass_date: ""
+        },
+        account_bucket: {
+          name: "",
+          dept: ""
+        },
+        customer_info: {
+          fullName:"",
+          dob:"",
+          gender:"",
+          contact_no:[],
+          emails:[],
+          addresses:[],
+          _id:""
+        }
+      }))
+    }
+  })
+
+
   const [logout, {loading}] = useMutation(LOGOUT,{
     onCompleted: async() => {
       try {
@@ -62,6 +126,7 @@ const Navbar = () => {
         dispatch(setTasker('group'))
         dispatch(setTaskFilter('assigned'))
         dispatch(setSelectedDisposition([]))
+        dispatch(setSelectedDispoReport([]))
         dispatch(setSelectedCustomer({
           _id: "",
           case_id: "",
@@ -112,6 +177,9 @@ const Navbar = () => {
     LOGOUT: async () => {
       try {
         await logout();
+        if(selectedCustomer._id) {
+          await deselectTask({variables: {id:selectedCustomer._id,user_id: userLogged._id}})
+        }
       } catch (error) {
         console.log(error)
       }
@@ -134,24 +202,44 @@ const Navbar = () => {
       toggle: action
     })
   }
-  useEffect(()=> {
-    if (error instanceof Error) {
-      if(error?.message === "Not authenticated") {
-        dispatch(setNeedLogin(true))
-        dispatch(setUserLogged({
-          _id: "",
-          change_password: false,
-          name: "",
-          type: "",
-          username: "",
-          branch: "",
-          department: "",
-          bucket: ""
-        }))
-        navigate("/")
-      }
+
+  const [logoutToPersist] = useMutation(LOGOUT_USING_PERSIST,{
+    onCompleted: ()=> {
+      dispatch(setNeedLogin(true))
+      dispatch(setUserLogged({
+        _id: "",
+        change_password: false,
+        name: "",
+        type: "",
+        username: "",
+        branch: "",
+        department: "",
+        bucket: ""
+      }))
+      
+      navigate("/")
+
     }
-  },[error,navigate,dispatch])
+  })
+
+
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      if (error instanceof Error) {
+        if(error?.message === "Not authenticated") {
+          try {
+            if(selectedCustomer._id){
+              await deselectTask({variables: {id:selectedCustomer._id,user_id: userLogged._id}})
+            }
+            await logoutToPersist({variables: {id: userLogged._id}})
+          } catch (error) {
+            console.log(error)
+          }
+        }
+      }
+    })
+    return ()=> clearTimeout(timer)
+  },[error,navigate,dispatch, logoutToPersist, userLogged, deselectTask,selectedCustomer])
 
 
   if(loading) return <Loading/>

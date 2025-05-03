@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import {  useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
 import { gql, useMutation } from "@apollo/client";
-import {  setError, setUserLogged } from "../redux/slices/authSlice";
+import {  setError, setSelectedCustomer, setUserLogged } from "../redux/slices/authSlice";
 import Loading from "./Loading";
 import { useSelector } from "react-redux";
 
@@ -38,8 +38,17 @@ const LOGOUT = gql`
 `;
 
 
+const DESELECT_TASK = gql`
+  mutation DeselectTask($id: ID!) {
+    deselectTask(id: $id) {
+      message
+      success
+    }
+  }
+`
+
 const Login = () => {
-  const {userLogged} = useSelector((state:RootState)=> state.auth)
+  const {userLogged,selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const navigate = useNavigate() 
   const dispatch = useAppDispatch()
   const userRoutes = useMemo(() => ({
@@ -58,7 +67,62 @@ const Login = () => {
   const [username, setUsername] = useState<string>("")
   const [password, setPassword] = useState<string>("") 
 
-  const [logout] = useMutation(LOGOUT)
+  const [deselectTask] = useMutation(DESELECT_TASK,{
+    onCompleted: () => {
+      dispatch(setSelectedCustomer({
+        _id: "",
+        case_id: "",
+        account_id: "",
+        endorsement_date: "",
+        credit_customer_id: "",
+        bill_due_day: 0,
+        max_dpd: 0,
+        balance: 0,
+        paid_amount: 0,
+        out_standing_details: {
+          principal_os: 0,
+          interest_os: 0,
+          admin_fee_os: 0,
+          txn_fee_os: 0,
+          late_charge_os: 0,
+          dst_fee_os: 0,
+          total_os: 0
+        },
+        grass_details: {
+          grass_region: "",
+          vendor_endorsement: "",
+          grass_date: ""
+        },
+        account_bucket: {
+          name: "",
+          dept: ""
+        },
+        customer_info: {
+          fullName:"",
+          dob:"",
+          gender:"",
+          contact_no:[],
+          emails:[],
+          addresses:[],
+          _id:""
+        }
+      }))
+    }
+  })
+  const [logout] = useMutation(LOGOUT,{
+    onCompleted: ()=> {
+      dispatch(setUserLogged({
+        _id: "",
+        change_password: false,
+        name: "",
+        type: "",
+        username: "",
+        branch: "",
+        department: "",
+        bucket: ""
+      }))
+    }
+  })
 
   const [login, {loading}] = useMutation(LOGIN, {
     onCompleted: (res) => {
@@ -110,23 +174,17 @@ const Login = () => {
         if(userLogged?._id && !userLogged.change_password)
         try {
           await logout()
-          dispatch(setUserLogged({
-            _id: "",
-            change_password: false,
-            name: "",
-            type: "",
-            username: "",
-            branch: "",
-            department: "",
-            bucket: ""
-          }))
+          if(selectedCustomer._id) {
+            await deselectTask({variables: {id: selectedCustomer._id}})
+          }
+          
         } catch (error) {
           console.log(error)
           dispatch(setError(true))
         }
       })
       return () => clearTimeout(timer) 
-  },[dispatch, userLogged, logout])
+  },[dispatch, userLogged, logout, selectedCustomer,deselectTask])
 
   if(loading) return <Loading/>
 

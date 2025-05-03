@@ -57,6 +57,7 @@ const AccountsView = () => {
   const {data, refetch} = useQuery<{getUsers:{users:Users[],total:number}}>(GET_ALL_USERS,{variables: {page: page},skip: !!search })
   const {data:searchData} = useQuery<{findUsers:{users:Users[],total:number}}>(FIND_QUERY,{variables: { search, page}, skip: !search})
   const users = search ? searchData?.findUsers?.users || [] : data?.getUsers?.users || [];
+  
   useEffect(()=> {
     refetch()
   },[navigate,refetch])

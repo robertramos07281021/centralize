@@ -1,6 +1,6 @@
 import gql from "graphql-tag"
 import { Users } from "../../middleware/types"
-import { useQuery } from "@apollo/client"
+import { useApolloClient, useQuery, useSubscription } from "@apollo/client"
 import { useEffect, useState } from "react"
 
 
@@ -20,7 +20,7 @@ interface AgentDisposition {
 
 
 const GET_DISPOSITION_TYPES = gql`
-  query Query {
+  query getDispositionTypes {
     getDispositionTypes {
       id
       name
@@ -30,7 +30,7 @@ const GET_DISPOSITION_TYPES = gql`
 `
 
 const AGENT_DISPOSITION = gql`
-  query GetDispositionReports {
+  query getAgentDispositions {
     getAgentDispositions {
       agent
       user_id
@@ -45,7 +45,7 @@ const AGENT_DISPOSITION = gql`
 
 
 const GET_DEPARTMENT_AGENT = gql`
-query Query {
+query findAgents {
   findAgents{
     _id
     name
@@ -62,17 +62,67 @@ query Query {
   }
 }
 `
+const SOMETHING_NEW_IN_TASK  = gql`
+  subscription Subscription {
+    somethingChanged {
+      message
+      members
+    }
+  }
+`
+
+interface SubSuccess {
+  message:string
+  members:string[]
+}
 
 const AgentDisposition = () => {
+  const client = useApolloClient()
+  const [newAgentObjectId, setNewAgentObjectId] = useState<string[]>([])
+
   const {data:agentSelector} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT)
  
-  const {data:dataDispo,refetch} = useQuery<{getAgentDispositions:AgentDisposition[]}>(AGENT_DISPOSITION)
+  const {data:dataDispo} = useQuery<{getAgentDispositions:AgentDisposition[]}>(AGENT_DISPOSITION)
 
   useEffect(()=> {
-    refetch()
-    const refetchIntervals = setInterval(refetch,1000)
-    return () => clearInterval(refetchIntervals) 
-  },[refetch])
+    if(agentSelector) {
+      const newAgentObject = agentSelector.findAgents.map(e=> e._id)
+      setNewAgentObjectId(newAgentObject)
+    }
+  },[agentSelector])
+
+
+ useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
+    onData: ({data})=> {
+      console.log(data)
+      if(data) {
+        function check(members:string[] | undefined) {
+          const newArray:boolean[] = []
+          if(members) {
+            members.forEach((e)=>{
+              if(newAgentObjectId.toString().includes(e)) {
+                newArray.push(true)
+              } else {
+                newArray.push(false)
+              }
+            })
+          }
+          console.log(newArray)
+          return newArray.toString().includes("true")
+        }
+        console.log(check(data?.data?.somethingChanged?.members))
+        if(data.data?.somethingChanged?.message === "NEW_DISPOSITION" && check(data?.data?.somethingChanged?.members)) {
+
+          client.refetchQueries({
+            include: ['getDispositionTypes','getAgentDispositions','findAgents']
+          })
+        }
+      }
+    }
+  });
+
+ 
+
 
   const [existsDispo, setExistsDispo] = useState<string[]>([])
 

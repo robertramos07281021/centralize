@@ -197,7 +197,6 @@ const GroupSection = () => {
     },
   })
   
-
   const [addGroupMember] = useMutation(ADD_GROUP_MEMBER,{
     onCompleted:() => {
       deptGroupDataRefetch()

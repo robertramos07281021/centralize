@@ -19,9 +19,9 @@ const bucketResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getDeptBucket: async(_,{dept}) => {
+    getDeptBucket: async(_,__,{user}) => {
       try {
-        const res = await Bucket.find({dept})
+        const res = await Bucket.find({dept: user.department})
         return res
       } catch (error) {
         throw new CustomError(error.message, 500)

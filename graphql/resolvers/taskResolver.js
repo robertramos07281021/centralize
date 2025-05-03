@@ -1,9 +1,13 @@
+import mongoose from "mongoose"
 import CustomError from "../../middlewares/errors.js"
 import Bucket from "../../models/bucket.js"
 import Customer from "../../models/customer.js"
 import CustomerAccount from "../../models/customerAccount.js"
 import Disposition from "../../models/disposition.js"
 import Group from "../../models/group.js"
+import { PubSub } from "graphql-subscriptions"
+const pubsub = new PubSub()
+const SOMETHING_CHANGED_TOPIC = "something_changed";
 
 const taskResolver = {
   Query: {
@@ -24,7 +28,10 @@ const taskResolver = {
 
         const customerAccounts = await CustomerAccount.find({$and: [{assigned: myGroup._id},{on_hands: false}]})
         
-        return customerAccounts
+        return {
+          _id: myGroup._id,
+          task: customerAccounts
+        }
 
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -78,15 +85,27 @@ const taskResolver = {
     selectTask: async(_,{id}, {user})=>{
       if(!user) throw new CustomError("Unauthorized",401)
       try {
+    
+      const ca = await CustomerAccount.findById(id)
+      if(!ca) throw new CustomError("Customer account not found", 404) 
+      
+      const findGroup = await Group.findById(ca.assigned)
+ 
+      const assigned = ca.assigned ? (findGroup ? findGroup.members : [user._id]) : []
 
-
-        const ca = await CustomerAccount.findById(id)
         if(ca.on_hands) throw new CustomError("Already taken")
 
         ca.on_hands = true
 
         await ca.save()
-        if(!ca) throw new CustomError("Customer account not found", 404) 
+        
+        await pubsub.publish(SOMETHING_CHANGED_TOPIC, {
+          somethingChanged: {
+            members: assigned,
+            message: "TASK_SELECTION"
+          },
+        });
+
         return {
           success: true,
           message: "Successfully selected"
@@ -96,12 +115,23 @@ const taskResolver = {
       }
 
     } ,
-    deselectTask: async(_,{id},{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
+    deselectTask: async(_,{id}) => {
       try {
-        const ca = await CustomerAccount.findByIdAndUpdate(id,{$set: {on_hands: false}})
+        const ca = await CustomerAccount.findByIdAndUpdate(id,{$set: {on_hands: false}},{new: true})
         if(!ca) throw new CustomError("Customer account not found", 404) 
-  
+      
+        const group = await Group.findById(ca.assigned)
+      
+        const assigned = ca.assigned ? (group ? [...group.members] : [...ca.assigned]) : []
+
+      
+        await pubsub.publish(SOMETHING_CHANGED_TOPIC, {
+          somethingChanged: {
+            members: assigned,
+            message: "TASK_SELECTION"
+          },
+        });
+
         return {
           success: true,
           message: "Successfully deselected"
@@ -111,6 +141,11 @@ const taskResolver = {
       }
     }
   },
+  Subscription: {
+    somethingChanged: {
+      subscribe:() => pubsub.asyncIterableIterator([SOMETHING_CHANGED_TOPIC])
+    }
+  }
 }
 
 export default taskResolver

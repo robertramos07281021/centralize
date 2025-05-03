@@ -46,7 +46,9 @@ const userResolvers = {
       }
     },
     getMe: async (_, __, { user }) => {
+
       if (!user) throw new CustomError("Not authenticated",401);
+
       return user; 
     },
     getAomUser: async() => {
@@ -200,10 +202,10 @@ const userResolvers = {
             user: user._id,
           });
         }
-
-        
-        res.cookie("token",token, { httpOnly: true,
-        })
+   
+        res.cookie('token', token, {
+          httpOnly: true,
+        });
 
         return {success: true, message: "Logged in", user: user}
         
@@ -271,8 +273,21 @@ const userResolvers = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
+    },
+    logoutToPersist: async(_,{id}) => {
+      try {
+        const findUser = await User.findByIdAndUpdate(id,{$set: {isOnline: false}})
+        if(!findUser) throw CustomError("User not found",404)
+        return {
+          success: true,
+          message: "Successfully logout",
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
     }
   },
+
 };
 
 export default userResolvers;

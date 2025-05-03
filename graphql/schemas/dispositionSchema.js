@@ -86,19 +86,38 @@ const dispositionTypeDefs = gql`
   }
 
 
+  type SubsribeSuccess {
+    message: String
+    members: [ID]
+  }
+
+  type Subscription {
+    somethingChanged: SubsribeSuccess
+  }
+
+
+  # type AomDispositionReport {
+    
+
+
+  # }
+
+
   type Query {
     getAccountDispositions(id:ID!, limit:Int):[Disposition]
     getDispositionReports(agent:String, bucket:String, disposition:[String], from:String, to:String): Reports
     getAgentDispositions:[AgentDisposition]
-    getBucketDisposition(dept:String!):[BucketDisposition]
-    getDispositionPerDay(dept:String):DispositionPerDay
-    getDispositionPerMonth(dept:String):DispositionPerYear
-    getDeptDispositionCount(dept:String):[DispositionCount]
+    getBucketDisposition:[BucketDisposition]
+    getDispositionPerDay:DispositionPerDay
+    getDispositionPerMonth:DispositionPerYear
+    getDeptDispositionCount:[DispositionCount]
     getAllDispositionTypes:[DispoType]
+    # getDispositionReports(campaign:String, bucket:String):AomDispositionReport
   }
 
   type Mutation {
-    createDisposition(customerAccountId:ID!,userId:ID!,amount:String, payment:String, disposition: String!, payment_date:String, payment_method:String, ref_no:String, comment:String): Success
+    createDisposition(customerAccountId:ID!,amount:String, payment:String, disposition: String!, payment_date:String, payment_method:String, ref_no:String, comment:String): Success
+  
   }
 `
 

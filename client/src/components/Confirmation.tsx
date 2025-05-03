@@ -35,7 +35,6 @@ interface modalProps {
   toggle: toggleType
 }
 
-
 const Confirmation:React.FC<modalProps> = ({yes, no, message, toggle}) => {
   return (
     <div className="fixed w-screen h-screen bg-black/20 top-0 left-0 z-50 backdrop-blur-[1.5px] flex items-center justify-center">

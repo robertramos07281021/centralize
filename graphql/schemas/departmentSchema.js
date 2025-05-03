@@ -39,6 +39,7 @@ const deptTypeDefs = gql`
     getDepts: [Dept]
     getDept(name: String): Department
     getBranchDept(branch:String) : [Department]
+    getAomDept:[Department]
   }
 
   type Mutation {

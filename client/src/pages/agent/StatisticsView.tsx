@@ -1,8 +1,10 @@
-import { useQuery } from "@apollo/client"
+import { useApolloClient, useQuery, useSubscription } from "@apollo/client"
 import gql from "graphql-tag"
 import { useEffect, useState } from "react"
 import { date, month, options } from "../../middleware/exports"
 import { Bar } from "react-chartjs-2"
+import { useSelector } from "react-redux"
+import { RootState } from "../../redux/store"
 
 
 type User = {
@@ -25,7 +27,7 @@ type Production = {
 }
 
 const TODAY_DISPOSITION = gql`
-  query GetProductions {
+  query getProductions {
     getProductions {
       _id
       user {
@@ -49,7 +51,7 @@ type DispositionType = {
   name: string
 }
 const DISPO_TYPES = gql`
-  query Query {
+  query getDispositionTypes {
     getDispositionTypes {
       id
       name
@@ -63,7 +65,7 @@ type AgentProdPerDay = {
   date:number
 }
 const AGENT_PER_DAY_PROD = gql`
-  query Query {
+  query getAgentProductionPerDay {
     getAgentProductionPerDay {
       total
       date
@@ -76,7 +78,7 @@ type AgentProdPerMonth = {
   month:number
 }
 const AGENT_PER_MONTH_PROD = gql`
-  query Query {
+  query getAgentProductionPerMonth {
     getAgentProductionPerMonth {
       month
       total
@@ -91,7 +93,7 @@ type AgentTotalDispo = {
 }
 
 const AGENT_TOTAL_DISPO = gql`
-  query Query {
+  query getAgentTotalDispositions {
     getAgentTotalDispositions {
       count
       dispotype
@@ -99,12 +101,40 @@ const AGENT_TOTAL_DISPO = gql`
   }
 `
 
+interface SubSuccess {
+  message:string
+  members:string[]
+}
+
+const SOMETHING_NEW_IN_TASK  = gql`
+  subscription Subscription {
+    somethingChanged {
+      message
+      members
+    }
+  }
+`
+
+
 const StatisticsView = () => {
-  const {data:productionData} = useQuery<{getProductions:Production}>(TODAY_DISPOSITION,{pollInterval: 1000})
-  const {data:dispotypeData} = useQuery<{getDispositionTypes:DispositionType[]}>(DISPO_TYPES,{pollInterval: 1000})
-  const {data:agentProdPerDayData} = useQuery<{getAgentProductionPerDay:AgentProdPerDay[]}>(AGENT_PER_DAY_PROD,{pollInterval: 1000})
-  const {data:agentProdPerMonthData} = useQuery<{getAgentProductionPerMonth:AgentProdPerMonth[]}>(AGENT_PER_MONTH_PROD, {pollInterval: 1000})
-  const {data:agentTotalDispoData} = useQuery<{getAgentTotalDispositions:AgentTotalDispo[]}>(AGENT_TOTAL_DISPO, {pollInterval: 1000})
+  const {userLogged} = useSelector((state:RootState)=> state.auth)
+  const client = useApolloClient()
+  useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
+    onData: ({data})=> {
+      if(data) {
+        if(data.data?.somethingChanged?.message === "NEW_DISPOSITION" && data.data?.somethingChanged?.members?.toString().includes(userLogged._id)) {
+          client.refetchQueries({
+            include: ['getAgentTotalDispositions','getAgentProductionPerMonth','getAgentProductionPerDay','getProductions']
+          })
+        }
+      }
+    }
+  });
+  const {data:productionData} = useQuery<{getProductions:Production}>(TODAY_DISPOSITION)
+  const {data:dispotypeData} = useQuery<{getDispositionTypes:DispositionType[]}>(DISPO_TYPES)
+  const {data:agentProdPerDayData} = useQuery<{getAgentProductionPerDay:AgentProdPerDay[]}>(AGENT_PER_DAY_PROD)
+  const {data:agentProdPerMonthData} = useQuery<{getAgentProductionPerMonth:AgentProdPerMonth[]}>(AGENT_PER_MONTH_PROD)
+  const {data:agentTotalDispoData} = useQuery<{getAgentTotalDispositions:AgentTotalDispo[]}>(AGENT_TOTAL_DISPO)
   
   const [totalCollection,setTotalCollection] = useState<number|null>(null)
 

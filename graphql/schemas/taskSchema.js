@@ -41,6 +41,12 @@ const taskTypeDefs = gql`
     dept: String
   }
 
+  type GroupTask {
+    _id:ID
+    task:[MyTasks]
+
+  }
+
   type MyTasks {
     _id: ID
     case_id: String
@@ -59,10 +65,18 @@ const taskTypeDefs = gql`
     customer_info: CustomerInfo
   }
 
-  
+  type SubsribeSuccess {
+    message: String
+    members: [ID]
+  }
+
+  type Subscription {
+    somethingChanged: SubsribeSuccess
+  }
+
   type Query {
     myTasks:[MyTasks]
-    groupTask:[MyTasks]
+    groupTask:GroupTask
   }
   type Mutation{
     selectTask(id:ID!):Success

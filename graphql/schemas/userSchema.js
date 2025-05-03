@@ -68,17 +68,12 @@ const userTypeDefs = gql`
 
   type Mutation {
     createUser(name: String!, username: String!,type: String!, department: String!, branch: String!, id_number: String ): User
-
     updatePassword(password:String!, confirmPass:String!) : User
-
     resetPassword(id:ID!): SuccessLogout
-
     updateUser(name:String!, type:String!, department:String!, branch:String!, bucket:String, id:ID!): SuccessUpdate
-
     login(username:String!, password:String!) : SuccessUpdate
-
     logout: SuccessLogout
-
+    logoutToPersist(id:ID!):SuccessLogout
     updateActiveStatus(id:ID!): SuccessUpdate
   }
 `;

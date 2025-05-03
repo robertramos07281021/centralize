@@ -5,8 +5,6 @@ import { Doughnut } from 'react-chartjs-2';
 import {gql} from "@apollo/client"
 import { useQuery } from "@apollo/client";
 import {  Users } from "../../middleware/types";
-import { useSelector } from "react-redux";
-import { RootState } from "../../redux/store";
 import {  useEffect, useState } from "react";
 
 
@@ -59,8 +57,8 @@ const DEPT_BUCKET_QUERY = gql`
   }
 `
 const GET_DEPARTMENT_AGENT = gql`
-  query Query($department: String!) {
-    findAgents(department: $department) {
+  query Query {
+    findAgents {
       _id
       name
       username
@@ -134,9 +132,8 @@ const colorDispo: { [key: string]: string } = {
 }
 
 const BacklogManagementView = () => {
-  const {userLogged} = useSelector((state:RootState)=> state.auth)
-  const {data:agentSelector} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT, {variables: {department:userLogged.department}})
-  const {data:departmentBucket} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY,{variables: {dept: userLogged?.department}, skip: !userLogged?.department})
+  const {data:agentSelector} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT)
+  const {data:departmentBucket} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY)
   const [buckets, setBuckets] = useState<Bucket[] | null>(null)
   const [searchBucket, setSearchBucket] = useState<string>("")
   const [bucketDropdown, setBucketDropdown] = useState<boolean>(false)
@@ -149,6 +146,8 @@ const BacklogManagementView = () => {
     from: "",
     to: ""
   })
+  const [dispositionData, setDispositionData] = useState<Dispositions[]>([])
+  const [totalCount, setTotalCount] = useState<number>(0)
   const {data:reportsData } = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: searchAgent, bucket: searchBucket, disposition: selectedDisposition, from: dateDistance.from, to: dateDistance.to}})
   const [newReportsDispo, setNewReportsDispo] = useState<Record<string,number>>({})
   
@@ -167,7 +166,6 @@ const BacklogManagementView = () => {
   useEffect(()=> {
     const filteredAgent = searchAgent?.trim() != "" ? agentSelector?.findAgents?.filter((e) => e.name.toLowerCase()?.includes(searchAgent?.toLowerCase()) || e.user_id?.includes(searchAgent ? searchAgent: "")) : agentSelector?.findAgents
     setAgents(filteredAgent || null)
- 
 
     const dropdownAgent = filteredAgent?.length.valueOf() && searchAgent?.trim() !== "" ? true : false
     setAgentDropdown(dropdownAgent)
@@ -188,8 +186,8 @@ const BacklogManagementView = () => {
     }
   },[departmentBucket, searchBucket])
 
-  const [dispositionData, setDispositionData] = useState<Dispositions[]>([])
-  const [totalCount, setTotalCount] = useState<number>(0)
+
+
 
   useEffect(()=> {
     if (disposition?.getDispositionTypes) {

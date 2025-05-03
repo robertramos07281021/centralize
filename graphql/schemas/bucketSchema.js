@@ -15,7 +15,7 @@ const bucketTypeDefs = gql`
   type Query {
     getBuckets(dept:String):[Bucket]
     getBucket(name:String): Bucket
-    getDeptBucket(dept:String):[Bucket]
+    getDeptBucket:[Bucket]
   }
 
   type Mutation {

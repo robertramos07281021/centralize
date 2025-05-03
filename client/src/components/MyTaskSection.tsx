@@ -1,49 +1,11 @@
-import { useMutation, useQuery } from "@apollo/client"
+import { useMutation, useQuery, useSubscription } from "@apollo/client"
 import gql from "graphql-tag"
 import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { dateAndTime } from "../middleware/dateAndTime"
 import { setSelectedCustomer } from "../redux/slices/authSlice"
-
-// type selectedCustomer: {
-//   _id: "",
-//   case_id: "",
-//   account_id: "",
-//   endorsement_date: "",
-//   credit_customer_id: "",
-//   bill_due_day: 0,
-//   max_dpd: 0,
-//   balance: 0,
-//   paid_amount: 0,
-//   out_standing_details: {
-//     principal_os: 0,
-//     interest_os: 0,
-//     admin_fee_os: 0,
-//     txn_fee_os: 0,
-//     late_charge_os: 0,
-//     dst_fee_os: 0,
-//     total_os: 0
-//   },
-//   grass_details: {
-//     grass_region: "",
-//     vendor_endorsement: "",
-//     grass_date: ""
-//   },
-//   account_bucket: {
-//     name: "",
-//     dept: ""
-//   },
-//   customer_info: {
-//     fullName:"",
-//     dob:"",
-//     gender:"",
-//     contact_no:[],
-//     emails:[],
-//     addresses:[],
-//     _id:""
-//   }
-// }
+import { useApolloClient } from '@apollo/client';
 
 type outStandingDetails = {
   principal_os: number
@@ -80,7 +42,7 @@ type CurrentDispo = {
   disposition: string
 }
 
-export type CustomerData = {
+type CustomerData = {
     _id: string
     case_id: string
     account_id: string
@@ -96,6 +58,11 @@ export type CustomerData = {
     account_bucket: AccountBucket
     current_disposition: CurrentDispo
     customer_info: CustomerRegistered
+}
+
+interface GroupTask {
+  task: CustomerData[]
+  _id: string
 }
 
 const MY_TASKS = gql`
@@ -146,48 +113,65 @@ const MY_TASKS = gql`
 `
 
 const GROUP_TASKS =gql`
-  query GroupTask {
+  query groupTask {
     groupTask {
       _id
-      case_id
-      account_id
-      endorsement_date
-      credit_customer_id
-      bill_due_day
-      max_dpd
-      balance
-      paid_amount
-      assigned_date
-      out_standing_details {
-        principal_os
-        interest_os
-        admin_fee_os
-        txn_fee_os
-        late_charge_os
-        dst_fee_os
-        total_os
-      }
-      grass_details {
-        grass_region
-        vendor_endorsement
-        grass_date
-      }
-      current_disposition {
-        disposition
-      }
-      account_bucket {
-        name
-        dept
-      }
-      customer_info {
-        fullName
-        dob
-        gender
-        contact_no
-        emails
-        addresses
+      task {
         _id
+        case_id
+        account_id
+        endorsement_date
+        credit_customer_id
+        bill_due_day
+        max_dpd
+        balance
+        paid_amount
+        assigned_date
+        out_standing_details {
+          principal_os
+          interest_os
+          admin_fee_os
+          txn_fee_os
+          late_charge_os
+          dst_fee_os
+          total_os
+        }
+        grass_details {
+          grass_region
+          vendor_endorsement
+          grass_date
+        }
+        current_disposition {
+          disposition
+        }
+        account_bucket {
+          name
+          dept
+        }
+        customer_info {
+          fullName
+          dob
+          gender
+          contact_no
+          emails
+          addresses
+          _id
+        }
       }
+    }
+  }
+`
+interface SubSuccess {
+  message:string
+  members:string[]
+}
+
+
+const SOMETHING_NEW_IN_TASK  = gql`
+  subscription Subscription {
+    somethingChanged {
+      message
+      members
     }
   }
 `
@@ -195,34 +179,47 @@ const GROUP_TASKS =gql`
 const SELECT_TASK = gql`
   mutation Mutation($id: ID!) {
     selectTask(id: $id) {
-      success
       message
+      success
     }
   }
 `
 
-const MyTaskSection = () => {
-  const dispatch = useAppDispatch()
-  const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
-  const {data:myTasksData} = useQuery<{myTasks:CustomerData[]}>(MY_TASKS)
-  const {data:groupTaskData,refetch:groupTaskRefetch, startPolling, stopPolling} = useQuery<{groupTask:CustomerData[]}>(GROUP_TASKS,{pollInterval: 3000})
-  const [data, setData] = useState<CustomerData[] | null>([])
-  const [selection, setSelection] = useState<string>("")
-  const [already, setAlready] = useState<boolean>(false)
 
-  document.addEventListener("visibilitychange", () => {
-    if (document.hidden) {
-      stopPolling();
-    } else {
-      startPolling(30000);
+const MyTaskSection = () => {
+  const {userLogged} = useSelector((state:RootState)=> state.auth)
+  const dispatch = useAppDispatch()
+  const client = useApolloClient()
+  useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
+    onData: ({data})=> {
+      if(data) {
+        if(data.data?.somethingChanged?.message === "TASK_SELECTION" && data.data?.somethingChanged?.members?.toString().includes(userLogged._id)) {
+          client.refetchQueries({
+            include: ['groupTask']
+          })
+        }
+        if(data.data?.somethingChanged?.message === "NEW_DISPOSITION" && data.data?.somethingChanged?.members?.toString().includes(userLogged._id)) {
+          client.refetchQueries({
+            include: ['groupTask']
+          })
+        }
+      }
     }
   });
 
+  // console.log(res.data?.somethingChange?.success)
+
+
+  const {data:myTasksData} = useQuery<{myTasks:CustomerData[]}>(MY_TASKS)
+  const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
+  const [data, setData] = useState<CustomerData[] | null>([])
+  const [selection, setSelection] = useState<string>("")
+
   useEffect(()=> {
     if(selection.trim()==="my_task") {
-      setData(myTasksData?.myTasks? myTasksData?.myTasks : null )
+      setData(myTasksData?.myTasks ? myTasksData?.myTasks : null )
     } else {
-      setData(groupTaskData?.groupTask ? groupTaskData?.groupTask : null)
+      setData(groupTaskData?.groupTask?.task ? groupTaskData?.groupTask.task : null)
     }
   },[selection,myTasksData,groupTaskData])
 
@@ -237,66 +234,55 @@ const MyTaskSection = () => {
   const [selectTask]= useMutation(SELECT_TASK,{
     onCompleted: ()=> {
       groupTaskRefetch()
-     
-
     }
   })
-
   
   const handleClickSelect = async(data:CustomerData) => {
     try {
       const res = await selectTask({variables: {id: data._id}})
-      console.log(data)
       if(res.data.selectTask.success) {
         dispatch(setSelectedCustomer({
-            _id: data._id,
-            case_id: data.case_id,
-            account_id: data.account_id,
-            endorsement_date: data.endorsement_date,
-            credit_customer_id: data.credit_customer_id,
-            bill_due_day: data.bill_due_day,
-            max_dpd: data.max_dpd,
-            balance: data.balance,
-            paid_amount: data.paid_amount,
-            out_standing_details: {
-              principal_os: data.out_standing_details.principal_os,
-              interest_os: data.out_standing_details.interest_os,
-              admin_fee_os: data.out_standing_details.admin_fee_os,
-              txn_fee_os: data.out_standing_details.txn_fee_os,
-              late_charge_os: data.out_standing_details.late_charge_os,
-              dst_fee_os: data.out_standing_details.dst_fee_os,
-              total_os: data.out_standing_details.total_os
-            },
-            grass_details: {
-              grass_region: data.grass_details.grass_region,
-              vendor_endorsement: data.grass_details.vendor_endorsement,
-              grass_date: data.grass_details.grass_date
-            },
-            account_bucket: {
-              name: data.account_bucket.name,
-              dept: data.account_bucket.dept
-            },
-            customer_info: {
-              fullName: data.customer_info.fullName,
-              dob: data.customer_info.dob,
-              gender: data.customer_info.gender,
-              contact_no: data.customer_info.contact_no,
-              emails: data.customer_info.emails,
-              addresses: data.customer_info.addresses,
-              _id:""
-            }
+          _id: data._id,
+          case_id: data.case_id,
+          account_id: data.account_id,
+          endorsement_date: data.endorsement_date,
+          credit_customer_id: data.credit_customer_id,
+          bill_due_day: data.bill_due_day,
+          max_dpd: data.max_dpd,
+          balance: data.balance,
+          paid_amount: data.paid_amount,
+          out_standing_details: {
+            principal_os: data.out_standing_details.principal_os,
+            interest_os: data.out_standing_details.interest_os,
+            admin_fee_os: data.out_standing_details.admin_fee_os,
+            txn_fee_os: data.out_standing_details.txn_fee_os,
+            late_charge_os: data.out_standing_details.late_charge_os,
+            dst_fee_os: data.out_standing_details.dst_fee_os,
+            total_os: data.out_standing_details.total_os
+          },
+          grass_details: {
+            grass_region: data.grass_details.grass_region,
+            vendor_endorsement: data.grass_details.vendor_endorsement,
+            grass_date: data.grass_details.grass_date
+          },
+          account_bucket: {
+            name: data.account_bucket.name,
+            dept: data.account_bucket.dept
+          },
+          customer_info: {
+            fullName: data.customer_info.fullName,
+            dob: data.customer_info.dob,
+            gender: data.customer_info.gender,
+            contact_no: data.customer_info.contact_no,
+            emails: data.customer_info.emails,
+            addresses: data.customer_info.addresses,
+            _id:""
+          }
         }))
       }
 
-
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error:any) { 
-      const errorMessage = error?.graphQLErrors?.[0]?.message;
-      if(errorMessage.includes("Already")) {
-        setAlready(true)
-      } else {
-        console.log(error)
-      }
+    } catch (error) { 
+      console.log(error)
     }
   }
 
@@ -308,13 +294,15 @@ const MyTaskSection = () => {
     } 
   }
 
-  useEffect(()=> {
-    if(selectedCustomer._id) {
-      setSelection("")
-    } else {
-      groupTaskRefetch()
-    }
-  },[selectedCustomer,groupTaskRefetch])
+  // useEffect(()=> {
+  //   if(selectedCustomer._id) {
+  //     setSelection("")
+  //   } else {
+  //     groupTaskRefetch()
+  //   }
+  // },[selectedCustomer,groupTaskRefetch])
+
+
 
   return (
     <div className="p-2 flex justify-end gap-5 relative">
@@ -323,8 +311,6 @@ const MyTaskSection = () => {
       {
         selection.trim() !== "" &&
         <div className="absolute border border-slate-300 rounded-lg shadow-md shadow-black/20 w-2/4 h-96 translate-y-1/2 -bottom-50 right-5 text-sm p-2 text-slate-500 flex flex-col ">
-          <h1 className="font-bold">{selection.trim() == "my_task" ? "My Tasks": "Group Tasks"} {already &&<span className="text-xs font-thin text-red-500 ps-5">Already taken. refresh the page!</span>} </h1>
-          <div></div>
           <div className="h-full  overflow-y-auto">
             {data?.map(d => (
               <div key={d._id} className="py-1.5 text-xs hover:bg-blue-100 even:bg-slate-100 grid grid-cols-4 px-5">

@@ -1,9 +1,7 @@
-import { useQuery } from "@apollo/client"
+import { useQuery, useSubscription, useApolloClient } from "@apollo/client"
 import gql from "graphql-tag"
-import { useSelector } from "react-redux"
-import { RootState } from "../../redux/store"
 import { useEffect, useState } from "react"
-
+import { Success } from "../../middleware/types"
 
 interface DispoData {
   id: string
@@ -11,8 +9,6 @@ interface DispoData {
   name: string
   count: string
 }
-
-
 
 interface BucketDisposition {
   bucket: string
@@ -26,7 +22,7 @@ interface Bucket {
 }
 
 const GET_DISPOSITION_TYPES = gql`
-  query Query {
+  query getDispositionTypes {
     getDispositionTypes {
       id
       name
@@ -36,8 +32,8 @@ const GET_DISPOSITION_TYPES = gql`
 `
 
 const BUCKET_DISPOSITIONS = gql`
-  query Query($dept: String!) {
-    getBucketDisposition(dept: $dept) {
+  query getBucketDisposition {
+    getBucketDisposition {
       bucket
       dispositions {
         code
@@ -49,8 +45,8 @@ const BUCKET_DISPOSITIONS = gql`
 `
 
 const DEPT_BUCKET_QUERY = gql`
-  query Query($dept: String) {
-    getDeptBucket(dept: $dept) {
+  query getDeptBucket {
+    getDeptBucket {
       id
       name
       dept
@@ -58,15 +54,31 @@ const DEPT_BUCKET_QUERY = gql`
   }
 `
 
-
+const SOMETHING_NEW_IN_TASK  = gql`
+  subscription Subscription {
+    somethingChanged {
+      message
+      success
+    }
+  }
+`
 
 const DispositionSection = () => {
-  const {userLogged} = useSelector((state:RootState)=>state.auth)
-  const {data:bucketDispoData} = useQuery<{getBucketDisposition:BucketDisposition[]}>(BUCKET_DISPOSITIONS,{variables: {dept: userLogged.department}, pollInterval: 1000})
+  const client = useApolloClient()
+  useSubscription<{somethingChange:Success}>(SOMETHING_NEW_IN_TASK, {
+    onData: ({data}) => {
+      if(data.data?.somethingChange?.message === "NEW_DISPOSITION") {
+        client.refetchQueries({
+          include: ['getDeptBucket','getBucketDisposition','getDispositionTypes']
+        })
+      }
+    }
+  });
 
-  const {data:deptBucket} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY,{variables: {dept: userLogged.department}})
 
+  const {data:bucketDispoData } = useQuery<{getBucketDisposition:BucketDisposition[]}>(BUCKET_DISPOSITIONS)
 
+  const {data:deptBucket} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY)
 
   const [existsDispo, setExistsDispo] = useState<string[]>([])
 
@@ -77,7 +89,6 @@ const DispositionSection = () => {
   },[bucketDispoData])
 
   const {data:disposition} = useQuery<{getDispositionTypes:DispoData[]}>(GET_DISPOSITION_TYPES)
-
 
   return (
     <div className=" row-span-3 col-span-4 flex flex-col border border-slate-300 rounded-lg overflow-y-auto bg-white px-2">
