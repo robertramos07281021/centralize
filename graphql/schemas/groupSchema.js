@@ -23,6 +23,15 @@ const groupTypeDefs = gql`
     findGroup:[GroupTask]
   }
 
+  type SubsribeSuccess {
+    message: String
+    members: [ID]
+  }
+
+  type Subscription {
+    groupChanging: SubsribeSuccess
+  }
+
   type Mutation {
     createGroup(name: String!,description: String): Success
     updateGroup(id:ID!,name: String,description: String): Success

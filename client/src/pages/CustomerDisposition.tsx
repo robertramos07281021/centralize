@@ -65,6 +65,14 @@ const SEARCH = gql`
   }
 `
 
+const SELECT_TASK = gql`
+  mutation Mutation($id: ID!) {
+    selectTask(id: $id) {
+      message
+      success
+    }
+  }
+`
 
 
 const CustomerDisposition = () => {
@@ -89,10 +97,20 @@ const CustomerDisposition = () => {
     refetch()
   },[search,refetch])
 
-  const onClickSearch = (customer:Search) => {
-    dispatch(setSelectedCustomer(customer))
-    setSearch("")
-    refetch()
+  const [selectTask] = useMutation(SELECT_TASK,{
+    onCompleted: ()=> {
+      setSearch("")
+      refetch()
+    }
+  })
+
+  const onClickSearch = async(customer:Search) => {
+    try {
+      await selectTask({variables: {id: customer._id}})
+      dispatch(setSelectedCustomer(customer))
+    } catch (error) {
+      console.log(error)
+    }
   }
 
   useEffect(()=> {

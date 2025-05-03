@@ -11,7 +11,7 @@ import Department from "../../models/department.js"
 import { PubSub } from "graphql-subscriptions"
 import Group from "../../models/group.js"
 const pubsub = new PubSub()
-const SOMETHING_CHANGED_TOPIC = "something_changed";
+const DISPOSITION_UPDATE = "DISPOSITION_UPDATE";
 
 const dispositionResolver = {
   DateTime,
@@ -597,7 +597,6 @@ const dispositionResolver = {
   Mutation: {
     createDisposition: async(_,{customerAccountId, amount, payment, disposition, payment_date, payment_method, ref_no, comment},{user}) => {
       try {
-
         if(!user) throw new CustomError("Unauthorized",401)
         
         const start = new Date();
@@ -629,24 +628,31 @@ const dispositionResolver = {
         })
 
         const customerAccount = await CustomerAccount.findById(customerAccountId)
+
+        const group = await Group.findById(customerAccount.assigned)
+
+        const assigned = customerAccount.assigned ? (group ? group.members : [...customerAccount.assigned]) : []
+
+        await pubsub.publish(DISPOSITION_UPDATE, {
+          dispositionUpdated: {
+            members: [...new Set([...assigned, user._id ])],
+            message: "NEW_DISPOSITION"
+          },
+        });
+
+        await Disposition.findByIdAndUpdate(customerAccount.current_disposition,
+          {
+            $set: {
+              existing: false
+            }
+          })
         
-        if (amount && (disposition === "PAID" || disposition === "SETTLED"  )) {
+        if (amount && (disposition === "PAID" || disposition === "SETTLED")) {
           const amountPaid = customerAccount.amount_paid || 0;
           const totalOS = customerAccount.out_standing_details?.total_os || 0;
 
           const newBalance = disposition === "PAID" ? (totalOS - (amountPaid + amount)).toFixed(2) : 0;
 
-          const group = await Group.findById(customerAccount.assigned)
-
-          const assigned = customerAccount.assigned ? (group ? group.members : [...customerAccount.assigned]) : []
-  
-          await pubsub.publish(SOMETHING_CHANGED_TOPIC, {
-            somethingChanged: {
-              members: [...new Set([...assigned, user._id])],
-              message: "NEW_DISPOSITION"
-            },
-          });
-  
           await CustomerAccount.updateOne(
             { _id: customerAccount._id },
             {
@@ -659,17 +665,20 @@ const dispositionResolver = {
                }
             }
           );
-        }
 
-        await Disposition.findByIdAndUpdate(customerAccount.current_disposition,
-        {
-          $set: {
-            existing: false
-          }
-        })
-        
-        customerAccount.current_disposition = newDisposition._id
-        await customerAccount.save()
+        } else {
+          await CustomerAccount.updateOne(
+            { _id: customerAccount._id },
+            {
+              $set: { 
+                current_disposition: newDisposition._id,
+                assigned: null,
+                assigned_date: null,
+                on_hands: false
+               }
+            }
+          );
+        }
 
         const userProd = await Production.findOne({
           $and: [
@@ -683,7 +692,7 @@ const dispositionResolver = {
         })
         userProd.dispositions.push(newDisposition._id)
         await userProd.save()
-     
+    
         return {
           success: true,
           message: "Disposition successfully created"
@@ -695,8 +704,8 @@ const dispositionResolver = {
     }
   },
   Subscription: {
-    somethingChanged: {
-      subscribe:() => pubsub.asyncIterableIterator([SOMETHING_CHANGED_TOPIC])
+    dispositionUpdated: {
+      subscribe:() => pubsub.asyncIterableIterator([DISPOSITION_UPDATE])
     }
   }
 }

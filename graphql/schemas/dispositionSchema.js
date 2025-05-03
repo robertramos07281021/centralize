@@ -92,7 +92,7 @@ const dispositionTypeDefs = gql`
   }
 
   type Subscription {
-    somethingChanged: SubsribeSuccess
+    dispositionUpdated: SubsribeSuccess
   }
 
 

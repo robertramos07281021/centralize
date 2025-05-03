@@ -48,8 +48,8 @@ interface Reports {
 }
 
 const DEPT_BUCKET_QUERY = gql`
-  query Query($dept: String) {
-    getDeptBucket(dept: $dept) {
+  query getDeptBucket {
+    getDeptBucket {
       id
       name
       dept
@@ -133,6 +133,7 @@ const colorDispo: { [key: string]: string } = {
 
 const BacklogManagementView = () => {
   const {data:agentSelector} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT)
+
   const {data:departmentBucket} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY)
   const [buckets, setBuckets] = useState<Bucket[] | null>(null)
   const [searchBucket, setSearchBucket] = useState<string>("")
@@ -174,6 +175,7 @@ const BacklogManagementView = () => {
     }
   },[searchAgent,agentSelector])
 
+
   useEffect(()=> {
     const filteredBucket = searchBucket.trim() !== "" ? departmentBucket?.getDeptBucket.filter((e)=> e.name.includes(searchBucket)) : departmentBucket?.getDeptBucket
     setBuckets(filteredBucket || null)
@@ -210,12 +212,13 @@ const BacklogManagementView = () => {
   const dataCount = dispositionData.map(d => { 
     const count = d.count;
     if (!totalCount || totalCount === 0) return 0; 
-    const percent = Math.floor((count / totalCount) * 100);
-    const parsed = parseInt(percent.toPrecision(2));
-    return parsed === 1 ? 100 : parsed;
+    const percent = parseInt(Math.floor((Number(count) / totalCount) * 100).toPrecision(2));
+ 
+    return percent === 100 ? 1 : percent;
   } 
   
   )
+
   const dataColor = dispositionData.map(d=> d.color)
   const data = {
     labels: dataLabels,

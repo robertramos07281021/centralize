@@ -1,9 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import gql from 'graphql-tag';
-import { useQuery, useSubscription, useApolloClient } from '@apollo/client';
-import { Success } from '../../middleware/types';
-
+import { useQuery } from '@apollo/client';
 
 interface DispositionCount {
   count: string
@@ -54,36 +52,18 @@ const GET_ALL_DISPOSITION_COUNT = gql`
   }
 `
 
-const SOMETHING_NEW_IN_TASK  = gql`
-  subscription Subscription {
-    somethingChanged {
-      message
-      success
-    }
-  }
-`
+
 
 const DoughnutSection = () => {
-  const client = useApolloClient()
-  useSubscription<{somethingChange:Success}>(SOMETHING_NEW_IN_TASK, {
-    onData: ({data}) => {
-      if(data.data?.somethingChange?.message === "NEW_DISPOSITION") {
-        client.refetchQueries({
-          include: ['getDeptDispositionCount','getDispositionTypes']
-        })
-      }
-    }
-  });
-
   const {data:disposition} = useQuery<{getDispositionTypes:DispositionCount[]}>(GET_DISPOSITION_TYPES)
   const {data:dispositionCount} = useQuery<{getDeptDispositionCount:DispositionCount[]}>(GET_ALL_DISPOSITION_COUNT)
   const [dispositionData, setDispositionData] = useState<DispositionCount[]>([])
   const [dispositionDataObj, setDispositionDataObj] = useState<{[key: string]:string}>({})
   const [total, setTotal] = useState<number>(0)
 
+
   useEffect(()=> {
     if(dispositionCount?.getDeptDispositionCount) {
-    
       const newData = dispositionCount?.getDeptDispositionCount.map((ddc)=> ({
         code: ddc.code,
         count: ddc.count,
@@ -105,7 +85,7 @@ const DoughnutSection = () => {
   },[dispositionCount])
 
   const dataLabels = dispositionData?.map(d=> d.code)
-  const dataCount = dispositionData?.map(d => parseInt(Math.floor(Number(d.count)/total * 100).toPrecision(2)) === 1 ? 100 : parseInt(Math.floor(Number(d.count)/total * 100).toPrecision(2)))
+  const dataCount = dispositionData?.map(d => parseInt(Math.floor((Number(d.count)/total) * 100).toPrecision(2)) === 100 ? 1 : parseInt(Math.floor((Number(d.count)/total) * 100).toPrecision(2)))
   const dataColor = dispositionData?.map(d=> d.color)
 
   const data = {

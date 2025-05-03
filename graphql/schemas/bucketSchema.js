@@ -16,6 +16,7 @@ const bucketTypeDefs = gql`
     getBuckets(dept:String):[Bucket]
     getBucket(name:String): Bucket
     getDeptBucket:[Bucket]
+    findDeptBucket(dept:ID):[Bucket]
   }
 
   type Mutation {

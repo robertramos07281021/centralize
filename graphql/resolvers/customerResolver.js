@@ -87,6 +87,7 @@ const customerResolver = {
           { $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } },
           {
             $match: {
+              on_hands: false,
               $or: [
                 { "customer_info.fullName": { $regex: search, $options: "i" } },
                 { "customer_info.dob": { $regex: search, $options: "i" } },

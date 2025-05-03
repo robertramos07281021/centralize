@@ -3,6 +3,10 @@ import CustomError from "../../middlewares/errors.js"
 import Group from "../../models/group.js"
 import User from "../../models/user.js"
 import CustomerAccount from "../../models/customerAccount.js"
+import { PubSub } from "graphql-subscriptions"
+const pubsub = new PubSub()
+const GROUP_CHANGING = "GROUP_CHANGING";
+
 
 const groupResolver = {
 
@@ -76,6 +80,14 @@ const groupResolver = {
 
         findGroup.members.push(member)
         await findGroup.save()
+
+        await pubsub.publish(GROUP_CHANGING, {
+          groupChanging: {
+            members: [member],
+            message: "GROUP_CHANGING"
+          },
+        });
+
         return {
           success: true,
           message: `Member successfully added`
@@ -98,11 +110,19 @@ const groupResolver = {
         const updateUser = await User.findByIdAndUpdate(member, {$set: {group: null}})
         if(!updateUser) throw new CustomError("User not found", 404)
 
+        await pubsub.publish(GROUP_CHANGING, {
+          groupChanging: {
+            members: [member],
+            message: "GROUP_CHANGING"
+          },
+        });
+
         return {
           success: true,
           message: `Member successfully deleted`
         }
       } catch (error) {
+        
         throw new CustomError(error.message, 500) 
       }
     },
@@ -139,6 +159,11 @@ const groupResolver = {
         throw new CustomError(error.message, 500)  
       }
     },
+  },
+  Subscription: {
+    groupChanging: {
+      subscribe:() => pubsub.asyncIterableIterator([GROUP_CHANGING])
+    }
   }
 }
 

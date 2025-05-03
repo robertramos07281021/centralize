@@ -1,7 +1,6 @@
-import { useQuery, useSubscription, useApolloClient } from "@apollo/client"
+import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
 import { useEffect, useState } from "react"
-import { Success } from "../../middleware/types"
 
 interface DispoData {
   id: string
@@ -54,27 +53,8 @@ const DEPT_BUCKET_QUERY = gql`
   }
 `
 
-const SOMETHING_NEW_IN_TASK  = gql`
-  subscription Subscription {
-    somethingChanged {
-      message
-      success
-    }
-  }
-`
 
 const DispositionSection = () => {
-  const client = useApolloClient()
-  useSubscription<{somethingChange:Success}>(SOMETHING_NEW_IN_TASK, {
-    onData: ({data}) => {
-      if(data.data?.somethingChange?.message === "NEW_DISPOSITION") {
-        client.refetchQueries({
-          include: ['getDeptBucket','getBucketDisposition','getDispositionTypes']
-        })
-      }
-    }
-  });
-
 
   const {data:bucketDispoData } = useQuery<{getBucketDisposition:BucketDisposition[]}>(BUCKET_DISPOSITIONS)
 
@@ -82,11 +62,13 @@ const DispositionSection = () => {
 
   const [existsDispo, setExistsDispo] = useState<string[]>([])
 
+
   useEffect(()=> {
     const newArray = bucketDispoData?.getBucketDisposition.map((bd) => bd.dispositions.map((d)=> d.code) )
     const flatArray = newArray?.flat()
     setExistsDispo([...new Set(flatArray)])
   },[bucketDispoData])
+
 
   const {data:disposition} = useQuery<{getDispositionTypes:DispoData[]}>(GET_DISPOSITION_TYPES)
 

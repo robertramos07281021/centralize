@@ -26,6 +26,17 @@ const bucketResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
+    },
+    findDeptBucket: async(_,{dept},{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
+      try {
+        const findDept = await Department.findById(dept)
+        if(!findDept) throw new CustomError("Department not found", 404)
+        const res = await Bucket.find({dept: findDept.name})
+        return res
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
     }
   },
   Mutation: {

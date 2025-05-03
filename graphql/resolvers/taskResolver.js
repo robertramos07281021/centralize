@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+
 import CustomError from "../../middlewares/errors.js"
 import Bucket from "../../models/bucket.js"
 import Customer from "../../models/customer.js"
@@ -24,7 +24,10 @@ const taskResolver = {
       if(!user) throw new CustomError("Unauthorized",401)
       try { 
         const myGroup = await Group.findOne({members: user._id})
-        if(!myGroup) throw new CustomError("Group not found", 404)
+        if(!myGroup) return {
+          _id: null,
+          task: []
+        }
 
         const customerAccounts = await CustomerAccount.find({$and: [{assigned: myGroup._id},{on_hands: false}]})
         
@@ -86,12 +89,12 @@ const taskResolver = {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
     
-      const ca = await CustomerAccount.findById(id)
-      if(!ca) throw new CustomError("Customer account not found", 404) 
+        const ca = await CustomerAccount.findById(id)
+        if(!ca) throw new CustomError("Customer account not found", 404) 
       
-      const findGroup = await Group.findById(ca.assigned)
+        const findGroup = await Group.findById(ca.assigned)
  
-      const assigned = ca.assigned ? (findGroup ? findGroup.members : [user._id]) : []
+        const assigned = ca.assigned ? (findGroup ? findGroup.members : [user._id]) : []
 
         if(ca.on_hands) throw new CustomError("Already taken")
 
@@ -101,7 +104,7 @@ const taskResolver = {
         
         await pubsub.publish(SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
-            members: assigned,
+            members: [...new Set([...assigned,user._id])],
             message: "TASK_SELECTION"
           },
         });
@@ -124,7 +127,6 @@ const taskResolver = {
       
         const assigned = ca.assigned ? (group ? [...group.members] : [...ca.assigned]) : []
 
-      
         await pubsub.publish(SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
             members: assigned,

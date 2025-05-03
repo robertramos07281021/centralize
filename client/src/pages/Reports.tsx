@@ -44,9 +44,10 @@ interface DeptBucket {
   id: string
   name: string
 }
+
 const GET_DEPT_BUCKET = gql`
-  query Query($dept: String) {
-    getDeptBucket(dept: $dept) {
+  query findDeptBucket($dept: ID) {
+    findDeptBucket(dept: $dept) {
       id
       name
     }
@@ -62,8 +63,21 @@ const Reports = () => {
   const [dispoPop, setDispoPop] = useState<boolean>(false)
   const {data:dispotypesData } = useQuery<{getDispositionTypes:DispoData[]}>(GET_DISPOSITION_TYPES)
   const {data:aomDeptData} = useQuery<{getAomDept:AomDept[]}>(GET_AOM_DEPT)
-  const {data:deptBucketData} = useQuery<{getDeptBucket:DeptBucket[]}>(GET_DEPT_BUCKET,{variables: {dept: campaign} })
 
+  const [deptId, setDeptId] = useState<{[key: string]: string}>({})
+  console.log(bucket)
+  useEffect(()=> {
+    if(aomDeptData){
+      const newObject:{[key: string]:string} = {}
+      aomDeptData?.getAomDept?.map((e)=> {
+        newObject[e.name] = e.id
+      })
+      setDeptId(newObject)
+    } 
+
+  },[aomDeptData])
+
+  const {data:deptBucketData} = useQuery<{findDeptBucket:DeptBucket[]}>(GET_DEPT_BUCKET,{variables: {dept: deptId[campaign]} })
 
   const handleCheckDispo = (value:string, e:React.ChangeEvent<HTMLInputElement>) => {
     const dispoChecked = selectedDispoReport || []
@@ -73,9 +87,7 @@ const Reports = () => {
       dispatch(setSelectedDispoReport(dispoChecked.filter((dc)=> dc !== value)))
     } 
   }
-  
-  console.log(bucket)
-  
+
   useEffect(()=> {
     if(!campaign) {
       dispatch(setSelectedDispoReport([]))
@@ -99,7 +111,7 @@ const Reports = () => {
               className="border-slate-300 border  text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 uppercase">
               <option value="">Select Campaign</option>
               {
-                aomDeptData?.getAomDept.map((ad)=> 
+                aomDeptData?.getAomDept?.map((ad)=> 
                   <option key={ad.id} value={ad.name} className="uppercase">{ad.name}</option>
                 )
               }
@@ -115,7 +127,7 @@ const Reports = () => {
               className={`${!campaign && "bg-slate-200"} border-slate-300 border  text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 uppercase`}>
               <option value="">Select Bucket</option>
               {
-                deptBucketData?.getDeptBucket.map((db)=> 
+                deptBucketData?.findDeptBucket?.map((db)=> 
                   <option value={db.name} className="uppercase">{db.name}</option>
                 )
               }
@@ -149,6 +161,10 @@ const Reports = () => {
               }
             </div>
           </div>
+          <label>
+            <p className="font-medium text-slate-500">Date From:</p>
+            <input type="date" name="" id="" />
+          </label>
         </div>
       </div>
       <div className="w-10/12 border h-full overflow-y-auto">

@@ -204,102 +204,113 @@ const DispositionForm = () => {
                 }
               </select>
             </label>
-            <label className="grid grid-cols-4 items-center">
-              <p className="text-gray-800 font-bold ">Amount</p>
-              {
-                data.disposition === "PAID" || data.disposition === "SETTLED" ? 
-                <div className="relative col-span-3">
-                  <input 
-                    type="text" 
-                    name="amount" 
-                    id="amount"
-                    value={data.amount}
-                    onChange={handleOnChangeAmount}
-                    pattern="[0-9]*"
-                    disabled={data.disposition === "SETTLED"}
-                    placeholder="Enter amount"
-                    required={data.disposition === "PAID" || data.disposition === "SETTLED"}
-                    className={`${required && !data.amount ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} w-full 2xl:text-sm lg:text-xs border  text-gray-900 text-sm rounded-lg pl-8 focus:ring-blue-500 focus:border-blue-500 block p-2 `}/>
-                  <p className="absolute top-2 left-4">&#x20B1;</p>
-                </div> 
-                : 
+            {
+              data.disposition === "PAID" || data.disposition === "SETTLED" ? 
+              <label className="grid grid-cols-4 items-center">
+                <p className="text-gray-800 font-bold ">Amount</p>
+                  <div className="relative col-span-3">
+                    <input 
+                      type="text" 
+                      name="amount" 
+                      id="amount"
+                      value={data.amount}
+                      onChange={handleOnChangeAmount}
+                      pattern="[0-9]*"
+                      disabled={data.disposition === "SETTLED"}
+                      placeholder="Enter amount"
+                      required={data.disposition === "PAID" || data.disposition === "SETTLED"}
+                      className={`${required && !data.amount ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} w-full 2xl:text-sm lg:text-xs border  text-gray-900 text-sm rounded-lg pl-8 focus:ring-blue-500 focus:border-blue-500 block p-2 `}/>
+                    <p className="absolute top-2 left-4">&#x20B1;</p>
+                  </div> 
+              </label> 
+              : 
+              <div className="grid grid-cols-4 items-center">
                 <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
                 </div>
-              }
-            </label>
-            <label className="grid grid-cols-4 items-center">
-              <p className="text-gray-800 font-bold ">Payment</p>
-              {
-                data.disposition === "PAID" ||  data.disposition === "SETTLED" ? 
-                <div 
-                  className={`bg-gray-50 border-gray-500 border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block col-span-3 p-2 capitalize`}>
-                  {data.payment}
-                </div>
-                :
+              </div>
+            }
+            {
+              data.disposition === "PAID" ||  data.disposition === "SETTLED" ? 
+              <label className="grid grid-cols-4 items-center">
+                <p className="text-gray-800 font-bold ">Payment</p>
+                  <div 
+                    className={`bg-gray-50 border-gray-500 border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block col-span-3 p-2 capitalize`}>
+                    {data.payment}
+                  </div>
+              </label>  
+              :
+              <div className="grid grid-cols-4 items-center">
                 <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
                 </div>
-              }
-            </label>
+              </div>
+            }
           </div>
           <div className="flex flex-col gap-2"> 
-            <label className="grid grid-cols-4 items-center">
-              <p className="text-gray-800 font-bold">Payment Date</p>
-              {
-                data.disposition === "PAID" ||  data.disposition === "SETTLED" ? 
-                <input 
-                  type="date" 
-                  id="payment_date" 
-                  name="payment_date"
-                  required={data.disposition === "PAID" ||  data.disposition === "SETTLED"}
-                  value={data.payment_date}
-                  onChange={(e)=> setData({...data, payment_date: e.target.value})}
-                  className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
-                />
-                  :
+            {
+              data.disposition === "PAID" ||  data.disposition === "SETTLED" ? 
+              <label className="grid grid-cols-4 items-center">
+                <p className="text-gray-800 font-bold">Payment Date</p>
+                  <input 
+                    type="date" 
+                    id="payment_date" 
+                    name="payment_date"
+                    required={data.disposition === "PAID" ||  data.disposition === "SETTLED"}
+                    value={data.payment_date}
+                    onChange={(e)=> setData({...data, payment_date: e.target.value})}
+                    className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
+                  />
+                
+              </label>
+              :
+              <div className="grid grid-cols-4 items-center">
                 <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
                 </div>
-              }
-            </label>
-            <label className="grid grid-cols-4 items-center">
-              <p className="text-gray-800 font-bold ">Payment Method</p>
+              </div>
+            }
               {
                 data.disposition === "PAID" ||  data.disposition === "SETTLED" ? 
-                <select 
-                  name="payment_method" 
-                  id="payment_method" 
-                  value={data.payment_method}
-                  required={data.disposition === "PAID" ||  data.disposition === "SETTLED"}
-                  onChange={(e)=> setData({...data, payment_method: e.target.value})}
-                  className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}>
-                  <option value="">Select Method</option>
-                  <option value="Bank to Bank Transfer">Bank to Bank Transfer</option>
-                  <option value="7/11">7/11</option>
-                  <option value="Gcash/PAY Maya">Gcash/PAY Maya</option>
-                  <option value="CASH">CASH</option>
-                </select>
+                <label className="grid grid-cols-4 items-center">
+                  <p className="text-gray-800 font-bold ">Payment Method</p>
+                    <select 
+                      name="payment_method" 
+                      id="payment_method" 
+                      value={data.payment_method}
+                      required={data.disposition === "PAID" ||  data.disposition === "SETTLED"}
+                      onChange={(e)=> setData({...data, payment_method: e.target.value})}
+                      className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}>
+                      <option value="">Select Method</option>
+                      <option value="Bank to Bank Transfer">Bank to Bank Transfer</option>
+                      <option value="7/11">7/11</option>
+                      <option value="Gcash/PAY Maya">Gcash/PAY Maya</option>
+                      <option value="CASH">CASH</option>
+                    </select>
+                </label>
                 :
-                <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
+                <div className="grid grid-cols-4 items-center">
+                  <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
+                  </div>
                 </div>
               }
-            </label>
-            <label className="grid grid-cols-4 items-center">
-              <p className="text-gray-800 font-bold ">Ref. No</p>
               {
                 data.disposition === "PAID" ||  data.disposition === "SETTLED" ?
-                <input 
-                  type="text" 
-                  name="ref" 
-                  id="ref"
-                  required={data.disposition === "PAID" ||  data.disposition === "SETTLED"}
-                  value={data.ref_no}
-                  placeholder="Enter reference no."
-                  onChange={(e)=> setData({...data, ref_no: e.target.value})}
-                  className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} p-2.5 border rounded-lg col-span-3`}/>
+                <label className="grid grid-cols-4 items-center">
+                  <p className="text-gray-800 font-bold ">Ref. No</p>
+                    <input 
+                      type="text" 
+                      name="ref" 
+                      id="ref"
+                      required={data.disposition === "PAID" ||  data.disposition === "SETTLED"}
+                      value={data.ref_no}
+                      placeholder="Enter reference no."
+                      onChange={(e)=> setData({...data, ref_no: e.target.value})}
+                      className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} p-2.5 border rounded-lg col-span-3`}/>
+                </label>
                 :
-                <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
+                <div className="grid grid-cols-4 items-center">
+                  <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
+                  </div>
                 </div>
               }
-            </label>
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Comment</p>
               <textarea 

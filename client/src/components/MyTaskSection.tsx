@@ -1,11 +1,10 @@
-import { useMutation, useQuery, useSubscription } from "@apollo/client"
+import { useMutation, useQuery, useSubscription, useApolloClient } from "@apollo/client"
 import gql from "graphql-tag"
 import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { dateAndTime } from "../middleware/dateAndTime"
 import { setSelectedCustomer } from "../redux/slices/authSlice"
-import { useApolloClient } from '@apollo/client';
 
 type outStandingDetails = {
   principal_os: number
@@ -175,6 +174,14 @@ const SOMETHING_NEW_IN_TASK  = gql`
     }
   }
 `
+const GROUP_CHANGING  = gql`
+  subscription Subscription {
+    groupChanging {
+      message
+      members
+    }
+  }
+`
 
 const SELECT_TASK = gql`
   mutation Mutation($id: ID!) {
@@ -184,7 +191,6 @@ const SELECT_TASK = gql`
     }
   }
 `
-
 
 const MyTaskSection = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
@@ -198,22 +204,28 @@ const MyTaskSection = () => {
             include: ['groupTask']
           })
         }
-        if(data.data?.somethingChanged?.message === "NEW_DISPOSITION" && data.data?.somethingChanged?.members?.toString().includes(userLogged._id)) {
+      }
+    }
+  });
+
+  useSubscription<{groupChanging:SubSuccess}>(GROUP_CHANGING,{
+    onData: ({data})=> {
+      console.log(data)
+      if(data){
+        if(data.data?.groupChanging?.message === "GROUP_CHANGING" && data.data?.groupChanging?.members?.toString().includes(userLogged._id)) {
           client.refetchQueries({
             include: ['groupTask']
           })
         }
       }
     }
-  });
-
-  // console.log(res.data?.somethingChange?.success)
-
-
+  })
+  
   const {data:myTasksData} = useQuery<{myTasks:CustomerData[]}>(MY_TASKS)
   const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
   const [data, setData] = useState<CustomerData[] | null>([])
   const [selection, setSelection] = useState<string>("")
+  
 
   useEffect(()=> {
     if(selection.trim()==="my_task") {
@@ -222,6 +234,11 @@ const MyTaskSection = () => {
       setData(groupTaskData?.groupTask?.task ? groupTaskData?.groupTask.task : null)
     }
   },[selection,myTasksData,groupTaskData])
+
+
+  useEffect(()=> {
+    groupTaskRefetch()
+  },[userLogged._id,groupTaskRefetch])
 
   const handleClickMyTask = () => {
     if(selection && selection.trim() !== "group_task"){
@@ -276,7 +293,7 @@ const MyTaskSection = () => {
             contact_no: data.customer_info.contact_no,
             emails: data.customer_info.emails,
             addresses: data.customer_info.addresses,
-            _id:""
+            _id:data.customer_info._id
           }
         }))
       }
@@ -294,33 +311,26 @@ const MyTaskSection = () => {
     } 
   }
 
-  // useEffect(()=> {
-  //   if(selectedCustomer._id) {
-  //     setSelection("")
-  //   } else {
-  //     groupTaskRefetch()
-  //   }
-  // },[selectedCustomer,groupTaskRefetch])
-
-
-
   return (
     <div className="p-2 flex justify-end gap-5 relative">
       <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5  dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleClickMyTask}>{selection.trim() !== "my_task" ? "My Tasks" : "Close"}</button>
-      <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5  dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleClickGroupTask}>{selection.trim() !== "group_task" ? "Group Tasks" : "Close"}</button>
+      {
+        groupTaskData?.groupTask?._id &&
+        <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5  dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleClickGroupTask}>{selection.trim() !== "group_task" ? "Group Tasks" : "Close"}</button>
+      }
       {
         selection.trim() !== "" &&
-        <div className="absolute border border-slate-300 rounded-lg shadow-md shadow-black/20 w-2/4 h-96 translate-y-1/2 -bottom-50 right-5 text-sm p-2 text-slate-500 flex flex-col ">
-          <div className="h-full  overflow-y-auto">
+        <div className="absolute border border-slate-300 rounded-lg shadow-md shadow-black/20 w-2/4 h-96 translate-y-1/2 -bottom-50 right-5 p-2 text-slate-500 flex flex-col">
+          <div className="h-full overflow-y-auto">
             {data?.map(d => (
-              <div key={d._id} className="py-1.5 text-xs hover:bg-blue-100 even:bg-slate-100 grid grid-cols-4 px-5">
+              <div key={d._id} className="py-1.5 2xl:text-xs lg:text-[0.6em] hover:bg-blue-100 even:bg-slate-100 grid grid-cols-4 px-5">
                 <div>{d.customer_info.fullName}</div>
                 <div>{d.current_disposition.disposition ? d.current_disposition.disposition : "N/A" }</div>
                 <div>
                   {dateAndTime(d.assigned_date)}
                 </div>
                 <div className="flex justify-end">
-                <button className="text-white bg-green-800 hover:bg-green-900 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs py-1 px-2 dark:bg-green-800 dark:hover:bg-green-700 dark:focus:ring-gray-700 dark:border-green-700 cursor-pointer" onClick={()=> handleClickSelect(d)}>Select</button>
+                <button className="text-white bg-green-800 hover:bg-green-900 focus:outline-none focus:ring-4 focus:ring-green-300 font-medium rounded-lg 2xl:text-xs lg:text-[0.6em] py-1 px-2 dark:bg-green-800 dark:hover:bg-green-700 dark:focus:ring-gray-700 dark:border-green-700 cursor-pointer" onClick={()=> handleClickSelect(d)}>Select</button>
                 </div>
               </div>
             ))}

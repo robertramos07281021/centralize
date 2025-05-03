@@ -58,7 +58,7 @@ const Navbar = () => {
   const navigate = useNavigate()
   const {userLogged,selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
-  const {error} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
+  const {error} = useQuery<{ getMe: UserInfo }>(myUserInfos)
 
   const [poPupUser, setPopUpUser] = useState<boolean>(false) 
 

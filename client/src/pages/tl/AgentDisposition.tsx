@@ -1,6 +1,6 @@
 import gql from "graphql-tag"
 import { Users } from "../../middleware/types"
-import { useApolloClient, useQuery, useSubscription } from "@apollo/client"
+import { useQuery } from "@apollo/client"
 import { useEffect, useState } from "react"
 
 
@@ -62,67 +62,13 @@ query findAgents {
   }
 }
 `
-const SOMETHING_NEW_IN_TASK  = gql`
-  subscription Subscription {
-    somethingChanged {
-      message
-      members
-    }
-  }
-`
-
-interface SubSuccess {
-  message:string
-  members:string[]
-}
 
 const AgentDisposition = () => {
-  const client = useApolloClient()
-  const [newAgentObjectId, setNewAgentObjectId] = useState<string[]>([])
+
 
   const {data:agentSelector} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT)
  
   const {data:dataDispo} = useQuery<{getAgentDispositions:AgentDisposition[]}>(AGENT_DISPOSITION)
-
-  useEffect(()=> {
-    if(agentSelector) {
-      const newAgentObject = agentSelector.findAgents.map(e=> e._id)
-      setNewAgentObjectId(newAgentObject)
-    }
-  },[agentSelector])
-
-
- useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
-    onData: ({data})=> {
-      console.log(data)
-      if(data) {
-        function check(members:string[] | undefined) {
-          const newArray:boolean[] = []
-          if(members) {
-            members.forEach((e)=>{
-              if(newAgentObjectId.toString().includes(e)) {
-                newArray.push(true)
-              } else {
-                newArray.push(false)
-              }
-            })
-          }
-          console.log(newArray)
-          return newArray.toString().includes("true")
-        }
-        console.log(check(data?.data?.somethingChanged?.members))
-        if(data.data?.somethingChanged?.message === "NEW_DISPOSITION" && check(data?.data?.somethingChanged?.members)) {
-
-          client.refetchQueries({
-            include: ['getDispositionTypes','getAgentDispositions','findAgents']
-          })
-        }
-      }
-    }
-  });
-
- 
-
 
   const [existsDispo, setExistsDispo] = useState<string[]>([])
 
@@ -140,7 +86,7 @@ const AgentDisposition = () => {
       <thead className='sticky top-0 bg-white'>
         <tr className='text-slate-500'>
           <th className='w-24 2xl:text-sm lg:text-[0.7rem] py-1.5'>AGENT ID</th>
-          <th className='w-auto 2xl:text-sm lg:text-[0.7rem]'>NAME</th>
+          <th className='w-auto 2xl:text-sm lg:text-[0.7rem]'>NAME 1</th>
           {
             disposition?.getDispositionTypes.map((dispo) => 
             {
