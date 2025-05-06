@@ -11,6 +11,7 @@ import { RootState, useAppDispatch } from "../redux/store";
 import { setNeedLogin, setPage, setSelectedCustomer, setSelectedDispoReport, setSelectedDisposition, setTasker, setTaskFilter, setUserLogged } from "../redux/slices/authSlice";
 import NavbarExtn from "./NavbarExtn";
 import { useSelector } from "react-redux";
+import IdleAutoLogout from "./IdleAutoLogout";
 
 const myUserInfos = gql` 
   query GetMe { 
@@ -58,10 +59,8 @@ const Navbar = () => {
   const navigate = useNavigate()
   const {userLogged,selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
-  const {error} = useQuery<{ getMe: UserInfo }>(myUserInfos)
-
+  const {error} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
   const [poPupUser, setPopUpUser] = useState<boolean>(false) 
-
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: ()=> {
       dispatch(setSelectedCustomer({
@@ -108,67 +107,64 @@ const Navbar = () => {
 
   const [logout, {loading}] = useMutation(LOGOUT,{
     onCompleted: async() => {
-      try {
-        dispatch(setNeedLogin(true))
-        dispatch(setUserLogged(
-          {
-            _id: "",
-            change_password: false,
-            name: "",
-            type: "",
-            username: "",
-            branch: "",
-            department: "",
-            bucket: ""
-          }
-        ))
-        dispatch(setPage(1))
-        dispatch(setTasker('group'))
-        dispatch(setTaskFilter('assigned'))
-        dispatch(setSelectedDisposition([]))
-        dispatch(setSelectedDispoReport([]))
-        dispatch(setSelectedCustomer({
+      dispatch(setNeedLogin(true))
+      dispatch(setUserLogged(
+        {
           _id: "",
-          case_id: "",
-          account_id: "",
-          endorsement_date: "",
-          credit_customer_id: "",
-          bill_due_day: 0,
-          max_dpd: 0,
-          balance: 0,
-          paid_amount: 0,
-          out_standing_details: {
-            principal_os: 0,
-            interest_os: 0,
-            admin_fee_os: 0,
-            txn_fee_os: 0,
-            late_charge_os: 0,
-            dst_fee_os: 0,
-            total_os: 0
-          },
-          grass_details: {
-            grass_region: "",
-            vendor_endorsement: "",
-            grass_date: ""
-          },
-          account_bucket: {
-            name: "",
-            dept: ""
-          },
-          customer_info: {
-            fullName:"",
-            dob:"",
-            gender:"",
-            contact_no:[],
-            emails:[],
-            addresses:[],
-            _id:""
-          }
-        }))
-        navigate('/')
-      } catch (error) {
-        console.log(error)
-      }
+          change_password: false,
+          name: "",
+          type: "",
+          username: "",
+          branch: "",
+          department: "",
+          bucket: ""
+        }
+      ))
+      dispatch(setPage(1))
+      dispatch(setTasker('group'))
+      dispatch(setTaskFilter('assigned'))
+      dispatch(setSelectedDisposition([]))
+      dispatch(setSelectedDispoReport([]))
+      dispatch(setSelectedCustomer({
+        _id: "",
+        case_id: "",
+        account_id: "",
+        endorsement_date: "",
+        credit_customer_id: "",
+        bill_due_day: 0,
+        max_dpd: 0,
+        balance: 0,
+        paid_amount: 0,
+        out_standing_details: {
+          principal_os: 0,
+          interest_os: 0,
+          admin_fee_os: 0,
+          txn_fee_os: 0,
+          late_charge_os: 0,
+          dst_fee_os: 0,
+          total_os: 0
+        },
+        grass_details: {
+          grass_region: "",
+          vendor_endorsement: "",
+          grass_date: ""
+        },
+        account_bucket: {
+          name: "",
+          dept: ""
+        },
+        customer_info: {
+          fullName:"",
+          dob:"",
+          gender:"",
+          contact_no:[],
+          emails:[],
+          addresses:[],
+          _id:""
+        }
+      }))
+      navigate('/')
+
     },
   })
   const [confirmation, setConfirmation] = useState<boolean>(false)
@@ -188,7 +184,7 @@ const Navbar = () => {
   
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "LOGOUT",
+    toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "LOGOUT" | "IDLE",
     yes: () => {},
     no: () => {}
   })
@@ -203,7 +199,7 @@ const Navbar = () => {
     })
   }
 
-  const [logoutToPersist] = useMutation(LOGOUT_USING_PERSIST,{
+  const [logoutToPersist, {loading:logoutToPEristsLoading}] = useMutation(LOGOUT_USING_PERSIST,{
     onCompleted: ()=> {
       dispatch(setNeedLogin(true))
       dispatch(setUserLogged({
@@ -216,25 +212,99 @@ const Navbar = () => {
         department: "",
         bucket: ""
       }))
-      
+      dispatch(setNeedLogin(true))
+      dispatch(setUserLogged(
+        {
+          _id: "",
+          change_password: false,
+          name: "",
+          type: "",
+          username: "",
+          branch: "",
+          department: "",
+          bucket: ""
+        }
+      ))
+      dispatch(setPage(1))
+      dispatch(setTasker('group'))
+      dispatch(setTaskFilter('assigned'))
+      dispatch(setSelectedDisposition([]))
+      dispatch(setSelectedDispoReport([]))
+      dispatch(setSelectedCustomer({
+        _id: "",
+        case_id: "",
+        account_id: "",
+        endorsement_date: "",
+        credit_customer_id: "",
+        bill_due_day: 0,
+        max_dpd: 0,
+        balance: 0,
+        paid_amount: 0,
+        out_standing_details: {
+          principal_os: 0,
+          interest_os: 0,
+          admin_fee_os: 0,
+          txn_fee_os: 0,
+          late_charge_os: 0,
+          dst_fee_os: 0,
+          total_os: 0
+        },
+        grass_details: {
+          grass_region: "",
+          vendor_endorsement: "",
+          grass_date: ""
+        },
+        account_bucket: {
+          name: "",
+          dept: ""
+        },
+        customer_info: {
+          fullName:"",
+          dob:"",
+          gender:"",
+          contact_no:[],
+          emails:[],
+          addresses:[],
+          _id:""
+        }
+      }))
       navigate("/")
-
     }
   })
 
-
+  
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       if (error instanceof Error) {
         if(error?.message === "Not authenticated") {
-          try {
-            if(selectedCustomer._id){
-              await deselectTask({variables: {id:selectedCustomer._id,user_id: userLogged._id}})
-            }
-            await logoutToPersist({variables: {id: userLogged._id}})
-          } catch (error) {
-            console.log(error)
-          }
+          setConfirmation(true)
+          setModalProps({
+            no:async()=> {
+              setConfirmation(false)
+              try {
+                if(selectedCustomer._id){
+                  await deselectTask({variables: {id:selectedCustomer._id,user_id: userLogged._id}})
+                }
+                await logoutToPersist({variables: {id: userLogged._id}})
+              } catch (error) {
+                console.log(error)
+              }
+            },
+            yes:async() => { 
+              setConfirmation(false)
+              try {
+                if(selectedCustomer._id){
+                  await deselectTask({variables: {id:selectedCustomer._id,user_id: userLogged._id}})
+                }
+                await logoutToPersist({variables: {id: userLogged._id}})
+              } catch (error) {
+                console.log(error)
+              }
+
+            },
+            message: "You idle for 5 minutes!",
+            toggle: "IDLE"
+          })
         }
       }
     })
@@ -242,14 +312,22 @@ const Navbar = () => {
   },[error,navigate,dispatch, logoutToPersist, userLogged, deselectTask,selectedCustomer])
 
 
-  if(loading) return <Loading/>
+  if(loading || logoutToPEristsLoading) return <Loading/>
 
   return (
+    
     <div className="sticky top-0 z-40 print:hidden">
+
       <div className="p-2 bg-blue-500 flex justify-between items-center ">
         <div className="flex text-2xl gap-2 font-medium items-center text-white italic">
           <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
           Bernales & Associates
+          {
+            (userLogged.type === "AGENT" || userLogged.type === "TL") && 
+        
+            <IdleAutoLogout/> 
+           
+          }
         </div>
         <div className="p-1 flex gap-2 text-xs z-50">
           <p className="font-medium text-white italic flex items-center">Hello&nbsp;<span className="uppercase">{userLogged.name}</span></p>

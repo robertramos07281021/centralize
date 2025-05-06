@@ -39,6 +39,10 @@ const productionTypeDefs = gql`
     getAgentProductionPerMonth:[perMonth]
     getAgentTotalDispositions:[AgentTotalDispo]
   }
+
+  # type Mutation {
+  #   updateProduction
+  # }
 `
 
 export default productionTypeDefs

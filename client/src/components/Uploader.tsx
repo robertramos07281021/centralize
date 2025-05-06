@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { useCallback, useState } from "react";
-import * as XLSX from "xlsx";
+
 import { useDropzone } from "react-dropzone";
 import { gql, useMutation } from "@apollo/client";
 import Confirmation from "../components/Confirmation";
@@ -27,31 +27,35 @@ const Uploader:React.FC = () => {
     const [excelData, setExcelData] = useState<CustomerData[]>([]);
     const [file, setFile] = useState<File[]>([])
   
-    const handleFileUpload = useCallback((file: File) => {
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        const binaryString = e.target?.result;
-        const workbook = XLSX.read(binaryString, { type: "binary" });
-        const sheetName = workbook.SheetNames[0]; 
-        const sheet = workbook.Sheets[sheetName];
-  
-        const jsonData:ExcelFile[] = XLSX.utils.sheet_to_json(sheet); 
-        const dateConverting = jsonData.map((row: any) => ({
-          ...row,
-          birthday: XLSX.SSF.format("yyyy-mm-dd", row.birthday),
-          endorsement_date:  XLSX.SSF.format("yyyy-mm-dd", row.endorsement_date),
-          grass_date:XLSX.SSF.format("yyyy-mm-dd", row.grass_date),
-          case_id: String(row.case_id),
-          one: String(row.one),
-          platform_user_id: String(row.platform_user_id),
-          platform_user_id_1: String(row.platform_user_id_1)
-        }));
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const newJsonData = dateConverting.map(({ total_os_1, platform_user_id_1, ...rest }) => rest)
-        setExcelData(newJsonData.slice(1,newJsonData.length -1)); 
-      };
-  
-      reader.readAsBinaryString(file);
+    const handleFileUpload = useCallback(async(file: File) => {
+      try {
+        const { read, utils, SSF } = await import("xlsx");
+        const reader = new FileReader();
+        reader.onload = (e) => {
+          const binaryString = e.target?.result;
+          const workbook = read(binaryString, { type: "binary" });
+          const sheetName = workbook.SheetNames[0]; 
+          const sheet = workbook.Sheets[sheetName];
+    
+          const jsonData:ExcelFile[] = utils.sheet_to_json(sheet); 
+          const dateConverting = jsonData.map((row: any) => ({
+            ...row,
+            birthday: SSF.format("yyyy-mm-dd", row.birthday),
+            endorsement_date:  SSF.format("yyyy-mm-dd", row.endorsement_date),
+            grass_date:SSF.format("yyyy-mm-dd", row.grass_date),
+            case_id: String(row.case_id),
+            one: String(row.one),
+            platform_user_id: String(row.platform_user_id),
+            platform_user_id_1: String(row.platform_user_id_1)
+          }));
+          // eslint-disable-next-line @typescript-eslint/no-unused-vars
+          const newJsonData = dateConverting.map(({ total_os_1, platform_user_id_1, ...rest }) => rest)
+          setExcelData(newJsonData.slice(1,newJsonData.length -1)); 
+        };
+        reader.readAsBinaryString(file);
+      } catch (error) {
+        console.log(error)
+      }
     }, []);
 
     const { getRootProps, getInputProps, isDragActive } = useDropzone({

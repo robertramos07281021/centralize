@@ -4,29 +4,14 @@ const Schema = mongoose.Schema;
 
 const productionSchema = new Schema(
   {
-    in_out: {
-      f_break: {
-        type: String
-      },
-      f_break_end: {
-        type: String
-      },
-      s_break: {
-        type: String
-      },
-      s_break_end: {
-        type: String
-      },
-      lunch: {
+    acount_history: [{
+      type: {
         type: String,
       },
-      lunch_end: {
-        type: String,
-      },
-      out: {
+      time: {
         type: String
       }
-    },
+    }],
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"

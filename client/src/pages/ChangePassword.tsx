@@ -132,7 +132,7 @@ const ChangePassword = () => {
     MIS: "/mis-dashboard"
   }
   const userType = userLogged.type as keyof typeof userRoutes ?? "ADMIN";
-  const sample = location.state !== null ? userRoutes[userType] : "/"
+  const navigator = location.state !== null ? userRoutes[userType] : "/"
 
  if(loading || changePassLoading) return (
     <Loading/>
@@ -203,7 +203,7 @@ const ChangePassword = () => {
 
     </div>
   ) : (
-    <Navigate to={sample}/>
+    <Navigate to={navigator}/>
   )
 }
 

@@ -6,7 +6,8 @@ import { Chart,
   BarElement,
   Title,
   Tooltip,
-  Legend } from 'chart.js';
+  Legend 
+} from 'chart.js';
 import PerDayDispositionSection from './PerDayDispositionSection';
 import DoughnutSection from './DoughnutSection';
 import DispositionSection from './DispositionSection';

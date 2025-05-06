@@ -169,8 +169,8 @@ const userResolvers = {
 
     login: async(_,{ username, password },{ res }) => {
       try {
+     
         const user = await User.findOne({username})
-  
         if(!user) throw new CustomError("Invalid",401)
         
         const validatePassword = await bcrypt.compare(password, user.password)
@@ -202,14 +202,13 @@ const userResolvers = {
             user: user._id,
           });
         }
-   
         res.cookie('token', token, {
           httpOnly: true,
         });
-
         return {success: true, message: "Logged in", user: user}
         
       } catch (error) {
+
         throw new CustomError(error.message,500)
       }
     },

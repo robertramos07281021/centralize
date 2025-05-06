@@ -95,13 +95,22 @@ const dispositionTypeDefs = gql`
     dispositionUpdated: SubsribeSuccess
   }
 
+  type DispoReport {
+    disposition: String
+    count: Int
+  }
 
-  # type AomDispositionReport {
-    
+  type Buckets { 
+    bucket: String
+    totalAmount: Float
+    dispositions: [DispoReport]
+  }
 
-
-  # }
-
+  type HighDispositionReport {
+    dept: String
+    buckets: [Buckets]
+  }
+  
 
   type Query {
     getAccountDispositions(id:ID!, limit:Int):[Disposition]
@@ -112,7 +121,7 @@ const dispositionTypeDefs = gql`
     getDispositionPerMonth:DispositionPerYear
     getDeptDispositionCount:[DispositionCount]
     getAllDispositionTypes:[DispoType]
-    # getDispositionReports(campaign:String, bucket:String):AomDispositionReport
+    getDispositionReportsHigh(campaign:String, bucket:String, dispositions:[String], from:String, to:String):[HighDispositionReport]
   }
 
   type Mutation {

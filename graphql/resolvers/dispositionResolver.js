@@ -591,6 +591,112 @@ const dispositionResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
+    },
+    getDispositionReportsHigh: async(_,{campaign, bucket, dispositions, from, to}) => {
+      try {
+        const start = new Date(from);
+        start.setHours(0, 0, 0, 0);
+        const end = new Date(to);
+        end.setHours(23, 59, 59, 999);
+        const search = {}
+        
+        if(campaign) search["bucket.dept"] = campaign
+        if(bucket) search["bucket.name"] = bucket
+        if(dispositions.length > 0) search['dispotype.name'] = {$in: dispositions}
+        if(from && to) search['createdAt'] =  {$gte: start, $lt: end}
+        if(from && !to) search['createdAt'] = {$gte: start}
+        if(!from && to) search['createdAt'] = {$lt: end}
+
+        const reports = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customer_account"
+            },
+          },
+          {
+            $unwind: {path: "$customer_account",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customer_account.bucket",
+              foreignField: "_id",
+              as: "bucket",
+              pipeline: [{$project: {name: 1, dept: 1}}]
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+              pipeline: [{$project: {name: 1, code: 1}}]
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: search
+          },
+          {
+            $group: {
+              _id: {
+                dept: "$bucket.dept",
+                bucket: "$bucket.name",
+                dispotype: "$dispotype.name"
+              },
+              count: {$sum: 1},
+              totalAmount: { $sum: "$amount" }
+            }
+          },
+          {
+            $group: {
+              _id: {
+                dept: "$_id.dept",
+                bucket: "$_id.bucket"
+              },
+              totalAmount: { $sum: "$totalAmount" },
+              dispositions: {
+                $push: {
+                  disposition: "$_id.dispotype",
+                  count: "$count",
+                }
+              }
+            }
+          },
+          {
+            $group: {
+              _id: "$_id.dept",
+              buckets: {
+                $push: {
+                  bucket: "$_id.bucket",
+                  totalAmount: "$totalAmount",
+                  dispositions: "$dispositions"
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              dept: "$_id",
+              buckets: 1
+            }
+          }
+        ])
+        return reports
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+
     }
   },
 

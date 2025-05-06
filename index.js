@@ -43,7 +43,7 @@ import path from "path";
 const app = express()
 connectDB()
 
-const allowedOrigins = ["http://localhost:4000", "http://172.16.24.31:4000"];
+const allowedOrigins = ["http://172.16.24.31:4000","http://localhost:4000"];
 
 app.use(cors({
   origin: function (origin, callback) {
@@ -58,8 +58,6 @@ app.use(cors({
 
 app.use(bodyParser.json());
 app.use(cookieParser())
-
-
 
 
 const __filename = fileURLToPath(import.meta.url);
@@ -86,8 +84,6 @@ const wsServer = new WebSocketServer({
 });
 
 useServer({ schema }, wsServer);
-
-
 
 const startServer = async() => {
   const server = new ApolloServer({
@@ -116,7 +112,6 @@ const startServer = async() => {
       })
     );
     
-
     httpServer.listen(4000, () => {
       console.log("🚀 Server running at http://localhost:4000/graphql");
       console.log("📂 Serving static files from /public");

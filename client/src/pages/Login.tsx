@@ -126,6 +126,7 @@ const Login = () => {
 
   const [login, {loading}] = useMutation(LOGIN, {
     onCompleted: (res) => {
+
       dispatch(setUserLogged(res.login.user))
       if(!res.login.user.change_password) {
         navigate('/change-password', {state: res.login.user})
@@ -133,12 +134,12 @@ const Login = () => {
         navigate(userRoutes[res.login.user.type  as keyof typeof userRoutes])
       }
     }
-  })
+  })  
+
 
   const handleEyeClick =() => {
     setEye(!eye)
   }
-
   const handleSubmitLogin = async(e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if(!loginForm?.current?.checkValidity()){
