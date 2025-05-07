@@ -95,8 +95,14 @@ const dispositionTypeDefs = gql`
     dispositionUpdated: SubsribeSuccess
   }
 
+  type User {
+    name: String
+    user_id: String
+  }
+  
   type DispoReport {
     disposition: String
+    users: [User]
     count: Int
   }
 
@@ -126,7 +132,6 @@ const dispositionTypeDefs = gql`
 
   type Mutation {
     createDisposition(customerAccountId:ID!,amount:String, payment:String, disposition: String!, payment_date:String, payment_method:String, ref_no:String, comment:String): Success
-  
   }
 `
 

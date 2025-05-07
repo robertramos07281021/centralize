@@ -1,26 +1,11 @@
 import { gql } from "graphql-tag";
 const userTypeDefs = gql`
   scalar DateTime
-  type User {
-    id: ID
-    name: String
-    username: String
-    type: String
-    department: String
-    branch: String
-    change_password: Boolean
-    buckets: [String]
-  }
 
   type Success {
     success: Boolean!
-    message: String
-    user: User
-  }
-
-  type SuccessLogout {
-    success: Boolean!
     message: String!
+    user: Users
   }
 
   type Users {
@@ -31,7 +16,7 @@ const userTypeDefs = gql`
     department: String
     branch: String
     change_password: Boolean
-    buckets: [String]
+    bucket: String
     isOnline: Boolean
     active: Boolean
     createdAt: DateTime
@@ -43,12 +28,6 @@ const userTypeDefs = gql`
     total: Int
   }
 
-  type SuccessUpdate {
-    success: Boolean!
-    message: String!
-    user: Users!
-  }
-
   type DeptUser {
     _id: ID
     name: String
@@ -58,23 +37,23 @@ const userTypeDefs = gql`
 
   type Query {
     getUsers(page: Int!): PaginatedUsers!
-    getUser(id: ID): User
-    getMe:User
-    getAomUser: [User]
+    getUser(id: ID): Users
+    getMe: Users
+    getAomUser: [Users]
     findUsers(search: String!, page: Int!): PaginatedUsers!
     findDeptAgents:[DeptUser]
     findAgents:[Users]
   }
 
   type Mutation {
-    createUser(name: String!, username: String!,type: String!, department: String!, branch: String!, id_number: String ): User
-    updatePassword(password:String!, confirmPass:String!) : User
-    resetPassword(id:ID!): SuccessLogout
-    updateUser(name:String!, type:String!, department:String!, branch:String!, bucket:String, id:ID!): SuccessUpdate
-    login(username:String!, password:String!) : SuccessUpdate
-    logout: SuccessLogout
-    logoutToPersist(id:ID!):SuccessLogout
-    updateActiveStatus(id:ID!): SuccessUpdate
+    createUser(name: String!, username: String!,type: String!, department: String!, branch: String!, id_number: String ): Users
+    updatePassword(password:String!, confirmPass:String!) : Users
+    resetPassword(id:ID!): Success
+    updateUser(name:String!, type:String!, department:String!, branch:String!, bucket:String, id:ID!): Success
+    login(username:String!, password:String!) : Success
+    logout: Success
+    logoutToPersist(id:ID!):Success
+    updateActiveStatus(id:ID!): Success
   }
 `;
 

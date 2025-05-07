@@ -43,16 +43,17 @@ import path from "path";
 const app = express()
 connectDB()
 
-const allowedOrigins = ["http://172.16.24.31:4000","http://localhost:4000"];
+// const allowedOrigins = ["http://172.16.24.31:4000","http://localhost:4000","http://localhost:5173"];
 
 app.use(cors({
-  origin: function (origin, callback) {
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      callback(new Error("Not allowed by CORS"));
-    }
-  },
+  // origin: function (origin, callback) {
+  //   if (!origin || allowedOrigins.includes(origin)) {
+  //     callback(null, true);
+  //   } else {
+  //     callback(new Error("Not allowed by CORS"));
+  //   }
+  // },
+  origin: true,
   credentials: true,
 }));
 
@@ -60,14 +61,14 @@ app.use(bodyParser.json());
 app.use(cookieParser())
 
 
-const __filename = fileURLToPath(import.meta.url);
-const __dirname = path.dirname(__filename);
+// const __filename = fileURLToPath(import.meta.url);
+// const __dirname = path.dirname(__filename);
 
-app.use(express.static(path.join(__dirname, "/client/dist")));
+// app.use(express.static(path.join(__dirname, "/client/dist")));
 
-app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "/client/dist/index.html"));
-});
+// app.get("*", (req, res) => {
+//   res.sendFile(path.join(__dirname, "/client/dist/index.html"));
+// });
 
 
 const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver]);
@@ -83,7 +84,24 @@ const wsServer = new WebSocketServer({
   path: '/graphql',
 });
 
-useServer({ schema }, wsServer);
+useServer({ schema,
+  context: async (ctx, msg, args) => {
+    const auth = ctx.connectionParams?.Authorization || "";
+    const token = auth.replace("Bearer ", "");
+
+    if (token) {
+      try {
+        const decoded = jwt.verify(token, process.env.SECRET);
+        const user = await User.findById(decoded.id);
+        return { user };
+      } catch (err) {
+        console.log("WebSocket token error:", err.message);
+      }
+    }
+
+    return {};
+  }
+ }, wsServer);
 
 const startServer = async() => {
   const server = new ApolloServer({

@@ -117,7 +117,7 @@ interface FindCustomerAccount {
 }
 
 const FIND_CUSTOMER_ACCOUNTS = gql`
-query Query($page: Int, $disposition: [String], $groupId: ID, $assigned:String,$limit: Int) {
+query findCustomerAccount($page: Int, $disposition: [String], $groupId: ID, $assigned:String,$limit: Int) {
   findCustomerAccount(page: $page, disposition: $disposition, groupId: $groupId, assigned:$assigned, limit:$limit ) {
     CustomerAccounts {
       _id
@@ -200,7 +200,7 @@ query Query($page: Int, $disposition: [String], $groupId: ID, $assigned:String,$
 }
 `
 const SELECT_ALL_CUSTOMER_ACCOUNT = gql`
-  query Query($disposition: [String], $groupId:ID, $assigned:String) {
+  query selectAllCustomerAccount($disposition: [String], $groupId:ID, $assigned:String) {
     selectAllCustomerAccount(disposition: $disposition,groupId: $groupId, assigned: $assigned )
   }
 `

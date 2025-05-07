@@ -5,6 +5,7 @@ import { date, month, options } from "../../middleware/exports"
 import { Bar } from "react-chartjs-2"
 import { useSelector } from "react-redux"
 import { RootState } from "../../redux/store"
+import { useNavigate } from "react-router-dom"
 
 
 type User = {
@@ -118,6 +119,7 @@ const SOMETHING_NEW_IN_TASK  = gql`
 
 const StatisticsView = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
+  const navigate = useNavigate()
   const client = useApolloClient()
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
     onData: ({data})=> {
@@ -130,11 +132,11 @@ const StatisticsView = () => {
       }
     }
   });
-  const {data:productionData} = useQuery<{getProductions:Production}>(TODAY_DISPOSITION)
-  const {data:dispotypeData} = useQuery<{getDispositionTypes:DispositionType[]}>(DISPO_TYPES)
-  const {data:agentProdPerDayData} = useQuery<{getAgentProductionPerDay:AgentProdPerDay[]}>(AGENT_PER_DAY_PROD)
-  const {data:agentProdPerMonthData} = useQuery<{getAgentProductionPerMonth:AgentProdPerMonth[]}>(AGENT_PER_MONTH_PROD)
-  const {data:agentTotalDispoData} = useQuery<{getAgentTotalDispositions:AgentTotalDispo[]}>(AGENT_TOTAL_DISPO)
+  const {data:productionData, refetch:ProductionRefetch} = useQuery<{getProductions:Production}>(TODAY_DISPOSITION)
+  const {data:dispotypeData, refetch:DispoTypeRefetch} = useQuery<{getDispositionTypes:DispositionType[]}>(DISPO_TYPES)
+  const {data:agentProdPerDayData, refetch:PerDayRefetch} = useQuery<{getAgentProductionPerDay:AgentProdPerDay[]}>(AGENT_PER_DAY_PROD)
+  const {data:agentProdPerMonthData, refetch:PerMonthRefetch} = useQuery<{getAgentProductionPerMonth:AgentProdPerMonth[]}>(AGENT_PER_MONTH_PROD)
+  const {data:agentTotalDispoData, refetch:TotalDispoRefetch} = useQuery<{getAgentTotalDispositions:AgentTotalDispo[]}>(AGENT_TOTAL_DISPO)
   
   const [totalCollection,setTotalCollection] = useState<number|null>(null)
 
@@ -196,6 +198,15 @@ const StatisticsView = () => {
     }
   },[productionData])
 
+  useEffect(()=> {
+    if(userLogged.type === "AGENT") {
+      ProductionRefetch()
+      DispoTypeRefetch()
+      PerDayRefetch()
+      PerMonthRefetch()
+      TotalDispoRefetch()
+    }
+  },[navigate,ProductionRefetch,DispoTypeRefetch,PerDayRefetch,PerMonthRefetch,TotalDispoRefetch,userLogged])
   
 
   return (

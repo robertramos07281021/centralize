@@ -48,7 +48,6 @@ const userResolvers = {
     getMe: async (_, __, { user }) => {
 
       if (!user) throw new CustomError("Not authenticated",401);
-
       return user; 
     },
     getAomUser: async() => {
@@ -202,13 +201,15 @@ const userResolvers = {
             user: user._id,
           });
         }
+
         res.cookie('token', token, {
           httpOnly: true,
+   
         });
         return {success: true, message: "Logged in", user: user}
         
       } catch (error) {
-
+        console.log(error)
         throw new CustomError(error.message,500)
       }
     },
@@ -234,12 +235,12 @@ const userResolvers = {
 
         const saltPassword = await bcrypt.genSalt(10)
         const hashPassword = await bcrypt.hash("Bernales2025", saltPassword)
-        const user = await User.findByIdAndUpdate(id,{$set: {password: hashPassword, change_password: false}})
+        const user = await User.findByIdAndUpdate(id,{$set: {password: hashPassword, change_password: false, isOnline: false}}, {new: true})
         if(!user) throw new CustomError("User not found",404)
          
         await ModifyRecord.create({name: "Reset Password", user: user._id})  
 
-        return {success: true, message: "User password updated"}
+        return {success: true, message: "User password updated", user: user}
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
@@ -252,9 +253,10 @@ const userResolvers = {
         
         await ModifyRecord.create({name: "Update User Info", user: updateUser._id})
         
-        return {success: true , message: "User account successfully updated", user: updateUser }
+        return {success: true , message: "User account successfully updated", user: updateUser}
 
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     } ,

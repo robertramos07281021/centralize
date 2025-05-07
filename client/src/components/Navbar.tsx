@@ -1,6 +1,4 @@
 import { gql, useMutation, useQuery } from "@apollo/client"
-
-import { UserInfo } from "../middleware/types"
 import { BsFillPersonVcardFill } from "react-icons/bs";
 import { IoMdLogOut } from "react-icons/io";
 import { useEffect, useState } from "react";
@@ -13,10 +11,23 @@ import NavbarExtn from "./NavbarExtn";
 import { useSelector } from "react-redux";
 import IdleAutoLogout from "./IdleAutoLogout";
 
+type UserInfo = {
+  _id: string;
+  type: "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" | "MIS";
+  branch: string;
+  username: string;
+  name: string;
+  change_password: boolean
+  department: string
+  bucket: string
+  user_id:string
+};
+
+
 const myUserInfos = gql` 
   query GetMe { 
     getMe {
-      id
+      _id
       name
       username
       type
@@ -323,7 +334,7 @@ const Navbar = () => {
           <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
           Bernales & Associates
           {
-            (userLogged.type === "AGENT" || userLogged.type === "TL") && 
+            (userLogged.type === "AGENT") && 
         
             <IdleAutoLogout/> 
            

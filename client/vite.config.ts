@@ -5,18 +5,21 @@ import tailwindcss from '@tailwindcss/vite'
 // https://vite.dev/config/
 export default defineConfig({
   plugins: [react(),tailwindcss()],
-  // server: {
-  //   proxy: {
-  //     '/graphql': {
-  //       target: 'http://localhost:4000',
-  //       changeOrigin: true,
-  //       secure: false,
-  //     },
-  //   },
-  // },
+  server: {
+    port: 3000,
+    proxy: {
+      '/graphql': {
+        target: 'http://localhost:4000',
+        changeOrigin: true,
+        secure: false,
+        ws: true,  
+      },
+    },
+
+  },
 
   build: {
-    chunkSizeWarningLimit: 2000, // in kB
+    chunkSizeWarningLimit: 2000, 
   }
 
 })

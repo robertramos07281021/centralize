@@ -46,7 +46,7 @@ const initialState:UserState = {
   tasker: "group",
   taskFilter: "assigned",
   selectedDisposition: [] as string[],
-  limit: 5,
+  limit: 20,
   selectedDispoReport: [] as string[],
   userLogged: {
     _id: "",

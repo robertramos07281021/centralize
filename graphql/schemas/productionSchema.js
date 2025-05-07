@@ -33,6 +33,11 @@ const productionTypeDefs = gql`
     count: Int
   }
 
+  type Success {
+    success: Boolean
+    message: String
+  }
+
   type Query {
     getProductions:Production
     getAgentProductionPerDay:[PerDay]
@@ -40,9 +45,9 @@ const productionTypeDefs = gql`
     getAgentTotalDispositions:[AgentTotalDispo]
   }
 
-  # type Mutation {
-  #   updateProduction
-  # }
+  type Mutation {
+    updateProduction(type: String!):Success
+  }
 `
 
 export default productionTypeDefs

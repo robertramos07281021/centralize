@@ -174,6 +174,7 @@ const SOMETHING_NEW_IN_TASK  = gql`
     }
   }
 `
+
 const GROUP_CHANGING  = gql`
   subscription Subscription {
     groupChanging {

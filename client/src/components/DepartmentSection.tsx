@@ -45,7 +45,7 @@ const BRANCH_QUERY = gql`
 const USER_QUERY = gql`
   query userQuery($id:ID) {
     getAomUser {
-      id
+      _id
       name
       username
       type
@@ -55,7 +55,7 @@ const USER_QUERY = gql`
     }
 
     getUser(id: $id) {
-      id
+      _id
       name
       username
       type
@@ -107,7 +107,7 @@ const DepartmentSection = () => {
     name: "",
     branch: "",
     aom: {
-      id: "",
+      _id: "",
       type:"AOM",
       branch: "",
       username: "",
@@ -119,75 +119,63 @@ const DepartmentSection = () => {
     }
   }) 
 
-  const {data:aomUsers} = useQuery<{getAomUser:UserInfo[],getUser:UserInfo}>(USER_QUERY, {variables: {id: deptToModify.aom?.id || null}})
+  const {data:aomUsers} = useQuery<{getAomUser:UserInfo[],getUser:UserInfo}>(USER_QUERY, {variables: {id: deptToModify.aom?._id || null}})
 
   // mutations ======================================================
   const [createDept,] = useMutation(CREATEDEPT,{
-    onCompleted: async() => {
-      try {
-        await refetch();
-        await refetchDept()
-        setSuccess({
-          success: true,
-          message: "Department successfully created"
-        })
-        setName("")
-        setBranch("")
-        setAom("")
-      } catch (error) {
-        console.log(error)
-      }
+    onCompleted: () => {
+      refetch();
+      refetchDept()
+      setSuccess({
+        success: true,
+        message: "Department successfully created"
+      })
+      setName("")
+      setBranch("")
+      setAom("")
     },
   })
 
-  const [updateDept] = useMutation(UPDATEDEPT, {
-    onCompleted: async() => {
-      try {
-        await refetch();
-        await refetchDept();
-        setSuccess({
-          success: true,
-          message: "Department successfully updated"
-        })
-        setName("")
-        setBranch("")
-        setAom("")
-        setIsUpdate(false)
-        setDeptToModify({
-          id: "",
-          name: "",
+  const [updateDept, {error}] = useMutation(UPDATEDEPT, {
+    onCompleted: () => {
+      refetch();
+      setConfirm(false)
+      refetchDept();
+      setSuccess({
+        success: true,
+        message: "Department successfully updated"
+      })
+      setName("")
+      setBranch("")
+      setAom("")
+      setIsUpdate(false)
+      setDeptToModify({
+        id: "",
+        name: "",
+        branch: "",
+        aom: {
+          _id: "",
+          type:"AOM",
           branch: "",
-          aom: {
-            id: "",
-            type:"AOM",
-            branch: "",
-            username: "",
-            name: "",
-            change_password: false,
-            department: "",
-            bucket: "",
-            user_id: ""
-          }
-        })
-      } catch (error) {
-        console.log(error)
-      }
+          username: "",
+          name: "",
+          change_password: false,
+          department: "",
+          bucket: "",
+          user_id: ""
+        }
+      })
     },
   })
-
+  console.log(error)
   const [deleteDept] = useMutation(DELETEDEPT, {
-    onCompleted: async() => {
-      try {
-        await refetch();
-        await refetchDept();
-        setSuccess({
-          success: true,
-          message: "Department successfully deleted"
-        })
-
-      } catch (error) {
-        console.log(error)
-      }
+    onCompleted: () => {
+      refetch();
+      refetchDept();
+      setSuccess({
+        success: true,
+        message: "Department successfully deleted"
+      })
     },
   })
 
@@ -245,8 +233,6 @@ const DepartmentSection = () => {
     }
   };
 
-
-
   const handleSubmitCreate = (action: "CREATE") => {
     if(!name || !branch || !aom) {
       setRequired(true)
@@ -270,7 +256,7 @@ const DepartmentSection = () => {
       setConfirm(true)
       setModalProps({
         no:()=> setConfirm(false),
-        yes:() => { confirmationFunction[action]?.(deptToModify); setConfirm(false);},
+        yes:() => { confirmationFunction[action]?.(deptToModify);},
         message: "Are you sure you want to add this department?",
         toggle: action
       })
@@ -284,7 +270,7 @@ const DepartmentSection = () => {
       name: "",
       branch: "",
       aom: {
-        id: "",
+        _id: "",
         type:"AOM",
         branch: "",
         username: "",
@@ -326,7 +312,7 @@ const DepartmentSection = () => {
       name: "",
       branch: "",
       aom: {
-        id: "",
+        _id: "",
         type:"AOM",
         branch: "",
         username: "",
@@ -356,13 +342,13 @@ const DepartmentSection = () => {
             </div>
           </div>
           <div className="flex  gap-5 justify-center"> 
-            <div className="h-100 w-150  border border-slate-300 rounded-xl p-4 overflow-y-auto">
+            <div className="h-100 w-2/3 border border-slate-300 rounded-xl p-4 overflow-y-auto">
               {
                 dept?.getDepts.map((d) => 
-                  <div key={d.id} className="justify-between px-2 py-2 border-b border-slate-300 last:border-b-0 hover:bg-slate-200/60 text-base font-medium text-slate-500 grid grid-cols-5 text-center">
-                    <div>{d?.name.toUpperCase()}</div>
+                  <div key={d.id} className="justify-between px-2 py-2 border-b border-slate-300 last:border-b-0 hover:bg-slate-200/60 text-base font-medium text-slate-500 grid grid-cols-5 text-center items-center">
+                    <div className="col-span-2 ">{d?.name.replace(/_/g, " ")}</div>
                     <div className="text-xs">{d?.branch.toUpperCase()}</div>
-                    <div className="col-span-2 text-xs">{d?.aom?.name.toUpperCase()}</div>
+                    <div className="text-xs">{d?.aom?.name.toUpperCase()}</div>
                     <div className="flex justify-end text-2xl gap-5">
                       <PiNotePencilBold className="text-green-400 cursor-pointer hover:text-green-600" onClick={()=> handleUpdateDept(d)}/>
                       <PiTrashFill  
@@ -413,7 +399,7 @@ const DepartmentSection = () => {
                 <option value="">Choose a aom</option>
                 {
                   aomUsers?.getAomUser.map((aom) => 
-                    <option key={aom.id} value={aom.name}>{aom.name.toUpperCase()}</option>
+                    <option key={aom._id} value={aom.name}>{aom.name.toUpperCase()}</option>
                   )
                 }
               </select>

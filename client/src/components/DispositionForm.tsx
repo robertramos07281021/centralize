@@ -225,6 +225,7 @@ const DispositionForm = () => {
               </label> 
               : 
               <div className="grid grid-cols-4 items-center">
+                <p className="text-gray-800 font-bold ">Amount</p>
                 <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
                 </div>
               </div>
@@ -240,6 +241,7 @@ const DispositionForm = () => {
               </label>  
               :
               <div className="grid grid-cols-4 items-center">
+                 <p className="text-gray-800 font-bold ">Payment</p>
                 <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
                 </div>
               </div>
@@ -263,6 +265,7 @@ const DispositionForm = () => {
               </label>
               :
               <div className="grid grid-cols-4 items-center">
+                     <p className="text-gray-800 font-bold">Payment Date</p>
                 <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
                 </div>
               </div>
@@ -287,6 +290,7 @@ const DispositionForm = () => {
                 </label>
                 :
                 <div className="grid grid-cols-4 items-center">
+                  <p className="text-gray-800 font-bold ">Payment Method</p>
                   <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
                   </div>
                 </div>
@@ -307,6 +311,7 @@ const DispositionForm = () => {
                 </label>
                 :
                 <div className="grid grid-cols-4 items-center">
+                  <p className="text-gray-800 font-bold ">Ref. No</p>
                   <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
                   </div>
                 </div>

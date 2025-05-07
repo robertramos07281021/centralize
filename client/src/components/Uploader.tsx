@@ -57,7 +57,6 @@ const Uploader:React.FC = () => {
         console.log(error)
       }
     }, []);
-
     const { getRootProps, getInputProps, isDragActive } = useDropzone({
       accept: {
         "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [], 
@@ -70,7 +69,7 @@ const Uploader:React.FC = () => {
         }
       },
     });
-  
+    
     const [createCustomer] = useMutation(CREATE_CUSTOMER, {
       onCompleted: async() => {
         setSuccess({

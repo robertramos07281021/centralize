@@ -77,6 +77,7 @@ const productionResolver = {
       }
     },
     getAgentProductionPerMonth: async(_,__,{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
       const year = new Date().getFullYear()
       const firstMonth = new Date(year, 0, 1)
       const lastMonth = new Date(year, 11, 31, 23, 59, 59, 999)
@@ -110,6 +111,7 @@ const productionResolver = {
       }
     },
     getAgentTotalDispositions: async(_,__,{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
       try {
         const res = await Disposition.aggregate([
           {
@@ -203,6 +205,45 @@ const productionResolver = {
         const findUser = await User.findById(parent.user)
         if(!findUser) throw new CustomError("User not found", 404)
         return findUser
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    }
+  },
+  Mutation: {
+    updateProduction: async(_,{type},{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
+      try {
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+  
+
+        const updateProduction = await Production.findOne({$and: [
+          {
+            user: user._id
+          },
+          {
+            createdAt: {$gte: start, $lt: end}
+          }
+        ]
+        })
+        if(!updateProduction) throw new CustomError("Production not found")
+
+        updateProduction.account_history.push({
+          type,
+          time: new Date()
+        })
+
+        await updateProduction.save()
+
+        return {
+          success: true,
+          message: "Successfully Updated"
+        }
+
       } catch (error) {
         throw new CustomError(error.message, 500)
       }

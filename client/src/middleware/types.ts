@@ -1,5 +1,5 @@
 export type UserInfo = {
-  id: string;
+  _id: string;
   type: "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" | "MIS";
   branch: string;
   username: string;
@@ -69,14 +69,14 @@ export type ExcelFile = {
   address: string
   admin_fee_os: number
   bill_due_day:number 
-  birthday:string | number // this is date
-  endorsement_date:string | number// this is date
-  grass_date:string | number // this is date
+  birthday:string | number 
+  endorsement_date:string | number
+  grass_date:string | number 
   bucket:string
-  case_id:string | number //need to string
-  one: string // need to string // cp number
-  platform_user_id:string | number //need to string
-  platform_user_id_1:string | number//need to string
+  case_id:string | number 
+  one: string 
+  platform_user_id:string | number 
+  platform_user_id_1:string | number
   credit_user_id:string
   customer_name:string 
   dpd_grp:string

@@ -17,7 +17,7 @@ import { useSelector } from "react-redux";
       type 
       name 
       department 
-      id 
+      _id 
       change_password 
     }
   }
@@ -27,7 +27,7 @@ import { useSelector } from "react-redux";
 const myUserInfos = gql` 
   query GetMe { 
     getMe {
-      id
+      _id
       name
       username
       type

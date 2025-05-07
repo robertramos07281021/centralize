@@ -96,7 +96,7 @@ const deptResolver = {
       }
     },
     updateDept: async(_,{id,name, branch, aom},{user}) => {
-
+    
       if(!user) throw new CustomError("Unauthorized",401)
       try {
         const findBranch = await Branch.findOne({name: branch})
@@ -107,8 +107,19 @@ const deptResolver = {
 
         const aomDeclared = name === "admin" ? null : findUser._id
 
-        const updateDept = await Department.findByIdAndUpdate(id,{$set: { name, branch , aom:aomDeclared}})
+        const updateDept = await Department.findById(id)
         if(!updateDept)  throw new CustomError("Department not found",404)
+  
+        const findBucket = await Bucket.findOne({dept: updateDept.name})
+        if(!findBucket) throw new CustomError("Bucket not found", 404)
+        
+        
+
+        const res= await Bucket.findByIdAndUpdate(findBucket._id,{$set: {dept: name}},{new: true})
+
+        console.log(res)
+        await Department.findByIdAndUpdate({_id: updateDept._id},{$set: { name, branch , aom:aomDeclared}})
+
 
         return {success: true, message: "Department successfully updated"}
       } catch (error) {
@@ -132,11 +143,6 @@ const deptResolver = {
       }
     },
   },
-  Subscription: {
-    somethingChanged: {
-      subscribe:() => pubsub.asyncIterableIterator([SOMETHING_CHANGED_TOPIC])
-    }
-  }
 }
 
 export default deptResolver

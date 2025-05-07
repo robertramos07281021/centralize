@@ -1,6 +1,6 @@
 
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { Branch, DeptAomId, Success, Users } from "../middleware/types"
 import Confirmation from "./Confirmation"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -18,8 +18,8 @@ interface Bucket {
 }
 
 const DEPT_BUCKET_QUERY = gql`
-  query Query($dept: String) {
-    getDeptBucket(dept: $dept) {
+  query findDeptBucket($dept: ID) {
+    findDeptBucket(dept: $dept) {
       id
       name
       dept
@@ -46,14 +46,28 @@ const BRANCH_DEPARTMENT_QUERY = gql`
     }
   }
 `
+
 const RESET_PASSWORD = gql`
   mutation resetPassword($id:ID!) {
     resetPassword(id:$id) {
       success
       message
+      user {
+        _id
+        name
+        username
+        type
+        department
+        branch
+        change_password
+        bucket
+        _id
+        user_id
+      }
     }
   }
 `
+
 const UPDATE_USER = gql`
   mutation updateUser( $name:String!, $type: String!, $branch:String!, $department: String!, $bucket:String, $id: ID!) {
     updateUser( name:$name, type:$type, branch:$branch, department:$department, bucket:$bucket, id:$id){
@@ -67,10 +81,8 @@ const UPDATE_USER = gql`
         department
         branch
         change_password
-        buckets
-        isOnline
-        active
-        createdAt
+        bucket
+        _id
         user_id
       }
     }
@@ -90,10 +102,9 @@ const STATUS_UPDATE = gql`
         department
         branch
         change_password
-        buckets
-        isOnline
-        active
-        createdAt
+        bucket
+        _id
+        user_id
       }
     }
   }
@@ -107,6 +118,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   const [isUpdate, setIsUpdate] = useState(false)
   const [required, setRequired] = useState(false)
   const [confirm, setConfirm] = useState(false)
+  const [dept, setDept] = useState<{[key:string]:string}>({})
 
   type UserType = "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" ;
 
@@ -141,45 +153,33 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
 
   // ================ mutations ===================================
   const [updateUser] = useMutation(UPDATE_USER, {
-    onCompleted: async(res) => {
-      try {
-        navigate(location.pathname, { state: { ...res.updateUser.user, newKey: "newKey" } });
-        setSuccess({
-          success: res.updateUser.success,
-          message: res.updateUser.message
-        })
-        setIsUpdate(false)
-      } catch (error) {
-        console.log(error)
-      }
+    onCompleted: (res) => {
+      navigate(location.pathname, { state: { ...res.updateUser.user, newKey: "newKey" } });
+      setSuccess({
+        success: res.updateUser.success,
+        message: res.updateUser.message
+      })
+      setIsUpdate(false)
     },
   })
 
   const [resetPassword] = useMutation(RESET_PASSWORD, {
-    onCompleted: async(res) => {
-      try {
-        navigate(location.pathname, { state: { ...state, newKey: "newKey" } });
-        setSuccess({
-          success: res.resetPassword.success,
-          message: res.resetPassword.message
-        })
-      } catch (error) {
-        console.log(error)
-      }
+    onCompleted: (res) => {
+      navigate(location.pathname, { state: { ...state, newKey: "newKey" } });
+      setSuccess({
+        success: res.resetPassword.success,
+        message: res.resetPassword.message
+      })
     },
   })
 
   const [updateActiveStatus] = useMutation(STATUS_UPDATE,{
-    onCompleted: async(res) => {
-      try {
-        navigate(location.pathname, { state: { ...res.updateActiveStatus.user, newKey: "newKey" } });
-        setSuccess({
-          success: res.updateActiveStatus.success,
-          message: res.updateActiveStatus.message
-        })
-      } catch (error) {
-        console.log(error)
-      }
+    onCompleted: (res) => {
+      navigate(location.pathname, { state: { ...res.updateActiveStatus.user, newKey: "newKey" } });
+      setSuccess({
+        success: res.updateActiveStatus.success,
+        message: res.updateActiveStatus.message
+      })
     },
   })
 
@@ -192,6 +192,17 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     } 
   )
 
+  useEffect(()=> {
+    if(branchDeptData) {
+      const newObject:{[key:string]:string} = {}
+      branchDeptData.getBranchDept.map((d)=> {
+        newObject[d.name.toString()] = d.id
+      })
+      setDept(newObject)
+    }
+  },[branchDeptData])
+
+
   const [modalProps, setModalProps] = useState({
     message: "",
     toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "LOGOUT",
@@ -199,9 +210,9 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     no: () => {}
   })
 
-  const {data:deptBucket} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY,{
-    variables: {dept: data.department},
-    skip: !data.department
+  const {data:deptBucket} = useQuery<{findDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY,{
+    variables: {dept: dept[data.department]},
+    skip: !dept[data.department]
   })
 
   const handleCancel = () => {
@@ -300,7 +311,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             <select
               id="type"
               name="type"
-              value={data.type}
+              value={data?.type}
               disabled={!isUpdate}
               onChange={(e) => {
                 const newType = e.target.value as UserType;
@@ -326,9 +337,9 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               name="username" 
               id="username" 
               autoComplete="username"
-              value={data.username}
+              value={data?.username}
               disabled
-              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
+              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
               />
           </label>
 
@@ -339,10 +350,10 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               id="name" 
               name="name" 
               autoComplete="name"
-              value={data.name}
+              value={data?.name}
               onChange={(e)=> setData({...data, name: e.target.value})}
               disabled={!isUpdate}
-              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
+              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
               />
           </label>
           
@@ -351,10 +362,10 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             <select
               id="branch"
               name="branch"
-              value={data.branch}
+              value={data?.branch}
               onChange={(e)=> setData({...data, branch: e.target.value})}
               disabled={!isUpdate}
-              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
               <option value="">Choose a branch</option>
               {
@@ -369,15 +380,15 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             <select
               id="department"
               name="department"
-              value={data.department}
+              value={data?.department}
               onChange={(e)=> setData({...data, department: e.target.value})}
               disabled={!isUpdate}
-              className={`${data.branch.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              className={`${data?.branch?.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
               >
               <option value="">Choose a department</option>
               {
                 branchDeptData?.getBranchDept?.map((dept)=> 
-                  <option key={dept.id} value={dept.name}>{dept.name.toUpperCase()}</option>
+                  <option key={dept.id} value={dept.name}>{dept.name.replace(/_/g, " ")}</option>
               )
             }
             </select>
@@ -387,14 +398,14 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             <select
               id="bucket"
               name="bucket"
-              value={data.bucket || ""}
+              value={data?.bucket || ""}
               onChange={(e)=> setData({...data,bucket: e.target.value})}
               disabled={!isUpdate}
-              className={`${(data.department.trim() === "") || data.type !== "AGENT"  ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              className={`${(data?.department?.trim() === "") || data.type !== "AGENT"  ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
               >
               <option value="">Choose a bucket</option>
               {
-                deptBucket?.getDeptBucket.map((bucket)=> 
+                deptBucket?.findDeptBucket.map((bucket)=> 
                   <option key={bucket.id} value={bucket.name}>{bucket.name.toUpperCase()}</option>
               )
             }
@@ -430,6 +441,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             <input 
               type="checkbox" 
               checked={check}
+              id="activation"
+              name="activation"
               onChange={(e) => handleSubmit("STATUS",e.target.checked)}
               className="sr-only peer"/>
             <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"></div>

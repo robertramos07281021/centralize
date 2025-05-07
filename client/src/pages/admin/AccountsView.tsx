@@ -19,7 +19,7 @@ const GET_ALL_USERS = gql`
         change_password
         active
         isOnline
-        buckets
+        bucket
         createdAt
         user_id
       }
@@ -40,7 +40,7 @@ const FIND_QUERY = gql`
         change_password
         active
         isOnline
-        buckets
+        bucket
         createdAt
         user_id
       }
@@ -58,6 +58,7 @@ const AccountsView = () => {
   const {data:searchData} = useQuery<{findUsers:{users:Users[],total:number}}>(FIND_QUERY,{variables: { search, page}, skip: !search})
   const users = search ? searchData?.findUsers?.users || [] : data?.getUsers?.users || [];
   
+
   useEffect(()=> {
     refetch()
   },[navigate,refetch])

@@ -10,19 +10,16 @@ import { useSelector } from "react-redux";
 const LOGIN = gql `
   mutation login($username: String!, $password: String!) { 
     login(username: $username, password: $password) { 
-      message success user { 
+      message success 
+      user { 
         _id
-        name
-        username
-        type
-        department
-        branch
         change_password
-        buckets
-        isOnline
-        active
-        createdAt
-        user_id
+        name
+        type
+        username
+        branch
+        department
+        bucket
       }
     }
   }
@@ -126,7 +123,7 @@ const Login = () => {
 
   const [login, {loading}] = useMutation(LOGIN, {
     onCompleted: (res) => {
-
+      console.log(res)
       dispatch(setUserLogged(res.login.user))
       if(!res.login.user.change_password) {
         navigate('/change-password', {state: res.login.user})

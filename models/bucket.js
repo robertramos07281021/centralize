@@ -7,10 +7,12 @@ const bucketSchema = new Schema(
     name: {
       type: String,
       required: true,
+      uppercase: true
     },
     dept: {
       type: String,
-      required: true
+      required: true,
+      uppercase: true
     }
   },
   { timestamps: true }

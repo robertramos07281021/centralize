@@ -644,6 +644,17 @@ const dispositionResolver = {
             $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
           },
           {
+            $lookup: {
+              from: "users",
+              localField: "user",
+              foreignField: "_id",
+              as: "user"
+            }
+          },
+          {
+            $unwind: { path: "$user", preserveNullAndEmptyArrays: true }
+          },
+          {
             $match: search
           },
           {
@@ -652,6 +663,12 @@ const dispositionResolver = {
                 dept: "$bucket.dept",
                 bucket: "$bucket.name",
                 dispotype: "$dispotype.name"
+              },
+              users: {
+                $push: {
+                  name: "$user.name",
+                  user_id: "$user.user_id"
+                }
               },
               count: {$sum: 1},
               totalAmount: { $sum: "$amount" }
@@ -667,6 +684,7 @@ const dispositionResolver = {
               dispositions: {
                 $push: {
                   disposition: "$_id.dispotype",
+                  users: "$users",
                   count: "$count",
                 }
               }

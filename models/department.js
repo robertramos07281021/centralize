@@ -1,7 +1,5 @@
 import mongoose from "mongoose";
 
-
-
 const Schema = mongoose.Schema;
 
 const deptSchema = new Schema(
@@ -9,6 +7,7 @@ const deptSchema = new Schema(
     name: {
       type: String,
       required: true,
+      uppercase: true
     },
     branch: {
       type: String,

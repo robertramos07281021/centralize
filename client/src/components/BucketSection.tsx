@@ -273,7 +273,7 @@ const BucketSection = () => {
                 className={`${nd === deptSelected && "bg-slate-200"} text-base uppercase font-medium text-slate-500 p-2 border-b border-slate-300 last:border-b-0 hover:bg-slate-100 cursor-pointer`}
                 onClick={()=> handleSelectDept(nd)}
               >
-                <p>{nd}</p>
+                <p>{nd.replace(/_/g," ")}</p>
               
               </div>
               )
@@ -287,7 +287,7 @@ const BucketSection = () => {
                   className="text-base uppercase font-medium text-slate-500 p-2 border-b border-slate-300 last:border-b-0 hover:bg-slate-100 cursor-pointer flex justify-between "
                 >
                   <p>
-                    {b.name}
+                    {b.name.toUpperCase()}
                   </p>
                   <div className="flex text-2xl gap-2">
                     <PiNotePencilBold className="text-green-400 cursor-pointer hover:text-green-600" onClick={()=> handleUpdate(b)} />

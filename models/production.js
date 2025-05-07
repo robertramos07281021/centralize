@@ -4,7 +4,7 @@ const Schema = mongoose.Schema;
 
 const productionSchema = new Schema(
   {
-    acount_history: [{
+    account_history: [{
       type: {
         type: String,
       },

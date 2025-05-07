@@ -12,7 +12,7 @@ const LOGOUT = gql `
 `;
 
 const IdleAutoLogout = () => {
-  const timeout = 1 * 60 * 1000;
+  const timeout = 10 * 60 * 1000;
 
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 

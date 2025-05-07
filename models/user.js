@@ -37,7 +37,9 @@ const userSchema = new Schema(
       type: Boolean,
       default: false
     },
-    buckets: [String],
+    bucket: {
+      type: String
+    },
     user_id: {
       type: String,
     },
