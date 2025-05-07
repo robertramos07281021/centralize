@@ -1,6 +1,9 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
 import { useEffect, useState } from "react"
+import { useSelector } from "react-redux"
+import { useNavigate } from "react-router-dom"
+import { RootState } from "../../redux/store"
 
 interface DispoData {
   id: string
@@ -55,10 +58,11 @@ const DEPT_BUCKET_QUERY = gql`
 
 
 const DispositionSection = () => {
+  const navigate = useNavigate()
+  const {userLogged} = useSelector((state:RootState)=> state.auth)
+  const {data:bucketDispoData, refetch:bucketDispoRefetch } = useQuery<{getBucketDisposition:BucketDisposition[]}>(BUCKET_DISPOSITIONS)
 
-  const {data:bucketDispoData } = useQuery<{getBucketDisposition:BucketDisposition[]}>(BUCKET_DISPOSITIONS)
-
-  const {data:deptBucket} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY)
+  const {data:deptBucket, refetch:deptBucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY)
 
   const [existsDispo, setExistsDispo] = useState<string[]>([])
 
@@ -69,49 +73,59 @@ const DispositionSection = () => {
     setExistsDispo([...new Set(flatArray)])
   },[bucketDispoData])
 
+  const {data:disposition, refetch:dispoTypeRefetch} = useQuery<{getDispositionTypes:DispoData[]}>(GET_DISPOSITION_TYPES)
 
-  const {data:disposition} = useQuery<{getDispositionTypes:DispoData[]}>(GET_DISPOSITION_TYPES)
-
+  useEffect(()=> {
+    dispoTypeRefetch()
+    deptBucketRefetch()
+    bucketDispoRefetch()
+  },[navigate, dispoTypeRefetch, deptBucketRefetch, bucketDispoRefetch])
   return (
-    <div className=" row-span-3 col-span-4 flex flex-col border border-slate-300 rounded-lg overflow-y-auto bg-white px-2">
-      <table className='w-full border-collapse'>
-        <thead className='sticky top-0 bg-white'>
-          <tr className='text-slate-500'>
-            <th className='w-auto 2xl:text-sm lg:text-[0.7rem] p-2'>BUCKET</th>
-            {
-              disposition?.getDispositionTypes.map((dt) => {
-                return  existsDispo.includes(dt.code) &&(
-                  <th key={dt.id} className="2xl:text-xs lg:text-[0.6rem] font-medium ">
-                    {dt.code}
-                  </th>
-                )
-              })
-            }
-            
-          </tr>
-        </thead>
-        <tbody>
-          { deptBucket?.getDeptBucket.map((db) => { 
-               const matchBucket = bucketDispoData?.getBucketDisposition.find(
-                (bd) => bd.bucket === db.name 
-              );
-            return (
-            <tr key={db.id} className='odd:bg-gray-100 even:bg-white text-center text-sm text-slate-500 '>
-              <th className="py-1.5 w-24 font-medium 2xl:text-sm lg:text-xs">{db.name}</th>
+    <div className=" row-span-3 col-span-4  overflow-y-auto px-2 grid grid-rows-3 gap-5">
+      <div className="border border-slate-200 rounded-md bg-white shadow-sm shadow-black/20">
+        <table className='w-full border-collapse'>
+          <thead className='sticky top-0 '>
+            <tr className='text-slate-500  '>
+              <th className='w-auto 2xl:text-sm lg:text-[0.7rem] p-2 pt-5'>BUCKET</th>
               {
-                disposition?.getDispositionTypes.map((dispo)=> {
-                  const found = matchBucket?.dispositions.find((d)=> d.code === dispo.code);
-                  return existsDispo.includes(dispo.code) && (
-                    <td key={dispo.code} className="2xl:text-xs lg:text-[0.6rem]">
-                      {found && found.count}
-                    </td>
+                disposition?.getDispositionTypes.map((dt) => {
+                  return  existsDispo.includes(dt.code) && (
+                    <th key={dt.id} className="2xl:text-xs lg:text-[0.6rem] font-medium pt-5 p-2 ">
+                      {dt.code}
+                    </th>
                   )
                 })
               }
+              
             </tr>
-          )})}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            { deptBucket?.getDeptBucket.map((db) => { 
+                const matchBucket = bucketDispoData?.getBucketDisposition.find(
+                  (bd) => bd.bucket === db.name 
+                );
+              return db.name === userLogged.bucket && (
+              <tr key={db.id} className='odd:bg-gray-200 even:bg-white text-center text-sm text-slate-500  '>
+                <th className="py-1.5 w-24 font-medium 2xl:text-sm lg:text-xs">{db.name}</th>
+                {
+                  disposition?.getDispositionTypes.map((dispo)=> {
+                    const found = matchBucket?.dispositions.find((d)=> d.code === dispo.code);
+                    return existsDispo.includes(dispo.code) && (
+                      <td key={dispo.code} className="2xl:text-xs lg:text-[0.6rem] ">
+                        {found && found.count}
+                      </td>
+                    )
+                  })
+                }
+              </tr>
+            )})}
+          </tbody>
+        </table>
+
+      </div>
+      <div className="bg-white row-span-2 border">
+
+      </div>
     </div>
   )
 }

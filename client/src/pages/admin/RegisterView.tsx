@@ -6,18 +6,11 @@ import SuccessToast from "../../components/SuccessToast"
 import Confirmation from "../../components/Confirmation"
 
 const CREATE_ACCOUNT = gql`
-  mutation Mutation($name: String!, $username: String!, $type: String!, $department: String!, $branch: String!, $idNumber: String) {
-    createUser(name: $name, username: $username, type: $type, department: $department, branch: $branch, id_number: $idNumber) {
-      id
-      name
-      username
-      type
-      department
-      branch
-      change_password
-      buckets
-      _id
-      user_id
+  mutation Mutation($name: String!, $username: String!, $type: String!, $department: String!, $branch: String!, $idNumber: String, $bucket:String) {
+    createUser(name: $name, username: $username, type: $type, department: $department, branch: $branch, id_number: $idNumber, bucket:$bucket) {
+      success
+      message
+    
     }
   }
 `
@@ -30,6 +23,9 @@ const BRANCH_QUERY = gql`
     }
   } 
 `
+
+
+
 const BRANCH_DEPARTMENT_QUERY = gql`
   query Query($branch: String) {
     getBranchDept(branch: $branch){
@@ -41,21 +37,48 @@ const BRANCH_DEPARTMENT_QUERY = gql`
   }
 `
 
+interface Bucket {
+  id: string
+  name:string
+  dept: string
+}
+
+const GET_DEPT_BUCKET = gql`
+  query GetBuckets($dept: String) {
+  getBuckets(dept: $dept) {
+    id
+    name
+    dept
+  }
+}
+`
+
 const RegisterView = () => {
 
   const {data:branchQuery} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
-  const [data, setData] = useState({
+  const [data, setData] = useState<{
+    type: string,
+    name: string,
+    username: string,
+    branch: string,
+    department: string,
+    id_number: string,
+    bucket: string
+  }>({
     type: "",
     name: "",
     username: "",
     branch: "",
     department: "",
-    id_number: ""
+    id_number: "",
+    bucket: ""
   })
   const [success, setSuccess] = useState({
     success: false,
     message: ""
   })
+
+  const {data:deptBucketData} = useQuery<{getBuckets:Bucket[]}>(GET_DEPT_BUCKET,{variables: {dept: data.department}})
 
   const {data:branchDeptData} = useQuery<{getBranchDept:DeptAomId[]}>(
     BRANCH_DEPARTMENT_QUERY, 
@@ -66,25 +89,24 @@ const RegisterView = () => {
   )
 
   const [createUser] = useMutation(CREATE_ACCOUNT, {
-    onCompleted: async() => {
-      try {
-        setData({
-          type: "",
-          name: "",
-          username: "",
-          branch: "",
-          department: "",
-          id_number: ""
-        })
-        setSuccess({
-          success: true,
-          message: "Account created"
-        })
-      } catch (error) {
-        console.log(error)
-      }
+    onCompleted: () => {
+      setData({
+        type: "",
+        name: "",
+        username: "",
+        branch: "",
+        department: "",
+        id_number: "",
+        bucket: ""
+      })
+      setSuccess({
+        success: true,
+        message: "Account created"
+      })
+   
     },
   })
+
 
   const [required, setRequired] = useState(false)
 
@@ -107,7 +129,8 @@ const RegisterView = () => {
             username: "",
             branch: "",
             department: "",
-            id_number: ""
+            id_number: "",
+            bucket: ""
           })
           setConfirm(false)
         }
@@ -124,38 +147,33 @@ const RegisterView = () => {
   })
 
 
-  const submitForm = async() => {
-    try {
-      
-      if(data.type === "AGENT") {
-        if(!data.branch || !data.name || !data.username || !data.department ) {
-          setRequired(true)
-        } else {
-          setRequired(false)
-          setConfirm(true)
-          setModalProps({
-            no:()=> setConfirm(false),
-            yes:() => { confirmationFunction["CREATE"]?.(); setConfirm(false);},
-            message: "Are you sure you want to add this user?",
-            toggle: "CREATE"
-          })
-        }
+  const submitForm = () => {
+    if(data.type === "AGENT") {
+      if(!data.branch || !data.name || !data.username || !data.department ) {
+        setRequired(true)
       } else {
-        if( !data.name || !data.username ) {
-          setRequired(true)
-        } else {
-          setRequired(false)
-          setConfirm(true)
-          setModalProps({
-            no:()=> setConfirm(false),
-            yes:() => { confirmationFunction["CREATE"]?.(); setConfirm(false);},
-            message: "Are you sure you want to add this user?",
-            toggle: "CREATE"
-          })
-        }
+        setRequired(false)
+        setConfirm(true)
+        setModalProps({
+          no:()=> setConfirm(false),
+          yes:() => { confirmationFunction["CREATE"]?.(); setConfirm(false);},
+          message: "Are you sure you want to add this user?",
+          toggle: "CREATE"
+        })
       }
-    } catch (error) {
-      console.log(error)
+    } else {
+      if( !data.name || !data.username ) {
+        setRequired(true)
+      } else {
+        setRequired(false)
+        setConfirm(true)
+        setModalProps({
+          no:()=> setConfirm(false),
+          yes:() => { confirmationFunction["CREATE"]?.(); setConfirm(false);},
+          message: "Are you sure you want to add this user?",
+          toggle: "CREATE"
+        })
+      }
     }
   }
 
@@ -278,6 +296,24 @@ const RegisterView = () => {
               {
                 branchDeptData?.getBranchDept?.map((dept)=> 
                   <option key={dept.id} value={dept.name}>{dept.name.toUpperCase()}</option>
+                )
+              }
+            </select>
+          </label>
+          <label className="w-96">
+            <p className="w-96 text-base font-medium text-slate-500">Bucket</p>
+            <select
+              id="bucket"
+              name="bucket"
+              value={data.bucket}
+              onChange={(e)=> setData({...data, bucket: e.target.value})}
+              disabled={data.department.trim() === "" || data.type.trim() === ""}
+              className={`${data.department.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}
+              >
+              <option value="">Choose a bucket</option>
+              {
+                deptBucketData?.getBuckets?.map((bucket)=> 
+                  <option key={bucket.id} value={bucket.name}>{bucket.name.toUpperCase()}</option>
                 )
               }
             </select>

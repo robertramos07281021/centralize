@@ -216,7 +216,7 @@ const dispositionResolver = {
         const agentDispositions = await Disposition.aggregate([
           {
             $match: {
-              createdAt: { $gte: start, $lte: end }
+              createdAt: { $gte: start, $lte: end },
             }
           },
           {
@@ -246,6 +246,33 @@ const dispositionResolver = {
           },
           {
             $unwind: {path: "$disposition_type",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "ca",
+            }
+          },
+          {
+            $unwind: {path: "$ca",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "ca.bucket",
+              foreignField: "_id",
+              as: "bucket"
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              "bucket.name": user.bucket
+            }
           },
           {
             $group: {
@@ -327,7 +354,7 @@ const dispositionResolver = {
             $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
           },
           {
-            $match: {"bucket.name": {$in: newArrayBucket}},
+            $match: {"bucket.name":user.bucket},
           },
           {
             $lookup: {
@@ -376,7 +403,8 @@ const dispositionResolver = {
             }
           }
         ])
-        return [...bucketDisposition]
+
+        return bucketDisposition
       } catch (error) {
         throw new CustomError(error.message, 500)
       } 
@@ -384,8 +412,6 @@ const dispositionResolver = {
     getDispositionPerDay: async(_,__,{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const findDept = await Department.findOne({name: user.department})
-        if(!findDept) throw new CustomError("Dept not found", 404)
 
         const year = new Date().getFullYear()
         const month = new Date().getMonth();
@@ -399,7 +425,6 @@ const dispositionResolver = {
               createdAt: { $gte: firstDay, $lte: lastDay }
             }
           },
-      
           {
             $lookup: {
               from: "customeraccounts",
@@ -424,7 +449,7 @@ const dispositionResolver = {
           },
           {
             $match: {
-              "customerBucket.dept": findDept.name
+              "customerBucket.name": user.bucket
             }
           },
           {
@@ -454,8 +479,7 @@ const dispositionResolver = {
     getDispositionPerMonth: async(_,__,{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const findDept = await Department.findOne({name: user.department})
-        if(!findDept) throw new CustomError("Dept not found", 404)
+
         const year = new Date().getFullYear()
         const firstMonth = new Date(year, 0, 1)
         const lastMonth = new Date(year, 11, 31, 23, 59, 59, 999)
@@ -490,7 +514,7 @@ const dispositionResolver = {
           },
           {
             $match: {
-              "customerBucket.dept": findDept.name
+              "customerBucket.name": user.bucket
             }
           },
           {
@@ -711,6 +735,7 @@ const dispositionResolver = {
             }
           }
         ])
+        
         return reports
       } catch (error) {
         throw new CustomError(error.message, 500)

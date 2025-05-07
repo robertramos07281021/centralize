@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { Doughnut } from 'react-chartjs-2';
 import gql from 'graphql-tag';
 import { useQuery } from '@apollo/client';
+import { useNavigate } from 'react-router-dom';
 
 interface DispositionCount {
   count: string
@@ -51,15 +52,18 @@ const GET_ALL_DISPOSITION_COUNT = gql`
     }
   }
 `
-
-
-
 const DoughnutSection = () => {
-  const {data:disposition} = useQuery<{getDispositionTypes:DispositionCount[]}>(GET_DISPOSITION_TYPES)
-  const {data:dispositionCount} = useQuery<{getDeptDispositionCount:DispositionCount[]}>(GET_ALL_DISPOSITION_COUNT)
+  const navigate = useNavigate()
+  const {data:disposition, refetch:dispoTypeRefetch} = useQuery<{getDispositionTypes:DispositionCount[]}>(GET_DISPOSITION_TYPES)
+  const {data:dispositionCount, refetch:deptDispoCountRefetch} = useQuery<{getDeptDispositionCount:DispositionCount[]}>(GET_ALL_DISPOSITION_COUNT)
   const [dispositionData, setDispositionData] = useState<DispositionCount[]>([])
   const [dispositionDataObj, setDispositionDataObj] = useState<{[key: string]:string}>({})
   const [total, setTotal] = useState<number>(0)
+  
+  useEffect(()=> {
+    dispoTypeRefetch()
+    deptDispoCountRefetch()
+  },[navigate, dispoTypeRefetch, deptDispoCountRefetch])
 
 
   useEffect(()=> {

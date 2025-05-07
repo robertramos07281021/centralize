@@ -2,6 +2,9 @@ import gql from "graphql-tag"
 import { Users } from "../../middleware/types"
 import { useQuery } from "@apollo/client"
 import { useEffect, useState } from "react"
+import { useNavigate } from "react-router-dom"
+import { useSelector } from "react-redux"
+import { RootState } from "../../redux/store"
 
 
 interface DispositionType  {
@@ -49,17 +52,19 @@ query findAgents {
   findAgents{
     _id
     name
+    bucket
     user_id
   }
 }
 `
 
 const AgentDisposition = () => {
-
-
-  const {data:agentSelector} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT)
+  const navigate = useNavigate()
+  const {userLogged} = useSelector((state:RootState)=> state.auth)
+  const {data:agentSelector, refetch:agentRefetch} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT)
  
-  const {data:dataDispo} = useQuery<{getAgentDispositions:AgentDisposition[]}>(AGENT_DISPOSITION)
+  const {data:dataDispo, refetch:agentDispoRefetch} = useQuery<{getAgentDispositions:AgentDisposition[]}>(AGENT_DISPOSITION)
+
 
   const [existsDispo, setExistsDispo] = useState<string[]>([])
 
@@ -69,7 +74,13 @@ const AgentDisposition = () => {
     setExistsDispo([...new Set(flatArray)])
   },[dataDispo])
 
-  const {data:disposition} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
+  const {data:disposition, refetch:dispoRefetch} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
+
+  useEffect(()=> {
+    agentRefetch()
+    agentDispoRefetch()
+    dispoRefetch()
+  },[navigate, dispoRefetch, agentDispoRefetch, agentRefetch])
 
   return (
     <div className="border border-slate-300 bg-white row-span-3 col-span-5 rounded-lg flex overflow-y-auto flex-col max-h-[400px]  overflow-x-auto px-2 pb-2">
@@ -92,10 +103,10 @@ const AgentDisposition = () => {
       {
         agentSelector?.findAgents.map((agent) => {
           const matchedAgent = dataDispo?.getAgentDispositions.find(
-            (a) => a.user_id === agent.user_id
+            (a) => (a.user_id === agent.user_id) 
           );
 
-          return (
+          return agent.bucket === userLogged.bucket && (
             <tr key={agent.user_id} className="odd:bg-gray-100 even:bg-white text-center 2xl:text-sm lg:text-xs text-slate-500  hover:bg-slate-200">
               <td className="w-24 font-medium py-1.5 2xl:text-sm lg:text-xs ">{agent.user_id || "TL"}</td>
               <td className="w-50 font-medium uppercase">{agent.name}</td>

@@ -1,9 +1,10 @@
-import { useQuery, useSubscription } from '@apollo/client';
+import { useQuery } from '@apollo/client';
 import gql from 'graphql-tag';
 import { Bar } from 'react-chartjs-2';
 import { date, month, options } from '../../middleware/exports';
-import { Success } from '../../middleware/types';
-import { useApolloClient } from '@apollo/client';
+import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+
 
 type PerDay = {
   day: string
@@ -49,32 +50,20 @@ const PER_MONTH_DISPOSITION = gql`
   }
 
 `
-const SOMETHING_NEW_IN_TASK  = gql`
-  subscription Subscription {
-    somethingChanged {
-      message
-      success
-    }
-  }
-`
+
 
 const PerDayDispositionSection = () => {
-  const client = useApolloClient()
-  useSubscription<{somethingChange:Success}>(SOMETHING_NEW_IN_TASK, {
-    onData: ({data}) => {
-      if(data.data?.somethingChange?.message === "NEW_DISPOSITION") {
-        client.refetchQueries({
-          include: ['getDispositionPerMonth','getDispositionPerDay']
-        })
-      }
-    }
-  });
-
-  const {data:perDayDispostiion} = useQuery<{getDispositionPerDay:DispositionPerDay}>(PER_DAY_DISPOSITION)
-  const {data:perMonthDisposition } = useQuery<{getDispositionPerMonth:DispositionPerMonth}>(PER_MONTH_DISPOSITION)
   
-  const todayMonth = new Date().getMonth()
+  const navigate = useNavigate()
+  const {data:perDayDispostiion, refetch:dispoPerDayRefetch} = useQuery<{getDispositionPerDay:DispositionPerDay}>(PER_DAY_DISPOSITION)
+  const {data:perMonthDisposition, refetch:dispoPerMonthRefetch} = useQuery<{getDispositionPerMonth:DispositionPerMonth}>(PER_MONTH_DISPOSITION)
+  
+  useEffect(()=> {
+    dispoPerDayRefetch()
+    dispoPerMonthRefetch()
+  },[navigate, dispoPerDayRefetch, dispoPerMonthRefetch])
 
+  const todayMonth = new Date().getMonth()
 
   const dataPerMonth = {
     labels: month.map((element)=> {return element.slice(0,3)}),

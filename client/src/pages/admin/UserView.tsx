@@ -29,6 +29,9 @@ const UserView = () => {
         <div className="h-full w-full grid grid-cols-3 ">
           <UpdateUserForm state={state}/>
           <div className="rounded-xl border h-full border-slate-300 py-5 px-2 flex flex-col overflow-y-auto">
+            <div className="">
+              
+            </div>
             <div className="flex flex-col h-125 overflow-y-auto">
               {
                 data?.getModifyReport?.map( mr => 

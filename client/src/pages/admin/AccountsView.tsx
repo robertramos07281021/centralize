@@ -92,25 +92,28 @@ const AccountsView = () => {
           <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
             <tr>
               <th scope="col" className="px-6 py-3">
-                  Name
+                Name
               </th>
               <th scope="col" className="px-6 py-3">
-                  Username
+                Username
               </th>
               <th scope="col" className="px-6 py-3">
-                  Type
+                Type
               </th>
               <th scope="col" className="px-6 py-3">
-                  Branch
+                Branch
               </th>
               <th scope="col" className="px-6 py-3">
-                  Department
+                Department
               </th>
               <th scope="col" className="px-6 py-3">
-                  Active
+                Bucket
               </th>
               <th scope="col" className="px-6 py-3">
-                  Online
+                Active
+              </th>
+              <th scope="col" className="px-6 py-3">
+                Online
               </th>
               <th scope="col" className="px-6 py-3">
                   
@@ -135,6 +138,9 @@ const AccountsView = () => {
                 </td>
                 <td className="px-6 py-4">
                   {user.department}
+                </td>
+                <td className="px-6 py-4">
+                  {user.bucket}
                 </td>
                 <td className="px-6 py-4">
                   <FaCircle className={`${user.active ? "text-green-400" : "text-gray-950"} `} />

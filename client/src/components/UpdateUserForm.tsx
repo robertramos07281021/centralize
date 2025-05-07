@@ -5,8 +5,6 @@ import { Branch, DeptAomId, Success, Users } from "../middleware/types"
 import Confirmation from "./Confirmation"
 import { useLocation, useNavigate } from "react-router-dom"
 import SuccessToast from "./SuccessToast"
-import { useSelector } from "react-redux"
-import { RootState } from "../redux/store"
 
 interface modalProps {
   state: Users
@@ -113,7 +111,7 @@ const STATUS_UPDATE = gql`
 `
 
 const UpdateUserForm:React.FC<modalProps> = ({state}) => {
-  const {userLogged} = useSelector((state:RootState)=> state.auth)
+  // const {userLogged} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
   const navigate = useNavigate()
   const {data:branchesData} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
@@ -129,6 +127,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     return ["AGENT", "ADMIN", "AOM", "TL", "CEO", "OPERATION"].includes(value);
   };
   
+  const anabled = ["AGENT","TL"]
+
   const safeType = isValidUserType(state?.type) ? state.type : "AGENT";
   
   const [success, setSuccess] = useState<Success | null>({
@@ -403,8 +403,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               name="bucket"
               value={data?.bucket || ""}
               onChange={(e)=> setData({...data,bucket: e.target.value})}
-              disabled={!isUpdate || userLogged.type !== "AGENT"}
-              className={`${(data?.department?.trim() === "") || data.type !== "AGENT"  ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              disabled={!isUpdate || !anabled.toString().includes(data.type)}
+              className={`${(data?.department?.trim() === "") || !anabled.toString().includes(data.type)  ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
               >
               <option value="">Choose a bucket</option>
               {

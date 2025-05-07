@@ -61,7 +61,7 @@ const customerResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    search: async(_,{search}) => {
+    search: async(_,{search},{user}) => {
       const isValidObjectId = mongoose.Types.ObjectId.isValid(search);
       const checkId = isValidObjectId ? new mongoose.Types.ObjectId(search) : null;
 
@@ -87,6 +87,7 @@ const customerResolver = {
           { $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } },
           {
             $match: {
+              "account_bucket.name": {$regex: user.bucket, $options: "i"},
               on_hands: false,
               $or: [
                 { "customer_info.fullName": { $regex: search, $options: "i" } },
@@ -103,7 +104,6 @@ const customerResolver = {
             },
           },
         ])
-  
         return [...accounts]
       } catch (error) {
         throw new CustomError(error.message, 500)

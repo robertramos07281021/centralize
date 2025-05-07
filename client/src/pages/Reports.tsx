@@ -96,7 +96,6 @@ const GET_REPORTS = gql`
   }
 `
 
-
 const Reports = () => {
   const dispatch = useAppDispatch()
   const [campaign, setCampaign] = useState<string>("")
@@ -129,7 +128,7 @@ const Reports = () => {
 
   const onClickPreview = ()=> {
     setReportsVariables({
-      campaign: campaign, bucket: bucket, dispositions: selectedDispoReport, from: "", to: ""
+      campaign: campaign, bucket: bucket, dispositions: selectedDispoReport, from: from, to: to
     })
 
   }
@@ -163,19 +162,19 @@ const Reports = () => {
               }
             })
           })
-          totalAmounts.push(b.totalAmount)
+          totalAmounts?.push(b.totalAmount)
         })
       })
-      setTotalAmount(totalAmounts.reduce((t,v)=> {
+      setTotalAmount(totalAmounts?.length > 0 ? totalAmounts?.reduce((t,v)=> {
         return t + v
-      }))
+      }) : 0 )
       setFTE(userMap.size);
     }
   },[reportHighData])
 
 
   return (
-    <div  className="h-full flex relative justify-end">
+    <div  className="h-full flex relative justify-end overflow-y-hidden">
       <div className="w-2/12 fixed left-0 flex flex-col p-5 gap-5">
         <div className="flex gap-5 justify-center">
           <h1 className="flex items-center font-bold text-slate-500">SELECT REPORT</h1>
@@ -209,16 +208,16 @@ const Reports = () => {
               <option value="">Select Bucket</option>
               {
                 deptBucketData?.findDeptBucket?.map((db)=> 
-                  <option value={db.name} className="uppercase">{db.name}</option>
+                  <option key={db.id} value={db.name} className="uppercase">{db.name}</option>
                 )
               }
             </select>
           </label>
           <div className="">
             <p className="font-medium text-slate-500 cursor-default" onClick={()=> setDispoPop(!dispoPop)}>Disposition</p>
-            <div className={`${dispoPop && campaign ? "border-blue-500" : "border-slate-300"} ${!bucket && "bg-slate-200"} border text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 flex  w-full pl-1.5 py-1.5 relative`}>
+            <div className={`${dispoPop && campaign ? "border-blue-500" : "border-slate-300"} ${!campaign && "bg-slate-200"} border text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 flex  w-full pl-1.5 py-1.5 relative`}>
               <div className="w-full truncate cursor-default" title={selectedDispoReport.toString()} onClick={()=> setDispoPop(!dispoPop)}>
-                {selectedDispoReport.toString()}
+                { selectedDispoReport.length > 0 ? selectedDispoReport.toString() : "Select Disposition"}
               </div>
               <MdKeyboardArrowDown className="text-lg" onClick={()=> setDispoPop(!dispoPop)}/>
               {
@@ -274,12 +273,12 @@ const Reports = () => {
             </div>
             <div className="w-full">
               <p>Total Collected</p>
-              <div className="text-xs py-1.5 border border-slate-300 w-full rounded-md text-end px-5 bg-slate-100">{totalAmount}</div>
+              <div className="text-xs py-1.5 border border-slate-300 w-full rounded-md text-end px-5 bg-slate-100">{totalAmount.toFixed(2)}</div>
             </div>
           </div>
         </div>
       </div>
-      <HighReports reportHighData={reportHighData?.getDispositionReportsHigh ?? []}/>
+      <HighReports reportHighData={reportHighData?.getDispositionReportsHigh ?? []}  campaign={reportsVariables.campaign} bucket={reportsVariables.bucket} from={reportsVariables.from} to={reportsVariables.to}/>
     </div>
   )
 }

@@ -58,34 +58,38 @@ const userResolvers = {
       }
     },
     findUsers: async(_,{search, page}) => {
-      const res = await User.aggregate([
-        {
-          $match: { 
-            $or: [
-              {name: {$regex: search, $options: "i"} },
-              {username: {$regex: search, $options: "i"}},
-              {type: {$regex: search, $options: "i"}},
-              {branch: {$regex: search, $options: "i"}},
-              {department: {$regex: search, $options: "i"}}
-            ]
+      try {
+        const res = await User.aggregate([
+          {
+            $match: { 
+              $or: [
+                {name: {$regex: search, $options: "i"} },
+                {username: {$regex: search, $options: "i"}},
+                {type: {$regex: search, $options: "i"}},
+                {branch: {$regex: search, $options: "i"}},
+                {department: {$regex: search, $options: "i"}}
+              ]
+            }
+          },
+          {
+            $facet: {
+              users: [
+                { $skip: (page - 1) * 20 },
+                { $limit: 20 }
+              ],
+              total: [{$count: "totalUser"}]
+            }
+          
           }
-        },
-        {
-          $facet: {
-            users: [
-              { $skip: (page - 1) * 20 },
-              { $limit: 20 }
-            ],
-            total: [{$count: "totalUser"}]
-          }
-        
-        }
-      ])
-
-      return {
-        users: res[0].users ?? [],
-        total: res[0].total.length > 0 ? res[0].total[0].totalUser : 0,
-      };
+        ])
+  
+        return {
+          users: res[0].users ?? [],
+          total: res[0].total.length > 0 ? res[0].total[0].totalUser : 0,
+        };
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
     },
     findDeptAgents: async(_,__,{user})=> {
       if (!user) throw new CustomError("Not authenticated",401);
@@ -111,9 +115,8 @@ const userResolvers = {
   Mutation: {
     createUser: async (
       _,
-      { name, username, branch, department, type, id_number}, {user}) => {
+      { name, username, branch, department, type, id_number,bucket}, {user}) => {
         try {
-
           if(!user) throw new CustomError("Unauthorized",401)
           
           if(type === "AGENT") {
@@ -127,15 +130,17 @@ const userResolvers = {
           const saltPassword = await bcrypt.genSalt(10)
           const hashPassword = await bcrypt.hash(type === "admin" ? "adminadmin" :"Bernales2025", saltPassword)
 
-          const newUser = new User({ name, username, password:hashPassword , branch, department, type,user_id: id_number });
+          const newUser = new User({ name, username, password:hashPassword , branch, department, type,user_id: id_number, bucket});
           await newUser.save();
 
           await ModifyRecord.create({name: "Created", user: newUser._id})
 
-          return newUser;
+          return {
+            success: true,
+            message: "New Account Created"
+          };
           
         } catch (error) {
-          console.log(error)
           throw new CustomError(error.message,500)
         }
     },
@@ -209,7 +214,6 @@ const userResolvers = {
         return {success: true, message: "Logged in", user: user}
         
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message,500)
       }
     },
@@ -256,7 +260,6 @@ const userResolvers = {
         return {success: true , message: "User account successfully updated", user: updateUser}
 
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     } ,

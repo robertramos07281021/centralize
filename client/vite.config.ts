@@ -7,9 +7,10 @@ export default defineConfig({
   plugins: [react(),tailwindcss()],
   server: {
     port: 3000,
+    host: true,
     proxy: {
       '/graphql': {
-        target: 'http://localhost:4000',
+        target: 'http://172.16.24.31:4000',
         changeOrigin: true,
         secure: false,
         ws: true,  

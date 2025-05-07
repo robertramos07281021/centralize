@@ -46,7 +46,7 @@ const userTypeDefs = gql`
   }
 
   type Mutation {
-    createUser(name: String!, username: String!,type: String!, department: String!, branch: String!, id_number: String ): Users
+    createUser(name: String!, username: String!,type: String!, department: String!, branch: String!, id_number: String,bucket:String ): Success
     updatePassword(password:String!, confirmPass:String!) : Users
     resetPassword(id:ID!): Success
     updateUser(name:String!, type:String!, department:String!, branch:String!, bucket:String, id:ID!): Success
