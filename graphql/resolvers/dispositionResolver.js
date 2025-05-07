@@ -182,14 +182,14 @@ const dispositionResolver = {
         
         return { 
           agent: agentUser && agent ? {
-            id: agentUser._id,
+            _id: agentUser._id,
             name: agentUser.name,
             branch: agentUser.branch,
             department: agentUser.department,
             user_id: agentUser.user_id,
             buckets: agentUser.buckets
           } : {
-            id: "",
+            _id: "",
             name: "",
             branch: "",
             department: "",
@@ -201,6 +201,7 @@ const dispositionResolver = {
           disposition: dispositionReport
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },

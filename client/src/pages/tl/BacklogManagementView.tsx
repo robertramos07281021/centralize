@@ -32,7 +32,7 @@ interface Dispositions {
 
 
 interface Agent {
-  id: string
+  _id: string
   name: string
   branch: string
   department: string
@@ -61,15 +61,6 @@ const GET_DEPARTMENT_AGENT = gql`
     findAgents {
       _id
       name
-      username
-      type
-      department
-      branch
-      change_password
-      buckets
-      isOnline
-      active
-      createdAt
       user_id
     }
   }
@@ -88,7 +79,7 @@ const GET_DISPOSITION_REPORTS = gql`
   query GetDispositionReports($agent: String, $bucket: String, $disposition: [String], $from: String, $to: String) {
     getDispositionReports(agent: $agent, bucket: $bucket, disposition: $disposition, from: $from, to: $to) {
       agent {
-        id
+        _id
         name
         branch
         department
@@ -149,9 +140,12 @@ const BacklogManagementView = () => {
   })
   const [dispositionData, setDispositionData] = useState<Dispositions[]>([])
   const [totalCount, setTotalCount] = useState<number>(0)
-  const {data:reportsData } = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: searchAgent, bucket: searchBucket, disposition: selectedDisposition, from: dateDistance.from, to: dateDistance.to}})
+  const {data:reportsData} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: searchAgent, bucket: searchBucket, disposition: selectedDisposition, from: dateDistance.from, to: dateDistance.to}})
   const [newReportsDispo, setNewReportsDispo] = useState<Record<string,number>>({})
   
+
+
+
   useEffect(()=> {
     const reportsDispo:{[key: string]: number} = {};
     if(reportsData) {

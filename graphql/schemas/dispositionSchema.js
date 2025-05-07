@@ -29,7 +29,7 @@ const dispositionTypeDefs = gql`
   }
 
   type Agent {
-    id: String
+    _id: String
     name: String
     branch: String
     department: String

@@ -123,7 +123,6 @@ const Login = () => {
 
   const [login, {loading}] = useMutation(LOGIN, {
     onCompleted: (res) => {
-      console.log(res)
       dispatch(setUserLogged(res.login.user))
       if(!res.login.user.change_password) {
         navigate('/change-password', {state: res.login.user})

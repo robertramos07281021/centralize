@@ -131,7 +131,7 @@ const Uploader:React.FC = () => {
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
       }
-      <div className="print:hidden flex gap-2 items-center mx-5">
+      <div className="print:hidden flex gap-2 items-center mx-5  mt-5">
         <div {...getRootProps()} className={`${required && file.length === 0  && "border-red-500 bg-red-50"} border-2 border-dashed p-2 rounded-lg text-center cursor-pointer w-full flex items-center justify-center`}>
           <input {...getInputProps()} />
           {
@@ -146,7 +146,7 @@ const Uploader:React.FC = () => {
           }
           {
             file.length > 0 && (
-              <ul className="mt-4">
+              <ul >
                 {file.map((file) => (
                   <li key={file.name} className="text-green-600">
                     📄 {file.name}
@@ -157,7 +157,7 @@ const Uploader:React.FC = () => {
           }
         </div>
         <div>
-        <button type="button" className='bg-green-400 hover:bg-green-500 focus:outline-none text-white  focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5  cursor-pointer'
+        <button type="button" className='bg-green-400 hover:bg-green-500 focus:outline-none text-white  focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer'
         onClick={submitUpload}
         >Import</button>
         </div>

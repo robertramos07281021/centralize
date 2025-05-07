@@ -49,15 +49,6 @@ query findAgents {
   findAgents{
     _id
     name
-    username
-    type
-    department
-    branch
-    change_password
-    buckets
-    isOnline
-    active
-    createdAt
     user_id
   }
 }
@@ -86,7 +77,7 @@ const AgentDisposition = () => {
       <thead className='sticky top-0 bg-white'>
         <tr className='text-slate-500'>
           <th className='w-24 2xl:text-sm lg:text-[0.7rem] py-1.5'>AGENT ID</th>
-          <th className='w-auto 2xl:text-sm lg:text-[0.7rem]'>NAME 1</th>
+          <th className='w-auto 2xl:text-sm lg:text-[0.7rem]'>NAME</th>
           {
             disposition?.getDispositionTypes.map((dispo) => 
             {
