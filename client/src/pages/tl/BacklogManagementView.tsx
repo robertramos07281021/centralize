@@ -1,6 +1,6 @@
 import Uploader from "../../components/Uploader"
-import { IoMdArrowDropdown } from "react-icons/io";
-import { IoMdArrowDropup } from "react-icons/io";
+import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
+
 import { Doughnut } from 'react-chartjs-2';
 import {gql} from "@apollo/client"
 import { useQuery } from "@apollo/client";

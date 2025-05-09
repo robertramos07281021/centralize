@@ -1,13 +1,11 @@
 import { gql } from "graphql-tag";
 
-
-
 const deptTypeDefs = gql`
 
   type Department {
-    id: ID!
-    name: String!
-    branch: String!
+    id: ID
+    name: String
+    branch: String
     aom: String
 
   }
@@ -34,7 +32,6 @@ const deptTypeDefs = gql`
     message: String!
   }
 
-
   type Query {
     getDepts: [Dept]
     getDept(name: String): Department
@@ -44,11 +41,8 @@ const deptTypeDefs = gql`
 
   type Mutation {
     createDept(name: String!, branch: String!, aom: String!): Success
-
     updateDept(id:ID!, name:String!, branch:String!, aom: String!): Success
-    
     deleteDept(id:ID!): Success
-
   }
 `;
 

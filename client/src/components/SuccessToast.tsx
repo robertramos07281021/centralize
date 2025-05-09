@@ -44,7 +44,6 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
     ADDED: {
       toast: "bg-green-400",
       close: "text-green-400"
-
     }
   } as const;
   useEffect(()=> {

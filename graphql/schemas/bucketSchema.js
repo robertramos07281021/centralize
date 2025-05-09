@@ -1,10 +1,12 @@
 import { gql } from "graphql-tag";
 
 const bucketTypeDefs = gql`
+
+
   type Bucket {
-    id:ID!
-    name: String!
-    dept: String!
+    id:ID
+    name: String
+    dept: String
   }
   
   type Success {
@@ -12,10 +14,16 @@ const bucketTypeDefs = gql`
     message: String!
   }
   
+  type GetBuckets {
+    dept: String
+    buckets: [Bucket]
+  }
+
   type Query {
-    getBuckets(dept:String):[Bucket]
+    getBuckets(dept:[ID]):[GetBuckets]
     getBucket(name:String): Bucket
     getDeptBucket:[Bucket]
+    getAllBucket:[Bucket]
     findDeptBucket(dept:ID):[Bucket]
   }
 

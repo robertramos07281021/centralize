@@ -2,7 +2,7 @@
 
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { useEffect, useState } from "react"
-import { Branch, Department, Success, UserInfo } from "../middleware/types"
+import { Department, Success, UserInfo } from "../middleware/types"
 import Confirmation from "./Confirmation"
 import { PiNotePencilBold, PiTrashFill  } from "react-icons/pi";
 import SuccessToast from "./SuccessToast"
@@ -31,7 +31,10 @@ const DELETEDEPT = gql `mutation
     }
   }
 `
-
+interface Branch {
+  id:string
+  name:string
+}
 
 const BRANCH_QUERY = gql`
   query branchQuery {
@@ -42,28 +45,19 @@ const BRANCH_QUERY = gql`
   } 
 `
 
-const USER_QUERY = gql`
-  query userQuery($id:ID) {
+const AOM_USER = gql`
+  query getAomUser {
     getAomUser {
       _id
       name
       username
       type
-      department
-      branch
-      change_password
-    }
-
-    getUser(id: $id) {
-      _id
-      name
-      username
-      type
-      department
+      departments
       branch
       change_password
     }
   }
+
 `
 
 const DEPARTMENT_QUERY = gql`
@@ -113,14 +107,13 @@ const DepartmentSection = () => {
       username: "",
       name: "",
       change_password: false,
-      department: "",
-      bucket: "",
+      departments: [],
+      buckets: [],
       user_id: ""
     }
   }) 
 
-  const {data:aomUsers} = useQuery<{getAomUser:UserInfo[],getUser:UserInfo}>(USER_QUERY, {variables: {id: deptToModify.aom?._id || null}})
-
+  const {data:aomUsers} = useQuery<{getAomUser:UserInfo[],}>(AOM_USER)
   // mutations ======================================================
   const [createDept,] = useMutation(CREATEDEPT,{
     onCompleted: () => {
@@ -136,7 +129,7 @@ const DepartmentSection = () => {
     },
   })
 
-  const [updateDept, {error}] = useMutation(UPDATEDEPT, {
+  const [updateDept] = useMutation(UPDATEDEPT, {
     onCompleted: () => {
       refetch();
       setConfirm(false)
@@ -160,14 +153,14 @@ const DepartmentSection = () => {
           username: "",
           name: "",
           change_password: false,
-          department: "",
-          bucket: "",
+          departments: [],
+          buckets: [],
           user_id: ""
         }
       })
     },
   })
-  console.log(error)
+
   const [deleteDept] = useMutation(DELETEDEPT, {
     onCompleted: () => {
       refetch();
@@ -276,8 +269,8 @@ const DepartmentSection = () => {
         username: "",
         name: "",
         change_password: false,
-        department: "",
-        bucket: "",
+        departments: [],
+        buckets: [],
         user_id: ""
       }
     })
@@ -318,8 +311,8 @@ const DepartmentSection = () => {
         username: "",
         name: "",
         change_password: false,
-        department: "",
-        bucket: "",
+        departments: [],
+        buckets: [],
         user_id: ""
       }
     })

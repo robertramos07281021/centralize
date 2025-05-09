@@ -18,10 +18,13 @@ type UserInfo = {
   username: string;
   name: string;
   change_password: boolean
-  department: string
-  bucket: string
+  department: string[]
+  bucket: string[]
   user_id:string
 };
+
+
+
 
 
 const myUserInfos = gql` 
@@ -31,7 +34,7 @@ const myUserInfos = gql`
       name
       username
       type
-      department
+      departments
       branch
       change_password
     }
@@ -48,8 +51,8 @@ const LOGOUT = gql `
 `;
 
 const DESELECT_TASK = gql`
-  mutation DeselectTask($id: ID!, $user_id:ID!) {
-    deselectTask(id: $id, user_id:$user_id) {
+  mutation DeselectTask($id: ID!) {
+    deselectTask(id: $id) {
       message
       success
     }
@@ -114,6 +117,8 @@ const Navbar = () => {
       }))
     }
   })
+  
+  
 
 
   const [logout, {loading}] = useMutation(LOGOUT,{
@@ -127,8 +132,8 @@ const Navbar = () => {
           type: "",
           username: "",
           branch: "",
-          department: "",
-          bucket: ""
+          departments: [],
+          buckets: []
         }
       ))
       dispatch(setPage(1))
@@ -185,7 +190,7 @@ const Navbar = () => {
       try {
         await logout();
         if(selectedCustomer._id) {
-          await deselectTask({variables: {id:selectedCustomer._id,user_id: userLogged._id}})
+          await deselectTask({variables: {id:selectedCustomer._id}})
         }
       } catch (error) {
         console.log(error)
@@ -220,8 +225,8 @@ const Navbar = () => {
         type: "",
         username: "",
         branch: "",
-        department: "",
-        bucket: ""
+        departments: [],
+        buckets: []
       }))
       dispatch(setNeedLogin(true))
       dispatch(setUserLogged(
@@ -232,8 +237,8 @@ const Navbar = () => {
           type: "",
           username: "",
           branch: "",
-          department: "",
-          bucket: ""
+          departments: [],
+          buckets: []
         }
       ))
       dispatch(setPage(1))

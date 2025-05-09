@@ -46,9 +46,8 @@ const deptResolver = {
       try {
         const res = await Department.find({branch})
         if(!res.length === 0) throw new CustomError("Branch not exists",404)
-        return res.length > 0 ? res : []; // ✅ Always return an array
+        return res.length > 0 ? res : [];
       } catch (error) {
-   
         throw new CustomError(error.message, 500)
       }
     },

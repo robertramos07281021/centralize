@@ -1,10 +1,12 @@
 
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { useEffect, useState } from "react"
-import { Branch, DeptAomId, Success, Users } from "../middleware/types"
+import { Success, Users } from "../middleware/types"
 import Confirmation from "./Confirmation"
 import { useLocation, useNavigate } from "react-router-dom"
 import SuccessToast from "./SuccessToast"
+import { MdKeyboardArrowDown } from "react-icons/md";
+
 
 interface modalProps {
   state: Users
@@ -17,12 +19,36 @@ interface Bucket {
   id: string
 }
 
+interface Branch {
+  id:string
+  name: string
+}
+
+interface Dept {
+  id:string
+  name:string
+  branch:string
+  aom:string
+}
+
+interface Bucket {
+  id:string
+  name: string
+}
+
+interface DeptBucket {
+  dept: string
+  buckets: Bucket[]
+}
+
 const DEPT_BUCKET_QUERY = gql`
-  query findDeptBucket($dept: ID) {
-    findDeptBucket(dept: $dept) {
-      id
-      name
+   query getBuckets($dept: [ID]) {
+    getBuckets(dept: $dept) {
       dept
+      buckets {
+        id
+        name
+      }
     }
   }
 `
@@ -57,10 +83,10 @@ const RESET_PASSWORD = gql`
         name
         username
         type
-        department
+        departments
         branch
         change_password
-        bucket
+        buckets
         _id
         user_id
       }
@@ -69,8 +95,8 @@ const RESET_PASSWORD = gql`
 `
 
 const UPDATE_USER = gql`
-  mutation updateUser( $name:String!, $type: String!, $branch:String!, $department: String!, $bucket:String, $id: ID!) {
-    updateUser( name:$name, type:$type, branch:$branch, department:$department, bucket:$bucket, id:$id){
+  mutation updateUser( $name:String!, $type: String!, $branch:ID!, $departments: [ID], $buckets:[ID], $id: ID!) {
+    updateUser( name:$name, type:$type, branch:$branch, departments:$departments, buckets:$buckets, id:$id){
       success
       message
       user {
@@ -78,10 +104,10 @@ const UPDATE_USER = gql`
         name
         username
         type
-        department
+        departments
         branch
         change_password
-        bucket
+        buckets
         _id
         user_id
       }
@@ -99,10 +125,10 @@ const STATUS_UPDATE = gql`
         name
         username
         type
-        department
+        departments
         branch
         change_password
-        bucket
+        buckets
         _id
         user_id
       }
@@ -111,15 +137,19 @@ const STATUS_UPDATE = gql`
 `
 
 const UpdateUserForm:React.FC<modalProps> = ({state}) => {
-  // const {userLogged} = useSelector((state:RootState)=> state.auth)
+
   const location = useLocation()
   const navigate = useNavigate()
+  const validForCampaignAndBucket = ["AGENT", "TL", "MIS"]
+  const [branchObject, setBranchObject] = useState<{[key:string]:string}>({})
   const {data:branchesData} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
-
   const [isUpdate, setIsUpdate] = useState(false)
   const [required, setRequired] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const [dept, setDept] = useState<{[key:string]:string}>({})
+  const [bucketObject,setBucketObject] = useState<{[key:string]:string}>({})
+  const [selectionDept, setSelectionDept] = useState<boolean>(false)
+  const [selectionBucket,setSelectionBucket] = useState<boolean>(false)
 
   type UserType = "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" ;
 
@@ -127,8 +157,6 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     return ["AGENT", "ADMIN", "AOM", "TL", "CEO", "OPERATION"].includes(value);
   };
   
-  const anabled = ["AGENT","TL"]
-
   const safeType = isValidUserType(state?.type) ? state.type : "AGENT";
   
   const [success, setSuccess] = useState<Success | null>({
@@ -136,23 +164,65 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     message: ""
   })
 
-  const [check, setCheck] = useState<boolean>(state.active)
+  const [check, setCheck] = useState<boolean>(state?.active)
 
   const [data, setData] = useState<{
     username: string;
     type: UserType;
     name: string;
     branch: string;
-    department: string;
-    bucket: string | null;
+    departments: string[];
+    buckets: string[];
   }>({
     username: state?.username,
     type: safeType,
     name: state?.name,
     branch: state?.branch,
-    department: state?.department,
-    bucket: state?.bucket || null
+    departments: state?.departments,
+    buckets: state?.buckets || []
   })
+  
+  const {data:branchDeptData} = useQuery<{getBranchDept:Dept[]}>(
+    BRANCH_DEPARTMENT_QUERY, 
+    {
+      variables: {branch: branchObject[data.branch]},
+    } 
+  )
+
+
+  const {data:deptBucket} = useQuery<{getBuckets:DeptBucket[]}>(DEPT_BUCKET_QUERY,{
+    variables: {dept: data.departments},
+
+  })
+  useEffect(()=> {
+    if(branchDeptData) {
+      const newObject:{[key:string]:string} = {}
+      branchDeptData.getBranchDept.map((d)=> {
+        newObject[d.name.toString()] = d.id
+      })
+      setDept(newObject)
+    }
+    if(branchesData) {
+      const newObject:{[key:string]:string} = {}
+      branchesData.getBranches.map((b)=> {
+        newObject[b.id] = b.name
+      })
+      setBranchObject(newObject)
+    }
+
+    if(deptBucket){
+      const newObject:{[key:string]:string} = {}
+      deptBucket.getBuckets.map(e=> {
+        e.buckets.map((b)=> 
+          newObject[b.name] = b.id
+        )
+      })
+      setBucketObject(newObject)
+    }
+
+
+  },[branchDeptData,branchesData, deptBucket])
+
 
   // ================ mutations ===================================
   const [updateUser] = useMutation(UPDATE_USER, {
@@ -187,23 +257,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   })
 
 //  ====================================================================== 
-  const {data:branchDeptData} = useQuery<{getBranchDept:DeptAomId[]}>(
-    BRANCH_DEPARTMENT_QUERY, 
-    {
-      variables: {branch: data.branch},
-      skip: !data.branch 
-    } 
-  )
 
-  useEffect(()=> {
-    if(branchDeptData) {
-      const newObject:{[key:string]:string} = {}
-      branchDeptData.getBranchDept.map((d)=> {
-        newObject[d.name.toString()] = d.id
-      })
-      setDept(newObject)
-    }
-  },[branchDeptData])
 
 
   const [modalProps, setModalProps] = useState({
@@ -213,10 +267,9 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     no: () => {}
   })
 
-  const {data:deptBucket} = useQuery<{findDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY,{
-    variables: {dept: dept[data.department]},
-    skip: !dept[data.department]
-  })
+
+
+
 
   const handleCancel = () => {
     setIsUpdate(false)
@@ -226,14 +279,14 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       type: safeType,
       name: state?.name,
       branch: state?.branch,
-      department: state?.department,
-      bucket: state?.bucket})
+      departments: state?.departments,
+      buckets: state?.buckets})
   }
 
   const submitValue: Record<string, () => Promise<void>>  = {
     UPDATE: async() => {
       if(data.type === "AGENT") {
-        if(!data.branch || !data.name || !data.department || !data.bucket) {
+        if(!data.branch || !data.name || !data.departments || !data.buckets) {
           setRequired(true)
           return
         } else {
@@ -245,7 +298,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
         no:()=> setConfirm(false),
         yes:async() => { 
           try {
-            await updateUser({variables: {name: data.name, type: data.type, branch: data.branch, department: data.department, bucket: data.bucket, id: state._id }})
+            await updateUser({variables: {...data, id: state._id }})
             setConfirm(false)
           } catch (error) {
            console.log(error)
@@ -295,6 +348,15 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       setCheck(status)
     }
   }
+  const handleCheckedDept = (e:React.ChangeEvent<HTMLInputElement>, value: string)=> {
+    const check = e.target.checked ? [...data.departments, dept[value]] : data.departments.filter((d) => d !== dept[value] )
+    setData({...data, departments: check})
+  }
+  const handleCheckedBucket = (e:React.ChangeEvent<HTMLInputElement>, value: string)=> {
+    const check = e.target.checked ? [...data.buckets, bucketObject[value]] : data.buckets.filter((d) => d !== bucketObject[value] )
+    setData({...data, buckets: check})
+  }
+  
 
   return (
     <>
@@ -365,7 +427,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             <select
               id="branch"
               name="branch"
-              value={data?.branch}
+              value={branchObject[data.branch]}
               onChange={(e)=> setData({...data, branch: e.target.value})}
               disabled={!isUpdate}
               className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
@@ -378,33 +440,98 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               }
             </select>
           </label>
-          <label className="w-full">
-            <p className=" text-base font-medium text-slate-500">Department</p>
-            <select
-              id="department"
-              name="department"
-              value={data?.department}
-              onChange={(e)=> setData({...data, department: e.target.value})}
-              disabled={!isUpdate}
-              className={`${data?.branch?.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+        
+          <div className="w-full relative">
+            <p className="w-full text-base font-medium text-slate-500">Campaign</p>
+            <div className={`${data.departments.length === 0 && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectionDept && data.departments.length > 0 ? "border-blue-500" : "border-slate-300"}`}>
+              <div 
+              className="w-full p-2.5 text-nowrap truncate cursor-default" 
+              title={data.departments.map(deptId => Object.entries(dept).find(([, val]) => val.toString() === deptId)?.[0]).join(', ').replace(/_/g, " ")} 
+              onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type) && isUpdate) {setSelectionDept(!selectionDept); setSelectionBucket(false)} }}
               >
-              <option value="">Choose a department</option>
-              {
-                branchDeptData?.getBranchDept?.map((dept)=> 
-                  <option key={dept.id} value={dept.name}>{dept.name.replace(/_/g, " ")}</option>
-              )
+                {
+                  data.departments.length < 1 ? "Select Department" : data.departments.map(deptId => Object.entries(dept).find(([, val]) => val.toString() === deptId)?.[0]).join(', ').replace(/_/g, " ")
+                }
+              </div>
+              <MdKeyboardArrowDown 
+              className="text-lg absolute right-0 top-9" 
+              onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type) && isUpdate) {setSelectionDept(!selectionDept); setSelectionBucket(false)}}}
+              />
+            </div>
+            {
+              (selectionDept && data.branch) &&
+              <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-70 overflow-y-auto border z-40">
+                {
+                  branchDeptData?.getBranchDept.map((e)=> 
+                    <label key={e.id} className="flex gap-2">
+                      <input 
+                      type="checkbox"
+                      name={e.name} 
+                      id={e.name} 
+                      value={e.name}
+                      onChange={(e)=> handleCheckedDept(e, e.target.value)} 
+                      checked={data.departments.toString().includes(e.id)} />
+                      <span>{e.name.replace(/_/g," ")}</span>
+                    </label>
+                  )
+                }
+              </div>
             }
-            </select>
-          </label>
-          <label className="w-full">
+          </div>
+          <div className="w-full relative">
+            <p className="w-full text-base font-medium text-slate-500">Bucket</p>
+            <div className={`${data.departments.length === 0 && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectionBucket && data.departments.length > 0 ? "border-blue-500" : "border-slate-300"}`}>
+              <div className="w-full p-2.5 text-nowrap truncate cursor-default" title={data.buckets.map(bucketId => Object.entries(bucketObject).find(([, val]) => val.toString() === bucketId)?.[0]).join(', ').replace(/_/g, " ")} onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type) && isUpdate) setSelectionBucket(!selectionBucket)}}>
+                {
+                  data.buckets.length < 1 ? "Select Bucket" : data.buckets.map(bucketId => Object.entries(bucketObject).find(([, val]) => val.toString() === bucketId)?.[0]).join(', ').replace(/_/g, " ")
+                }
+              </div>
+              <MdKeyboardArrowDown className="text-lg absolute right-0 top-9" onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type) && isUpdate) setSelectionBucket(!selectionBucket)}}/>
+            </div>
+            {
+              (selectionBucket && data.departments.length > 0) &&
+              <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-50 overflow-y-auto border z-40">
+                {
+                  deptBucket?.getBuckets.map((e,index)=> 
+                  
+                    <div key={index} className="py-0.5">
+                      <div className="uppercase text-sm">{e.dept}</div>
+                      {
+                        e.buckets.map(e => 
+                        <label key={e.id} className="flex gap-2 text-xs">
+                          <input 
+                          type="checkbox"
+                          name={e.name} 
+                          id={e.name} 
+                          value={e.name}
+                          onChange={(e)=> handleCheckedBucket(e, e.target.value)} 
+                          checked={data.buckets.toString().includes(e.id)} />
+                          <span className="uppercase">{e.name.replace(/_/g," ")}</span>
+                        </label>
+                        )
+                      }
+                    </div>
+                  
+                  )
+
+                }
+              </div>
+            }
+          </div>
+
+          {/* <label className="w-full">
             <p className=" text-base font-medium text-slate-500">Bucket</p>
             <select
               id="bucket"
               name="bucket"
-              value={data?.bucket || ""}
-              onChange={(e)=> setData({...data,bucket: e.target.value})}
+              value={data?.buckets || ""}
+              // onChange={(e)=> setData({...data,buckets: e.target.value})}
               disabled={!isUpdate || !anabled.toString().includes(data.type)}
-              className={`${(data?.department?.trim() === "") || !anabled.toString().includes(data.type)  ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              className={`
+            
+                  // (data?.departments?.trim() === "") || !anabled.toString().includes(data.type)  ? "bg-gray-200" : "bg-gray-50"
+              
+                 border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
               >
               <option value="">Choose a bucket</option>
               {
@@ -413,7 +540,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               )
             }
             </select>
-          </label>
+          </label> */}
           <div>
           {
             isUpdate ? 

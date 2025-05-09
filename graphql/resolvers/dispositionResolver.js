@@ -740,115 +740,92 @@ const dispositionResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
+    },
 
-    }
   },
 
   Mutation: {
     createDisposition: async(_,{customerAccountId, amount, payment, disposition, payment_date, payment_method, ref_no, comment},{user}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
-        
+    
         const start = new Date();
         start.setHours(0, 0, 0, 0);
         const end = new Date();  
         end.setHours(23, 59, 59, 999);
 
-        const findProd = await Production.findOne({
-          $and: [
-            {user: user._id},
-            {createdAt: {$gte: start, $lte: end}}
-          ]
-        })
-
-        if(!findProd) {
-          await Production.create({
+        const [customerAccount, dispoType, userProdRaw] = await Promise.all([
+          CustomerAccount.findById(customerAccountId).lean(),
+          DispoType.findOne({ name: disposition }).lean(),
+          Production.findOne({
             user: user._id,
-          });
+            createdAt: { $gte: start, $lte: end }
+          }),
+        ]);
+
+        if (!customerAccount) throw new CustomError("Customer account not found", 404);
+        if (!dispoType) throw new CustomError("Disposition type not found", 400);
+      
+        const userProd = userProdRaw || await Production.create({ user: user._id });
+
+        const isPaymentDisposition = disposition === "PAID" || disposition === "SETTLED";
+        if (isPaymentDisposition && (!amount || !payment || !payment_date || !payment_method || !ref_no)) {
+          throw new CustomError("All payment fields are required", 400);
         }
 
-        if((disposition === "PAID" || disposition === "SETTLED") && (!amount || !payment || !payment_date || !payment_method || !ref_no)) {
-          throw new CustomError("All fields are required",400)
-        } 
-
-        const findDispoType = await DispoType.findOne({name: disposition})
-
         const newDisposition = await Disposition.create({
-          customer_account: customerAccountId, user: user._id, amount:parseFloat(amount) || 0, payment, disposition: findDispoType._id, payment_date, payment_method, ref_no, comment
+          customer_account: customerAccountId, 
+          user: user._id, 
+          amount:parseFloat(amount) || 0, 
+          payment, 
+          disposition: dispoType._id, 
+          payment_date, 
+          payment_method, 
+          ref_no, 
+          comment
         })
 
-        const customerAccount = await CustomerAccount.findById(customerAccountId)
+        const group = customerAccount.assigned ? await Group.findById(customerAccount.assigned).lean() : null
 
-        const group = await Group.findById(customerAccount.assigned)
-
-        const assigned = customerAccount.assigned ? (group ? group.members : [...customerAccount.assigned]) : []
+        const assigned = group ? group.members : customerAccount.assigned ? [customerAccount.assigned] : [];
 
         await pubsub.publish(DISPOSITION_UPDATE, {
           dispositionUpdated: {
-            members: [...new Set([...assigned, user._id ])],
+            members: [...new Set([...assigned, user._id.toString() ])],
             message: "NEW_DISPOSITION"
           },
         });
 
-        await Disposition.findByIdAndUpdate(customerAccount.current_disposition,
-          {
-            $set: {
-              existing: false
-            }
-          })
-        
-        if (amount && (disposition === "PAID" || disposition === "SETTLED")) {
-          const amountPaid = customerAccount.amount_paid || 0;
+        await Disposition.findByIdAndUpdate(customerAccount.current_disposition, {$set: { existing: false }});
+
+        const updateFields = {
+          current_disposition: newDisposition._id,
+          assigned: null,
+          assigned_date: null,
+          on_hands: false,
+        };
+
+        if (isPaymentDisposition && amount) {
+          const paid = customerAccount.paid_amount || 0;
           const totalOS = customerAccount.out_standing_details?.total_os || 0;
-
-          const newBalance = disposition === "PAID" ? (totalOS - (amountPaid + amount)).toFixed(2) : 0;
-
-          await CustomerAccount.updateOne(
-            { _id: customerAccount._id },
-            {
-              $inc: { paid_amount: amount },
-              $set: { 
-                balance: newBalance,
-                assigned: null,
-                assigned_date: null,
-                on_hands: false
-               }
-            }
-          );
-
-        } else {
-          await CustomerAccount.updateOne(
-            { _id: customerAccount._id },
-            {
-              $set: { 
-                current_disposition: newDisposition._id,
-                assigned: null,
-                assigned_date: null,
-                on_hands: false
-               }
-            }
-          );
+          const newBalance = disposition === "PAID" ? +(totalOS - paid - amount).toFixed(2) : 0;
+      
+          Object.assign(updateFields, {
+            paid_amount: paid + amount,
+            balance: newBalance,
+          });
         }
-
-        const userProd = await Production.findOne({
-          $and: [
-            {
-              user: new mongoose.Types.ObjectId(user._id)
-            },
-            {
-              createdAt: { $gte: start, $lte: end }
-            }
-          ]
-        })
-        userProd.dispositions.push(newDisposition._id)
-        await userProd.save()
+      
+        await CustomerAccount.updateOne({ _id: customerAccount._id }, { $set: updateFields });
+      
+        userProd.dispositions.push(newDisposition._id);
+        await userProd.save();
     
         return {
           success: true,
           message: "Disposition successfully created"
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

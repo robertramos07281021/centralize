@@ -31,8 +31,8 @@ const DEPARTMENT_QUERY = gql`
   }
 `
 const DEPARTMENT_BUCKET = gql`
-  query bucketQuery($dept:String) {
-    getBuckets(dept:$dept) {
+  query findDeptBucket($dept:ID) {
+    findDeptBucket(dept: $dept) {
       id
       name
       dept
@@ -69,15 +69,26 @@ const DELETEBUCKET = gql `mutation
 const BucketSection = () => {
   const {data:dept, refetch} = useQuery<{getDepts:Department[], getDept:Department}>(DEPARTMENT_QUERY,{ variables: { name: "admin" } })
   const campaignOnly = dept?.getDepts.filter((d)=> d.name!== "admin")
-  const newDepts = useMemo(() => [...new Set(campaignOnly?.map((d) => d.name))], [campaignOnly])
+  const newDepts = useMemo(() => [...new Set(campaignOnly?.map((d) => d.id))], [campaignOnly])
   const [deptSelected,setDeptSelected] = useState<string | null>(null)
   const [success, setSuccess] = useState<Success>({
     success: false,
     message: ""
   })
+  const [deptObject, setDeptObject] = useState<{[key:string]:string}>({})
+  useEffect(()=> {
+    if(dept) {
+      const newObject:{[key:string]:string} = {}
+      dept?.getDepts?.map((d)=> {
+        newObject[d.id] = d.name
+      })
+      setDeptObject(newObject)
+    }
+  },[dept])
 
   const [confirm,setConfirm] = useState<boolean>(false)
   const [bucket, setBucket] = useState<string>("")
+
   useEffect(() => {
     if (newDepts.length > 0 && deptSelected === null) {
       setDeptSelected(newDepts[0]);
@@ -92,21 +103,18 @@ const BucketSection = () => {
     dept: ""
   })
 
-  type TypeOfDept = (typeof newDepts)[number];
-  
-  const handleSelectDept = (dept:TypeOfDept) => {
+  const handleSelectDept = (dept:string) => {
     setDeptSelected(dept)
     setBucket("")
     setRequired(false)
     setIsUpdate(false)
   }
 
-  const {data:bucketData,refetch:bucketRefetch} = useQuery<{getBuckets:Bucket[],getBucket:Bucket}>(DEPARTMENT_BUCKET,{
+  const {data:bucketData,refetch:bucketRefetch} = useQuery<{findDeptBucket:Bucket[]}>(DEPARTMENT_BUCKET,{
     variables: {dept: deptSelected},
     skip: !deptSelected
   })
 
-  
   useEffect(()=> {
     refetch()
     bucketRefetch()
@@ -172,11 +180,11 @@ const BucketSection = () => {
       }
     },
   })
-
+  
   const confirmationFunction: Record<string, (b:Bucket | null) => Promise<void>> = {
     CREATE: async() => {
       try {
-        await createBucket({variables: { name:bucket, dept:deptSelected }});
+        await createBucket({variables: { name:bucket, dept: deptObject[deptSelected || ""] }});
       } catch (error:any) {
         const errorMessage = error?.graphQLErrors?.[0]?.message;
         if (errorMessage?.includes("Duplicate")) {
@@ -273,7 +281,7 @@ const BucketSection = () => {
                 className={`${nd === deptSelected && "bg-slate-200"} text-base uppercase font-medium text-slate-500 p-2 border-b border-slate-300 last:border-b-0 hover:bg-slate-100 cursor-pointer`}
                 onClick={()=> handleSelectDept(nd)}
               >
-                <p>{nd.replace(/_/g," ")}</p>
+                <p>{deptObject[nd]?.replace(/_/g," ")}</p>
               
               </div>
               )
@@ -282,7 +290,7 @@ const BucketSection = () => {
           </div>
           <div className="w-96 h-80 rounded-xl border border-slate-300 p-2 overflow-y-auto">
             {
-              bucketData?.getBuckets.map((b) => 
+              bucketData?.findDeptBucket.map((b) => 
                 <div key={b.id}
                   className="text-base uppercase font-medium text-slate-500 p-2 border-b border-slate-300 last:border-b-0 hover:bg-slate-100 cursor-pointer flex justify-between "
                 >

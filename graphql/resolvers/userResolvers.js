@@ -8,6 +8,7 @@ import jwt from "jsonwebtoken"
 import ModifyRecord from "../../models/modifyRecord.js";
 import {DateTime} from "../../middlewares/dateTime.js";
 import Production from "../../models/production.js";
+import Bucket from "../../models/bucket.js";
 
 
 const userResolvers = {
@@ -97,7 +98,6 @@ const userResolvers = {
         const agent = await User.find({department: user.department})
         return agent
       } catch (error) {
-
         throw new CustomError(error.message, 500)
       }
     },
@@ -115,22 +115,44 @@ const userResolvers = {
   Mutation: {
     createUser: async (
       _,
-      { name, username, branch, department, type, id_number,bucket}, {user}) => {
+      { name, username, branch, departments, type, id_number,buckets}, {user}) => {
         try {
           if(!user) throw new CustomError("Unauthorized",401)
           
           if(type === "AGENT") {
-            const findBranch = await Branch.findOne({name: branch})
-            if(!findBranch) throw new Error("Branch not found")
-      
-            const findDept = await Department.findOne({name: department})
-            if(!findDept) throw new Error("Department not found")
-          }
-          
-          const saltPassword = await bcrypt.genSalt(10)
-          const hashPassword = await bcrypt.hash(type === "admin" ? "adminadmin" :"Bernales2025", saltPassword)
+            await Promise.all(
+              departments.map(async (deptId) => {
+                const found = await Department.findById(deptId);
+                if (!found) throw new Error(`Department not found: ${deptId}`);
+              })
+            );
 
-          const newUser = new User({ name, username, password:hashPassword , branch, department, type,user_id: id_number, bucket});
+            await Promise.all(
+              buckets.map(async (bucketId) => {
+                const found = await Bucket.findById(bucketId);
+                if (!found) throw new Error(`Bucket not found: ${bucketId}`);
+              })
+            );
+            
+            const findBranch = await Branch.findById(branch)
+            if(!findBranch) throw new Error("Branch not found")
+          }
+
+          const saltPassword = await bcrypt.genSalt(10)
+          const password = type.toLowerCase() === "admin" ? "adminadmin" : "Bernales2025";
+
+          const hashPassword = await bcrypt.hash(password, saltPassword)
+
+          const newUser = new User({ 
+            name, 
+            username, 
+            password:hashPassword , 
+            branch: branch || null, 
+            departments, 
+            type,user_id: 
+            id_number, 
+            buckets});
+
           await newUser.save();
 
           await ModifyRecord.create({name: "Created", user: newUser._id})
@@ -141,6 +163,7 @@ const userResolvers = {
           };
           
         } catch (error) {
+          console.log(error)
           throw new CustomError(error.message,500)
         }
     },
@@ -249,17 +272,22 @@ const userResolvers = {
         throw new CustomError(error.message, 500)
       }
     },
-    updateUser: async(_,{id, name, type, branch, department, bucket },{user}) => {
+    updateUser: async(_,{id, name, type, branch, departments, buckets },{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const updateUser = await User.findByIdAndUpdate(id,{name, type, branch, department, bucket},{new: true})
+        console.log(departments)
+        console.log(branch)
+        console.log(buckets)
+
+        const updateUser = await User.findByIdAndUpdate(id,{name, type, branch, departments, buckets},{new: true})
         if(!updateUser) throw new CustomError("User not found",404)
         
         await ModifyRecord.create({name: "Update User Info", user: updateUser._id})
-        
+        console.log(updateUser)
         return {success: true , message: "User account successfully updated", user: updateUser}
 
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     } ,

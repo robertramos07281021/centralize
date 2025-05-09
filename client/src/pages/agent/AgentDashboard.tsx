@@ -1,6 +1,24 @@
 import { useSelector } from "react-redux"
 import { RootState } from "../../redux/store"
 import { useEffect, useState } from "react";
+import gql from "graphql-tag";
+import { useQuery } from "@apollo/client";
+
+
+interface Bucket {
+  id:string
+  name:string
+}
+
+
+const GET_AGENT_BUCKET = gql`
+  query getDeptBucket {
+    getDeptBucket {
+      id
+      name
+    }
+  }
+`
 
 
 const AgentDashboard = () => {
@@ -8,6 +26,21 @@ const AgentDashboard = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
 
   const [time, setTime] = useState(new Date());
+
+  const [bucketObject, setBucketObject] = useState<{[key:string]:string}>({})
+  const {data:agentBucketData} = useQuery<{getDeptBucket:Bucket[]}>(GET_AGENT_BUCKET)
+  
+  useEffect(()=> {
+    if(agentBucketData){
+      const newObject:{[key:string]:string} = {}
+      agentBucketData.getDeptBucket.map(e => 
+      {
+        newObject[e.id] = e.name
+      }
+      )
+      setBucketObject(newObject)
+    }
+  },[agentBucketData])
 
   useEffect(() => {
     const timer = setInterval(() => {
@@ -23,7 +56,7 @@ const AgentDashboard = () => {
     <div className="w-full h-full flex flex-col">
       <div className="w-full flex justify-between p-5 text-slate-600 text-xs font-medium ">
         <div>
-          Bucket: {userLogged?.bucket?.toUpperCase()}
+          Bucket: {userLogged?.buckets.map((e)=> bucketObject[e] + ", ")}
         </div>
         <div className="text-xs">
           Date & Time: <span className=""> {time.toLocaleDateString()} - {formattedTime}</span>
@@ -36,3 +69,4 @@ const AgentDashboard = () => {
 }
 
 export default AgentDashboard
+

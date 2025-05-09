@@ -8,8 +8,8 @@ type User = {
   type: string,
   username: string,
   branch: string,
-  department: string,
-  bucket: string
+  departments: string[],
+  buckets: string[]
 }
 
 type search = {
@@ -54,9 +54,9 @@ const initialState:UserState = {
     name: "",
     type: "",
     username: "",
-    branch: "",
-    department: "",
-    bucket: ""
+    branch:"",
+    departments: [],
+    buckets: []
   },
   search: {
     fullName: "",

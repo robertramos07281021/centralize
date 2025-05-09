@@ -48,14 +48,14 @@ const AGENT_DISPOSITION = gql`
 
 
 const GET_DEPARTMENT_AGENT = gql`
-query findAgents {
-  findAgents{
-    _id
-    name
-    bucket
-    user_id
+  query findAgents {
+    findAgents{
+      _id
+      name
+      bucket
+      user_id
+    }
   }
-}
 `
 
 const AgentDisposition = () => {

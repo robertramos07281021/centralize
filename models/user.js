@@ -23,11 +23,13 @@ const userSchema = new Schema(
       required: true,
       uppercase: true
     },
-    department: {
-      type: String,
-    }, 
+    departments: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Department"
+    }],
     branch: {
-      type: String,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Branch"
     },
     isOnline: {
       type: Boolean,
@@ -37,9 +39,10 @@ const userSchema = new Schema(
       type: Boolean,
       default: false
     },
-    bucket: {
-      type: String
-    },
+    buckets: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Bucket"
+    }],
     user_id: {
       type: String,
     },

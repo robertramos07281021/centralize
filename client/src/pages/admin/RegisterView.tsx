@@ -1,16 +1,37 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { useEffect, useState } from "react"
-import { Branch, DeptAomId } from "../../middleware/types"
 import SuccessToast from "../../components/SuccessToast"
 import Confirmation from "../../components/Confirmation"
+import { MdKeyboardArrowDown } from "react-icons/md";
+
+interface Dept {
+  id: string;
+  name: string;
+  branch: string;
+}
+
+interface Branch {
+  id: string;
+  name: string;
+}
+
+interface Bucket {
+  id:string
+  name: string
+}
+
+interface DeptBucket {
+  dept: string
+  buckets: Bucket[]
+}
+
+
 
 const CREATE_ACCOUNT = gql`
-  mutation Mutation($name: String!, $username: String!, $type: String!, $department: String!, $branch: String!, $idNumber: String, $bucket:String) {
-    createUser(name: $name, username: $username, type: $type, department: $department, branch: $branch, id_number: $idNumber, bucket:$bucket) {
+  mutation createUser($name: String!, $username: String!, $type: String!, $departments: [ID], $branch: ID!, $idNumber: String, $buckets:[ID]) {
+    createUser(name: $name, username: $username, type: $type, departments: $departments, branch: $branch, id_number: $idNumber, buckets:$buckets) {
       success
       message
-    
     }
   }
 `
@@ -24,70 +45,90 @@ const BRANCH_QUERY = gql`
   } 
 `
 
-
-
 const BRANCH_DEPARTMENT_QUERY = gql`
   query Query($branch: String) {
     getBranchDept(branch: $branch){
       id
       name
       branch
-      aom
     }
   }
 `
 
-interface Bucket {
-  id: string
-  name:string
-  dept: string
-}
-
 const GET_DEPT_BUCKET = gql`
-  query GetBuckets($dept: String) {
-  getBuckets(dept: $dept) {
-    id
-    name
-    dept
+  query getBuckets($dept: [ID]) {
+    getBuckets(dept: $dept) {
+      dept
+      buckets {
+        id
+        name
+      }
+    }
   }
-}
 `
+
+const validForCampaignAndBucket = ['TL','AGENT','MIS']
 
 const RegisterView = () => {
 
-  const {data:branchQuery} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
+  const [selectDept, setSelectDept] = useState<boolean>(false)
+  const [selectBucket, setSelectBucket] = useState<boolean>(false)
   const [data, setData] = useState<{
     type: string,
     name: string,
     username: string,
     branch: string,
-    department: string,
+    departments: string[],
     id_number: string,
-    bucket: string
+    buckets: string[]
   }>({
     type: "",
     name: "",
     username: "",
     branch: "",
-    department: "",
+    departments: [],
     id_number: "",
-    bucket: ""
+    buckets: []
   })
+
   const [success, setSuccess] = useState({
     success: false,
     message: ""
   })
+ 
+  const [deptObject,setDeptObject] = useState<{[key:string]:string}>({})
+  const [bucketObject, setBucketObject] = useState<{[key:string]:string}>({})
+  const [branchObject, setBranchObject] = useState<{[key:string]:string}>({})
 
-  const {data:deptBucketData} = useQuery<{getBuckets:Bucket[]}>(GET_DEPT_BUCKET,{variables: {dept: data.department}})
+  const {data:branchQuery} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
+  const {data:branchDeptData} = useQuery<{getBranchDept:Dept[]}>(
+    BRANCH_DEPARTMENT_QUERY, {variables: {branch: Object.keys(branchObject).find((key) => branchObject[key] === data.branch)}})
+  const {data:getDeptBucketData} = useQuery<{getBuckets:DeptBucket[]}>(GET_DEPT_BUCKET,{variables: {dept: data.departments}})
 
-  const {data:branchDeptData} = useQuery<{getBranchDept:DeptAomId[]}>(
-    BRANCH_DEPARTMENT_QUERY, 
-    {
-      variables: {branch: data.branch},
-      skip: !data.branch 
-    } 
-  )
+  useEffect(()=> {
+    if(branchDeptData) {
+      const newObject:{[key:string]:string} = {}
+      branchDeptData.getBranchDept.map(d=> newObject[d.name]= d.id)
+      setDeptObject(newObject)
+    }
 
+    if(getDeptBucketData){
+      const newObject:{[key:string]:string} = {}
+      getDeptBucketData.getBuckets.map(e=> {
+        e.buckets.map((b)=> 
+          newObject[b.name] = b.id
+        )
+      })
+      setBucketObject(newObject)
+    }
+
+    if(branchQuery) {
+      const newObject:{[key:string]:string} = {}
+      branchQuery.getBranches.map(e=> {newObject[e.name] = e.id})
+      setBranchObject(newObject)
+    }
+  },[getDeptBucketData, branchDeptData, branchQuery])
+ 
   const [createUser] = useMutation(CREATE_ACCOUNT, {
     onCompleted: () => {
       setData({
@@ -95,101 +136,101 @@ const RegisterView = () => {
         name: "",
         username: "",
         branch: "",
-        department: "",
+        departments: [],
         id_number: "",
-        bucket: ""
+        buckets: []
       })
       setSuccess({
         success: true,
         message: "Account created"
       })
-   
+      setConfirm(false)
     },
   })
 
-
   const [required, setRequired] = useState(false)
-
   const [confirm,setConfirm] = useState(false)
-
-  const confirmationFunction: Record<string, () => Promise<void>> = {
-    CREATE: async() => {
-      try {
-        await createUser({variables:  {...data}});
-      } catch (error:any) {
-        const errorMessage = error?.graphQLErrors?.[0]?.message;
-        if (errorMessage?.includes("E11000")) {
-          setSuccess({
-            success: true,
-            message: "Username already exists"
-          })
-          setData({
-            type: "",
-            name: "",
-            username: "",
-            branch: "",
-            department: "",
-            id_number: "",
-            bucket: ""
-          })
-          setConfirm(false)
-        }
-      }
-    },
-
-  };
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "LOGOUT",
+    toggle: "CREATE" as "CREATE" | "UPDATE",
     yes: () => {},
     no: () => {}
   })
 
-
-  const submitForm = () => {
-    if(data.type === "AGENT") {
-      if(!data.branch || !data.name || !data.username || !data.department ) {
-        setRequired(true)
-      } else {
-        setRequired(false)
-        setConfirm(true)
-        setModalProps({
-          no:()=> setConfirm(false),
-          yes:() => { confirmationFunction["CREATE"]?.(); setConfirm(false);},
-          message: "Are you sure you want to add this user?",
-          toggle: "CREATE"
-        })
-      }
-    } else {
-      if( !data.name || !data.username ) {
-        setRequired(true)
-      } else {
-        setRequired(false)
-        setConfirm(true)
-        setModalProps({
-          no:()=> setConfirm(false),
-          yes:() => { confirmationFunction["CREATE"]?.(); setConfirm(false);},
-          message: "Are you sure you want to add this user?",
-          toggle: "CREATE"
-        })
+  const validateAgent = () =>
+    data.branch && data.name && data.username && data.departments.length > 0;
+  
+  const validateOther = () =>
+    data.name && data.username;
+  
+  const handleCreateUser = async () => {
+    try {
+      await createUser({ variables: { ...data } });
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (error: any) {
+      const errorMessage = error?.graphQLErrors?.[0]?.message;
+      if (errorMessage?.includes("E11000")) {
+        setSuccess({
+          success: true,
+          message: "Username already exists",
+        });
+        setData({
+          type: "",
+          name: "",
+          username: "",
+          branch: "",
+          departments: [],
+          id_number: "",
+          buckets: [],
+        });
       }
     }
+  };
+
+  const submitForm = () => {
+    const isAgent = data.type === "AGENT";
+    const isValid = isAgent ? validateAgent() : validateOther();
+  
+    if (!isValid) {
+      setRequired(true);
+      return;
+    }
+  
+    setRequired(false);
+    setConfirm(true);
+    setModalProps({
+      no: () => setConfirm(false),
+      yes: handleCreateUser,
+      message: "Are you sure you want to add this user?",
+      toggle: "CREATE",
+    })
+  }
+
+  const handleCheckedDept = (e:React.ChangeEvent<HTMLInputElement>,value:string) => {
+    const check = e.target.checked ? [...data.departments, deptObject[value]] : data.departments.filter((d) => d !== deptObject[value] )
+    setData({...data, departments: check})
+  }
+
+  const handleCheckedBucket = (e:React.ChangeEvent<HTMLInputElement>,value:string) => {
+    const check = e.target.checked ? [...data.buckets, bucketObject[value]] : data.buckets.filter((d) => d !== bucketObject[value] )
+    setData({...data, buckets: check})
   }
 
   useEffect(() => {
-    if (data.type === "" && (data.name || data.username || data.branch || data.department || data.id_number)) {
+    if (data.type === "" && (data.name || data.username || data.branch || data.departments.length > 0 || data.id_number)) {
       setData(prev => ({
         ...prev,
         name: "",
         username: "",
         branch: "",
-        department: "",
-        bucket: "",
+        department: [],
+        buckets: [],
         id_number: ""
       }));
     }
   }, [data.type, data])
+
 
   return (
     <>
@@ -198,21 +239,21 @@ const RegisterView = () => {
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
       }
     
-      <div className="w-full flex flex-col">
+      <div className="w-full justify-center items-center flex flex-col bg-[]" >
         <div className="p-5 text-2xl font-medium text-slate-500 ">Create Account</div>
-        <form className=" w-full px-5 py-2 flex flex-col gap-2 items-center justify-center ">
+        <form className=" lg:w-3/8 2xl:w-2/8 px-5 py-2 flex flex-col gap-2 items-center justify-center ">
           {
             required && 
           <div className="text-center text-xs text-red-500">All fields are required.</div>
           }
-          <label className="w-96">
-            <p className="w-96 text-base font-medium text-slate-500">Type</p>
+          <label className="w-full">
+            <p className="w-full text-base font-medium text-slate-500">Type</p>
             <select
               id="type"
               name="type"
               value={data.type}
               onChange={(e)=> setData({...data, type: e.target.value})}
-              className={`bg-slate-50 border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}
+              className={`bg-slate-50 border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
               >
               <option value="">Choose a type</option>
               <option value="AGENT">AGENT</option>
@@ -224,8 +265,8 @@ const RegisterView = () => {
               <option value="OPERATION">OPERATION</option>
             </select>
           </label>
-          <label className="w-96">
-            <p className="w-96 text-base font-medium text-slate-500">Name</p>
+          <label className="w-full">
+            <p className="w-full text-base font-medium text-slate-500">Name</p>
             <input 
               type="text" 
               id="name" 
@@ -234,12 +275,12 @@ const RegisterView = () => {
               value={data.name}
               onChange={(e)=> setData({...data, name: e.target.value})}
               disabled={data.type.trim() === ""}
-              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-96 in-disabled:bg-gray-200`}  
+              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
               />
           </label>
           
-          <label className="w-96">
-            <p className="w-96 text-base font-medium text-slate-500">Username</p>
+          <label className="w-full">
+            <p className="w-full text-base font-medium text-slate-500">Username</p>
             <input 
               type="text" 
               name="username" 
@@ -247,12 +288,12 @@ const RegisterView = () => {
               autoComplete="username"
               value={data.username}
               onChange={(e)=> setData({...data,username: e.target.value})}
-              disabled={data.type.trim() === "" }
-              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-96 p-2.5`}  
+              disabled={data.type.trim() === ""}
+              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
               />
           </label>
-          <label className="w-96">
-            <p className="w-96 text-base font-medium text-slate-500">User Id</p>
+          <label className="w-full">
+            <p className="w-full text-base font-medium text-slate-500">User Id</p>
             <input 
               type="text" 
               name="id_number" 
@@ -260,19 +301,19 @@ const RegisterView = () => {
               autoComplete="id_number"
               value={data.id_number}
               onChange={(e)=> setData({...data,id_number: e.target.value})}
-              disabled={data.type.trim() === "" }
-              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-96 p-2.5`}  
+              disabled={data.type.trim() === "" || !validForCampaignAndBucket.toString().includes(data.type)  }
+              className={`${data.type.trim() === "" || !validForCampaignAndBucket.toString().includes(data.type)  ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
               />
           </label>
-          <label className="w-96">
-            <p className="w-96 text-base font-medium text-slate-500">Branch</p>
+          <label className="w-full">
+            <p className="w-full text-base font-medium text-slate-500">Branch</p>
             <select
               id="branch"
               name="branch"
-              value={data.branch}
-              onChange={(e)=> setData({...data, branch: e.target.value})}
-              disabled={data.type.trim() === "" }
-              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}
+              value={data.branch ? Object.keys(branchObject).find((key) => branchObject[key] === data.branch) : ""}
+              onChange={(e)=> setData({...data, branch: branchObject[e.target.value]})}
+              disabled={data.type.trim() === "" || !validForCampaignAndBucket.toString().includes(data.type)}
+              className={`${data.type.trim() === "" || !validForCampaignAndBucket.toString().includes(data.type) ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
               <option value="">Choose a branch</option>
               {
@@ -282,52 +323,82 @@ const RegisterView = () => {
               }
             </select>
           </label>
-          <label className="w-96">
-            <p className="w-96 text-base font-medium text-slate-500">Department</p>
-            <select
-              id="department"
-              name="department"
-              value={data.department}
-              onChange={(e)=> setData({...data, department: e.target.value})}
-              disabled={data.branch.trim() === "" || data.type.trim() === ""}
-              className={`${data.branch.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}
-              >
-              <option value="">Choose a department</option>
-              {
-                branchDeptData?.getBranchDept?.map((dept)=> 
-                  <option key={dept.id} value={dept.name}>{dept.name.toUpperCase()}</option>
-                )
-              }
-            </select>
-          </label>
-          <label className="w-96">
-            <p className="w-96 text-base font-medium text-slate-500">Bucket</p>
-            <select
-              id="bucket"
-              name="bucket"
-              value={data.bucket}
-              onChange={(e)=> setData({...data, bucket: e.target.value})}
-              disabled={data.department.trim() === "" || data.type.trim() === ""}
-              className={`${data.department.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}
-              >
-              <option value="">Choose a bucket</option>
-              {
-                deptBucketData?.getBuckets?.map((bucket)=> 
-                  <option key={bucket.id} value={bucket.name}>{bucket.name.toUpperCase()}</option>
-                )
-              }
-            </select>
-          </label>
-          <div>
+          <div className="w-full relative">
+            <p className="w-full text-base font-medium text-slate-500">Campaign</p>
+            <div className={`${(!data.branch || !validForCampaignAndBucket.toString().includes(data.type)) && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectDept && data.branch ? "border-blue-500" : "border-slate-300"}`}>
+              <div className="w-full p-2.5 text-nowrap truncate cursor-default" title={data.departments.map(deptId => Object.entries(deptObject).find(([, val]) => val.toString() === deptId)?.[0]).join(', ').replace(/_/g, " ")} onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type)) {setSelectDept(!selectDept); setSelectBucket(false)} }}>
+                {
+                  data.departments.length < 1 ? "Select Department" : data.departments.map(deptId => Object.entries(deptObject).find(([, val]) => val.toString() === deptId)?.[0]).join(', ').replace(/_/g, " ")
+                }
+              </div>
+              <MdKeyboardArrowDown className="text-lg absolute right-0 top-9" onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type)) {setSelectDept(!selectDept); setSelectBucket(false)}}}/>
+            </div>
+            {
+              (selectDept && data.branch) &&
+              <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-70 overflow-y-auto border z-40">
+                {
+                  branchDeptData?.getBranchDept.map((e)=> 
+                    <label key={e.id} className="flex gap-2">
+                      <input 
+                      type="checkbox"
+                      name={e.name} 
+                      id={e.name} 
+                      value={e.name}
+                      onChange={(e)=> handleCheckedDept(e, e.target.value)} 
+                      checked={data.departments.toString().includes(e.id)} />
+                      <span>{e.name.replace(/_/g," ")}</span>
+                    </label>
+                  )
+                }
+              </div>
+            }
+          </div>
+          <div className="w-full relative">
+            <p className="w-full text-base font-medium text-slate-500">Bucket</p>
+            <div className={`${data.departments.length === 0 && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectBucket && data.departments.length > 0 ? "border-blue-500" : "border-slate-300"}`}>
+              <div className="w-full p-2.5 text-nowrap truncate cursor-default" title={data.buckets.map(bucketId => Object.entries(bucketObject).find(([, val]) => val.toString() === bucketId)?.[0]).join(', ').replace(/_/g, " ")} onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type)) setSelectBucket(!selectBucket)}}>
+                {
+                  data.buckets.length < 1 ? "Select Bucket" : data.buckets.map(bucketId => Object.entries(bucketObject).find(([, val]) => val.toString() === bucketId)?.[0]).join(', ').replace(/_/g, " ")
+                }
+              </div>
+              <MdKeyboardArrowDown className="text-lg absolute right-0 top-9" onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type)) setSelectBucket(!selectBucket)}}/>
+            </div>
+            {
+              (selectBucket && data.departments.length > 0) &&
+              <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-50 overflow-y-auto border z-40">
+                {
+                  getDeptBucketData?.getBuckets.map((e,index)=> 
+                  
+                    <div key={index} className="py-0.5">
+                      <div className="uppercase text-sm">{e.dept}</div>
+                      {
+                        e.buckets.map(e => 
+                        <label key={e.id} className="flex gap-2 text-xs">
+                          <input 
+                          type="checkbox"
+                          name={e.name} 
+                          id={e.name} 
+                          value={e.name}
+                          onChange={(e)=> handleCheckedBucket(e, e.target.value)} 
+                          checked={data.buckets.toString().includes(e.id)} />
+                          <span className="uppercase">{e.name.replace(/_/g," ")}</span>
+                        </label>
+                        )
+                      }
+                    </div>
+                  
+                  )
 
+                }
+              </div>
+            }
+          </div>
+          <div>
             <button type="button" className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5" 
             onClick={submitForm}
             >Submit</button>
           </div>
         </form>
-
-
-
       </div>
 
       { confirm &&

@@ -1,6 +1,5 @@
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { UserInfo } from "../middleware/types"
-
 import { Navigate, useLocation, useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
 import { RootState, useAppDispatch } from "../redux/store";
@@ -16,24 +15,18 @@ import { useSelector } from "react-redux";
       username 
       type 
       name 
-      department 
+      departments
       _id 
       change_password 
     }
   }
 `;
 
-
 const myUserInfos = gql` 
   query GetMe { 
     getMe {
       _id
       name
-      username
-      type
-      department
-      branch
-      change_password
     }
   } 
 `
@@ -45,7 +38,6 @@ const LOGOUT = gql`
     } 
   }
 `;
-
 
 const ChangePassword = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
@@ -71,8 +63,8 @@ const ChangePassword = () => {
           type: "",
           username: "",
           branch: "",
-          department: "",
-          bucket: ""
+          departments: [],
+          buckets: []
         }
       ))
     }

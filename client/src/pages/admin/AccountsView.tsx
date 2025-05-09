@@ -5,6 +5,37 @@ import { FaCircle } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { CiSearch } from "react-icons/ci";
 
+interface DeptBranchBucket {
+  id: string
+  name: string
+}
+
+const GET_DEPTS = gql`
+  query getDepts {
+    getDepts {
+      id
+      name
+    }
+  }
+`
+const GET_BRANCHES = gql`
+  query getBranches {
+    getBranches {
+      id
+      name
+    }
+  }
+`
+const GET_ALL_BUCKET = gql`
+  query getAllBucket {
+    getAllBucket {
+      id
+      name
+    }
+  }
+
+`
+
 const GET_ALL_USERS = gql`
   query Query($page: Int!) {
     getUsers(page:$page) {
@@ -14,12 +45,12 @@ const GET_ALL_USERS = gql`
         name
         username
         type
-        department
+        departments
         branch
         change_password
         active
         isOnline
-        bucket
+        buckets
         createdAt
         user_id
       }
@@ -35,12 +66,12 @@ const FIND_QUERY = gql`
         name
         username
         type
-        department
+        departments
         branch
         change_password
         active
         isOnline
-        bucket
+        buckets
         createdAt
         user_id
       }
@@ -48,20 +79,56 @@ const FIND_QUERY = gql`
   }
 `
 
-
 const AccountsView = () => {
+
+  const {data:getDeptData} = useQuery<{getDepts:DeptBranchBucket[]}>(GET_DEPTS)
+  const {data:getBranchData} = useQuery<{getBranches:DeptBranchBucket[]}>(GET_BRANCHES)
+  const {data: getAllBucketsData} = useQuery<{getAllBucket:DeptBranchBucket[]}>(GET_ALL_BUCKET) 
+  const [deptObject, setDeptObject] = useState<{[key:string]:string}>({})
+  const [branchObject, setBranchObject] = useState<{[key:string]:string}>({})
+  const [bucketObject, setBucketObject] = useState<{[key:string]:string}>({})
+
+
+
+  useEffect(()=> {
+    if(getDeptData) {
+      const newObject:{[key:string]:string} = {}
+      getDeptData.getDepts.map((e)=> {
+        newObject[e.id] = e.name
+      })
+      setDeptObject(newObject)
+    }
+    if(getBranchData) {
+      const newObject:{[key:string]:string} = {}
+      getBranchData.getBranches.map((e)=> {
+        newObject[e.id] = e.name
+      })
+      setBranchObject(newObject)
+    }
+    if(getAllBucketsData) {
+      const newObject:{[key:string]:string} = {}
+      getAllBucketsData.getAllBucket.map((e)=> {
+        newObject[e.id] = e.name
+      })
+      setBucketObject(newObject)
+    }
+  },[getDeptData, getBranchData, getAllBucketsData])
+
+
   const [page] = useState<number>(1)
   const [search, setSearch] = useState("")
   const navigate = useNavigate()
 
-  const {data, refetch} = useQuery<{getUsers:{users:Users[],total:number}}>(GET_ALL_USERS,{variables: {page: page},skip: !!search })
-  const {data:searchData} = useQuery<{findUsers:{users:Users[],total:number}}>(FIND_QUERY,{variables: { search, page}, skip: !search})
+  const {data, refetch, } = useQuery<{getUsers:{users:Users[],total:number}}>(GET_ALL_USERS,{variables: {page: page},skip: !!search })
+  const {data:searchData, } = useQuery<{findUsers:{users:Users[],total:number}}>(FIND_QUERY,{variables: { search, page}, skip: !search})
   const users = search ? searchData?.findUsers?.users || [] : data?.getUsers?.users || [];
   
+
 
   useEffect(()=> {
     refetch()
   },[navigate,refetch])
+
 
   return (
     <div className="h-full">
@@ -104,7 +171,7 @@ const AccountsView = () => {
                 Branch
               </th>
               <th scope="col" className="px-6 py-3">
-                Department
+                Campaign
               </th>
               <th scope="col" className="px-6 py-3">
                 Bucket
@@ -133,14 +200,14 @@ const AccountsView = () => {
                 <td className="px-6 py-4">
                   {user.type}
                 </td>
-                <td className="px-6 py-4">
-                  {user.branch}
+                <td className="px-6 py-4 uppercase">
+                  {branchObject[user.branch]}
                 </td>
                 <td className="px-6 py-4">
-                  {user.department}
+                  {user.departments?.map((e)=> deptObject[e]?.toString() + ", " )}
                 </td>
                 <td className="px-6 py-4">
-                  {user.bucket}
+                  {user.buckets?.map(b => bucketObject[b]?.toString() + ", ")}
                 </td>
                 <td className="px-6 py-4">
                   <FaCircle className={`${user.active ? "text-green-400" : "text-gray-950"} `} />

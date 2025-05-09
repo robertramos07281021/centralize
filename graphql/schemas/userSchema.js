@@ -13,10 +13,10 @@ const userTypeDefs = gql`
     name: String
     username: String
     type: String
-    department: String
-    branch: String
+    departments: [ID]
+    branch: ID
     change_password: Boolean
-    bucket: String
+    buckets: [ID]
     isOnline: Boolean
     active: Boolean
     createdAt: DateTime
@@ -46,10 +46,28 @@ const userTypeDefs = gql`
   }
 
   type Mutation {
-    createUser(name: String!, username: String!,type: String!, department: String!, branch: String!, id_number: String,bucket:String ): Success
+
+    createUser( 
+      name: String!, 
+      username: String!, 
+      type: String!, 
+      departments: [ID], 
+      branch: ID, 
+      id_number: String, 
+      buckets:[ID] 
+    ): Success
+
+    updateUser(
+      name:String!, 
+      type:String!, 
+      departments:[ID], 
+      branch:ID, 
+      buckets:[ID], 
+      id:ID!
+    ): Success
+
     updatePassword(password:String!, confirmPass:String!) : Users
     resetPassword(id:ID!): Success
-    updateUser(name:String!, type:String!, department:String!, branch:String!, bucket:String, id:ID!): Success
     login(username:String!, password:String!) : Success
     logout: Success
     logoutToPersist(id:ID!):Success

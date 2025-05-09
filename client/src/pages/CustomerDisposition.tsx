@@ -198,14 +198,18 @@ const CustomerDisposition = () => {
         <div className="flex flex-col p-2 gap-3"> 
           <h1 className="text-center font-bold text-slate-600 text-lg">Customer Information</h1>
           <div className="ms-5 mt-5 relative">
-            <input 
-              type="text"
-              name="search" 
-              value={search}
-              onChange={(e)=> {setSearch(e.target.value); dispatch(setSettled(false))}}
-              id="search"
-              placeholder="Search" 
-              className="w-96 p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "/>
+            {
+              !selectedCustomer._id &&
+              <input 
+                type="text"
+                name="search" 
+                value={search}
+                onChange={(e)=> {setSearch(e.target.value); dispatch(setSettled(false))}}
+                id="search"
+                placeholder="Search" 
+                className="w-96 p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "/>
+
+            }
             <div className={`${length > 0 && search ? "" : "hidden"} absolute max-h-96 border border-slate-400 w-96 bg-white overflow-y-auto rounded-md`}>
               {
                 searchData?.search.map((data) => (

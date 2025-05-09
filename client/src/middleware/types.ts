@@ -5,8 +5,8 @@ export type UserInfo = {
   username: string;
   name: string;
   change_password: boolean
-  department: string
-  bucket: string
+  departments: string[]
+  buckets: string[]
   user_id:string
 };
 
@@ -18,17 +18,7 @@ export type Department = {
 }
 
 
-export type DeptAomId = {
-  id: string;
-  name: string;
-  branch: string;
-  aom: string;
-}
 
-export type Branch = {
-  id: string;
-  name: string;
-}
 
 export type Success = {
   success: boolean;
@@ -50,8 +40,8 @@ export type Users = {
   username: string;
   name: string;
   change_password: boolean
-  department: string
-  bucket: string
+  departments: string[]
+  buckets: string[]
   isOnline: boolean
   active: boolean
   createdAt: string

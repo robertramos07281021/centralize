@@ -1,9 +1,7 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { gql, useMutation, useQuery } from "@apollo/client"
-
 import {  useRef, useState } from "react"
-
-import { Branch, Success } from "../middleware/types"
+import { Success } from "../middleware/types"
 import { PiNotePencilBold, PiTrashFill  } from "react-icons/pi";
 import Confirmation from "./Confirmation"
 import SuccessToast from "./SuccessToast"
@@ -38,6 +36,11 @@ const DELETEBRANCH = gql`mutation deleteBranch($id: ID!) {
   } 
 }
 `
+
+interface Branch {
+  id:string
+  name: string
+}
 
 const BranchSection = () => {
 

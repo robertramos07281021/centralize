@@ -128,6 +128,7 @@ const dispositionTypeDefs = gql`
     getDeptDispositionCount:[DispositionCount]
     getAllDispositionTypes:[DispoType]
     getDispositionReportsHigh(campaign:String, bucket:String, dispositions:[String], from:String, to:String):[HighDispositionReport]
+
   }
 
   type Mutation {

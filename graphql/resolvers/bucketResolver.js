@@ -6,23 +6,49 @@ const bucketResolver = {
   Query: {
     getBuckets: async(_,{dept}) => {
       try {
-        return await Bucket.find({dept}) 
+        const depts = (await Department.find({_id: {$in: dept}})).map((e)=> e.name)
+        const deptBucket = await Bucket.aggregate([
+          {
+            $match: {
+              dept: {$in: depts}
+            }
+          },
+          {
+            $group: {
+              _id: "$dept",
+              buckets: {
+                $push: {
+                  id: "$_id",
+                  name: "$name",
+                  dept: "$dept"
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              dept: "$_id",
+              buckets: 1
+            }
+          }
+        ]) 
+        return deptBucket ? deptBucket : []
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
     },
     getBucket: async(_,{name}) => {
       try {
-        const res = await Bucket.findOne({name}) 
-        return res 
+        return await Bucket.findOne({name})  
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
     },
     getDeptBucket: async(_,__,{user}) => {
       try {
-        const res = await Bucket.find({dept: user.department})
-        return res
+        const dept = (await Department.find({_id: {$in:user.departments}})).map(e => e.name)
+        return await Bucket.find({dept: {$in: dept}})
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
@@ -34,6 +60,13 @@ const bucketResolver = {
         if(!findDept) throw new CustomError("Department not found", 404)
         const res = await Bucket.find({dept: findDept.name})
         return res
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getAllBucket: async() => {
+      try {
+        return await Bucket.find()
       } catch (error) {
         throw new CustomError(error.message, 500)
       }

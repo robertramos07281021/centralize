@@ -233,7 +233,7 @@ const HighReports:React.FC<modalProps> = ({reportHighData, campaign, from, to}) 
         <h1 className="lg:text-xs 2xl:text-sm text-end px-10 text-slate-500"><span className="font-bold text-slate-500">DATE:</span> {date}</h1>
       }
       <div className="h-80">
-        <Doughnut data={campaign ? data2 : data} options={options}/>
+        <Doughnut data={(campaign && reportHighData.length > 0) ? data2 : data} options={options}/>
       </div>
       {
         (campaign) && 
