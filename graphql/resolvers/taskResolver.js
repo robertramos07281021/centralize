@@ -63,10 +63,7 @@ const taskResolver = {
       try {
         const bucket = await Bucket.findById(parent.bucket)
         if(!bucket) throw new CustomError("Bucket not found", 404)
-        return {
-          name: bucket.name,
-          dept: bucket.dept
-        }
+        return bucket
       } catch (error) {
         throw new CustomError(error.message, 500)  
       }

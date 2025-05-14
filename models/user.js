@@ -45,6 +45,7 @@ const userSchema = new Schema(
     }],
     user_id: {
       type: String,
+      unique: true
     },
     group: {
       type: mongoose.Schema.Types.ObjectId,

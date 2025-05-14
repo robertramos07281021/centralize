@@ -138,8 +138,7 @@ const TaskManagerView = () => {
           </div>
         </div>
         {
-          tasker === "group" ? <GroupSection/> : 
-          <AgentSection/>
+          tasker === "group" ? <GroupSection/> : <AgentSection/>
         }
       </div>
       <TaskDispoSection/>

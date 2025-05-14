@@ -68,6 +68,16 @@ const SEARCH = gql`
   }
 `
 
+
+const DESELECT_TASK = gql`
+  mutation DeselectTask($id: ID!) {
+    deselectTask(id: $id) {
+      message
+      success
+    }
+  }
+`
+
 interface CustomerUpdateFormProps {
   cancel: () => void, 
 }
@@ -77,6 +87,48 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const dispatch = useAppDispatch()
   const [id, setId] = useState("")
   const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: id}})
+  const [deselectTask] = useMutation(DESELECT_TASK,{
+    onCompleted: ()=> {
+      dispatch(setSelectedCustomer({
+        _id: "",
+        case_id: "",
+        account_id: "",
+        endorsement_date: "",
+        credit_customer_id: "",
+        bill_due_day: 0,
+        max_dpd: 0,
+        balance: 0,
+        paid_amount: 0,
+        out_standing_details: {
+          principal_os: 0,
+          interest_os: 0,
+          admin_fee_os: 0,
+          txn_fee_os: 0,
+          late_charge_os: 0,
+          dst_fee_os: 0,
+          total_os: 0
+        },
+        grass_details: {
+          grass_region: "",
+          vendor_endorsement: "",
+          grass_date: ""
+        },
+        account_bucket: {
+          name: "",
+          dept: ""
+        },
+        customer_info: {
+          fullName:"",
+          dob:"",
+          gender:"",
+          contact_no:[],
+          emails:[],
+          addresses:[],
+          _id:""
+        }
+      }))  
+    }
+  })
   const location = useLocation()
   useEffect(()=> {
     if(searchData?.search.length === 1) {
@@ -91,6 +143,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const handleAddMobile = () => {
     setMobiles([...mobiles, ""])
   }
+  
 
   const validatePhone = (phone: string): boolean => /^09\d{9}$/.test(phone);
 
@@ -164,17 +217,13 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const [required, setRequired] = useState(false)
   const [updateCustomer] = useMutation(UPDATE_CUSTOMER, {
     onCompleted: async(res) => {
-      try {
-        cancel()
-        navigate(`${location.pathname}?success=true`)
-        setId(res.updateCustomer.customer._id)
-        refetch()
-        if(searchData) {
-          dispatch(setSelectedCustomer(searchData?.search[0]))
-        }
-      } catch (error) {
-        console.log(error)
-      }
+      cancel()
+      navigate(`${location.pathname}?success=true`)
+      setId(res.updateCustomer.customer._id)
+      refetch()
+      deselectTask({variables: {id: selectedCustomer._id}}).catch(console.log)
+      
+      
     },
   })
   const updateForm = useRef<HTMLFormElement | null>(null)
@@ -227,148 +276,151 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
 
   return (
     <>
-      <form ref={updateForm} className="flex flex-col p-2 gap-3" onSubmit={(e)=> handleSubmitUpdateForm(e)} noValidate>
-        <h1 className="text-center font-bold text-slate-600 text-lg">Customer Update Information</h1>
-        <div className="mt-5">
-          <label 
-            htmlFor="fullName" 
-            className="block text-sm font-bold text-slate-500 dark:text-white">Full Name</label>
-          <input 
-            type="text" 
-            id="fullName"   
-            name="fullName" 
-            value={data.fullName}
-            onChange={(e)=> setData({...data, fullName: e.target.value})}
-            required
-            className={`${required && !data.fullName ? "bg-red-100 border-red-300": "bg-gray-50 border-gray-300"}  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Full Name"  />
-        </div>
-        <div> 
-          <label 
-            htmlFor="dob" 
-            className="block text-sm font-bold text-slate-500 dark:text-white">Date Of Birth</label>  
-          <input 
-            type="date" 
-            name="dob"
-            value={data.dob}
-            onChange={(e)=> setData({...data, dob: e.target.value})} 
-            id="dob" 
-            required
-            className={`${required && !data.dob ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"}  border  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}  />
-        </div>
-        <div> 
-          <label 
-            htmlFor="gender" 
-            className="block text-sm font-bold text-slate-500 dark:text-white">Gender</label>  
-          <select
-            id="gender"
-            name="gender"
-            value={data.gender}
-            required
-            onChange={(e)=> setData({...data, gender: e.target.value})}
-            className={`${required && !data.gender ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}
-          >
-            <option value="">Choose a gender</option>
-            <option value="M">Male</option>
-            <option value="F">Female</option>
-          </select>
-        </div>
+      <form ref={updateForm} className="flex flex-col  gap-3" onSubmit={(e)=> handleSubmitUpdateForm(e)} noValidate>
+   
+        <div className="flex flex-col gap-3 p-5">
 
-        <div >
-          <div 
-            className="block text-sm font-bold text-slate-500 dark:text-white">Mobile No.</div>
-          <div className="flex flex-col gap-2">
-            {
-              mobiles.map((m,index)=> (
+          <div className="mt-5">
+            <label 
+              htmlFor="fullName" 
+              className="block text-sm font-bold text-slate-500 dark:text-white">Full Name</label>
+            <input 
+              type="text" 
+              id="fullName"   
+              name="fullName" 
+              value={data.fullName}
+              onChange={(e)=> setData({...data, fullName: e.target.value})}
+              required
+              className={`${required && !data.fullName ? "bg-red-100 border-red-300": "bg-gray-50 border-gray-300"}  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Full Name"  />
+          </div>
+          <div> 
+            <label 
+              htmlFor="dob" 
+              className="block text-sm font-bold text-slate-500 dark:text-white">Date Of Birth</label>  
+            <input 
+              type="date" 
+              name="dob"
+              value={data.dob}
+              onChange={(e)=> setData({...data, dob: e.target.value})} 
+              id="dob" 
+              required
+              className={`${required && !data.dob ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"}  border  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}  />
+          </div>
+          <div> 
+            <label 
+              htmlFor="gender" 
+              className="block text-sm font-bold text-slate-500 dark:text-white">Gender</label>  
+            <select
+              id="gender"
+              name="gender"
+              value={data.gender}
+              required
+              onChange={(e)=> setData({...data, gender: e.target.value})}
+              className={`${required && !data.gender ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}
+            >
+              <option value="">Choose a gender</option>
+              <option value="M">Male</option>
+              <option value="F">Female</option>
+            </select>
+          </div>
+
+          <div >
+            <div 
+              className="block text-sm font-bold text-slate-500 dark:text-white">Mobile No.</div>
+            <div className="flex flex-col gap-2">
+              {
+                mobiles.map((m,index)=> (
+                  <div key={index} className="flex items-center gap-2">
+                    <input 
+                      type="text" 
+                      id={`contact_${index}`}   
+                      name={`contact_${index}`}
+                      pattern="^09\d{9}$"
+                      value={m}
+                      required
+                      onChange={(e)=> handleMobileOnchange(index,e.target.value)}
+                      className={`${required && (!mobiles[index] || !validatePhone(mobiles[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Mobile No."  
+                    />
+                    {
+                      index === 0 &&
+                      <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddMobile}/>
+                    }
+                    {
+                      index !== 0 &&
+                      <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusMobile(index)}/>
+                    }
+                  </div>
+                ))
+              }
+            </div>
+          </div>
+            
+          <div  className="">
+            <div 
+            className="block text-sm font-bold text-slate-500 dark:text-white">Email Address</div>
+            <div className="flex flex-col gap-2">
+              {
+                emails.map((email,index)=> (
                 <div key={index} className="flex items-center gap-2">
                   <input 
-                    type="text" 
-                    id={`contact_${index}`}   
-                    name={`contact_${index}`}
-                    pattern="^09\d{9}$"
-                    value={m}
+                    type="email" 
+                    id={`email_${index}`}   
+                    name={`email_${index}`}
+                    value={email}
                     required
-                    onChange={(e)=> handleMobileOnchange(index,e.target.value)}
-                    className={`${required && (!mobiles[index] || !validatePhone(mobiles[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Mobile No."  
-                  />
+                    onChange={(e)=> handleEmailOnchange(index,e.target.value)}
+                    className={`${required && (!emails[index] || !validateEmail(emails[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+                    placeholder="Enter Email Address" 
+                    />
+                    {
+                      index === 0 &&
+                      <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddEmail}/>
+                    }
+                    {
+                      index !== 0 &&
+                      <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusEmail(index)}/>
+                    }
+                </div>
+                ))
+              }
+            </div>
+          </div>
+          <div className="">
+            <div 
+              className="block text-sm font-bold text-slate-500 dark:text-white">Address</div>
+            <div className="flex flex-col gap-2">
+              {
+              address.map((a,index)=> (
+                <div key={index} className="flex items-center gap-2">
+                  <textarea 
+                    id={`address_${index}`}   
+                    name={`address_${index}`}
+                    value={a}
+                    required
+                    onChange={(e)=> handleAddressOnchange(index,e.target.value)} 
+                    className={`${required && !address[index] ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 h-32 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Email Address">
+                  </textarea>
+
                   {
                     index === 0 &&
-                    <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddMobile}/>
+                    <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddAddress}/>
                   }
                   {
                     index !== 0 &&
-                    <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusMobile(index)}/>
+                    <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusAddress(index)}/>
                   }
                 </div>
               ))
-            }
+              }
+            </div>
           </div>
-        </div>
-          
-        <div  className="">
-          <div 
-          className="block text-sm font-bold text-slate-500 dark:text-white">Email Address</div>
-          <div className="flex flex-col gap-2">
-            {
-              emails.map((email,index)=> (
-              <div key={index} className="flex items-center gap-2">
-                <input 
-                  type="email" 
-                  id={`email_${index}`}   
-                  name={`email_${index}`}
-                  value={email}
-                  required
-                  onChange={(e)=> handleEmailOnchange(index,e.target.value)}
-                  className={`${required && (!emails[index] || !validateEmail(emails[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
-                  placeholder="Enter Email Address" 
-                  />
-                  {
-                    index === 0 &&
-                    <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddEmail}/>
-                  }
-                  {
-                    index !== 0 &&
-                    <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusEmail(index)}/>
-                  }
-              </div>
-              ))
-            }
+          <div>
+            <button type="submit" className={`bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-500 font-medium rounded-lg text-sm w-24 py-2.5 me-2  cursor-pointer`}>Save</button>
+            <button 
+              type="button"
+              onClick={cancel} 
+              className={` bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg text-sm w-24 py-2.5 me-2 cursor-pointer`}>Cancel</button>
           </div>
-        </div>
-        <div className="">
-          <div 
-            className="block text-sm font-bold text-slate-500 dark:text-white">Address</div>
-          <div className="flex flex-col gap-2">
-            {
-            address.map((a,index)=> (
-              <div key={index} className="flex items-center gap-2">
-                <textarea 
-                  id={`address_${index}`}   
-                  name={`address_${index}`}
-                  value={a}
-                  required
-                  onChange={(e)=> handleAddressOnchange(index,e.target.value)} 
-                  className={`${required && !address[index] ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 h-32 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Email Address">
-                </textarea>
-
-                {
-                  index === 0 &&
-                  <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddAddress}/>
-                }
-                {
-                  index !== 0 &&
-                  <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusAddress(index)}/>
-                }
-              </div>
-            ))
-            }
-          </div>
-        </div>
-        <div>
-        <button type="submit" className={`bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-500 font-medium rounded-lg text-sm w-24 py-2.5 me-2 mb-2  cursor-pointer`}>Save</button>
-        <button 
-          type="button"
-          onClick={cancel} 
-          className={` bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg text-sm w-24 py-2.5 me-2 mb-2  cursor-pointer`}>Cancel</button>
         </div>
       </form>
       { confirm &&

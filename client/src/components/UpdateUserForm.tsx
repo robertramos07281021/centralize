@@ -232,6 +232,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
         success: res.updateUser.success,
         message: res.updateUser.message
       })
+      
       setIsUpdate(false)
     },
   })

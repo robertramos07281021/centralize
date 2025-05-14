@@ -13,21 +13,13 @@ interface Bucket {
 }
 
 const DEPARTMENT_QUERY = gql`
-  query departmentQuery($name: String){
+  query departmentQuery{
     getDepts {
       id
       name
       branch
-      aom { id name username type department branch change_password }
+      aom { _id name }
     }
-
-    getDept(name: $name) {
-      id
-      name
-      branch
-      aom 
-    }
-
   }
 `
 const DEPARTMENT_BUCKET = gql`

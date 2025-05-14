@@ -105,8 +105,8 @@ const userResolvers = {
     findAgents: async(_,__,{user}) => {
       if (!user) throw new CustomError("Not authenticated",401);
       try {
-        const agent = await User.find({department: user.department})
-        return agent
+        const agents = await User.find({departments: {$in: user.departments}})
+        return agents
       } catch (error) {
         throw new CustomError(error.message, 500) 
       }
@@ -115,7 +115,7 @@ const userResolvers = {
   Mutation: {
     createUser: async (
       _,
-      { name, username, branch, departments, type, id_number,buckets}, {user}) => {
+      { name, username, branch, departments, type, user_id,buckets}, {user}) => {
         try {
           if(!user) throw new CustomError("Unauthorized",401)
           
@@ -149,8 +149,8 @@ const userResolvers = {
             password:hashPassword , 
             branch: branch || null, 
             departments, 
-            type,user_id: 
-            id_number, 
+            type ,
+            user_id, 
             buckets});
 
           await newUser.save();
@@ -163,7 +163,6 @@ const userResolvers = {
           };
           
         } catch (error) {
-          console.log(error)
           throw new CustomError(error.message,500)
         }
     },
@@ -275,19 +274,14 @@ const userResolvers = {
     updateUser: async(_,{id, name, type, branch, departments, buckets },{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-        console.log(departments)
-        console.log(branch)
-        console.log(buckets)
-
         const updateUser = await User.findByIdAndUpdate(id,{name, type, branch, departments, buckets},{new: true})
         if(!updateUser) throw new CustomError("User not found",404)
         
         await ModifyRecord.create({name: "Update User Info", user: updateUser._id})
-        console.log(updateUser)
+
         return {success: true , message: "User account successfully updated", user: updateUser}
 
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     } ,

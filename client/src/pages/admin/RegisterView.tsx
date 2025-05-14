@@ -28,8 +28,8 @@ interface DeptBucket {
 
 
 const CREATE_ACCOUNT = gql`
-  mutation createUser($name: String!, $username: String!, $type: String!, $departments: [ID], $branch: ID!, $idNumber: String, $buckets:[ID]) {
-    createUser(name: $name, username: $username, type: $type, departments: $departments, branch: $branch, id_number: $idNumber, buckets:$buckets) {
+  mutation createUser($name: String!, $username: String!, $type: String!, $departments: [ID], $branch: ID!, $user_id: String, $buckets:[ID]) {
+    createUser(name: $name, username: $username, type: $type, departments: $departments, branch: $branch, user_id: $user_id, buckets:$buckets) {
       success
       message
     }
@@ -79,7 +79,7 @@ const RegisterView = () => {
     username: string,
     branch: string,
     departments: string[],
-    id_number: string,
+    user_id: string,
     buckets: string[]
   }>({
     type: "",
@@ -87,7 +87,7 @@ const RegisterView = () => {
     username: "",
     branch: "",
     departments: [],
-    id_number: "",
+    user_id: "",
     buckets: []
   })
 
@@ -137,7 +137,7 @@ const RegisterView = () => {
         username: "",
         branch: "",
         departments: [],
-        id_number: "",
+        user_id: "",
         buckets: []
       })
       setSuccess({
@@ -181,7 +181,7 @@ const RegisterView = () => {
           username: "",
           branch: "",
           departments: [],
-          id_number: "",
+          user_id: "",
           buckets: [],
         });
       }
@@ -218,7 +218,7 @@ const RegisterView = () => {
   }
 
   useEffect(() => {
-    if (data.type === "" && (data.name || data.username || data.branch || data.departments.length > 0 || data.id_number)) {
+    if (data.type === "" && (data.name || data.username || data.branch || data.departments.length > 0 || data.user_id)) {
       setData(prev => ({
         ...prev,
         name: "",
@@ -226,7 +226,7 @@ const RegisterView = () => {
         branch: "",
         department: [],
         buckets: [],
-        id_number: ""
+        user_id: ""
       }));
     }
   }, [data.type, data])
@@ -299,8 +299,8 @@ const RegisterView = () => {
               name="id_number" 
               id="id_number" 
               autoComplete="id_number"
-              value={data.id_number}
-              onChange={(e)=> setData({...data,id_number: e.target.value})}
+              value={data.user_id}
+              onChange={(e)=> setData({...data,user_id: e.target.value})}
               disabled={data.type.trim() === "" || !validForCampaignAndBucket.toString().includes(data.type)  }
               className={`${data.type.trim() === "" || !validForCampaignAndBucket.toString().includes(data.type)  ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
               />

@@ -72,6 +72,7 @@ const customerTypeDefs = gql`
   type  AccountBucket {
     name: String
     dept: String
+    _id: ID
   }
 
   type DispoType {
@@ -160,11 +161,7 @@ const customerTypeDefs = gql`
     account_bucket: AccountBucket
     customer_info: CustomerInfo
   }
-
-  type SelectAllCustomerAccount {
-    _id: ID
-  }
-
+ 
   type Query {
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
     getCustomers(page:Int): getCustomers!

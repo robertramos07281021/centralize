@@ -18,6 +18,7 @@ interface Member {
   _id: string
   name: string
   user_id: string
+  buckets: string[]
 }
 interface Group {
   _id:string
@@ -31,7 +32,11 @@ interface DeptAgent {
   name: string
   user_id: string
   group: string
+  buckets: string[]
 }
+
+
+
 
 const CREATE_GROUP = gql`
   mutation CreateGroup($name: String!, $description: String!) {
@@ -71,20 +76,22 @@ const DEPT_GROUP = gql`
         _id
         name
         user_id
+        buckets
       }
     }
   }
 `
 
 const DEPT_AGENT = gql`
-  query Query{
-  findDeptAgents {
-    _id
-    name
-    user_id
-    group
+  query FindAgents {
+    findAgents {
+      _id
+      name
+      user_id
+      group
+      buckets 
+    }
   }
-}
 `
 const ADD_GROUP_MEMBER = gql`
   mutation AddGroupMember($addGroupMemberId: ID!, $member: ID!) {
@@ -104,6 +111,21 @@ const DELETE_GROUP_MEMBER = gql`
 }
 `
 
+interface Bucket {
+  id:string
+  name: string
+  dept: string
+}
+
+const GET_DEPT_BUCKETS = gql`
+  query Query {
+    getDeptBucket {
+      id
+      name
+      dept
+    }
+  }
+`
 
 
 const GroupSection = () => {
@@ -120,11 +142,26 @@ const GroupSection = () => {
   const [required, setRequire] = useState(false)
   const [groupRequired, setGroupRequired] = useState(false)
   const {data:deptGroupData, refetch:deptGroupDataRefetch} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
-  const {data:deptAgentData, refetch:deptAgentDataRefetch} = useQuery<{findDeptAgents:DeptAgent[]}>(DEPT_AGENT)
+  const {data:deptAgentData, refetch:deptAgentDataRefetch} = useQuery<{findAgents:DeptAgent[]}>(DEPT_AGENT)
   const selectedGroupData = deptGroupData?.findGroup.find((dgd)=> dgd.name === selectedGroup)
   const [dgdObject, setDgdObject] = useState<{[key: string]:string}>({})
   const [dgdObjectName, setdgdObjectName] = useState<{[key: string]:string}>({})
   const [updatedGroup, setUpdateGroup] = useState<boolean>(false)
+
+    const [bucketObject, setBucketObject] = useState<{[key:string]:string}>({})
+    const {data:deptBucketData} = useQuery<{getDeptBucket:Bucket[]}>(GET_DEPT_BUCKETS)
+  
+    useEffect(()=> {
+
+      if(deptBucketData) {
+        const newObject:{[key:string]:string} = {}
+        deptBucketData?.getDeptBucket?.map((b) => 
+          newObject[b.id] = b.name
+        )
+        setBucketObject(newObject)
+      }
+    },[ deptBucketData])
+
 
   useEffect(()=> {
     setUpdateGroup(false)
@@ -175,6 +212,7 @@ const GroupSection = () => {
       setName("")
       setDescription("")
       setConfirm(false)
+      dispatch(setSelectedGroup(""))
       deptGroupDataRefetch()
       setUpdateGroup(false)
       setSuccess({
@@ -187,9 +225,12 @@ const GroupSection = () => {
   const [deleteGroup] = useMutation(DELETE_GROUP,{
     onCompleted:(result) => {
       setName("")
-      setDescription("")
-      setConfirm(false)
       deptGroupDataRefetch()
+      setDescription("")
+      deptAgentDataRefetch()
+      dispatch(setSelectedGroup(""))
+      setConfirm(false)
+      setAddMember(false)
       setSuccess({
         success: result.deleteGroup.success,
         message: result.deleteGroup.message
@@ -407,15 +448,15 @@ const GroupSection = () => {
                 <p className="font-bold text-slate-700">Agent</p>
                 <div className="h-full overflow-y-auto mt-2 text-slate-700">
                   {
-                    deptAgentData?.findDeptAgents.map(da=> (
-                      <div key={da._id} className="grid grid-cols-3 text-center py-1.5  odd:bg-slate-100">
-                        <p>{da.name}</p>
-                        <p>{da.user_id}</p>
-                        <p className="flex justify-center ">{da.group ? dgdObjectName[da.group] : <FaPlusCircle className="lg:text-base 2xl:text-lg text-green-500" onClick={() => handleAddGroupMember(da._id)} />}</p></div>
+                    deptAgentData?.findAgents.map(da=> (
+                      <div key={da._id} className="grid grid-cols-5 text-center py-1.5  odd:bg-slate-100">
+                        <p className="cursor-default">{da.user_id}</p>
+                        <p className="text-nowrap truncate uppercase cursor-default" title={da.name.toUpperCase()}>{da.name}</p>
+                        <p className="col-span-2 cursor-default">{da.buckets.map((e)=>bucketObject[e] ).join(', ')}</p>
+                        <p className="flex justify-center cursor-default">{da.group ? dgdObjectName[da.group] : <FaPlusCircle className="lg:text-base 2xl:text-lg text-green-500" onClick={() => handleAddGroupMember(da._id)} />}</p></div>
                     ))
                   }
                 </div>
-
               </div>
               <div className="bg-white z-10 lg:w-50 2xl:w-96 absolute border right-0 h-96 top-12 rounded-lg border-slate-300 shadow-lg shadow-black/15 p-2 grid grid-rows-3">
                 <div className="flex flex-col overflow-y-auto">
@@ -428,20 +469,23 @@ const GroupSection = () => {
 
                 </div>
                 <div className=" flex flex-col ">
-                  <h1 className="font-bold text-slate-700">Member{selectedGroupData?.members &&  selectedGroupData?.members?.length > 1 ? "s" : ""}</h1>
+                  <h1 className="font-bold text-slate-700">Member{selectedGroupData?.members && selectedGroupData?.members?.length > 1 ? "s" : ""}</h1>
                   <div className="h-full flex flex-col overflow-y-auto">
                     {
                       selectedGroupData?.members.map((m)=> (
-                        <div key={m._id} className="grid grid-cols-3 text-center odd:bg-slate-100 py-1">
-                          <div>
-                            {m.name}
-                          </div>
-                          <div>
+                        <div key={m._id} className="grid grid-cols-5 text-center odd:bg-slate-100 py-1">
+                          <p className="cursor-default">
                             {m.user_id}
-                          </div>
-                          <div className="flex justify-center">
+                          </p>
+                          <p className="uppercase text-nowrap truncate cursor-default" title={m.name.toUpperCase()}>
+                            {m.name}
+                          </p>
+                          <p className="col-span-2 cursor-default">
+                            {m.buckets.map((e)=> bucketObject[e]).join(', ')}
+                          </p>
+                          <p className="flex justify-center">
                           <FaMinusCircle className="lg:text-base 2xl:text-lg text-red-500" onClick={()=> handleDeleteMember(m._id)}/>
-                          </div>
+                          </p>
                         </div>
                       ))
                     }

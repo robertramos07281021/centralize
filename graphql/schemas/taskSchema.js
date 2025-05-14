@@ -39,6 +39,7 @@ const taskTypeDefs = gql`
   type AccountBucket {
     name: String
     dept: String
+    _id: ID
   }
 
   type GroupTask {

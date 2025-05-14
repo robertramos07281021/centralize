@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+import mongoose, { mongo } from "mongoose"
 import { DateTime } from "../../middlewares/dateTime.js"
 import CustomError from "../../middlewares/errors.js"
 import CustomerAccount from "../../models/customerAccount.js"
@@ -201,7 +201,6 @@ const dispositionResolver = {
           disposition: dispositionReport
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -271,7 +270,7 @@ const dispositionResolver = {
           },
           {
             $match: {
-              "bucket.name": user.bucket
+              "bucket._id": {$in: user.buckets}
             }
           },
           {
@@ -318,8 +317,6 @@ const dispositionResolver = {
     getBucketDisposition: async(_,__,{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const bucket = await Bucket.find({dept:user.department})
-        const newArrayBucket = bucket.map((b)=> b.name)
         const start = new Date();
         start.setHours(0, 0, 0, 0);
         const end = new Date();  
@@ -354,7 +351,7 @@ const dispositionResolver = {
             $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
           },
           {
-            $match: {"bucket.name":user.bucket},
+            $match: {"bucket._id":{$in : user.buckets}},
           },
           {
             $lookup: {
@@ -371,6 +368,17 @@ const dispositionResolver = {
             $unwind: {path: "$disposition_type",preserveNullAndEmptyArrays: true}
           },
           {
+            $lookup: {
+              from: "users",
+              localField: "user",
+              foreignField: "_id",
+              as: "user",
+            }
+          },
+          {
+            $unwind: {path: "$user",preserveNullAndEmptyArrays: true}
+          },
+          {
             $group: {
               _id: {
                 bucket_id: "$bucket._id",
@@ -379,13 +387,25 @@ const dispositionResolver = {
               bucket: {$first: "$bucket.name"},
               dispositionName: { $first: "$disposition_type.name" },
               dispositionCode: { $first: "$disposition_type.code" },
-              count: { $sum: 1 }
+              count: { $sum: 1 },
+              user_id: {$first: "$user._id"},
+              user_name: {$first: "$user.name"},
+              user_buckets: {$first: "$user.buckets"},
+              amount: {$sum: "$amount"}
             }
           },
           {
             $group: {
               _id: "$_id.bucket_id",
               bucket: { $first: "$bucket" },
+              amount: {$sum: "$amount"},
+              users: {
+                $push: {
+                  _id: "$user_id",
+                  name: "$user_name",
+                  buckets: "$user_buckets"
+                }
+              },
               dispositions: {
                 $push: {
                   code: "$dispositionCode",
@@ -399,16 +419,67 @@ const dispositionResolver = {
             $project: {
               _id: "$_id",
               bucket: 1,
+              amount: 1,
+              users: 1,
               dispositions: 1
             }
           }
         ])
-
         return bucketDisposition
       } catch (error) {
         throw new CustomError(error.message, 500)
       } 
     },
+    getDispositionCountYesterday: async(_,__,{user}) => {
+      const yesterdayStart = new Date();
+      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+      yesterdayStart.setHours(0, 0, 0, 0);
+
+      const yesterdayEnd = new Date();
+      yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
+      yesterdayEnd.setHours(23, 59, 59, 999);
+
+      try {
+        const yesterdayDispoCount = await Disposition.aggregate([
+
+        {
+          $lookup: {
+            from: "customeraccounts",
+            localField: "customer_account",
+            foreignField: "_id",
+            as: "customerAccount",
+          }
+        },
+        {
+          $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+        },
+        { 
+          $match: {
+            createdAt: {$gte: yesterdayStart, $lt: yesterdayEnd},
+            "customerAccount.bucket": {$in:  user.buckets.map(id => new mongoose.Types.ObjectId(id))}
+          }
+        },
+        {
+          $group: {
+            _id: "$customerAccount.bucket",
+            count: { $sum: "$amount" }
+          }
+        },
+        {
+          $project: {
+            _id: 0,
+            bucket: "$_id",
+            count: 1
+          }
+        }
+        ])
+        return yesterdayDispoCount
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+
+    },
+
     getDispositionPerDay: async(_,__,{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
@@ -420,11 +491,7 @@ const dispositionResolver = {
         const lastDay = new Date(year,month + 1,0)
 
         const dispositionPerDayOfTheMonth = await Disposition.aggregate([
-          {
-            $match: {
-              createdAt: { $gte: firstDay, $lte: lastDay }
-            }
-          },
+      
           {
             $lookup: {
               from: "customeraccounts",
@@ -435,129 +502,6 @@ const dispositionResolver = {
           },
           {
             $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "customerAccount.bucket",
-              foreignField: "_id",
-              as: "customerBucket"
-            }
-          },
-          {
-            $unwind: {path: "$customerBucket",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $match: {
-              "customerBucket.name": user.bucket
-            }
-          },
-          {
-            $group: {
-              _id: {
-                day: { $dayOfMonth: "$createdAt" }
-              },
-              amount: { $sum: "$amount" }
-            }
-          },
-          {
-            $project: {
-              _id: 0,
-              day: "$_id.day",
-              amount: 1
-            }
-          },
-          {
-            $sort: { date: 1 }
-          }
-        ])     
-        return {month: month, dispositionsCount:[...dispositionPerDayOfTheMonth]}
-      } catch (error) {
-        throw new CustomError(error.message, 500)
-      }
-    },
-    getDispositionPerMonth: async(_,__,{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-      try {
-
-        const year = new Date().getFullYear()
-        const firstMonth = new Date(year, 0, 1)
-        const lastMonth = new Date(year, 11, 31, 23, 59, 59, 999)
-
-        const dispositionPerMonth = await Disposition.aggregate([
-          {
-            $match: {
-              createdAt:  { $gte: firstMonth, $lte: lastMonth }
-            }
-          },
-          {
-            $lookup: {
-              from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
-              as: "customerAccount",
-            }
-          },
-          {
-            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "customerAccount.bucket",
-              foreignField: "_id",
-              as: "customerBucket"
-            }
-          },
-          {
-            $unwind: {path: "$customerBucket",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $match: {
-              "customerBucket.name": user.bucket
-            }
-          },
-          {
-            $group: {
-              _id: {
-                month: { $month: "$createdAt" }
-              },
-              amount: { $sum: "$amount" }
-            }
-          },
-          {
-            $project: {
-              _id: 0,
-              month: "$_id.month",
-              amount: 1
-            }
-          },
-          {
-            $sort: { month: 1 }
-          }
-        ])
-        return {year:year, dispositionsCount: [...dispositionPerMonth] }
-      } catch (error) {
-        throw new CustomError(error.message, 500)
-      }
-    },
-    getDeptDispositionCount: async(_,__,{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-      try {
-        const findDept = await Department.findOne({name: user.department})
-        if(!findDept) throw new CustomError("Dept not found", 404)
-
-        const DepartmentDispositionCount = await Disposition.aggregate([
-          {
-            $lookup: {
-              from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
-              as: "customerAccount",
-            }
-          },
-          {
-            $unwind: "$customerAccount"
           },
           {
             $lookup: {
@@ -575,32 +519,213 @@ const dispositionResolver = {
               from: "dispotypes",
               localField: "disposition",
               foreignField: "_id",
-              as: "accountDisposition",
-              pipeline: [
-                { $project: { code: 1}}
-              ]
+              as: "dispotype",
             }
           },
           {
-            $unwind: {path: "$accountDisposition",preserveNullAndEmptyArrays: true}
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
           },
           {
             $match: {
-              "customerBucket.dept": findDept.name
+              createdAt: { $gte: firstDay, $lte: lastDay },
+              "customerBucket._id": {$in: user.buckets.map(e=> new mongoose.Types.ObjectId(e))},
+              "dispotype.code": {$in: ['SET',"PAID"]}
             }
           },
           {
             $group: {
-              _id:"$accountDisposition._id",
-              code: {$first: "$accountDisposition.code"},
-              count: {$sum: 1}
+              _id: {
+                bucket: "$customerBucket._id",
+                day: { $dayOfMonth: "$createdAt" }
+              },
+              amount: { $sum: "$amount" }
+            }
+          },
+          {
+            $group: {
+              _id:"$_id.bucket",
+              buckets: {
+                $push: {
+                  day:"$_id.day",
+                  amount: "$amount"
+                }
+              }
             }
           },
           {
             $project: {
-              _id: "$_id",
-              code: 1,
-              count: 1
+              _id: 0,
+              bucket: "$_id",
+              buckets: 1
+            }
+          },
+          {
+            $sort: { day: 1 }
+          }
+        ])    
+
+        return {month: month, dispositionsCount:dispositionPerDayOfTheMonth}
+      } catch (error) {
+        console.log(error)
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getDispositionPerMonth: async(_,__,{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
+      try {
+
+        const year = new Date().getFullYear()
+        const firstMonth = new Date(year, 0, 1)
+        const lastMonth = new Date(year, 11, 31, 23, 59, 59, 999)
+
+        const dispositionPerMonth = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount",
+            }
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "customerBucket"
+            }
+          },
+          {
+            $unwind: {path: "$customerBucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              "customerBucket._id": {$in: user.buckets.map(e => new mongoose.Types.ObjectId(e)) },
+              createdAt:  { $gte: firstMonth, $lte: lastMonth },
+              "dispotype.code": {$in: ['SET',"PAID"]}
+            }
+          },
+          {
+            $group: {
+              _id: {
+                bucket: "$customerBucket._id",
+                month: { $month: "$createdAt" }
+              },
+              amount: { $sum: "$amount" }
+            }
+          },
+          {
+            $group: {
+              _id:"$_id.bucket",
+              buckets: {
+                $push: {
+                  month:"$_id.month",
+                  amount: "$amount"
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              bucket: "$_id",
+              buckets: 1
+            }
+          },
+          {
+            $sort: { month: 1 }
+          }
+        ])
+        
+        return {year:year, dispositionsCount: [...dispositionPerMonth] }
+      } catch (error) {
+  
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getDeptDispositionCount: async(_,__,{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
+      try {
+      
+
+        const DepartmentDispositionCount = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount",
+            }
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket"
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              "bucket._id": {$in: user.buckets.map(e => new mongoose.Types.ObjectId(e))}
+            }
+          },
+          {
+            $group: {
+              _id:{
+                bucket: "$bucket._id",
+                dispotype: "$dispotype._id"
+              },
+              count: {$sum: 1}
+            }
+          },
+          {
+            $group: {
+              _id: "$_id.bucket",
+              dispositions: {
+                $push: {
+                  dispotype: "$_id.dispotype",
+                  count: "$count"
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              bucket: "$_id",
+              dispositions: 1
             }
           }
         ])

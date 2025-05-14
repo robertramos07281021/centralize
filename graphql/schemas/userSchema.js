@@ -21,6 +21,7 @@ const userTypeDefs = gql`
     active: Boolean
     createdAt: DateTime
     user_id: String
+    group: ID
   }
 
   type PaginatedUsers {
@@ -53,7 +54,7 @@ const userTypeDefs = gql`
       type: String!, 
       departments: [ID], 
       branch: ID, 
-      id_number: String, 
+      user_id: String, 
       buckets:[ID] 
     ): Success
 

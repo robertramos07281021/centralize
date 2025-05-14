@@ -21,9 +21,9 @@ const groupSchema = new Schema(
     description: {
       type: String,
     },
-    department: {
-      type: String,
-      required: true
+    createdBy: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
     }
   },
 );

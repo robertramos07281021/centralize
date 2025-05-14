@@ -1,13 +1,14 @@
 import { useEffect, useState } from 'react';
-import { Doughnut } from 'react-chartjs-2';
+import { Bar } from 'react-chartjs-2';
 import gql from 'graphql-tag';
 import { useQuery } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
+import { ChartOptions } from 'chart.js';
 
-interface DispositionCount {
-  count: string
+interface Dispotypes {
   code: string
-  color: string
+  id:string
+
 }
 
 const colorDispo: { [key: string]: string } = {
@@ -38,83 +39,154 @@ const GET_DISPOSITION_TYPES = gql`
   query getDispositionTypes {
     getDispositionTypes {
       id
-      name
       code
     }
   }
 `
 
+interface Dispotype {
+  dispotype: string
+  count:number
+}
+
+interface DeptDispoCount {
+  bucket:string
+  dispositions: Dispotype[]
+}
+
 const GET_ALL_DISPOSITION_COUNT = gql`
-  query getDeptDispositionCount {
+  query GetDeptDispositionCount {
     getDeptDispositionCount {
-      count
-      code
+      bucket
+      dispositions {
+        dispotype
+        count
+      }
     }
   }
 `
+interface Datasets {
+  label: string
+  data: number[],
+  backgroundColor: string[]
+  hoverOffset: number
+}
+
+interface Data {
+  labels: string[],
+  datasets: Datasets[]
+}
+
+
+interface Bucket {
+  id: string
+  name: string
+}
+const DEPT_BUCKET_QUERY = gql`
+  query getDeptBucket {
+    getDeptBucket {
+      id
+      name
+    }
+  }
+`
+
+
+// const oklchColors = [
+//   'oklch(60% 0.15 216)',
+//   'oklch(60% 0.15 288)',
+//   'oklch(60% 0.15 0)',
+//   'oklch(60% 0.15 36)',
+//   'oklch(60% 0.15 72)',
+//   'oklch(60% 0.15 108)',
+//   'oklch(60% 0.15 144)',
+//   'oklch(60% 0.15 180)',
+//   'oklch(60% 0.15 252)',
+//   'oklch(60% 0.15 324)'
+// ];
+
+
 const DoughnutSection = () => {
   const navigate = useNavigate()
-  const {data:disposition, refetch:dispoTypeRefetch} = useQuery<{getDispositionTypes:DispositionCount[]}>(GET_DISPOSITION_TYPES)
-  const {data:dispositionCount, refetch:deptDispoCountRefetch} = useQuery<{getDeptDispositionCount:DispositionCount[]}>(GET_ALL_DISPOSITION_COUNT)
-  const [dispositionData, setDispositionData] = useState<DispositionCount[]>([])
-  const [dispositionDataObj, setDispositionDataObj] = useState<{[key: string]:string}>({})
-  const [total, setTotal] = useState<number>(0)
+  const {data:dispotypesData, refetch:dispoTypeRefetch} = useQuery<{getDispositionTypes:Dispotypes[]}>(GET_DISPOSITION_TYPES)
+  const {data:dispositionCount, refetch:deptDispoCountRefetch} = useQuery<{getDeptDispositionCount:DeptDispoCount[]}>(GET_ALL_DISPOSITION_COUNT)
+  const [dispotypeObject, setDispotypeObject] = useState<{[key:string]:string}>({})
+  useEffect(()=> {
+    if(dispotypesData) {
+      const newObject:{[key:string]:string} = {}
+      dispotypesData.getDispositionTypes.map((e) => {
+        newObject[e.id] = e.code
+      })
+      setDispotypeObject(newObject)
+    }
+  },[dispotypesData])
+
+  const {data:bucketData} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY)
+
+  const [bucketObject, setObjectObject] = useState<{[key:string]:string}>({})
+
+  useEffect(()=> {
+    if(bucketData) {
+      const newObject:{[key:string]:string} = {}
+      bucketData.getDeptBucket.map((e)=> {
+        newObject[e.id] = e.name
+      })
+      setObjectObject(newObject)
+    }
+  },[bucketData])
+
+  const [barData, setBarData] = useState<Data[]>([])
   
   useEffect(()=> {
     dispoTypeRefetch()
     deptDispoCountRefetch()
   },[navigate, dispoTypeRefetch, deptDispoCountRefetch])
 
-
   useEffect(()=> {
-    if(dispositionCount?.getDeptDispositionCount) {
-      const newData = dispositionCount?.getDeptDispositionCount.map((ddc)=> ({
-        code: ddc.code,
-        count: ddc.count,
-        color: colorDispo[ddc.code] || "#ccc",
-      }))
-      const newDataObject:{[key: string]:string} = {}
+    if(dispositionCount) {
+      const newArrays:Data[] = []
+      dispositionCount.getDeptDispositionCount.map(e => {
+        const newData:Data = {
+          labels:[], //2
+          datasets: [{
+            label: "", // 1
+            data: [], //3
+            backgroundColor: [], //4
+            hoverOffset: 4
+          }]
+        }
+        newData["datasets"][0]["label"] = bucketObject[e.bucket] //1
+        const newArray = new Array(e.dispositions.length).fill("")
+        const newArrayData = new Array(e.dispositions.length + 2).fill(null)
+        const newArrayColor = new Array(e.dispositions.length).fill("")
 
-      dispositionCount?.getDeptDispositionCount?.forEach((ddc)=> {
-        newDataObject[ddc.code] = ddc.count
+
+        e.dispositions.map((e,index) => {
+          newArray[index] = dispotypeObject[e.dispotype]
+          newArrayData[index] = e.count
+          newArrayColor[index] = colorDispo[dispotypeObject[e.dispotype]]
+        })
+        newData["labels"] = newArray //2
+        newData['datasets'][0]['data'] = newArrayData //3
+        newData['datasets'][0]['backgroundColor'] = newArrayColor //4
+        newArrays.push(newData)
       })
-      
-      setTotal(dispositionCount?.getDeptDispositionCount?.map((ddc)=> parseInt(ddc.count)).reduce((total, value)=> 
-       total + value
-      ,0))
-
-      setDispositionDataObj(newDataObject)
-      setDispositionData(newData)
+      setBarData(newArrays)
     }
-  },[dispositionCount])
+  },[dispositionCount,dispotypeObject,bucketObject])
 
-  const dataLabels = dispositionData?.map(d=> d.code)
-  const dataCount = dispositionData?.map(d => parseInt(Math.floor((Number(d.count)/total) * 100).toPrecision(2)) === 100 ? 1 : parseInt(Math.floor((Number(d.count)/total) * 100).toPrecision(2)))
-  const dataColor = dispositionData?.map(d=> d.color)
-
-  const data = {
-    labels: dataLabels,
-    datasets: [{
-      label: 'Percentage',
-      data: dataCount,
-      backgroundColor: dataColor,
-      hoverOffset: 4
-    }]
-  };
-
-  const options = {
+  const options:ChartOptions<'bar'> = {
+    indexAxis: 'y',
     plugins: {
-      datalabels: {
-        color: 'oklch(0 0 0)',
-        font: {
-          weight: "bold", 
-          size: 12,
-        } as const,
-        formatter: (value: number) => {return value === 0 ? "" : Math.ceil(value/100 * total)},
+      datalabels:{
+        display:false
       },
       legend: {
-        position: 'bottom' as const,
-        display: false
+        labels: {
+          usePointStyle: true,
+          pointStyle: 'line', // This makes it look like just a line, not a colored box
+          boxWidth: 0,        // Optionally set boxWidth to 0 to hide it
+        },
       },
     },
     responsive: true,
@@ -122,41 +194,19 @@ const DoughnutSection = () => {
   };
 
   return (
-    <div className="col-span-3 row-span-3 flex items-center justify-between text-center">
-      <div className="text-xs">
-        <div  className='grid grid-cols-6 py-0.5 text-slate-800  font-medium'>
-          <div className="col-span-2">Code</div>
-          <div></div>
-          <div>Count</div>
-          <div></div>
-          <div>Percentage</div>
+    <div className={`col-span-3 row-span-3 grid grid-cols-${barData.length} gap-5`}>
+      {
+        barData.map(e => {
+          const newBarDatas = {
+            labels: e.labels,
+            datasets: e.datasets
+          }
+          return <div className='bg-white rounded-xl border border-slate-400 p-2'>
+          <Bar data={newBarDatas} options={options}/>
         </div>
-        {
-          disposition?.getDispositionTypes?.map((d,index)=>{
-            const codeExists = dispositionData.map((dd)=> dd.code)
-
-            return codeExists.includes(d.code) && (
-              <div key={index} className='grid grid-cols-6 py-0.5 text-slate-800 '>
-                <div className="font-medium col-span-2 " style={{backgroundColor: `${colorDispo[d.code]}`}}>{d.code}</div>
-                <div>-</div>
-                <div>{dispositionDataObj[d.code] || 0}</div>
-                <div>-</div>
-                <div>  {
-                  (() => {
-                    const percent = (parseInt(dispositionDataObj[d.code]) / total) * 100;
-                    const formatted = Math.floor(percent).toPrecision(2);
-                    return formatted === "1.0e+2" ? "100" : formatted;
-                  })()
-                }%</div>
-              </div>
-            )
-          } 
-          )
-        }
-      </div>
-      <div className='2xl:h-full lg:h-3/5'>
-        <Doughnut data={data} options={options}/>
-      </div>
+      }
+        )
+      }
   </div>
   )
 }

@@ -8,27 +8,8 @@ const deptResolver = {
   Query: {
     getDepts: async()=> {
       try {
-    
-        const result = await Department.aggregate([
-          {
-            $lookup: {
-              from: "users",       
-              localField: "aom",   
-              foreignField: "_id", 
-              as: "aomData"    
-            }
-          },
-          {
-            $unwind: { path: "$aomData", preserveNullAndEmptyArrays: true } 
-          }
-        ]);
-        return result.map(dept => ({
-          id: dept._id.toString(),
-          name: dept.name,
-          branch: dept.branch,
-          aom: dept.aomData || null,
-          bucket: dept.bucket || []
-        }));
+        const result = await Department.find()
+        return result
       } catch (error) {
         throw new CustomError(error.message,500)
       }
@@ -62,6 +43,18 @@ const deptResolver = {
       }
     }
   },
+  Dept: {
+    aom: async(parent) => {
+      try {
+        const aom = await User.findById(parent.aom)
+        return aom
+      } catch (error) {
+        throw new CustomError(error.message,500)
+      }
+      
+    }
+  },
+
   Mutation: {
     createDept: async(_,{name, branch, aom}, {user} ) => {
       if(!user) throw new CustomError("Unauthorized",401)
@@ -108,17 +101,13 @@ const deptResolver = {
 
         const updateDept = await Department.findById(id)
         if(!updateDept)  throw new CustomError("Department not found",404)
-  
-        const findBucket = await Bucket.findOne({dept: updateDept.name})
-        if(!findBucket) throw new CustomError("Bucket not found", 404)
-        
-        
 
-        const res= await Bucket.findByIdAndUpdate(findBucket._id,{$set: {dept: name}},{new: true})
+        await Bucket.updateMany({dept: updateDept.name },{$set: {dept: name}})
 
-        console.log(res)
-        await Department.findByIdAndUpdate({_id: updateDept._id},{$set: { name, branch , aom:aomDeclared}})
-
+        updateDept.name = name
+        updateDept.branch = branch
+        updateDept.aom = aomDeclared
+        await updateDept.save()
 
         return {success: true, message: "Department successfully updated"}
       } catch (error) {

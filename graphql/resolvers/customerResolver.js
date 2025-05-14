@@ -8,6 +8,7 @@ import Group from "../../models/group.js";
 import ModifyRecord from "../../models/modifyRecord.js";
 import mongoose from "mongoose";
 import User from "../../models/user.js";
+import Department from "../../models/department.js";
 
 const customerResolver = {
   DateTime,
@@ -62,10 +63,13 @@ const customerResolver = {
       }
     },
     search: async(_,{search},{user}) => {
-      const isValidObjectId = mongoose.Types.ObjectId.isValid(search);
-      const checkId = isValidObjectId ? new mongoose.Types.ObjectId(search) : null;
-
+      
       try {
+        const isValidObjectId = mongoose.Types.ObjectId.isValid(search);
+        const checkId =  isValidObjectId ? [{ "customer_info._id": new mongoose.Types.ObjectId(search) }] : [];
+        const regexSearch = { $regex: search, $options: "i" };
+
+
         const accounts = await CustomerAccount.aggregate([
           {
             $lookup: {
@@ -87,24 +91,24 @@ const customerResolver = {
           { $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } },
           {
             $match: {
-              "account_bucket.name": {$regex: user.bucket, $options: "i"},
+              "account_bucket._id": {$in: user.buckets},
               on_hands: false,
               $or: [
-                { "customer_info.fullName": { $regex: search, $options: "i" } },
-                { "customer_info.dob": { $regex: search, $options: "i" } },
-                { "customer_info.contact_no": { $elemMatch: { $regex: search, $options: "i" } } },
-                { "customer_info.emails": { $elemMatch: { $regex: search, $options: "i" } } },
-                { "customer_info.addresses": { $elemMatch: { $regex: search, $options: "i" } } },
-                { credit_customer_id: { $regex: search} },
-                { account_id: { $regex: search, $options: "i" } },
-                { "out_standing_details.total_os": { $regex: search, } },
-                { case_id: { $regex: search, $options: "i" } },
-                ...(checkId ? [{ "customer_info._id": checkId }] : []),
+                { "customer_info.fullName": regexSearch },
+                { "customer_info.dob": regexSearch },
+                { "customer_info.contact_no": { $elemMatch: regexSearch } },
+                { "customer_info.emails": { $elemMatch: regexSearch } },
+                { "customer_info.addresses": { $elemMatch: regexSearch } },
+                { credit_customer_id: regexSearch },
+                { account_id: regexSearch },
+                { "out_standing_details.total_os": regexSearch },
+                { case_id: regexSearch },
+                ...checkId,
               ],
             },
           },
         ])
-        return [...accounts]
+        return accounts
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
@@ -114,27 +118,28 @@ const customerResolver = {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
         let selected = ''
-        if(groupId) {
-          const group = await Group.findOne({_id: groupId})
-        
-          const userSelected = await User.findOne({_id: groupId})
-
-          selected = group ? group._id : userSelected._id
+        if (groupId) {
+          const [group, userSelected] = await Promise.all([
+            Group.findById(groupId),
+            User.findById(groupId),
+          ]);
+          selected = group?._id || userSelected?._id || null;
         }
-      
-        const bucket = (await Bucket.find({dept: user.department})).map(e => e.name)
-        let search = []
-        if(Boolean(disposition.length > 0 && groupId)){
-          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }}, {assigned: assigned == "assigned" ? selected : null}]
-        } else if (Boolean(disposition.length === 0 && !groupId)) {
-          search = [{"account_bucket.name": {$in: bucket}}, {assigned: assigned == "assigned" ? {$ne: null} : null}]
-        } else if (Boolean(disposition.length > 0 && !groupId)) {
-          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }},{assigned: assigned == "assigned" ? {$ne: null} : null}]
-        } else if(Boolean(disposition.length === 0 && groupId)) {
-          search = [{"account_bucket.name": {$in: bucket}},{assigned: assigned == "assigned" ? selected : null}]
+        const bucket = user.buckets
+        const search = [
+          { "account_bucket._id": { $in: bucket } },
+        ];
+    
+        if (disposition.length > 0) {
+          search.push({ "dispoType.name": { $in: disposition } });
+        }
+    
+        if (assigned === "assigned") {
+          search.push({ assigned: selected ?? { $ne: null } });
+        } else {
+          search.push({ assigned: null });
         }
 
-        
         const accounts = await CustomerAccount.aggregate([
           {
             $lookup: {
@@ -196,9 +201,11 @@ const customerResolver = {
             }
           }
         ])
+
+        const total = accounts[0]?.total[0]?.totalCustomerAccounts || 0;
         return {
-          CustomerAccounts: [...accounts[0]?.FindCustomerAccount],
-          totalCountCustomerAccounts: accounts[0]?.total[0]?.totalCustomerAccounts > 0 ? accounts[0]?.total[0]?.totalCustomerAccounts : 0
+          CustomerAccounts: accounts[0]?.FindCustomerAccount || [],
+          totalCountCustomerAccounts: total,
         }
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -216,16 +223,16 @@ const customerResolver = {
         }
 
 
-        const bucket = (await Bucket.find({dept: user.department})).map(e => e.name)
+        const bucket = user.buckets
         let search = []
         if(Boolean(disposition.length > 0 && groupId)){
-          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }}, {assigned: assigned == "assigned" ? selected : null}]
+          search = [{"account_bucket._id": {$in: bucket}},{"dispoType.name": {$in: disposition }}, {assigned: assigned == "assigned" ? selected : null}]
         } else if (Boolean(disposition.length === 0 && !groupId)) {
-          search = [{"account_bucket.name": {$in: bucket}}, {assigned: assigned == "assigned" ? {$ne: null} : null}]
+          search = [{"account_bucket._id": {$in: bucket}}, {assigned: assigned == "assigned" ? {$ne: null} : null}]
         } else if (disposition.length > 0 && !groupId) {
-          search = [{"account_bucket.name": {$in: bucket}},{"dispoType.name": {$in: disposition }},{assigned: assigned == "assigned" ? selected : null}]
+          search = [{"account_bucket._id": {$in: bucket}},{"dispoType.name": {$in: disposition }},{assigned: assigned == "assigned" ? selected : null}]
         } else if(Boolean(disposition.length === 0 && groupId)) {
-          search = [{"account_bucket.name": {$in: bucket}},{assigned: assigned == "assigned" ? selected : null}]
+          search = [{"account_bucket._id": {$in: bucket}},{assigned: assigned == "assigned" ? selected : null}]
         }
 
         const accounts = await CustomerAccount.aggregate([
@@ -310,57 +317,64 @@ const customerResolver = {
     createCustomer: async(_,{input},{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const buckets = await Bucket.find({dept: user.department})
-        const bucketsNames = buckets.map((bucket) => bucket.name)
-        const inputBucket = [...new Set(input.map((i) => i.bucket))]
+        const dept = await Department.find({_id: {$in: user.departments}}).distinct('name')
 
-        Array.from(inputBucket).forEach((ib) => {
-          if(!bucketsNames.includes(ib)) {
-            throw new CustomError("Not Included")
+        const buckets = new Set(await Bucket.find({dept: {$in: dept}}).distinct('name'))
+        
+        const inputBucket = new Set(input.map((i) => i.bucket))
+
+        for (const name of inputBucket) {
+          if (!buckets.has(name)) {
+            throw new CustomError(`Bucket '${name}' is not included in user's access`, 403);
           }
-        })
+        }
 
-        Array.from(input).forEach(async(element)=> {
-          const bucket = await Bucket.findOne({name : element.bucket})
-          if(!bucket) throw new CustomError("Bucket not found",404)
-          const findCustomer = await Customer.findOne({platform_customer_id: element.platform_user_id})
-          if(!findCustomer) {
-            const customer = await Customer.create({
+        await Promise.all(input.map(async (element) => {
+          const bucket = await Bucket.findOne({ name: element.bucket });
+          if (!bucket) throw new CustomError("Bucket not found", 404);
+    
+          let customer = await Customer.findOne({ platform_customer_id: element.platform_user_id });
+          if (!customer) {
+            customer = new Customer({
               fullName: element.customer_name,
               platform_customer_id: element.platform_user_id,
               gender: element.gender,
-              dob: element.birthday
-            })
-            customer.addresses.push(element.address)
-            customer.emails.push(element.email)
-            customer.contact_no.push("0" + element.one)
-            await customer.save()
-  
-            await CustomerAccount.create({
-              customer: customer._id,
-              bucket: bucket._id,
-              case_id: element.case_id,
-              credit_customer_id: element.credit_user_id,
-              endorsement_date: element.endorsement_date,
-              bill_due_day: element.bill_due_day,
-              max_dpd: element.max_dpd,
-              balance: element.total_os,
-              paid_amount: 0,
-              account_id: element.account_id || null,
-              "out_standing_details.principal_os" : element.principal_os,
-              "out_standing_details.interest_os" : element.interest_os,
-              "out_standing_details.admin_fee_os" : element.admin_fee_os,
-              "out_standing_details.txn_fee_os" : element.txn_fee_os,
-              "out_standing_details.late_charge_os" : element.late_charge_os,
-              "out_standing_details.dst_fee_os" : element.dst_fee_os,
-              "out_standing_details.total_os": element.total_os,
-              "grass_details.grass_region": element.grass_region,
-              "grass_details.vendor_endorsement": element.vendor_endorsement,
-              "grass_details.grass_date": element.grass_date
-            })
+              dob: element.birthday,
+              addresses: [element.address],
+              emails: [element.email],
+              contact_no: ["0" + element.one],
+            });
+            await customer.save();
           }
-          return {success: true, message: "successfully add"}
-        })
+    
+          await CustomerAccount.create({
+            customer: customer._id,
+            bucket: bucket._id,
+            case_id: element.case_id,
+            credit_customer_id: element.credit_user_id,
+            endorsement_date: element.endorsement_date,
+            bill_due_day: element.bill_due_day,
+            max_dpd: element.max_dpd,
+            balance: element.total_os,
+            paid_amount: 0,
+            account_id: element.account_id || null,
+            out_standing_details: {
+              principal_os: element.principal_os,
+              interest_os: element.interest_os,
+              admin_fee_os: element.admin_fee_os,
+              txn_fee_os: element.txn_fee_os,
+              late_charge_os: element.late_charge_os,
+              dst_fee_os: element.dst_fee_os,
+              total_os: element.total_os,
+            },
+            grass_details: {
+              grass_region: element.grass_region,
+              vendor_endorsement: element.vendor_endorsement,
+              grass_date: element.grass_date,
+            }
+          });
+        }));
+
       } catch (error) {
         throw new CustomError(error.message, 500)
       }

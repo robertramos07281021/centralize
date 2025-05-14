@@ -10,7 +10,7 @@ const deptTypeDefs = gql`
 
   }
   type Aom {
-    id: ID
+    _id: ID
     name: String
     username: String
     type: String

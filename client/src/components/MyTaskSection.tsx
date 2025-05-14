@@ -22,9 +22,10 @@ type grassDetails = {
   grass_date: string
 }
 
-type  AccountBucket = {
+type AccountBucket = {
   name: string
   dept: string
+  _id:string
 }
 
 type CustomerRegistered = {
@@ -97,6 +98,7 @@ const MY_TASKS = gql`
       account_bucket {
         name
         dept
+        _id
       }
       customer_info {
         fullName
@@ -146,6 +148,7 @@ const GROUP_TASKS =gql`
         account_bucket {
           name
           dept
+          _id
         }
         customer_info {
           fullName
@@ -221,19 +224,20 @@ const MyTaskSection = () => {
     }
   })
   
+
+
   const {data:myTasksData} = useQuery<{myTasks:CustomerData[]}>(MY_TASKS)
   const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
   const [data, setData] = useState<CustomerData[] | null>([])
   const [selection, setSelection] = useState<string>("")
-  
 
   useEffect(()=> {
     if(selection.trim()==="my_task") {
-      setData(myTasksData?.myTasks ? myTasksData?.myTasks : null )
+      setData(myTasksData?.myTasks ? myTasksData?.myTasks.filter(e=> userLogged.buckets.toString().includes(e.account_bucket._id)) : null )
     } else {
-      setData(groupTaskData?.groupTask?.task ? groupTaskData?.groupTask.task : null)
+      setData(groupTaskData?.groupTask?.task ? groupTaskData?.groupTask.task.filter(e=> userLogged.buckets.toString().includes(e.account_bucket._id)) : null)
     }
-  },[selection,myTasksData,groupTaskData])
+  },[selection,myTasksData,groupTaskData,userLogged])
 
 
   useEffect(()=> {
@@ -328,7 +332,7 @@ const MyTaskSection = () => {
           <div className="h-full overflow-y-auto">
             {data?.map(d => (
               <div key={d._id} className="py-1.5 2xl:text-xs lg:text-[0.6em] hover:bg-blue-100 even:bg-slate-100 grid grid-cols-4 px-5">
-                <div>{d.customer_info.fullName}</div>
+                <div className="px-2 text-nowrap truncate">{d.customer_info.fullName}</div>
                 <div>{d.current_disposition.disposition ? d.current_disposition.disposition : "N/A" }</div>
                 <div>
                   {dateAndTime(d.assigned_date)}

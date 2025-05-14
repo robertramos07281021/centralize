@@ -14,7 +14,7 @@ const groupResolver = {
     findGroup: async(_,__,{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const getAllGroup = await Group.find({department: user.department})
+        const getAllGroup = await Group.find({createdBy: user._id})
         return getAllGroup
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -36,7 +36,7 @@ const groupResolver = {
     createGroup: async(_,{name,description}, {user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-        await Group.create({name,description, department: user.department})
+        await Group.create({name,description, createdBy: user._id})
         return {success: true, message: `Group successfully created`}
       } catch (error) {
         throw new CustomError(error.message, 500)

@@ -29,12 +29,12 @@ const dispositionTypeDefs = gql`
   }
 
   type Agent {
-    _id: String
+    _id: ID
     name: String
     branch: String
     department: String
     user_id: String
-    buckets: [String]
+    buckets: [ID]
   }
 
   type DispoData {
@@ -57,22 +57,35 @@ const dispositionTypeDefs = gql`
 
   type BucketDisposition {
     bucket: String
+    amount: Float
+    users: [Agent]
     dispositions: [DispoData]
   } 
+
+  type PerDayAmount {
+    day: String,
+    amount: Float
+  }
+
   type PerDay {
-    day: String
-    amount: String
+    buckets: [PerDayAmount]
+    bucket: ID
   }
-
-  type PerMonth {
-    month: String
-    amount: String
-  }
-
 
   type DispositionPerDay {
     month: String,
     dispositionsCount: [PerDay]
+  }
+
+  
+  type MonthAmount {
+    month: String,
+    amount: Float
+  }
+
+  type PerMonth {
+    buckets: [MonthAmount]
+    bucket: ID
   }
 
   type DispositionPerYear {
@@ -80,9 +93,14 @@ const dispositionTypeDefs = gql`
     dispositionsCount: [PerMonth]
   }
 
+  type Dispo {
+    dispotype: ID,
+    count: Int
+  }
+
   type DispositionCount {
-    count: String
-    code: String
+    bucket: ID
+    dispositions: [Dispo]
   }
 
 
@@ -117,6 +135,10 @@ const dispositionTypeDefs = gql`
     buckets: [Buckets]
   }
   
+  type YesterdayDispo {
+    bucket: String
+    count:Float
+  }
 
   type Query {
     getAccountDispositions(id:ID!, limit:Int):[Disposition]
@@ -128,7 +150,7 @@ const dispositionTypeDefs = gql`
     getDeptDispositionCount:[DispositionCount]
     getAllDispositionTypes:[DispoType]
     getDispositionReportsHigh(campaign:String, bucket:String, dispositions:[String], from:String, to:String):[HighDispositionReport]
-
+    getDispositionCountYesterday:[YesterdayDispo]
   }
 
   type Mutation {

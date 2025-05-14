@@ -2,10 +2,26 @@
 
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { useEffect, useState } from "react"
-import { Department, Success, UserInfo } from "../middleware/types"
 import Confirmation from "./Confirmation"
-import { PiNotePencilBold, PiTrashFill  } from "react-icons/pi";
+import { PiNotePencilBold, PiTrashFill } from "react-icons/pi";
 import SuccessToast from "./SuccessToast"
+
+interface Success {
+  success: boolean;
+  message: string;
+}
+
+interface UserInfo {
+  _id: string;
+  name: string;
+};
+
+interface Department {
+  id: string;
+  name: string;
+  branch: string;
+  aom: UserInfo ;
+}
 
 const CREATEDEPT = gql`mutation
   createDept($name:String!, $branch:String!, $aom:String!) {
@@ -61,30 +77,20 @@ const AOM_USER = gql`
 `
 
 const DEPARTMENT_QUERY = gql`
-  query departmentQuery($name: String){
+  query departmentQuery{
     getDepts {
       id
       name
       branch
-      aom { id name username type department branch change_password }
+      aom { _id name }
     }
-
-    getDept(name: $name) {
-      id
-      name
-      branch
-      aom 
-    }
-
   }
 `
-
-
 
 const DepartmentSection = () => {
   const {data, refetch } = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
 
-  const {data:dept, refetch:refetchDept} = useQuery<{getDepts:Department[], getDept:Department}>(DEPARTMENT_QUERY,{ variables: { name: "admin" } })
+  const {data:dept, refetch:refetchDept} = useQuery<{getDepts:Department[]}>(DEPARTMENT_QUERY)
   
   const [name, setName] = useState<string>("")
   const [branch, setBranch] = useState<string>("")
@@ -102,16 +108,10 @@ const DepartmentSection = () => {
     branch: "",
     aom: {
       _id: "",
-      type:"AOM",
-      branch: "",
-      username: "",
       name: "",
-      change_password: false,
-      departments: [],
-      buckets: [],
-      user_id: ""
     }
   }) 
+
 
   const {data:aomUsers} = useQuery<{getAomUser:UserInfo[],}>(AOM_USER)
   // mutations ======================================================
@@ -148,14 +148,7 @@ const DepartmentSection = () => {
         branch: "",
         aom: {
           _id: "",
-          type:"AOM",
-          branch: "",
-          username: "",
           name: "",
-          change_password: false,
-          departments: [],
-          buckets: [],
-          user_id: ""
         }
       })
     },
@@ -264,14 +257,7 @@ const DepartmentSection = () => {
       branch: "",
       aom: {
         _id: "",
-        type:"AOM",
-        branch: "",
-        username: "",
         name: "",
-        change_password: false,
-        departments: [],
-        buckets: [],
-        user_id: ""
       }
     })
     setName("")
@@ -306,14 +292,7 @@ const DepartmentSection = () => {
       branch: "",
       aom: {
         _id: "",
-        type:"AOM",
-        branch: "",
-        username: "",
         name: "",
-        change_password: false,
-        departments: [],
-        buckets: [],
-        user_id: ""
       }
     })
     setName("")

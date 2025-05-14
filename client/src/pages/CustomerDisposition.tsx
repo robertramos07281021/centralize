@@ -113,11 +113,7 @@ const CustomerDisposition = () => {
     }
   }
 
-  useEffect(()=> {
-    if(!success.success){
-      navigate(location.pathname)
-    }
-  },[success.success,navigate,location.pathname])
+
 
   useEffect(()=> {
     const params = new URLSearchParams(location.search);
@@ -172,6 +168,29 @@ const CustomerDisposition = () => {
       })) 
     }
   })
+
+
+  useEffect(()=> {
+    if(!success.success){
+      navigate(location.pathname)
+    }
+  },[ success ,navigate,location.pathname ])
+
+
+
+
+
+  useEffect(()=> {
+    const id = selectedCustomer._id;
+    if(id) {
+      const timer = setTimeout(() => {
+        deselectTask({ variables: { id } }).catch(console.log);
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[navigate, deselectTask])
+
 
   const clearSelectedCustomer = async() => {
     try {
@@ -326,10 +345,19 @@ const CustomerDisposition = () => {
           </div>
           }
         </div>
-        {
-          isUpdate &&
-          <CustomerUpdateForm cancel={()=> setIsUpdate(false)} />
-        }
+        <div>
+        <h1 className="text-center font-bold text-slate-600 text-lg">Customer Update Information</h1>
+        <div className={`border h-full border-slate-500 mr-5 rounded-xl ${!isUpdate && "flex items-center justify-center"}`}>
+          {
+            isUpdate ?
+            <CustomerUpdateForm cancel={()=> setIsUpdate(false)} /> :
+            <p className="text-2xl font-light text-slate-500">
+              For Updating Customer Info Only
+            </p>
+          }
+
+        </div>
+        </div>
       </div>
       </div>
       <div className="p-5 grid grid-cols-2 gap-5">
