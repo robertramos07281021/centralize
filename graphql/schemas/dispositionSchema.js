@@ -139,9 +139,23 @@ const dispositionTypeDefs = gql`
     bucket: String
     count:Float
   }
+  
+  type BucketAomDashobard {
+    bucket: ID
+    ptp: Int
+    ptp_amount: Float
+    ptp_kept: Int
+    ptp_kept_amount:Float
+    amount_collected: Int
+    amount_collected_amount:Float
+  }
+  type Count {
+    count: Int
+  }
 
   type Query {
     getAccountDispositions(id:ID!, limit:Int):[Disposition]
+    getAccountDispoCount(id:ID!): Count
     getDispositionReports(agent:String, bucket:String, disposition:[String], from:String, to:String): Reports
     getAgentDispositions:[AgentDisposition]
     getBucketDisposition:[BucketDisposition]
@@ -151,6 +165,8 @@ const dispositionTypeDefs = gql`
     getAllDispositionTypes:[DispoType]
     getDispositionReportsHigh(campaign:String, bucket:String, dispositions:[String], from:String, to:String):[HighDispositionReport]
     getDispositionCountYesterday:[YesterdayDispo]
+    getAomDashboardDispoCollections:[BucketAomDashobard] 
+    getAomDashboardDispoCollectionsToday:[BucketAomDashobard] 
   }
 
   type Mutation {

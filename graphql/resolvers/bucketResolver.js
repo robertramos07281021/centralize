@@ -1,6 +1,7 @@
 import CustomError from "../../middlewares/errors.js";
 import Bucket from "../../models/bucket.js";
 import Department from "../../models/department.js";
+import Group from "../../models/group.js";
 
 const bucketResolver = {
   Query: {
@@ -70,7 +71,48 @@ const bucketResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
+    },
+    findAomBucket: async(_,__,{user})=> {
+      try {
+        const aomDept = (await Department.find({aom: user._id}).lean()).map(e => e.name)
+
+        const findAomBucket = await Bucket.aggregate([
+          {
+            $match: {
+              dept: {$in:aomDept}
+            }
+          },
+          {
+            $group: {
+              _id: "$dept",
+              buckets: {
+                $push: {
+                  id: "$_id",
+                  name: "$name"
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              dept: "$_id",
+              buckets: 1
+            }
+          },
+          {
+            $sort: {
+              dept: 1
+            }
+          }
+        ])
+
+        return findAomBucket
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
     }
+    
   },
   Mutation: {
     createBucket: async(_,{name,dept},{user}) => {

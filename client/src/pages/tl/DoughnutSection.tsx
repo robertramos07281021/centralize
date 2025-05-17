@@ -92,20 +92,6 @@ const DEPT_BUCKET_QUERY = gql`
 `
 
 
-// const oklchColors = [
-//   'oklch(60% 0.15 216)',
-//   'oklch(60% 0.15 288)',
-//   'oklch(60% 0.15 0)',
-//   'oklch(60% 0.15 36)',
-//   'oklch(60% 0.15 72)',
-//   'oklch(60% 0.15 108)',
-//   'oklch(60% 0.15 144)',
-//   'oklch(60% 0.15 180)',
-//   'oklch(60% 0.15 252)',
-//   'oklch(60% 0.15 324)'
-// ];
-
-
 const DoughnutSection = () => {
   const navigate = useNavigate()
   const {data:dispotypesData, refetch:dispoTypeRefetch} = useQuery<{getDispositionTypes:Dispotypes[]}>(GET_DISPOSITION_TYPES)
@@ -196,12 +182,12 @@ const DoughnutSection = () => {
   return (
     <div className={`col-span-3 row-span-3 grid grid-cols-${barData.length} gap-5`}>
       {
-        barData.map(e => {
+        barData.map((e,index) => {
           const newBarDatas = {
             labels: e.labels,
             datasets: e.datasets
           }
-          return <div className='bg-white rounded-xl border border-slate-400 p-2'>
+          return <div key={index} className='bg-white rounded-xl border border-slate-400 p-2'>
           <Bar data={newBarDatas} options={options}/>
         </div>
       }

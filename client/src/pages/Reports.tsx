@@ -6,6 +6,7 @@ import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../redux/store";
 import { setSelectedDispoReport } from "../redux/slices/authSlice";
 import HighReports from "../components/HighReports";
+import { useNavigate } from "react-router-dom";
 
 interface DispoData {
   id: string
@@ -98,6 +99,7 @@ const GET_REPORTS = gql`
 
 const Reports = () => {
   const dispatch = useAppDispatch()
+  const navigate = useNavigate()
   const [campaign, setCampaign] = useState<string>("")
   const [bucket, setBucket] = useState<string>("")
   const {selectedDispoReport} = useSelector((state:RootState)=> state.auth)
@@ -145,8 +147,13 @@ const Reports = () => {
   useEffect(()=> {
     if(!campaign) {
       dispatch(setSelectedDispoReport([]))
+      setBucket("")
     }
   },[campaign, dispatch])
+
+  useEffect(()=> {
+    
+  },[navigate])
 
 
   useEffect(()=> {

@@ -60,19 +60,20 @@ const deptResolver = {
       if(!user) throw new CustomError("Unauthorized",401)
    
       try {
-        const findBranch = await Branch.findOne({name:branch})
-        if(!findBranch) throw new CustomError("Branch not existing",400)
+     
+        
+        const [findBranch, findUser, findDept] = await Promise.all([
+          await Branch.findOne({name:branch}).lean(),
+          await User.findOne({name: aom.toLowerCase()}).lean(),
+          await Department.findOne({
+            $and: [{name: {$eq: name},},{branch: {$eq:branch}}]
+          })
+        ])
 
-        const findUser = await User.findOne({name: aom.toLowerCase()})
+        if(!findBranch) throw new CustomError("Branch not existing",400)
+  
         if(!findUser) throw new CustomError("User not found")
-        const findDept = await Department.findOne({
-          $and: [{
-            name: {$eq: name},
-          },{
-            branch: {$eq:branch}
-          }
-          ]
-        })
+
         if(findDept) throw new CustomError("Duplicate",400)
 
         const typeOfUser = {
@@ -124,7 +125,6 @@ const deptResolver = {
         if(findDept.length === 0) {
           await Bucket.deleteMany({dept: {$eq: deletedDept.name}})
         }
-
         return {success: true, message:"Department successfully deleted"}
       } catch (error) {
         throw new CustomError(error.message, 500)

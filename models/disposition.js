@@ -21,7 +21,6 @@ const dispositionSchema = new Schema(
     },
     payment_date: {
       type: String,
-
     },
     payment_method: {
       type: String,
@@ -35,6 +34,14 @@ const dispositionSchema = new Schema(
     existing: {
       type: Boolean,
       default: true
+    },
+    ptp: {
+      type: Boolean,
+      default: false
+    },
+    contact_method: {
+      type: String,
+      default: "calls"
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,

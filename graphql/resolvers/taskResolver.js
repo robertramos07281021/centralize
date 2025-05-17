@@ -30,7 +30,7 @@ const taskResolver = {
         }
 
         const customerAccounts = await CustomerAccount.find({$and: [{assigned: myGroup._id},{on_hands: false}]})
-        
+
         return {
           _id: myGroup._id,
           task: customerAccounts

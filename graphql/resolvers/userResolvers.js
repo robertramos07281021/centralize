@@ -49,7 +49,8 @@ const userResolvers = {
     getMe: async (_, __, { user }) => {
 
       if (!user) throw new CustomError("Not authenticated",401);
-      return user; 
+      
+      return user;
     },
     getAomUser: async() => {
       try {

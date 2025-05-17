@@ -47,11 +47,23 @@ const DISPOSITION_RECORDS = gql`
     }
   }
 `
+
+const CUSTOMER_DISPO_COUNT = gql`
+  query GetAccountDispoCount($id: ID!) {
+    getAccountDispoCount(id: $id) {
+      count
+    }
+  }
+
+`
+
+
 const DispositionRecords = () => {
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth )
   const [limit, setLimit] = useState(3)
   const dispatch = useAppDispatch()
-  const {data:dispositions,refetch, loading} = useQuery<{getAccountDispositions:Disposition[]}>(DISPOSITION_RECORDS,{variables: {id: selectedCustomer._id, limit: limit} })
+  const {data:dispositions,refetch, loading} = useQuery<{getAccountDispositions:Disposition[]}>(DISPOSITION_RECORDS,{variables: {id: selectedCustomer._id, limit: limit}})
+  const {data:customerDispoCount} = useQuery<{getAccountDispoCount:{count:number}}>(CUSTOMER_DISPO_COUNT,{variables: {id: selectedCustomer._id}}) 
 
   const date = (date:string) => {
     const createdDate = new Date(date).toLocaleDateString()
@@ -67,34 +79,45 @@ const DispositionRecords = () => {
   }
   useEffect(()=> {
     if(dispositions) {
-
       const exisist =  dispositions.getAccountDispositions.find((e)=>e.existing === true)
       if(exisist?.ca_disposition.code === "SET") {
         dispatch(setSettled(true))
       }
     }
-
   },[dispositions,dispatch])
+
+
+  function getOrdinal(n: number): string {
+  const suffixes = ["th", "st", "nd", "rd"];
+  const v = n % 100;
+  return n + (suffixes[(v - 20) % 10] || suffixes[v] || suffixes[0]);
+}
 
 
   useEffect(()=> {
     refetch()
   },[selectedCustomer,refetch, limit])
 
+
   return selectedCustomer._id && dispositions?.getAccountDispositions && dispositions?.getAccountDispositions?.length > 0 && (
     <div className="p-5 flex flex-col gap-10">
       <h1 className="text-center text-xl font-bold text-slate-600">Account History</h1>
       <div className={`flex flex-wrap gap-10 justify-center`}>
         {
-          dispositions?.getAccountDispositions.map((gad) => (
+          dispositions?.getAccountDispositions.map((gad,index) => (
             <div key={gad._id} className={`w-2/7 2xl:text-sm lg:text-xs flex flex-col gap-2 border p-2 rounded-xl border-slate-400 ${gad.existing && "bg-slate-200"}`}>
-              <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white">
-                <div className="text-gray-800 font-bold p-2 text-end">Agent</div>
-                <div className="p-2 font-medium capitalize text-slate-600 ">{gad.created_by || "No agent id"}</div>
+               <div className=" gap-2 border border-slate-500 rounded-md bg-white p-2 text-center font-medium 2xl:text-base lg;text-sm text-slate-600">
+                {index + 1 === 1 ? "Latest" : getOrdinal(index + 1) + " " + "Disposition"}
+               
               </div>
-              <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white">
+              <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white ">
+                <div className="text-gray-800 font-bold p-2 text-end">Agent</div>
+                <div className="p-2 col-span-2 font-medium capitalize text-slate-600 ">{gad.created_by || "No agent id"}</div>
+              </div>
+             
+              <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white w-full">
                 <div className="text-gray-800 font-bold p-2 text-end">Date & Time</div>
-                <div className="p-2 text-slate-700 bg-white">{date(gad.createdAt)}</div>
+                <div className="p-2 col-span-2 text-slate-700  w-full">{date(gad.createdAt)}</div>
               </div>
               <div className=" grid grid-cols-3 gap-2 ">
                 <div className="text-gray-800 font-bold p-2 text-end">Disposition</div>
@@ -129,7 +152,7 @@ const DispositionRecords = () => {
         }
       </div>
         {
-          dispositions?.getAccountDispositions && dispositions?.getAccountDispositions?.length > 3 &&
+          customerDispoCount?.getAccountDispoCount.count && customerDispoCount?.getAccountDispoCount.count > 3 &&
           <div className="flex justify-center">
             <button type="submit" className={`bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-500 font-medium rounded-lg thandleLoadMoreext-sm w-30 py-2 me-2 mb-2  cursor-pointer flex justify-center`} onClick={handleLoadMore}>
               {

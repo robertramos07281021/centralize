@@ -231,6 +231,9 @@ const MyTaskSection = () => {
   const [data, setData] = useState<CustomerData[] | null>([])
   const [selection, setSelection] = useState<string>("")
 
+  const groupLength = groupTaskData?.groupTask.task.filter(e=> userLogged.buckets.toString().includes(e.account_bucket._id)).length || null
+  const taskLength = myTasksData?.myTasks.filter(e=> userLogged.buckets.toString().includes(e.account_bucket._id)).length
+
   useEffect(()=> {
     if(selection.trim()==="my_task") {
       setData(myTasksData?.myTasks ? myTasksData?.myTasks.filter(e=> userLogged.buckets.toString().includes(e.account_bucket._id)) : null )
@@ -316,19 +319,25 @@ const MyTaskSection = () => {
   }
 
   return (
-    <div className="p-2 flex justify-end gap-5 relative">
+    <div className="p-2 py-4 flex justify-end gap-5 relative">
       {
-        (myTasksData && myTasksData?.myTasks?.length > 0) &&
-        <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5  dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleClickMyTask}>{selection.trim() !== "my_task" ? "My Tasks" : "Close"}</button>
-
+        taskLength !== undefined && taskLength > 0 &&
+   
+        <div className="flex flex-col gap-2 justify-between w-1/15">
+          <p className="lg:text-[0.6em] 2xl:text-xs font-bold flex justify-between"><span>Task:</span><span>{taskLength?.toLocaleString()}</span></p>
+          <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5  dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleClickMyTask}>{selection.trim() !== "my_task" ? "My Tasks" : "Close"}</button>
+        </div>
       }
       {
-        groupTaskData?.groupTask?._id &&
-        <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5  dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleClickGroupTask}>{selection.trim() !== "group_task" ? "Group Tasks" : "Close"}</button>
+        (groupLength && groupLength > 0) &&
+        <div className="flex flex-col gap-2 justify-between w-1/15">
+          <p className="lg:text-[0.6em] 2xl:text-xs font-bold flex justify-between"><span>Task:</span> <span>{groupLength?.toLocaleString()}</span></p>
+          <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg lg:text-[0.6em] 2xl:text-xs px-5 py-2.5  dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleClickGroupTask}>{selection.trim() !== "group_task" ? "Group Tasks" : "Close"}</button>
+        </div>
       }
       {
         selection.trim() !== "" &&
-        <div className="absolute border border-slate-300 rounded-lg shadow-md shadow-black/20 w-2/4 h-96 translate-y-1/2 -bottom-50 right-5 p-2 text-slate-500 flex flex-col">
+        <div className="absolute border border-slate-300 rounded-lg shadow-md shadow-black/20 w-2/4 h-96 translate-y-1/2 -bottom-50 right-5 p-2 text-slate-500 flex flex-col bg-white">
           <div className="h-full overflow-y-auto">
             {data?.map(d => (
               <div key={d._id} className="py-1.5 2xl:text-xs lg:text-[0.6em] hover:bg-blue-100 even:bg-slate-100 grid grid-cols-4 px-5">

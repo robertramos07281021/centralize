@@ -7,19 +7,30 @@ import Production from "../../models/production.js"
 import User from "../../models/user.js"
 import Bucket from "../../models/bucket.js"
 import DispoType from "../../models/dispoType.js"
-import Department from "../../models/department.js"
 import { PubSub } from "graphql-subscriptions"
 import Group from "../../models/group.js"
+import Department from "../../models/department.js"
 const pubsub = new PubSub()
 const DISPOSITION_UPDATE = "DISPOSITION_UPDATE";
 
 const dispositionResolver = {
   DateTime,
   Query: {
+
+    getAccountDispoCount: async(_,{id})=> {
+      try {
+        const dispositionCount = await Disposition.countDocuments({customer_account: new mongoose.Types.ObjectId(id)})
+        return {count:dispositionCount}
+      } catch (error) {
+       throw new CustomError(error.message, 500)
+      }
+      
+      
+    },
     getAccountDispositions: async(_,{id, limit}) => {
       try {
-        const dispositionCount = await Disposition.find({customer_account: new mongoose.Types.ObjectId(id)}).countDocuments()
-
+        const dispositionCount = await Disposition.countDocuments({customer_account: new mongoose.Types.ObjectId(id)})
+     
         const disposition = await Disposition.aggregate([
           {
             $match: {
@@ -54,9 +65,7 @@ const dispositionResolver = {
           {
             $unwind: { path: "$ca_disposition", preserveNullAndEmptyArrays: true } 
           },
-          {
-            $sort: { createdAt: -1 }
-          },
+   
 
           {
             $group:{
@@ -100,10 +109,13 @@ const dispositionResolver = {
             } 
           },
           {
+            $sort: { createdAt: -1 }
+          },
+          {
             $limit: limit === 3 ? limit : dispositionCount
-          }
+          },
         ])
-        return [...disposition]
+        return disposition
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
@@ -111,11 +123,11 @@ const dispositionResolver = {
     getDispositionReports: async(_,{agent, bucket, disposition, from, to}) => {
       try {
         
-        const agentUser = agent && await User.findOne({user_id: agent}) 
+        const agentUser = agent && await User.findOne({user_id: agent}).lean()
         
         if (!agentUser && agent) throw new CustomError("Agent not found", 404);
         
-        const findDispositions = disposition.length > 0 ? await DispoType.find({name: {$in: disposition}}) : [];
+        const findDispositions = disposition.length > 0 ? await DispoType.find({name: {$in: disposition}}).lean() : [];
 
         const dispoTypesIds = disposition.length > 0 ? findDispositions.map((dt)=> dt._id) : []
    
@@ -123,7 +135,7 @@ const dispositionResolver = {
         if (!findBucket && bucket) throw new CustomError("Bucket not found", 404);
         
         const customerAccountIds = findBucket
-        ? (await CustomerAccount.find({ bucket: findBucket._id })).map(ca => ca._id)
+        ? (await CustomerAccount.find({ bucket: findBucket._id }).lean()).map(ca => ca._id)
         : [];
      
         const query = [{}]
@@ -181,7 +193,7 @@ const dispositionResolver = {
         ])
         
         return { 
-          agent: agentUser && agent ? {
+          agent: agentUser ? {
             _id: agentUser._id,
             name: agentUser.name,
             branch: agentUser.branch,
@@ -566,7 +578,6 @@ const dispositionResolver = {
 
         return {month: month, dispositionsCount:dispositionPerDayOfTheMonth}
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -736,8 +747,7 @@ const dispositionResolver = {
     },
     getAllDispositionTypes: async() => {
       try {
-        const dispoTypes = await DispoType.find({code: {$ne: "SET"}})
-        return dispoTypes
+        return await DispoType.find({code: {$ne: "SET"}}).lean()
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
@@ -859,14 +869,229 @@ const dispositionResolver = {
               buckets: 1
             }
           }
-        ])
-        
+        ])   
         return reports
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
     },
+    getAomDashboardDispoCollections: async(_,__,{user}) => {
+      try {
+        const aomDept = (await Department.find({aom: user._id}).lean()).map(e=> e.name)
 
+        const deptBuckets = (await Bucket.find({dept: {$in:aomDept}}).lean()).map((e)=> new mongoose.Types.ObjectId(e._id))
+
+        const queryDispotype = ['PTP','PAID','SET']
+
+        const aomDashboardCollections = await Disposition.aggregate([
+          {
+            $lookup :{
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount",
+            }
+          },
+          {
+            $unwind: { path: "$customerAccount", preserveNullAndEmptyArrays: true }
+          },
+          {
+            $lookup :{
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true }
+          },
+          {
+            $match: {
+              "customerAccount.bucket": {$in: deptBuckets},
+              "dispotype.code": {$in: queryDispotype},
+            }
+          },
+          {
+            $group: {
+              _id: {
+                bucket: "$customerAccount.bucket",
+              },
+              ptp: {
+                $sum: { $cond: [{ $and: [{ $eq: ["$ptp", true] }, { $eq: ["$existing", true] },{$in: ["$dispotype.code", queryDispotype]}] }, 1, 0] }
+              },
+              ptp_amount: {
+                $sum: { $cond: [{  $and: [{ $eq: ["$ptp", true] }, { $eq: ["$existing", true] }, {$in: ["$dispotype.code", queryDispotype]}]}, "$amount", 0] }
+              },
+              ptp_kept: {
+                $sum: {
+                  $cond: [
+                    { $and: [{ $eq: ["$ptp", true] }, {$in: ["$dispotype.code", ["PAID","SET"]]}] },
+                    1,
+                    0
+                  ]
+                }
+              },
+              ptp_kept_amount: {
+                $sum: {
+                  $cond: [
+                    { $and: [{ $eq: ["$ptp", true] }, {$in: ["$dispotype.code", ["PAID","SET"]]}] },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              amount_collected: {
+                $sum: {
+                  $cond: [
+                    { $and: [{ $eq: ["$ptp", false] }, {$in: ["$dispotype.code", ["PAID","SET"]]}] },
+                    1,
+                    0
+                  ]
+                }
+              },
+              amount_collected_amount: {
+                $sum: {
+                  $cond: [
+                    { $and: [{ $eq: ["$ptp", false] }, {$in: ["$dispotype.code", ["PAID","SET"]]}] },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              bucket: "$_id.bucket",
+              ptp: 1,
+              ptp_amount: 1,
+              ptp_kept: 1,
+              ptp_kept_amount: 1,
+              amount_collected: 1,
+              amount_collected_amount: 1,
+            }
+          }
+        ]);
+
+        return aomDashboardCollections
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getAomDashboardDispoCollectionsToday: async(_,__,{user}) => {
+      try {
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+        const aomDept = (await Department.find({aom: user._id}).lean()).map(e=> e.name)
+
+        const deptBuckets = (await Bucket.find({dept: {$in:aomDept}}).lean()).map((e)=> new mongoose.Types.ObjectId(e._id))
+
+        const queryDispotype = ['PTP','PAID','SET']
+
+        const aomDashboardCollectionsToday = await Disposition.aggregate([
+          {
+            $lookup :{
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount",
+            }
+          },
+          {
+            $unwind: { path: "$customerAccount", preserveNullAndEmptyArrays: true }
+          },
+          {
+            $lookup :{
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true }
+          },
+          {
+            $match: {
+              "customerAccount.bucket": {$in: deptBuckets},
+              "dispotype.code": {$in: queryDispotype},
+              "createdAt" : {$gte: start, $lt:end}
+            }
+          },
+          {
+            $group: {
+              _id: {
+                bucket: "$customerAccount.bucket",
+              },
+              ptp: {
+                $sum: { $cond: [{ $and: [{ $eq: ["$ptp", true] }, { $eq: ["$existing", true] },{$in: ["$dispotype.code", queryDispotype]}] }, 1, 0] }
+              },
+              ptp_amount: {
+                $sum: { $cond: [{  $and: [{ $eq: ["$ptp", true] }, { $eq: ["$existing", true] }, {$in: ["$dispotype.code", queryDispotype]}]}, "$amount", 0] }
+              },
+              ptp_kept: {
+                $sum: {
+                  $cond: [
+                    { $and: [{ $eq: ["$ptp", true] }, {$in: ["$dispotype.code", ["PAID","SET"]]}] },
+                    1,
+                    0
+                  ]
+                }
+              },
+              ptp_kept_amount: {
+                $sum: {
+                  $cond: [
+                    { $and: [{ $eq: ["$ptp", true] }, {$in: ["$dispotype.code", ["PAID","SET"]]}] },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              amount_collected: {
+                $sum: {
+                  $cond: [
+                    { $and: [{ $eq: ["$ptp", false] }, {$in: ["$dispotype.code", ["PAID","SET"]]}] },
+                    1,
+                    0
+                  ]
+                }
+              },
+              amount_collected_amount: {
+                $sum: {
+                  $cond: [
+                    { $and: [{ $eq: ["$ptp", false] }, {$in: ["$dispotype.code", ["PAID","SET"]]}] },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              bucket: "$_id.bucket",
+              contact_method: "$_id.contact_method",
+              ptp: 1,
+              ptp_amount: 1,
+              ptp_kept: 1,
+              ptp_kept_amount: 1,
+              amount_collected: 1,
+              amount_collected_amount: 1,
+            }
+          }
+        ]);
+
+        return aomDashboardCollectionsToday
+
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    }
   },
 
   Mutation: {
@@ -880,23 +1105,26 @@ const dispositionResolver = {
         end.setHours(23, 59, 59, 999);
 
         const [customerAccount, dispoType, userProdRaw] = await Promise.all([
-          CustomerAccount.findById(customerAccountId).lean(),
+          CustomerAccount.findById(customerAccountId).populate( 'current_disposition'),
           DispoType.findOne({ name: disposition }).lean(),
           Production.findOne({
             user: user._id,
             createdAt: { $gte: start, $lte: end }
           }),
         ]);
-
+        
         if (!customerAccount) throw new CustomError("Customer account not found", 404);
+        
         if (!dispoType) throw new CustomError("Disposition type not found", 400);
       
         const userProd = userProdRaw || await Production.create({ user: user._id });
-
+        
         const isPaymentDisposition = disposition === "PAID" || disposition === "SETTLED";
         if (isPaymentDisposition && (!amount || !payment || !payment_date || !payment_method || !ref_no)) {
           throw new CustomError("All payment fields are required", 400);
         }
+
+        const ptp = customerAccount.current_disposition ? customerAccount.current_disposition.code === "PTP" ? true : false : false || dispoType.code === "PTP" ? true : false;
 
         const newDisposition = await Disposition.create({
           customer_account: customerAccountId, 
@@ -907,8 +1135,10 @@ const dispositionResolver = {
           payment_date, 
           payment_method, 
           ref_no, 
-          comment
+          comment,
+          ptp: ptp
         })
+   
 
         const group = customerAccount.assigned ? await Group.findById(customerAccount.assigned).lean() : null
 

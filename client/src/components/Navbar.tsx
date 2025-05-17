@@ -292,7 +292,7 @@ const Navbar = () => {
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       if (error instanceof Error) {
-        if(error?.message === "Not authenticated") {
+        if(error?.message === "Not authenticated" || error?.message === "Unauthorized") {
           setConfirmation(true)
           setModalProps({
             no:async()=> {

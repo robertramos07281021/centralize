@@ -106,14 +106,12 @@ interface modalProps {
 
 const HighReports:React.FC<modalProps> = ({reportHighData, campaign, from, to}) => {
 
-  console.log(reportHighData)
   const {data:dispoTypes} = useQuery<{getDispositionTypes:DispoType[]}>(GET_DISPOSITION_TYPES) 
   const [total, setTotal] = useState<number >(0)
   const [dataSetData, setDataSetData] = useState<number[]>([])
   const [dataSetBackGroundColor, setDataSetBackGroundColor] = useState<string[]>([])
   const [dataSetLabels, setDataSetLabes] = useState<string[]>([])
   const [newDispoTypeObject, setNewDispoTypeObject] = useState<{[key:string]:string}>({})
-
   useEffect(()=> {
     if(dispoTypes) {
       const object:{[key: string]:string} = {}
@@ -134,13 +132,13 @@ const HighReports:React.FC<modalProps> = ({reportHighData, campaign, from, to}) 
         reportHighData[0]?.buckets?.map((e,index)=> 
         {
           
-          const bucketCountArray = new Array<number>()
+          // const bucketCountArray = new Array<number>(reportHighData[0]?.buckets?.length)
           labelArray[index] = e.bucket
-          bucketNewArray[index] = bucketCountArray.reduce((t,v) => {return t + v} )
+          // bucketNewArray[index] = bucketCountArray?.reduce((t,v) => {return (t + v)} ) | 0
           bucketNewArrayColor[index] = colorBucket[index]
           e.dispositions.forEach(e => {
             countArray.push(e.count)
-            bucketCountArray.push(e.count)
+            // bucketCountArray.push(e.count)
           })
         })
         setDataSetLabes(labelArray)

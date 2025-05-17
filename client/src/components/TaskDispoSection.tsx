@@ -374,7 +374,6 @@ const TaskDispoSection = () => {
       })
     }
   }
-
   if(loading) return (<Loading/>)
 
   return (
@@ -413,7 +412,7 @@ const TaskDispoSection = () => {
                     Current Disposition
                   </th>
                   <th scope="col" className="px-6 py-3">
-                    
+                    Bucket
                   </th>
                   <th scope="col" className="px-6 py-3">
                     assigned
@@ -454,7 +453,7 @@ const TaskDispoSection = () => {
                 </tr>
               }
               {
-                CustomerAccountsData?.findCustomerAccount.CustomerAccounts.map((ca,index)=> ( 
+                CustomerAccountsData?.findCustomerAccount.CustomerAccounts.map((ca)=> ( 
                 <tr key={ca._id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-blue-100">
                   <th scope="row" className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
                       {ca.customer_info.fullName}
@@ -463,7 +462,7 @@ const TaskDispoSection = () => {
                       {ca.currentDisposition ? (ca.dispoType.code === "PAID" ? `${ca.dispoType.code} (Not Settled)` : ca.dispoType.code) : "New Endorsed"}
                   </td>
                   <td className="px-6 ">
-                      {index + 1}
+                      {ca.account_bucket.name}
                   </td>
                   <td className="px-6">
                     {ca.assigned?.name}

@@ -11,6 +11,14 @@ const customerAccountSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Bucket"
     },
+    assigned: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Group"
+    },
+    current_disposition: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref:"Disposition",
+    },
     case_id: {
       type: String,
     },
@@ -37,10 +45,6 @@ const customerAccountSchema = new Schema(
       type: Number,
       default: 0
     },
-    assigned: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Group"
-    },
     assigned_date: {
       type: String
     },
@@ -48,6 +52,16 @@ const customerAccountSchema = new Schema(
       type: Boolean,
       default: false
     },
+    status_call: {
+      type: String
+    },
+    file_name: {
+      type: String
+    },
+    failure_cause: {
+      type: String
+    },
+    //object
     out_standing_details: {
       principal_os: {
         type: Number,
@@ -71,6 +85,7 @@ const customerAccountSchema = new Schema(
         type: Number
       }
     },
+    //object
     grass_details: {
       grass_region: {
         type: String,
@@ -82,10 +97,6 @@ const customerAccountSchema = new Schema(
         type: String,
       }
     },
-    current_disposition: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref:"Disposition",
-    }
   },
   { timestamps: true }
 );

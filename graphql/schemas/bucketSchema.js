@@ -19,12 +19,19 @@ const bucketTypeDefs = gql`
     buckets: [Bucket]
   }
 
+  type AomDept {
+    dept: String,
+    buckets: [Bucket]
+  }
+
   type Query {
     getBuckets(dept:[ID]):[GetBuckets]
     getBucket(name:String): Bucket
     getDeptBucket:[Bucket]
     getAllBucket:[Bucket]
     findDeptBucket(dept:ID):[Bucket]
+    findAomBucket:[AomDept]
+    
   }
 
   type Mutation {

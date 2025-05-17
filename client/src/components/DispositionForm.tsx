@@ -121,8 +121,23 @@ const DispositionForm = () => {
 
   const handleOnChangeAmount = (e:React.ChangeEvent<HTMLInputElement>) => {
     let inputValue = e.target.value
-    inputValue = inputValue.replace(/\D/g,"");
-    inputValue = inputValue.replace(/^0+/,"") || "0"
+  
+  
+  inputValue = inputValue.replace(/[^0-9.]/g, '');
+
+  
+  const parts = inputValue.split('.');
+  if (parts.length > 2) {
+    inputValue = parts[0] + '.' + parts[1]; 
+  }
+ 
+  if (parts.length === 2) {
+    inputValue = parts[0] + '.' + parts[1].slice(0, 2);
+  }
+
+  if (inputValue.startsWith('00')) {
+    inputValue = '0';
+  }
     setData({...data, amount: inputValue})
   }
 
@@ -172,6 +187,7 @@ const DispositionForm = () => {
     }
   }
 
+  const anabledDispo = ["PAID","SETTLED","PROMISE TO PAY","UNDERNEGO"]
 
   return  (
     <>
@@ -205,7 +221,7 @@ const DispositionForm = () => {
               </select>
             </label>
             {
-              data.disposition === "PAID" || data.disposition === "SETTLED" ? 
+              anabledDispo.includes(data.disposition) ? 
               <label className="grid grid-cols-4 items-center">
                 <p className="text-gray-800 font-bold ">Amount</p>
                   <div className="relative col-span-3">
@@ -215,10 +231,10 @@ const DispositionForm = () => {
                       id="amount"
                       value={data.amount}
                       onChange={handleOnChangeAmount}
-                      pattern="[0-9]*"
+                      pattern="^\d+(\.\d{1,2})?$"
                       disabled={data.disposition === "SETTLED"}
                       placeholder="Enter amount"
-                      required={data.disposition === "PAID" || data.disposition === "SETTLED"}
+                      required={anabledDispo.includes(data.disposition)}
                       className={`${required && !data.amount ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} w-full 2xl:text-sm lg:text-xs border  text-gray-900 text-sm rounded-lg pl-8 focus:ring-blue-500 focus:border-blue-500 block p-2 `}/>
                     <p className="absolute top-2 left-4">&#x20B1;</p>
                   </div> 
@@ -231,14 +247,28 @@ const DispositionForm = () => {
               </div>
             }
             {
-              data.disposition === "PAID" ||  data.disposition === "SETTLED" ? 
-              <label className="grid grid-cols-4 items-center">
+              anabledDispo.includes(data.disposition) ? data.disposition === "PROMISE TO PAY" || data.disposition === "UNDERNEGO" ? 
+                <label className="grid grid-cols-4 items-center">
+                   <p className="text-gray-800 font-bold ">Payment</p>
+                  <select 
+                    name="payment" 
+                    id="payment"
+                    required
+                    className={`${required && !data.payment ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
+                    >
+                    <option value="">Select Payment</option>
+                    <option value="partial">Partial</option>
+                    <option value="full">Full payment</option>
+                  </select>
+                </label>
+              :
+              <div className="grid grid-cols-4 items-center">
                 <p className="text-gray-800 font-bold ">Payment</p>
                   <div 
                     className={`bg-gray-50 border-gray-500 border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block col-span-3 p-2 capitalize`}>
                     {data.payment}
                   </div>
-              </label>  
+              </div>  
               :
               <div className="grid grid-cols-4 items-center">
                  <p className="text-gray-800 font-bold ">Payment</p>
@@ -246,22 +276,44 @@ const DispositionForm = () => {
                 </div>
               </div>
             }
+            {/* {
+              anabledDispo.includes(data.disposition) ? 
+              <label className="grid grid-cols-4 items-center">
+                  <p className="text-gray-800 font-bold ">Contact Method</p>
+                <select 
+                  name="payment" 
+                  id="payment"
+                  required
+                  className={`${required && !data.payment ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
+                  >
+                  <option value="calls">Calls</option>
+                  <option value="sms">SMS</option>
+                  <option value="email">Email</option>
+                  <option value="skip">Skip</option>
+                  <option value="field">Field</option>
+                </select>
+              </label>
+              :
+              <div className="grid grid-cols-4 items-center">
+                <p className="text-gray-800 font-bold ">Field Type</p>
+                <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
+                </div>
+              </div>
+            } */}
           </div>
           <div className="flex flex-col gap-2"> 
             {
-              data.disposition === "PAID" ||  data.disposition === "SETTLED" ? 
+              anabledDispo.includes(data.disposition) ? 
               <label className="grid grid-cols-4 items-center">
                 <p className="text-gray-800 font-bold">Payment Date</p>
                   <input 
                     type="date" 
                     id="payment_date" 
                     name="payment_date"
-                    required={data.disposition === "PAID" ||  data.disposition === "SETTLED"}
                     value={data.payment_date}
                     onChange={(e)=> setData({...data, payment_date: e.target.value})}
-                    className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
+                    className={`bg-gray-50 border-gray-500 border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
                   />
-                
               </label>
               :
               <div className="grid grid-cols-4 items-center">
@@ -270,52 +322,50 @@ const DispositionForm = () => {
                 </div>
               </div>
             }
-              {
-                data.disposition === "PAID" ||  data.disposition === "SETTLED" ? 
-                <label className="grid grid-cols-4 items-center">
-                  <p className="text-gray-800 font-bold ">Payment Method</p>
-                    <select 
-                      name="payment_method" 
-                      id="payment_method" 
-                      value={data.payment_method}
-                      required={data.disposition === "PAID" ||  data.disposition === "SETTLED"}
-                      onChange={(e)=> setData({...data, payment_method: e.target.value})}
-                      className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}>
-                      <option value="">Select Method</option>
-                      <option value="Bank to Bank Transfer">Bank to Bank Transfer</option>
-                      <option value="7/11">7/11</option>
-                      <option value="Gcash/PAY Maya">Gcash/PAY Maya</option>
-                      <option value="CASH">CASH</option>
-                    </select>
-                </label>
-                :
-                <div className="grid grid-cols-4 items-center">
-                  <p className="text-gray-800 font-bold ">Payment Method</p>
-                  <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
-                  </div>
+            {
+              anabledDispo.includes(data.disposition) ? 
+              <label className="grid grid-cols-4 items-center">
+                <p className="text-gray-800 font-bold ">Payment Method</p>
+                  <select 
+                    name="payment_method" 
+                    id="payment_method" 
+                    value={data.payment_method}
+                    onChange={(e)=> setData({...data, payment_method: e.target.value})}
+                    className={` bg-gray-50  border-gray-500 border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}>
+                    <option value="">Select Method</option>
+                    <option value="Bank to Bank Transfer">Bank to Bank Transfer</option>
+                    <option value="7/11">7/11</option>
+                    <option value="Gcash/PAY Maya">Gcash/PAY Maya</option>
+                    <option value="CASH">CASH</option>
+                  </select>
+              </label>
+              :
+              <div className="grid grid-cols-4 items-center">
+                <p className="text-gray-800 font-bold ">Payment Method</p>
+                <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
                 </div>
-              }
-              {
-                data.disposition === "PAID" ||  data.disposition === "SETTLED" ?
-                <label className="grid grid-cols-4 items-center">
-                  <p className="text-gray-800 font-bold ">Ref. No</p>
-                    <input 
-                      type="text" 
-                      name="ref" 
-                      id="ref"
-                      required={data.disposition === "PAID" ||  data.disposition === "SETTLED"}
-                      value={data.ref_no}
-                      placeholder="Enter reference no."
-                      onChange={(e)=> setData({...data, ref_no: e.target.value})}
-                      className={`${required && !data.payment_date ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} p-2.5 border rounded-lg col-span-3`}/>
-                </label>
-                :
-                <div className="grid grid-cols-4 items-center">
-                  <p className="text-gray-800 font-bold ">Ref. No</p>
-                  <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
-                  </div>
+              </div>
+            }
+            {
+              data.disposition === "PAID" ||  data.disposition === "SETTLED"  ?
+              <label className="grid grid-cols-4 items-center">
+                <p className="text-gray-800 font-bold ">Ref. No</p>
+                  <input 
+                    type="text" 
+                    name="ref" 
+                    id="ref"
+                    value={data.ref_no}
+                    placeholder="Enter reference no."
+                    onChange={(e)=> setData({...data, ref_no: e.target.value})}
+                    className={` bg-gray-50  border-gray-500 p-2.5 border rounded-lg col-span-3`}/>
+              </label>
+              :
+              <div className="grid grid-cols-4 items-center">
+                <p className="text-gray-800 font-bold ">Ref. No</p>
+                <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
                 </div>
-              }
+              </div>
+            }
             <label className="grid grid-cols-4 items-center">
               <p className="text-gray-800 font-bold ">Comment</p>
               <textarea 

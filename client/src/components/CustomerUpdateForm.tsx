@@ -414,7 +414,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
               }
             </div>
           </div>
-          <div>
+          <div className="flex justify-center gap-5">
             <button type="submit" className={`bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-500 font-medium rounded-lg text-sm w-24 py-2.5 me-2  cursor-pointer`}>Save</button>
             <button 
               type="button"
