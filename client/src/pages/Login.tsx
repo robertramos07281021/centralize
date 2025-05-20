@@ -169,20 +169,19 @@ const Login = () => {
   },[userLogged,userRoutes,navigate])
 
   useEffect(()=> {
-      const timer = setTimeout(async() =>  {
-        if(userLogged?._id && !userLogged.change_password)
-        try {
-          await logout()
-          if(selectedCustomer._id) {
-            await deselectTask({variables: {id: selectedCustomer._id}})
-          }
-          
-        } catch (error) {
-          console.log(error)
-          dispatch(setError(true))
+    const timer = setTimeout(async() =>  {
+      if(userLogged?._id && !userLogged.change_password)
+      try {
+        await logout()
+        if(selectedCustomer._id) {
+          await deselectTask({variables: {id: selectedCustomer._id}})
         }
-      })
-      return () => clearTimeout(timer) 
+      } catch (error) {
+        console.log(error)
+        dispatch(setError(true))
+      }
+    })
+    return () => clearTimeout(timer) 
   },[dispatch, userLogged, logout, selectedCustomer,deselectTask])
 
   if(loading) return <Loading/>
@@ -212,7 +211,7 @@ const Login = () => {
                 type="text" 
                 id="username"
                 name="username"
-                autoComplete="username"
+                autoComplete="false"
                 value={username}
                 onChange={(e)=> setUsername(e.target.value)}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
@@ -226,6 +225,7 @@ const Login = () => {
                 type={`${eye? "text" : "password"}`}
                 id="password" 
                 name="password"
+                autoComplete="false"
                 value={password} 
                 onChange={(e)=> setPassword(e.target.value)}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 

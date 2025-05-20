@@ -272,8 +272,18 @@ const customerResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500) 
       }
-    
     },
+    accountsCount: async(_,__,{user}) => {
+      try {
+        const aomDept = (await Department.find({aom: user._id}).lean()).map(dept=> dept.name)
+
+        const deptBuckets = (await Bucket.find({dept: {$in:aomDept}}).lean()).map((e)=> e._id)
+
+        return  await CustomerAccount.countDocuments({ bucket: { $in: deptBuckets } }) || 0
+      } catch (error) {
+        throw new CustomError(error.message, 500)        
+      }
+    }
   },
   CustomerAccount: {
     assigned: async(parent)=> {
@@ -302,7 +312,7 @@ const customerResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
-    }
+    },
   },
 
   Assigned: {

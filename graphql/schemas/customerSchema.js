@@ -168,6 +168,7 @@ const customerTypeDefs = gql`
     search(search:String):[Search]
     findCustomerAccount(disposition:[String],groupId:ID,page:Int, assigned:String, limit:Int):FindCustomerAccount
     selectAllCustomerAccount(disposition:[String],groupId:ID,assigned:String):[ID]
+    accountsCount:Int
   }
 
   type Mutation {

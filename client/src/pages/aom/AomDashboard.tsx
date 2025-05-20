@@ -1,151 +1,92 @@
-import { useQuery } from "@apollo/client"
-import gql from "graphql-tag"
-import React from "react"
+import PaidBar from "../../components/PaidBar"
+import PTPBar from "../../components/PTPBar"
+import PTPKept from "../../components/PTPKept"
 
-interface getAomDashboardDispoCollections {
-  bucket: string
-  ptp: number
-  ptp_amount: number
-  ptp_kept: number
-  ptp_kept_amount: number
-  amount_collected: number
-  amount_collected_amount: number
-}
+import { IoMdArrowDown, IoMdArrowUp  } from "react-icons/io";
 
-
-const AOM_DASHBOARD_COLLECTIONS = gql`
-  query GetAomDashboardDispoCollections {
-    getAomDashboardDispoCollections {
-      bucket
-      ptp
-      ptp_amount
-      ptp_kept
-      ptp_kept_amount
-      amount_collected
-      amount_collected_amount
-    }
-  }
-`
-
-const AOM_DASHBOARD_COLLECTIONS_TODAY = gql`
-  query GetAomDashboardDispoCollectionsToday {
-    getAomDashboardDispoCollectionsToday {
-      bucket
-      ptp
-      ptp_amount
-      ptp_kept
-      ptp_kept_amount
-      amount_collected
-      amount_collected_amount
-    }
-  }
-`
-
-interface Bucket {
-  id: string
-  name: string
-}
-
-interface AomBucket {
-  dept: string
-  buckets: Bucket[]
-}
-
-const AOM_BUCKET = gql`
-  query FindAomBucket {
-    findAomBucket {
-      dept
-      buckets {
-        id
-        name
-      }
-    }
-  }
-
-
-`
 
 
 const AomDashboard = () => {
-  const {data:AOMDashboardData} = useQuery<{getAomDashboardDispoCollections:getAomDashboardDispoCollections[]}>(AOM_DASHBOARD_COLLECTIONS)
-  const {data:AOMDashboardTodayData} = useQuery<{getAomDashboardDispoCollectionsToday:getAomDashboardDispoCollections[]}>(AOM_DASHBOARD_COLLECTIONS_TODAY)
-  const {data:AOMBucketData} = useQuery<{findAomBucket:AomBucket[]}>(AOM_BUCKET)
+ 
+  function widthOfMonthlyTarget(total:number, collected:number) {
+    const width = (collected/total * 100)
+    return `w-[${width}%]`
+  }
 
   return (
-    <div className="h-full p-2 flex flex-col bg-slate-200 gap-2 relative">
-      <div className="w-full border bg-white border-slate-400 rounded-xl p-2  ">
-        
-        <table className="table-auto">
-          <thead className="text-slate-500">
-            <tr>
-              <th rowSpan={3} className="text-xs  border sticky top-0 bg-white ">Buckets</th>
-              <th colSpan={6} className="border">Total</th>
-              <th colSpan={6} className="border">Today</th>
-            </tr>
-            <tr className="text-[0.8em] ">
-         
-              <th colSpan={2} className=" border py-1">PTP</th>
-              <th colSpan={2} className="border">PTP Kept</th>
-              <th colSpan={2} className="border">PAID</th>
-              <th colSpan={2} className=" border py-1">PTP</th>
-              <th colSpan={2} className="border">PTP Kept</th>
-              <th colSpan={2} className="border">PAID</th>
-            </tr>
-            <tr className="text-[0.6em] text-center">
-              <td className="border">Count</td>
-              <td className="border">Amount</td>
-              <td className="border">Count</td>
-              <td className="border">Amount</td>
-              <td className="border">Count</td>
-              <td className="border">Amount</td>
-              <td className="border">Count</td>
-              <td className="border">Amount</td>
-              <td className="border">Count</td>
-              <td className="border">Amount</td>
-              <td className="border">Count</td>
-              <td className="border">Amount</td>
-            </tr>
-          </thead>
-          <tbody>
-            {
-              AOMBucketData?.findAomBucket.map((ab,index) => {
-                return (<React.Fragment key={index}>
-                  <tr>
-                    <th className="text-xs text-slate-600 border py-1 bg-blue-100" colSpan={13}> {ab.dept}</th>
-                  </tr>
-                  {
-                    ab.buckets.map(b => {
-                      const findCollections = AOMDashboardData?.getAomDashboardDispoCollections.find(e=> e.bucket === b.id)
-                      const findCollectionsToday = AOMDashboardTodayData?.getAomDashboardDispoCollectionsToday.find(e => e.bucket === b.id)
-                      return (
-                        <tr key={b.id} className="text-xs text-slate-600 border">
-                          <th className="text-[0.9em] px-10">{b.name}</th>
-                          <td className=" text-center border px-5 py-0.5">{findCollections?.ptp || 0}</td>
-                          <td className=" border text-center px-5 py-0.5">{findCollections?.ptp_amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) || (0).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</td>
-                          <td className=" text-center border px-5 py-0.5">{findCollections?.ptp_kept || 0}</td>
-                          <td className=" border text-center px-5 py-0.5">{findCollections?.ptp_kept_amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) || (0).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</td>
-                          <td className=" text-center border px-5 py-0.5">{findCollections?.amount_collected || 0}</td>
-                          <td className="border text-center px-5 py-0.5">{findCollections?.amount_collected_amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) || (0).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</td>
-                          <td className=" text-center border px-5 py-0.5">{findCollectionsToday?.ptp_kept || 0}</td>
-                          <td className="border text-center px-5 py-0.5">{findCollectionsToday?.ptp_amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) || (0).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</td>
-                          <td className=" text-center border px-5 py-0.5">{findCollectionsToday?.ptp_kept || 0}</td>
-                          <td className=" border text-center px-5 py-0.5">{findCollectionsToday?.ptp_kept_amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) || (0).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</td>
-                          <td className=" text-center border px-5 py-0.5">{findCollectionsToday?.amount_collected || 0}</td>
-                          <td className="border text-center px-5 py-0.5">{findCollectionsToday?.amount_collected_amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) || (0).toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</td>
-                       
-                        </tr>
-                      )
-                    })
-                  }
-                  </React.Fragment>
-                )
-              })
-            }
-          </tbody>
-        </table>
+    <div className="h-full p-2 grid grid-rows-4 grid-cols-5 bg-slate-200 gap-2">
+      
+      <div className="bg-white rounded-xl border border-slate-300 row-span-2 p-2 flex flex-col">
+        <div className="text-center font-medium text-slate-500 lg:text-xs 2xl:text-sm">
+          Daily Collection
+        </div>
+        <div className="text-center font-medium text-slate-500 lg:text-xs 2xl:text-sm grid grid-cols-4">
+          <div>Campaign</div>
+          <div>PTP</div>
+          <div>PTP Kept</div>
+          <div>Paid</div>
+        </div>
+        <div className="lg:h-70 2xl:h-80 overflow-x-auto lg:text-[0.6em] 2xl:text-xs text-slate-400">
+
+          <div className="grid grid-cols-4 text-center hover:bg-blue-50 cursor-default py-0.5">
+            <div>Shopee M2</div>
+            <div className="flex justify-center items-center"><span>4654</span> <IoMdArrowDown className="text-red-500" /> </div>
+            <div className="flex justify-center items-center"><span>4654</span> <IoMdArrowUp className="text-green-500" /> </div>
+            <div className="flex justify-center items-center"><span>123124</span> <IoMdArrowUp className="text-green-500"/> </div>
+          </div>
+        </div>
 
       </div>
-      
+      <div className="row-start-3 row-span-2 bg-white rounded-xl border border-slate-300 p-2">
+        <h1 className="font-medium text-slate-500 text-center lg:text-xs 2xl:text-sm">Daily FTE</h1>
+        <div className="text-center font-medium text-slate-500 lg:text-xs 2xl:text-sm grid grid-cols-3">
+          <div>Campaign</div>
+          <div>Assigned</div>
+          <div>Online</div>
+        </div>
+        <div className="lg:h-70 2xl:h-80 overflow-x-auto lg:text-[0.6em] 2xl:text-xs text-slate-400">
+          <div className="grid grid-cols-3 text-center hover:bg-blue-50 cursor-default py-0.5">
+            <div>Shopee M2</div>
+            <div className="flex justify-center items-center"><span>2</span> </div>
+            <div className="flex justify-center items-center"><span>1</span> </div>
+          </div>
+        </div>
+      </div>
+      <div className=" col-start-2 row-span-4 col-span-3 grid grid-rows-3 gap-2">
+        <div className="border bg-white rounded-xl border-slate-300 p-2">
+          <PTPBar/>
+        </div>
+        <div className="border bg-white rounded-xl border-slate-300 p-2">
+          <PTPKept/>
+        </div>
+        <div className="border bg-white rounded-xl border-slate-300 p-2">
+          <PaidBar/>
+        </div>
+      </div>
+
+      <div className="col-start-5 border row-span-2 border-slate-300 bg-white rounded-xl">
+        
+      </div>
+
+      <div className="bg-white row-span-2 rounded-xl border border-slate-300 p-2">
+        <h1 className="font-medium text-slate-500 lg:text-xs 2xl:text-sm">Monthly Target</h1>
+        
+        <div className="lg:h-70 2xl:h-80 overflow-x-auto lg:text-[0.6em] 2xl:text-xs text-slate-500">
+
+          <div className="flex flex-col gap-2 hover:bg-blue-50 cursor-default py-2 odd:bg-slate-100">
+            <div className="text-center font-medium">Shopee M2</div>
+            <div className="flex justify-center items-center flex-col">
+              <div className="border w-8/9 h-4 rounded-full ">
+                <div className={`rounded-full bg-red-500 h-full  ${widthOfMonthlyTarget(60000,18000)} text-center text-slate-900 font-bold `} >
+                {18000/60000 * 100}%
+                </div>
+              </div>
+              <h1 className="text-center">18000/60000</h1>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   )
 }

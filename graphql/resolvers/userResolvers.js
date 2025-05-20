@@ -204,7 +204,7 @@ const userResolvers = {
         if(!validatePassword) throw new CustomError("Invalid",401)
   
         const token = jwt.sign({id: user._id,username: user.username}, process.env.SECRET,
-          // { expiresIn: "1d"}
+          { expiresIn: "12h"}
         )
   
         user.isOnline = true
@@ -215,7 +215,6 @@ const userResolvers = {
           const newDateFindProd = new Date(findProd[0].createdAt);
           const newDateToDay = new Date();
         
-
           newDateFindProd.setHours(0, 0, 0, 0);
           newDateToDay.setHours(0, 0, 0, 0);
         
@@ -232,7 +231,6 @@ const userResolvers = {
 
         res.cookie('token', token, {
           httpOnly: true,
-   
         });
         return {success: true, message: "Logged in", user: user}
         

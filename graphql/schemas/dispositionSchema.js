@@ -141,16 +141,22 @@ const dispositionTypeDefs = gql`
   }
   
   type BucketAomDashobard {
-    bucket: ID
-    ptp: Int
+    campaign: ID
     ptp_amount: Float
-    ptp_kept: Int
     ptp_kept_amount:Float
-    amount_collected: Int
     amount_collected_amount:Float
   }
   type Count {
     count: Int
+  }
+
+  type AomDashboardAmountAndCount {
+    ptp: Int
+    ptp_amount: Float
+    ptp_kept:Int
+    ptp_kept_amount:Float
+    amount_collected:Int
+    amount_collected_amount:Float
   }
 
   type Query {
@@ -165,8 +171,7 @@ const dispositionTypeDefs = gql`
     getAllDispositionTypes:[DispoType]
     getDispositionReportsHigh(campaign:String, bucket:String, dispositions:[String], from:String, to:String):[HighDispositionReport]
     getDispositionCountYesterday:[YesterdayDispo]
-    getAomDashboardDispoCollections:[BucketAomDashobard] 
-    getAomDashboardDispoCollectionsToday:[BucketAomDashobard] 
+
   }
 
   type Mutation {
