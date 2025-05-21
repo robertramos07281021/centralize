@@ -1,47 +1,78 @@
 
 import { Bar } from 'react-chartjs-2'
+import { color, month } from '../middleware/exports';
+import gql from 'graphql-tag';
+import { useQuery } from '@apollo/client';
+import { useEffect, useState } from 'react';
 
 
-  const color = [
-  "oklch(0.75 0.15 0)",     // Red
-  "oklch(0.75 0.15 18)",     // Orange-red
-  "oklch(0.75 0.15 36)",     // Orange
-  "oklch(0.75 0.15 54)",     // Yellow-orange
-  "oklch(0.75 0.15 72)",     // Yellow
-  "oklch(0.75 0.15 90)",     // Yellow-green
-  "oklch(0.75 0.15 108)",     // Lime green
-  "oklch(0.75 0.15 126)",     // Green
-  "oklch(0.75 0.15 144)",     // Emerald
-  "oklch(0.75 0.15 162)",     // Cyan-green
-  "oklch(0.75 0.15 180)",     // Cyan
-  "oklch(0.75 0.15 198)",     // Aqua
-  "oklch(0.75 0.15 216)",     // Sky Blue
-  "oklch(0.75 0.15 234)",     // Blue
-  "oklch(0.75 0.15 252)",     // Indigo
-  "oklch(0.75 0.15 270)",     // Violet
-  "oklch(0.75 0.15 288)",     // Purple
-  "oklch(0.75 0.15 306)",     // Magenta
-  "oklch(0.75 0.15 324)",     // Pink
-  "oklch(0.75 0.15 342)", 
-]
 
+
+interface AomDept {
+  id: string
+  name: string
+}
+
+const AOM_DEPT = gql`
+  query getAomDept {
+    getAomDept {
+      id
+      name
+    }
+  }
+`
+
+interface PTP_KEPT {
+  campaign: string
+  amount: number
+}
+
+const PTP_KEPT_OF_MONTH = gql`
+  query GetPTPKeptPerMonth {
+    getPTPKeptPerMonth {
+      campaign
+      amount
+    }
+  }
+`
+
+interface DataPerCampaign {
+  label: string
+  data: number
+  color: string
+}
 
 
 const PTPKept = () => {
+  const {data:ptpKeptData} = useQuery<{getPTPKeptPerMonth:PTP_KEPT[]}>(PTP_KEPT_OF_MONTH)
+    const {data:aomDeptData} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
+    const [newObjectArray, setNewObjectArray] = useState<DataPerCampaign[]>([])
 
-  const labels = ['Shopee M2','Shopee M3','Shopee M4','Shopee M5','Shopee M7','Shopee M8','Shopee M9','Shopee M10','Shopee M11','Shopee M12','Shopee M13','Shopee M15','Shopee M16','Shopee M17','Shopee M18','Shopee M19','Shopee M20']
+    useEffect(()=> {
+      if(aomDeptData && ptpKeptData) {
+        const newArrayId = new Array(aomDeptData.getAomDept.length).fill({})
+        aomDeptData.getAomDept.forEach((ad,index) => {
+          const object:DataPerCampaign = {label: "", data: 0, color: ""}
+          const findCampaignPTP = ptpKeptData?.getPTPKeptPerMonth.find(ppm => ppm.campaign === ad.id)
+          object["label"] = ad.name
+          object["data"] = findCampaignPTP?.amount || 0
+          object['color'] = color[index]
+          newArrayId[index] = object
+        })
+        setNewObjectArray(newArrayId)
+      }
+    },[aomDeptData,ptpKeptData])
 
   const data = {
-    labels: labels,
+    labels: newObjectArray.map(e=> e.label),
     datasets: [
       {
         label: 'Collection',
-        data: Array.from({ length: labels.length }, () => Math.floor(Math.random() * 100) + 5),
-        backgroundColor: color[0],
+        data: newObjectArray.map(e=> e.data),
+        backgroundColor: newObjectArray.map(e=> e.color),
       },
     ],
   };
-
 
   const option = { 
     plugins: {
@@ -53,7 +84,7 @@ const PTPKept = () => {
       },
       title: {
         display: true,
-        text: 'PTP Kept',
+        text: `PTP Kept ${month[new Date().getMonth()]} ${new Date().getFullYear()}`,
       },
     },
     responsive: true, 
@@ -61,7 +92,6 @@ const PTPKept = () => {
   }
 
   return (
-    
     <>
       <Bar data={data} options={option}/>
     </>

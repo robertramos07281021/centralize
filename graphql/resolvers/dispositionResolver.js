@@ -875,9 +875,515 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-   
-    
-   
+    getAomDailyCollection: async(_,__,{user}) => {
+      try {
+        
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const yesterdayStart = new Date();
+        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+        yesterdayStart.setHours(0, 0, 0, 0);
+        const yesterDayEnd = new Date();
+        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
+        yesterDayEnd.setHours(23, 59, 59, 999);
+        
+        const aomCampaign = await Department.find({aom: user._id}).lean()
+        const aomCampaignNameArray = aomCampaign.map(e => e.name)
+        const campaignBucket = await Bucket.find({dept: {$in: aomCampaignNameArray}}).lean()
+        const newArrayCampaignBucket = campaignBucket.map(e=> e._id)
+
+
+        const disposition = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount"
+            },
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+              pipeline: [
+                {
+                  $project: {code: 1}
+                }
+              ]
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              createdAt: {$gte:yesterdayStart, $lt: todayEnd },
+              "bucket._id": {$in: newArrayCampaignBucket}
+            }
+          },
+          {
+            $group: {
+              _id: "$bucket.dept" ,
+              ptp: {
+                $sum: {
+                  $cond: [
+                    {$and : [
+                      {$gte: ['$createdAt',todayStart]},
+                      {$lt: ['$createdAt',todayEnd]},
+                      {$eq: ["$dispotype.code","PTP"]}
+                    ]},
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              ptp_kept: {
+                $sum: {
+                  $cond: [
+                    {$and: [
+                      {$gte: ['$createdAt',todayStart]},
+                      {$lt: ['$createdAt',todayEnd]},
+                      {$eq: ["$dispotype.code","PAID"]},
+                      {$eq: ["$ptp" , true]}
+                     ]},
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              paid: {
+                $sum: {
+                  $cond: [
+                    {$and: [
+                      {$gte: ['$createdAt',todayStart]},
+                      {$lt: ['$createdAt',todayEnd]},
+                      {$eq: ["$dispotype.code","PAID"]},
+                      {$eq: ["$ptp" , false]}
+                     ]},
+                    "$amount",
+                    0
+                  ]
+                }
+
+              },
+              yesterday_ptp: {
+                $sum: {
+                  $cond: [
+                    {$and : [
+                      {$gte: ['$createdAt',yesterdayStart]},
+                      {$lt: ['$createdAt',yesterDayEnd]},
+                      {$eq: ["$dispotype.code","PTP"]},
+                    ]},
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              yesterday_ptp_kept: {
+                $sum: {
+                  $cond: [
+                    {$and: [
+                      {$gte: ['$createdAt',yesterdayStart]},
+                      {$lt: ['$createdAt',yesterDayEnd]},
+                      {$eq: ["$dispotype.code","PTP"]},
+                      {$eq: ["$ptp" , true]}
+                     ]},
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              yesterday_paid: {
+                $sum: {
+                  $cond: [
+                    {$and: [
+                      {$gte: ['$createdAt',yesterdayStart]},
+                      {$lt: ['$createdAt',yesterDayEnd]},
+                      {$eq: ["$dispotype.code","PAID"]},
+                      {$eq: ["$ptp" , false]}
+                     ]},
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              campaign: "$_id",
+              ptp: 1,
+              ptp_kept: 1,
+              paid: 1,
+              yesterday_ptp: 1,
+              yesterday_ptp_kept: 1,
+              yesterday_paid: 1,
+            }
+          }
+        ])
+
+        const newDispo = disposition.map(e => {
+          const campaign = aomCampaign.find(c=> c.name === e.campaign)
+          return {
+            ...e,
+            campaign: campaign ? campaign._id : null
+          }
+        })
+
+  
+        return newDispo
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+
+    },
+    getDailyFTE: async(_,__,{user}) => {
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const aomCampaign = await Department.find({aom: user._id}).lean()
+        const aomCampaignNameArray = aomCampaign.map(e => e.name)
+        const campaignBucket = (await Bucket.find({dept: {$in: aomCampaignNameArray}}).lean()).map(e=> e._id)
+
+        const dailyFTE = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount"
+            },
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              createdAt: {$gte:todayStart, $lt: todayEnd },
+              "bucket._id": {$in: campaignBucket}
+            }
+          },
+          {
+            $group: {
+              _id: {
+                campaign: "$bucket.dept",
+                user: "$user"
+              },
+            }
+          },
+          {
+            $group: {
+              _id: "$_id.campaign",
+              online: {$sum: 1}
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              campaign: "$_id",
+              online: 1
+            }
+          }
+
+        ])
+        const newDailyFTE = dailyFTE.map(e => {
+          const newCampaignArray = aomCampaign.find(c=> e.campaign === c.name)
+          return {
+            ...e,
+            campaign: newCampaignArray ? newCampaignArray._id : null,
+          }
+        })
+        return newDailyFTE
+
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getPTPPerMonth: async(_,__,{user} ) => {
+      try {
+        const year = new Date().getFullYear()
+        const month = new Date().getMonth();
+        const firstDay = new Date(year,month, 1)
+        const lastDay = new Date(year,month + 1,0)
+
+        const aomCampaign = await Department.find({aom: user._id}).lean()
+        const aomCampaignNameArray = aomCampaign.map(e => e.name)
+        const campaignBucket = await Bucket.find({dept: {$in: aomCampaignNameArray}}).lean()
+        const newArrayCampaignBucket = campaignBucket.map(e=> e._id)
+
+        const PTPOfMonth = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount"
+            },
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              createdAt: {$gte:firstDay, $lt:lastDay},
+              "dispotype.code" : "PTP",
+              "bucket._id" : {$in: newArrayCampaignBucket}
+            }
+          },
+          {
+            $group: {
+              _id: "$bucket.dept",
+              amount: {$sum: "$amount"}
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              campaign: "$_id",
+              amount: 1
+            }
+          }
+
+
+        ])
+
+        const newPTPOfMonth = PTPOfMonth.map(pom=> {
+          const campaign = aomCampaign.find(ac => pom.campaign === ac.name)
+          return {
+            ...pom,
+            campaign: campaign ? campaign._id : null
+          }
+        })
+
+        return newPTPOfMonth
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getPTPKeptPerMonth: async(_,__,{user} ) => {
+      try {
+        const year = new Date().getFullYear()
+        const month = new Date().getMonth();
+        const firstDay = new Date(year,month, 1)
+        const lastDay = new Date(year,month + 1,0)
+
+        const aomCampaign = await Department.find({aom: user._id}).lean()
+        const aomCampaignNameArray = aomCampaign.map(e => e.name)
+        const campaignBucket = await Bucket.find({dept: {$in: aomCampaignNameArray}}).lean()
+        const newArrayCampaignBucket = campaignBucket.map(e=> e._id)
+
+        const PTPKeptOfMonth = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount"
+            },
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              createdAt: {$gte:firstDay, $lt:lastDay},
+              "dispotype.code" : "PAID",
+              ptp : true,
+              "bucket._id" : {$in: newArrayCampaignBucket}
+            }
+          },
+          {
+            $group: {
+              _id: "$bucket.dept",
+              amount: {$sum: "$amount"}
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              campaign: "$_id",
+              amount: 1
+            }
+          }
+
+        ])
+
+        const newPTPKeptOfMonth = PTPKeptOfMonth.map(pom=> {
+          const campaign = aomCampaign.find(ac => pom.campaign === ac.name)
+          return {
+            ...pom,
+            campaign: campaign ? campaign._id : null
+          }
+        })
+
+        return newPTPKeptOfMonth
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getPaidPerMonth: async(_,__,{user} ) => {
+      try {
+        const year = new Date().getFullYear()
+        const month = new Date().getMonth();
+        const firstDay = new Date(year,month, 1)
+        const lastDay = new Date(year,month + 1,0)
+
+        const aomCampaign = await Department.find({aom: user._id}).lean()
+        const aomCampaignNameArray = aomCampaign.map(e => e.name)
+        const campaignBucket = await Bucket.find({dept: {$in: aomCampaignNameArray}}).lean()
+        const newArrayCampaignBucket = campaignBucket.map(e=> e._id)
+
+        const PTPKeptOfMonth = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount"
+            },
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              createdAt: {$gte:firstDay, $lt:lastDay},
+              "dispotype.code" : "PAID",
+              ptp : false,
+              "bucket._id" : {$in: newArrayCampaignBucket}
+            }
+          },
+          {
+            $group: {
+              _id: "$bucket.dept",
+              amount: {$sum: "$amount"}
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              campaign: "$_id",
+              amount: 1
+            }
+          }
+        ])
+
+        const newPTPKeptOfMonth = PTPKeptOfMonth.map(pom=> {
+          const campaign = aomCampaign.find(ac => pom.campaign === ac.name)
+          return {
+            ...pom,
+            campaign: campaign ? campaign._id : null
+          }
+        })
+
+        return newPTPKeptOfMonth
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
   },
 
   Mutation: {

@@ -150,14 +150,26 @@ const dispositionTypeDefs = gql`
     count: Int
   }
 
-  type AomDashboardAmountAndCount {
-    ptp: Int
-    ptp_amount: Float
-    ptp_kept:Int
-    ptp_kept_amount:Float
-    amount_collected:Int
-    amount_collected_amount:Float
+  type AomCampaignToday {
+    campaign: ID
+    ptp: Float
+    ptp_kept: Float
+    paid: Float
+    yesterday_ptp: Float
+    yesterday_ptp_kept: Float
+    yesterday_paid: Float
   }
+
+  type DailyFTE {
+    campaign: ID
+    online: Int
+  }
+
+  type PerMonthCollection {
+    campaign: ID,
+    amount: Float
+  }
+
 
   type Query {
     getAccountDispositions(id:ID!, limit:Int):[Disposition]
@@ -171,6 +183,11 @@ const dispositionTypeDefs = gql`
     getAllDispositionTypes:[DispoType]
     getDispositionReportsHigh(campaign:String, bucket:String, dispositions:[String], from:String, to:String):[HighDispositionReport]
     getDispositionCountYesterday:[YesterdayDispo]
+    getAomDailyCollection:[AomCampaignToday]
+    getDailyFTE:[DailyFTE]
+    getPTPPerMonth: [PerMonthCollection]
+    getPTPKeptPerMonth: [PerMonthCollection]
+    getPaidPerMonth: [PerMonthCollection],
 
   }
 

@@ -1,5 +1,7 @@
 
+import mongoose from "mongoose";
 import CustomError from "../../middlewares/errors.js";
+import Department from "../../models/department.js";
 import Disposition from "../../models/disposition.js";
 import Production from "../../models/production.js";
 import User from "../../models/user.js";
@@ -153,7 +155,8 @@ const productionResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
-    }
+    },
+    
   },
   Production: {
     dispositions: async(parent) => {

@@ -162,6 +162,13 @@ const customerTypeDefs = gql`
     customer_info: CustomerInfo
   }
  
+  type MonthlyTarget {
+    campaign: ID,
+    target: Float,
+    paid: Float
+  }
+
+
   type Query {
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
     getCustomers(page:Int): getCustomers!
@@ -169,6 +176,7 @@ const customerTypeDefs = gql`
     findCustomerAccount(disposition:[String],groupId:ID,page:Int, assigned:String, limit:Int):FindCustomerAccount
     selectAllCustomerAccount(disposition:[String],groupId:ID,assigned:String):[ID]
     accountsCount:Int
+    getMonthlyTarget:[MonthlyTarget]
   }
 
   type Mutation {

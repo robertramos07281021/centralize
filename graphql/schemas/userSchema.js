@@ -36,6 +36,11 @@ const userTypeDefs = gql`
     group: ID 
   }
 
+  type CampaignUser {
+    campaign: ID,
+    assigned: Int
+  }
+
   type Query {
     getUsers(page: Int!): PaginatedUsers!
     getUser(id: ID): Users
@@ -43,7 +48,8 @@ const userTypeDefs = gql`
     getAomUser: [Users]
     findUsers(search: String!, page: Int!): PaginatedUsers!
     findDeptAgents:[DeptUser]
-    findAgents:[Users]
+    findAgents:[Users],
+    getCampaignAssigned: [CampaignUser]
   }
 
   type Mutation {

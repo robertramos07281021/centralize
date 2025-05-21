@@ -45,3 +45,26 @@ export const options = {
   responsive: true, 
   maintainAspectRatio: false
 }
+
+export const color = [
+  "oklch(0.75 0.15 0)",     // Red
+  "oklch(0.75 0.15 18)",     // Orange-red
+  "oklch(0.75 0.15 36)",     // Orange
+  "oklch(0.75 0.15 54)",     // Yellow-orange
+  "oklch(0.75 0.15 72)",     // Yellow
+  "oklch(0.75 0.15 90)",     // Yellow-green
+  "oklch(0.75 0.15 108)",     // Lime green
+  "oklch(0.75 0.15 126)",     // Green
+  "oklch(0.75 0.15 144)",     // Emerald
+  "oklch(0.75 0.15 162)",     // Cyan-green
+  "oklch(0.75 0.15 180)",     // Cyan
+  "oklch(0.75 0.15 198)",     // Aqua
+  "oklch(0.75 0.15 216)",     // Sky Blue
+  "oklch(0.75 0.15 234)",     // Blue
+  "oklch(0.75 0.15 252)",     // Indigo
+  "oklch(0.75 0.15 270)",     // Violet
+  "oklch(0.75 0.15 288)",     // Purple
+  "oklch(0.75 0.15 306)",     // Magenta
+  "oklch(0.75 0.15 324)",     // Pink
+  "oklch(0.75 0.15 342)", 
+]

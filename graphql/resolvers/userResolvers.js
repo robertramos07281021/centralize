@@ -111,6 +111,45 @@ const userResolvers = {
       } catch (error) {
         throw new CustomError(error.message, 500) 
       }
+    },
+    getCampaignAssigned: async(_,__,{user}) => {
+      try {
+        const aomCampaign = await Department.find({aom: user._id}).lean()
+        const aomCampaignNameArray = aomCampaign.map(e => e._id)
+  
+
+        const assignedUserPerCampagin = await User.aggregate([
+          {
+            $addFields: {
+              firstDept: { $arrayElemAt: ["$departments", 0] }
+            }
+          },
+          {
+            $match: {
+              type: {$eq: "AGENT"},
+              firstDept: {$in: aomCampaignNameArray}
+            }
+          },
+          {
+            $group: {
+              _id: "$firstDept",
+              assigned: {$sum: 1}
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              campaign: "$_id",
+              assigned: 1
+            }
+          }
+
+        ])
+
+        return assignedUserPerCampagin
+      } catch (error) {
+        throw new CustomError(error.message, 500) 
+      }
     }
   },
   Mutation: {

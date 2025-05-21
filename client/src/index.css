@@ -1,6 +1,8 @@
 @plugin "flowbite-react/plugin/tailwindcss";
 @source "../.flowbite-react/class-list.json";
 @import "tailwindcss";
+
+
 /* flowbite-react/class-list.json */
 ::-webkit-scrollbar {
   width: 10px;
@@ -23,3 +25,4 @@
 ::-webkit-scrollbar-thumb:hover {
   background: oklch(0.707 0.165 254.624); 
 }
+

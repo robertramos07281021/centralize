@@ -37,12 +37,14 @@ const productionTypeDefs = gql`
     success: Boolean
     message: String
   }
+  
 
   type Query {
     getProductions:Production
     getAgentProductionPerDay:[PerDay]
     getAgentProductionPerMonth:[perMonth]
     getAgentTotalDispositions:[AgentTotalDispo]
+
   }
 
   type Mutation {
