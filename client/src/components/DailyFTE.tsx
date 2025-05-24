@@ -32,7 +32,6 @@ const DAILY_FTE = gql`
   }
 `
 
-
 interface CampaignAssigned {
   campaign: string
   assigned: number
@@ -46,11 +45,6 @@ const CAMPAIGN_ASSIGNED = gql`
     }
   }
 `
-
-
-
-
-
 
 const DailyFTE = () => {
 

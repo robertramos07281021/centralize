@@ -42,7 +42,6 @@ const AOM_DAILY_COLLECTION = gql`
 
 `
 
-
 const DailyCollection = () => {
   const {data:aomDeptData} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
   const {data:aomDailyCollections} = useQuery<{getAomDailyCollection:DailyCollection[] }>(AOM_DAILY_COLLECTION)

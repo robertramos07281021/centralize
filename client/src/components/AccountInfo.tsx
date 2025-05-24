@@ -41,15 +41,15 @@ const AccountInfo = () => {
           </div>
           <div className="grid grid-cols-4 items-center">
             <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Principal OS</p>
-            <div className="p-2 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3">{selectedCustomer?.out_standing_details.principal_os}</div>
+            <div className="p-2 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3">{selectedCustomer?.out_standing_details.principal_os.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</div>
           </div>
           <div className="grid grid-cols-4 items-center">
             <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Interest OS</p>
-            <div className="p-2 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3">{selectedCustomer?.out_standing_details.interest_os}</div>
+            <div className="p-2 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3">{selectedCustomer?.out_standing_details.interest_os.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</div>
           </div>
           <div className="grid grid-cols-4 items-center">
             <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">DST Fee OS</p>
-            <div className="p-2 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3">{selectedCustomer?.out_standing_details?.dst_fee_os}</div>
+            <div className="p-2 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3">{selectedCustomer?.out_standing_details?.dst_fee_os.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</div>
           </div>
          
         </div>
@@ -58,19 +58,19 @@ const AccountInfo = () => {
         <div>
           <p className="font-medium 2xl:text-lg lg:text-base ">Outstanding Balance</p>
           <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
-            {selectedCustomer?.out_standing_details.total_os}
+            {selectedCustomer?.out_standing_details.total_os.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
           </div>
         </div>
         <div>
           <p className="font-medium 2xl:text-base lg:text-md ">Balance</p>
           <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
-            {selectedCustomer?.balance}
+            {selectedCustomer?.balance.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
           </div>
         </div>
         <div>
           <p className="font-medium 2xl:text-lg lg:text-base ">Total Paid</p>
           <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
-            {selectedCustomer?.paid_amount}
+            {selectedCustomer?.paid_amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
           </div>
         </div>
       </div>

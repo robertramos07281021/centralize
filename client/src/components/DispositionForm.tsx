@@ -1,12 +1,23 @@
-import {   useRef, useState } from "react"
+import {   useEffect, useRef, useState } from "react"
 import Confirmation from "./Confirmation"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { Success } from "../middleware/types"
 import SuccessToast from "./SuccessToast"
-import { setSelectedCustomer, setSettled } from "../redux/slices/authSlice"
+import { setDeselectCustomer, setSettled } from "../redux/slices/authSlice"
 
+
+interface Data {
+  amount: string
+  payment: string
+  disposition: string
+  payment_date: string
+  payment_method: string
+  ref_no: string
+  comment: string
+  contact_method: string
+}
 
 interface Disposition {
   id: string
@@ -25,9 +36,10 @@ const GET_DISPOSITION_TYPES = gql`
   }
 `
 
+
 const CREATE_DISPOSITION = gql`
-  mutation CreateDisposition($customerAccountId: ID!, $disposition: String!, $amount: String, $payment: String, $payment_date: String, $payment_method: String, $ref_no: String, $comment: String) {
-    createDisposition(customerAccountId: $customerAccountId, disposition: $disposition, amount: $amount, payment: $payment, payment_date: $payment_date, payment_method: $payment_method, ref_no: $ref_no, comment: $comment) {
+  mutation CreateDisposition($input: CreateDispo) {
+    createDisposition(input:$input) {
       success
       message
     }
@@ -35,8 +47,10 @@ const CREATE_DISPOSITION = gql`
 `
 
 const DispositionForm = () => {
-  const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
- 
+  const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
+
+  const [selectedDispo, setSelectedDispo] = useState<string>('')
+
   const [success, setSuccess] = useState<Success | null>({
     success: false,
     message: ""
@@ -44,18 +58,46 @@ const DispositionForm = () => {
 
   const dispatch = useAppDispatch()
 
-  const [data, setData] = useState({
+  const [data, setData] = useState<Data>({
     amount: "",
     payment: "",
     disposition: "",
     payment_date: "",
     payment_method: "",
     ref_no: "",
-    comment: ""
+    comment: "",
+    contact_method: "calls"
   })
 
+  useEffect(()=> {
+    if(!selectedCustomer._id) {
+      setSelectedDispo("")
+      setData({
+        amount: "",
+        payment: "",
+        disposition: "",
+        payment_date: "",
+        payment_method: "",
+        ref_no: "",
+        comment: "",
+        contact_method: "calls"
+      })
+    }
+  },[selectedCustomer])
+
+  const [dispoObject, setDispoObject] = useState<{[key:string]:string}>({})
 
   const {data:disposition} = useQuery<{getDispositionTypes:Disposition[]}>(GET_DISPOSITION_TYPES)
+
+  useEffect(()=> {
+    if(disposition){
+      const newObject:{[key:string]:string} = {}
+      disposition.getDispositionTypes.forEach((e)=> {
+        newObject[e.code] = e.id
+      })
+      setDispoObject(newObject)
+    }
+  },[disposition])
 
   const [createDisposition] = useMutation(CREATE_DISPOSITION,{
     onCompleted: async() => {
@@ -66,6 +108,7 @@ const DispositionForm = () => {
         })
         setConfirm(false)
         dispatch(setSettled(false))
+        setSelectedDispo('')
         setData({
           amount: "",
           payment: "",
@@ -73,46 +116,10 @@ const DispositionForm = () => {
           payment_date: "",
           payment_method: "",
           ref_no: "",
-          comment: ""
+          comment: "",
+          contact_method: "calls"
         })
-        dispatch(setSelectedCustomer({
-          _id: "",
-          case_id: "",
-          account_id: "",
-          endorsement_date: "",
-          credit_customer_id: "",
-          bill_due_day: 0,
-          max_dpd: 0,
-          balance: 0,
-          paid_amount: 0,
-          out_standing_details: {
-            principal_os: 0,
-            interest_os: 0,
-            admin_fee_os: 0,
-            txn_fee_os: 0,
-            late_charge_os: 0,
-            dst_fee_os: 0,
-            total_os: 0
-          },
-          grass_details: {
-            grass_region: "",
-            vendor_endorsement: "",
-            grass_date: ""
-          },
-          account_bucket: {
-            name: "",
-            dept: ""
-          },
-          customer_info: {
-            fullName:"",
-            dob:"",
-            gender:"",
-            contact_no:[],
-            emails:[],
-            addresses:[],
-            _id:""
-          }
-        }))
+        dispatch(setDeselectCustomer())
       } catch (error) {
         console.log(error)
       }
@@ -121,24 +128,22 @@ const DispositionForm = () => {
 
   const handleOnChangeAmount = (e:React.ChangeEvent<HTMLInputElement>) => {
     let inputValue = e.target.value
+    inputValue = inputValue.replace(/[^0-9.]/g, '');
+    const parts = inputValue.split('.');
+    if (parts.length > 2) {
+      inputValue = parts[0] + '.' + parts[1]; 
+    }
   
-  
-  inputValue = inputValue.replace(/[^0-9.]/g, '');
+    if (parts.length === 2) {
+      inputValue = parts[0] + '.' + parts[1].slice(0, 2);
+    }
 
-  
-  const parts = inputValue.split('.');
-  if (parts.length > 2) {
-    inputValue = parts[0] + '.' + parts[1]; 
-  }
- 
-  if (parts.length === 2) {
-    inputValue = parts[0] + '.' + parts[1].slice(0, 2);
-  }
-
-  if (inputValue.startsWith('00')) {
-    inputValue = '0';
-  }
-    setData({...data, amount: inputValue})
+    if (inputValue.startsWith('00')) {
+      inputValue = '0';
+    }
+    const amount = parseFloat(inputValue) > selectedCustomer?.balance ? selectedCustomer?.balance.toFixed(2) : inputValue
+    const payment = parseFloat(inputValue) > selectedCustomer?.balance ? "full" : "partial"
+    setData({...data, amount: amount, payment: payment})
   }
 
   const Form = useRef<HTMLFormElement | null>(null)
@@ -164,9 +169,7 @@ const DispositionForm = () => {
         toggle: "UPLOADED",
         yes: async() => {
           try {
-            await createDisposition({variables: {
-              ...data,
-              customerAccountId:selectedCustomer._id}})
+            await createDisposition({variables: { input: {...data, customer_account: selectedCustomer._id} }})
           } catch (error) {
             console.log(error)
           }
@@ -176,24 +179,14 @@ const DispositionForm = () => {
     }
   }
 
-  const handleChangeDisposition = (value:string) => {
-    if(value === "SETTLED") {
-      setData({...data, disposition: value, amount: selectedCustomer.balance.toString(), payment: "full"})
-    } else if(value === "PAID") {
-      setData({...data, disposition: value, payment: "partial"})
-    } else {
-      setData({...data, disposition: value, payment: "" , amount: ""})
-      setRequired(false)
-    }
-  }
-
-  const anabledDispo = ["PAID","SETTLED","PROMISE TO PAY","UNDERNEGO"]
+  const anabledDispo = ["PAID","PTP","UNEG"]
+  const requiredDispo = ["PAID"]
 
   return  (
     <>
       {
         success?.success &&
-        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
+        <SuccessToast successObject={success} close={()=> setSuccess({success:false, message:""})}/>
       }
 
       <form ref={Form} className="flex flex-col p-4" noValidate onSubmit={handleSubmitForm}>
@@ -208,20 +201,20 @@ const DispositionForm = () => {
               <select 
                 name="disposition" 
                 id="disposition" 
-                value={data.disposition}
+                value={selectedDispo}
                 required
-                onChange={(e) => handleChangeDisposition(e.target.value)}
+                onChange={(e) => {setData({...data, disposition: dispoObject[e.target.value]}); setSelectedDispo(e.target.value)}}
                 className={`${required && !data.disposition ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block col-span-3 p-2 `}>
                 <option value="">Select Disposition</option>
                 {
                   disposition?.getDispositionTypes.map((dispo)=> (
-                    <option key={dispo.id} value={dispo.name} >{dispo.name} - {dispo.code}</option>
+                    <option key={dispo.id} value={dispo.code} >{dispo.name} - {dispo.code}</option>
                   ))
                 }
               </select>
             </label>
             {
-              anabledDispo.includes(data.disposition) ? 
+              anabledDispo.includes(selectedDispo) ? 
               <label className="grid grid-cols-4 items-center">
                 <p className="text-gray-800 font-bold ">Amount</p>
                   <div className="relative col-span-3">
@@ -232,9 +225,8 @@ const DispositionForm = () => {
                       value={data.amount}
                       onChange={handleOnChangeAmount}
                       pattern="^\d+(\.\d{1,2})?$"
-                      disabled={data.disposition === "SETTLED"}
                       placeholder="Enter amount"
-                      required={anabledDispo.includes(data.disposition)}
+                      required={requiredDispo.includes(selectedDispo)}
                       className={`${required && !data.amount ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} w-full 2xl:text-sm lg:text-xs border  text-gray-900 text-sm rounded-lg pl-8 focus:ring-blue-500 focus:border-blue-500 block p-2 `}/>
                     <p className="absolute top-2 left-4">&#x20B1;</p>
                   </div> 
@@ -247,13 +239,15 @@ const DispositionForm = () => {
               </div>
             }
             {
-              anabledDispo.includes(data.disposition) ? data.disposition === "PROMISE TO PAY" || data.disposition === "UNDERNEGO" ? 
+              anabledDispo.includes(selectedDispo) ? 
                 <label className="grid grid-cols-4 items-center">
                    <p className="text-gray-800 font-bold ">Payment</p>
                   <select 
                     name="payment" 
                     id="payment"
-                    required
+                    required={requiredDispo.includes(selectedDispo)}
+                    value={data.payment}
+                    onChange={(e)=> setData({...data,payment: e.target.value})}
                     className={`${required && !data.payment ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
                     >
                     <option value="">Select Payment</option>
@@ -263,28 +257,22 @@ const DispositionForm = () => {
                 </label>
               :
               <div className="grid grid-cols-4 items-center">
-                <p className="text-gray-800 font-bold ">Payment</p>
-                  <div 
-                    className={`bg-gray-50 border-gray-500 border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block col-span-3 p-2 capitalize`}>
-                    {data.payment}
-                  </div>
-              </div>  
-              :
-              <div className="grid grid-cols-4 items-center">
                  <p className="text-gray-800 font-bold ">Payment</p>
                 <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
                 </div>
               </div>
             }
-            {/* {
-              anabledDispo.includes(data.disposition) ? 
+            {
+              ['TL','MIS'].includes(userLogged.type) &&
+              (anabledDispo.includes(selectedDispo) ? 
               <label className="grid grid-cols-4 items-center">
                   <p className="text-gray-800 font-bold ">Contact Method</p>
                 <select 
                   name="payment" 
                   id="payment"
-                  required
-                  className={`${required && !data.payment ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
+                  value={data.contact_method}
+                  onChange={(e)=> setData({...data, contact_method: e.target.value})}
+                  className={` bg-gray-50  border-gray-500 border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
                   >
                   <option value="calls">Calls</option>
                   <option value="sms">SMS</option>
@@ -295,15 +283,15 @@ const DispositionForm = () => {
               </label>
               :
               <div className="grid grid-cols-4 items-center">
-                <p className="text-gray-800 font-bold ">Field Type</p>
+                <p className="text-gray-800 font-bold ">Contact Method</p>
                 <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
                 </div>
-              </div>
-            } */}
+              </div>)
+            }
           </div>
           <div className="flex flex-col gap-2"> 
             {
-              anabledDispo.includes(data.disposition) ? 
+              anabledDispo.includes(selectedDispo) ? 
               <label className="grid grid-cols-4 items-center">
                 <p className="text-gray-800 font-bold">Payment Date</p>
                   <input 
@@ -323,21 +311,21 @@ const DispositionForm = () => {
               </div>
             }
             {
-              anabledDispo.includes(data.disposition) ? 
+              anabledDispo.includes(selectedDispo) ? 
               <label className="grid grid-cols-4 items-center">
                 <p className="text-gray-800 font-bold ">Payment Method</p>
-                  <select 
-                    name="payment_method" 
-                    id="payment_method" 
-                    value={data.payment_method}
-                    onChange={(e)=> setData({...data, payment_method: e.target.value})}
-                    className={` bg-gray-50  border-gray-500 border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}>
-                    <option value="">Select Method</option>
-                    <option value="Bank to Bank Transfer">Bank to Bank Transfer</option>
-                    <option value="7/11">7/11</option>
-                    <option value="Gcash/PAY Maya">Gcash/PAY Maya</option>
-                    <option value="CASH">CASH</option>
-                  </select>
+                <select 
+                  name="payment_method" 
+                  id="payment_method" 
+                  value={data.payment_method}
+                  onChange={(e)=> setData({...data, payment_method: e.target.value})}
+                  className={` bg-gray-50  border-gray-500 border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}>
+                  <option value="">Select Method</option>
+                  <option value="Bank to Bank Transfer">Bank to Bank Transfer</option>
+                  <option value="7/11">7/11</option>
+                  <option value="Gcash/PAY Maya">Gcash/PAY Maya</option>
+                  <option value="CASH">CASH</option>
+                </select>
               </label>
               :
               <div className="grid grid-cols-4 items-center">
@@ -347,7 +335,7 @@ const DispositionForm = () => {
               </div>
             }
             {
-              data.disposition === "PAID" ||  data.disposition === "SETTLED"  ?
+              anabledDispo.includes(selectedDispo)   ?
               <label className="grid grid-cols-4 items-center">
                 <p className="text-gray-800 font-bold ">Ref. No</p>
                   <input 

@@ -5,7 +5,7 @@ import { gql, useMutation, useQuery } from "@apollo/client";
 import {  useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../redux/store";
-import { setSelectedCustomer } from "../redux/slices/authSlice";
+import { setDeselectCustomer, setSelectedCustomer } from "../redux/slices/authSlice";
 import { Search } from "../middleware/types";
 
 const UPDATE_CUSTOMER = gql` mutation
@@ -68,7 +68,6 @@ const SEARCH = gql`
   }
 `
 
-
 const DESELECT_TASK = gql`
   mutation DeselectTask($id: ID!) {
     deselectTask(id: $id) {
@@ -89,44 +88,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: id}})
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: ()=> {
-      dispatch(setSelectedCustomer({
-        _id: "",
-        case_id: "",
-        account_id: "",
-        endorsement_date: "",
-        credit_customer_id: "",
-        bill_due_day: 0,
-        max_dpd: 0,
-        balance: 0,
-        paid_amount: 0,
-        out_standing_details: {
-          principal_os: 0,
-          interest_os: 0,
-          admin_fee_os: 0,
-          txn_fee_os: 0,
-          late_charge_os: 0,
-          dst_fee_os: 0,
-          total_os: 0
-        },
-        grass_details: {
-          grass_region: "",
-          vendor_endorsement: "",
-          grass_date: ""
-        },
-        account_bucket: {
-          name: "",
-          dept: ""
-        },
-        customer_info: {
-          fullName:"",
-          dob:"",
-          gender:"",
-          contact_no:[],
-          emails:[],
-          addresses:[],
-          _id:""
-        }
-      }))  
+      dispatch(setDeselectCustomer())  
     }
   })
   const location = useLocation()
@@ -390,27 +352,26 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
               className="block text-sm font-bold text-slate-500 dark:text-white">Address</div>
             <div className="flex flex-col gap-2">
               {
-              address.map((a,index)=> (
-                <div key={index} className="flex items-center gap-2">
-                  <textarea 
-                    id={`address_${index}`}   
-                    name={`address_${index}`}
-                    value={a}
-                    required
-                    onChange={(e)=> handleAddressOnchange(index,e.target.value)} 
-                    className={`${required && !address[index] ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 h-32 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Email Address">
-                  </textarea>
-
-                  {
-                    index === 0 &&
-                    <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddAddress}/>
-                  }
-                  {
-                    index !== 0 &&
-                    <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusAddress(index)}/>
-                  }
-                </div>
-              ))
+                address.map((a,index)=> (
+                  <div key={index} className="flex items-center gap-2">
+                    <textarea 
+                      id={`address_${index}`}   
+                      name={`address_${index}`}
+                      value={a}
+                      required
+                      onChange={(e)=> handleAddressOnchange(index,e.target.value)} 
+                      className={`${required && !address[index] ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 h-32 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Email Address">
+                    </textarea>
+                    {
+                      index === 0 &&
+                      <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddAddress}/>
+                    }
+                    {
+                      index !== 0 &&
+                      <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusAddress(index)}/>
+                    }
+                  </div>
+                ))
               }
             </div>
           </div>

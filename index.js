@@ -1,8 +1,7 @@
 import "dotenv/config.js";
 import express from "express";
 import { ApolloServer } from "@apollo/server";
-import { mergeResolvers } from "@graphql-tools/merge";
-import { mergeTypeDefs } from "@graphql-tools/merge";
+import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import cors from "cors"
 import bodyParser from "body-parser";
 import { expressMiddleware } from "@apollo/server/express4";
@@ -10,6 +9,11 @@ import connectDB from "./dbConnection/_db.js";
 import User from "./models/user.js";
 import cookieParser from "cookie-parser";
 import jwt from "jsonwebtoken"
+import { useServer } from 'graphql-ws/use/ws';
+import { createServer } from 'http';
+import { WebSocketServer } from 'ws';
+import { makeExecutableSchema } from '@graphql-tools/schema';
+
 import userResolvers from "./graphql/resolvers/userResolvers.js";
 import userTypeDefs from "./graphql/schemas/userSchema.js";
 import deptResolver from "./graphql/resolvers/departmentResolver.js";
@@ -32,32 +36,19 @@ import taskResolver from "./graphql/resolvers/taskResolver.js";
 import taskTypeDefs from "./graphql/schemas/taskSchema.js";
 import productionResolver from "./graphql/resolvers/productionResolver.js";
 import productionTypeDefs from "./graphql/schemas/productionSchema.js";
-import { useServer } from 'graphql-ws/use/ws';
-import { createServer } from 'http';
-import { WebSocketServer } from 'ws';
-import { makeExecutableSchema } from '@graphql-tools/schema';
-import { fileURLToPath } from "url";
-import path from "path";
+
+// import { fileURLToPath } from "url";
+// import path from "path";
 
 
 const app = express()
 connectDB()
 
-// const allowedOrigins = ["http://172.16.24.31:4000","http://localhost:4000","http://localhost:5173"];
-
 app.use(cors({
-  // origin: function (origin, callback) {
-  //   if (!origin || allowedOrigins.includes(origin)) {
-  //     callback(null, true);
-  //   } else {
-  //     callback(new Error("Not allowed by CORS"));
-  //   }
-  // },
   origin: true,
   credentials: true,
 }));
-
-app.use(bodyParser.json());
+app.use(express.json())
 app.use(cookieParser())
 
 
@@ -99,7 +90,7 @@ useServer({ schema,
       }
     }
 
-    return {};
+    return {user: null };
   }
  }, wsServer);
 
@@ -123,15 +114,15 @@ const startServer = async() => {
               return { user, res };
             }
           } catch (error) {
-            console.log("Invalid Token:", error.message);
+            console.log(error.message)
           }
-          return { res };
+          return { user: null, res};
         },
       })
     );
     
-    httpServer.listen(4000, () => {
-      console.log("🚀 Server running at http://localhost:4000/graphql");
+    httpServer.listen(process.env.PORT, () => {
+      console.log(`🚀 Server running at http://localhost:${process.env.PORT}/graphql`);
       console.log("📂 Serving static files from /public");
     });
 

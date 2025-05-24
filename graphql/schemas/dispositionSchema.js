@@ -21,6 +21,7 @@ const dispositionTypeDefs = gql`
     payment_method: String
     createdAt: DateTime
     created_by: String
+    contact_method: String
   }
   
   type Success {
@@ -170,6 +171,25 @@ const dispositionTypeDefs = gql`
     amount: Float
   }
 
+  enum ContactMethod {
+    skip
+    calls
+    email
+    sms
+    field
+  }
+
+  input CreateDispo {
+    customer_account:ID!
+    disposition: ID!
+    amount:String
+    payment:String
+    payment_date:String
+    payment_method:String
+    ref_no:String
+    comment:String
+    contact_method: ContactMethod!
+  }
 
   type Query {
     getAccountDispositions(id:ID!, limit:Int):[Disposition]
@@ -192,7 +212,7 @@ const dispositionTypeDefs = gql`
   }
 
   type Mutation {
-    createDisposition(customerAccountId:ID!,amount:String, payment:String, disposition: String!, payment_date:String, payment_method:String, ref_no:String, comment:String): Success
+    createDisposition(input:CreateDispo): Success
   }
 `
 

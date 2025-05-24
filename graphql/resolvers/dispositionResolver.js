@@ -81,6 +81,7 @@ const dispositionResolver = {
               payment: {$first: "$payment"},
               payment_method: {$first : "$payment_method"},
               createdAt: {$first : "$createdAt"},
+              contact_method: {$first: "$contact_method"},
               created_by: {
                 $first: {
                   $cond: [
@@ -106,6 +107,7 @@ const dispositionResolver = {
               payment_method: 1,
               createdAt: 1,
               created_by: 1,
+              contact_method: 1
             } 
           },
           {
@@ -1387,7 +1389,7 @@ const dispositionResolver = {
   },
 
   Mutation: {
-    createDisposition: async(_,{customerAccountId, amount, payment, disposition, payment_date, payment_method, ref_no, comment},{user}) => {
+    createDisposition: async(_,{input},{user}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
     
@@ -1397,8 +1399,8 @@ const dispositionResolver = {
         end.setHours(23, 59, 59, 999);
 
         const [customerAccount, dispoType, userProdRaw] = await Promise.all([
-          CustomerAccount.findById(customerAccountId).populate( 'current_disposition'),
-          DispoType.findOne({ name: disposition }).lean(),
+          CustomerAccount.findById(input.customer_account).populate( 'current_disposition'),
+          DispoType.findById(input.disposition).lean(),
           Production.findOne({
             user: user._id,
             createdAt: { $gte: start, $lte: end }
@@ -1411,23 +1413,20 @@ const dispositionResolver = {
       
         const userProd = userProdRaw || await Production.create({ user: user._id });
         
-        const isPaymentDisposition = disposition === "PAID" || disposition === "SETTLED";
-        if (isPaymentDisposition && (!amount || !payment || !payment_date || !payment_method || !ref_no)) {
-          throw new CustomError("All payment fields are required", 400);
+        const isPaymentDisposition = dispoType.code === "PAID"
+
+        if (isPaymentDisposition && !input.amount) {
+          throw new CustomError("Amount is required", 401);
         }
 
-        const ptp = customerAccount.current_disposition ? customerAccount.current_disposition.code === "PTP" ? true : false : false || dispoType.code === "PTP" ? true : false;
+        const ptp = (customerAccount.current_disposition ? (customerAccount.current_disposition.code === "PTP" ? true : false) : false) || dispoType.code === "PTP" ? true : false;
+        const payment = customerAccount.balance - parseFloat(input.amount) === 0 ? "full" : 'partial'
 
         const newDisposition = await Disposition.create({
-          customer_account: customerAccountId, 
+          ...input,
+          payment: payment,
+          amount: parseFloat(input.amount), 
           user: user._id, 
-          amount:parseFloat(amount) || 0, 
-          payment, 
-          disposition: dispoType._id, 
-          payment_date, 
-          payment_method, 
-          ref_no, 
-          comment,
           ptp: ptp
         })
 
@@ -1450,14 +1449,14 @@ const dispositionResolver = {
           assigned_date: null,
           on_hands: false,
         };
-
-        if (isPaymentDisposition && amount) {
+       
+        if (isPaymentDisposition && input.amount) {
           const paid = customerAccount.paid_amount || 0;
           const totalOS = customerAccount.out_standing_details?.total_os || 0;
-          const newBalance = disposition === "PAID" ? +(totalOS - paid - amount).toFixed(2) : 0;
+          const newBalance = dispoType.code === "PAID" ? (totalOS - paid - parseFloat(input.amount)).toFixed(2) : 0;
       
           Object.assign(updateFields, {
-            paid_amount: paid + amount,
+            paid_amount: paid + parseFloat(input.amount),
             balance: newBalance,
           });
         }

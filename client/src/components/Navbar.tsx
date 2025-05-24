@@ -6,7 +6,7 @@ import Confirmation from "./Confirmation";
 import Loading from "../pages/Loading";
 import { useNavigate } from "react-router-dom";
 import { RootState, useAppDispatch } from "../redux/store";
-import { setNeedLogin, setPage, setSelectedCustomer, setSelectedDispoReport, setSelectedDisposition, setTasker, setTaskFilter, setUserLogged } from "../redux/slices/authSlice";
+import { setDeselectCustomer, setNeedLogin, setPage, setSelectedDispoReport, setSelectedDisposition, setTasker, setTaskFilter, setUserLogged } from "../redux/slices/authSlice";
 import NavbarExtn from "./NavbarExtn";
 import { useSelector } from "react-redux";
 import IdleAutoLogout from "./IdleAutoLogout";
@@ -77,44 +77,7 @@ const Navbar = () => {
   const [poPupUser, setPopUpUser] = useState<boolean>(false) 
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: ()=> {
-      dispatch(setSelectedCustomer({
-        _id: "",
-        case_id: "",
-        account_id: "",
-        endorsement_date: "",
-        credit_customer_id: "",
-        bill_due_day: 0,
-        max_dpd: 0,
-        balance: 0,
-        paid_amount: 0,
-        out_standing_details: {
-          principal_os: 0,
-          interest_os: 0,
-          admin_fee_os: 0,
-          txn_fee_os: 0,
-          late_charge_os: 0,
-          dst_fee_os: 0,
-          total_os: 0
-        },
-        grass_details: {
-          grass_region: "",
-          vendor_endorsement: "",
-          grass_date: ""
-        },
-        account_bucket: {
-          name: "",
-          dept: ""
-        },
-        customer_info: {
-          fullName:"",
-          dob:"",
-          gender:"",
-          contact_no:[],
-          emails:[],
-          addresses:[],
-          _id:""
-        }
-      }))
+      dispatch(setDeselectCustomer())
     }
   })
   
@@ -141,44 +104,7 @@ const Navbar = () => {
       dispatch(setTaskFilter('assigned'))
       dispatch(setSelectedDisposition([]))
       dispatch(setSelectedDispoReport([]))
-      dispatch(setSelectedCustomer({
-        _id: "",
-        case_id: "",
-        account_id: "",
-        endorsement_date: "",
-        credit_customer_id: "",
-        bill_due_day: 0,
-        max_dpd: 0,
-        balance: 0,
-        paid_amount: 0,
-        out_standing_details: {
-          principal_os: 0,
-          interest_os: 0,
-          admin_fee_os: 0,
-          txn_fee_os: 0,
-          late_charge_os: 0,
-          dst_fee_os: 0,
-          total_os: 0
-        },
-        grass_details: {
-          grass_region: "",
-          vendor_endorsement: "",
-          grass_date: ""
-        },
-        account_bucket: {
-          name: "",
-          dept: ""
-        },
-        customer_info: {
-          fullName:"",
-          dob:"",
-          gender:"",
-          contact_no:[],
-          emails:[],
-          addresses:[],
-          _id:""
-        }
-      }))
+      dispatch(setDeselectCustomer())
       navigate('/')
 
     },
@@ -246,44 +172,7 @@ const Navbar = () => {
       dispatch(setTaskFilter('assigned'))
       dispatch(setSelectedDisposition([]))
       dispatch(setSelectedDispoReport([]))
-      dispatch(setSelectedCustomer({
-        _id: "",
-        case_id: "",
-        account_id: "",
-        endorsement_date: "",
-        credit_customer_id: "",
-        bill_due_day: 0,
-        max_dpd: 0,
-        balance: 0,
-        paid_amount: 0,
-        out_standing_details: {
-          principal_os: 0,
-          interest_os: 0,
-          admin_fee_os: 0,
-          txn_fee_os: 0,
-          late_charge_os: 0,
-          dst_fee_os: 0,
-          total_os: 0
-        },
-        grass_details: {
-          grass_region: "",
-          vendor_endorsement: "",
-          grass_date: ""
-        },
-        account_bucket: {
-          name: "",
-          dept: ""
-        },
-        customer_info: {
-          fullName:"",
-          dob:"",
-          gender:"",
-          contact_no:[],
-          emails:[],
-          addresses:[],
-          _id:""
-        }
-      }))
+      dispatch(setDeselectCustomer())
       navigate("/")
     }
   })
@@ -318,7 +207,7 @@ const Navbar = () => {
               }
 
             },
-            message: "You idle for 5 minutes!",
+            message: "You have been force to logout!",
             toggle: "IDLE"
           })
         }
@@ -340,9 +229,7 @@ const Navbar = () => {
           Bernales & Associates
           {
             (userLogged.type === "AGENT") && 
-        
             <IdleAutoLogout/> 
-           
           }
         </div>
         <div className="p-1 flex gap-2 text-xs z-50">

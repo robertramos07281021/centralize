@@ -281,7 +281,7 @@ const userResolvers = {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
 
-        await User.findByIdAndUpdate(user._id, {isOnline: false})
+        await User.findByIdAndUpdate(user._id, {$set: {isOnline: false}})
         
         res.clearCookie("token",{
           httpOnly: true

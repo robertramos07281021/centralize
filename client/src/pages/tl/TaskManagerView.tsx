@@ -53,7 +53,7 @@ const TaskManagerView = () => {
     <div className="h-full w-full flex flex-col relative">
       <div className="flex gap-10 p-5 mt-5 items-start">
         <div className=" flex gap-5 lg:text-[0.6em] 2xl:text-xs w-full flex-col">
-         
+  
           <div className="flex gap-5">
             <fieldset className="flex p-1.5 gap-4 px-4 border rounded-md border-slate-300">
               <legend className="font-medium text-slate-600 px-2">Tasker</legend>

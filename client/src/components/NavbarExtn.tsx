@@ -29,10 +29,6 @@ const NavbarExtn = () => {
         name: "Production Area",
         link: "/agent-production-area"
       },
-      {
-        name: "Statistics",
-        link: "/agent-statistics"
-      }
     ],
     TL: [
       {

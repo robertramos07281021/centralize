@@ -21,9 +21,10 @@ type Disposition =  {
   comment: string
   existing: boolean
   payment: string
-  payment_method: string,
+  payment_method: string
   createdAt: string
   created_by: string
+  contact_method: string
 }
 
 const DISPOSITION_RECORDS = gql`
@@ -44,6 +45,7 @@ const DISPOSITION_RECORDS = gql`
       payment_method
       createdAt
       created_by 
+      contact_method
     }
   }
 `
@@ -124,8 +126,12 @@ const DispositionRecords = () => {
                 <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 capitalize bg-white font-bold">{gad.ca_disposition.name}</div>
               </div>
               <div className=" grid grid-cols-3 gap-2 ">
+                <div className="text-gray-800 font-bold p-2 text-end">Contact Method</div>
+                <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 capitalize bg-white">{gad.contact_method.toUpperCase()}</div>
+              </div>
+              <div className=" grid grid-cols-3 gap-2 ">
                 <div className="text-gray-800 font-bold p-2 text-end">Amount</div>
-                <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 bg-white">{gad.amount.toFixed(2)}</div>
+                <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 bg-white">{gad.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</div>
               </div>
               <div className=" grid grid-cols-3 gap-2">
                 <div className="text-gray-800 font-bold p-2 text-end">Payment</div>

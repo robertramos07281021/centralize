@@ -55,37 +55,6 @@ export type ModifyRecords = {
 }
 
 
-export type ExcelFile = {
-  address: string
-  admin_fee_os: number
-  bill_due_day:number 
-  birthday:string | number 
-  endorsement_date:string | number
-  grass_date:string | number 
-  bucket:string
-  case_id:string | number 
-  one: string 
-  platform_user_id:string | number 
-  platform_user_id_1:string | number
-  credit_user_id:string
-  customer_name:string 
-  dpd_grp:string
-  dst_fee_os:number
-  email:string
-  gender:string
-  grass_region:string 
-  interest_os:number
-  late_charge_os:number
-  max_dpd:number
-  penalty_interest_os:number 
-  principal_os:number
-  scenario:string
-  tagging:string 
-  total_os:number
-  total_os_1:number
-  txn_fee_os:number
-  vendor_endorsement:string
-}
 
 
 

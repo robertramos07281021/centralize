@@ -41,7 +41,8 @@ const dispositionSchema = new Schema(
     },
     contact_method: {
       type: String,
-      default: "calls"
+      default: "calls",
+      enum: ['calls','sms','email','skip','field']
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,

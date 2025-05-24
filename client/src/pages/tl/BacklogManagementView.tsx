@@ -1,4 +1,3 @@
-import Uploader from "../../components/Uploader"
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 
 import { Doughnut } from 'react-chartjs-2';
@@ -27,7 +26,6 @@ interface Dispositions {
   count: number
   color: string
 }
-
 
 
 
@@ -392,7 +390,7 @@ const BacklogManagementView = () => {
             <button type="button" className='bg-blue-400 hover:bg-blue-500 focus:outline-none text-white  focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer'>Export</button>
           </div>
         </div>
-        <Uploader/>
+      
       </div>
         <div className={`print:hidden col-span-2 flex flex-col ${chartFull ? "fixed top-0 bg-white z-50 items-center justify-center w-full h-full px-10" : "h-5/6"}`}>
           <div className="text-center uppercase font-medium 2xl:text-lg lg:text-base text-slate-500 flex item-center justify-center gap-5 py-5">

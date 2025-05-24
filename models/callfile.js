@@ -7,6 +7,7 @@ const callFileSchema = new Schema(
     name: {
       type: String,
       required: true,
+      unique: true,
       uppercase: true
     },
     active: {

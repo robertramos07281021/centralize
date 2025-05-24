@@ -9,6 +9,7 @@ import ModifyRecord from "../../models/modifyRecord.js";
 import mongoose from "mongoose";
 import User from "../../models/user.js";
 import Department from "../../models/department.js";
+import Callfile from "../../models/callfile.js";
 
 const customerResolver = {
   DateTime,
@@ -221,8 +222,7 @@ const customerResolver = {
           const userSelected = await User.findOne({_id: groupId})
           selected = group ? group._id : userSelected._id
         }
-
-
+        
         const bucket = user.buckets
         let search = []
         if(Boolean(disposition.length > 0 && groupId)){
@@ -244,7 +244,9 @@ const customerResolver = {
               as: "account_bucket",
             },
           },
-          { $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } },
+          { 
+            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          },
           {
             $lookup: {
               from: "dispositions",
@@ -253,7 +255,9 @@ const customerResolver = {
               as: "currentDisposition",
             }
           },
-          { $unwind: { path: "$currentDisposition", preserveNullAndEmptyArrays: true } },
+          { 
+            $unwind: { path: "$currentDisposition", preserveNullAndEmptyArrays: true } 
+          },
           {
             $lookup: {
               from: "dispotypes",
@@ -261,6 +265,9 @@ const customerResolver = {
               foreignField: "_id",
               as: "dispoType",
             }
+          },
+          { 
+            $unwind: { path: "$dispoType", preserveNullAndEmptyArrays: true } 
           },
           {
             $match: {
@@ -282,6 +289,88 @@ const customerResolver = {
         return  await CustomerAccount.countDocuments({ bucket: { $in: deptBuckets } }) || 0
       } catch (error) {
         throw new CustomError(error.message, 500)        
+      }
+    },
+    getMonthlyTarget: async(_,__,{user}) => {
+      try {
+        const year = new Date().getFullYear()
+        const month = new Date().getMonth();
+        const firstDay = new Date(year,month, 1)
+        const lastDay = new Date(year,month + 1,0)
+        const aomCampaign = await Department.find({aom: user._id}).lean()
+        const aomCampaignNameArray = aomCampaign.map(e => e.name)
+        const campaignBucket = await Bucket.find({dept: {$in: aomCampaignNameArray}}).lean()
+        const newArrayCampaignBucket = campaignBucket.map(e=> e._id)
+
+        const monthlyTarget = await CustomerAccount.aggregate([
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "bucket",
+              foreignField: "_id",
+              as: "account_bucket",
+            },
+          },
+          { 
+            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "current_disposition",
+              foreignField: "_id",
+              as: "currentDisposition",
+            }
+          },
+          { 
+            $unwind: { path: "$currentDisposition", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "currentDisposition.disposition",
+              foreignField: "_id",
+              as: "dispoType",
+            }
+          },
+          { 
+            $unwind: { path: "$dispoType", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $match: {
+              "currentDisposition.createdAt" : {$gte: firstDay, $lt: lastDay},
+              bucket: {$in: newArrayCampaignBucket}
+            }
+          },
+          {
+            $group: {
+              _id: "$account_bucket.dept",
+              collected: {$sum: "$paid_amount"},
+              target: {$sum: "$out_standing_details.total_os"},
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              campaign: "$_id",
+              collected: 1,
+              target: 1
+            }
+          }
+        ])
+
+        const newMonthlyTarget = monthlyTarget.map(e=> {
+          const campagin = aomCampaign.find(ac => e.campaign === ac.name)
+          return {
+            ...e,
+            campaign: campagin ? campagin._id : null
+          }
+        })
+
+        return newMonthlyTarget
+      } catch (error) {
+        console.log(error)
+        throw new CustomError(error.message, 500)             
       }
     }
   },
@@ -324,7 +413,7 @@ const customerResolver = {
   },
   
   Mutation: {
-    createCustomer: async(_,{input},{user}) => {
+    createCustomer: async(_,{input,callfile},{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
         const dept = await Department.find({_id: {$in: user.departments}}).distinct('name')
@@ -338,6 +427,8 @@ const customerResolver = {
             throw new CustomError(`Bucket '${name}' is not included in user's access`, 403);
           }
         }
+        
+        const createdCallfile = await Callfile.create({name: callfile})
 
         await Promise.all(input.map(async (element) => {
           const bucket = await Bucket.findOne({ name: element.bucket });
@@ -356,35 +447,40 @@ const customerResolver = {
             });
             await customer.save();
           }
-    
-          await CustomerAccount.create({
-            customer: customer._id,
-            bucket: bucket._id,
-            case_id: element.case_id,
-            credit_customer_id: element.credit_user_id,
-            endorsement_date: element.endorsement_date,
-            bill_due_day: element.bill_due_day,
-            max_dpd: element.max_dpd,
-            balance: element.total_os,
-            paid_amount: 0,
-            account_id: element.account_id || null,
-            out_standing_details: {
-              principal_os: element.principal_os,
-              interest_os: element.interest_os,
-              admin_fee_os: element.admin_fee_os,
-              txn_fee_os: element.txn_fee_os,
-              late_charge_os: element.late_charge_os,
-              dst_fee_os: element.dst_fee_os,
-              total_os: element.total_os,
-            },
-            grass_details: {
-              grass_region: element.grass_region,
-              vendor_endorsement: element.vendor_endorsement,
-              grass_date: element.grass_date,
-            }
-          });
+          let findCA = await CustomerAccount.findById(customer)
+          if(findCA) {
+            findCA.callfile.push(createdCallfile._id)
+            await findCA.save()
+          } else {
+            await CustomerAccount.create({
+              customer: customer._id,
+              bucket: bucket._id,
+              case_id: element.case_id,
+              callfile: [createdCallfile._id],
+              credit_customer_id: element.credit_user_id,
+              endorsement_date: element.endorsement_date,
+              bill_due_day: element.bill_due_day,
+              max_dpd: element.max_dpd,
+              balance: element.total_os,
+              paid_amount: 0,
+              account_id: element.account_id || null,
+              out_standing_details: {
+                principal_os: element.principal_os,
+                interest_os: element.interest_os,
+                admin_fee_os: element.admin_fee_os,
+                txn_fee_os: element.txn_fee_os,
+                late_charge_os: element.late_charge_os,
+                dst_fee_os: element.dst_fee_os,
+                total_os: element.total_os,
+              },
+              grass_details: {
+                grass_region: element.grass_region,
+                vendor_endorsement: element.vendor_endorsement,
+                grass_date: element.grass_date,
+              }
+            });
+          }
         }));
-
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
@@ -395,7 +491,7 @@ const customerResolver = {
       try {
         const customer = await Customer.findByIdAndUpdate(id,{
           $set: {
-            fullName, dob, gender, addresses, emails, contact_no:mobiles
+            fullName, dob, gender, addresses, emails, contact_no: mobiles
           }
         }, {new: true}) 
         if(!customer) throw new CustomError("Customer not found",404)

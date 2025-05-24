@@ -48,9 +48,9 @@ const AgentTimer = () => {
   const formattedTime = time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true }); 
 
   return (
-    <div className="w-full flex justify-between p-5 text-slate-600 text-xs font-medium ">
+    <div className="w-full flex justify-between  text-slate-600 text-xs font-medium ">
       <div>
-        Bucket: {userLogged?.buckets.map((e)=> bucketObject[e] + ", ")}
+        Bucket: {userLogged?.buckets.map((e)=> bucketObject[e]).join(", ")}
       </div>
       <div className="text-xs">
         Date & Time: <span >{time.toLocaleDateString()} - {formattedTime}</span>

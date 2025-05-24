@@ -19,6 +19,10 @@ const customerAccountSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref:"Disposition",
     },
+    callfile: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Callfile"
+    }],
     case_id: {
       type: String,
     },

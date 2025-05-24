@@ -132,13 +132,10 @@ const HighReports:React.FC<modalProps> = ({reportHighData, campaign, from, to}) 
         reportHighData[0]?.buckets?.map((e,index)=> 
         {
           
-          // const bucketCountArray = new Array<number>(reportHighData[0]?.buckets?.length)
           labelArray[index] = e.bucket
-          // bucketNewArray[index] = bucketCountArray?.reduce((t,v) => {return (t + v)} ) | 0
           bucketNewArrayColor[index] = colorBucket[index]
           e.dispositions.forEach(e => {
             countArray.push(e.count)
-            // bucketCountArray.push(e.count)
           })
         })
         setDataSetLabes(labelArray)

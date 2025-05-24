@@ -51,7 +51,7 @@ const Confirmation:React.FC<modalProps> = ({yes, no, message, toggle}) => {
           type="button" 
           className={`${color[toggle]?.button} text-white focus:ring-4  font-medium rounded-lg text-lg w-24 py-2.5 cursor-pointer`} onClick={yes}>{message.includes('idle') ? "OK":"Yes"}</button>
         {
-          !message.includes('idle') &&
+          toggle !== "IDLE" &&
           <button 
             type="button" 
             className="text-white bg-slate-700 hover:bg-slate-800 focus:ring-4 focus:ring-slate-300 font-medium rounded-lg text-lg w-24 py-2.5 cursor-pointer" onClick={no}>No</button>

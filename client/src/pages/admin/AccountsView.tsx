@@ -204,10 +204,10 @@ const AccountsView = () => {
                   {branchObject[user.branch]}
                 </td>
                 <td className="px-6 py-4">
-                  {user.departments?.map((e)=> deptObject[e]?.toString() + ", " )}
+                  {user.departments?.map((e)=> deptObject[e]?.toString()).join(', ')}
                 </td>
                 <td className="px-6 py-4">
-                  {user.buckets?.map(b => bucketObject[b]?.toString() + ", ")}
+                  {user.buckets?.map(b => bucketObject[b]?.toString()).join(', ')}
                 </td>
                 <td className="px-6 py-4">
                   <FaCircle className={`${user.active ? "text-green-400" : "text-gray-950"} `} />

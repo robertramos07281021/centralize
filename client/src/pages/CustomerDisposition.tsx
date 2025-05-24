@@ -8,7 +8,7 @@ import AccountInfo from "../components/AccountInfo"
 import DispositionForm from "../components/DispositionForm"
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { Search } from "../middleware/types"
-import { setSelectedCustomer, setSettled } from "../redux/slices/authSlice"
+import { setDeselectCustomer, setSelectedCustomer, setSettled } from "../redux/slices/authSlice"
 import AgentTimer from "../components/AgentTimer"
 import DispositionRecords from "../components/DispositionRecords"
 import MyTaskSection from "../components/MyTaskSection"
@@ -128,44 +128,7 @@ const CustomerDisposition = () => {
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: ()=> {
       dispatch(setSettled(false))
-      dispatch(setSelectedCustomer({
-        _id: "",
-        case_id: "",
-        account_id: "",
-        endorsement_date: "",
-        credit_customer_id: "",
-        bill_due_day: 0,
-        max_dpd: 0,
-        balance: 0,
-        paid_amount: 0,
-        out_standing_details: {
-          principal_os: 0,
-          interest_os: 0,
-          admin_fee_os: 0,
-          txn_fee_os: 0,
-          late_charge_os: 0,
-          dst_fee_os: 0,
-          total_os: 0
-        },
-        grass_details: {
-          grass_region: "",
-          vendor_endorsement: "",
-          grass_date: ""
-        },
-        account_bucket: {
-          name: "",
-          dept: ""
-        },
-        customer_info: {
-          fullName:"",
-          dob:"",
-          gender:"",
-          contact_no:[],
-          emails:[],
-          addresses:[],
-          _id:""
-        }
-      })) 
+      dispatch(setDeselectCustomer()) 
     }
   })
 
@@ -208,12 +171,15 @@ const CustomerDisposition = () => {
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
       }
       <div>
-      {
-        userLogged.type === "AGENT" &&
-        <AgentTimer/>
-      }
-      <MyTaskSection/>
-      <div className="w-full grid grid-cols-2 gap-5 p-5">
+        <div className="p-5">
+
+        {
+          userLogged.type === "AGENT" &&
+          <AgentTimer/>
+        }
+        <MyTaskSection/>
+        </div>
+      <div className="w-full grid grid-cols-2 gap-5 px-5 pb-5">
         <div className="flex flex-col items-center"> 
           <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Information</h1>
           <div className="border flex flex-col rounded-xl border-slate-400 w-full h-full items-center justify-center p-5">
@@ -229,7 +195,6 @@ const CustomerDisposition = () => {
                   id="search"
                   placeholder="Search" 
                   className="w-96 p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "/>
-
               }
               <div className={`${length > 0 && search ? "" : "hidden"} absolute max-h-96 border border-slate-400 w-96 bg-white overflow-y-auto rounded-md`}>
                 {

@@ -5,6 +5,7 @@ import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { dateAndTime } from "../middleware/dateAndTime"
 import { setSelectedCustomer } from "../redux/slices/authSlice"
+import Uploader from "./Uploader"
 
 type outStandingDetails = {
   principal_os: number
@@ -319,7 +320,11 @@ const MyTaskSection = () => {
   }
 
   return (
-    <div className="p-2 py-4 flex justify-end gap-5 relative">
+    <div className={`mt-3 flex ${["TL","MIS"].includes(userLogged.type) ? "justify-between" : "justify-end" }  gap-5 relative`}>
+      {
+        ["TL","MIS"].includes(userLogged.type) && 
+        <Uploader/>
+      }
       {
         taskLength !== undefined && taskLength > 0 &&
    

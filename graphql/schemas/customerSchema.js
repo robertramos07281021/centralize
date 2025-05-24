@@ -163,9 +163,9 @@ const customerTypeDefs = gql`
   }
  
   type MonthlyTarget {
-    campaign: ID,
-    target: Float,
-    paid: Float
+    campaign: ID
+    collected: Float
+    target: Float
   }
 
 
@@ -180,7 +180,7 @@ const customerTypeDefs = gql`
   }
 
   type Mutation {
-    createCustomer(input:[CustomerData]): Success
+    createCustomer(input:[CustomerData], callfile: String!): Success
     updateCustomer(fullName:String!, dob:String!, gender:String!, mobiles:[String], emails:[String], addresses:[String],id:ID!): Success
   }
 `

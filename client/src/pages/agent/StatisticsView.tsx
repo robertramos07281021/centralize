@@ -6,6 +6,7 @@ import { Bar } from "react-chartjs-2"
 import { useSelector } from "react-redux"
 import { RootState } from "../../redux/store"
 import { useNavigate } from "react-router-dom"
+import AgentTimer from "../../components/AgentTimer"
 
 
 type User = {
@@ -210,10 +211,11 @@ const StatisticsView = () => {
   
 
   return (
-    <div className="flex flex-col m-5 h-full gap-5">
+    <div className="flex flex-col p-5 h-full gap-5 bg-slate-200">
+      <AgentTimer/>
       <h1 className="text-2xl font-medium text-slate-500">Agent Statistics</h1>
       <div className=" h-full w-full grid grid-cols-9 grid-rows-4 gap-5">
-        <div className="row-span-4 col-span-3 border flex flex-col rounded-lg border-slate-200 shadow-md shadow-black/20 p-3">
+        <div className="row-span-4 col-span-3 border flex flex-col rounded-lg bg-white border-slate-200 shadow-md shadow-black/20 p-3">
           <h1 className="text-sm font-medium text-slate-500">Daily Production</h1>
           <div className="h-full overflow-y-auto">
             <table className="w-full h-full text-sm text-left rtl:text-right text-gray-700 dark:text-gray-400">
@@ -264,13 +266,13 @@ const StatisticsView = () => {
             </table>
           </div>
         </div>
-        <div className="border flex rounded-lg border-slate-200 col-span-6 row-span-2 p-2 shadow-md shadow-black/20">
+        <div className="border flex rounded-lg border-slate-200 col-span-6 row-span-2 p-2 shadow-md shadow-black/20 bg-white">
           <Bar data={dataPerDay} options={options} />
         </div>
-        <div className="border rounded-lg border-slate-200 col-span-4 row-span-2 p-2 shadow-md shadow-black/20">
+        <div className="border rounded-lg border-slate-200 col-span-4 row-span-2 p-2 shadow-md shadow-black/20 bg-white">
         <Bar data={dataPerMonth} options={options} />
         </div>
-        <div className="border rounded-lg border-slate-200 col-span-2 row-span-2 shadow-md shadow-black/20 text-[0.8em] p-3">
+        <div className="border rounded-lg border-slate-200 col-span-2 row-span-2 shadow-md shadow-black/20 text-[0.8em] p-3 bg-white">
           <div className="text-slate-500 font-bold ">Overall</div>
           {
             dispotypeData?.getDispositionTypes?.map((dt) => {

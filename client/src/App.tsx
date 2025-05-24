@@ -1,6 +1,6 @@
 import { BrowserRouter, Route, Routes } from "react-router-dom"
 import  Login  from "./pages/Login"
-// import { Error } from "./pages/Error"
+import { Error } from "./pages/Error"
 import { AdminRoute } from "./routes/AdminRoute"
 import ChangePassword from "./pages/ChangePassword"
 import { AgentRoute } from "./routes/AgentRoute"
@@ -9,7 +9,6 @@ import { OpsRoute } from "./routes/OpsRoute"
 import { TlRoute } from "./routes/TlRoute"
 import { CeoRoute } from "./routes/CeoRoute"
 import AdminDashboard from "./pages/admin/AdminDashboard"
-import AgentDashboard from "./pages/agent/AgentDashboard"
 import AomDashboard from "./pages/aom/AomDashboard"
 import CeoDashboard from "./pages/ceo/CeoDashboard"
 import TlDashboard from "./pages/tl/TlDashboard"
@@ -32,7 +31,7 @@ function App() {
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Login/>}/>
-        {/* <Route path="*" element={<Error/>}/> */}
+        <Route path="*" element={<Error/>}/>
         <Route path="/change-password" element={<ChangePassword/>}/>
     
         <Route element={<AdminRoute/>}>
@@ -43,9 +42,8 @@ function App() {
           <Route path="/user-account" element={<UserView/>}/>
         </Route>
         <Route element={<AgentRoute/>}>
-          <Route path="/agent-dashboard" element={<AgentDashboard/>}/>
+          <Route path="/agent-dashboard" element={<StatisticsView/>}/>
           <Route path="/agent-production-area" element={<CustomerDisposition/>}/>
-          <Route path="/agent-statistics" element={<StatisticsView/>}/>
         </Route>
         <Route element={<AomRoute/>}>
           <Route path="/aom-dashboard" element={<AomDashboard/>}/>
