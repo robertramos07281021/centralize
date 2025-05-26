@@ -8,7 +8,7 @@ import AccountInfo from "../components/AccountInfo"
 import DispositionForm from "../components/DispositionForm"
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { Search } from "../middleware/types"
-import { setDeselectCustomer, setSelectedCustomer, setSettled } from "../redux/slices/authSlice"
+import { setDeselectCustomer, setSelectedCustomer } from "../redux/slices/authSlice"
 import AgentTimer from "../components/AgentTimer"
 import DispositionRecords from "../components/DispositionRecords"
 import MyTaskSection from "../components/MyTaskSection"
@@ -74,9 +74,8 @@ const SELECT_TASK = gql`
   }
 `
 
-
 const CustomerDisposition = () => {
-  const {userLogged, selectedCustomer, settled} = useSelector((state:RootState)=> state.auth)
+  const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -127,7 +126,6 @@ const CustomerDisposition = () => {
 
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: ()=> {
-      dispatch(setSettled(false))
       dispatch(setDeselectCustomer()) 
     }
   })
@@ -138,8 +136,6 @@ const CustomerDisposition = () => {
       navigate(location.pathname)
     }
   },[ success ,navigate,location.pathname ])
-
-
 
 
 
@@ -191,7 +187,7 @@ const CustomerDisposition = () => {
                   type="text"
                   name="search" 
                   value={search}
-                  onChange={(e)=> {setSearch(e.target.value); dispatch(setSettled(false))}}
+                  onChange={(e)=> {setSearch(e.target.value)}}
                   id="search"
                   placeholder="Search" 
                   className="w-96 p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "/>
@@ -330,7 +326,7 @@ const CustomerDisposition = () => {
       <div className="p-5 grid grid-cols-2 gap-5">
         <AccountInfo/>
         {
-          !settled &&
+          selectedCustomer.balance > 0 &&
           <DispositionForm/>
         }
       </div>

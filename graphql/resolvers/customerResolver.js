@@ -427,8 +427,10 @@ const customerResolver = {
             throw new CustomError(`Bucket '${name}' is not included in user's access`, 403);
           }
         }
-        
-        const createdCallfile = await Callfile.create({name: callfile})
+        const sumOfOutStanding = input.map(e => e.total_os).reduce((t,v)=> {
+          return t + v
+        })
+        const createdCallfile = await Callfile.create({name: callfile, target: sumOfOutStanding})
 
         await Promise.all(input.map(async (element) => {
           const bucket = await Bucket.findOne({ name: element.bucket });

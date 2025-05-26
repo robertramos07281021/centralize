@@ -22,7 +22,6 @@ type search = {
 interface UserState {
   error: boolean
   need_login: boolean
-  settled: boolean
   userLogged: User
   search: search
   page: number
@@ -39,7 +38,6 @@ interface UserState {
 const initialState:UserState = {
   error: false,
   need_login: false,
-  settled: false,
   selectedGroup: "",
   selectedAgent: "",
   page: 1,
@@ -129,9 +127,6 @@ const authSlice = createSlice({
     setSelectedCustomer: (state, action:PayloadAction<Search>) => {
       state.selectedCustomer = action.payload
     },
-    setSettled: (state, action:PayloadAction<boolean>) => {
-      state.settled = action.payload
-    },
     setSelectedGroup: (state, action:PayloadAction<string>)=> {
       state.selectedGroup = action.payload
     },
@@ -196,5 +191,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logoutUser, setError, setNeedLogin , setUserLogged, setSearch, setSelectedCustomer, setSettled, setSelectedGroup, setAgent, setPage, setTasker ,setTaskFilter, setSelectedDisposition, setSelectedDispoReport, setDeselectCustomer} = authSlice.actions;
+export const { logoutUser, setError, setNeedLogin , setUserLogged, setSearch, setSelectedCustomer, setSelectedGroup, setAgent, setPage, setTasker ,setTaskFilter, setSelectedDisposition, setSelectedDispoReport, setDeselectCustomer} = authSlice.actions;
 export default authSlice.reducer;

@@ -13,6 +13,16 @@ const callFileSchema = new Schema(
     active: {
       type: Boolean,
       default: true
+    },
+    masterlist: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Masterlist"
+    },
+    collected:{
+      type: Number
+    },
+    target: {
+      type: Number
     }
   },
   { timestamps: true }

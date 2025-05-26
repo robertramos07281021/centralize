@@ -5,7 +5,7 @@ import { RootState, useAppDispatch } from "../redux/store"
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { Success } from "../middleware/types"
 import SuccessToast from "./SuccessToast"
-import { setDeselectCustomer, setSettled } from "../redux/slices/authSlice"
+import { setDeselectCustomer } from "../redux/slices/authSlice"
 
 
 interface Data {
@@ -107,7 +107,6 @@ const DispositionForm = () => {
           message: "Disposition successfully created"
         })
         setConfirm(false)
-        dispatch(setSettled(false))
         setSelectedDispo('')
         setData({
           amount: "",

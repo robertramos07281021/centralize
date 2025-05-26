@@ -56,53 +56,14 @@ const dispositionTypeDefs = gql`
     dispositions: [DispoData]
   }
 
-  type BucketDisposition {
-    bucket: String
-    amount: Float
-    users: [Agent]
-    dispositions: [DispoData]
-  } 
 
-  type PerDayAmount {
-    day: String,
-    amount: Float
-  }
 
-  type PerDay {
-    buckets: [PerDayAmount]
-    bucket: ID
-  }
-
-  type DispositionPerDay {
-    month: String,
-    dispositionsCount: [PerDay]
-  }
-
-  
-  type MonthAmount {
-    month: String,
-    amount: Float
-  }
-
-  type PerMonth {
-    buckets: [MonthAmount]
-    bucket: ID
-  }
-
-  type DispositionPerYear {
-    year: String,
-    dispositionsCount: [PerMonth]
-  }
 
   type Dispo {
     dispotype: ID,
     count: Int
   }
 
-  type DispositionCount {
-    bucket: ID
-    dispositions: [Dispo]
-  }
 
 
   type SubsribeSuccess {
@@ -136,11 +97,7 @@ const dispositionTypeDefs = gql`
     buckets: [Buckets]
   }
   
-  type YesterdayDispo {
-    bucket: String
-    count:Float
-  }
-  
+
   type BucketAomDashobard {
     campaign: ID
     ptp_amount: Float
@@ -178,6 +135,15 @@ const dispositionTypeDefs = gql`
     sms
     field
   }
+  type TLDashboardProd {
+    bucket: ID
+    calls: Float
+    sms: Float
+    email: Float
+    field: Float
+    skip: Float
+  }
+
 
   input CreateDispo {
     customer_account:ID!
@@ -195,20 +161,16 @@ const dispositionTypeDefs = gql`
     getAccountDispositions(id:ID!, limit:Int):[Disposition]
     getAccountDispoCount(id:ID!): Count
     getDispositionReports(agent:String, bucket:String, disposition:[String], from:String, to:String): Reports
-    getAgentDispositions:[AgentDisposition]
-    getBucketDisposition:[BucketDisposition]
-    getDispositionPerDay:DispositionPerDay
-    getDispositionPerMonth:DispositionPerYear
-    getDeptDispositionCount:[DispositionCount]
     getAllDispositionTypes:[DispoType]
     getDispositionReportsHigh(campaign:String, bucket:String, dispositions:[String], from:String, to:String):[HighDispositionReport]
-    getDispositionCountYesterday:[YesterdayDispo]
     getAomDailyCollection:[AomCampaignToday]
     getDailyFTE:[DailyFTE]
     getPTPPerMonth: [PerMonthCollection]
     getPTPKeptPerMonth: [PerMonthCollection]
-    getPaidPerMonth: [PerMonthCollection],
-
+    getPaidPerMonth: [PerMonthCollection]
+    getTLPaidToday:[TLDashboardProd]
+    getTLPTPKeptToday: [TLDashboardProd]
+    getTLPTPToday: [TLDashboardProd]
   }
 
   type Mutation {

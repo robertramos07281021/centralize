@@ -120,7 +120,7 @@ const TaskManagerView = () => {
               showSelection &&
               <div className="w-full h-96  border overflow-y-auto absolute top-10 flex gap-5 p-5 text-xs flex-col border-slate-300 bg-white">
               {
-                DispositionTypes?.getDispositionTypes.filter((e)=> e.name !== "SETTLED").map((e) =>
+                DispositionTypes?.getDispositionTypes.filter((e)=> e.name !== "PAID").map((e) =>
                   <label key={e.id} className="flex gap-2 text-slate-500">
                     <input   
                     type="checkbox" 
@@ -129,7 +129,7 @@ const TaskManagerView = () => {
                     value={e.name}
                     checked={selectedDisposition?.includes(e.name)}
                     onChange={(e)=> handleCheckBox(e.target.value, e)} />
-                    <p>{e.name}{e.name === "PAID" ? " (Not Completely Settled)":""}</p>
+                    <p>{e.name}</p>
                   </label>
                 )
               }

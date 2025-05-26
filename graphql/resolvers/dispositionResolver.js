@@ -218,535 +218,7 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getAgentDispositions: async(_,__,{user})=> {
-      if(!user) throw new CustomError("Unauthorized",401)
-      try {
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
-        const end = new Date();  
-        end.setHours(23, 59, 59, 999);
-
-        const agentDispositions = await Disposition.aggregate([
-          {
-            $match: {
-              createdAt: { $gte: start, $lte: end },
-            }
-          },
-          {
-            $lookup: {
-              from: "users",
-              localField: "user",
-              foreignField: "_id",
-              as: "agent",
-              pipeline: [
-                { $project: { name: 1, user_id: 1 } }
-              ]
-            }
-          },
-          {
-            $unwind: {path: "$agent",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "dispotypes",
-              localField: "disposition",
-              foreignField: "_id",
-              as: "disposition_type",
-              pipeline: [
-                { $project: { name: 1, code: 1 } }
-              ]
-            }
-          },
-          {
-            $unwind: {path: "$disposition_type",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
-              as: "ca",
-            }
-          },
-          {
-            $unwind: {path: "$ca",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "ca.bucket",
-              foreignField: "_id",
-              as: "bucket"
-            }
-          },
-          {
-            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $match: {
-              "bucket._id": {$in: user.buckets}
-            }
-          },
-          {
-            $group: {
-              _id: {
-                agent_id: "$agent._id",
-                disposition_id: "$disposition_type._id"
-              },
-              agent: { $first: "$agent.name" },
-              user_id: { $first: "$agent.user_id" },
-              dispositionName: { $first: "$disposition_type.name" },
-              dispositionCode: { $first: "$disposition_type.code" },
-              count: { $sum: 1 }
-            }
-          },
-          {
-            $group: {
-              _id: "$_id.agent_id",
-              agent: { $first: "$agent" },
-              user_id: { $first: "$user_id" },
-              dispositions: {
-                $push: {
-                  code: "$dispositionCode",
-                  name: "$dispositionName",
-                  count: "$count"
-                }
-              }
-            }
-          },
-          {
-            $project: {
-              _id:  "$_id",
-              agent: 1,
-              user_id: 1,
-              dispositions: 1
-            }
-          }
-        ])
-        return [...agentDispositions]
-      } catch (error) {
-        throw new CustomError(error.message, 500)
-      }
-    },
-    getBucketDisposition: async(_,__,{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-      try {
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
-        const end = new Date();  
-        end.setHours(23, 59, 59, 999);
-        const bucketDisposition = await Disposition.aggregate([
-          {
-            $match: {createdAt: { $gte: start, $lte: end }},
-          },
-          {
-            $lookup: {
-              from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
-              as: "customerAccount",
-            }
-          },
-          {
-            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "customerAccount.bucket",
-              foreignField: "_id",
-              as: "bucket",
-              pipeline: [
-                {$project: {name: 1}}
-              ]
-            }
-          },
-          {
-            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $match: {"bucket._id":{$in : user.buckets}},
-          },
-          {
-            $lookup: {
-              from: "dispotypes",
-              localField: "disposition",
-              foreignField: "_id",
-              as: "disposition_type",
-              pipeline: [
-                { $project: { name: 1, code: 1 } }
-              ]
-            }
-          },
-          {
-            $unwind: {path: "$disposition_type",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "users",
-              localField: "user",
-              foreignField: "_id",
-              as: "user",
-            }
-          },
-          {
-            $unwind: {path: "$user",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $group: {
-              _id: {
-                bucket_id: "$bucket._id",
-                disposition_id: "$disposition_type._id"
-              },
-              bucket: {$first: "$bucket.name"},
-              dispositionName: { $first: "$disposition_type.name" },
-              dispositionCode: { $first: "$disposition_type.code" },
-              count: { $sum: 1 },
-              user_id: {$first: "$user._id"},
-              user_name: {$first: "$user.name"},
-              user_buckets: {$first: "$user.buckets"},
-              amount: {$sum: "$amount"}
-            }
-          },
-          {
-            $group: {
-              _id: "$_id.bucket_id",
-              bucket: { $first: "$bucket" },
-              amount: {$sum: "$amount"},
-              users: {
-                $push: {
-                  _id: "$user_id",
-                  name: "$user_name",
-                  buckets: "$user_buckets"
-                }
-              },
-              dispositions: {
-                $push: {
-                  code: "$dispositionCode",
-                  name: "$dispositionName",
-                  count: "$count"
-                }
-              }
-            }
-          },
-          {
-            $project: {
-              _id: "$_id",
-              bucket: 1,
-              amount: 1,
-              users: 1,
-              dispositions: 1
-            }
-          }
-        ])
-        return bucketDisposition
-      } catch (error) {
-        throw new CustomError(error.message, 500)
-      } 
-    },
-    getDispositionCountYesterday: async(_,__,{user}) => {
-      const yesterdayStart = new Date();
-      yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-      yesterdayStart.setHours(0, 0, 0, 0);
-
-      const yesterdayEnd = new Date();
-      yesterdayEnd.setDate(yesterdayEnd.getDate() - 1);
-      yesterdayEnd.setHours(23, 59, 59, 999);
-
-      try {
-        const yesterdayDispoCount = await Disposition.aggregate([
-
-        {
-          $lookup: {
-            from: "customeraccounts",
-            localField: "customer_account",
-            foreignField: "_id",
-            as: "customerAccount",
-          }
-        },
-        {
-          $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
-        },
-        { 
-          $match: {
-            createdAt: {$gte: yesterdayStart, $lt: yesterdayEnd},
-            "customerAccount.bucket": {$in:  user.buckets.map(id => new mongoose.Types.ObjectId(id))}
-          }
-        },
-        {
-          $group: {
-            _id: "$customerAccount.bucket",
-            count: { $sum: "$amount" }
-          }
-        },
-        {
-          $project: {
-            _id: 0,
-            bucket: "$_id",
-            count: 1
-          }
-        }
-        ])
-        return yesterdayDispoCount
-      } catch (error) {
-        throw new CustomError(error.message, 500)
-      }
-
-    },
-
-    getDispositionPerDay: async(_,__,{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-      try {
-
-        const year = new Date().getFullYear()
-        const month = new Date().getMonth();
-
-        const firstDay = new Date(year,month, 1)
-        const lastDay = new Date(year,month + 1,0)
-
-        const dispositionPerDayOfTheMonth = await Disposition.aggregate([
-      
-          {
-            $lookup: {
-              from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
-              as: "customerAccount",
-            }
-          },
-          {
-            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "customerAccount.bucket",
-              foreignField: "_id",
-              as: "customerBucket"
-            }
-          },
-          {
-            $unwind: {path: "$customerBucket",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "dispotypes",
-              localField: "disposition",
-              foreignField: "_id",
-              as: "dispotype",
-            }
-          },
-          {
-            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $match: {
-              createdAt: { $gte: firstDay, $lte: lastDay },
-              "customerBucket._id": {$in: user.buckets.map(e=> new mongoose.Types.ObjectId(e))},
-              "dispotype.code": {$in: ['SET',"PAID"]}
-            }
-          },
-          {
-            $group: {
-              _id: {
-                bucket: "$customerBucket._id",
-                day: { $dayOfMonth: "$createdAt" }
-              },
-              amount: { $sum: "$amount" }
-            }
-          },
-          {
-            $group: {
-              _id:"$_id.bucket",
-              buckets: {
-                $push: {
-                  day:"$_id.day",
-                  amount: "$amount"
-                }
-              }
-            }
-          },
-          {
-            $project: {
-              _id: 0,
-              bucket: "$_id",
-              buckets: 1
-            }
-          },
-          {
-            $sort: { day: 1 }
-          }
-        ])    
-
-        return {month: month, dispositionsCount:dispositionPerDayOfTheMonth}
-      } catch (error) {
-        throw new CustomError(error.message, 500)
-      }
-    },
-    getDispositionPerMonth: async(_,__,{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-      try {
-
-        const year = new Date().getFullYear()
-        const firstMonth = new Date(year, 0, 1)
-        const lastMonth = new Date(year, 11, 31, 23, 59, 59, 999)
-
-        const dispositionPerMonth = await Disposition.aggregate([
-          {
-            $lookup: {
-              from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
-              as: "customerAccount",
-            }
-          },
-          {
-            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "customerAccount.bucket",
-              foreignField: "_id",
-              as: "customerBucket"
-            }
-          },
-          {
-            $unwind: {path: "$customerBucket",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "dispotypes",
-              localField: "disposition",
-              foreignField: "_id",
-              as: "dispotype",
-            }
-          },
-          {
-            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $match: {
-              "customerBucket._id": {$in: user.buckets.map(e => new mongoose.Types.ObjectId(e)) },
-              createdAt:  { $gte: firstMonth, $lte: lastMonth },
-              "dispotype.code": {$in: ['SET',"PAID"]}
-            }
-          },
-          {
-            $group: {
-              _id: {
-                bucket: "$customerBucket._id",
-                month: { $month: "$createdAt" }
-              },
-              amount: { $sum: "$amount" }
-            }
-          },
-          {
-            $group: {
-              _id:"$_id.bucket",
-              buckets: {
-                $push: {
-                  month:"$_id.month",
-                  amount: "$amount"
-                }
-              }
-            }
-          },
-          {
-            $project: {
-              _id: 0,
-              bucket: "$_id",
-              buckets: 1
-            }
-          },
-          {
-            $sort: { month: 1 }
-          }
-        ])
-        
-        return {year:year, dispositionsCount: [...dispositionPerMonth] }
-      } catch (error) {
-  
-        throw new CustomError(error.message, 500)
-      }
-    },
-    getDeptDispositionCount: async(_,__,{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-      try {
-      
-
-        const DepartmentDispositionCount = await Disposition.aggregate([
-          {
-            $lookup: {
-              from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
-              as: "customerAccount",
-            }
-          },
-          {
-            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "customerAccount.bucket",
-              foreignField: "_id",
-              as: "bucket"
-            }
-          },
-          {
-            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "dispotypes",
-              localField: "disposition",
-              foreignField: "_id",
-              as: "dispotype",
-            }
-          },
-          {
-            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $match: {
-              "bucket._id": {$in: user.buckets.map(e => new mongoose.Types.ObjectId(e))}
-            }
-          },
-          {
-            $group: {
-              _id:{
-                bucket: "$bucket._id",
-                dispotype: "$dispotype._id"
-              },
-              count: {$sum: 1}
-            }
-          },
-          {
-            $group: {
-              _id: "$_id.bucket",
-              dispositions: {
-                $push: {
-                  dispotype: "$_id.dispotype",
-                  count: "$count"
-                }
-              }
-            }
-          },
-          {
-            $project: {
-              _id: 0,
-              bucket: "$_id",
-              dispositions: 1
-            }
-          }
-        ])
-        return DepartmentDispositionCount
-      } catch (error) {
-        throw new CustomError(error.message, 500)
-      }
-    },
+    
     getAllDispositionTypes: async() => {
       try {
         return await DispoType.find({code: {$ne: "SET"}}).lean()
@@ -1386,6 +858,307 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
+    getTLPaidToday: async(_,__,{user})=> {
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+        
+        const campaignBucket = (await Bucket.find({_id: {$in: user.buckets}}).lean()).map(e=> e._id)
+
+        const tlPaidToday = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount"
+            },
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              createdAt: {$gte:todayStart, $lt:todayEnd},
+              "dispotype.code" : "PAID",
+              ptp : false,
+              "bucket._id" : {$in: campaignBucket}
+            }
+          },
+          {
+            $group: {
+              _id:"$bucket._id",
+              calls: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','calls']},"$amount",0]
+                }
+              },
+              sms: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','sms']},"$amount",0]
+                }
+              },
+              email: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','email']},"$amount",0]
+                }
+              },
+              skip: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','skip']},"$amount",0]
+                }
+              },
+              field: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','field']},"$amount",0]
+                }
+              },
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              bucket: "$_id",
+              calls: 1,
+              sms: 1,
+              email: 1,
+              skip: 1,
+              field: 1
+            }
+          }
+        ])
+
+        return tlPaidToday
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getTLPTPKeptToday: async(_,__,{user}) => {
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+        
+        const campaignBucket = (await Bucket.find({_id: {$in: user.buckets}}).lean()).map(e=> e._id)
+
+        const tlPtpKeptToday = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount"
+            },
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              createdAt: {$gte:todayStart, $lt:todayEnd},
+              "dispotype.code" : "PAID",
+              ptp : true,
+              "bucket._id" : {$in: campaignBucket}
+            }
+          },
+          {
+            $group: {
+              _id:"$bucket._id",
+              calls: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','calls']},"$amount",0]
+                }
+              },
+              sms: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','sms']},"$amount",0]
+                }
+              },
+              email: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','email']},"$amount",0]
+                }
+              },
+              skip: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','skip']},"$amount",0]
+                }
+              },
+              field: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','field']},"$amount",0]
+                }
+              },
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              bucket: "$_id",
+              calls: 1,
+              sms: 1,
+              email: 1,
+              skip: 1,
+              field: 1
+            }
+          }
+        ])
+
+        return tlPtpKeptToday
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getTLPTPToday: async(_,__,{user})=> {
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+        
+        const campaignBucket = (await Bucket.find({_id: {$in: user.buckets}}).lean()).map(e=> e._id)
+
+        const tlPtpToday = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount"
+            },
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              createdAt: {$gte:todayStart, $lt:todayEnd},
+              "dispotype.code" : "PTP",
+              ptp : true,
+              "bucket._id" : {$in: campaignBucket}
+            }
+          },
+          {
+            $group: {
+              _id:"$bucket._id",
+              calls: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','calls']},"$amount",0]
+                }
+              },
+              sms: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','sms']},"$amount",0]
+                }
+              },
+              email: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','email']},"$amount",0]
+                }
+              },
+              skip: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','skip']},"$amount",0]
+                }
+              },
+              field: {
+                $sum: {
+                  $cond: [{$eq: ['$contact_method','field']},"$amount",0]
+                }
+              },
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              bucket: "$_id",
+              calls: 1,
+              sms: 1,
+              email: 1,
+              skip: 1,
+              field: 1
+            }
+          }
+        ])
+
+        return tlPtpToday
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    }
+
   },
 
   Mutation: {

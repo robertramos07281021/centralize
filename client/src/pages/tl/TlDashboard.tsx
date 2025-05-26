@@ -8,11 +8,10 @@ import { Chart,
   Tooltip,
   Legend 
 } from 'chart.js';
-import PerDayDispositionSection from './PerDayDispositionSection';
-import DoughnutSection from './DoughnutSection';
-import DispositionSection from './DispositionSection';
-import AgentDisposition from './AgentDisposition';
+
 import ChartDataLabels from 'chartjs-plugin-datalabels';
+import ProductionToday from '../../components/ProductionToday';
+
 
 Chart.register(...registerables,
   ChartDataLabels,
@@ -26,14 +25,17 @@ Chart.register(...registerables,
 
 
 const TlDashboard  = () => {
-
+  const samplebucket = 3
   return (
-    <div className="h-full p-5 grid grid-rows-6 grid-cols-8 bg-slate-600/10  gap-5">
-      <AgentDisposition/>
-      <PerDayDispositionSection/>
-      
-      <DoughnutSection/>
-      <DispositionSection/>
+    <div className="h-full p-2 grid grid-rows-6 grid-cols-8 bg-slate-600/10  gap-2">
+      <ProductionToday/>
+      <div className={`${samplebucket > 2 ? "row-start-2" : ""} col-start-4 border col-span-3 row-span-full `}>
+        asd
+      </div>
+      <div>asd</div>
+
+
+
     </div>
   )
 }
