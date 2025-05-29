@@ -16,10 +16,12 @@ const productionSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
     },
-    dispositions: [{
-      type: mongoose.Schema.ObjectId,
-      ref: "Disposition"
-    }]
+    default_target: {
+      type: Number
+    },
+    target_today: {
+      type: Number
+    }
   },
   { timestamps: true }
 );

@@ -91,7 +91,7 @@ const DispositionRecords = () => {
           dispositions?.getAccountDispositions.map((gad,index) => (
             <div key={gad._id} className={`w-2/7 2xl:text-sm lg:text-xs flex flex-col gap-2 border p-2 rounded-xl border-slate-400 ${gad.existing && "bg-slate-200"}`}>
                <div className=" gap-2 border border-slate-500 rounded-md bg-white p-2 text-center font-medium 2xl:text-base lg;text-sm text-slate-600">
-                {index + 1 === 1 ? "Latest" :"Past"}
+                {index + 1 === 1 ? "Latest" :  (index + 1 === 2 ? "Previous" : "Past")}
                
               </div>
               <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white ">

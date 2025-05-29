@@ -39,6 +39,10 @@ const userSchema = new Schema(
       type: Boolean,
       default: false
     },
+    account_type: {
+      type: Number,
+      default: 1,
+    },
     buckets: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "Bucket"

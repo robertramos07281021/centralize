@@ -47,7 +47,7 @@ const CREATE_DISPOSITION = gql`
 `
 
 const DispositionForm = () => {
-  const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
+  const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
 
   const [selectedDispo, setSelectedDispo] = useState<string>('')
 
@@ -118,6 +118,7 @@ const DispositionForm = () => {
           comment: "",
           contact_method: "calls"
         })
+
         dispatch(setDeselectCustomer())
       } catch (error) {
         console.log(error)
@@ -179,7 +180,7 @@ const DispositionForm = () => {
   }
 
   const anabledDispo = ["PAID","PTP","UNEG"]
-  const requiredDispo = ["PAID"]
+  const requiredDispo = ["PAID",'PTP']
 
   return  (
     <>
@@ -262,7 +263,6 @@ const DispositionForm = () => {
               </div>
             }
             {
-              ['TL','MIS'].includes(userLogged.type) &&
               (anabledDispo.includes(selectedDispo) ? 
               <label className="grid grid-cols-4 items-center">
                   <p className="text-gray-800 font-bold ">Contact Method</p>

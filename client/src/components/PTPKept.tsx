@@ -79,7 +79,7 @@ const PTPKept = () => {
       datalabels:{
         display:false
       },
-        legend: {
+      legend: {
         display: false
       },
       title: {
@@ -92,9 +92,9 @@ const PTPKept = () => {
   }
 
   return (
-    <>
+    <div className='bg-white border border-slate-400 rounded-xl p-2'>
       <Bar data={data} options={option}/>
-    </>
+    </div>
   )
 }
 

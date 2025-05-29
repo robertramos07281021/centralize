@@ -144,6 +144,31 @@ const dispositionTypeDefs = gql`
     skip: Float
   }
 
+  type TLTotal {
+    bucket: ID
+    count: Int
+    amount: Float
+    yesterday: Float
+  }
+
+  type TLDailyCollected {
+    bucket: ID
+    amount: Float
+    yesterday: Float
+  }
+
+  type AgentDispo {
+    user: ID
+    count: Int
+    amount: Float
+    yesterday: Float
+  }
+
+  type BucketTargets {
+    bucket: ID
+    collected: Float
+    target: Float
+  }
 
   input CreateDispo {
     customer_account:ID!
@@ -156,6 +181,7 @@ const dispositionTypeDefs = gql`
     comment:String
     contact_method: ContactMethod!
   }
+
 
   type Query {
     getAccountDispositions(id:ID!, limit:Int):[Disposition]
@@ -171,6 +197,12 @@ const dispositionTypeDefs = gql`
     getTLPaidToday:[TLDashboardProd]
     getTLPTPKeptToday: [TLDashboardProd]
     getTLPTPToday: [TLDashboardProd]
+    getTLPTPTotals: [TLTotal]
+    getTLPTPKeptTotals: [TLTotal]
+    getTLPaidTotals: [TLTotal],
+    getTLDailyCollected: [TLDailyCollected]
+    agentDispoDaily: [AgentDispo]
+    getTargetPerCampaign: [BucketTargets]
   }
 
   type Mutation {

@@ -14,7 +14,7 @@ const taskResolver = {
     myTasks: async(_,__,{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const myTask = await CustomerAccount.find({assigned: user._id}) 
+        const myTask = await CustomerAccount.find({$and : [{assigned: user._id},{ on_hands: false}]}) 
         return myTask
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -122,7 +122,7 @@ const taskResolver = {
       
         const group = await Group.findById(ca.assigned)
       
-        const assigned = ca.assigned ? (group ? [...group.members] : [...ca.assigned]) : []
+        const assigned = ca?.assigned ? (group ? [...group.members] : [ca.assigned]) : []
 
         await pubsub.publish(SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {

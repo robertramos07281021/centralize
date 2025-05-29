@@ -10,10 +10,6 @@ const callFileSchema = new Schema(
       unique: true,
       uppercase: true
     },
-    active: {
-      type: Boolean,
-      default: true
-    },
     masterlist: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Masterlist"

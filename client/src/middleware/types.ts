@@ -17,9 +17,6 @@ export type Department = {
   aom: UserInfo | null;
 }
 
-
-
-
 export type Success = {
   success: boolean;
   message: string;
@@ -30,8 +27,6 @@ export type Dept = {
   branch: string;
   aom: string
 }
-
-
 
 export type Users = {
   _id: string;
@@ -53,10 +48,6 @@ export type ModifyRecords = {
   name: string
   createdAt: string
 }
-
-
-
-
 
 export type CustomerData = {
   address: string
@@ -87,8 +78,6 @@ export type CustomerData = {
   txn_fee_os:number
   vendor_endorsement:string
 }
-
-
 
 // =======================
 // customer update form, customer disposition
@@ -139,13 +128,3 @@ export type Search = {
     account_bucket: AccountBucket
     customer_info: CustomerRegistered
 }
-
-
-
-
-// export type AllCustomers = {
-//   customers:CustomerRegistered[]
-//   total: number
-// }
-
-

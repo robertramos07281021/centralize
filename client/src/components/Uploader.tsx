@@ -85,7 +85,7 @@ const Uploader = () => {
         }));
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const newJsonData = dateConverting.map(({ total_os_1, platform_user_id_1, ...rest }) => rest)
-        setExcelData(newJsonData.slice(1,newJsonData.length -1)); 
+        setExcelData(newJsonData.slice(0,newJsonData.length - 1)); 
       };
       reader.readAsBinaryString(file);
     } catch (error) {

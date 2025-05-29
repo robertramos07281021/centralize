@@ -6,6 +6,7 @@ import { RootState, useAppDispatch } from "../redux/store"
 import { dateAndTime } from "../middleware/dateAndTime"
 import { setSelectedCustomer } from "../redux/slices/authSlice"
 import Uploader from "./Uploader"
+import { useNavigate } from "react-router-dom"
 
 type outStandingDetails = {
   principal_os: number
@@ -67,7 +68,7 @@ interface GroupTask {
 }
 
 const MY_TASKS = gql`
-  query Query {
+  query myTasks {
     myTasks {
       _id
       case_id
@@ -169,10 +170,18 @@ interface SubSuccess {
   members:string[]
 }
 
-
 const SOMETHING_NEW_IN_TASK  = gql`
   subscription Subscription {
     somethingChanged {
+      message
+      members
+    }
+  }
+`
+
+const NEW_DISPO = gql`
+  subscription Subscription {
+    dispositionUpdated {
       message
       members
     }
@@ -197,21 +206,41 @@ const SELECT_TASK = gql`
   }
 `
 
+const DESELECT_TASK = gql`
+  mutation DeselectTask($id: ID!) {
+    deselectTask(id: $id) {
+      message
+      success
+    }
+  }
+`
+
+
 const MyTaskSection = () => {
-  const {userLogged} = useSelector((state:RootState)=> state.auth)
+  const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const client = useApolloClient()
+  const navigate = useNavigate()
+
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
     onData: ({data})=> {
       if(data) {
+        console.log(data)
         if(data.data?.somethingChanged?.message === "TASK_SELECTION" && data.data?.somethingChanged?.members?.toString().includes(userLogged._id)) {
           client.refetchQueries({
-            include: ['groupTask']
+            include: ['myTasks']
           })
         }
       }
     }
   });
+
+
+  useSubscription<{dispositionUpdated:SubSuccess}>(NEW_DISPO,{
+    onData: ({data})=> {
+      if(data) console.log(data)
+    }
+  })
 
   useSubscription<{groupChanging:SubSuccess}>(GROUP_CHANGING,{
     onData: ({data})=> {
@@ -225,9 +254,7 @@ const MyTaskSection = () => {
     }
   })
   
-
-
-  const {data:myTasksData} = useQuery<{myTasks:CustomerData[]}>(MY_TASKS)
+  const {data:myTasksData, refetch} = useQuery<{myTasks:CustomerData[]}>(MY_TASKS)
   const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
   const [data, setData] = useState<CustomerData[] | null>([])
   const [selection, setSelection] = useState<string>("")
@@ -243,10 +270,21 @@ const MyTaskSection = () => {
     }
   },[selection,myTasksData,groupTaskData,userLogged])
 
+  const [deselectTask] = useMutation(DESELECT_TASK)
 
   useEffect(()=> {
     groupTaskRefetch()
   },[userLogged._id,groupTaskRefetch])
+
+  useEffect(()=> {
+    setSelection("")
+  },[selectedCustomer._id])
+
+  useEffect(()=> {
+    refetch()
+    groupTaskRefetch()
+  },[refetch,groupTaskRefetch,navigate])
+
 
   const handleClickMyTask = () => {
     if(selection && selection.trim() !== "group_task"){
@@ -259,53 +297,19 @@ const MyTaskSection = () => {
   const [selectTask]= useMutation(SELECT_TASK,{
     onCompleted: ()=> {
       groupTaskRefetch()
+      setSelection("")
     }
   })
   
   const handleClickSelect = async(data:CustomerData) => {
     try {
+      if(selectedCustomer._id) {
+        await deselectTask({variables: {id: selectedCustomer._id }})  
+      }
       const res = await selectTask({variables: {id: data._id}})
       if(res.data.selectTask.success) {
-        dispatch(setSelectedCustomer({
-          _id: data._id,
-          case_id: data.case_id,
-          account_id: data.account_id,
-          endorsement_date: data.endorsement_date,
-          credit_customer_id: data.credit_customer_id,
-          bill_due_day: data.bill_due_day,
-          max_dpd: data.max_dpd,
-          balance: data.balance,
-          paid_amount: data.paid_amount,
-          out_standing_details: {
-            principal_os: data.out_standing_details.principal_os,
-            interest_os: data.out_standing_details.interest_os,
-            admin_fee_os: data.out_standing_details.admin_fee_os,
-            txn_fee_os: data.out_standing_details.txn_fee_os,
-            late_charge_os: data.out_standing_details.late_charge_os,
-            dst_fee_os: data.out_standing_details.dst_fee_os,
-            total_os: data.out_standing_details.total_os
-          },
-          grass_details: {
-            grass_region: data.grass_details.grass_region,
-            vendor_endorsement: data.grass_details.vendor_endorsement,
-            grass_date: data.grass_details.grass_date
-          },
-          account_bucket: {
-            name: data.account_bucket.name,
-            dept: data.account_bucket.dept
-          },
-          customer_info: {
-            fullName: data.customer_info.fullName,
-            dob: data.customer_info.dob,
-            gender: data.customer_info.gender,
-            contact_no: data.customer_info.contact_no,
-            emails: data.customer_info.emails,
-            addresses: data.customer_info.addresses,
-            _id:data.customer_info._id
-          }
-        }))
+        dispatch(setSelectedCustomer(data))
       }
-
     } catch (error) { 
       console.log(error)
     }
@@ -327,7 +331,6 @@ const MyTaskSection = () => {
       }
       {
         taskLength !== undefined && taskLength > 0 &&
-   
         <div className="flex flex-col gap-2 justify-between w-1/15">
           <p className="lg:text-[0.6em] 2xl:text-xs font-bold flex justify-between"><span>Task:</span><span>{taskLength?.toLocaleString()}</span></p>
           <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5  dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleClickMyTask}>{selection.trim() !== "my_task" ? "My Tasks" : "Close"}</button>

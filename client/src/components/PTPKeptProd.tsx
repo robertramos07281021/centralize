@@ -72,6 +72,7 @@ const PTPKeptProd = () => {
   const [skipData, setSkipData] = useState<number[]>([])
   const [fieldData, setFieldData] = useState<number[]>([])
   
+
   useEffect(()=> {
     if(ptpKeptData) {
       const labelsArray = new Array(ptpKeptData.getTLPTPKeptToday.length).fill("")
@@ -169,7 +170,7 @@ const PTPKeptProd = () => {
     ],
   };
   return (
-    <div className='bg-white border border-slate-400 rounded-xl'>
+    <div className='bg-white border border-slate-400 rounded-xl p-2'>
       <Bar data={data} options={option}/>
     </div>
   )

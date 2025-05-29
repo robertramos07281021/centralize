@@ -10,6 +10,7 @@ import DispoType from "../../models/dispoType.js"
 import { PubSub } from "graphql-subscriptions"
 import Group from "../../models/group.js"
 import Department from "../../models/department.js"
+import Callfile from "../../models/callfile.js"
 const pubsub = new PubSub()
 const DISPOSITION_UPDATE = "DISPOSITION_UPDATE";
 
@@ -1157,8 +1158,612 @@ const dispositionResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
-    }
+    },
+    getTLPTPTotals: async(_,__,{user})=> {
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
 
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const yesterdayStart = new Date();
+        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+        yesterdayStart.setHours(0, 0, 0, 0);
+        const yesterDayEnd = new Date();
+        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
+        yesterDayEnd.setHours(23, 59, 59, 999);
+
+        const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
+        const newBucket = campaignBucket.map(e=> e._id)
+
+        const PTP = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount"
+            },
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              createdAt: {$gte:yesterdayStart, $lt:todayEnd},
+              "dispotype.code" : "PTP",
+              ptp : true,
+              "bucket._id" : {$in: newBucket}
+            }
+          },
+          {
+            $group: {
+              _id: "$bucket._id",
+              count: {
+                $sum: {
+                  $cond: [{
+                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]}]
+                  },1,0]
+                }
+              },
+              amount: {
+                $sum: {
+                  $cond: [{
+                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]}]
+                  },"$amount",0]
+                }
+              },
+              yesterday: {
+                 $sum: {
+                  $cond: [{
+                    $and: [{$gte: ["$createdAt",yesterdayStart]},{$lt: ['$createdAt',yesterDayEnd]}]
+                  },"$amount",0]
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              bucket: "$_id",
+              count: 1,
+              amount: 1,
+              yesterday: 1
+            }
+          },
+          {
+            $sort: {
+              bucket: 1
+            }
+          }
+        ])
+        
+        return PTP
+      } catch (error) {
+
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getTLPTPKeptTotals: async(_,__,{user}) => {
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const yesterdayStart = new Date();
+        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+        yesterdayStart.setHours(0, 0, 0, 0);
+        const yesterDayEnd = new Date();
+        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
+        yesterDayEnd.setHours(23, 59, 59, 999);
+
+        const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
+        const newBucket = campaignBucket.map(e=> e._id)
+
+
+        const PTPKept = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount"
+            },
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              createdAt: {$gte:yesterdayStart, $lt:todayEnd},
+              "dispotype.code" : "PAID",
+              ptp : true,
+              "bucket._id" : {$in: newBucket}
+            }
+          },
+          {
+            $group: {
+              _id: "$bucket._id",
+              count: {
+                $sum: {
+                  $cond: [{
+                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]}]
+                  },1,0]
+                }
+              },
+              amount: {
+                $sum: {
+                  $cond: [{
+                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]}]
+                  },"$amount",0]
+                }
+              },
+              yesterday: {
+                 $sum: {
+                  $cond: [{
+                    $and: [{$gte: ["$createdAt",yesterdayStart]},{$lt: ['$createdAt',yesterDayEnd]}]
+                  },"$amount",0]
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              bucket: "$_id",
+              count: 1,
+              amount: 1,
+              yesterday: 1
+            }
+          },
+          {
+            $sort: {
+              bucket: 1
+            }
+          }
+        ])
+        
+        return PTPKept
+      } catch (error) {
+        throw new CustomError(error.message, 500)        
+      }
+    },
+    getTLPaidTotals: async(_,__,{user})=> {
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const yesterdayStart = new Date();
+        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+        yesterdayStart.setHours(0, 0, 0, 0);
+        const yesterDayEnd = new Date();
+        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
+        yesterDayEnd.setHours(23, 59, 59, 999);
+
+        const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
+        const newBucket = campaignBucket.map(e=> e._id)
+
+        const paid = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount"
+            },
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              createdAt: {$gte:yesterdayStart, $lt:todayEnd},
+              "dispotype.code" : "PAID",
+              ptp : false,
+              "bucket._id" : {$in: newBucket}
+            }
+          },
+          {
+            $group: {
+              _id: "$bucket._id",
+              count: {
+                $sum: {
+                  $cond: [{
+                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]}]
+                  },1,0]
+                }
+              },
+              amount: {
+                $sum: {
+                  $cond: [{
+                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]}]
+                  },"$amount",0]
+                }
+              },
+              yesterday: {
+                 $sum: {
+                  $cond: [{
+                    $and: [{$gte: ["$createdAt",yesterdayStart]},{$lt: ['$createdAt',yesterDayEnd]}]
+                  },"$amount",0]
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              bucket: "$_id",
+              count: 1,
+              amount: 1,
+              yesterday: 1
+            }
+          },
+          {
+            $sort: {
+              bucket: 1
+            }
+          }
+        ])
+
+        return paid
+      } catch (error) {
+        throw new CustomError(error.message, 500)        
+      }
+    },
+    getTLDailyCollected: async(_,__,{user}) => {
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const yesterdayStart = new Date();
+        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+        yesterdayStart.setHours(0, 0, 0, 0);
+        const yesterDayEnd = new Date();
+        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
+        yesterDayEnd.setHours(23, 59, 59, 999);
+
+        const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
+        const newBucket = campaignBucket.map(e=> e._id)
+
+        const dailyCollected = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount"
+            },
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              createdAt: {$gte:yesterdayStart, $lt:todayEnd},
+              "bucket._id" : {$in: newBucket}
+            }
+          },
+          {
+            $group: {
+              _id: "$bucket._id",
+              amount: {
+                $sum: {
+                  $cond: [{
+                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]},{$eq: ['$dispotype.code',"PAID"]}]
+                  },"$amount",0]
+                }
+              },
+              yesterday: {
+                 $sum: {
+                  $cond: [{
+                    $and: [{$gte: ["$createdAt",yesterdayStart]},{$lt: ['$createdAt',yesterDayEnd]},{$eq: ['$dispotype.code',"PAID"]}]
+                  },"$amount",0]
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              bucket: "$_id",
+              amount: 1,
+              count: 1,
+              yesterday: 1
+            }
+          },
+          {
+            $sort: {
+              bucket: 1
+            }
+          }
+        ])
+
+        return dailyCollected
+      } catch (error) {
+        throw new CustomError(error.message, 500) 
+      }
+    },
+    agentDispoDaily: async(_,__,{user})=> {
+      try {
+        
+
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const yesterdayStart = new Date();
+        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+        yesterdayStart.setHours(0, 0, 0, 0);
+        const yesterDayEnd = new Date();
+        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
+        yesterDayEnd.setHours(23, 59, 59, 999);
+        const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
+        const newBucket = campaignBucket.map(e=> e._id)
+
+
+        const agentDispoDaily = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "customerAccount"
+            },
+          },
+          {
+            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "customerAccount.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              createdAt: {$gte:yesterdayStart, $lt:todayEnd},
+              "bucket._id" : {$in: newBucket}
+            }
+          },
+          {
+            $group: {
+              _id: "$user",
+              amount: {
+                $sum: {
+                  $cond: [{
+                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]},{$eq: ['$dispotype.code','PAID']}]
+                  },"$amount",0]
+                }
+              },
+              count: {
+                $sum: {
+                  $cond: [{
+                    $and: [
+                      {
+                        $gte: ["$createdAt",todayStart]
+                      },
+                      {
+                        $lt: ['$createdAt',todayEnd]
+                      },
+                      {
+                        $or: [
+                          {
+                            $and: [
+                              {
+                                $ne: ['$dispotype.code','PAID']
+                              }
+                            ]
+                          },
+                          {
+                            $and: [
+                              {
+                                $eq: ['$dispotype.code','PAID']
+                              },
+                              {
+                                $eq: ['$existing',true]
+                              },
+                              {
+                                $eq: ['$ptp',true]
+                              }
+                            ]
+                          },
+                          {
+                            $and: [
+                              {
+                                $eq: ['$dispotype.code','PAID']
+                              },
+                              {
+                                $eq: ['$ptp',false]
+                              }
+                            ] 
+                          }
+                        ]
+                      }
+                    ]
+                  },1,0]
+                }
+              },
+              yesterday: {
+                 $sum: {
+                  $cond: [{
+                    $and: [{$gte: ["$createdAt",yesterdayStart]},{$lt: ['$createdAt',yesterDayEnd]},{$eq: ['dispotype.code','PAID']}]
+                  },"$amount",0]
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              user: "$_id",
+              amount: 1,
+              count: 1,
+              yesterday: 1
+            }
+          },
+          {
+            $sort: {
+              user: 1
+            }
+          }
+        ])
+
+        return agentDispoDaily
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getTargetPerCampaign: async(_,__,{user}) => {
+      try {
+        const buckets = (await Bucket.find({_id: {$in: user.buckets}}).lean()).map(e=> e._id)
+ 
+        const customerAccount = await CustomerAccount.aggregate([
+          {
+            $match: {
+              bucket: {$in: buckets}
+            }
+          },
+          {
+            $group: {
+              _id: "$bucket",
+              collected: {
+                $sum: "$paid_amount"
+              },
+              target: {
+                $sum:  "$out_standing_details.total_os"
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              bucket: "$_id",
+              collected: 1,
+              target: 1
+            }
+          }
+        ])
+
+        return customerAccount
+      } catch (error) {
+        throw new CustomError(error.message, 500)        
+      }
+    }
   },
 
   Mutation: {
@@ -1184,21 +1789,22 @@ const dispositionResolver = {
         
         if (!dispoType) throw new CustomError("Disposition type not found", 400);
       
-        const userProd = userProdRaw || await Production.create({ user: user._id });
-        
+        if(!userProdRaw) await Production.create({ user: user._id });
+   
         const isPaymentDisposition = dispoType.code === "PAID"
 
         if (isPaymentDisposition && !input.amount) {
           throw new CustomError("Amount is required", 401);
         }
 
-        const ptp = (customerAccount.current_disposition ? (customerAccount.current_disposition.code === "PTP" ? true : false) : false) || dispoType.code === "PTP" ? true : false;
-        const payment = customerAccount.balance - parseFloat(input.amount) === 0 ? "full" : 'partial'
+        const ptp =  customerAccount.current_disposition?.code === "PTP" || dispoType.code === "PTP";
+
+        const payment = customerAccount.balance - parseFloat(input.amount || 0) === 0 ? "full" : 'partial';
 
         const newDisposition = await Disposition.create({
           ...input,
           payment: payment,
-          amount: parseFloat(input.amount), 
+          amount: parseFloat(input.amount) || 0, 
           user: user._id, 
           ptp: ptp
         })
@@ -1235,9 +1841,6 @@ const dispositionResolver = {
         }
 
         await CustomerAccount.updateOne({ _id: customerAccount._id }, { $set: updateFields });
-
-        userProd.dispositions.push(newDisposition._id);
-        await userProd.save();
 
         return {
           success: true,

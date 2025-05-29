@@ -116,19 +116,42 @@ const customerResolver = {
      
     },
     findCustomerAccount: async(_,{disposition, groupId ,page, assigned, limit}, {user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
+
+        const endOfTheDay = new Date()
+        endOfTheDay.setDate(endOfTheDay.getDate() + 1)
+        endOfTheDay.setHours(0,0,0,0)
         let selected = ''
         if (groupId) {
           const [group, userSelected] = await Promise.all([
-            Group.findById(groupId),
-            User.findById(groupId),
+            Group.findById(groupId).lean(),
+            User.findById(groupId).lean(),
           ]);
           selected = group?._id || userSelected?._id || null;
         }
         const bucket = user.buckets
         const search = [
           { "account_bucket._id": { $in: bucket } },
+          { 
+            $or: [
+              {
+                "dispoType.code": { $nin: ["PAID", "PTP"] }
+              },
+              {
+                $and: [
+                  {"dispoType.code": {$eq: "PAID"}},
+                  {"currentDisposition.payment": {$eq: 'partial'}}
+                ]
+              },
+              {
+                $and: [
+                  {"dispoType.code": {$eq: "PTP"}},
+                  {"paymentDate": {$lt: endOfTheDay}}
+                ]
+              }
+            ]
+          }
         ];
     
         if (disposition.length > 0) {
@@ -141,6 +164,9 @@ const customerResolver = {
           search.push({ assigned: null });
         }
 
+
+        // console.log(endOfTheDay)
+        // console.log(search)
         const accounts = await CustomerAccount.aggregate([
           {
             $lookup: {
@@ -188,6 +214,25 @@ const customerResolver = {
           },
           { $unwind: { path: "$disposition_user", preserveNullAndEmptyArrays: true } },
           {
+            $addFields: {
+              paymentDate: {
+                $cond: [
+                  {
+                    $and: [
+                      { $ne: ["$currentDisposition.payment_date", null] },
+                      { $ne: ["$currentDisposition.payment_date", ""] },
+                      {
+                        $in: [{ $type: "$currentDisposition.payment_date" }, ["string", "date"]]
+                      }
+                    ]
+                  },
+                  { $toDate: "$currentDisposition.payment_date" },
+                  null
+                ]
+              }
+            }
+          },
+          {
             $match: {
               $and: search
             }
@@ -203,7 +248,10 @@ const customerResolver = {
           }
         ])
 
+
+
         const total = accounts[0]?.total[0]?.totalCustomerAccounts || 0;
+
         return {
           CustomerAccounts: accounts[0]?.FindCustomerAccount || [],
           totalCountCustomerAccounts: total,
@@ -213,8 +261,11 @@ const customerResolver = {
       }
     },
     selectAllCustomerAccount: async(_,{disposition,groupId,assigned},{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401) 
       try {
+        if(!user) throw new CustomError("Unauthorized",401) 
+        const endOfTheDay = new Date()
+        endOfTheDay.setDate(endOfTheDay.getDate() + 1)
+        endOfTheDay.setHours(0,0,0,0)
         let selected = ''
         if(groupId) {
           const group = await Group.findOne({_id: groupId})
@@ -224,15 +275,39 @@ const customerResolver = {
         }
         
         const bucket = user.buckets
-        let search = []
+        let search = [
+          { 
+            $or: [
+              {
+                "dispoType.code": { $nin: ["PAID", "PTP"] }
+              },
+              {
+                $and: [
+                  {"dispoType.code": {$eq: "PAID"}},
+                  {"currentDisposition.payment": {$eq: 'partial'}}
+                ]
+              },
+              {
+                $and: [
+                  {"dispoType.code": {$eq: "PTP"}},
+                  {"paymentDate": {$lt: endOfTheDay}}
+                ]
+              }
+            ]
+          },
+          {"account_bucket._id": {$in: bucket}}
+        ]
+
         if(Boolean(disposition.length > 0 && groupId)){
-          search = [{"account_bucket._id": {$in: bucket}},{"dispoType.name": {$in: disposition }}, {assigned: assigned == "assigned" ? selected : null}]
+          search.push({"dispoType.name": {$in: disposition }})
+          search.push({assigned: assigned == "assigned" ? selected : null})
         } else if (Boolean(disposition.length === 0 && !groupId)) {
-          search = [{"account_bucket._id": {$in: bucket}}, {assigned: assigned == "assigned" ? {$ne: null} : null}]
+          search.push({assigned: assigned == "assigned" ? {$ne: null} : null})
         } else if (disposition.length > 0 && !groupId) {
-          search = [{"account_bucket._id": {$in: bucket}},{"dispoType.name": {$in: disposition }},{assigned: assigned == "assigned" ? selected : null}]
+          search.push({"dispoType.name": {$in: disposition }})
+          search.push({assigned: assigned == "assigned" ? selected : null})
         } else if(Boolean(disposition.length === 0 && groupId)) {
-          search = [{"account_bucket._id": {$in: bucket}},{assigned: assigned == "assigned" ? selected : null}]
+          search.push({assigned: assigned == "assigned" ? selected : null})
         }
 
         const accounts = await CustomerAccount.aggregate([
@@ -270,11 +345,31 @@ const customerResolver = {
             $unwind: { path: "$dispoType", preserveNullAndEmptyArrays: true } 
           },
           {
+            $addFields: {
+              paymentDate: {
+                $cond: [
+                  {
+                    $and: [
+                      { $ne: ["$currentDisposition.payment_date", null] },
+                      { $ne: ["$currentDisposition.payment_date", ""] },
+                      {
+                        $in: [{ $type: "$currentDisposition.payment_date" }, ["string", "date"]]
+                      }
+                    ]
+                  },
+                  { $toDate: "$currentDisposition.payment_date" },
+                  null
+                ]
+              }
+            }
+          },
+          {
             $match: {
               $and: search
             }
           }
         ])
+
         return accounts ? accounts.map(e => e._id) : []
       } catch (error) {
         throw new CustomError(error.message, 500) 

@@ -11,6 +11,7 @@ import { Chart,
 
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import ProductionToday from '../../components/ProductionToday';
+import TLRightDashboard from '../../components/TLRightDashboard';
 
 
 Chart.register(...registerables,
@@ -25,17 +26,11 @@ Chart.register(...registerables,
 
 
 const TlDashboard  = () => {
-  const samplebucket = 3
+ 
   return (
-    <div className="h-full p-2 grid grid-rows-6 grid-cols-8 bg-slate-600/10  gap-2">
+    <div className="h-full p-2 grid grid-rows-6 grid-cols-8 bg-slate-600/10 gap-2">
       <ProductionToday/>
-      <div className={`${samplebucket > 2 ? "row-start-2" : ""} col-start-4 border col-span-3 row-span-full `}>
-        asd
-      </div>
-      <div>asd</div>
-
-
-
+      <TLRightDashboard/>
     </div>
   )
 }

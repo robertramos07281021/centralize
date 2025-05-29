@@ -187,7 +187,8 @@ const authSlice = createSlice({
           _id:""
         }
       }
-    }
+    },
+
   },
 });
 

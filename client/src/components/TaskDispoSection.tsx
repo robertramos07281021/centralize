@@ -459,7 +459,7 @@ const TaskDispoSection = () => {
                       {ca.customer_info.fullName}
                   </th>
                   <td className="px-6">
-                      {ca.currentDisposition ? (ca.dispoType.code === "PAID" ? `${ca.dispoType.code} (Not Settled)` : ca.dispoType.code) : "New Endorsed"}
+                      {ca.currentDisposition ? (ca.dispoType.code === "PAID" ? `${ca.dispoType.code} (Partial)` : ca.dispoType.code) : "New Endorsed"}
                   </td>
                   <td className="px-6 ">
                       {ca.account_bucket.name}
