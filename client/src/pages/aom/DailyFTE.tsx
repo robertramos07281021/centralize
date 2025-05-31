@@ -61,7 +61,7 @@ const DailyFTE = () => {
         <div>Assigned</div>
         <div>Online</div>
       </div>
-      <div className="lg:h-70 2xl:h-80 overflow-x-auto lg:text-[0.6em] 2xl:text-xs text-slate-400">
+      <div className="lg:h-70 2xl:h-70 border overflow-x-auto lg:text-[0.6em] 2xl:text-xs text-slate-400">
           {
             aomDeptData?.getAomDept.map(e=> {
               const findFTEOnline = dailyFTEData?.getDailyFTE?.find(cf => cf.campaign === e.id)

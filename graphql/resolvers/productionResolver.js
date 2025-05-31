@@ -4,10 +4,8 @@ import CustomError from "../../middlewares/errors.js";
 import Department from "../../models/department.js";
 import Disposition from "../../models/disposition.js";
 import Production from "../../models/production.js";
-import User from "../../models/user.js";
 
 const productionResolver = {
-
   Query: {
     getProductions: async(_,__,{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
@@ -18,7 +16,7 @@ const productionResolver = {
       end.setHours(23, 59, 59, 999);
 
       try {
-        const res = await Production.aggregate([
+        const res = await Disposition.aggregate([
           {
             $match: {
               $and: [
@@ -31,31 +29,68 @@ const productionResolver = {
                 {user: user._id}
               ]
             }
-          }
+          },
+         {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+              pipeline: [
+                {$project: {name: 1, code: 1, _id: 1}}
+              ]
+            }
+          },
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $group: {
+              _id: "$dispotype._id",
+              count: {$sum: 1}
+            }
+          },
+          {
+            $project: {
+              _id: "$_id",
+              count: 1
+            }
+          },
         ])
-      
-        return res[0]
 
+        return res
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
     },
     getAgentProductionPerDay: async(_,__,{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-
-
-      const year = new Date().getFullYear()
-      const month = new Date().getMonth();
-
-      const firstDay = new Date(year,month, 1)
-      const lastDay = new Date(year,month + 1,0)
-
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
+
+        
+        const year = new Date().getFullYear()
+        const month = new Date().getMonth();
+
+        const firstDay = new Date(year,month, 1)
+        const lastDay = new Date(year,month + 1,0)
+
         const disposition = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+          },
           {
             $match: {
               user: user._id,
-              createdAt: {$gte: firstDay, $lt:lastDay}
+              createdAt: {$gte: firstDay, $lt:lastDay},
+              "dispotype.code": {$eq: "PAID"}
             }
           },
           {
@@ -63,13 +98,69 @@ const productionResolver = {
               _id: {
                 day: { $dayOfMonth: "$createdAt" }
               },
-              total: { $sum: "$amount" }
+              calls: {
+                $sum: {
+                  $cond: [{$eq: ["$contact_method","calls"]} ,"$amount",0]
+                }
+              },
+              sms: {
+                $sum: {
+                  $cond: [{$eq: ["$contact_method","sms"]} ,"$amount",0]
+                }
+              },
+              email: {
+                $sum: {
+                  $cond: [{$eq: ["$contact_method","email"]} ,"$amount",0]
+                }
+              },
+              skip: {
+                $sum: {
+                  $cond: [{$eq: ["$contact_method","skip"]} ,"$amount",0]
+                }
+              },
+              field: {
+                $sum: {
+                  $cond: [{$eq: ["$contact_method","field"]} ,"$amount",0]
+                }
+              },
+              total: {
+                $sum: "$amount"
+              },
+              ptp_kept: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$ptp',true]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              paid: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$ptp',false]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              }
             }
           },
           {
             $project: {
               date: "$_id.day",
-              total: 1
+              calls: 1,
+              skip: 1,
+              email: 1,
+              sms: 1,
+              field: 1,
+              total: 1,
+              paid: 1,
+              ptp_kept: 1
             }
           }
         ])
@@ -83,12 +174,25 @@ const productionResolver = {
       const year = new Date().getFullYear()
       const firstMonth = new Date(year, 0, 1)
       const lastMonth = new Date(year, 11, 31, 23, 59, 59, 999)
+
       try {
         const res = await Disposition.aggregate([
           {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+          },
+          {
             $match: {
               user: user._id,
-              createdAt: { $gte: firstMonth, $lte: lastMonth }
+              createdAt: { $gte: firstMonth, $lte: lastMonth },
+              'dispotype.code': {$eq: 'PAID'}
             }
           },
           {
@@ -96,13 +200,69 @@ const productionResolver = {
               _id: {
                 month: { $month: "$createdAt" }
               },
-              total: { $sum: "$amount" }
+              calls: {
+                $sum: {
+                  $cond: [{$eq: ["$contact_method","calls"]} ,"$amount",0]
+                }
+              },
+              sms: {
+                $sum: {
+                  $cond: [{$eq: ["$contact_method","sms"]} ,"$amount",0]
+                }
+              },
+              email: {
+                $sum: {
+                  $cond: [{$eq: ["$contact_method","email"]} ,"$amount",0]
+                }
+              },
+              skip: {
+                $sum: {
+                  $cond: [{$eq: ["$contact_method","skip"]} ,"$amount",0]
+                }
+              },
+              field: {
+                $sum: {
+                  $cond: [{$eq: ["$contact_method","field"]} ,"$amount",0]
+                }
+              },
+              total: {
+                $sum: "$amount"
+              },
+              ptp_kept: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$ptp',true]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              paid: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$ptp',false]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              }
             }
           },
           {
             $project: {
               month: "$_id.month",
-              total: 1
+              calls: 1,
+              skip: 1,
+              email: 1,
+              sms: 1,
+              field: 1,
+              total: 1,
+              paid: 1,
+              ptp_kept: 1
             }
           }
         ])
@@ -113,12 +273,18 @@ const productionResolver = {
       }
     },
     getAgentTotalDispositions: async(_,__,{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
+        const year = new Date().getFullYear()
+        const month = new Date().getMonth();
+        const firstDay = new Date(year,month, 1)
+        const lastDay = new Date(year,month + 1,0)
+
         const res = await Disposition.aggregate([
           {
             $match: {
               user: user._id,
+              createdAt: { $gte: firstDay, $lt: lastDay }
             }
           },
           {
@@ -126,9 +292,6 @@ const productionResolver = {
               from: "dispotypes",
               localField: "disposition",
               foreignField: "_id",
-              pipeline: [
-                { $project: { code: 1}}
-              ],
               as: "dispotype",
             }
           },
@@ -138,14 +301,13 @@ const productionResolver = {
           {
             $group: {
               _id: "$dispotype._id",
-              dispotype: {$first: "$dispotype.code" },
               count: {$sum: 1}
             }
           },
           {
             $project: {
-              _id: "$_id",
-              dispotype: 1,
+              _id:null,
+              dispotype: "$_id",
               count: 1
             }
           }
@@ -156,25 +318,28 @@ const productionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    
-  },
-  Production: {
-    dispositions: async(parent) => {
+    getAgentDailyCollection: async(_,__,{user})=> {
       try {
-        const disposition = await Disposition.aggregate([
-          {
-            $match: {
-              _id: {$in: parent.dispositions}
-            }
-          },
+        if(!user) throw new CustomError("Unauthorized",401)
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const yesterdayStart = new Date();
+        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+        yesterdayStart.setHours(0, 0, 0, 0);
+        const yesterDayEnd = new Date();
+        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
+        yesterDayEnd.setHours(23, 59, 59, 999);
+
+        const agentCollection = await Disposition.aggregate([
           {
             $lookup: {
               from: "dispotypes",
               localField: "disposition",
               foreignField: "_id",
-              pipeline: [
-                { $project: { code: 1}}
-              ],
               as: "dispotype",
             }
           },
@@ -182,34 +347,113 @@ const productionResolver = {
             $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true}
           },
           {
-            $group: {
-              _id: "$dispotype._id",
-              collection: {$sum: "$amount"},
-              dispotype: {$first: "$dispotype.code" },
-              count: {$sum: 1}
+            $match: {
+              createdAt: {$gte: yesterdayStart, $lt: todayEnd},
+              user: {$eq: user._id},
+              "dispotype.code": {$in: ['PAID','PTP']}
             }
           },
           {
             $project: {
-              _id: "$_id",
-              collection: 1,
-              dispotype: 1,
-              count: 1
+              amount: 1,
+              createdAt: 1,
+              ptp: 1,
+              code: "$dispotype.code",
+              isToday: {
+                $and: [{ $gte: ["$createdAt", todayStart] }, { $lt: ["$createdAt", todayEnd] }]
+              },
+              isYesterday: {
+                $and: [{ $gte: ["$createdAt", yesterdayStart] }, { $lt: ["$createdAt", yesterDayEnd] }]
+              }
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              ptp_amount: {
+                $sum: {
+                  $cond: [
+                    { 
+                      $and: ["$isToday", { $eq: ["$code", "PTP"] }] 
+                    }, 
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              ptp_yesterday:{
+                $sum: {
+                  $cond: [
+                    { 
+                      $and: ["$isYesterday", { $eq: ["$code", "PTP"] }] 
+                    }, 
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              ptp_kept_amount: {
+                $sum: {
+                  $cond: [
+                    { 
+                      $and: ["$isToday", { $eq: ["$code", "PAID"] }, {$eq: ['$ptp', true]}] 
+                    }, 
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              ptp_kept_yesterday: {
+                $sum: {
+                  $cond: [
+                    { 
+                      $and: ["$isYesterday", { $eq: ["$code", "PAID"] }, { $eq: ['$ptp', true] }] 
+                    }, 
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              paid_amount: {
+                $sum: {
+                  $cond: [
+                    { 
+                      $and: ["$isToday", { $eq: ["$code", "PAID"] }, { $eq: ['$ptp', false] }] 
+                    }, 
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              paid_yesterday: {
+                $sum: {
+                  $cond: [
+                    { 
+                      $and: ["$isYesterday", { $eq: ["$code", "PAID"] }, { $eq: ['$ptp', false] }] 
+                    }, 
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              ptp_amount: 1,
+              ptp_yesterday: 1,
+              ptp_kept_amount: 1,
+              ptp_kept_yesterday: 1,
+              paid_amount: 1,
+              paid_yesterday: 1
             }
           }
         ])
-        return disposition
+
+        return agentCollection[0]
       } catch (error) {
-        throw new CustomError(error.message, 500)
-      }
-    },
-    user: async(parent) => {
-      try {
-        const findUser = await User.findById(parent.user)
-        if(!findUser) throw new CustomError("User not found", 404)
-        return findUser
-      } catch (error) {
-        throw new CustomError(error.message, 500)
+        throw new CustomError(error.message, 500)        
       }
     }
   },

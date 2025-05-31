@@ -1,10 +1,8 @@
-import DailyCollection from "../../components/DailyCollection"
-import DailyFTE from "../../components/DailyFTE"
-import MonthlyTarget from "../../components/MonthlyTarget"
-import PaidBar from "../../components/PaidBar"
-import PTPBar from "../../components/PTPBar"
-import PTPKept from "../../components/PTPKept"
 
+import MonthlyTarget from "./MonthlyTarget"
+import PaidBar from "./PaidBar"
+import PTPBar from "./PTPBar"
+import PTPKept from "./PTPKept"
 
 
 
@@ -14,15 +12,12 @@ const AomDashboard = () => {
   return (
     <div className="h-full p-2 grid grid-rows-4 grid-cols-5 bg-slate-200 gap-2">
       
-      <div className="bg-white rounded-xl border border-slate-300 row-span-2 p-2 flex flex-col">
-        <DailyCollection/>
-      </div>
-
+{/* 
       <div className="row-start-3 row-span-2 bg-white rounded-xl border border-slate-300 p-2">
         <DailyFTE/>
-      </div>
+      </div> */}
 
-      <div className=" col-start-2 row-span-4 col-span-3 grid grid-rows-3 gap-2">
+      <div className="row-span-4 col-span-3 grid grid-rows-3 gap-2">
         <div className="border bg-white rounded-xl border-slate-300 p-2">
           <PTPBar/>
         </div>

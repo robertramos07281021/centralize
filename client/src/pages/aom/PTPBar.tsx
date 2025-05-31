@@ -2,7 +2,7 @@ import { useQuery } from '@apollo/client'
 import gql from 'graphql-tag'
 import { useEffect, useState } from 'react'
 import { Bar } from 'react-chartjs-2'
-import { color, month } from '../middleware/exports'
+import { color, month } from '../../middleware/exports'
 
 
 

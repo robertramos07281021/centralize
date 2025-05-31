@@ -225,7 +225,6 @@ const MyTaskSection = () => {
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
     onData: ({data})=> {
       if(data) {
-        console.log(data)
         if(data.data?.somethingChanged?.message === "TASK_SELECTION" && data.data?.somethingChanged?.members?.toString().includes(userLogged._id)) {
           client.refetchQueries({
             include: ['myTasks']

@@ -63,6 +63,7 @@ const Login = () => {
   const loginForm = useRef<HTMLFormElement | null>(null)
   const [username, setUsername] = useState<string>("")
   const [password, setPassword] = useState<string>("") 
+  const [already, setAlready] = useState<boolean>(false)
 
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: () => {
@@ -111,15 +112,22 @@ const Login = () => {
       await login({ variables: { username, password } })
     } catch (error) {
       if (error instanceof Error) {
-        if(error?.message === "Invalid") {
+        const newError = error?.message 
+        if(newError === 'Invalid') {
           setRequired(true)
+          setUsername("")
+          setPassword("")
+          setAlready(false)
+        }
+        if(newError === 'Already') {
+          setRequired(false)
+          setAlready(true)
           setUsername("")
           setPassword("")
         }
       } else {        
         console.log("An unknown error occurred",error);
         dispatch(setError(true))
-
       }
     }
   }
@@ -165,7 +173,10 @@ const Login = () => {
         </div>
         <div className="flex gap-5 w-full flex-col px-10">
           { required &&
-            <h1 className="text-xs text-center text-red-500 font-medium">Incorrect username or password</h1>
+            <h1 className="text-xs text-center text-red-500 font-medium">Incorrect username or password.</h1>
+          }
+          { already &&
+            <h1 className="text-xs text-center text-red-500 font-medium">Account already logged in.</h1>
           }
           <div className="w-full">
             <label>

@@ -67,7 +67,7 @@ const PTPKeptTl = () => {
               <div key={index} className='grid grid-cols-3 lg:text-[0.6em] 2xl:text-xs text-green-500'>
                 <div className="font-bold">{bucketObject[tpt.bucket]}</div>
                 <div className="font-medium flex justify-between px-2 items-center "><div>{tpt.count}</div> {arrow}</div>
-                <div className="font-medium ">{tpt.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
+                <div className="font-medium ">{tpt.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'})}</div>
               </div>
             )
           }) 

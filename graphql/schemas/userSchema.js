@@ -53,6 +53,10 @@ const userTypeDefs = gql`
     getCampaignAssigned: [CampaignUser]
   }
 
+  type Subscription {
+    ping: String!
+  }
+
   type Mutation {
 
     createUser( 

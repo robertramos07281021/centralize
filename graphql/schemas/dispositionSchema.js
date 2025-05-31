@@ -108,16 +108,6 @@ const dispositionTypeDefs = gql`
     count: Int
   }
 
-  type AomCampaignToday {
-    campaign: ID
-    ptp: Float
-    ptp_kept: Float
-    paid: Float
-    yesterday_ptp: Float
-    yesterday_ptp_kept: Float
-    yesterday_paid: Float
-  }
-
   type DailyFTE {
     campaign: ID
     online: Int
@@ -189,7 +179,6 @@ const dispositionTypeDefs = gql`
     getDispositionReports(agent:String, bucket:String, disposition:[String], from:String, to:String): Reports
     getAllDispositionTypes:[DispoType]
     getDispositionReportsHigh(campaign:String, bucket:String, dispositions:[String], from:String, to:String):[HighDispositionReport]
-    getAomDailyCollection:[AomCampaignToday]
     getDailyFTE:[DailyFTE]
     getPTPPerMonth: [PerMonthCollection]
     getPTPKeptPerMonth: [PerMonthCollection]

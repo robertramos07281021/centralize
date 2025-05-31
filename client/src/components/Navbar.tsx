@@ -1,4 +1,4 @@
-import { gql, useMutation, useQuery } from "@apollo/client"
+import { gql, useMutation, useQuery, useSubscription } from "@apollo/client"
 import { BsFillPersonVcardFill } from "react-icons/bs";
 import { IoMdLogOut } from "react-icons/io";
 import { useEffect, useState } from "react";
@@ -22,10 +22,6 @@ type UserInfo = {
   bucket: string[]
   user_id:string
 };
-
-
-
-
 
 const myUserInfos = gql` 
   query GetMe { 
@@ -68,6 +64,11 @@ const LOGOUT_USING_PERSIST = gql`
   }
 `
 
+const DUMMY_SUB = gql`
+  subscription DummyPing {
+    ping
+  }
+`;
 
 const Navbar = () => {
   const navigate = useNavigate()
@@ -81,8 +82,7 @@ const Navbar = () => {
     }
   })
   
-  
-
+  useSubscription(DUMMY_SUB)
 
   const [logout, {loading}] = useMutation(LOGOUT,{
     onCompleted: async() => {
@@ -181,6 +181,7 @@ const Navbar = () => {
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       if (error instanceof Error) {
+        console.log(error)
         if(error?.message === "Not authenticated" || error?.message === "Unauthorized") {
           setConfirmation(true)
           setModalProps({
@@ -227,10 +228,10 @@ const Navbar = () => {
         <div className="flex text-2xl gap-2 font-medium items-center text-white italic">
           <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
           Bernales & Associates
-          {
+          {/* {
             (userLogged.type === "AGENT") && 
             <IdleAutoLogout/> 
-          }
+          } */}
         </div>
         <div className="p-1 flex gap-2 text-xs z-50">
           <p className="font-medium text-white italic flex items-center">Hello&nbsp;<span className="uppercase">{userLogged.name}</span></p>

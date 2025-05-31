@@ -1,7 +1,12 @@
-import { Bar } from "react-chartjs-2";
-import { color, month } from "../middleware/exports";
-import { useEffect, useState } from "react";
-import { gql, useQuery } from "@apollo/client";
+
+import { Bar } from 'react-chartjs-2'
+import { color, month } from '../../middleware/exports';
+import gql from 'graphql-tag';
+import { useQuery } from '@apollo/client';
+import { useEffect, useState } from 'react';
+
+
+
 
 interface AomDept {
   id: string
@@ -17,40 +22,38 @@ const AOM_DEPT = gql`
   }
 `
 
+interface PTP_KEPT {
+  campaign: string
+  amount: number
+}
+
+const PTP_KEPT_OF_MONTH = gql`
+  query GetPTPKeptPerMonth {
+    getPTPKeptPerMonth {
+      campaign
+      amount
+    }
+  }
+`
+
 interface DataPerCampaign {
   label: string
   data: number
   color: string
 }
 
-interface PAID {
-  campaign: string
-  amount: number
-}
 
-const PAID_PER_MONTH = gql`
-  query GetPaidPerMonth {
-    getPaidPerMonth {
-      campaign
-      amount
-    }
-  }
-
-`
-
-
-const PaidBar = () => {
-    const {data:paidData} = useQuery<{getPaidPerMonth:PAID[]}>(PAID_PER_MONTH)
+const PTPKept = () => {
+  const {data:ptpKeptData} = useQuery<{getPTPKeptPerMonth:PTP_KEPT[]}>(PTP_KEPT_OF_MONTH)
     const {data:aomDeptData} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
     const [newObjectArray, setNewObjectArray] = useState<DataPerCampaign[]>([])
 
-
-  useEffect(()=> {
-      if(aomDeptData && paidData) {
+    useEffect(()=> {
+      if(aomDeptData && ptpKeptData) {
         const newArrayId = new Array(aomDeptData.getAomDept.length).fill({})
         aomDeptData.getAomDept.forEach((ad,index) => {
           const object:DataPerCampaign = {label: "", data: 0, color: ""}
-          const findCampaignPTP = paidData?.getPaidPerMonth.find(ppm => ppm.campaign === ad.id)
+          const findCampaignPTP = ptpKeptData?.getPTPKeptPerMonth.find(ppm => ppm.campaign === ad.id)
           object["label"] = ad.name
           object["data"] = findCampaignPTP?.amount || 0
           object['color'] = color[index]
@@ -58,7 +61,7 @@ const PaidBar = () => {
         })
         setNewObjectArray(newArrayId)
       }
-    },[aomDeptData,paidData])
+    },[aomDeptData,ptpKeptData])
 
   const data = {
     labels: newObjectArray.map(e=> e.label),
@@ -76,12 +79,12 @@ const PaidBar = () => {
       datalabels:{
         display:false
       },
-        legend: {
+      legend: {
         display: false
       },
       title: {
         display: true,
-        text: `PAID ${month[new Date().getMonth()]} ${new Date().getFullYear()}`,
+        text: `PTP Kept ${month[new Date().getMonth()]} ${new Date().getFullYear()}`,
       },
     },
     responsive: true, 
@@ -89,11 +92,10 @@ const PaidBar = () => {
   }
 
   return (
-    
     <>
       <Bar data={data} options={option}/>
     </>
   )
 }
 
-export default PaidBar
+export default PTPKept

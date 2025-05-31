@@ -9,7 +9,11 @@ import ModifyRecord from "../../models/modifyRecord.js";
 import {DateTime} from "../../middlewares/dateTime.js";
 import Production from "../../models/production.js";
 import Bucket from "../../models/bucket.js";
+import { PubSub } from "graphql-subscriptions";
 
+
+const pubsub = new PubSub()
+const CHECKING = "CHECKING";
 
 const userResolvers = {
   DateTime,
@@ -49,7 +53,7 @@ const userResolvers = {
     getMe: async (_, __, { user }) => {
 
       if (!user) throw new CustomError("Not authenticated",401);
-      
+
       return user;
     },
     getAomUser: async() => {
@@ -233,23 +237,27 @@ const userResolvers = {
       }
     },
 
-    login: async(_,{ username, password },{ res }) => {
+    login: async(_,{ username, password },{ res , req}) => {
       try {
      
         const user = await User.findOne({username})
         if(!user) throw new CustomError("Invalid",401)
         
+          
         const validatePassword = await bcrypt.compare(password, user.password)
         if(!validatePassword) throw new CustomError("Invalid",401)
-  
-        const token = jwt.sign({id: user._id,username: user.username}, process.env.SECRET,
-          { expiresIn: "12h"}
-        )
-  
+        
+        if(user.isOnline) throw new CustomError('Already',401)
+
+        const token = jwt.sign({id: user._id,username: user.username}, process.env.SECRET)
+    
+        // req.session.user = user._id 
+        
         user.isOnline = true
         await user.save()
 
         const findProd = await Production.find({user: user._id}).sort({"createdAt": -1})
+        
         if (findProd.length > 0) {
           const newDateFindProd = new Date(findProd[0].createdAt);
           const newDateToDay = new Date();
@@ -267,10 +275,12 @@ const userResolvers = {
             user: user._id,
           });
         }
+        
 
         res.cookie('token', token, {
           httpOnly: true,
         });
+
         return {success: true, message: "Logged in", user: user}
         
       } catch (error) {
@@ -283,10 +293,8 @@ const userResolvers = {
 
         await User.findByIdAndUpdate(user._id, {$set: {isOnline: false}})
         
-        res.clearCookie("token",{
-          httpOnly: true
-        })
-        
+        res.clearCookie('connect.sid');
+        res.clearCookie('token');
 
         return { success: true, message: "Successfully logout"}
       } catch (error) {
@@ -338,10 +346,14 @@ const userResolvers = {
         throw new CustomError(error.message, 500)
       }
     },
-    logoutToPersist: async(_,{id}) => {
+    logoutToPersist: async(_,{id},{res}) => {
       try {
         const findUser = await User.findByIdAndUpdate(id,{$set: {isOnline: false}})
         if(!findUser) throw CustomError("User not found",404)
+
+        res.clearCookie('connect.sid');
+        res.clearCookie('token');
+
         return {
           success: true,
           message: "Successfully logout",
@@ -351,7 +363,11 @@ const userResolvers = {
       }
     }
   },
-
+  Subscription: {
+    ping: {
+      subscribe:() => pubsub.asyncIterableIterator([CHECKING])
+    }
+  }
 };
 
 export default userResolvers;

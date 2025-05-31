@@ -3,7 +3,6 @@ import express from "express";
 import { ApolloServer } from "@apollo/server";
 import { mergeResolvers, mergeTypeDefs } from "@graphql-tools/merge";
 import cors from "cors"
-import bodyParser from "body-parser";
 import { expressMiddleware } from "@apollo/server/express4";
 import connectDB from "./dbConnection/_db.js";
 import User from "./models/user.js";
@@ -13,7 +12,7 @@ import { useServer } from 'graphql-ws/use/ws';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-
+import cookie from 'cookie'
 import userResolvers from "./graphql/resolvers/userResolvers.js";
 import userTypeDefs from "./graphql/schemas/userSchema.js";
 import deptResolver from "./graphql/resolvers/departmentResolver.js";
@@ -36,6 +35,7 @@ import taskResolver from "./graphql/resolvers/taskResolver.js";
 import taskTypeDefs from "./graphql/schemas/taskSchema.js";
 import productionResolver from "./graphql/resolvers/productionResolver.js";
 import productionTypeDefs from "./graphql/schemas/productionSchema.js";
+import session from "express-session";
 
 // import { fileURLToPath } from "url";
 // import path from "path";
@@ -50,7 +50,18 @@ app.use(cors({
 }));
 app.use(express.json())
 app.use(cookieParser())
-
+// app.use(
+//   session({
+//     secret: process.env.SECRET,
+//     resave: false,
+//     saveUninitialized: true,
+//     cookie: {
+//       maxAge: 1000 * 60 * 60 * 24,
+//       secure: false,
+//       httpOnly: true,
+//     },
+//   })
+// );
 
 // const __filename = fileURLToPath(import.meta.url);
 // const __dirname = path.dirname(__filename);
@@ -75,22 +86,37 @@ const wsServer = new WebSocketServer({
   path: '/graphql',
 });
 
+
 useServer({ schema,
   context: async (ctx, msg, args) => {
-    const auth = ctx.connectionParams?.Authorization || "";
-    const token = auth.replace("Bearer ", "");
+    const cookieHeader  = ctx.extra.request.headers.cookie || '';
 
+    const cookies = cookie.parse(cookieHeader)
+
+    const token = cookies.token
     if (token) {
       try {
         const decoded = jwt.verify(token, process.env.SECRET);
         const user = await User.findById(decoded.id);
+        ctx.extra.userId = decoded.id;
         return { user };
       } catch (err) {
         console.log("WebSocket token error:", err.message);
       }
     }
-
     return {user: null };
+  },
+  onDisconnect: async (ctx, code, reason) => {
+    const userId = ctx.extra?.userId;
+    if (userId) {
+      try {
+        if(code === 1001 || code === 1006) {
+          await User.findByIdAndUpdate(userId, { isOnline: false });
+        }
+      } catch (err) {
+        console.error("onDisconnect error:", err.message);
+      }
+    }
   }
  }, wsServer);
 
@@ -106,17 +132,22 @@ const startServer = async() => {
       "/graphql",
       expressMiddleware(server, {
         context: async ({ req, res }) => {
-          try {
-            const token = req.cookies?.token;
-            if (token) {
-              const decoded = jwt.verify(token, process.env.SECRET);
-              const user = await User.findById(decoded.id);
-              return { user, res };
+          const token = req.cookies?.token;
+          // const sessionUser = req.session?.user;
+ 
+          // if (sessionUser) {
+            try {
+              if (token) {
+                const decoded = jwt.verify(token, process.env.SECRET);
+                const user = await User.findById(decoded.id);
+                return { user, res, req };
+              }
+            } catch (error) {
+              console.log(error.message);
             }
-          } catch (error) {
-            console.log(error.message)
-          }
-          return { user: null, res};
+          // }
+
+          return { user: null, res, req};
         },
       })
     );

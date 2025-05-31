@@ -2,34 +2,35 @@ import { gql } from "graphql-tag";
 
 const productionTypeDefs = gql`
 
-  type User {
-    _id: ID
-    name: String
-    user_id: String
-  }
-
   type Disposition {
     _id:ID
-    dispotype: String
     count: Int
-    collection: Float
   }
-  
-  type Production {
-    _id: ID
-    user: User
-    dispositions: [Disposition]
-  }
+
   type PerDay {
     date: Int
+    calls: Float
+    sms: Float
+    email: Float
+    skip: Float
+    field: Float
+    ptp_kept: Float
+    paid: Float
     total: Float
   }
   type perMonth {
     month: Int
+    calls: Float
+    sms: Float
+    email: Float
+    skip: Float
+    field: Float
+    ptp_kept: Float
+    paid: Float
     total: Float
   }
   type AgentTotalDispo {
-    dispotype: String
+    dispotype: ID
     count: Int
   }
 
@@ -37,14 +38,22 @@ const productionTypeDefs = gql`
     success: Boolean
     message: String
   }
-  
 
+  type DailyCollection {
+    ptp_amount: Float
+    ptp_yesterday: Float
+    ptp_kept_amount: Float
+    ptp_kept_yesterday: Float
+    paid_amount: Float
+    paid_yesterday: Float
+  }
+  
   type Query {
-    getProductions:Production
+    getProductions:[Disposition]
     getAgentProductionPerDay:[PerDay]
     getAgentProductionPerMonth:[perMonth]
     getAgentTotalDispositions:[AgentTotalDispo]
-
+    getAgentDailyCollection: DailyCollection
   }
 
   type Mutation {

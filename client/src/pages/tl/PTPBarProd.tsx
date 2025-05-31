@@ -4,9 +4,7 @@ import gql from "graphql-tag"
 import { useEffect, useState } from "react"
 import { Bar } from "react-chartjs-2"
 
-
-
-interface PtpKeptProd {
+interface PtpProd {
   bucket: string
   calls: number
   sms: number
@@ -16,9 +14,9 @@ interface PtpKeptProd {
 }
 
 
-const TL_PTP_KEPT = gql`
-  query GetDeptBucket {
-    getTLPTPKeptToday {
+const PTP_PROD = gql`
+  query GetTLPTPToday {
+    getTLPTPToday {
       bucket
       calls
       sms
@@ -46,42 +44,38 @@ const oklchColors = [
   'oklch(60% 0.15 0)',
   'oklch(60% 0.15 144)',
   'oklch(60% 0.15 72)',
-  
 ];
 
 
-const PTPKeptProd = () => {
-
-
+const PTPBarProd = () => {
   const [bucketObject, setBucketObject]= useState<{[key:string]:string}>({})
-  const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
-  useEffect(()=> {
-    if(tlBucketData) {
-      const newObject:{[key: string]:string} = {}
-      tlBucketData.getDeptBucket.map(e=> {
-        newObject[e.id] = e.name
-      })
-      setBucketObject(newObject)
-    }
-  },[tlBucketData])
-  const {data:ptpKeptData } = useQuery<{getTLPTPKeptToday:PtpKeptProd[]}>(TL_PTP_KEPT)
+    const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+    useEffect(()=> {
+      if(tlBucketData) {
+        const newObject:{[key: string]:string} = {}
+        tlBucketData.getDeptBucket.map(e=> {
+          newObject[e.id] = e.name
+        })
+        setBucketObject(newObject)
+      }
+    },[tlBucketData])
+  const {data:ptpData} = useQuery<{getTLPTPToday:PtpProd[]}>(PTP_PROD)
   const [labels, setLabels] = useState<string[]>([])
   const [callsData, setCallsData] = useState<number[]>([])
   const [smsData, setSmsData] = useState<number[]>([])
   const [emailData, setEmailData] = useState<number[]>([])
   const [skipData, setSkipData] = useState<number[]>([])
   const [fieldData, setFieldData] = useState<number[]>([])
-  
 
   useEffect(()=> {
-    if(ptpKeptData) {
-      const labelsArray = new Array(ptpKeptData.getTLPTPKeptToday.length).fill("")
-      const callsArray = new Array(ptpKeptData.getTLPTPKeptToday.length).fill(0)
-      const smsArray = new Array(ptpKeptData.getTLPTPKeptToday.length).fill(0)
-      const emailArray = new Array(ptpKeptData.getTLPTPKeptToday.length).fill(0)
-      const skipArray = new Array(ptpKeptData.getTLPTPKeptToday.length).fill(0)
-      const fieldArray = new Array(ptpKeptData.getTLPTPKeptToday.length).fill(0)
-      ptpKeptData.getTLPTPKeptToday.map((e,index) => {
+    if(ptpData) {
+      const labelsArray = new Array(ptpData.getTLPTPToday.length).fill("")
+      const callsArray = new Array(ptpData.getTLPTPToday.length).fill(0)
+      const smsArray = new Array(ptpData.getTLPTPToday.length).fill(0)
+      const emailArray = new Array(ptpData.getTLPTPToday.length).fill(0)
+      const skipArray = new Array(ptpData.getTLPTPToday.length).fill(0)
+      const fieldArray = new Array(ptpData.getTLPTPToday.length).fill(0)
+      ptpData.getTLPTPToday.map((e,index) => {
         labelsArray[index] = e.bucket
         callsArray[index] = e.calls
         smsArray[index] = e.sms
@@ -96,10 +90,10 @@ const PTPKeptProd = () => {
       setSkipData(skipArray)
       setFieldData(fieldArray)
     }
-  },[ptpKeptData,bucketObject])
+  },[ptpData,bucketObject])
 
-    const option:ChartOptions<'bar'> = { 
-      plugins: {
+   const option:ChartOptions<'bar'> = { 
+     plugins: {
       datalabels:{
         display:false
       },
@@ -115,10 +109,10 @@ const PTPKeptProd = () => {
       },
       title: {
         display: true,
-        text: `PTP Kept Today`,
+        text: `PTP Today`,
       },
-        
-      },
+       
+     },
       scales: {
         x: {
           ticks: {
@@ -135,9 +129,9 @@ const PTPKeptProd = () => {
           },
         },
       },
-      responsive: true, 
-      maintainAspectRatio: false
-    }
+     responsive: true, 
+     maintainAspectRatio: false
+   }
 
   const data = {
     labels: labels.map(e=> bucketObject[e]),
@@ -169,6 +163,8 @@ const PTPKeptProd = () => {
       },
     ],
   };
+
+
   return (
     <div className='bg-white border border-slate-400 rounded-xl p-2'>
       <Bar data={data} options={option}/>
@@ -176,4 +172,4 @@ const PTPKeptProd = () => {
   )
 }
 
-export default PTPKeptProd
+export default PTPBarProd

@@ -10,9 +10,8 @@ import { Chart,
 } from 'chart.js';
 
 import ChartDataLabels from 'chartjs-plugin-datalabels';
-import ProductionToday from '../../components/ProductionToday';
-import TLRightDashboard from '../../components/TLRightDashboard';
-
+import ProductionToday from './ProductionToday';
+import TLRightDashboard from './TLRightDashboard';
 
 Chart.register(...registerables,
   ChartDataLabels,

@@ -9,12 +9,6 @@ const httpLink = new HttpLink({
 
 const wsLink = new GraphQLWsLink(createClient({
   url: 'ws://172.16.24.31:3000/graphql',
-  connectionParams: () => {
-    const token = localStorage.getItem('token');
-    return {
-      Authorization: token ? `Bearer ${token}` : "",
-    };
-  }
 }));
 
 const splitLink = split(

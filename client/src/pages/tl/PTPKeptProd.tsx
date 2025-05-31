@@ -4,7 +4,9 @@ import gql from "graphql-tag"
 import { useEffect, useState } from "react"
 import { Bar } from "react-chartjs-2"
 
-interface PtpProd {
+
+
+interface PtpKeptProd {
   bucket: string
   calls: number
   sms: number
@@ -14,9 +16,9 @@ interface PtpProd {
 }
 
 
-const PTP_PROD = gql`
-  query GetTLPTPToday {
-    getTLPTPToday {
+const TL_PTP_KEPT = gql`
+  query GetDeptBucket {
+    getTLPTPKeptToday {
       bucket
       calls
       sms
@@ -48,35 +50,38 @@ const oklchColors = [
 ];
 
 
-const PTPBarProd = () => {
+const PTPKeptProd = () => {
+
+
   const [bucketObject, setBucketObject]= useState<{[key:string]:string}>({})
-    const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
-    useEffect(()=> {
-      if(tlBucketData) {
-        const newObject:{[key: string]:string} = {}
-        tlBucketData.getDeptBucket.map(e=> {
-          newObject[e.id] = e.name
-        })
-        setBucketObject(newObject)
-      }
-    },[tlBucketData])
-  const {data:ptpData} = useQuery<{getTLPTPToday:PtpProd[]}>(PTP_PROD)
+  const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+  useEffect(()=> {
+    if(tlBucketData) {
+      const newObject:{[key: string]:string} = {}
+      tlBucketData.getDeptBucket.map(e=> {
+        newObject[e.id] = e.name
+      })
+      setBucketObject(newObject)
+    }
+  },[tlBucketData])
+  const {data:ptpKeptData } = useQuery<{getTLPTPKeptToday:PtpKeptProd[]}>(TL_PTP_KEPT)
   const [labels, setLabels] = useState<string[]>([])
   const [callsData, setCallsData] = useState<number[]>([])
   const [smsData, setSmsData] = useState<number[]>([])
   const [emailData, setEmailData] = useState<number[]>([])
   const [skipData, setSkipData] = useState<number[]>([])
   const [fieldData, setFieldData] = useState<number[]>([])
+  
 
   useEffect(()=> {
-    if(ptpData) {
-      const labelsArray = new Array(ptpData.getTLPTPToday.length).fill("")
-      const callsArray = new Array(ptpData.getTLPTPToday.length).fill(0)
-      const smsArray = new Array(ptpData.getTLPTPToday.length).fill(0)
-      const emailArray = new Array(ptpData.getTLPTPToday.length).fill(0)
-      const skipArray = new Array(ptpData.getTLPTPToday.length).fill(0)
-      const fieldArray = new Array(ptpData.getTLPTPToday.length).fill(0)
-      ptpData.getTLPTPToday.map((e,index) => {
+    if(ptpKeptData) {
+      const labelsArray = new Array(ptpKeptData.getTLPTPKeptToday.length).fill("")
+      const callsArray = new Array(ptpKeptData.getTLPTPKeptToday.length).fill(0)
+      const smsArray = new Array(ptpKeptData.getTLPTPKeptToday.length).fill(0)
+      const emailArray = new Array(ptpKeptData.getTLPTPKeptToday.length).fill(0)
+      const skipArray = new Array(ptpKeptData.getTLPTPKeptToday.length).fill(0)
+      const fieldArray = new Array(ptpKeptData.getTLPTPKeptToday.length).fill(0)
+      ptpKeptData.getTLPTPKeptToday.map((e,index) => {
         labelsArray[index] = e.bucket
         callsArray[index] = e.calls
         smsArray[index] = e.sms
@@ -91,10 +96,10 @@ const PTPBarProd = () => {
       setSkipData(skipArray)
       setFieldData(fieldArray)
     }
-  },[ptpData,bucketObject])
+  },[ptpKeptData,bucketObject])
 
-   const option:ChartOptions<'bar'> = { 
-     plugins: {
+    const option:ChartOptions<'bar'> = { 
+      plugins: {
       datalabels:{
         display:false
       },
@@ -110,10 +115,10 @@ const PTPBarProd = () => {
       },
       title: {
         display: true,
-        text: `PTP Today`,
+        text: `PTP Kept Today`,
       },
-       
-     },
+        
+      },
       scales: {
         x: {
           ticks: {
@@ -130,9 +135,9 @@ const PTPBarProd = () => {
           },
         },
       },
-     responsive: true, 
-     maintainAspectRatio: false
-   }
+      responsive: true, 
+      maintainAspectRatio: false
+    }
 
   const data = {
     labels: labels.map(e=> bucketObject[e]),
@@ -164,13 +169,12 @@ const PTPBarProd = () => {
       },
     ],
   };
-
-
   return (
     <div className='bg-white border border-slate-400 rounded-xl p-2'>
       <Bar data={data} options={option}/>
+
     </div>
   )
 }
 
-export default PTPBarProd
+export default PTPKeptProd

@@ -1,10 +1,10 @@
-import TLDailyCollected from "./TLDailyCollected"
 import Paid from "./Paid"
 import PTP from "./PTP"
 import PTPKeptTl from "./PTPKeptTl"
 
 import TLAgentProduction from "./TLAgentProduction"
 import Targets from "./Targets"
+import TLDailyCollected from "./TLDailyCollected"
 
 
 const TLRightDashboard = () => {
