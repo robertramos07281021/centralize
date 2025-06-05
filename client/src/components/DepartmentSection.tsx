@@ -301,7 +301,7 @@ const DepartmentSection = () => {
   }
 
   return (
-    <>
+    <div className="relative">
       {
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
@@ -396,7 +396,7 @@ const DepartmentSection = () => {
         confirm &&
         <Confirmation {...modalProps}/>
       }
-    </>
+    </div>
   )
 }
 

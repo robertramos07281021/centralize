@@ -257,7 +257,7 @@ const userResolvers = {
         await user.save()
 
         const findProd = await Production.find({user: user._id}).sort({"createdAt": -1})
-        
+
         if (findProd.length > 0) {
           const newDateFindProd = new Date(findProd[0].createdAt);
           const newDateToDay = new Date();
@@ -284,6 +284,7 @@ const userResolvers = {
         return {success: true, message: "Logged in", user: user}
         
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message,500)
       }
     },
@@ -307,7 +308,7 @@ const userResolvers = {
 
         const saltPassword = await bcrypt.genSalt(10)
         const hashPassword = await bcrypt.hash("Bernales2025", saltPassword)
-        const user = await User.findByIdAndUpdate(id,{$set: {password: hashPassword, change_password: false, isOnline: false}}, {new: true})
+        const user = await User.findByIdAndUpdate(id,{$set: {password: hashPassword, change_password: false, isOnline: false, new_account: false}}, {new: true})
         if(!user) throw new CustomError("User not found",404)
          
         await ModifyRecord.create({name: "Reset Password", user: user._id})  

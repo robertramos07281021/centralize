@@ -47,7 +47,7 @@ const CREATE_DISPOSITION = gql`
 `
 
 const DispositionForm = () => {
-  const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
+  const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
 
   const [selectedDispo, setSelectedDispo] = useState<string>('')
 
@@ -66,7 +66,7 @@ const DispositionForm = () => {
     payment_method: "",
     ref_no: "",
     comment: "",
-    contact_method: "calls"
+    contact_method: ""
   })
 
   useEffect(()=> {
@@ -133,11 +133,9 @@ const DispositionForm = () => {
     if (parts.length > 2) {
       inputValue = parts[0] + '.' + parts[1]; 
     }
-  
     if (parts.length === 2) {
       inputValue = parts[0] + '.' + parts[1].slice(0, 2);
     }
-
     if (inputValue.startsWith('00')) {
       inputValue = '0';
     }
@@ -181,6 +179,9 @@ const DispositionForm = () => {
 
   const anabledDispo = ["PAID","PTP","UNEG"]
   const requiredDispo = ["PAID",'PTP']
+  const highUser = ['TL','MIS']
+
+  const contactMethod = highUser.includes(userLogged.type) ? ['calls','sms','email','skip','field'] : (userLogged.account_type === 'caller' ? ['calls','sms','email'] : [ userLogged.account_type ])
 
   return  (
     <>
@@ -262,31 +263,25 @@ const DispositionForm = () => {
                 </div>
               </div>
             }
-            {
-              (anabledDispo.includes(selectedDispo) ? 
               <label className="grid grid-cols-4 items-center">
-                  <p className="text-gray-800 font-bold ">Contact Method</p>
+                <p className="text-gray-800 font-bold ">Contact Method</p>
                 <select 
                   name="payment" 
                   id="payment"
+                  required
                   value={data.contact_method}
                   onChange={(e)=> setData({...data, contact_method: e.target.value})}
-                  className={` bg-gray-50  border-gray-500 border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
+                  className={`${required && !data.contact_method ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
                   >
-                  <option value="calls">Calls</option>
-                  <option value="sms">SMS</option>
-                  <option value="email">Email</option>
-                  <option value="skip">Skip</option>
-                  <option value="field">Field</option>
+                    <option value="">Select Contact Method</option>
+                    {
+                      contactMethod.map((e,index)=> 
+                        <option key={index} value={e}>{e.toUpperCase()}</option>
+                      )
+                    }
                 </select>
               </label>
-              :
-              <div className="grid grid-cols-4 items-center">
-                <p className="text-gray-800 font-bold ">Contact Method</p>
-                <div className="col-span-3 rounded-lg p-4.5 bg-slate-400 border border-gray-400">
-                </div>
-              </div>)
-            }
+
           </div>
           <div className="flex flex-col gap-2"> 
             {

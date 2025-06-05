@@ -6,7 +6,7 @@ import DepartmentSection from "../../components/DepartmentSection"
 const SetupView = () => {
 
   return (
-    <div className="w-full p-5">
+    <div className="w-full flex flex-col h-full overflow-y-auto p-5">
       <div className="flex p-5">
         <h1 className="text-xl font-medium text-slate-500">Branch & Department</h1>
       </div>

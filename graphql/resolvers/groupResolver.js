@@ -6,7 +6,7 @@ import CustomerAccount from "../../models/customerAccount.js"
 import { PubSub } from "graphql-subscriptions"
 const pubsub = new PubSub()
 const GROUP_CHANGING = "GROUP_CHANGING";
-
+const TASK_CHANGING = 'TASK_CHANGING'
 
 const groupResolver = {
 
@@ -133,7 +133,16 @@ const groupResolver = {
         const user = await User.findById(groupId)
         const id = findGroup ? findGroup._id : user._id
 
+
         await CustomerAccount.updateMany({_id: {$in: task}}, {$set: {assigned: id, assigned_date: new Date() }})
+
+        await pubsub.publish(TASK_CHANGING, {
+          taskChanging: {
+            members: [id],
+            message: "TASK_CHANGING"
+          },
+        });
+
         return {
           success: true,
           message: "Task successfully added"
@@ -143,14 +152,21 @@ const groupResolver = {
       }
 
     },
-    deleteGroupTask: async(_,{caIds},{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
+    deleteGroupTask: async(_,{caIds}) => {
       try {
-        await CustomerAccount.updateMany({_id: {$in: caIds}},{$set: {
-          assigned: null,
-          assigned_date: null
-        }})
-        
+        const findAccounts = await CustomerAccount.find({_id: {$in: caIds}})
+        await Promise.all(findAccounts.map(async(e)=> {
+          await CustomerAccount.findByIdAndUpdate(e._id,{$set: {assigned: null, assigned_date: null} })
+        }))
+
+        const agent = new Set(findAccounts.map(e=> e.assigned))
+        await pubsub.publish(TASK_CHANGING, {
+          taskChanging: {
+            members: agent,
+            message: "TASK_CHANGING"
+          },
+        });
+
         return {
           success: true,
           message: "Assigned successfully removed"
@@ -163,6 +179,9 @@ const groupResolver = {
   Subscription: {
     groupChanging: {
       subscribe:() => pubsub.asyncIterableIterator([GROUP_CHANGING])
+    },
+    taskChanging: {
+      subscribe: () => pubsub.asyncIterableIterator([TASK_CHANGING])
     }
   }
 }

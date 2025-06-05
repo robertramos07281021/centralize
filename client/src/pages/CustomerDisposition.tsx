@@ -155,7 +155,7 @@ const CustomerDisposition = () => {
   },[selectedCustomer._id])
 
   return userLogged._id ? (
-    <>
+    <div className="h-full w-full overflow-auto"> 
       {
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
@@ -329,7 +329,7 @@ const CustomerDisposition = () => {
         }
       </div>
       <DispositionRecords/>
-    </>
+    </div>
   ) : (<Navigate to="/"/>)
 }
 

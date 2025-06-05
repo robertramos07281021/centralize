@@ -26,8 +26,12 @@ const NavbarExtn = () => {
         link: "/agent-dashboard"
       },
       {
-        name: "Production Area",
-        link: "/agent-production-area"
+        name: "Customer Interaction Panel",
+        link: "/agent-cip"
+      },
+      {
+        name: "Report",
+        link: "/agent-report"
       },
     ],
     TL: [
@@ -36,8 +40,8 @@ const NavbarExtn = () => {
         link: "/tl-dashboard"
       },
       {
-        name: "Production Area",
-        link: "/tl-production-area"
+        name: "Customer Interaction Panel",
+        link: "/tl-cip"
       },
       {
         name: "Task Manager",

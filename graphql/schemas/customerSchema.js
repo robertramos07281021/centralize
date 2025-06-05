@@ -161,13 +161,23 @@ const customerTypeDefs = gql`
     account_bucket: AccountBucket
     customer_info: CustomerInfo
   }
+
+  type PerformanceStatistic {
+    campaign: ID
+    totalAccounts: Int
+    connectedAccounts: Int
+    targetAmount: Float
+    collectedAmount: Float
+    ptpKeptAccount: Int
+    paidAccount: Float
+    attendanceRate: Float
+  }
  
   type MonthlyTarget {
     campaign: ID
     collected: Float
     target: Float
   }
-
 
   type Query {
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
@@ -177,6 +187,7 @@ const customerTypeDefs = gql`
     selectAllCustomerAccount(disposition:[String],groupId:ID,assigned:String):[ID]
     accountsCount:Int
     getMonthlyTarget:[MonthlyTarget]
+    getMonthlyPerformance:[PerformanceStatistic]
   }
 
   type Mutation {

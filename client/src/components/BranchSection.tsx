@@ -176,7 +176,7 @@ const BranchSection = () => {
   }
 
   return (
-    <>
+    <div className="relative">
       {
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
@@ -248,7 +248,7 @@ const BranchSection = () => {
         <Confirmation {...modalProps}/>
       }
 
-    </>
+    </div>
   )
 }
 

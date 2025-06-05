@@ -20,6 +20,8 @@ const LOGIN = gql `
         branch
         departments
         buckets
+        account_type
+        group
       }
     }
   }
@@ -70,6 +72,7 @@ const Login = () => {
       dispatch(setDeselectCustomer())
     }
   })
+  
   const [logout] = useMutation(LOGOUT,{
     onCompleted: ()=> {
       dispatch(setUserLogged({
@@ -80,14 +83,15 @@ const Login = () => {
         username: "",
         branch: "",
         departments: [],
-        buckets: []
+        buckets: [],
+        account_type: "",
+        group: ""
       }))
     }
   })
 
   const [login, {loading}] = useMutation(LOGIN, {
     onCompleted: (res) => {
-
       dispatch(setUserLogged(res.login.user))
       if(!res.login.user.change_password) {
         navigate('/change-password', {state: res.login.user})

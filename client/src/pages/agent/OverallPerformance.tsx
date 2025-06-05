@@ -99,7 +99,7 @@ export default function OverallPerformance () {
   return (
     <>
       <h1 className="text-slate-500 font-bold text-[0.8em]">Overall Performance</h1>
-      <div className="h-73">
+      <div className="h-full">
         <Radar data={data} options={options}/>
       </div>  
     </>

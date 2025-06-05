@@ -23,6 +23,7 @@ const userTypeDefs = gql`
     createdAt: DateTime
     user_id: String
     group: ID
+    account_type: String
   }
 
   type PaginatedUsers {

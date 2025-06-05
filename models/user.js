@@ -40,8 +40,8 @@ const userSchema = new Schema(
       default: false
     },
     account_type: {
-      type: Number,
-      default: 1,
+      type: String ,
+      enum: ['caller','skiper','field']
     },
     buckets: [{
       type: mongoose.Schema.Types.ObjectId,
@@ -50,6 +50,10 @@ const userSchema = new Schema(
     user_id: {
       type: String,
       unique: true
+    },
+    new_account: {
+      type: Boolean,
+      default: true
     },
     group: {
       type: mongoose.Schema.Types.ObjectId,

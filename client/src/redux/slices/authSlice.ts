@@ -10,6 +10,8 @@ type User = {
   branch: string,
   departments: string[],
   buckets: string[]
+  account_type: string
+  group: string
 }
 
 type search = {
@@ -32,7 +34,6 @@ interface UserState {
   taskFilter: string
   selectedDisposition: string[] 
   limit: number
-  selectedDispoReport: string[]
 }
 
 const initialState:UserState = {
@@ -45,7 +46,6 @@ const initialState:UserState = {
   taskFilter: "assigned",
   selectedDisposition: [] as string[],
   limit: 20,
-  selectedDispoReport: [] as string[],
   userLogged: {
     _id: "",
     change_password: false,
@@ -54,7 +54,9 @@ const initialState:UserState = {
     username: "",
     branch:"",
     departments: [],
-    buckets: []
+    buckets: [],
+    account_type: "",
+    group: ""
   },
   search: {
     fullName: "",
@@ -145,9 +147,6 @@ const authSlice = createSlice({
     setSelectedDisposition: (state, action:PayloadAction<string[]>) => {
       state.selectedDisposition =action.payload 
     },
-    setSelectedDispoReport: (state, action:PayloadAction<string[]>) => {
-      state.selectedDispoReport = action.payload
-    },
     setDeselectCustomer: (state) => {
       state.selectedCustomer = {
         _id: "",
@@ -192,5 +191,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logoutUser, setError, setNeedLogin , setUserLogged, setSearch, setSelectedCustomer, setSelectedGroup, setAgent, setPage, setTasker ,setTaskFilter, setSelectedDisposition, setSelectedDispoReport, setDeselectCustomer} = authSlice.actions;
+export const { logoutUser, setError, setNeedLogin , setUserLogged, setSearch, setSelectedCustomer, setSelectedGroup, setAgent, setPage, setTasker ,setTaskFilter, setSelectedDisposition, setDeselectCustomer} = authSlice.actions;
 export default authSlice.reducer;

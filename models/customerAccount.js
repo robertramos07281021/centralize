@@ -19,10 +19,6 @@ const customerAccountSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref:"Disposition",
     },
-    callfile: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Callfile"
-    }],
     case_id: {
       type: String,
     },
@@ -55,15 +51,6 @@ const customerAccountSchema = new Schema(
     on_hands: {
       type: Boolean,
       default: false
-    },
-    status_call: {
-      type: String
-    },
-    file_name: {
-      type: String
-    },
-    failure_cause: {
-      type: String
     },
     //object
     out_standing_details: {

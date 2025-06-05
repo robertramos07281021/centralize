@@ -22,7 +22,8 @@ import CustomerDisposition from "./pages/CustomerDisposition"
 import StatisticsView from "./pages/agent/StatisticsView"
 import BacklogManagementView from "./pages/tl/BacklogManagementView"
 import TaskManagerView from "./pages/tl/TaskManagerView"
-import Reports from "./pages/Reports"
+import Reports from "./pages/aom/Reports"
+import AgentReport from "./pages/agent/AgentReport"
 
 function App() {
 
@@ -43,7 +44,8 @@ function App() {
         </Route>
         <Route element={<AgentRoute/>}>
           <Route path="/agent-dashboard" element={<StatisticsView/>}/>
-          <Route path="/agent-production-area" element={<CustomerDisposition/>}/>
+          <Route path="/agent-cip" element={<CustomerDisposition/>}/>
+          <Route path="/agent-report" element={<AgentReport/>}/>
         </Route>
         <Route element={<AomRoute/>}>
           <Route path="/aom-dashboard" element={<AomDashboard/>}/>
@@ -58,7 +60,7 @@ function App() {
         <Route element={<TlRoute/>}>
           <Route path="/tl-dashboard" element={<TlDashboard/>}/>
           <Route path="/tl-task-manager" element={<TaskManagerView/>}/>
-          <Route path="/tl-production-area" element={<CustomerDisposition/>}/>
+          <Route path="/tl-cip" element={<CustomerDisposition/>}/>
           <Route path="/tl-reports" element={<BacklogManagementView/>}/>
         </Route>
         <Route element={<CeoRoute/>}>

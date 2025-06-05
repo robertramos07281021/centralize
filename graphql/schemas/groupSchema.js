@@ -30,6 +30,7 @@ const groupTypeDefs = gql`
 
   type Subscription {
     groupChanging: SubsribeSuccess
+    taskChanging: SubsribeSuccess
   }
 
   type Mutation {

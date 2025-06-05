@@ -251,7 +251,7 @@ const BucketSection = () => {
   }
 
   return (
-    <>
+    <div className="relative">
       {
         success.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
@@ -337,7 +337,7 @@ const BucketSection = () => {
       {confirm &&
         <Confirmation {...modalProps}/>
       }
-    </>
+    </div>
   )
 }
 

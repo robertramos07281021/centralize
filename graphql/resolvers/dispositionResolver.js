@@ -225,129 +225,8 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getDispositionReportsHigh: async(_,{campaign, bucket, dispositions, from, to}) => {
-      try {
-        const start = new Date(from);
-        start.setHours(0, 0, 0, 0);
-        const end = new Date(to);
-        end.setHours(23, 59, 59, 999);
-        const search = {}
-        
-        if(campaign) search["bucket.dept"] = campaign
-        if(bucket) search["bucket.name"] = bucket
-        if(dispositions.length > 0) search['dispotype.name'] = {$in: dispositions}
-        if(from && to) search['createdAt'] =  {$gte: start, $lt: end}
-        if(from && !to) search['createdAt'] = {$gte: start}
-        if(!from && to) search['createdAt'] = {$lt: end}
 
-        const reports = await Disposition.aggregate([
-          {
-            $lookup: {
-              from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
-              as: "customer_account"
-            },
-          },
-          {
-            $unwind: {path: "$customer_account",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "customer_account.bucket",
-              foreignField: "_id",
-              as: "bucket",
-              pipeline: [{$project: {name: 1, dept: 1}}]
-            }
-          },
-          {
-            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "dispotypes",
-              localField: "disposition",
-              foreignField: "_id",
-              as: "dispotype",
-              pipeline: [{$project: {name: 1, code: 1}}]
-            }
-          },
-          {
-            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "users",
-              localField: "user",
-              foreignField: "_id",
-              as: "user"
-            }
-          },
-          {
-            $unwind: { path: "$user", preserveNullAndEmptyArrays: true }
-          },
-          {
-            $match: search
-          },
-          {
-            $group: {
-              _id: {
-                dept: "$bucket.dept",
-                bucket: "$bucket.name",
-                dispotype: "$dispotype.name"
-              },
-              users: {
-                $push: {
-                  name: "$user.name",
-                  user_id: "$user.user_id"
-                }
-              },
-              count: {$sum: 1},
-              totalAmount: { $sum: "$amount" }
-            }
-          },
-          {
-            $group: {
-              _id: {
-                dept: "$_id.dept",
-                bucket: "$_id.bucket"
-              },
-              totalAmount: { $sum: "$totalAmount" },
-              dispositions: {
-                $push: {
-                  disposition: "$_id.dispotype",
-                  users: "$users",
-                  count: "$count",
-                }
-              }
-            }
-          },
-          {
-            $group: {
-              _id: "$_id.dept",
-              buckets: {
-                $push: {
-                  bucket: "$_id.bucket",
-                  totalAmount: "$totalAmount",
-                  dispositions: "$dispositions"
-                }
-              }
-            }
-          },
-          {
-            $project: {
-              _id: 0,
-              dept: "$_id",
-              buckets: 1
-            }
-          }
-        ])   
-        return reports
-      } catch (error) {
-        throw new CustomError(error.message, 500)
-      }
-    },
+
     
     getDailyFTE: async(_,__,{user}) => {
       try {
@@ -411,7 +290,6 @@ const dispositionResolver = {
               online: 1
             }
           }
-
         ])
         const newDailyFTE = dailyFTE.map(e => {
           const newCampaignArray = aomCampaign.find(c=> e.campaign === c.name)
@@ -426,12 +304,13 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getPTPPerMonth: async(_,__,{user} ) => {
+    getAOMPTPPerDay: async(_,__,{user} ) => {
       try {
-        const year = new Date().getFullYear()
-        const month = new Date().getMonth();
-        const firstDay = new Date(year,month, 1)
-        const lastDay = new Date(year,month + 1,0)
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
 
         const aomCampaign = await Department.find({aom: user._id}).lean()
         const aomCampaignNameArray = aomCampaign.map(e => e.name)
@@ -439,6 +318,11 @@ const dispositionResolver = {
         const newArrayCampaignBucket = campaignBucket.map(e=> e._id)
 
         const PTPOfMonth = await Disposition.aggregate([
+          {
+            $match: {
+              createdAt: {$gte:todayStart, $lt:todayEnd},
+            }
+          },
           {
             $lookup: {
               from: "customeraccounts",
@@ -462,6 +346,11 @@ const dispositionResolver = {
             $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
           },
           {
+            $match: {
+              "bucket._id" : {$in: newArrayCampaignBucket}
+            }
+          },
+          {
             $lookup: {
               from: "dispotypes",
               localField: "disposition",
@@ -472,24 +361,83 @@ const dispositionResolver = {
           {
             $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
           },
+
           {
             $match: {
-              createdAt: {$gte:firstDay, $lt:lastDay},
               "dispotype.code" : "PTP",
-              "bucket._id" : {$in: newArrayCampaignBucket}
             }
           },
           {
             $group: {
               _id: "$bucket.dept",
-              amount: {$sum: "$amount"}
+              calls: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','calls']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              sms: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','sms']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              email: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','email']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              skip: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','skip']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              field: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','field']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              total: {$sum: "$amount"}
             }
           },
           {
             $project: {
               _id: 0,
               campaign: "$_id",
-              amount: 1
+              skip: 1,
+              calls: 1,
+              sms: 1,
+              email: 1,
+              field: 1,
+              total: 1
             }
           }
 
@@ -509,12 +457,13 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getPTPKeptPerMonth: async(_,__,{user} ) => {
+    getAOMPTPKeptPerDay: async(_,__,{user} ) => {
       try {
-        const year = new Date().getFullYear()
-        const month = new Date().getMonth();
-        const firstDay = new Date(year,month, 1)
-        const lastDay = new Date(year,month + 1,0)
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
 
         const aomCampaign = await Department.find({aom: user._id}).lean()
         const aomCampaignNameArray = aomCampaign.map(e => e.name)
@@ -522,6 +471,13 @@ const dispositionResolver = {
         const newArrayCampaignBucket = campaignBucket.map(e=> e._id)
 
         const PTPKeptOfMonth = await Disposition.aggregate([
+          {
+            $match: {
+              createdAt: { $gte: todayStart, $lt: todayEnd },
+              ptp: true
+            }
+          },
+
           {
             $lookup: {
               from: "customeraccounts",
@@ -545,6 +501,11 @@ const dispositionResolver = {
             $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
           },
           {
+            $match: {
+              "bucket._id" : {$in: newArrayCampaignBucket}
+            }
+          },
+          {
             $lookup: {
               from: "dispotypes",
               localField: "disposition",
@@ -557,23 +518,80 @@ const dispositionResolver = {
           },
           {
             $match: {
-              createdAt: {$gte:firstDay, $lt:lastDay},
               "dispotype.code" : "PAID",
-              ptp : true,
-              "bucket._id" : {$in: newArrayCampaignBucket}
             }
           },
           {
             $group: {
               _id: "$bucket.dept",
-              amount: {$sum: "$amount"}
+              calls: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','calls']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              sms: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','sms']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              email: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','email']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              skip: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','skip']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              field: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','field']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              total: {$sum: "$amount"}
             }
           },
           {
             $project: {
               _id: 0,
               campaign: "$_id",
-              amount: 1
+              skip: 1,
+              calls: 1,
+              sms: 1,
+              email: 1,
+              field: 1,
+              total: 1
             }
           }
 
@@ -592,12 +610,13 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getPaidPerMonth: async(_,__,{user} ) => {
+    getAOMPaidPerDay: async(_,__,{user} ) => {
       try {
-        const year = new Date().getFullYear()
-        const month = new Date().getMonth();
-        const firstDay = new Date(year,month, 1)
-        const lastDay = new Date(year,month + 1,0)
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
 
         const aomCampaign = await Department.find({aom: user._id}).lean()
         const aomCampaignNameArray = aomCampaign.map(e => e.name)
@@ -605,6 +624,13 @@ const dispositionResolver = {
         const newArrayCampaignBucket = campaignBucket.map(e=> e._id)
 
         const PTPKeptOfMonth = await Disposition.aggregate([
+          {
+            $match: {
+              createdAt: { $gte: todayStart, $lt: todayEnd },
+              ptp: false
+            }
+          },
+
           {
             $lookup: {
               from: "customeraccounts",
@@ -628,6 +654,11 @@ const dispositionResolver = {
             $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
           },
           {
+            $match: {
+              "bucket._id" : {$in: newArrayCampaignBucket}
+            }
+          },
+          {
             $lookup: {
               from: "dispotypes",
               localField: "disposition",
@@ -640,23 +671,80 @@ const dispositionResolver = {
           },
           {
             $match: {
-              createdAt: {$gte:firstDay, $lt:lastDay},
               "dispotype.code" : "PAID",
-              ptp : false,
-              "bucket._id" : {$in: newArrayCampaignBucket}
             }
           },
           {
             $group: {
               _id: "$bucket.dept",
-              amount: {$sum: "$amount"}
+              calls: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','calls']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              sms: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','sms']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              email: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','email']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              skip: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','skip']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              field: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$contact_method','field']
+                    },
+                    "$amount",
+                    0
+                  ]
+                }                
+              },
+              total: {$sum: "$amount"}
             }
           },
           {
             $project: {
               _id: 0,
               campaign: "$_id",
-              amount: 1
+              skip: 1,
+              calls: 1,
+              sms: 1,
+              email: 1,
+              field: 1,
+              total: 1
             }
           }
         ])
@@ -1585,7 +1673,7 @@ const dispositionResolver = {
     createDisposition: async(_,{input},{user}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
-    
+
         const start = new Date();
         start.setHours(0, 0, 0, 0);
         const end = new Date();  
@@ -1611,8 +1699,8 @@ const dispositionResolver = {
         if (isPaymentDisposition && !input.amount) {
           throw new CustomError("Amount is required", 401);
         }
-
-        const ptp =  customerAccount.current_disposition.ptp === true || dispoType.code === "PTP";
+   
+        const ptp = (customerAccount?.current_disposition && customerAccount?.current_disposition.ptp === true) || dispoType.code === "PTP";
 
         const payment = customerAccount.balance - parseFloat(input.amount || 0) === 0 ? "full" : 'partial';
 
@@ -1662,6 +1750,7 @@ const dispositionResolver = {
           message: "Disposition successfully created"
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

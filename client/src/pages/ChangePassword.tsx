@@ -64,22 +64,20 @@ const ChangePassword = () => {
           username: "",
           branch: "",
           departments: [],
-          buckets: []
+          buckets: [],
+          account_type: "",
+          group: ""
         }
       ))
     }
   })
 
   const [changePassword, {loading:changePassLoading}] = useMutation<{updatePassword: UserInfo}>(UPDATEPASSWORD, {
-      onCompleted: async(res) => {
+      onCompleted: (res) => {
       refetch();
       navigate("/")
       dispatch(setNeedLogin(res.updatePassword.change_password))
-      try {
-        await logout()
-      } catch (error) {
-        console.log(error)
-      }
+      logout().catch(console.log)
     },
   })
 

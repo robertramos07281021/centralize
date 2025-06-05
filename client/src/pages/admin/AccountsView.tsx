@@ -131,7 +131,7 @@ const AccountsView = () => {
 
 
   return (
-    <div className="h-full">
+    <div className="h-full overflow-y-auto">
       <div className="p-5 flex justify-between">
         <h1 className="text-2xl font-medium text-slate-500">Account</h1>
         <Link to="/register">

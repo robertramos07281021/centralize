@@ -6,7 +6,7 @@ import Confirmation from "./Confirmation";
 import Loading from "../pages/Loading";
 import { useNavigate } from "react-router-dom";
 import { RootState, useAppDispatch } from "../redux/store";
-import { setDeselectCustomer, setNeedLogin, setPage, setSelectedDispoReport, setSelectedDisposition, setTasker, setTaskFilter, setUserLogged } from "../redux/slices/authSlice";
+import { setDeselectCustomer, setNeedLogin, setPage,  setSelectedDisposition, setTasker, setTaskFilter, setUserLogged } from "../redux/slices/authSlice";
 import NavbarExtn from "./NavbarExtn";
 import { useSelector } from "react-redux";
 import IdleAutoLogout from "./IdleAutoLogout";
@@ -82,6 +82,8 @@ const Navbar = () => {
     }
   })
   
+
+
   useSubscription(DUMMY_SUB)
 
   const [logout, {loading}] = useMutation(LOGOUT,{
@@ -96,14 +98,15 @@ const Navbar = () => {
           username: "",
           branch: "",
           departments: [],
-          buckets: []
+          buckets: [],
+          account_type: "",
+          group: ""
         }
       ))
       dispatch(setPage(1))
       dispatch(setTasker('group'))
       dispatch(setTaskFilter('assigned'))
       dispatch(setSelectedDisposition([]))
-      dispatch(setSelectedDispoReport([]))
       dispatch(setDeselectCustomer())
       navigate('/')
 
@@ -152,7 +155,9 @@ const Navbar = () => {
         username: "",
         branch: "",
         departments: [],
-        buckets: []
+        buckets: [],
+        account_type: "",
+        group: ""
       }))
       dispatch(setNeedLogin(true))
       dispatch(setUserLogged(
@@ -164,14 +169,15 @@ const Navbar = () => {
           username: "",
           branch: "",
           departments: [],
-          buckets: []
+          buckets: [],
+          account_type: "",
+          group: ""
         }
       ))
       dispatch(setPage(1))
       dispatch(setTasker('group'))
       dispatch(setTaskFilter('assigned'))
       dispatch(setSelectedDisposition([]))
-      dispatch(setSelectedDispoReport([]))
       dispatch(setDeselectCustomer())
       navigate("/")
     }

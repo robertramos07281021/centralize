@@ -197,6 +197,15 @@ const GROUP_CHANGING  = gql`
   }
 `
 
+const TASK_CHANGING  = gql`
+  subscription Subscription {
+    taskChanging {
+      message
+      members
+    }
+  }
+`
+
 const SELECT_TASK = gql`
   mutation Mutation($id: ID!) {
     selectTask(id: $id) {
@@ -222,6 +231,7 @@ const MyTaskSection = () => {
   const client = useApolloClient()
   const navigate = useNavigate()
 
+
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
     onData: ({data})=> {
       if(data) {
@@ -234,17 +244,35 @@ const MyTaskSection = () => {
     }
   });
 
+  useSubscription<{taskChanging:SubSuccess}>(TASK_CHANGING,{
+    onData: ({data})=> {
+      if(data) {
+        if(data.data?.taskChanging?.message === "TASK_CHANGING" && (data.data?.taskChanging?.members?.toString().includes(userLogged._id)||data.data?.taskChanging?.members?.toString().includes(userLogged.group))) {
+      
+          client.refetchQueries({
+            include: ['myTasks','groupTask']
+          })
+        }
+      }
+    }
+  });
 
   useSubscription<{dispositionUpdated:SubSuccess}>(NEW_DISPO,{
     onData: ({data})=> {
-      if(data) console.log(data)
+      if(data){
+         if(data.data?.dispositionUpdated?.message === "NEW_DISPOSITION" && data.data?.dispositionUpdated?.members?.toString().includes(userLogged._id)) {
+          client.refetchQueries({
+            include: ['myTasks','groupTask']
+          })
+        }
+      }
     }
   })
 
   useSubscription<{groupChanging:SubSuccess}>(GROUP_CHANGING,{
     onData: ({data})=> {
       if(data){
-        if(data.data?.groupChanging?.message === "GROUP_CHANGING" && data.data?.groupChanging?.members?.toString().includes(userLogged._id)) {
+        if(data.data?.groupChanging?.message === "GROUP_CHANGING" &&  data.data?.groupChanging?.members?.toString().includes(userLogged._id)) {
           client.refetchQueries({
             include: ['groupTask']
           })
@@ -273,7 +301,7 @@ const MyTaskSection = () => {
 
   useEffect(()=> {
     groupTaskRefetch()
-  },[userLogged._id,groupTaskRefetch])
+  },[groupTaskRefetch,navigate])
 
   useEffect(()=> {
     setSelection("")

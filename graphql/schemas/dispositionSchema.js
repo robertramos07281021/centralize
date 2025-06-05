@@ -56,15 +56,10 @@ const dispositionTypeDefs = gql`
     dispositions: [DispoData]
   }
 
-
-
-
   type Dispo {
     dispotype: ID,
     count: Int
   }
-
-
 
   type SubsribeSuccess {
     message: String
@@ -92,12 +87,7 @@ const dispositionTypeDefs = gql`
     dispositions: [DispoReport]
   }
 
-  type HighDispositionReport {
-    dept: String
-    buckets: [Buckets]
-  }
-  
-
+ 
   type BucketAomDashobard {
     campaign: ID
     ptp_amount: Float
@@ -113,9 +103,14 @@ const dispositionTypeDefs = gql`
     online: Int
   }
 
-  type PerMonthCollection {
+  type AomDailyCollection {
     campaign: ID,
-    amount: Float
+    calls: Float
+    sms: Float
+    email: Float
+    field: Float
+    skip: Float
+    total: Float
   }
 
   enum ContactMethod {
@@ -172,17 +167,15 @@ const dispositionTypeDefs = gql`
     contact_method: ContactMethod!
   }
 
-
   type Query {
     getAccountDispositions(id:ID!, limit:Int):[Disposition]
     getAccountDispoCount(id:ID!): Count
     getDispositionReports(agent:String, bucket:String, disposition:[String], from:String, to:String): Reports
     getAllDispositionTypes:[DispoType]
-    getDispositionReportsHigh(campaign:String, bucket:String, dispositions:[String], from:String, to:String):[HighDispositionReport]
     getDailyFTE:[DailyFTE]
-    getPTPPerMonth: [PerMonthCollection]
-    getPTPKeptPerMonth: [PerMonthCollection]
-    getPaidPerMonth: [PerMonthCollection]
+    getAOMPTPPerDay: [AomDailyCollection]
+    getAOMPTPKeptPerDay: [AomDailyCollection]
+    getAOMPaidPerDay: [AomDailyCollection]
     getTLPaidToday:[TLDashboardProd]
     getTLPTPKeptToday: [TLDashboardProd]
     getTLPTPToday: [TLDashboardProd]
@@ -192,6 +185,7 @@ const dispositionTypeDefs = gql`
     getTLDailyCollected: [TLDailyCollected]
     agentDispoDaily: [AgentDispo]
     getTargetPerCampaign: [BucketTargets]
+
   }
 
   type Mutation {

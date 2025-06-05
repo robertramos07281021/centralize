@@ -10,6 +10,7 @@ import mongoose from "mongoose";
 import User from "../../models/user.js";
 import Department from "../../models/department.js";
 import Callfile from "../../models/callfile.js";
+import Disposition from "../../models/disposition.js";
 
 const customerResolver = {
   DateTime,
@@ -80,7 +81,9 @@ const customerResolver = {
               as: "customer_info",
             },
           },
-          { $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } },
+          { 
+            $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
+          },
           {
             $lookup: {
               from: "buckets",
@@ -89,7 +92,9 @@ const customerResolver = {
               as: "account_bucket",
             },
           },
-          { $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } },
+          { 
+            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          },
           {
             $match: {
               "account_bucket._id": {$in: user.buckets},
@@ -114,6 +119,267 @@ const customerResolver = {
         throw new CustomError(error.message, 500)
       }
      
+    },
+    getMonthlyPerformance: async(_,__,{user}) => {
+  
+      try {
+        
+        const year = new Date().getFullYear()
+        const month = new Date().getMonth();
+        const thisDay = new Date()
+        thisDay.setHours(0,0,0,0)
+        const firstDay = new Date(year,month, 1)
+        const lastDay = new Date(year,month + 1,0)
+        const aomCampaign = await Department.find({aom: user._id}).lean()
+        const aomCampaignNameArray = aomCampaign.map(e => e.name)
+        const campaignBucket = await Bucket.find({dept: {$in: aomCampaignNameArray}}).lean()
+        const newArrayCampaignBucket = campaignBucket.map(e=> e._id)
+
+
+        const dispositionCheck = await Disposition.aggregate([
+          {
+            $match: {
+              createdAt: { $gte:firstDay , $lt:lastDay },
+            }
+          },
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "ca",
+            },
+          },
+          { 
+            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "ca.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            },
+          },
+          { 
+            $unwind: { path: "$bucket", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $match: {
+              "bucket.dept": {$in: aomCampaignNameArray}
+            }
+          },
+          {
+            $group: {
+              _id: {
+                campaign: "$bucket.dept",
+                day: { $dayOfMonth: "$createdAt" },
+                month: { $month: "$createdAt" },
+                year: { $year: "$createdAt" }
+              },
+              users: {
+                $addToSet: "$user"
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              campaign: "$_id.campaign",
+              date: {
+                $dateFromParts: {
+                  year: "$_id.year",
+                  month: "$_id.month",
+                  day: "$_id.day"
+                }
+              },
+              users:{ $size: "$users" }
+            }
+          }
+        ])
+        
+
+
+        
+        const dispo = await Promise.all(
+          dispositionCheck.map(async(e)=> 
+          {
+             const users = await User.aggregate([
+              {
+                $match: {
+                  type: "AGENT"
+                }
+              },
+              {
+                $lookup: {
+                  from: "departments",
+                  localField: "departments",
+                  foreignField: "_id",
+                  as: "department",
+                }
+              },
+              { 
+                $unwind: { path: "$department", preserveNullAndEmptyArrays: true } 
+              },
+              {
+                $match: {
+                  "department.name": e.campaign 
+                }
+              },
+
+            ])
+
+            return {
+              campaign: e.campaign,
+              rate: e.users / users.length * 100
+            }
+          }
+          )
+        )
+
+
+        const connectedDispo = ['FFUP','PAID','PRC','RPCCB','FV','LM','PTP','UNEG','DEC','ITP','RTP']
+        
+        const accounts = await CustomerAccount.aggregate([
+          {
+            $match: {
+              createdAt: { $gte:firstDay , $lt:lastDay },
+            }
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "bucket",
+              foreignField: "_id",
+              as: "account_bucket",
+            },
+          },
+          { 
+            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $match: {
+              "account_bucket._id": { $in: newArrayCampaignBucket }
+            }
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "current_disposition",
+              foreignField: "_id",
+              as: "currentDisposition",
+            }
+          },
+          { 
+            $unwind: { path: "$currentDisposition", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "currentDisposition.disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          { 
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $group: {
+              _id: "$account_bucket.dept",
+              totalAccounts: {
+                $sum: 1
+              },
+              connectedAccounts: {
+                $sum: {
+                  $cond: [
+                    {
+                      $in: ["$dispotype.code",connectedDispo]
+                    }
+                    ,1
+                    ,0
+                  ]
+                }
+              },
+              targetAmount: {
+                $sum: "$out_standing_details.total_os"
+              },
+              collectedAmount: {
+                $sum: "$paid_amount"
+              },
+              ptpKeptAccount: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $eq: ["$dispotype.code","PAID"]
+                        },
+                        {
+                          $eq: ['$dispotype.ptp',true]
+                        }
+                      ]
+                    },
+                    1,
+                    0
+                  ]
+                }
+              },
+              paidAccount: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $eq: ["$dispotype.code","PAID"]
+                        },
+                        {
+                          $eq: ['$currentDisposition.ptp',false]
+                        }
+                      ]
+                    },
+                    1,
+                    0
+                  ]
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              campaign: "$_id",
+              totalAccounts: 1,
+              connectedAccounts: 1,
+              targetAmount: 1,
+              collectedAmount: 1,
+              ptpKeptAccount: 1,
+              paidAccount: 1,
+            }
+          }
+        ])
+
+        
+       
+        const newResult = accounts.map((com)=> {
+          const findDept = aomCampaign.find(e => e.name === com.campaign)
+          const camp = dispo.filter(x=> x.campaign === com.campaign).map(y => y.rate)
+      
+          const sumOfCamp = camp.length > 0 ? camp.reduce((t,v) => {return t + v }) : 0
+          
+
+          return {
+            ...com,
+            campaign: findDept ? findDept._id : com.campagin,
+            attendanceRate: sumOfCamp/camp.length
+          }
+        })
+        
+        return newResult
+      } catch (error) {
+        console.log(error)
+        throw new CustomError(error.message, 500)        
+      }
     },
     findCustomerAccount: async(_,{disposition, groupId ,page, assigned, limit}, {user}) => {
       try {
@@ -164,9 +430,6 @@ const customerResolver = {
           search.push({ assigned: null });
         }
 
-
-        // console.log(endOfTheDay)
-        // console.log(search)
         const accounts = await CustomerAccount.aggregate([
           {
             $lookup: {
@@ -194,7 +457,9 @@ const customerResolver = {
               as: "currentDisposition",
             }
           },
-          { $unwind: { path: "$currentDisposition", preserveNullAndEmptyArrays: true } },
+          { 
+            $unwind: { path: "$currentDisposition", preserveNullAndEmptyArrays: true } 
+          },
           {
             $lookup: {
               from: "dispotypes",
@@ -247,8 +512,6 @@ const customerResolver = {
             }
           }
         ])
-
-
 
         const total = accounts[0]?.total[0]?.totalCustomerAccounts || 0;
 

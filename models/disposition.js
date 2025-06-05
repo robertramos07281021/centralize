@@ -41,7 +41,6 @@ const dispositionSchema = new Schema(
     },
     contact_method: {
       type: String,
-      default: "calls",
       enum: ['calls','sms','email','skip','field']
     },
     user: {
