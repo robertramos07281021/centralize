@@ -376,7 +376,7 @@ const GroupSection = () => {
             type="text" 
             name="name" 
             id="name" 
-            autoComplete="false"
+            autoComplete="off"
             value={name}
             className={`border ${required ? "border-red-500 bg-red-50" : "border-slate-300 bg-slate-50"}  rounded-md lg:px-1.5 lg:py-1  2xl:py-1.5 2xl:px-2  lg:w-50 2xl:w-70 lg:text-[0.6em] 2xl:text-xs`}
             onChange={(e)=> setName(e.target.value)}
@@ -385,7 +385,7 @@ const GroupSection = () => {
             type="text" 
             name="discription" 
             id="discription"
-            autoComplete="false"
+            autoComplete="off"
             value={description}
             className="border border-slate-300 bg-slate-50 rounded-md lg:px-1.5 lg:py-1  2xl:py-1.5 2xl:px-2 lg:w-70 2xl:w-96 2xl:text-xs lg:text-[0.6em]"
             onChange={(e)=> setDescription(e.target.value)}

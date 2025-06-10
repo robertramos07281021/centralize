@@ -24,6 +24,8 @@ import BacklogManagementView from "./pages/tl/BacklogManagementView"
 import TaskManagerView from "./pages/tl/TaskManagerView"
 import Reports from "./pages/aom/Reports"
 import AgentReport from "./pages/agent/AgentReport"
+import ProductionManagerView from "./pages/tl/ProductionManagerView"
+
 
 function App() {
 
@@ -59,6 +61,7 @@ function App() {
         </Route>
         <Route element={<TlRoute/>}>
           <Route path="/tl-dashboard" element={<TlDashboard/>}/>
+          <Route path="/tl-production-manager" element={<ProductionManagerView/>}/>
           <Route path="/tl-task-manager" element={<TaskManagerView/>}/>
           <Route path="/tl-cip" element={<CustomerDisposition/>}/>
           <Route path="/tl-reports" element={<BacklogManagementView/>}/>

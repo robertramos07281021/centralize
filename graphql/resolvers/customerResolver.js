@@ -197,10 +197,7 @@ const customerResolver = {
             }
           }
         ])
-        
 
-
-        
         const dispo = await Promise.all(
           dispositionCheck.map(async(e)=> 
           {
@@ -226,12 +223,11 @@ const customerResolver = {
                   "department.name": e.campaign 
                 }
               },
-
             ])
 
             return {
               campaign: e.campaign,
-              rate: e.users / users.length * 100
+              rate: users.length === 0 ? 0 : (e.users / users.length * 100)
             }
           }
           )
@@ -364,20 +360,18 @@ const customerResolver = {
         const newResult = accounts.map((com)=> {
           const findDept = aomCampaign.find(e => e.name === com.campaign)
           const camp = dispo.filter(x=> x.campaign === com.campaign).map(y => y.rate)
-      
-          const sumOfCamp = camp.length > 0 ? camp.reduce((t,v) => {return t + v }) : 0
+          const sumOfCamp = camp.reduce((t,v) => {return t + v }) 
           
 
           return {
             ...com,
-            campaign: findDept ? findDept._id : com.campagin,
-            attendanceRate: sumOfCamp/camp.length
+            campaign: findDept ? findDept._id.toString() : com.campaign,
+            attendanceRate: camp.length > 0 ? sumOfCamp/camp.length : 0
           }
         })
         
         return newResult
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)        
       }
     },
@@ -771,52 +765,33 @@ const customerResolver = {
   },
   
   Mutation: {
-    createCustomer: async(_,{input,callfile},{user}) => {
+    createCustomer: async(_,{input, callfile, bucket},{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
+
       try {
-        const dept = await Department.find({_id: {$in: user.departments}}).distinct('name')
+        const findBucket = await Bucket.findById(bucket)
+        if(!findBucket) throw new CustomError('Bucket not found',404)
 
-        const buckets = new Set(await Bucket.find({dept: {$in: dept}}).distinct('name'))
-        
-        const inputBucket = new Set(input.map((i) => i.bucket))
+        const newCallfile = await Callfile.create({name: callfile, bucket: findBucket._id})
 
-        for (const name of inputBucket) {
-          if (!buckets.has(name)) {
-            throw new CustomError(`Bucket '${name}' is not included in user's access`, 403);
-          }
-        }
-        const sumOfOutStanding = input.map(e => e.total_os).reduce((t,v)=> {
-          return t + v
-        })
-        const createdCallfile = await Callfile.create({name: callfile, target: sumOfOutStanding})
 
         await Promise.all(input.map(async (element) => {
-          const bucket = await Bucket.findOne({ name: element.bucket });
-          if (!bucket) throw new CustomError("Bucket not found", 404);
-    
-          let customer = await Customer.findOne({ platform_customer_id: element.platform_user_id });
-          if (!customer) {
-            customer = new Customer({
+          const customer = new Customer({
               fullName: element.customer_name,
               platform_customer_id: element.platform_user_id,
               gender: element.gender,
               dob: element.birthday,
               addresses: [element.address],
               emails: [element.email],
-              contact_no: ["0" + element.one],
+              contact_no: [element.contact],
             });
             await customer.save();
-          }
-          let findCA = await CustomerAccount.findById(customer)
-          if(findCA) {
-            findCA.callfile.push(createdCallfile._id)
-            await findCA.save()
-          } else {
+  
             await CustomerAccount.create({
               customer: customer._id,
-              bucket: bucket._id,
+              bucket: findBucket._id,
               case_id: element.case_id,
-              callfile: [createdCallfile._id],
+              callfile: newCallfile._id,
               credit_customer_id: element.credit_user_id,
               endorsement_date: element.endorsement_date,
               bill_due_day: element.bill_due_day,
@@ -838,8 +813,8 @@ const customerResolver = {
                 vendor_endorsement: element.vendor_endorsement,
                 grass_date: element.grass_date,
               }
-            });
-          }
+          });
+          
         }));
       } catch (error) {
         throw new CustomError(error.message, 500)

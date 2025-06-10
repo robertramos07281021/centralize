@@ -141,6 +141,42 @@ const Reports = () => {
               onChange={(e)=> setTo(e.target.value)} 
               className="w-full border border-slate-300 rounded-md py-2 px-2 text-xs" />
           </label>
+          {
+            bucket && 
+            <fieldset className="p-2 border rounded-xl flex flex-col gap-2 border-slate-300">
+              <legend className="px-2 text-sm font-medium text-gray-500">Compare</legend>
+              <label >
+                <p className="font-medium text-slate-500">1st Callfile</p>
+                <select 
+                  name="bucket" 
+                  id="bucket" 
+
+                  className={` border-slate-300 border  text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 uppercase`}>
+                  <option value="">Select Callfile</option>
+        
+                </select>
+              </label>
+              <label >
+                <p className="font-medium text-slate-500">2nd Callfile</p>
+                <select 
+                  name="bucket" 
+                  id="bucket" 
+                  className={` border-slate-300 border  text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 uppercase`}>
+                  <option value="">Select Callfile</option>
+                </select>
+              </label>
+              <label >
+                <p className="font-medium text-slate-500">3rd Callfile</p>
+                <select 
+                  name="bucket" 
+                  id="bucket" 
+                  className={` border-slate-300 border text-gray-900 text-xs rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-1.5 uppercase`}>
+                  <option value="">Select CallFile</option>
+                </select>
+              </label>
+
+            </fieldset>
+          }
           <div className="flex items-center justify-center">
             <button className="bg-blue-500  hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-xs px-4 py-2  cursor-pointer" onClick={onClickPreview}>Preview</button>
 

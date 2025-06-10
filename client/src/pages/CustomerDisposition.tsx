@@ -180,6 +180,7 @@ const CustomerDisposition = () => {
                   <input 
                     type="text"
                     name="search" 
+                    autoComplete="off"
                     value={search}
                     onChange={(e)=> {setSearch(e.target.value)}}
                     id="search"

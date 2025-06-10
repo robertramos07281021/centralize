@@ -25,9 +25,6 @@ const TLRightDashboard = () => {
       <div className='row-start-2 row-span-full grid grid-cols-5 gap-2'>
         <TLAgentProduction/>
         <Targets/>
-
-
- 
       </div>
 
     </div>

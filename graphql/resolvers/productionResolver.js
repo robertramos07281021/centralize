@@ -1,7 +1,5 @@
 
-import mongoose from "mongoose";
 import CustomError from "../../middlewares/errors.js";
-import Department from "../../models/department.js";
 import Disposition from "../../models/disposition.js";
 import Production from "../../models/production.js";
 

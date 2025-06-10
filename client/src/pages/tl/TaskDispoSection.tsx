@@ -2,11 +2,13 @@ import { useMutation, useQuery } from "@apollo/client"
 import gql from "graphql-tag"
 import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
-import { RootState } from "../redux/store"
-import Confirmation from "./Confirmation"
-import SuccessToast from "./SuccessToast"
-import Pagination from "./Pagination"
-import Loading from "../pages/Loading"
+import { RootState, useAppDispatch } from "../../redux/store"
+import Confirmation from "../../components/Confirmation"
+import SuccessToast from "../../components/SuccessToast"
+import Pagination from "../../components/Pagination"
+import Loading from "../Loading"
+import { setPage } from "../../redux/slices/authSlice"
+
 
 interface Success {
   success: boolean,
@@ -245,6 +247,7 @@ const DELETE_GROUP_TASK = gql`
 
 
 const TaskDispoSection = () => {
+  const dispatch = useAppDispatch()
   const [groupDataNewObject, setGroupDataNewObject] = useState<{[key:string]:string}>({})
   const {selectedGroup, selectedAgent, page, tasker, taskFilter, selectedDisposition, limit} = useSelector((state:RootState)=> state.auth)
   const selected = selectedGroup ? groupDataNewObject[selectedGroup] : selectedAgent
@@ -259,7 +262,13 @@ const TaskDispoSection = () => {
     success:false,
     message: ""
   })
-  
+  const [taskManagerPage, setTaskManagerPage] = useState("1")
+
+  useEffect(()=> {
+    setTaskManagerPage(page.toString())
+  },[page])
+
+
   useEffect(()=> {
     setRequired(false)
     CADRefetch()
@@ -374,6 +383,13 @@ const TaskDispoSection = () => {
       })
     }
   }
+
+  const pages = CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts ? CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts/limit : 1
+  
+  const valuePage = parseInt(taskManagerPage) > pages ? pages.toString() : taskManagerPage 
+
+  console.log(valuePage)
+
   if(loading) return (<Loading/>)
 
   return (
@@ -382,112 +398,86 @@ const TaskDispoSection = () => {
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
       }
-      <div className="p-5 h-full flex flex-col justify-between">
-        <div className="flex flex-col">
-          {
-            (selectedGroup || selectedAgent) &&
-            <div className={`flex ${required ? "justify-between" : "justify-end"}  items-center`}>
-              { required &&
-                <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
-                <span className="font-medium">No Item Selected!</span> Please add one or more task.
-              </div>
-              }
-              <div className="flex gap-2">
-                { taskFilter !== "assigned" ? 
-                  <button type="button" className="focus:outline-none text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xs px-5 h-10 me-2 mb-2" onClick={handleAddTask}>Add Task</button> : 
+      <div className="h-full w-full flex flex-col p-2 overflow-hidden">
+        {
+          (selectedGroup || selectedAgent) &&
+          <div className={`flex ${required ? "justify-between" : "justify-end"}  items-center`}>
+            { required &&
+              <div className="p-4 mb-4 text-sm text-red-800 rounded-lg bg-red-50 dark:bg-gray-800 dark:text-red-400" role="alert">
+              <span className="font-medium">No Item Selected!</span> Please add one or more task.
+            </div>
+            }
+            <div className="flex gap-2">
+              { taskFilter !== "assigned" ? 
+                <button type="button" className="focus:outline-none text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xs px-5 h-10 me-2 " onClick={handleAddTask}>Add Task</button> : 
 
-                  <button type="button" className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-xs px-5 h-10 me-2 mb-2" onClick={handleClickDeleteGroupTaskButton}>Remove task</button>
+                <button type="button" className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-xs px-5 h-10 me-2" onClick={handleClickDeleteGroupTaskButton}>Remove task</button>
+              }
+            </div>
+          </div>
+        }
+
+        <div className="text-xs text-gray-700 uppercase bg-blue-100 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-5 font-medium">
+          <div  className="px-6 py-3">
+            Customer Name
+          </div>
+          <div className="px-6 py-3">
+            Current Disposition
+          </div>
+          <div  className="px-6 py-3">
+            Bucket
+          </div>
+          <div  className="px-6 py-3">
+            Assigned
+          </div>
+          <div className="px-6 py-3 text-end">
+            Action
+          </div>
+        </div>
+        <div className=" w-full h-full text-gray-500 flex flex-col overflow-y-auto relative mb-2">
+          { 
+            (selectedGroup || selectedAgent) &&
+            <div className="bg-white border-b  border-gray-200 hover:bg-blue-100 flex py-2 items-center text-xs justify-end sticky top-10">
+              <label className=" flex gap-2 justify-end px-2 w-full">
+                <input type="checkbox" name="all" id="all" 
+                checked={handleCheckAll}
+                onChange={(e)=> handleSelectAllToAdd(e)} className={`${taskFilter === "assigned" && "accent-red-600"}`}/>
+                <span className="ps-2">Select All</span>
+              </label>
+            </div>
+          }
+          {
+            CustomerAccountsData?.findCustomerAccount.CustomerAccounts.map((ca)=> ( 
+            <div key={ca._id} className="bg-white border-b border-gray-200 hover:bg-slate-100 grid grid-cols-5 py-2 items-center text-xs">
+              <div className="font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
+                  {ca.customer_info.fullName}
+              </div>
+              <div className="px-6">
+                  {ca.currentDisposition ? (ca.dispoType.code === "PAID" ? `${ca.dispoType.code} (Partial)` : ca.dispoType.code) : "New Endorsed"}
+              </div>
+              <div className="px-6 ">
+                  {ca.account_bucket.name}
+              </div>
+              <div className="px-6">
+                {ca.assigned?.name}
+              </div>
+              <div className="px-6 flex items-center justify-end">
+                {
+                  (selectedGroup || selectedAgent) &&
+                  <input type="checkbox" name={ca.customer_info.fullName} id={ca.customer_info.fullName} onChange={(e)=> handleCheckBox(ca._id, e)} checked={taskToAdd.includes(ca._id)} className={`${taskFilter === "assigned" && "accent-red-600" }`}/>
                 }
               </div>
             </div>
+            ))
           }
-      
-          <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400 ">
-            <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
-              <tr>
-                  <th scope="col" className="px-6 py-3">
-                    Customer Name
-                  </th>
-                  <th scope="col" className="px-6 py-3">
-                    Current Disposition
-                  </th>
-                  <th scope="col" className="px-6 py-3">
-                    Bucket
-                  </th>
-                  <th scope="col" className="px-6 py-3">
-                    assigned
-                  </th>
-                  {
-                    (selectedGroup || selectedAgent) &&
-                    <th scope="col" className="px-6 py-3 w-70 text-end">
-                      Action
-                    </th>
-
-                  }
-              </tr>
-            </thead>
-            <tbody>
-              { 
-                (selectedGroup || selectedAgent) &&
-                <tr className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-blue-100">
-                  <th scope="row" className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
-                      
-                  </th>
-                  <td className="px-6">
-                      
-                  </td>
-                  <td className="px-6 ">
-                      
-                  </td>
-                  <td className="px-6">
-                  
-                  </td>
-                  <td className=" flex gap-2 ps-6 justify-end w-70"> 
-                    <label>
-                      <input type="checkbox" name="all" id="all" 
-                      checked={handleCheckAll}
-                      onChange={(e)=> handleSelectAllToAdd(e)} className={`${taskFilter === "assigned" && "accent-red-600"}`}/>
-                      <span className="ps-2">Select All</span>
-                    </label>
-                  </td>
-                </tr>
-              }
-              {
-                CustomerAccountsData?.findCustomerAccount.CustomerAccounts.map((ca)=> ( 
-                <tr key={ca._id} className="bg-white border-b dark:bg-gray-800 dark:border-gray-700 border-gray-200 hover:bg-blue-100">
-                  <th scope="row" className="px-6 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
-                      {ca.customer_info.fullName}
-                  </th>
-                  <td className="px-6">
-                      {ca.currentDisposition ? (ca.dispoType.code === "PAID" ? `${ca.dispoType.code} (Partial)` : ca.dispoType.code) : "New Endorsed"}
-                  </td>
-                  <td className="px-6 ">
-                      {ca.account_bucket.name}
-                  </td>
-                  <td className="px-6">
-                    {ca.assigned?.name}
-                  </td>
-                  {
-                    (selectedGroup || selectedAgent) &&
-                    <td className="px-6 flex items-center py-4 justify-end">
-                        <input type="checkbox" name={ca.customer_info.fullName} id={ca.customer_info.fullName} onChange={(e)=> handleCheckBox(ca._id, e)} checked={taskToAdd.includes(ca._id)} className={`${taskFilter === "assigned" && "accent-red-600" }`}/>
-                    </td>
-                  }
-                </tr>
-                ))
-              }
-            </tbody>
-          </table>
         </div>
-        { Math.ceil(CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts ? CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts/limit : 1) > 1 &&
-          <Pagination totalPage={CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts ? CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts : 1 }/>
-        }
-    
+        <Pagination value={valuePage} onChangeValue={(e)=>setTaskManagerPage(e)} onKeyDownValue={(e)=> dispatch(setPage(e))} totalPage={pages} currentPage={page}/>
       </div>
       { confirm &&
       <Confirmation {...modalProps}/>
       }
-    </>
+      </>
+
   )
 }
 

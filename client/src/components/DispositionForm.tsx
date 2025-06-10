@@ -223,6 +223,7 @@ const DispositionForm = () => {
                       type="text" 
                       name="amount" 
                       id="amount"
+                      autoComplete="off"
                       value={data.amount}
                       onChange={handleOnChangeAmount}
                       pattern="^\d+(\.\d{1,2})?$"
@@ -266,8 +267,8 @@ const DispositionForm = () => {
               <label className="grid grid-cols-4 items-center">
                 <p className="text-gray-800 font-bold ">Contact Method</p>
                 <select 
-                  name="payment" 
-                  id="payment"
+                  name="contact_method" 
+                  id="contact_method"
                   required
                   value={data.contact_method}
                   onChange={(e)=> setData({...data, contact_method: e.target.value})}
@@ -336,6 +337,7 @@ const DispositionForm = () => {
                     type="text" 
                     name="ref" 
                     id="ref"
+                    autoComplete="off"
                     value={data.ref_no}
                     placeholder="Enter reference no."
                     onChange={(e)=> setData({...data, ref_no: e.target.value})}

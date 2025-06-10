@@ -34,9 +34,9 @@ const deptTypeDefs = gql`
 
   type Query {
     getDepts: [Dept]
+    getTLDepts:[Dept]
     getDept(name: String): Department
     getBranchDept(branch:String) : [Department]
-    getAomDept:[Department]
   }
 
   type Mutation {

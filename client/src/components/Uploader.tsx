@@ -13,20 +13,25 @@ interface Success {
 
 interface Data {
   address: string
+  address_2: string
+  address_3: string
   admin_fee_os: number
   bill_due_day:number 
   birthday:string 
   endorsement_date: number
   grass_date: number 
-  bucket:string
   case_id: number 
-  one: string 
+  contact: string
+  contact_2: string
+  contact_3: string
   platform_user_id:string
   credit_user_id:string
   customer_name:string 
   dpd_grp:string
   dst_fee_os:number
   email:string
+  email_2:string
+  email_3:string
   gender:string
   grass_region:string 
   interest_os:number
@@ -42,24 +47,30 @@ interface Data {
 }
 
 const CREATE_CUSTOMER = gql `mutation
-  createCustomer($input:[CustomerData], $callfile:String!) {
-    createCustomer(input:$input, callfile:$callfile ) {
+  createCustomer($input:[CustomerData], $callfile:String!, $bucket: ID!) {
+    createCustomer(input:$input, callfile:$callfile , bucket:$bucket) {
       success
       message
     }
   }
 `
+interface modalProps {
+  width: string
+  bucket: string
+  bucketRequired: (e:boolean)=> void
+  onSuccess: ()=> void
+}
 
-const Uploader = () => {
+const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess}) => {
   const [success, setSuccess] = useState<Success>({
     success: false,
     message: ""
   })
+  
 
   const [excelData, setExcelData] = useState<Data[]>([]);
   const [file, setFile] = useState<File[]>([]);
  
-  // console.log(excelData)
   const handleFileUpload = useCallback(async(file: File) => {
     try {
       const { read, utils, SSF } = await import("xlsx");
@@ -79,13 +90,9 @@ const Uploader = () => {
           endorsement_date:  SSF.format("yyyy-mm-dd", row.endorsement_date),
           grass_date:SSF.format("yyyy-mm-dd", row.grass_date),
           case_id: String(row.case_id),
-          one: String(row.one),
           platform_user_id: String(row.platform_user_id),
-          platform_user_id_1: String(row.platform_user_id_1),
-        }));
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const newJsonData = dateConverting.map(({ total_os_1, platform_user_id_1, ...rest }) => rest)
-        setExcelData(newJsonData.slice(0,newJsonData.length - 1)); 
+        }))
+        setExcelData(dateConverting.slice(0,dateConverting.length - 1)); 
       };
       reader.readAsBinaryString(file);
     } catch (error) {
@@ -106,7 +113,7 @@ const Uploader = () => {
     },
   });
   
-  const [createCustomer, ] = useMutation(CREATE_CUSTOMER, {
+  const [createCustomer] = useMutation(CREATE_CUSTOMER, {
     onCompleted: async() => {
       setSuccess({
         success: true,
@@ -114,6 +121,7 @@ const Uploader = () => {
       })
       setExcelData([])
       setFile([])
+      onSuccess()
     },
     onError: (error)=> {
       if(error.message.includes('E11000')) {
@@ -140,19 +148,27 @@ const Uploader = () => {
   const [required, setRequired] = useState(false)
   
   const submitUpload = () => {
-    if(file.length === 0) {
-      setRequired(true)
+    if(file.length === 0 || !bucket) {
+      if(file.length === 0) {
+        setRequired(true)
+      } else {
+        bucketRequired(true)
+      }
     } else {
+   
+      bucketRequired(false)
       setRequired(false)
       setConfirm(true)
       setModalProps({
         message: "You uploaded a file?",
         toggle: "UPLOADED",
         yes: async() => {
+       
           try {
-            await createCustomer({variables: {input:excelData, callfile: file[0].name.split('.')[0]}});
+            await createCustomer({variables: {input:excelData, callfile: file[0].name.split('.')[0], bucket: bucket}});
             setConfirm(false);
           } catch (error:any) {
+         
             const errorMessage = error?.graphQLErrors?.[0]?.message;
             if (errorMessage?.includes("Not Included")) {
               setSuccess({
@@ -176,8 +192,9 @@ const Uploader = () => {
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
       }
-      <div className="print:hidden flex gap-2 items-center w-4/12">
-        <div {...getRootProps()} className={`${required && file.length === 0  && "border-red-500 bg-red-50"} border-2 border-dashed p-2 rounded-lg text-center cursor-pointer w-full flex items-center justify-center`}>
+
+      <div className={`print:hidden flex gap-2 items-center ${width}`}>
+        <div {...getRootProps()} className={`${required && file.length === 0  && "border-red-500 bg-red-50"} border-2 border-dashed p-2 rounded-lg text-center cursor-pointer w-full flex items-center justify-center lg:text-xs 2xl:sm`}>
           <input {...getInputProps()} />
           {
             file.length === 0 &&
@@ -185,7 +202,7 @@ const Uploader = () => {
               {isDragActive ? (
                 <p className="text-blue-600">📂 Drop your files here...</p>
               ) : ( 
-                <p className="text-gray-600">Drag & Drop files here or Click to select</p>
+                <p className="text-gray-600">Drag & Drop file here or Click and select file</p>
               )}
             </>
           }

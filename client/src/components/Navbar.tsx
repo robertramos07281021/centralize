@@ -83,7 +83,6 @@ const Navbar = () => {
   })
   
 
-
   useSubscription(DUMMY_SUB)
 
   const [logout, {loading}] = useMutation(LOGOUT,{
@@ -233,7 +232,7 @@ const Navbar = () => {
       <div className="p-2 bg-blue-500 flex justify-between items-center ">
         <div className="flex text-2xl gap-2 font-medium items-center text-white italic">
           <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
-          Bernales & Associates
+          Bernales & Associates Centralize Collection System
           {/* {
             (userLogged.type === "AGENT") && 
             <IdleAutoLogout/> 

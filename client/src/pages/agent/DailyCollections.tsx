@@ -2,6 +2,7 @@ import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
 import { IoMdArrowDown, IoMdArrowUp  } from "react-icons/io";
 import { HiOutlineMinusSm } from "react-icons/hi";
+import { useEffect } from "react";
 
 
 interface DailyCollection {
@@ -59,9 +60,15 @@ const StatCard = ({ label, current, previous, color }: RateProps) => {
         })
       : "-";
 
+    const colorMap:{[key:string]:string} = {
+      orange: "bg-orange-200 border-orange-400 text-orange-500",
+      green: "bg-green-200 border-green-400 text-green-500",
+      blue: "bg-blue-200 border-blue-400 text-blue-500",
+    }
+
   return (
     <div
-      className={`bg-${color}-200 rounded-xl border border-${color}-400 p-2 shadow shadow-black/20 flex flex-col text-${color}-500`}
+      className={` rounded-xl border ${colorMap[color]} p-2 shadow shadow-black/20 flex flex-col `}
     >
       <h1 className="lg:text-xs 2xl:text-sm font-bold">
         {label} <span className="lg:text-[0.7em] 2xl:text-xs">(Daily)</span>
@@ -81,10 +88,13 @@ const StatCard = ({ label, current, previous, color }: RateProps) => {
 };
 
 export default function DailyCollections() {
-  const {data:dailyCollectionData} = useQuery<{getAgentDailyCollection:DailyCollection}>(AGENT_DAILY_COLLECTIONS)
+  const {data:dailyCollectionData,refetch} = useQuery<{getAgentDailyCollection:DailyCollection}>(AGENT_DAILY_COLLECTIONS)
 
   const stats = dailyCollectionData?.getAgentDailyCollection;
 
+  useEffect(()=> {
+    refetch()
+  },[refetch])
   return (
     <div className="grid grid-cols-3 gap-2">
       {stats && (

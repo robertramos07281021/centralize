@@ -284,7 +284,6 @@ const userResolvers = {
         return {success: true, message: "Logged in", user: user}
         
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message,500)
       }
     },

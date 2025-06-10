@@ -72,6 +72,14 @@ const bucketResolver = {
         throw new CustomError(error.message, 500)
       }
     },
+    getTLBucket: async(_,__,{user}) => {
+      try {
+        const res = await Bucket.find({_id: user.buckets})
+        return res
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
     findAomBucket: async(_,__,{user})=> {
       try {
         const aomDept = (await Department.find({aom: user._id}).lean()).map(e => e.name)

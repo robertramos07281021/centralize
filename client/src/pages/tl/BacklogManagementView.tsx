@@ -278,7 +278,7 @@ const BacklogManagementView = () => {
                 type="text"
                 name="search_agent"
                 id="search_agent"
-                autoComplete="false"
+                autoComplete="off"
                 value={searchAgent} 
                 onChange={(e)=> setSearchAgent(e.target.value)}
                 placeholder="Select Agent"
@@ -315,7 +315,7 @@ const BacklogManagementView = () => {
                 type="text"
                 name="search_bucket"
                 id="search_bucket"
-                autoComplete="false"
+                autoComplete="off"
                 value={searchBucket} 
                 onChange={(e)=> setSearchBucket(e.target.value)}
                 placeholder="Select Bucket"

@@ -31,6 +31,7 @@ const bucketTypeDefs = gql`
     getAllBucket:[Bucket]
     findDeptBucket(dept:ID):[Bucket]
     findAomBucket:[AomDept]
+    getTLBucket:[Bucket]
     
   }
 

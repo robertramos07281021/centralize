@@ -21,6 +21,16 @@ type search = {
   email: string
 }
 
+export enum Tasker {
+  group = "group",
+  individual = "individual"
+}
+
+export enum TaskFilter {
+  assigned = "assigned",
+  unassigned = "unassigned"
+}
+
 interface UserState {
   error: boolean
   need_login: boolean
@@ -30,10 +40,11 @@ interface UserState {
   selectedCustomer:Search
   selectedGroup: string,
   selectedAgent: string
-  tasker: string
-  taskFilter: string
+  tasker: Tasker
+  taskFilter: TaskFilter
   selectedDisposition: string[] 
   limit: number
+  productionManagerPage: number
 }
 
 const initialState:UserState = {
@@ -42,10 +53,11 @@ const initialState:UserState = {
   selectedGroup: "",
   selectedAgent: "",
   page: 1,
-  tasker: "group",
-  taskFilter: "assigned",
+  tasker: Tasker.group,
+  taskFilter: TaskFilter.assigned,
   selectedDisposition: [] as string[],
   limit: 20,
+  productionManagerPage: 1,
   userLogged: {
     _id: "",
     change_password: false,
@@ -139,13 +151,16 @@ const authSlice = createSlice({
       state.page = action.payload
     },
     setTasker: (state, action:PayloadAction<string>) => { 
-      state.tasker = action.payload
+      state.tasker = action.payload as Tasker
     },
     setTaskFilter: (state, action:PayloadAction<string>) => {
-      state.taskFilter = action.payload
+      state.taskFilter = action.payload as TaskFilter
     },
     setSelectedDisposition: (state, action:PayloadAction<string[]>) => {
-      state.selectedDisposition =action.payload 
+      state.selectedDisposition = action.payload 
+    },
+    setProductionManagerPage: (state, action:PayloadAction<number>) => {
+      state.productionManagerPage = action.payload
     },
     setDeselectCustomer: (state) => {
       state.selectedCustomer = {
@@ -191,5 +206,5 @@ const authSlice = createSlice({
   },
 });
 
-export const { logoutUser, setError, setNeedLogin , setUserLogged, setSearch, setSelectedCustomer, setSelectedGroup, setAgent, setPage, setTasker ,setTaskFilter, setSelectedDisposition, setDeselectCustomer} = authSlice.actions;
+export const { logoutUser, setError, setNeedLogin , setUserLogged, setSearch, setSelectedCustomer, setSelectedGroup, setAgent, setPage, setTasker ,setTaskFilter, setSelectedDisposition, setDeselectCustomer, setProductionManagerPage} = authSlice.actions;
 export default authSlice.reducer;

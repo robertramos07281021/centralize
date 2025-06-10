@@ -36,6 +36,8 @@ import taskTypeDefs from "./graphql/schemas/taskSchema.js";
 import productionResolver from "./graphql/resolvers/productionResolver.js";
 import productionTypeDefs from "./graphql/schemas/productionSchema.js";
 import session from "express-session";
+import callfileResolver from "./graphql/resolvers/callfileResolver.js";
+import callfileTypeDefs from "./graphql/schemas/callfileSchema.js";
 
 // import { fileURLToPath } from "url";
 // import path from "path";
@@ -73,9 +75,9 @@ app.use(cookieParser())
 // });
 
 
-const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver]);
+const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver,callfileResolver ]);
 
-const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs, productionTypeDefs]);
+const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs, productionTypeDefs, callfileTypeDefs]);
 
 const httpServer = createServer(app);
 const schema = makeExecutableSchema({ typeDefs, resolvers });

@@ -56,16 +56,17 @@ const Targets = () => {
   useEffect(()=> {
     if(targetsData) {
       const length = targetsData.getTargetPerCampaign.length 
-      setWidth(length < 4 ? 'w-6/6' : 'w-3/6');
+      setWidth(length < 4 ? 'w-full' : 'w-1/2');
       if(length == 1 ) {
-        setHeight('h-3/3')
-      } else if(length < 4 ) {
-        setHeight('h-1/2')
+        setHeight('100%')
+      } else if(length < 2 ) {
+        setHeight('50%')
       } else {
-        setHeight('h-1/3')
+        setHeight('33.33%')
       }
     }
   },[targetsData])
+
 
   return (
     <div className='col-span-2 flex bg-white rounded-xl border-slate-400 border'>
@@ -103,8 +104,9 @@ const Targets = () => {
                   } as const,
                   formatter: (value: number) => {
                     const percent = (value/e.target) * 100
+                    
                     return (
-                      percent.toFixed(2) + '%'
+                      percent.toFixed(2) + '%' 
                   )}
                 },
                 legend: {
@@ -126,11 +128,11 @@ const Targets = () => {
             };
 
             return (
-              <div key={index} className={`flex justify-center ${width} ${height} py-2 px-5`}>
+              <div key={index} style={{height:`${height}`}} className={`flex justify-center ${width} py-2 px-5`} >
                 <Doughnut data={data} options={options} />
               </div>
             )
-          })
+          }) 
         }
 
       </div>

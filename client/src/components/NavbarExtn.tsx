@@ -48,6 +48,10 @@ const NavbarExtn = () => {
         link: "/tl-task-manager"
       },
       {
+        name: "Production Manager",
+        link: '/tl-production-manager'
+      },
+      {
         name: "Reports",
         link: "/tl-reports"
       },

@@ -10,15 +10,16 @@ const callFileSchema = new Schema(
       unique: true,
       uppercase: true
     },
-    masterlist: {
+    bucket: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Masterlist"
+      ref: "Bucket"
     },
-    collected:{
-      type: Number
+    active: {
+      type: Boolean,
+      default: true
     },
-    target: {
-      type: Number
+    endo: {
+      type: String
     }
   },
   { timestamps: true }
