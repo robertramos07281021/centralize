@@ -59,9 +59,10 @@ interface modalProps {
   bucket: string
   bucketRequired: (e:boolean)=> void
   onSuccess: ()=> void
+  canUpload: boolean
 }
 
-const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess}) => {
+const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,canUpload}) => {
   const [success, setSuccess] = useState<Success>({
     success: false,
     message: ""
@@ -134,9 +135,8 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess}
       }
     }
   })
+
   const [confirm, setConfirm] = useState(false)
-
-
 
   const [modalProps, setModalProps] = useState({
     message: "",
@@ -149,13 +149,20 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess}
   
   const submitUpload = () => {
     if(file.length === 0 || !bucket) {
+
       if(file.length === 0) {
         setRequired(true)
       } else {
-        bucketRequired(true)
+        setRequired(false)
       }
+
+      if(!bucket) {
+        bucketRequired(true)
+      } else {
+        bucketRequired(false)
+      }
+
     } else {
-   
       bucketRequired(false)
       setRequired(false)
       setConfirm(true)
@@ -163,12 +170,10 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess}
         message: "You uploaded a file?",
         toggle: "UPLOADED",
         yes: async() => {
-       
           try {
             await createCustomer({variables: {input:excelData, callfile: file[0].name.split('.')[0], bucket: bucket}});
             setConfirm(false);
           } catch (error:any) {
-         
             const errorMessage = error?.graphQLErrors?.[0]?.message;
             if (errorMessage?.includes("Not Included")) {
               setSuccess({
@@ -192,38 +197,40 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess}
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
       }
-
-      <div className={`print:hidden flex gap-2 items-center ${width}`}>
-        <div {...getRootProps()} className={`${required && file.length === 0  && "border-red-500 bg-red-50"} border-2 border-dashed p-2 rounded-lg text-center cursor-pointer w-full flex items-center justify-center lg:text-xs 2xl:sm`}>
-          <input {...getInputProps()} />
-          {
-            file.length === 0 &&
-            <>
-              {isDragActive ? (
-                <p className="text-blue-600">📂 Drop your files here...</p>
-              ) : ( 
-                <p className="text-gray-600">Drag & Drop file here or Click and select file</p>
-              )}
-            </>
-          }
-          {
-            file.length > 0 && (
-              <ul >
-                {file.map((file) => (
-                  <li key={file.name} className="text-green-600">
-                    📄 {file.name}
-                  </li>
-                ))}
-              </ul>
-            )
-          }
+      {
+        canUpload &&
+        <div className={`print:hidden flex gap-2 items-center ${width}`}>
+          <div {...getRootProps()} className={`${required && file.length === 0  && "border-red-500 bg-red-50"} border-2 border-dashed p-2 rounded-lg text-center cursor-pointer w-full flex items-center justify-center lg:text-xs 2xl:sm`}>
+            <input {...getInputProps()} />
+            {
+              file.length === 0 &&
+              <>
+                {isDragActive ? (
+                  <p className="text-blue-600">📂 Drop your files here...</p>
+                ) : ( 
+                  <p className="text-gray-600">Drag & Drop file here or Click and select file</p>
+                )}
+              </>
+            }
+            {
+              file.length > 0 && (
+                <ul >
+                  {file.map((file) => (
+                    <li key={file.name} className="text-green-600">
+                      📄 {file.name}
+                    </li>
+                  ))}
+                </ul>
+              )
+            }
+          </div>
+          <div>
+            <button type="button" className='bg-green-400 hover:bg-green-500 focus:outline-none text-white  focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer'
+            onClick={submitUpload}
+            >Import</button>
+          </div>
         </div>
-        <div>
-          <button type="button" className='bg-green-400 hover:bg-green-500 focus:outline-none text-white  focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer'
-          onClick={submitUpload}
-          >Import</button>
-        </div>
-      </div>
+      }
 
       { confirm &&
         <Confirmation {...modalProps}/>

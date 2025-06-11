@@ -25,13 +25,42 @@ const GET_ALL_DISPOSITION_TYPE = gql`
 }
 `
 
+interface Bucket {
+  id: string
+  name: string
+}
+
+const BUCKETS = gql`
+  query GetTLBucket {
+    getTLBucket {
+      id
+      name
+    }
+  }
+
+`
+
 
 const TaskManagerView = () => {
   const dispatch = useAppDispatch()
   const {tasker, taskFilter, selectedDisposition} = useSelector((state:RootState)=> state.auth)
   const {data:DispositionTypes} = useQuery<{getDispositionTypes:DispositionTypes[]}>(GET_ALL_DISPOSITION_TYPE)
- 
-  
+  const {data:bucketData} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS)
+  const [bucketObject, setBucketObject] = useState<Record<string, string>>({})
+  const [bucketSelect, setBucketSelect] = useState<keyof typeof bucketObject | "">("")
+
+
+
+  useEffect(()=> {
+    if(bucketData) {
+      const newObject:{[key:string]:string} = {}
+      bucketData.getTLBucket.map(e=> {
+        newObject[e.name] = e.id
+      })
+      setBucketObject(newObject)
+    }
+  },[bucketData])
+
   useEffect(()=> {
     dispatch(setSelectedGroup(""))
     dispatch(setAgent(""))
@@ -112,36 +141,50 @@ const TaskManagerView = () => {
             </fieldset>
 
           </div>
+          <div className="flex gap-5">
 
-          <div className="lg:w-70 2xl:w-96 border rounded-md h-10 border-slate-300 relative cursor-default " title={selectedDisposition?.toString()} >
-            {
-              showSelection ?
-              <RiArrowUpSFill  className="absolute right-2 top-2 text-2xl"  onClick={onClick}/>
-              :
-              <RiArrowDownSFill className="absolute right-2 top-2 text-2xl" onClick={onClick}/>
-            }
-            <div className="lg:w-60 2xl:w-80 h-full px-2 truncate font-bold text-slate-500 flex items-center" onClick={onClick}>
-              {selectedDisposition?.length > 0 ? selectedDisposition?.toString(): "Select Disposition"}
-            </div>
-            {
-              showSelection &&
-              <div className="w-full h-96  border overflow-y-auto absolute top-10 flex gap-5 p-5 text-xs flex-col border-slate-300 bg-white">
+            <div className="w-1/2 border rounded-md h-10 border-slate-300 relative cursor-default z-50" title={selectedDisposition?.toString()} >
               {
-                DispositionTypes?.getDispositionTypes.filter((e)=> e.name !== "PAID").map((e) =>
-                  <label key={e.id} className="flex gap-2 text-slate-500">
-                    <input   
-                    type="checkbox" 
-                    name={e.name} 
-                    id={e.name} 
-                    value={e.name}
-                    checked={selectedDisposition?.includes(e.name)}
-                    onChange={(e)=> handleCheckBox(e.target.value, e)} />
-                    <p>{e.name}</p>
-                  </label>
+                showSelection ?
+                <RiArrowUpSFill  className="absolute right-2 top-2 text-2xl"  onClick={onClick}/>
+                :
+                <RiArrowDownSFill className="absolute right-2 top-2 text-2xl" onClick={onClick}/>
+              }
+              <div className="lg:w-60 2xl:w-80 h-full px-2 truncate font-bold text-slate-500 flex items-center" onClick={onClick}>
+                {selectedDisposition?.length > 0 ? selectedDisposition?.toString(): "Select Disposition"}
+              </div>
+              {
+                showSelection &&
+                <div className="w-full h-96  border overflow-y-auto absolute top-10 flex gap-5 p-5 text-xs flex-col border-slate-300 bg-white">
+                {
+                  DispositionTypes?.getDispositionTypes.filter((e)=> e.name !== "PAID").map((e) =>
+                    <label key={e.id} className="flex gap-2 text-slate-500">
+                      <input   
+                      type="checkbox" 
+                      name={e.name} 
+                      id={e.name} 
+                      value={e.name}
+                      checked={selectedDisposition?.includes(e.name)}
+                      onChange={(e)=> handleCheckBox(e.target.value, e)} />
+                      <p>{e.name}</p>
+                    </label>
+                  )
+                }
+                </div>
+              }
+            </div>
+            <select 
+              className="w-1/2 border border-slate-300 rounded-md font-bold text-slate-500 px-1"
+              value={bucketSelect}
+              onChange={(e)=> setBucketSelect(e.target.value)}
+            >
+              <option value="">Select Bucket</option>
+              {
+                bucketData?.getTLBucket.map(e=> 
+                  <option key={e.id} value={e.name}>{e.name}</option>
                 )
               }
-              </div>
-            }
+            </select>
           </div>
         </div>
         {
@@ -150,7 +193,7 @@ const TaskManagerView = () => {
       </div>
       
       
-      <TaskDispoSection/>
+      <TaskDispoSection selectedBucket={bucketObject[bucketSelect]}/>
     </div>
   )
 }

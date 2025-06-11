@@ -34,12 +34,12 @@ const ProductionManagerView = () => {
   const {productionManagerPage} = useSelector((state:RootState)=> state.auth)
   const {data:bucketData, refetch} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS)
   const [bucketObject, setBucketObject] = useState<{[key:string]:string}>({})
-  const [bucket,setBucket] = useState<string>("")
   const [callfileBucket, setCallfileBucket] = useState<string>("")
   const [required, setRequired] = useState(false)
   const [page, setPage] = useState<string>("1")
   const [status, setStatus] = useState<Status>(Status.all)
   const [totalPage, setTotalPage] = useState<number>(1)
+  const [canUpload, setCanUpload] = useState<boolean>(false)
 
   useEffect(()=> {
     if(bucketData) {
@@ -59,11 +59,12 @@ const ProductionManagerView = () => {
     refetch()
   },[refetch])
 
+
   return (
     <div className="p-2 h-full overflow-y-auto">
       <div className="h-full flex flex-col ">
         <div className="p-5 flex gap-20 ">
-          <div className="w-full flex flex-col gap-2">
+          <div className="w-1/2 flex flex-col gap-2">
             <h1 className="lg:text-sm 2xl:text-sm font-medium text-gray-600 text-center">Call files</h1>
             <div className="flex gap-10 h-full items-end">
                <label className="flex flex-col w-1/2 gap-2">
@@ -73,11 +74,15 @@ const ProductionManagerView = () => {
                   id="bucket" 
                   onChange={(e)=> setCallfileBucket(e.target.value)}
                   value={callfileBucket}
-                  className={`border-slate-400 lg:text-[0.6em] 2xl:text-xs w-full p-2  border rounded-lg`}>
+                  className={`${required ? "bg-red-50 border-red-500" : "border-slate-400"} lg:text-[0.6em] 2xl:text-xs w-full p-2  border rounded-lg`}>
                   <option value="">Select Bucket</option>
                   {
                     bucketData?.getTLBucket.map(e=> 
-                      <option key={e.id} value={e.name}>{e.name.toUpperCase()}</option>
+                      <option key={e.id} value={e.name}>
+                        {
+                          e.name.toUpperCase()
+                        }
+                      </option>
                     )
                   }
                 </select>
@@ -120,44 +125,29 @@ const ProductionManagerView = () => {
 
             </div>
           </div>
-          <div className="w-full flex flex-col gap-2">
-            <h1 className="lg:text-sm 2xl:text-sm font-medium text-gray-600 text-center">Uploader</h1>
-            <div className="flex gap-10">
-              <label className="flex flex-col w-1/2 gap-2">
-                <p className="lg:text-xs 2xl:text-sm font-bold text-gray-400">Bucket</p>
-                <select 
-                  name="bucketUploader" 
-                  id="bucketUploader" 
-                  onChange={(e)=> setBucket(e.target.value)}
-                  value={bucket}
-                  className={`${required ? "border-red-400 bg-red-50" : "border-slate-400"} lg:text-[0.6em] 2xl:text-xs w-full p-2  border rounded-lg`}>
-                  <option value="">Select Bucket</option>
-                  {
-                    bucketData?.getTLBucket.map(e=> 
-                      <option key={e.id} value={e.name}>{e.name.toUpperCase()}</option>
-                    )
-                  }
-                </select>
-              </label>
+    
+          <div className="w-1/2 flex flex-col gap-2">
+            <h1 className="lg:text-sm 2xl:text-sm font-medium text-gray-600 text-center">{ canUpload && "Uploader"}</h1>
+            <div className=" h-full flex items-end">
+              <Uploader width="w-full" bucket={bucketObject[callfileBucket]} bucketRequired={(e:boolean)=> setRequired(e)} onSuccess={()=> setCallfileBucket("")} canUpload={canUpload} />
             </div>
-            <Uploader width="w-full" bucket={bucketObject[bucket]} bucketRequired={(e:boolean)=> setRequired(e)} onSuccess={()=> setBucket("")} />
           </div>
           
         </div>
-        <div className="sticky w-full top-0 text-gray-500 uppercase font-medium bg-blue-50 lg:text-xs 2xl:text-sm grid grid-cols-10 px-2 py-2">
+        <div className="sticky w-full top-0 text-gray-500 uppercase font-medium bg-blue-50 lg:text-xs 2xl:text-sm grid grid-cols-11 px-2 py-2">
           <div>Name</div>
           <div>Date</div>
           <div>Endo</div>
-
           <div>Work Days</div>
           <div>Accounts</div>
           <div>Connected</div>
           <div>Target</div>
           <div>Collected</div>
           <div>Status</div>
+          <div>Finished By</div>
           <div className="text-center">Action</div>
         </div>
-        <CallfilesViews bucket={bucketObject[callfileBucket]} status={status} setTotalPage={(e)=> setTotalPage(e)}/>
+        <CallfilesViews bucket={bucketObject[callfileBucket]} status={status} setTotalPage={(e)=> setTotalPage(e)} setCanUpload={(e)=> setCanUpload(e)}/>
         <Pagination value={page} onChangeValue={(e) => setPage(e)} onKeyDownValue={(e)=> dispatch(setProductionManagerPage(e))} totalPage={totalPage} currentPage={productionManagerPage}/>
       </div> 
     </div>

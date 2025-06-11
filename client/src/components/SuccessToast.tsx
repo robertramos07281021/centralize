@@ -48,6 +48,10 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
     DUPLICATE: {
       toast: "bg-red-400",
       close: "text-red-400"
+    },
+    FINISHED: {
+      toast: "bg-green-400",
+      close: "text-green-400"
     }
   } as const;
   useEffect(()=> {
@@ -69,6 +73,7 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
   if (messageText.includes("REMOVED")) successType = "REMOVED";
   if (messageText.includes("ADDED")) successType = "ADDED";
   if (messageText.includes("DUPLICATE")) successType = "DUPLICATE";
+  if (messageText.includes("FINISHED")) successType = "FINISHED";
   if (messageText.includes("NOT INCLUDED")) successType = "NOT INCLUDED";
 
   return (

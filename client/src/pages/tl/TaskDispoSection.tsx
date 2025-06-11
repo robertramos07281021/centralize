@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useEffect, useState } from "react"
+import React, { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../../redux/store"
 import Confirmation from "../../components/Confirmation"
@@ -119,8 +119,8 @@ interface FindCustomerAccount {
 }
 
 const FIND_CUSTOMER_ACCOUNTS = gql`
-query findCustomerAccount($page: Int, $disposition: [String], $groupId: ID, $assigned:String,$limit: Int) {
-  findCustomerAccount(page: $page, disposition: $disposition, groupId: $groupId, assigned:$assigned, limit:$limit ) {
+query findCustomerAccount($page: Int, $disposition: [String], $groupId: ID, $assigned:String,$limit: Int, $selectedBucket: ID) {
+  findCustomerAccount(page: $page, disposition: $disposition, groupId: $groupId, assigned:$assigned, limit:$limit ,selectedBucket:$selectedBucket) {
     CustomerAccounts {
       _id
       case_id
@@ -202,8 +202,8 @@ query findCustomerAccount($page: Int, $disposition: [String], $groupId: ID, $ass
 }
 `
 const SELECT_ALL_CUSTOMER_ACCOUNT = gql`
-  query selectAllCustomerAccount($disposition: [String], $groupId:ID, $assigned:String) {
-    selectAllCustomerAccount(disposition: $disposition,groupId: $groupId, assigned: $assigned )
+  query selectAllCustomerAccount($disposition: [String], $groupId:ID, $assigned:String, $selectedBucket:ID) {
+    selectAllCustomerAccount(disposition: $disposition,groupId: $groupId, assigned: $assigned,selectedBucket: $selectedBucket )
   }
 `
 const ADD_GROUP_TASK = gql`
@@ -243,18 +243,20 @@ const DELETE_GROUP_TASK = gql`
     }
   }
 `
+interface Props {
+  selectedBucket:string
+}
 
 
-
-const TaskDispoSection = () => {
+const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   const dispatch = useAppDispatch()
   const [groupDataNewObject, setGroupDataNewObject] = useState<{[key:string]:string}>({})
   const {selectedGroup, selectedAgent, page, tasker, taskFilter, selectedDisposition, limit} = useSelector((state:RootState)=> state.auth)
   const selected = selectedGroup ? groupDataNewObject[selectedGroup] : selectedAgent
-  const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId: selected, assigned: taskFilter, limit: limit}})
+  const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId: selected, assigned: taskFilter, limit: limit, selectedBucket: selectedBucket}})
   const [handleCheckAll, setHandleCheckAll] = useState<boolean>(false)
   const [taskToAdd, setTaskToAdd] = useState<string[]>([])
-  const {data:selectAllCustomerAccountData, refetch:SACARefetch} = useQuery<{selectAllCustomerAccount:string[]}>(SELECT_ALL_CUSTOMER_ACCOUNT,{variables: {disposition: selectedDisposition, groupId:selected, assigned: taskFilter }})
+  const {data:selectAllCustomerAccountData, refetch:SACARefetch} = useQuery<{selectAllCustomerAccount:string[]}>(SELECT_ALL_CUSTOMER_ACCOUNT,{variables: {disposition: selectedDisposition, groupId:selected, assigned: taskFilter, selectedBucket}})
   const [required, setRequired] = useState<boolean>(false)
   const [confirm, setConfirm] = useState<boolean>(false)
   const {data:GroupData} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
@@ -268,6 +270,10 @@ const TaskDispoSection = () => {
     setTaskManagerPage(page.toString())
   },[page])
 
+  useEffect(()=> {
+    CADRefetch()
+    SACARefetch()
+  },[selectedBucket,SACARefetch,CADRefetch])
 
   useEffect(()=> {
     setRequired(false)
@@ -385,10 +391,8 @@ const TaskDispoSection = () => {
   }
 
   const pages = CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts ? CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts/limit : 1
-  
-  const valuePage = parseInt(taskManagerPage) > pages ? pages.toString() : taskManagerPage 
 
-  console.log(valuePage)
+  const valuePage = parseInt(taskManagerPage) > pages ? pages.toString() : taskManagerPage 
 
   if(loading) return (<Loading/>)
 
@@ -417,7 +421,7 @@ const TaskDispoSection = () => {
           </div>
         }
 
-        <div className="text-xs text-gray-700 uppercase bg-blue-100 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-5 font-medium">
+        <div className="text-xs text-gray-700 uppercase bg-blue-100 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-5 font-medium mt-2">
           <div  className="px-6 py-3">
             Customer Name
           </div>
@@ -437,7 +441,7 @@ const TaskDispoSection = () => {
         <div className=" w-full h-full text-gray-500 flex flex-col overflow-y-auto relative mb-2">
           { 
             (selectedGroup || selectedAgent) &&
-            <div className="bg-white border-b  border-gray-200 hover:bg-blue-100 flex py-2 items-center text-xs justify-end sticky top-10">
+            <div className="bg-white border-b  border-gray-200 hover:bg-blue-100 flex py-2 items-center text-xs justify-end sticky top-0">
               <label className=" flex gap-2 justify-end px-2 w-full">
                 <input type="checkbox" name="all" id="all" 
                 checked={handleCheckAll}

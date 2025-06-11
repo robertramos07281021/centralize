@@ -27,6 +27,14 @@ const color = {
   IDLE: {
     title: "bg-red-500",
     button: "bg-red-500 hover:bg-red-600 focus:ring-red-300"
+  },
+  FINISHED: {
+    title: "bg-green-500",
+    button: "bg-green-500 hover:bg-green-600 focus:ring-green-300"
+  },
+  DOWNLOAD: {
+    title: "bg-blue-500",
+    button: "bg-blue-500 hover:bg-blue-600 focus:ring-blue-300"
   }
 }
 

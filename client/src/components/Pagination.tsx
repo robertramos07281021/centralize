@@ -11,15 +11,14 @@ interface modalProps {
 
 const Pagination:React.FC<modalProps> = ({value, onChangeValue, onKeyDownValue, totalPage,currentPage}) => {
 
-
   return (
     <div className="flex justify-end mt-2">
       <div className="flex items-center gap-2 lg:text-[0.6em] 2xl:text-[0.6em] font-bold text-gray-600">
         <MdKeyboardDoubleArrowLeft className={`text-lg ${currentPage === 1 ? "text-slate-300" : "text-slate-500"} `} onClick={()=> {
-          onKeyDownValue(1)
+          if(currentPage <= totalPage) {onKeyDownValue(1)}
         }}/>
         <MdOutlineKeyboardArrowLeft className={`text-lg ${currentPage === 1 ? "text-slate-300" : "text-slate-500"} `} onClick={()=> {
-          onKeyDownValue(currentPage - 1)
+          if(currentPage > 1){onKeyDownValue(currentPage - 1)}
         }}/>
         <span>Page</span>
         <input 
@@ -45,10 +44,10 @@ const Pagination:React.FC<modalProps> = ({value, onChangeValue, onKeyDownValue, 
           className="border max-w-8  py-0.5 px-1.5 rounded-md focus:outline-0" />
         <span>of {totalPage}</span>
         <MdOutlineKeyboardArrowRight className={`text-lg ${currentPage ===  totalPage ? "text-slate-300" : "text-slate-500"} `} onClick={()=> {
-          onKeyDownValue(currentPage + 1)
+          if(totalPage > currentPage){ onKeyDownValue(currentPage + 1) ; console.log("hello")}
         }}/>
         <MdOutlineKeyboardDoubleArrowRight className={`text-lg ${currentPage ===  totalPage ? "text-slate-300" : "text-slate-500"} `} onClick={()=> {
-          onKeyDownValue(totalPage)
+          if(totalPage >= currentPage){ onKeyDownValue(totalPage)}
         }} />
       </div>
     </div>

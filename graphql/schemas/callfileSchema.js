@@ -8,12 +8,17 @@ const callfileTypeDefs = gql`
     success: Boolean
   }
 
+  type User {
+    name: String
+  }
+
   type Callfile {
     _id: ID
     name: String
     createdAt: DateTime
     active: Boolean
     endo: String
+    finished_by: User
   }
 
   type Result {
@@ -31,6 +36,16 @@ const callfileTypeDefs = gql`
   
   type Query {
     getCallfiles(bucket:ID, limit:Int! , page:Int! ,status: String!):CallFilesResult
+    downloadCallfiles(callfile:ID!): String!
+  }
+
+  type SubsribeSuccess {
+    message: String
+    bucket: ID
+  }
+
+  type Subscription {
+    updateOnCallfiles: SubsribeSuccess
   }
 
   type Mutation {

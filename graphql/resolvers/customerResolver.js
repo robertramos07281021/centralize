@@ -6,11 +6,14 @@ import CustomerAccount from "../../models/customerAccount.js";
 import DispoType from "../../models/dispoType.js";
 import Group from "../../models/group.js";
 import ModifyRecord from "../../models/modifyRecord.js";
-import mongoose from "mongoose";
+import mongoose, { Mongoose } from "mongoose";
 import User from "../../models/user.js";
 import Department from "../../models/department.js";
 import Callfile from "../../models/callfile.js";
 import Disposition from "../../models/disposition.js";
+import { PubSub } from "graphql-subscriptions";
+const SOMETHING_NEW_ON_CALLFILE = "SOMETHING_NEW_ON_CALLFILE"
+const pubsub = new PubSub()
 
 const customerResolver = {
   DateTime,
@@ -375,7 +378,7 @@ const customerResolver = {
         throw new CustomError(error.message, 500)        
       }
     },
-    findCustomerAccount: async(_,{disposition, groupId ,page, assigned, limit}, {user}) => {
+    findCustomerAccount: async(_,{disposition, groupId ,page, assigned, limit, selectedBucket}, {user}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
 
@@ -390,9 +393,12 @@ const customerResolver = {
           ]);
           selected = group?._id || userSelected?._id || null;
         }
-        const bucket = user.buckets
+
+
+        const bucket = selectedBucket ? { $eq: new mongoose.Types.ObjectId (selectedBucket)} : { $in: user.buckets.map(e=> new mongoose.Types.ObjectId(e)) }
+        
         const search = [
-          { "account_bucket._id": { $in: bucket } },
+          { "account_bucket._id": bucket },
           { 
             $or: [
               {
@@ -413,16 +419,21 @@ const customerResolver = {
             ]
           }
         ];
-    
-        if (disposition.length > 0) {
+        
+        if (disposition && disposition.length > 0) {
           search.push({ "dispoType.name": { $in: disposition } });
         }
-    
+        
         if (assigned === "assigned") {
-          search.push({ assigned: selected ?? { $ne: null } });
+          if (selected) {
+            search.push({ assigned: new mongoose.Types.ObjectId(selected) });
+          } else {
+            search.push({ assigned: { $ne: null } });
+          }
         } else {
           search.push({ assigned: null });
         }
+  
 
         const accounts = await CustomerAccount.aggregate([
           {
@@ -433,7 +444,9 @@ const customerResolver = {
               as: "customer_info",
             },
           },
-          { $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } },
+          { 
+            $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
+          },
           {
             $lookup: {
               from: "buckets",
@@ -442,7 +455,9 @@ const customerResolver = {
               as: "account_bucket",
             },
           },
-          { $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } },
+          { 
+            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          },
           {
             $lookup: {
               from: "dispositions",
@@ -462,7 +477,9 @@ const customerResolver = {
               as: "dispoType",
             }
           },
-          { $unwind: { path: "$dispoType", preserveNullAndEmptyArrays: true } },
+          { 
+            $unwind: { path: "$dispoType", preserveNullAndEmptyArrays: true } 
+          },
           {
             $lookup: {
               from: "users",
@@ -471,7 +488,9 @@ const customerResolver = {
               as: "disposition_user",
             }
           },
-          { $unwind: { path: "$disposition_user", preserveNullAndEmptyArrays: true } },
+          { 
+            $unwind: { path: "$disposition_user", preserveNullAndEmptyArrays: true } 
+          },
           {
             $addFields: {
               paymentDate: {
@@ -491,6 +510,7 @@ const customerResolver = {
               }
             }
           },
+   
           {
             $match: {
               $and: search
@@ -504,7 +524,7 @@ const customerResolver = {
               ],
               total: [{$count: "totalCustomerAccounts"}]
             }
-          }
+          },
         ])
 
         const total = accounts[0]?.total[0]?.totalCustomerAccounts || 0;
@@ -517,7 +537,7 @@ const customerResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    selectAllCustomerAccount: async(_,{disposition,groupId,assigned},{user}) => {
+    selectAllCustomerAccount: async(_,{disposition,groupId,assigned, selectedBucket},{user}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401) 
         const endOfTheDay = new Date()
@@ -531,7 +551,7 @@ const customerResolver = {
           selected = group ? group._id : userSelected._id
         }
         
-        const bucket = user.buckets
+        const searhBucket =selectedBucket ? {$eq: new mongoose.Types.ObjectId(selectedBucket) } :  {$in :user.buckets.map(e=> new mongoose.Types.ObjectId(e))}
         let search = [
           { 
             $or: [
@@ -552,7 +572,7 @@ const customerResolver = {
               }
             ]
           },
-          {"account_bucket._id": {$in: bucket}}
+          {"account_bucket._id": searhBucket }
         ]
 
         if(Boolean(disposition.length > 0 && groupId)){
@@ -816,7 +836,19 @@ const customerResolver = {
           });
           
         }));
+
+        await pubsub.publish(SOMETHING_NEW_ON_CALLFILE, {
+          newCallfile: {
+            bucket: bucket ,
+            message: SOMETHING_NEW_ON_CALLFILE
+          },
+        });
+        return {
+          success: true,
+          message: "Callfile successfully created"
+        }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
 
@@ -834,6 +866,11 @@ const customerResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
+    }
+  },
+  Subscription: {
+    newCallfile: {
+      subscribe:() => pubsub.asyncIterableIterator([SOMETHING_NEW_ON_CALLFILE])
     }
   }
 }

@@ -193,12 +193,16 @@ const customerTypeDefs = gql`
     to:String
   }
 
+  type Subscription {
+    newCallfile: SubsribeSuccess
+  }
+
   type Query {
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
     getCustomers(page:Int): getCustomers!
     search(search:String):[Search]
-    findCustomerAccount(disposition:[String],groupId:ID,page:Int, assigned:String, limit:Int):FindCustomerAccount
-    selectAllCustomerAccount(disposition:[String],groupId:ID,assigned:String):[ID]
+    findCustomerAccount(disposition:[String],groupId:ID,page:Int, assigned:String, limit:Int,selectedBucket: ID):FindCustomerAccount
+    selectAllCustomerAccount(disposition:[String],groupId:ID,assigned:String, selectedBucket:ID):[ID]
     accountsCount:Int
     getMonthlyTarget:[MonthlyTarget]
     getMonthlyPerformance:[PerformanceStatistic]
