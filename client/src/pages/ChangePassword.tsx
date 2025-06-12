@@ -5,7 +5,7 @@ import { FaEye, FaEyeSlash  } from "react-icons/fa";
 import { RootState, useAppDispatch } from "../redux/store";
 import { useEffect, useRef, useState } from "react";
 import Loading from "./Loading";
-import { setNeedLogin, setError, setUserLogged } from "../redux/slices/authSlice";
+import {  setServerError, setUserLogged } from "../redux/slices/authSlice";
 import { useSelector } from "react-redux";
 
  const UPDATEPASSWORD = gql `
@@ -73,11 +73,14 @@ const ChangePassword = () => {
   })
 
   const [changePassword, {loading:changePassLoading}] = useMutation<{updatePassword: UserInfo}>(UPDATEPASSWORD, {
-      onCompleted: (res) => {
+      onCompleted: async() => {
       refetch();
       navigate("/")
-      dispatch(setNeedLogin(res.updatePassword.change_password))
-      logout().catch(console.log)
+      try {
+        await logout()
+      } catch (_error) {
+        dispatch(setServerError(true))
+      }
     },
   })
 
@@ -105,8 +108,7 @@ const ChangePassword = () => {
             setConfirmPassword("")
           }
         } else {
-          console.log("An unknown error occurred", error);
-          dispatch(setError(true))
+          dispatch(setServerError(true))
         }
       }
     }

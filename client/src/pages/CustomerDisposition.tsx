@@ -8,7 +8,7 @@ import AccountInfo from "../components/AccountInfo"
 import DispositionForm from "../components/DispositionForm"
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { Search } from "../middleware/types"
-import { setDeselectCustomer, setSelectedCustomer } from "../redux/slices/authSlice"
+import { setDeselectCustomer, setSelectedCustomer, setServerError } from "../redux/slices/authSlice"
 import AgentTimer from "../components/AgentTimer"
 import DispositionRecords from "../components/DispositionRecords"
 import MyTaskSection from "../components/MyTaskSection"
@@ -88,13 +88,18 @@ const CustomerDisposition = () => {
   
   const [search, setSearch] = useState("")
 
-  const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search}})
+  const {data:searchData ,refetch, error} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search}})
+
+  
 
   const length = searchData?.search?.length || 0;
 
   useEffect(()=> {
     refetch()
-  },[search,refetch])
+    if(error) {
+      dispatch(setServerError(true))
+    }
+  },[search,refetch,error, dispatch])
 
   const [selectTask] = useMutation(SELECT_TASK,{
     onCompleted: ()=> {
@@ -107,8 +112,8 @@ const CustomerDisposition = () => {
     try {
       await selectTask({variables: {id: customer._id}})
       dispatch(setSelectedCustomer(customer))
-    } catch (error) {
-      console.log(error)
+    } catch (_error) {
+      dispatch(setServerError(true))
     }
   }
 
@@ -128,7 +133,6 @@ const CustomerDisposition = () => {
     }
   })
 
-
   useEffect(()=> {
     if(!success.success){
       navigate(location.pathname)
@@ -138,15 +142,22 @@ const CustomerDisposition = () => {
   useEffect(()=> {
     const id = selectedCustomer._id;
     if(!id) return
-    deselectTask({ variables: { id } }).catch(console.log);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[navigate, deselectTask])
+    const timer = setTimeout(async()=> {
+      try {
+        await deselectTask({ variables: { id } })
+      } catch (_error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return ()=> clearTimeout(timer)
+
+  },[navigate, deselectTask, dispatch])
 
   const clearSelectedCustomer = async() => {
     try {
       await deselectTask({variables: {id: selectedCustomer._id}}) 
-    } catch (error) {
-      console.log(error)
+    } catch (_error) {
+      dispatch(setServerError(true))
     }
   }
   
@@ -172,7 +183,7 @@ const CustomerDisposition = () => {
       <div className="w-full grid grid-cols-2 gap-5 px-5 pb-5">
         <div className="flex flex-col items-center"> 
           <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Information</h1>
-          <div className="border flex flex-col rounded-xl border-slate-400 w-full h-full items-center justify-center p-5">
+          <div className="border flex flex-col rounded-xl border-slate-400 w-full h-full items-center justify-center p-5 gap-1.5">
 
             {
               !selectedCustomer._id &&
@@ -241,7 +252,7 @@ const CustomerDisposition = () => {
                   <div className="w-96 border border-gray-300 p-5 rounded-lg  bg-gray-50 text-slate-500">
                   </div>
                 }
-                {selectedCustomer?.customer_info?.contact_no?.map((cn,index)=> (
+                {selectedCustomer?.customer_info?.contact_no.map((cn,index)=> (
                   <div key={index} className="w-96 border border-gray-300 p-2.5 rounded-lg  bg-gray-50 text-slate-500">
                     {cn}
                   </div>
@@ -256,7 +267,7 @@ const CustomerDisposition = () => {
                   </div>
                 }
                 {
-                  selectedCustomer?.customer_info?.emails?.map((e,index)=> (
+                  selectedCustomer?.customer_info?.emails.map((e,index)=> (
                     <div key={index} className="w-96 border border-gray-300 p-2.5 rounded-lg bg-gray-50 text-slate-500">
                       {e}
                     </div>
@@ -272,7 +283,7 @@ const CustomerDisposition = () => {
                   </div>
                 }
                 {
-                  selectedCustomer?.customer_info?.addresses?.map((a, index)=> (
+                  selectedCustomer?.customer_info?.addresses.map((a, index)=> (
                     <div key={index} className="w-96 max-h-96 border border-gray-300 p-2.5 rounded-lg  bg-gray-50 text-slate-500 text-justify">
                       {a}
                     </div>

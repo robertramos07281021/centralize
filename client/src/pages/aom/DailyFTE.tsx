@@ -1,5 +1,8 @@
 import { useQuery } from '@apollo/client'
 import gql from 'graphql-tag'
+import { useEffect } from 'react'
+import {  useAppDispatch } from '../../redux/store'
+import { setServerError } from '../../redux/slices/authSlice'
 
 
 
@@ -47,14 +50,27 @@ const CAMPAIGN_ASSIGNED = gql`
 `
 
 const DailyFTE = () => {
+  const dispatch = useAppDispatch()
+  const {data:aomDeptData, error} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
+  const {data:dailyFTEData, error:dailyFTEError} = useQuery<{getDailyFTE:DailyFTE[]}>(DAILY_FTE)
+  
+  const {data:campagnedData, error:campaignAssignedError} = useQuery<{getCampaignAssigned:CampaignAssigned[]}>(CAMPAIGN_ASSIGNED)
 
-  const {data:aomDeptData} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
-  const {data:dailyFTEData} = useQuery<{getDailyFTE:DailyFTE[]}>(DAILY_FTE)
-  const {data:campagnedData} = useQuery<{getCampaignAssigned:CampaignAssigned[]}>(CAMPAIGN_ASSIGNED)
-
+  useEffect(()=> {
+    if(error || dailyFTEError || campaignAssignedError) {
+      const theError = [
+        error,
+        campaignAssignedError,
+        dailyFTEError
+      ]
+      console.log("Error in DailyFTE: ",theError.filter((e)=> e !== undefined ))
+      dispatch(setServerError(true))
+    }
+  },[error, dailyFTEError, campaignAssignedError,dispatch])
 
   return (
     <>
+      
       <h1 className="font-medium text-slate-500 text-center lg:text-xs 2xl:text-sm">Daily FTE</h1>
       <div className="text-center font-medium text-slate-500 lg:text-xs 2xl:text-sm grid grid-cols-3">
         <div>Campaign</div>

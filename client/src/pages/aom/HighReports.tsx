@@ -3,6 +3,8 @@ import { ChartOptions } from "chart.js"
 import { useEffect, useState } from "react"
 import { Doughnut } from "react-chartjs-2"
 import ReportsView from "./ReportsView"
+import { useAppDispatch } from "../../redux/store"
+import { setServerError } from "../../redux/slices/authSlice"
 
 // interface DispoType {
 //   id:string
@@ -92,11 +94,24 @@ const MONTHLY_PERFORMANCE = gql`
 
 
 const HighReports:React.FC<modalProps> = ({setCampaign, reportsVariables, setReportVariables}) => {
-  const {data:aomDeptData} = useQuery<{getAomDept:AomDept[]}>(GET_AOM_DEPT)
+  const dispatch = useAppDispatch()
+  const {data:aomDeptData, error:aomDeptError} = useQuery<{getAomDept:AomDept[]}>(GET_AOM_DEPT)
   // const {data:dispoTypes} = useQuery<{getDispositionTypes:DispoType[]}>(GET_DISPOSITION_TYPES) 
-  const {data:monthlyPerformance} = useQuery<{getMonthlyPerformance: PerformanceStatistic[]}>(MONTHLY_PERFORMANCE)
+  const {data:monthlyPerformance, error:monthlyPerError} = useQuery<{getMonthlyPerformance: PerformanceStatistic[]}>(MONTHLY_PERFORMANCE)
   const [searchAnimation, setSearchAnimation] = useState<boolean>(false)
   const [animation, setAnimation] = useState(false)
+
+  useEffect(()=> {
+    if(aomDeptError || monthlyPerError){
+      const isError = [
+        monthlyPerError,
+        aomDeptError
+      ]
+      dispatch(setServerError(true))
+      console.log("Error in HighReports: ", isError.filter(e=> e !== undefined))
+    }
+  },[dispatch,monthlyPerError,aomDeptError])
+
 
   const [deptId, setDeptId] = useState<{[key: string]: string}>({})
   useEffect(()=> {

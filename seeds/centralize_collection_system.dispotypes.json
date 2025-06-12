@@ -1,0 +1,160 @@
+[{
+  "_id": {
+    "$oid": "67f380134b64b17332ea02e8"
+  },
+  "name": "DISPUTE",
+  "code": "DISP",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f380234b64b17332ea02f6"
+  },
+  "name": "FOLLOW UP PAYMENT",
+  "code": "FFUP",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f38217aa2a57da5b6aa6c6"
+  },
+  "name": "FAILED VERIFICATION",
+  "code": "FV",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f38223aa2a57da5b6aa6cb"
+  },
+  "name": "HUNG UP",
+  "code": "HUP",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f38274447ae4a5e297f33e"
+  },
+  "name": "INCAPACITY TO PAY",
+  "code": "ITP",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f3827f447ae4a5e297f348"
+  },
+  "name": "LEAVE MESSAGE",
+  "code": "LM",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f3828d447ae4a5e297f355"
+  },
+  "name": "PAID",
+  "code": "PAID",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f38299447ae4a5e297f35c"
+  },
+  "name": "PROMISE TO PAY",
+  "code": "PTP",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f382bd447ae4a5e297f368"
+  },
+  "name": "RPC CALL BACK",
+  "code": "RPCCB",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f382f0447ae4a5e297f375"
+  },
+  "name": "REFUSE TO PAY",
+  "code": "RTP",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f38301447ae4a5e297f37c"
+  },
+  "name": "UNDERNEGO",
+  "code": "UNEG",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f38312447ae4a5e297f383"
+  },
+  "name": "ANSWERING MACHINE",
+  "code": "ANSM",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f38323447ae4a5e297f389"
+  },
+  "name": "WRONG NUMBER",
+  "code": "WN",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f3832d447ae4a5e297f38e"
+  },
+  "name": "NO ANSWER",
+  "code": "NOA",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f38f33d11420e20449b98d"
+  },
+  "name": "KEEP ON RINGING",
+  "code": "KOR",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f3901bd11420e20449ba0e"
+  },
+  "name": "OUT OF COVERAGE AREA",
+  "code": "OCA",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f39028d11420e20449ba1a"
+  },
+  "name": "NOT IN SERVICE",
+  "code": "NIS",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f3904ed11420e20449ba33"
+  },
+  "name": "BUSY",
+  "code": "BUSY",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f3905dd11420e20449ba3a"
+  },
+  "name": "DECEASED",
+  "code": "DEC",
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "67f3908cd11420e20449ba5d"
+  },
+  "name": "UNKNOWN",
+  "code": "UNK",
+  "__v": 0
+}]

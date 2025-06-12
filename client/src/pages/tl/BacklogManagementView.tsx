@@ -1,11 +1,10 @@
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
-
 import { Doughnut } from 'react-chartjs-2';
 import {gql} from "@apollo/client"
 import { useQuery } from "@apollo/client";
 import {  Users } from "../../middleware/types";
 import {  useEffect, useState } from "react";
-
+import { FaDownload} from "react-icons/fa6";
 
 interface DispositionType  {
   id: string
@@ -273,7 +272,7 @@ const BacklogManagementView = () => {
         <div className="p-5 flex flex-col gap-2 justify-center">
           <div className="grid grid-cols-4 relative">
             <div className="flex items-center lg:text-xs 2xl:text-sm font-medium text-slate-500">Agent </div>
-            <div className="col-span-3 relative border flex items-center border-slate-600 rounded-lg">
+            <div className="col-span-3 relative border flex items-center border-slate-400 rounded-lg">
               <input 
                 type="text"
                 name="search_agent"
@@ -282,12 +281,12 @@ const BacklogManagementView = () => {
                 value={searchAgent} 
                 onChange={(e)=> setSearchAgent(e.target.value)}
                 placeholder="Select Agent"
-                className="  w-10/11 outline-0 p-2 text-sm uppercase"/>
+                className="  w-10/11 outline-0 p-2 lg:text-xs 2xl:text-sm uppercase"/>
                 {
                   !agentDropdown ? 
-                  <IoMdArrowDropdown className="text-2xl" onClick={handleAgentDropdown}/>
+                  <IoMdArrowDropdown className="lg:text-base 2xl:text-2xl" onClick={handleAgentDropdown}/>
                     :
-                  <IoMdArrowDropup className="text-2xl" onClick={handleAgentDropdown}/>
+                  <IoMdArrowDropup className="lg:text-base 2xl:text-2xl" onClick={handleAgentDropdown}/>
                 }
                 {
                   agentDropdown &&
@@ -308,23 +307,23 @@ const BacklogManagementView = () => {
                 }
             </div>
           </div>
-          <div className="grid grid-cols-4">
+          <div className="grid grid-cols-4 ">
             <div className="flex items-center lg:text-xs 2xl:text-sm font-medium text-slate-500">Bucket </div>
-            <div className="col-span-3 relative border flex items-center border-slate-600 rounded-lg">
+            <div className="col-span-3 relative border flex items-center border-slate-400 rounded-lg">
               <input 
                 type="text"
                 name="search_bucket"
                 id="search_bucket"
                 autoComplete="off"
                 value={searchBucket} 
-                onChange={(e)=> setSearchBucket(e.target.value)}
+                onChange={(e)=> setSearchBucket(e.target.value.toLocaleUpperCase())}
                 placeholder="Select Bucket"
-                className="w-10/11 outline-0 p-2 text-sm uppercase"/>
+                className="w-10/11 outline-0 p-2 lg:text-xs 2xl:text-sm uppercase"/>
                 {
                   !bucketDropdown ? 
-                  <IoMdArrowDropdown className="text-2xl" onClick={handleBucketDropdown}/>
+                  <IoMdArrowDropdown className="lg:text-base 2xl:text-2xl" onClick={handleBucketDropdown}/>
                     :
-                  <IoMdArrowDropup className="text-2xl" onClick={handleBucketDropdown}/>
+                  <IoMdArrowDropup className="lg:text-base 2xl:text-2xl" onClick={handleBucketDropdown}/>
                 }
                 {
                   bucketDropdown &&
@@ -344,23 +343,49 @@ const BacklogManagementView = () => {
           </div>
           <div className="flex flex-col">
             <div className="flex justify-center my-2  text-sm font-medium text-slate-500">Disposition</div>
-            <div className="flex flex-wrap max-h-50 gap-5 border-slate-600 rounded-lg p-2 justify-center border overflow-y-auto">
+            <div className="flex flex-wrap max-h-50 gap-5 border-slate-400 rounded-lg p-2 justify-center border overflow-y-auto">
               {
                 disposition?.getDispositionTypes?.map((dispoTypes) => 
                   <label key={dispoTypes.id} className="w-2/10 2xl:text-xs lg:text-[.45rem] items-center flex gap-2">
-                    <input type="checkbox" onChange={(e)=> handleCheckBox(e.target.value, e)} name={dispoTypes.name} id={dispoTypes.name} value={dispoTypes.name} />
+                    <input type="checkbox" 
+                    onChange={(e)=> handleCheckBox(e.target.value, e)} 
+                    name={dispoTypes.name} 
+                    id={dispoTypes.name} 
+                    value={dispoTypes.name}
+                    checked = {selectedDisposition.includes(dispoTypes.name)}
+                    />
                     <span className="uppercase">{dispoTypes.name}</span>
                   </label>
                 )
               }
+              <label className="w-2/10 2xl:text-xs lg:text-[.45rem] items-center flex gap-2" >
+                <input 
+                  type="checkbox"  
+                  name="all"
+                  id="all" 
+                  value="all"
+                  onChange={(e)=> {
+                    if(e.target.checked) {
+                      if(disposition){
+                        setSelectedDisposition(disposition?.getDispositionTypes?.map(v=> v.name))
+                      } else {
+                        setSelectedDisposition([])
+                      }
+                    } else {
+                      setSelectedDisposition([])
+                    }
+                  }}
+                  />
+                    <span className="uppercase">Select All</span>
+              </label>
             </div>
           </div>
           <div className="flex flex-col gap-2 mt-3">
-            <label className="grid grid-cols-4">
-              <div className="flex items-center lg:text-xs 2xl:text-sm font-medium text-slate-500">
+            <label className="grid grid-cols-4 lg:text-xs 2xl:text-sm">
+              <div className="flex items-center  font-medium text-slate-500">
                 Date From : 
               </div>
-              <div className="col-span-3 w-full flex border items-center border-slate-600 rounded-lg p-2">
+              <div className="col-span-3 w-full flex border items-center border-slate-400 rounded-lg p-2">
                 <input 
                   type="date"
                   name="from"
@@ -370,11 +395,11 @@ const BacklogManagementView = () => {
                   className="w-full outline-0"/>
               </div>
             </label>
-            <label className="grid grid-cols-4">
-              <div className="flex items-center lg:text-xs 2xl:text-sm font-medium text-slate-500">
+            <label className="grid grid-cols-4 lg:text-xs 2xl:text-sm">
+              <div className="flex items-center font-medium text-slate-500">
                 Date To : 
               </div>
-              <div className="col-span-3 w-full flex border items-center border-slate-600 rounded-lg p-2">
+              <div className="col-span-3 w-full flex border items-center border-slate-400 rounded-lg p-2">
                 <input 
                   type="date"
                   name="to"
@@ -385,65 +410,68 @@ const BacklogManagementView = () => {
               </div>
             </label>
           </div>
-          <h1 className="text-sm text-slate-600"><span className=" font-medium">Note: </span>Report can be generated by Daily, Weekly and Monthly</h1>
+          <h1 className="lg:text-xs 2xl:text-sm text-slate-600"><span className=" font-medium">Note: </span>Report can be generated by Daily, Weekly and Monthly</h1>
           <div className="flex gap-5">
-            <button type="button" className='bg-blue-400 hover:bg-blue-500 focus:outline-none text-white  focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer'>Export</button>
+            <button type="button" className='bg-blue-400 hover:bg-blue-500 focus:outline-none text-white  focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer flex gap-2 items-center justify-center'>
+              <span>Export</span>
+              <FaDownload/>
+            </button>
           </div>
         </div>
       
       </div>
-        <div className={`print:hidden col-span-2 flex flex-col ${chartFull ? "fixed top-0 bg-white z-50 items-center justify-center w-full h-full px-10" : "h-5/6"}`}>
-          <div className="text-center uppercase font-medium 2xl:text-lg lg:text-base text-slate-500 flex item-center justify-center gap-5 py-5">
-            <div>
-              { reportsData?.getDispositionReports?.bucket &&
+      <div className={`print:hidden col-span-2 flex flex-col ${chartFull ? "fixed top-0 bg-white z-50 items-center justify-center w-full h-full px-10" : "h-5/6"}`}>
+        <div className="text-center uppercase font-medium 2xl:text-lg lg:text-base text-slate-500 flex item-center justify-center gap-5 py-5">
+          <div>
+            { reportsData?.getDispositionReports?.bucket &&
               <span>Bucket: </span>
-              }
+            }
             {reportsData?.getDispositionReports?.bucket ? reportsData?.getDispositionReports?.bucket: "" }
-            </div>
-            <div>
-              {
-                reportsData?.getDispositionReports?.agent.name &&
-              <span>Agent Name: </span>
-              }
-            {reportsData?.getDispositionReports?.agent ? reportsData?.getDispositionReports?.agent.name: "" }</div>
-            {
-              dateDistance.from && dateDistance.to && dateDistance.from !== dateDistance.to &&
-            <div>From: {dateDistance.from } to {dateDistance.to}</div>
-            }
-            {
-              ((dateDistance.from && !dateDistance.to) || (!dateDistance.from && dateDistance.to) || ((dateDistance.from === dateDistance.to) && dateDistance.from && dateDistance.to))  &&
-              <div>Date: {dateDistance.from ? dateDistance.from : dateDistance.to } </div>
-            }
           </div>
+          <div>
+            {
+              reportsData?.getDispositionReports?.agent.name &&
+              <span>Agent Name: </span>
+            }
+          {reportsData?.getDispositionReports?.agent ? reportsData?.getDispositionReports?.agent.name: "" }</div>
+          {
+            dateDistance.from && dateDistance.to && dateDistance.from !== dateDistance.to &&
+          <div>From: {dateDistance.from } to {dateDistance.to}</div>
+          }
+          {
+            ((dateDistance.from && !dateDistance.to) || (!dateDistance.from && dateDistance.to) || ((dateDistance.from === dateDistance.to) && dateDistance.from && dateDistance.to))  &&
+            <div>Date: {dateDistance.from ? dateDistance.from : dateDistance.to } </div>
+          }
+        </div>
 
-          <div className="flex justify-between w-full h-full pr-5">
-            <div className="w-full flex justify-center item-center flex-col ">
-              <div  className="flex flex-col justify-center h-5/6 ">
-                {disposition?.getDispositionTypes.map((d)=> 
-                  <div key={d.id}>
-                  {
-                    dispositionCount(d.code) !== 0 &&
-                    <div className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 py-0.5 hover:scale-105 cursor-default hover:font-bold">
-                      <div style={{backgroundColor: `${colorDispo[d.code]}`}} className="px-2">{d.code} </div>
-                      <div>{d.name}</div>
-                      <div className="text-center">{dispositionCount(d.code)}</div>
-                    </div>
-                  }
+        <div className="flex justify-between w-full h-full pr-5">
+          <div className="w-full flex justify-center item-center flex-col ">
+            <div  className="flex flex-col justify-center h-5/6 ">
+              {disposition?.getDispositionTypes.map((d)=> 
+                <div key={d.id}>
+                {
+                  dispositionCount(d.code) !== 0 &&
+                  <div className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 py-0.5 hover:scale-105 cursor-default hover:font-bold">
+                    <div style={{backgroundColor: `${colorDispo[d.code]}`}} className="px-2">{d.code} </div>
+                    <div>{d.name}</div>
+                    <div className="text-center">{dispositionCount(d.code)}</div>
                   </div>
-                )}
-                
-              </div>
-              <div className="flex justify-center">
-                <button type="button" className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5  cursor-pointer" 
-                onClick={handleChartFullScreen}
-                >{chartFull ? "Minimize" : "Maximize"}</button>
-              </div>
+                }
+                </div>
+              )}
+              
             </div>
-            <div className="w-8/10 flex justify-center h-full">
-              <Doughnut data={data} options={options} />
+            <div className="flex justify-center">
+              <button type="button" className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer" 
+              onClick={handleChartFullScreen}
+              >{chartFull ? "Minimize" : "Maximize"}</button>
             </div>
+          </div>
+          <div className="w-8/10 flex justify-center h-full">
+            <Doughnut data={data} options={options} />
           </div>
         </div>
+      </div>
     
 
     </div>

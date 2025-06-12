@@ -68,3 +68,73 @@ export const color = [
   "oklch(0.75 0.15 324)",     // Pink
   "oklch(0.75 0.15 342)", 
 ]
+
+
+interface links {
+  name: string
+  link: string
+}
+
+export const accountsNavbar:{[key:string]:links[]} = {
+  ADMIN: [
+    {
+      name: "Dashboard",
+      link: "/admin-dashboard"
+    },
+    {
+      name: "Accounts",
+      link: "/accounts"
+    },
+    {
+      name: "Branch & Depts",
+      link: "/setup"
+    },
+  ],
+  AGENT: [
+    {
+      name: "Dashboard",
+      link: "/agent-dashboard"
+    },
+    {
+      name: "Customer Interaction Panel",
+      link: "/agent-cip"
+    },
+    {
+      name: "Report",
+      link: "/agent-report"
+    },
+  ],
+  TL: [
+    {
+      name: "Dashboard",
+      link: "/tl-dashboard"
+    },
+    {
+      name: "Customer Interaction Panel",
+      link: "/tl-cip"
+    },
+    {
+      name: "Task Manager",
+      link: "/tl-task-manager"
+    },
+    {
+      name: "Production Manager",
+      link: '/tl-production-manager'
+    },
+    {
+      name: "Reports",
+      link: "/tl-reports"
+    },
+  ],
+  AOM: [
+    {
+      name: "Dashboard",
+      link: "/aom-dashboard"
+    },
+    {
+      name: "Report",
+      link: "/aom-reports"
+    }
+
+  ]
+}

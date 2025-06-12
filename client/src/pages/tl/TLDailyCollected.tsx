@@ -2,6 +2,8 @@ import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { useEffect, useState } from "react";
 import { IoMdArrowDown,IoMdArrowUp  } from "react-icons/io";
+import { useAppDispatch } from "../../redux/store";
+import { setServerError } from "../../redux/slices/authSlice";
 
 interface Collected {
   bucket: string
@@ -37,8 +39,9 @@ const TL_BUCKET = gql`
 
 const TLDailyCollected = () => {
     const [bucketObject, setBucketObject]= useState<{[key:string]:string}>({})
-  
-    const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+    const dispatch = useAppDispatch()
+    const {data:tlBucketData,error} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+    
     useEffect(()=> {
       if(tlBucketData) {
         const newObject:{[key: string]:string} = {}
@@ -48,8 +51,14 @@ const TLDailyCollected = () => {
         setBucketObject(newObject)
       }
     },[tlBucketData])
-    const {data:dailyCollected} = useQuery<{getTLDailyCollected:Collected[]}>(DAILY_COLLECTION)
+    const {data:dailyCollected,error:tlDailyCollectedError} = useQuery<{getTLDailyCollected:Collected[]}>(DAILY_COLLECTION)
 
+    useEffect(()=> {
+      if(error || tlDailyCollectedError) {
+        dispatch(setServerError(true))
+      }
+        
+    },[error, tlDailyCollectedError, dispatch])
 
   return (
     <div className='border-yellow-400 border bg-yellow-200 rounded-xl p-2 flex flex-col'>

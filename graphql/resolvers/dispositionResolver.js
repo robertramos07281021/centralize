@@ -1503,6 +1503,43 @@ const dispositionResolver = {
         const newBucket = campaignBucket.map(e=> e._id)
 
 
+        function setGroupForDailyCollection (name,ptp,start,end) {
+      
+          const andArray = [
+            {
+              $gte: ['$createdAt',start]
+            },
+            {
+              $lt: ['$createdAt',end]
+            },
+          ]
+          if(name === 'PTP') {
+            andArray.push({ $eq: ['$dispotype.code','PTP'] }) 
+          }
+
+          if(name === 'PAID' && ptp) {
+            andArray.push({$eq: ['$dispotype.code','PAID']}) 
+            andArray.push({$eq: ['$ptp', ptp]} )
+          }
+          
+          if(name === 'PAID' && !ptp) {
+            andArray.push({ $eq: ['$dispotype.code','PAID']}) 
+            andArray.push({$eq: ['$ptp', !ptp]} )
+          }
+
+          return {
+            $sum: {
+              $cond: [
+                {
+                  $and: andArray
+                },
+                "$amount",
+                0
+              ]
+            } 
+          }
+        }
+
         const agentDispoDaily = await Disposition.aggregate([
           {
             $lookup: {
@@ -1546,77 +1583,78 @@ const dispositionResolver = {
           {
             $group: {
               _id: "$user",
-              amount: {
-                $sum: {
-                  $cond: [{
-                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]},{$eq: ['$dispotype.code','PAID']}]
-                  },"$amount",0]
-                }
-              },
+              ptp: setGroupForDailyCollection('PTP',true,todayStart,todayEnd),
+              pk: setGroupForDailyCollection('PAID',true,todayStart,todayEnd),
+              ac: setGroupForDailyCollection('PAID',false,todayStart,todayEnd),
+              y_ptp: setGroupForDailyCollection('PTP',true, yesterdayStart, yesterDayEnd),
+              y_pk: setGroupForDailyCollection('PAID',true, yesterdayStart, yesterDayEnd),
+              y_ac: setGroupForDailyCollection('PAID',false, yesterdayStart, yesterDayEnd),
               count: {
                 $sum: {
-                  $cond: [{
-                    $and: [
-                      {
-                        $gte: ["$createdAt",todayStart]
-                      },
-                      {
-                        $lt: ['$createdAt',todayEnd]
-                      },
-                      {
-                        $or: [
-                          {
-                            $and: [
-                              {
-                                $ne: ['$dispotype.code','PAID']
-                              }
-                            ]
-                          },
-                          {
-                            $and: [
-                              {
-                                $eq: ['$dispotype.code','PAID']
-                              },
-                              {
-                                $eq: ['$existing',true]
-                              },
-                              {
-                                $eq: ['$ptp',true]
-                              }
-                            ]
-                          },
-                          {
-                            $and: [
-                              {
-                                $eq: ['$dispotype.code','PAID']
-                              },
-                              {
-                                $eq: ['$ptp',false]
-                              }
-                            ] 
-                          }
-                        ]
-                      }
-                    ]
-                  },1,0]
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $gte: ["$createdAt",todayStart]
+                        },
+                        {
+                          $lt: ['$createdAt',todayEnd]
+                        },
+                        // {
+                        //   $or: [
+                        //     {
+                        //       $and: [
+                        //         {
+                        //           $ne: ['$dispotype.code','PAID']
+                        //         }
+                        //       ]
+                        //     },
+                        //     {
+                        //       $and: [
+                        //         {
+                        //           $eq: ['$dispotype.code','PAID']
+                        //         },
+                        //         {
+                        //           $eq: ['$existing',true]
+                        //         },
+                        //         {
+                        //           $eq: ['$ptp',true]
+                        //         }
+                        //       ]
+                        //     },
+                        //     {
+                        //       $and: [
+                        //         {
+                        //           $eq: ['$dispotype.code','PAID']
+                        //         },
+                        //         {
+                        //           $eq: ['$ptp',false]
+                        //         }
+                        //       ] 
+                        //     }
+                        //   ]
+                        // }
+                      ]
+                    },
+                    1,
+                    0
+                  ]
                 }
               },
-              yesterday: {
-                 $sum: {
-                  $cond: [{
-                    $and: [{$gte: ["$createdAt",yesterdayStart]},{$lt: ['$createdAt',yesterDayEnd]},{$eq: ['dispotype.code','PAID']}]
-                  },"$amount",0]
-                }
-              }
+
             }
           },
           {
             $project: {
               _id: 0,
               user: "$_id",
-              amount: 1,
+              pk: 1,
+              ptp: 1,
+              ac: 1,
+              y_ac: 1,
+              y_ptp: 1,
+              y_pk: 1,
               count: 1,
-              yesterday: 1
             }
           },
           {

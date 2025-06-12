@@ -54,7 +54,7 @@ const Paid = () => {
 
   return (
     <div className='border-blue-400 border bg-blue-200 rounded-xl p-2 flex flex-col'>
-      <h1 className='lg:text-base 2xl:text-xl font-black text-blue-500'>PAID <span className="text-sm font-medium">(Daily)</span></h1>
+      <h1 className='lg:text-base 2xl:text-xl font-black text-blue-500'>Amount Collected <span className="text-sm font-medium">(Daily)</span></h1>
       <div className='h-full w-full flex flex-col justify-center '>
 
         {

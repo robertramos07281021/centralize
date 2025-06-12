@@ -5,6 +5,7 @@
     "useDefineForClassFields": true,
     "lib": ["ES2020", "DOM", "DOM.Iterable"],
     "module": "ESNext",
+
     "skipLibCheck": true,
 
     /* Bundler mode */
@@ -13,6 +14,7 @@
     "isolatedModules": true,
     "moduleDetection": "force",
     "noEmit": true,
+    "types": ["jest","node"],
     "jsx": "react-jsx",
 
     /* Linting */
@@ -22,5 +24,6 @@
     "noFallthroughCasesInSwitch": true,
     "noUncheckedSideEffectImports": true
   },
-  "include": ["src"]
+  "include": ["src","jest.setup.ts"],
+  "exclude": ["node_modules"]
 }

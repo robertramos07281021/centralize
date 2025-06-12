@@ -4,11 +4,15 @@ const Schema = mongoose.Schema;
 
 const productionSchema = new Schema(
   {
-    account_history: [{
+    prod_history: [{
       type: {
         type: String,
+        enum: ['LUNCH','COFFEE','MEETING','TECHSUPP','CRBREAK','COACHING','HRMEETING','HANDSETNEGO','SKIPTRACING','CLINIC','PROD']
       },
-      time: {
+      start: {
+        type: String
+      },
+      end: {
         type: String
       }
     }],

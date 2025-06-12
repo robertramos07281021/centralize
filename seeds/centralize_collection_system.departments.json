@@ -1,0 +1,65 @@
+[{
+  "_id": {
+    "$oid": "67dcf4eb6e6e713f062ab228"
+  },
+  "name": "ADMIN",
+  "branch": "main",
+  "createdAt": {
+    "$date": "2025-03-21T05:11:07.618Z"
+  },
+  "updatedAt": {
+    "$date": "2025-03-21T05:11:07.618Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681dbbb4fb307d5ae0cb1249"
+  },
+  "name": "SHOPEE M2",
+  "branch": "main",
+  "aom": {
+    "$oid": "681db798fb307d5ae0cb10ed"
+  },
+  "createdAt": {
+    "$date": "2025-05-09T08:24:20.687Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-09T10:24:31.180Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681dbbccfb307d5ae0cb1261"
+  },
+  "name": "SHOPEE M3",
+  "branch": "main",
+  "aom": {
+    "$oid": "681db798fb307d5ae0cb10ed"
+  },
+  "createdAt": {
+    "$date": "2025-05-09T08:24:44.052Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-09T08:24:44.052Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681dbbd7fb307d5ae0cb1273"
+  },
+  "name": "SHOPEE M4",
+  "branch": "main",
+  "aom": {
+    "$oid": "681db798fb307d5ae0cb10ed"
+  },
+  "createdAt": {
+    "$date": "2025-05-09T08:24:55.280Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-09T08:24:55.280Z"
+  },
+  "__v": 0
+}]

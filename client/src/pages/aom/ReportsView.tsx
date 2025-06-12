@@ -30,11 +30,11 @@ const GET_AOM_DEPT = gql`
 `
 
 const ReportsView:React.FC<modalProps> = ({variables}) => {
-  console.log(variables)
 
   const {data:aomDeptData} = useQuery<{getAomDept:AomDept[]}>(GET_AOM_DEPT)
 
   const [deptId, setDeptId] = useState<{[key: string]: string}>({})
+  console.log(variables)
   useEffect(()=> {
     if(aomDeptData){
       const newObject:{[key: string]:string} = {}
@@ -44,7 +44,6 @@ const ReportsView:React.FC<modalProps> = ({variables}) => {
       setDeptId(newObject)
     } 
   },[aomDeptData])
-
 
   return (
     <div className="gap-2 flex min-h-full flex-col">

@@ -69,11 +69,11 @@ function App() {
         <Route element={<CeoRoute/>}>
           <Route path="/ceo-dashboard" element={<CeoDashboard/>}/>
         </Route>
-
-
       </Routes>
     </BrowserRouter>
   )
 }
 
 export default App
+
+

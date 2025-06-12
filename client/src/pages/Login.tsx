@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import {  useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
 import { gql, useMutation } from "@apollo/client";
-import {  setDeselectCustomer, setError, setUserLogged } from "../redux/slices/authSlice";
+import {  setDeselectCustomer, setServerError, setUserLogged } from "../redux/slices/authSlice";
 import Loading from "./Loading";
 import { useSelector } from "react-redux";
 
@@ -105,6 +105,7 @@ const Login = () => {
   const handleEyeClick =() => {
     setEye(!eye)
   }
+  
   const handleSubmitLogin = async(e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if(!loginForm?.current?.checkValidity()){
@@ -112,7 +113,6 @@ const Login = () => {
       return
     }
     try {
-     
       await login({ variables: { username, password } })
     } catch (error) {
       if (error instanceof Error) {
@@ -130,8 +130,7 @@ const Login = () => {
           setPassword("")
         }
       } else {        
-        console.log("An unknown error occurred",error);
-        dispatch(setError(true))
+        dispatch(setServerError(true))
       }
     }
   }
@@ -144,19 +143,19 @@ const Login = () => {
   },[userLogged,userRoutes,navigate])
 
   useEffect(()=> {
-    const timer = setTimeout(async() =>  {
-      if(userLogged?._id && !userLogged.change_password)
-      try {
-        await logout()
-        if(selectedCustomer._id) {
-          await deselectTask({variables: {id: selectedCustomer._id}})
+    if(userLogged?._id && !userLogged.change_password) {
+      const timer = setTimeout(async() =>  {
+        try {
+          await logout()
+          if(selectedCustomer._id) {
+            await deselectTask({variables: {id: selectedCustomer._id}})
+          }
+        } catch (_error) {
+          dispatch(setServerError(true))
         }
-      } catch (error) {
-        console.log(error)
-        dispatch(setError(true))
-      }
-    })
-    return () => clearTimeout(timer) 
+      })
+      return () => clearTimeout(timer) 
+    }
   },[dispatch, userLogged, logout, selectedCustomer,deselectTask])
 
   if(loading) return <Loading/>

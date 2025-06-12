@@ -145,8 +145,12 @@ const dispositionTypeDefs = gql`
   type AgentDispo {
     user: ID
     count: Int
-    amount: Float
-    yesterday: Float
+    ptp: Float
+    pk: Float
+    ac: Float
+    y_pk: Float
+    y_ptp: Float
+    y_ac: Float
   }
 
   type BucketTargets {

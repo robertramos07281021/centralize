@@ -27,7 +27,7 @@ Chart.register(...registerables,
 const TlDashboard  = () => {
  
   return (
-    <div className="h-full p-2 grid grid-rows-6 grid-cols-8 bg-slate-600/10 gap-2">
+    <div className="h-full overflow-hidden p-2 grid grid-rows-6 grid-cols-8 bg-slate-600/10 gap-2">
       <ProductionToday/>
       <TLRightDashboard/>
     </div>

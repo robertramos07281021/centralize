@@ -7,7 +7,7 @@ import Confirmation from "../../components/Confirmation"
 import SuccessToast from "../../components/SuccessToast"
 import Pagination from "../../components/Pagination"
 import Loading from "../Loading"
-import { setPage } from "../../redux/slices/authSlice"
+import { setPage, setServerError } from "../../redux/slices/authSlice"
 
 
 interface Success {
@@ -253,10 +253,10 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   const [groupDataNewObject, setGroupDataNewObject] = useState<{[key:string]:string}>({})
   const {selectedGroup, selectedAgent, page, tasker, taskFilter, selectedDisposition, limit} = useSelector((state:RootState)=> state.auth)
   const selected = selectedGroup ? groupDataNewObject[selectedGroup] : selectedAgent
-  const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId: selected, assigned: taskFilter, limit: limit, selectedBucket: selectedBucket}})
+  const {data:CustomerAccountsData, refetch:CADRefetch, loading, error:fcaError} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId: selected, assigned: taskFilter, limit: limit, selectedBucket: selectedBucket}})
   const [handleCheckAll, setHandleCheckAll] = useState<boolean>(false)
   const [taskToAdd, setTaskToAdd] = useState<string[]>([])
-  const {data:selectAllCustomerAccountData, refetch:SACARefetch} = useQuery<{selectAllCustomerAccount:string[]}>(SELECT_ALL_CUSTOMER_ACCOUNT,{variables: {disposition: selectedDisposition, groupId:selected, assigned: taskFilter, selectedBucket}})
+  const {data:selectAllCustomerAccountData, refetch:SACARefetch,error:sacaError} = useQuery<{selectAllCustomerAccount:string[]}>(SELECT_ALL_CUSTOMER_ACCOUNT,{variables: {disposition: selectedDisposition, groupId:selected, assigned: taskFilter, selectedBucket}})
   const [required, setRequired] = useState<boolean>(false)
   const [confirm, setConfirm] = useState<boolean>(false)
   const {data:GroupData} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
@@ -265,6 +265,13 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
     message: ""
   })
   const [taskManagerPage, setTaskManagerPage] = useState("1")
+
+  useEffect(()=> {
+    if(sacaError || sacaError) {
+      dispatch(setServerError(true))
+    }
+  },[dispatch, fcaError, sacaError])
+
 
   useEffect(()=> {
     setTaskManagerPage(page.toString())
@@ -325,8 +332,8 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
       yes: async() => {
         try {
           await deleteGroupTask({variables: {caIds: taskToAdd}})
-        } catch (error) {
-          console.log(error)
+        } catch (_error) {
+          dispatch(setServerError(true))
         }
       },
       no: () => {
@@ -379,8 +386,8 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
         yes: async() => {
           try {
             await addGroupTask({variables: {groupId: selected ,task: taskToAdd}})
-          } catch (error) {
-            console.log(error)
+          } catch (_error) {
+            dispatch(setServerError(true))
           }
         },
         no: () => {
@@ -390,7 +397,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
     }
   }
 
-  const pages = CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts ? CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts/limit : 1
+  const pages = CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts ? Math.round(CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts/limit) : 1
 
   const valuePage = parseInt(taskManagerPage) > pages ? pages.toString() : taskManagerPage 
 

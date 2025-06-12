@@ -51,9 +51,7 @@ const userResolvers = {
       }
     },
     getMe: async (_, __, { user }) => {
-
-      if (!user) throw new CustomError("Not authenticated",401);
-
+      if (!user) throw new CustomError("Not authenticated",401)
       return user;
     },
     getAomUser: async() => {
@@ -291,20 +289,23 @@ const userResolvers = {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
 
-        await User.findByIdAndUpdate(user._id, {$set: {isOnline: false}})
+        const findUser = await User.findByIdAndUpdate(user._id, {$set: {isOnline: false}})
         
+        if(!findUser) {
+          throw CustomError("User not found",404)
+        }
         res.clearCookie('connect.sid');
         res.clearCookie('token');
 
         return { success: true, message: "Successfully logout"}
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message,500)
       }
     },
     resetPassword: async(_,{id}, {user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-
         const saltPassword = await bcrypt.genSalt(10)
         const hashPassword = await bcrypt.hash("Bernales2025", saltPassword)
         const user = await User.findByIdAndUpdate(id,{$set: {password: hashPassword, change_password: false, isOnline: false, new_account: false}}, {new: true})
@@ -349,7 +350,10 @@ const userResolvers = {
     logoutToPersist: async(_,{id},{res}) => {
       try {
         const findUser = await User.findByIdAndUpdate(id,{$set: {isOnline: false}})
-        if(!findUser) throw CustomError("User not found",404)
+        
+        if(!findUser) {
+          throw CustomError("User not found",404)
+        }
 
         res.clearCookie('connect.sid');
         res.clearCookie('token');
@@ -359,6 +363,7 @@ const userResolvers = {
           message: "Successfully logout",
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

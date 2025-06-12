@@ -1,4 +1,7 @@
 import { gql, useQuery } from "@apollo/client"
+import { useEffect } from "react"
+import { useAppDispatch } from "../../redux/store"
+import { setServerError } from "../../redux/slices/authSlice"
 
 interface AomDept {
   id: string
@@ -30,25 +33,36 @@ const MONTHLY_TARGET = gql`
 `
 
 const CampaignStats = () => {
+  const dispatch = useAppDispatch()
+  const {data:aomDeptData, error:aomDeptError} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
+  const {data:monthlyTargetData, error:monthlyTargetError} = useQuery<{getMonthlyTarget:MonthlyTarget[]}>(MONTHLY_TARGET)
 
-  const {data:aomDeptData} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
-  const {data:monthlyTargetData} = useQuery<{getMonthlyTarget:MonthlyTarget[]}>(MONTHLY_TARGET)
+  useEffect(()=> {
+    if(aomDeptError || monthlyTargetError){
+      const isError = [
+        aomDeptError,
+        monthlyTargetError
+      ]
+      console.log("Error in CampaignStats: ",isError.filter(e=> e !== undefined)) 
+      dispatch(setServerError(true))
+    }
+  },[monthlyTargetError,aomDeptError,dispatch])
 
-  console.log(aomDeptData)
-  console.log(monthlyTargetData)
+
   return (
     <>
       <h1 className="font-medium text-slate-500 lg:text-xs 2xl:text-sm">Campaign Daily Statistics</h1>
-      <div className="lg:h-70 2xl:h-80 overflow-y-auto lg:text-[0.6em] 2xl:text-xs text-slate-500 ">
-        <div className="flex">
+      <div className="h-full overflow-y-auto lg:text-[0.6em] 2xl:text-xs text-slate-500">
+        <div className="grid grid-cols-8">
           <h1>Campaign</h1>
           <h1>PTP Rate</h1>
           <h1>PKR</h1>
           <h1>ACR</h1>
           <h1>CR</h1>
-          <h1></h1>
+          <h1>asd</h1>
+          <h1>asd</h1>
+          <h1>asd</h1>
         </div>
-
       </div>
     </>
   )

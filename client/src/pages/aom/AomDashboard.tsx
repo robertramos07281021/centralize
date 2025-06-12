@@ -13,10 +13,8 @@ const AomDashboard = () => {
 
 
   return (
-    <div className="h-full p-2 grid grid-rows-4 grid-cols-7 bg-slate-200 gap-2">
-      
-
-
+    <div className="h-full p-2 grid grid-rows-4 grid-cols-7 bg-slate-200 gap-2 overflow-hidden">
+  
 
       <div className="row-span-4 col-span-3 grid grid-rows-3 gap-2">
         <div className="border bg-white rounded-xl border-slate-300 p-2">
@@ -31,7 +29,7 @@ const AomDashboard = () => {
       </div>
 
 
-      <div className="bg-white row-span-2 col-span-3 rounded-xl border border-slate-300 p-2">
+      <div className="bg-white row-span-2 col-span-3 rounded-xl border border-slate-300 p-2 flex flex-col">
         <CampaignStats/>
       </div>
       <div className=" row-span-2 bg-white rounded-xl border border-slate-300 p-2">

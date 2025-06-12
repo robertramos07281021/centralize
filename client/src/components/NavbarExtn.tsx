@@ -1,73 +1,11 @@
 import { Link, useLocation } from "react-router-dom"
 import { useSelector } from "react-redux"
 import { RootState } from "../redux/store"
+import { accountsNavbar } from "../middleware/exports.ts"
 
 const NavbarExtn = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
-  const accountsNavbar = {
-    ADMIN: [
-      {
-        name: "Dashboard",
-        link: "/admin-dashboard"
-      },
-      {
-        name: "Accounts",
-        link: "/accounts"
-      },
-      {
-        name: "Branch & Depts",
-        link: "/setup"
-      },
-    ],
-    AGENT: [
-      {
-        name: "Dashboard",
-        link: "/agent-dashboard"
-      },
-      {
-        name: "Customer Interaction Panel",
-        link: "/agent-cip"
-      },
-      {
-        name: "Report",
-        link: "/agent-report"
-      },
-    ],
-    TL: [
-      {
-        name: "Dashboard",
-        link: "/tl-dashboard"
-      },
-      {
-        name: "Customer Interaction Panel",
-        link: "/tl-cip"
-      },
-      {
-        name: "Task Manager",
-        link: "/tl-task-manager"
-      },
-      {
-        name: "Production Manager",
-        link: '/tl-production-manager'
-      },
-      {
-        name: "Reports",
-        link: "/tl-reports"
-      },
-    ],
-    AOM: [
-      {
-        name: "Dashboard",
-        link: "/aom-dashboard"
-      },
-      {
-        name: "Report",
-        link: "/aom-reports"
-      }
-
-    ]
-  }
 
   const userType = userLogged?.type as keyof typeof accountsNavbar;
 

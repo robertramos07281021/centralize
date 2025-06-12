@@ -1,0 +1,84 @@
+[{
+  "_id": {
+    "$oid": "681dbbe4fb307d5ae0cb128a"
+  },
+  "name": "C1 M2",
+  "dept": "SHOPEE M2",
+  "createdAt": {
+    "$date": "2025-05-09T08:25:08.442Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-09T10:24:31.178Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681dbbeafb307d5ae0cb1296"
+  },
+  "name": "C2 M2",
+  "dept": "SHOPEE M2",
+  "createdAt": {
+    "$date": "2025-05-09T08:25:14.185Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-09T10:24:31.178Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681dbbf0fb307d5ae0cb12a1"
+  },
+  "name": "C1 M3",
+  "dept": "SHOPEE M3",
+  "createdAt": {
+    "$date": "2025-05-09T08:25:20.152Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-09T08:25:20.152Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681dbbf4fb307d5ae0cb12ad"
+  },
+  "name": "C2 M3",
+  "dept": "SHOPEE M3",
+  "createdAt": {
+    "$date": "2025-05-09T08:25:24.760Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-09T08:25:24.760Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681dbbfafb307d5ae0cb12bb"
+  },
+  "name": "C1 M4",
+  "dept": "SHOPEE M4",
+  "createdAt": {
+    "$date": "2025-05-09T08:25:30.378Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-09T08:25:30.378Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "681dbc00fb307d5ae0cb12c7"
+  },
+  "name": "C2 M4",
+  "dept": "SHOPEE M4",
+  "createdAt": {
+    "$date": "2025-05-09T08:25:36.641Z"
+  },
+  "updatedAt": {
+    "$date": "2025-05-09T08:25:36.641Z"
+  },
+  "__v": 0
+}]

@@ -6,7 +6,7 @@ import GroupSection from "../../components/GroupSection";
 import TaskDispoSection from "./TaskDispoSection";
 import AgentSection from "../../components/AgentSection";
 import { RootState, useAppDispatch } from "../../redux/store";
-import { setAgent, setSelectedDisposition, setSelectedGroup, setTasker, setTaskFilter, Tasker, TaskFilter } from "../../redux/slices/authSlice";
+import { setAgent, setSelectedDisposition, setSelectedGroup, setServerError, setTasker, setTaskFilter, Tasker, TaskFilter } from "../../redux/slices/authSlice";
 import { useSelector } from "react-redux";
 
 interface DispositionTypes {
@@ -40,16 +40,19 @@ const BUCKETS = gql`
 
 `
 
-
 const TaskManagerView = () => {
   const dispatch = useAppDispatch()
   const {tasker, taskFilter, selectedDisposition} = useSelector((state:RootState)=> state.auth)
-  const {data:DispositionTypes} = useQuery<{getDispositionTypes:DispositionTypes[]}>(GET_ALL_DISPOSITION_TYPE)
-  const {data:bucketData} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS)
+  const {data:DispositionTypes, error:dispoTypeError} = useQuery<{getDispositionTypes:DispositionTypes[]}>(GET_ALL_DISPOSITION_TYPE)
+  const {data:bucketData, error:bucketError} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS)
   const [bucketObject, setBucketObject] = useState<Record<string, string>>({})
   const [bucketSelect, setBucketSelect] = useState<keyof typeof bucketObject | "">("")
 
-
+  useEffect(()=> {
+    if(bucketError || dispoTypeError) {
+      dispatch(setServerError(true))
+    }
+  },[dispoTypeError,bucketError,dispatch ])
 
   useEffect(()=> {
     if(bucketData) {
@@ -175,6 +178,8 @@ const TaskManagerView = () => {
             </div>
             <select 
               className="w-1/2 border border-slate-300 rounded-md font-bold text-slate-500 px-1"
+              name="bucket"
+              id="bucket"
               value={bucketSelect}
               onChange={(e)=> setBucketSelect(e.target.value)}
             >
