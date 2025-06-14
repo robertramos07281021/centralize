@@ -32,15 +32,15 @@ const deptResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    // getAomDept: async(_,__,{user}) => {
-    //   if(!user) throw new CustomError("Unauthorized",401)
-    //   try { 
-    //     const res = await Department.find({aom: user._id})
-    //     return res
-    //   } catch (error) {
-    //     throw new CustomError(error.message,500)
-    //   }
-    // },
+    getAomDept: async(_,__,{user}) => {
+      if(!user) throw new CustomError("Unauthorized",401)
+      try { 
+        const res = await Department.find({aom: user._id})
+        return res
+      } catch (error) {
+        throw new CustomError(error.message,500)
+      }
+    },
   },
   Dept: {
     aom: async(parent) => {

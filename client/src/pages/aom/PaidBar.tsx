@@ -49,7 +49,6 @@ const oklchColors = [
   'oklch(60% 0.15 72)',
 ];
 
-
 const PaidBar = () => {
   const {data:paidData} = useQuery<{getAOMPaidPerDay:PaidPerDay[]}>(PAID_PER_DAY)
   const {data:aomDeptData} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)

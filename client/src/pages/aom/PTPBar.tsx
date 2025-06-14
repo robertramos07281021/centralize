@@ -52,7 +52,6 @@ const oklchColors = [
   'oklch(60% 0.15 72)',
 ];
 
-
 const PTPBar = () => {
 
   const {data:ptpPerDay} = useQuery<{getAOMPTPPerDay:PTPPerDay[]}>(PTP_PER_DAY)

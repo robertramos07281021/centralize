@@ -55,7 +55,6 @@ export default function OverallPerformance () {
     }
   },[dispotypeData, agentTotalDispoData])
 
-
   const data: ChartData<'radar'> = {
     labels: dispotypeData?.getDispositionTypes.map(e=> e.code),
     datasets: [
@@ -68,7 +67,7 @@ export default function OverallPerformance () {
         pointBackgroundColor: 'rgb(54, 162, 235)',
         pointRadius: (ctx) => {
         const value = ctx.raw;
-        return value === 0 ? 0 : 3; // 🔥 hide dot if 0
+        return value === 0 ? 0 : 3;
       },
       },
     ],
@@ -89,7 +88,6 @@ export default function OverallPerformance () {
       
     },
   };
-
 
   useEffect(()=> {
     TotalDispoRefetch()

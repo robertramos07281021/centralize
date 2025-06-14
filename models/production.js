@@ -9,6 +9,9 @@ const productionSchema = new Schema(
         type: String,
         enum: ['LUNCH','COFFEE','MEETING','TECHSUPP','CRBREAK','COACHING','HRMEETING','HANDSETNEGO','SKIPTRACING','CLINIC','PROD']
       },
+      existing: {
+        type: Boolean
+      },
       start: {
         type: String
       },
@@ -19,9 +22,6 @@ const productionSchema = new Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
-    },
-    default_target: {
-      type: Number
     },
     target_today: {
       type: Number

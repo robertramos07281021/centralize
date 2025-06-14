@@ -52,7 +52,6 @@ const oklchColors = [
 
 const PTPKeptProd = () => {
 
-
   const [bucketObject, setBucketObject]= useState<{[key:string]:string}>({})
   const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
   useEffect(()=> {

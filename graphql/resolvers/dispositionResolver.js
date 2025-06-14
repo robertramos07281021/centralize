@@ -291,6 +291,9 @@ const dispositionResolver = {
             }
           }
         ])
+
+        console.log(dailyFTE)
+
         const newDailyFTE = dailyFTE.map(e => {
           const newCampaignArray = aomCampaign.find(c=> e.campaign === c.name)
           return {

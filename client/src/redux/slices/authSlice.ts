@@ -1,5 +1,6 @@
 import { createSlice, PayloadAction  } from "@reduxjs/toolkit";
 import { Search } from "../../middleware/types";
+import { BreakEnum } from "../../middleware/exports";
 
 type User = {
   _id: string,
@@ -31,20 +32,6 @@ export enum TaskFilter {
   unassigned = "unassigned"
 }
 
-enum BreakEnum {
-  LUNCH ="LUNCH",
-  COFFEE = "COFFEE",
-  MEETING = "MEETING", 
-  TECHSUPP = "TECHSUPP",
-  CRBREAK = "CRBREAK",
-  COACHING = "COACHING",
-  HRMEETING = "HRMEETING",
-  HANDSETNEGO = "HANDSETNEGO",
-  SKIPTRACING = "SKIPTRACING",
-  CLINIC = "CLINIC",
-  PROD = "PROD"
-}
-
 interface UserState {
   serverError: boolean
   userLogged: User
@@ -58,10 +45,10 @@ interface UserState {
   selectedDisposition: string[] 
   limit: number
   productionManagerPage: number
-  breakValue: keyof typeof BreakEnum
+  breakValue: keyof typeof BreakEnum,
+  breakTimer: number,
+  start: string
 }
-
-
 
 const initialState:UserState = {
   serverError: false,
@@ -73,7 +60,9 @@ const initialState:UserState = {
   selectedDisposition: [] as string[],
   limit: 20,
   productionManagerPage: 1,
-  breakValue: BreakEnum.PROD,
+  breakTimer: 0,
+  start: "",
+  breakValue: BreakEnum.WELCOME,
   userLogged: {
     _id: "",
     change_password: false,
@@ -131,8 +120,6 @@ const initialState:UserState = {
     }
   }
 };
-
-
 
 const authSlice = createSlice({
   name: "auth",
@@ -214,6 +201,15 @@ const authSlice = createSlice({
         }
       }
     },
+    increamentBreakTimer: (state) => {
+      state.breakTimer ++;
+    },
+    setBreakTimer: (state,action:PayloadAction<number>)=> {
+      state.breakTimer = action.payload;
+    },
+    setStart: (state, action:PayloadAction<string>)=> {
+      state.start = action.payload
+    },
     setLogout: (state) => {
       state.selectedCustomer = {
         _id: "",
@@ -279,25 +275,30 @@ const authSlice = createSlice({
       state.taskFilter = TaskFilter.assigned
       state.selectedDisposition = [] 
       state.productionManagerPage= 1
+      state.breakTimer = 0
+      state.start =  ""
+      state.breakValue = BreakEnum.WELCOME
     }
-
   },
 });
 
 export const { 
-  setServerError, 
-  setUserLogged, 
-  setSearch, 
-  setSelectedCustomer, 
-  setSelectedGroup, 
-  setAgent, 
-  setPage, 
+  setServerError,
+  setUserLogged,
+  setSearch,
+  setSelectedCustomer,
+  setSelectedGroup,
+  setAgent,
+  setPage,
   setTasker,
-  setTaskFilter, 
-  setSelectedDisposition, 
-  setDeselectCustomer, 
-  setProductionManagerPage , 
-  setLogout, 
-  setBreakValue 
+  setTaskFilter,
+  setSelectedDisposition,
+  setDeselectCustomer,
+  setProductionManagerPage,
+  setLogout,
+  setBreakValue,
+  increamentBreakTimer,
+  setBreakTimer,
+  setStart
 } = authSlice.actions;
 export default authSlice.reducer;

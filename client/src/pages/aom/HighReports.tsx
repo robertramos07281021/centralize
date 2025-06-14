@@ -23,15 +23,14 @@ import { setServerError } from "../../redux/slices/authSlice"
 // `
 
 interface AomDept {
-  branch: string
+
   id: string
   name: string
 }
 
 const GET_AOM_DEPT = gql`
-  query Query {
+  query getAomDept {
     getAomDept {
-      branch
       id
       name
     }
@@ -107,8 +106,8 @@ const HighReports:React.FC<modalProps> = ({setCampaign, reportsVariables, setRep
         monthlyPerError,
         aomDeptError
       ]
-      dispatch(setServerError(true))
       console.log("Error in HighReports: ", isError.filter(e=> e !== undefined))
+      dispatch(setServerError(true))
     }
   },[dispatch,monthlyPerError,aomDeptError])
 
@@ -141,7 +140,6 @@ const HighReports:React.FC<modalProps> = ({setCampaign, reportsVariables, setRep
     },1000)
   }
 
-  
   return (
     <div className="w-10/12 h-full overflow-y-auto overflow-x-hidden p-2 flex flex-col gap-2">
       {

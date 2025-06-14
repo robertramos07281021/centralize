@@ -49,16 +49,16 @@ const oklchColors = [
 
 const PTPBarProd = () => {
   const [bucketObject, setBucketObject]= useState<{[key:string]:string}>({})
-    const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
-    useEffect(()=> {
-      if(tlBucketData) {
-        const newObject:{[key: string]:string} = {}
-        tlBucketData.getDeptBucket.map(e=> {
-          newObject[e.id] = e.name
-        })
-        setBucketObject(newObject)
-      }
-    },[tlBucketData])
+  const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+  useEffect(()=> {
+    if(tlBucketData) {
+      const newObject:{[key: string]:string} = {}
+      tlBucketData.getDeptBucket.map(e=> {
+        newObject[e.id] = e.name
+      })
+      setBucketObject(newObject)
+    }
+  },[tlBucketData])
   const {data:ptpData} = useQuery<{getTLPTPToday:PtpProd[]}>(PTP_PROD)
   const [labels, setLabels] = useState<string[]>([])
   const [callsData, setCallsData] = useState<number[]>([])
@@ -92,46 +92,46 @@ const PTPBarProd = () => {
     }
   },[ptpData,bucketObject])
 
-   const option:ChartOptions<'bar'> = { 
-     plugins: {
-      datalabels:{
-        display:false
+  const option:ChartOptions<'bar'> = { 
+    plugins: {
+    datalabels:{
+      display:false
+    },
+    legend: {
+      display: true,
+      labels: {
+        font: {
+          size: 8,
+          family: 'Arial',
+          weight: 'bold',
+        },
       },
-      legend: {
-        display: true,
-        labels: {
+    },
+    title: {
+      display: true,
+      text: `PTP Today`,
+    },
+      
+    },
+    scales: {
+      x: {
+        ticks: {
           font: {
             size: 8,
-            family: 'Arial',
-            weight: 'bold',
           },
         },
       },
-      title: {
-        display: true,
-        text: `PTP Today`,
-      },
-       
-     },
-      scales: {
-        x: {
-          ticks: {
-            font: {
-              size: 8,
-            },
-          },
-        },
-        y: {
-          ticks: {
-            font: {
-              size: 10,
-            },
+      y: {
+        ticks: {
+          font: {
+            size: 10,
           },
         },
       },
-     responsive: true, 
-     maintainAspectRatio: false
-   }
+    },
+    responsive: true, 
+    maintainAspectRatio: false
+  }
 
   const data = {
     labels: labels.map(e=> bucketObject[e]),

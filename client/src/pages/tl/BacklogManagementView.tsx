@@ -141,8 +141,6 @@ const BacklogManagementView = () => {
   const [newReportsDispo, setNewReportsDispo] = useState<Record<string,number>>({})
   
 
-
-
   useEffect(()=> {
     const reportsDispo:{[key: string]: number} = {};
     if(reportsData) {
@@ -166,7 +164,6 @@ const BacklogManagementView = () => {
     }
   },[searchAgent,agentSelector])
 
-
   useEffect(()=> {
     const filteredBucket = searchBucket.trim() !== "" ? departmentBucket?.getDeptBucket.filter((e)=> e.name.includes(searchBucket)) : departmentBucket?.getDeptBucket
     setBuckets(filteredBucket || null)
@@ -178,9 +175,6 @@ const BacklogManagementView = () => {
       setAgentDropdown(!dropdownBucket)
     }
   },[departmentBucket, searchBucket])
-
-
-
 
   useEffect(()=> {
     if (disposition?.getDispositionTypes) {
@@ -204,11 +198,8 @@ const BacklogManagementView = () => {
     const count = d.count;
     if (!totalCount || totalCount === 0) return 0; 
     const percent = parseInt(Math.floor((Number(count) / totalCount) * 100).toPrecision(2));
- 
     return percent === 100 ? 1 : percent;
-  } 
-  
-  )
+  })
 
   const dataColor = dispositionData.map(d=> d.color)
   const data = {
@@ -220,7 +211,6 @@ const BacklogManagementView = () => {
       hoverOffset: 30,
     }],
   };
-
 
   const options = {
     plugins: {
@@ -472,8 +462,6 @@ const BacklogManagementView = () => {
           </div>
         </div>
       </div>
-    
-
     </div>
   )
 }

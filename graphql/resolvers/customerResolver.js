@@ -363,7 +363,7 @@ const customerResolver = {
         const newResult = accounts.map((com)=> {
           const findDept = aomCampaign.find(e => e.name === com.campaign)
           const camp = dispo.filter(x=> x.campaign === com.campaign).map(y => y.rate)
-          const sumOfCamp = camp.reduce((t,v) => {return t + v }) 
+          const sumOfCamp =camp.length > 0 ? camp.reduce((t,v) => { return t + v }) : 0
           
 
           return {
@@ -375,6 +375,7 @@ const customerResolver = {
         
         return newResult
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)        
       }
     },

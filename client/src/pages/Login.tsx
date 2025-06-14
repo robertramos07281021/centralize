@@ -3,14 +3,16 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import {  useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
 import { gql, useMutation } from "@apollo/client";
-import {  setDeselectCustomer, setServerError, setUserLogged } from "../redux/slices/authSlice";
+import {  setBreakValue, setDeselectCustomer, setServerError, setStart, setUserLogged } from "../redux/slices/authSlice";
 import Loading from "./Loading";
 import { useSelector } from "react-redux";
+import { BreakEnum } from "../middleware/exports";
 
 const LOGIN = gql `
   mutation login($username: String!, $password: String!) { 
     login(username: $username, password: $password) { 
-      message success 
+      prodStatus
+      start
       user { 
         _id
         change_password
@@ -45,11 +47,31 @@ const DESELECT_TASK = gql`
     }
   }
 `
+interface User {
+  _id: string
+  change_password : boolean
+  name: string
+  type: string
+  username: string
+  branch: string
+  departments:string[]
+  buckets:string[]
+  account_type: string
+  group: string
+}
+
+interface Login {
+  user: User
+  prodStatus: keyof typeof BreakEnum
+  start: string
+}
+
 
 const Login = () => {
   const {userLogged,selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const navigate = useNavigate() 
   const dispatch = useAppDispatch()
+
   const userRoutes = useMemo(() => ({
     AGENT: "/agent-dashboard",
     ADMIN: "/admin-dashboard",
@@ -67,12 +89,13 @@ const Login = () => {
   const [password, setPassword] = useState<string>("") 
   const [already, setAlready] = useState<boolean>(false)
 
+
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: () => {
       dispatch(setDeselectCustomer())
     }
   })
-  
+
   const [logout] = useMutation(LOGOUT,{
     onCompleted: ()=> {
       dispatch(setUserLogged({
@@ -90,17 +113,23 @@ const Login = () => {
     }
   })
 
-  const [login, {loading}] = useMutation(LOGIN, {
+  const [login, {loading}] = useMutation<{login:Login}>(LOGIN, {
     onCompleted: (res) => {
       dispatch(setUserLogged(res.login.user))
       if(!res.login.user.change_password) {
         navigate('/change-password', {state: res.login.user})
       } else {
-        navigate(userRoutes[res.login.user.type  as keyof typeof userRoutes])
+        if(res.login.user.type === "AGENT") {
+          dispatch(setBreakValue(res.login.prodStatus))
+          dispatch(setStart(res.login.start))
+          const navigateString = res.login.prodStatus === BreakEnum.PROD ? userRoutes[res.login.user.type  as keyof typeof userRoutes] : "/break-view"
+          navigate(navigateString)
+        } else {
+          navigate(userRoutes[res.login.user.type  as keyof typeof userRoutes])
+        }
       }
     }
   })  
-
 
   const handleEyeClick =() => {
     setEye(!eye)

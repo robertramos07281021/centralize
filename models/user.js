@@ -55,6 +55,10 @@ const userSchema = new Schema(
       type: Boolean,
       default: true
     },
+    default_target: {
+      type: Number,
+      default: 50000
+    },
     group: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Group"

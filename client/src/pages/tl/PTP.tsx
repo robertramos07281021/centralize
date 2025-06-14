@@ -36,9 +36,10 @@ const TL_BUCKET = gql`
 
 
 const PTP = () => {
-  const [bucketObject, setBucketObject]= useState<{[key:string]:string}>({})
 
+  const [bucketObject, setBucketObject]= useState<{[key:string]:string}>({})
   const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+
   useEffect(()=> {
     if(tlBucketData) {
       const newObject:{[key: string]:string} = {}
@@ -48,6 +49,7 @@ const PTP = () => {
       setBucketObject(newObject)
     }
   },[tlBucketData])
+
   const {data:ptpData} = useQuery<{getTLPTPTotals:PTP[]}>(PTP_DAILY)
 
   return (

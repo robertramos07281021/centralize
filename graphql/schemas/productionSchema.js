@@ -1,7 +1,7 @@
 import { gql } from "graphql-tag";
 
 const productionTypeDefs = gql`
-
+  scalar DateTime
   type Disposition {
     _id:ID
     count: Int
@@ -37,6 +37,7 @@ const productionTypeDefs = gql`
   type Success {
     success: Boolean
     message: String
+    start: DateTime
   }
 
   type DailyCollection {
@@ -47,17 +48,25 @@ const productionTypeDefs = gql`
     paid_amount: Float
     paid_yesterday: Float
   }
-  
+  type Login {
+    success: Boolean
+    message: String
+  }
+
+
   type Query {
     getProductions:[Disposition]
     getAgentProductionPerDay:[PerDay]
     getAgentProductionPerMonth:[perMonth]
     getAgentTotalDispositions:[AgentTotalDispo]
     getAgentDailyCollection: DailyCollection
+    getProductionStatus: String
   }
+
 
   type Mutation {
     updateProduction(type: String!):Success
+    loginToProd(password: String):Login
   }
 `
 

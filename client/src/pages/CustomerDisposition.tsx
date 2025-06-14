@@ -12,6 +12,7 @@ import { setDeselectCustomer, setSelectedCustomer, setServerError } from "../red
 import AgentTimer from "../components/AgentTimer"
 import DispositionRecords from "../components/DispositionRecords"
 import MyTaskSection from "../components/MyTaskSection"
+import { BreakEnum } from "../middleware/exports"
 
 
 const DESELECT_TASK = gql`
@@ -74,8 +75,10 @@ const SELECT_TASK = gql`
   }
 `
 
+
+
 const CustomerDisposition = () => {
-  const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
+  const {userLogged, selectedCustomer, breakValue} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -164,6 +167,13 @@ const CustomerDisposition = () => {
   useEffect(()=> {
     setSearch("")
   },[selectedCustomer._id])
+
+  useEffect(()=> {
+    if(breakValue !== BreakEnum.PROD && userLogged.type === "AGENT") {
+      navigate('/break-view')
+    }
+  },[breakValue,navigate])
+
 
   return userLogged._id ? (
     <div className="h-full w-full overflow-auto"> 

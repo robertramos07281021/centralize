@@ -1,9 +1,13 @@
 
+import { DateTime } from "../../middlewares/dateTime.js";
 import CustomError from "../../middlewares/errors.js";
 import Disposition from "../../models/disposition.js";
 import Production from "../../models/production.js";
+import User from "../../models/user.js";
+import bcrypt from "bcryptjs";
 
 const productionResolver = {
+  DateTime,
   Query: {
     getProductions: async(_,__,{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
@@ -453,45 +457,98 @@ const productionResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)        
       }
+    },
+    getProductionStatus: async(_,__,{user})=> {
+      try {
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const findProd = await Production.findOne({$and: [{user:user._id},{createdAt: {$gte: todayStart, $lt: todayEnd}}]})
+
+        console.log(findProd)
+
+        return 'hello'
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
     }
   },
   Mutation: {
     updateProduction: async(_,{type},{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
+
         const start = new Date();
         start.setHours(0, 0, 0, 0);
         
         const end = new Date();
         end.setHours(23, 59, 59, 999);
   
-
-        const updateProduction = await Production.findOne({$and: [
-          {
-            user: user._id
-          },
-          {
-            createdAt: {$gte: start, $lt: end}
-          }
-        ]
+        const updateProduction = await Production.findOne({
+          $and: [
+            {
+              user: user._id
+            },
+            {
+              createdAt: {$gte: start, $lt: end}
+            }
+          ]
         })
-        if(!updateProduction) throw new CustomError("Production not found")
 
-        updateProduction.account_history.push({
+        if(!updateProduction) {
+          throw new CustomError("Production not found")
+        }
+
+        updateProduction.prod_history = updateProduction.prod_history.map((entry) => {
+          if (entry.existing === true) {
+            return {
+              ...entry,
+              existing: false,
+              end: new Date(),
+            };
+          }
+          return entry;
+        });
+        
+        const newStart = new Date()
+        
+
+
+        updateProduction.prod_history.push({
           type,
-          time: new Date()
+          start: newStart,
+          existing: true,
         })
 
         await updateProduction.save()
 
         return {
           success: true,
-          message: "Successfully Updated"
+          message: "Production successfully updated",
+          start: newStart
         }
-
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
+    },
+    loginToProd: async(_,{password},{user}) => {
+      try {
+        if(!user) throw new CustomError("Unauthorized",401)
+        const findUser = await User.findById(user._id)
+
+        const validatePassword = await bcrypt.compare(password, user.password)
+        if(!validatePassword) throw new CustomError('Incorrect')
+
+        return {
+          success: validatePassword,
+          message: 'Successfully login'
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }  
     }
   }
 }

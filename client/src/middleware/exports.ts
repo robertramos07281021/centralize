@@ -122,6 +122,10 @@ export const accountsNavbar:{[key:string]:links[]} = {
       link: '/tl-production-manager'
     },
     {
+      name: "Agent Production",
+      link: "/agent-production"
+    },
+    {
       name: "Reports",
       link: "/tl-reports"
     },
@@ -138,3 +142,67 @@ export const accountsNavbar:{[key:string]:links[]} = {
 
   ]
 }
+
+export enum BreakEnum {
+  LUNCH ="LUNCH",
+  COFFEE = "COFFEE",
+  MEETING = "MEETING", 
+  TECHSUPP = "TECHSUPP",
+  CRBREAK = "CRBREAK",
+  COACHING = "COACHING",
+  HRMEETING = "HRMEETING",
+  HANDSETNEGO = "HANDSETNEGO",
+  SKIPTRACING = "SKIPTRACING",
+  CLINIC = "CLINIC",
+  PROD = "PROD",
+  WELCOME = "WELCOME"
+}
+
+interface Breaks {
+  name: string
+  value: keyof typeof BreakEnum
+}
+
+export const breaks:Breaks[] = [
+    {
+      name: 'Lunch Break',
+      value: BreakEnum.LUNCH
+    },
+    {
+      name: 'Coffee',
+      value: BreakEnum.COFFEE
+    },
+    {
+      name: 'Meeting',
+      value: BreakEnum.MEETING
+    },
+    {
+      name: 'Technical Support',
+      value: BreakEnum.TECHSUPP
+    },
+    {
+      name: 'Cr Break',
+      value: BreakEnum.CRBREAK
+    },
+    {
+      name: 'Coaching',
+      value: BreakEnum.COACHING
+    },
+    {
+      name: 'HR Meeting',
+      value: BreakEnum.HRMEETING
+    },
+    {
+      name: 'Handset Nego',
+      value: BreakEnum.HANDSETNEGO
+    },
+    {
+      name: 'Skip Tracing',
+      value: BreakEnum.SKIPTRACING
+    },
+    {
+      name: 'Clinic',
+      value: BreakEnum.CLINIC
+    },
+
+  ]

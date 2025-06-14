@@ -9,6 +9,27 @@ const userTypeDefs = gql`
     user: Users
   }
 
+  enum Break {
+    LUNCH 
+    COFFEE
+    MEETING 
+    TECHSUPP 
+    CRBREAK 
+    COACHING 
+    HRMEETING
+    HANDSETNEGO 
+    SKIPTRACING
+    CLINIC 
+    PROD
+    WELCOME 
+  }
+
+  type Login {
+    user: Users
+    prodStatus: Break
+    start: String
+  }
+
   type Users {
     _id: ID
     name: String
@@ -81,7 +102,7 @@ const userTypeDefs = gql`
 
     updatePassword(password:String!, confirmPass:String!) : Users
     resetPassword(id:ID!): Success
-    login(username:String!, password:String!) : Success
+    login(username:String!, password:String!) : Login
     logout: Success
     logoutToPersist(id:ID!):Success
     updateActiveStatus(id:ID!): Success

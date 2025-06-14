@@ -237,51 +237,55 @@ const userResolvers = {
 
     login: async(_,{ username, password },{ res , req}) => {
       try {
-     
+        
         const user = await User.findOne({username})
         if(!user) throw new CustomError("Invalid",401)
         
-          
+        
         const validatePassword = await bcrypt.compare(password, user.password)
         if(!validatePassword) throw new CustomError("Invalid",401)
         
         if(user.isOnline) throw new CustomError('Already',401)
-
-        const token = jwt.sign({id: user._id,username: user.username}, process.env.SECRET)
-    
-        // req.session.user = user._id 
         
+        const token = jwt.sign({id: user._id,username: user.username}, process.env.SECRET)
+
+        // req.session.user = user._id 
+
         user.isOnline = true
         await user.save()
 
-        const findProd = await Production.find({user: user._id}).sort({"createdAt": -1})
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+        
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
 
-        if (findProd.length > 0) {
-          const newDateFindProd = new Date(findProd[0].createdAt);
-          const newDateToDay = new Date();
+        const findProd = await Production.find({$and: [{user: user._id},{createdAt: {$gte: todayStart, $lt: todayEnd}}]})
         
-          newDateFindProd.setHours(0, 0, 0, 0);
-          newDateToDay.setHours(0, 0, 0, 0);
+        res.cookie('token', token, {
+          httpOnly: true,
+        });
         
-          if (newDateFindProd.getTime() !== newDateToDay.getTime()) {
-            await Production.create({
-              user: user._id,
-            });
-          }
-        } else {
+        const prodLength = findProd.length <= 0
+
+        if (prodLength && user.type === "AGENT") {
           await Production.create({
             user: user._id,
           });
         }
         
+        const existingProd = findProd[0]?.prod_history?.filter(e => e.existing === true).map(e=> e.type).toString() || "WELCOME"
 
-        res.cookie('token', token, {
-          httpOnly: true,
-        });
+        const status = !prodLength ? existingProd : "WELCOME"
+        
+        const start = findProd[0]?.prod_history?.filter(e => e.existing === true)
+        
+        
 
-        return {success: true, message: "Logged in", user: user}
+        return { user: user, prodStatus: status , start: start ? start?.map(e=> e.start).toString() : new Date().toString() }
         
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message,500)
       }
     },
@@ -294,12 +298,11 @@ const userResolvers = {
         if(!findUser) {
           throw CustomError("User not found",404)
         }
-        res.clearCookie('connect.sid');
+        // res.clearCookie('connect.sid');
         res.clearCookie('token');
 
         return { success: true, message: "Successfully logout"}
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message,500)
       }
     },
@@ -355,7 +358,7 @@ const userResolvers = {
           throw CustomError("User not found",404)
         }
 
-        res.clearCookie('connect.sid');
+        // res.clearCookie('connect.sid');
         res.clearCookie('token');
 
         return {
@@ -363,7 +366,6 @@ const userResolvers = {
           message: "Successfully logout",
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

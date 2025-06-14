@@ -14,6 +14,7 @@ const callfileTypeDefs = gql`
 
   type Callfile {
     _id: ID
+    bucket: ID
     name: String
     createdAt: DateTime
     active: Boolean
