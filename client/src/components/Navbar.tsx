@@ -6,7 +6,7 @@ import Confirmation from "./Confirmation";
 import Loading from "../pages/Loading";
 import { Link, useNavigate } from "react-router-dom";
 import { RootState, useAppDispatch } from "../redux/store";
-import { setBreakTimer, setBreakValue, setDeselectCustomer, setLogout, setServerError, setStart } from "../redux/slices/authSlice";
+import {  setBreakValue, setDeselectCustomer, setLogout, setServerError, setStart } from "../redux/slices/authSlice";
 import NavbarExtn from "./NavbarExtn";
 import { useSelector } from "react-redux";
 import IdleAutoLogout from "./IdleAutoLogout";

@@ -1,10 +1,12 @@
 
+import mongoose from "mongoose";
 import { DateTime } from "../../middlewares/dateTime.js";
 import CustomError from "../../middlewares/errors.js";
 import Disposition from "../../models/disposition.js";
 import Production from "../../models/production.js";
 import User from "../../models/user.js";
 import bcrypt from "bcryptjs";
+import DispoType from "../../models/dispoType.js";
 
 const productionResolver = {
   DateTime,
@@ -458,21 +460,82 @@ const productionResolver = {
         throw new CustomError(error.message, 500)        
       }
     },
-    getProductionStatus: async(_,__,{user})=> {
+    ProductionReport: async(_,{dispositions, from, to},{user}) => {
       try {
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+        const startFrom = new Date(from)
+        startFrom.setHours(0,0,0,0)
 
-        const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999);
+        const endTo = new Date(to)
+        endTo.setHours(23,59,59,999)
 
-        const findProd = await Production.findOne({$and: [{user:user._id},{createdAt: {$gte: todayStart, $lt: todayEnd}}]})
+        const dispositionFilter = dispositions.length > 0 ? {$in: dispositions.map(e=> new mongoose.Types.ObjectId(e))}  :  {$ne: null}
 
-        console.log(findProd)
+        let objectMatch = {
+          user: new mongoose.Types.ObjectId(user._id) ,
+          disposition: dispositionFilter
+        }
 
-        return 'hello'
+        let totalDispositionDate = {}
+
+        if(from && to) {  
+          objectMatch['createdAt'] = {$gte: startFrom, $lt: endTo}
+          totalDispositionDate["$gte"] = startFrom
+          totalDispositionDate["$lt"] = endTo
+        } 
+        
+        if(from || to) {
+          const startDate = new Date(from || to)
+          startDate.setHours(0,0,0,0)
+          
+          const endDate = new Date(from || to)
+          endDate.setHours(23,59,59,999)
+          
+          objectMatch['createdAt'] = {$gte: startDate, $lt: endDate}
+          totalDispositionDate["$gte"] = startDate
+          totalDispositionDate["$lt"] = endDate
+        }
+        
+        const filterAllCreatedAt = (!from && !to) ? {$ne: null} : totalDispositionDate
+
+        const totalDisposition = await Disposition.countDocuments({user: new mongoose.Types.ObjectId(user._id), createdAt: filterAllCreatedAt})
+    
+        const userDispostion = await Disposition.aggregate([
+          {
+            $match: objectMatch
+          },
+          {
+            $group: {
+              _id: "$disposition",
+              count: {$sum :1}
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              dispotype: "$_id",
+              count: 1
+            }
+          }
+        ])
+
+    
+        return {
+          totalDisposition,
+          dispotypes: userDispostion
+        }
+
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        throw new CustomError(error.message, 500)        
+      }
+    }
+  },
+  DipotypeCount: {
+    dispotype: async(parent)=> {
+      try {
+        const dispotypes = await DispoType.findById(parent.dispotype)
+        return dispotypes
+      } catch (error) {
+        throw new CustomError(error.message, 500)        
       }
     }
   },
@@ -515,8 +578,6 @@ const productionResolver = {
         
         const newStart = new Date()
         
-
-
         updateProduction.prod_history.push({
           type,
           start: newStart,

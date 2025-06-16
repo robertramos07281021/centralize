@@ -53,6 +53,22 @@ const productionTypeDefs = gql`
     message: String
   }
 
+  type Dispotype {
+    _id: ID
+    name: String
+    code: String
+  }
+
+  type DipotypeCount {
+    dispotype: Dispotype,
+    count: Int
+  }
+
+  type ProductionReport{
+    totalDisposition: Int
+    dispotypes: [DipotypeCount]
+
+  }
 
   type Query {
     getProductions:[Disposition]
@@ -60,7 +76,7 @@ const productionTypeDefs = gql`
     getAgentProductionPerMonth:[perMonth]
     getAgentTotalDispositions:[AgentTotalDispo]
     getAgentDailyCollection: DailyCollection
-    getProductionStatus: String
+    ProductionReport(dispositions:[ID],from:String,to:String):ProductionReport
   }
 
 

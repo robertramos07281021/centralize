@@ -43,7 +43,6 @@ const userResolvers = {
     },
     getUser: async (_, { id })=>
     {
-
       try {
         return await User.findById(id)
       } catch (error) {

@@ -16,11 +16,11 @@ import { useEffect } from "react"
 
 const UserView = () => {
   const {state} = useLocation()
-  // const {data, refetch} = useQuery<{getModifyReport:ModifyRecords[]}>(MODIFY_RECORD_QUERY,{variables: {id: state?._id}, skip: !state._id})
+  const {data, refetch} = useQuery<{getModifyReport:ModifyRecords[]}>(MODIFY_RECORD_QUERY,{variables: {id: state?._id}, skip: !state._id})
 
-  // useEffect(()=> {
-  //   refetch()
-  // },[state, refetch])
+  useEffect(()=> {
+    refetch()
+  },[state, refetch])
 
   return (
     <div className="p-5 h-screen flex flex-col">
@@ -33,14 +33,14 @@ const UserView = () => {
               
             </div>
             <div className="flex flex-col h-125 overflow-y-auto">
-              {/* {
+              {
                 data?.getModifyReport?.map( mr => 
                   <div key={mr.id} className="grid grid-cols-2 py-1.5 px-2 odd:bg-slate-100">
                     <div className="text-slate-700 font-medium text-base">{mr.name}</div>
                     <div className="text-slate-600 text-sm">{new Date(mr.createdAt).toLocaleDateString()} - {new Date(mr.createdAt).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", hour12: true })}</div>
                   </div>
                 )
-              } */}
+              }
             </div>
           </div>
         </div>

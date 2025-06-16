@@ -59,13 +59,6 @@ const DailyFTE = () => {
 
   useEffect(()=> {
     if(error || dailyFTEError || campaignAssignedError) {
-      const theError = [
-        error,
-        campaignAssignedError,
-        dailyFTEError
-      ]
-     
-      // console.log("Error in DailyFTE: ",theError.filter((e)=> e !== undefined ))
       dispatch(setServerError(true))
     }
   },[error, dailyFTEError, campaignAssignedError,dispatch])

@@ -5,6 +5,7 @@ import { useQuery } from "@apollo/client";
 import {  Users } from "../../middleware/types";
 import {  useEffect, useState } from "react";
 import { FaDownload} from "react-icons/fa6";
+import { colorDispo } from "../../middleware/exports";
 
 interface DispositionType  {
   id: string
@@ -62,6 +63,7 @@ const GET_DEPARTMENT_AGENT = gql`
     }
   }
 `
+
 const GET_DISPOSITION_TYPES = gql`
   query Query {
     getDispositionTypes {
@@ -95,29 +97,6 @@ const GET_DISPOSITION_REPORTS = gql`
 
 
 
-const colorDispo: { [key: string]: string } = {
-  DISP: "oklch(0.704 0.191 22.216)",
-  FFUP: "oklch(0.75 0.183 55.934)",
-  FV: "oklch(0.828 0.189 84.429)",
-  HUP: "oklch(0.852 0.199 91.936)",
-  ITP: "oklch(0.841 0.238 128.85)",
-  LM: "oklch(0.792 0.209 151.711)",
-  PAID:"oklch(0.765 0.177 163.223)",
-  PTP: "oklch(0.777 0.152 181.912)",
-  RPCCB:"oklch(0.789 0.154 211.53)",
-  RTP: "oklch(0.746 0.16 232.661)",
-  UNEG: "oklch(0.707 0.165 254.624)",
-  ANSM:"oklch(0.673 0.182 276.935)",
-  WN: "oklch(0.702 0.183 293.541)",
-  NOA: "oklch(0.714 0.203 305.504)",
-  KOR: "oklch(0.74 0.238 322.16)",
-  OCA: "oklch(0.73 0.195 45.0)",
-  NIS: "oklch(0.7 0.2 340.0)",
-  BUSY: "oklch(0.73 0.19 10.0)",
-  DEC: "oklch(0.76 0.185 30.0)",
-  UNK: "oklch(0.78 0.18 350.0)",
-  SET: "oklch(0.76 0.19 20.0)"
-}
 
 const BacklogManagementView = () => {
   const {data:agentSelector} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT)
