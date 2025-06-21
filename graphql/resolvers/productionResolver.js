@@ -7,6 +7,12 @@ import Production from "../../models/production.js";
 import User from "../../models/user.js";
 import bcrypt from "bcryptjs";
 import DispoType from "../../models/dispoType.js";
+import ftp from "basic-ftp"
+import 'dotenv/config.js'
+import { PubSub } from "graphql-subscriptions";
+
+const pubsub = new PubSub()
+const AGENT_LOCK = "AGENT_LOCK";
 
 const productionResolver = {
   DateTime,
@@ -462,6 +468,7 @@ const productionResolver = {
     },
     ProductionReport: async(_,{dispositions, from, to},{user}) => {
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
         const startFrom = new Date(from)
         startFrom.setHours(0,0,0,0)
 
@@ -515,17 +522,303 @@ const productionResolver = {
               dispotype: "$_id",
               count: 1
             }
+          },
+          {
+            $sort: {
+              dispotype: 1
+            }
           }
         ])
 
-    
         return {
           totalDisposition,
           dispotypes: userDispostion
         }
-
       } catch (error) {
         throw new CustomError(error.message, 500)        
+      }
+    },
+    getAgentProductions: async(_,__,{user})=> {
+      try {
+        if(!user) throw new CustomError("Unauthorized",401)
+        const start = new Date()
+        start.setHours(0,0,0,0)
+
+        const end = new Date()
+        end.setHours(23,59,59,999)
+
+        const production = await Production.aggregate([
+          {
+            $lookup: {
+              from: "users",
+              localField: "user",
+              foreignField: "_id",
+              as: "userInfo",
+            }
+          },
+          {
+            $unwind: { path: "$userInfo", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              "userInfo.departments": {$in: user.departments.map(e => new mongoose.Types.ObjectId(e))},
+              createdAt: { $gte: start , $lt: end }
+            }
+          },
+          {
+            $group: {
+              _id: {
+                _id: "$_id",
+                user: "$userInfo._id",
+              },
+              prod_history: {$first: "$prod_history"},
+              createdAt: {$first: "$createdAt"},
+              target_today: {$first: "$target_today"}
+            }
+          },
+          {
+            $project: {
+              _id: "$_id._id",
+              user: "$_id.user",
+              prod_history: 1,
+              createdAt: 1,
+              target_today: 1
+            }
+          }
+        ])
+        return production
+      } catch (error) {
+        throw new CustomError(error.message, 500)             
+      }
+    },
+    getAgentDispositionRecords: async(_,{agentID, limit, page, from, to, search})=> {
+      
+      const client = new ftp.Client();
+      try {
+        const skip = ((page - 1) * limit)
+
+        const dispoWithRecordings = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RPCCB','RTP','ITP']
+
+        const filtered = {
+          user: new mongoose.Types.ObjectId(agentID),
+          "dispotype.code" : {$in: dispoWithRecordings},
+          "customer.contact_no" : {$elemMatch: { $regex: search, $options: "i" }}
+        }
+      
+        if(from && to) { 
+          const dateStart = new Date(from)
+          dateStart.setHours(0,0,0,0) 
+          const dateEnd = new Date(to)
+          dateEnd.setHours(23,59,59,999)
+          filtered['createdAt'] = {$gte: dateStart, $lt: dateEnd}
+        } else if (from || to ){
+          const dateStart = new Date(from || to)
+          dateStart.setHours(0,0,0,0) 
+          const dateEnd = new Date(from || to)
+          dateEnd.setHours(23,59,59,999)
+          filtered['createdAt'] = {$gte: dateStart, $lt: dateEnd}
+        }
+        
+        const forFiltering = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "ca",
+            }
+          },
+          {
+            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "customers",
+              localField: "ca.customer",
+              foreignField: "_id",
+              as: "customer",
+            }
+          },
+          {
+            $unwind: { path: "$customer", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "ca.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: { path: "$bucket", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: filtered
+          },
+        ])
+
+        const months = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December'
+        ]
+
+        await client.access({
+          host: process.env.FILEZILLA_HOST,
+          user: process.env.FILEZILLA_USER,
+          password: process.env.FILEZILLA_PASSWORD,
+          port: 21,
+          secure: false,
+        });
+
+        const filteredWithRecording = [];
+
+        for (const e of forFiltering) {
+          const createdAt = new Date(e.createdAt);
+          const yearCreated = createdAt.getFullYear();
+          const monthCreated = months[createdAt.getMonth()];
+          const dayCreated = createdAt.getDate();
+          const contact = e.customer.contact_no;
+          const remoteDir = `/ISSABEL RECORDINGS/ISSABEl_${e.bucket.ip}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
+     
+          const contactPatterns = contact.map(num =>
+            num.length < 11 ? num : num.slice(1, 11)
+          );
+          let skip = false;
+
+          try {
+            const fileList = await client.list(remoteDir);
+            const files = fileList.filter(y =>
+              contactPatterns.some(pattern => y.name.includes(pattern))
+            );
+            if (files.length > 0) {
+              filteredWithRecording.push(e._id);
+            }
+
+          } catch (err) {
+            skip = true;
+          } 
+          if (skip) continue;
+        }
+
+
+        const filteredWithIds = {
+          ...filtered,
+          _id: { $in: filteredWithRecording }
+        };
+     
+        const dispositions = await Disposition.aggregate([
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "ca",
+            }
+          },
+          {
+            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "customers",
+              localField: "ca.customer",
+              foreignField: "_id",
+              as: "customer",
+            }
+          },
+          {
+            $unwind: { path: "$customer", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "ca.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            }
+          },
+          {
+            $unwind: { path: "$bucket", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+
+            }
+          },
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: filteredWithIds
+          },
+          {
+            $group: {
+              _id: "$_id",
+              customer_name:{ $first: "$customer.fullName" },
+              payment: { $first: "$payment" },
+              amount: { $first: "$amount"},
+              dispotype: { $first: "$dispotype.code" },
+              payment_date: { $first: "$payment_date" },
+              ref_no: { $first: "$ref_no" },
+              comment: { $first: "$comment" },
+              contact_no: {$first: '$customer.contact_no'},
+              createdAt: {$first: "$createdAt"}
+            }
+          },
+          {
+            $project: {
+              _id: "$_id",
+              customer_name: 1 ,
+              payment: 1,
+              amount: 1,
+              dispotype: 1,
+              payment_date: 1,
+              ref_no: 1,
+              comment: 1,
+              contact_no: 1,
+              createdAt: 1
+            }
+          },
+          { $sort: { "createdAt" : 1 } },
+          { $skip: skip },
+          { $limit: limit },
+        ])
+
+        return {
+          dispositions: dispositions,
+          total: filteredWithRecording?.length
+        }
+
+      } catch (error) {
+        throw new CustomError(error.message, 500)  
+      } finally {
+        client.close()
       }
     }
   },
@@ -540,6 +833,34 @@ const productionResolver = {
     }
   },
   Mutation: {
+    resetTarget: async(_,{id,userId})=> {
+      try {
+        const findUser = await User.findById(userId)
+
+        if(!findUser) {
+          throw new CustomError('User not found',404)
+        }
+
+        if(id) {
+          await Production.findByIdAndUpdate(id,{$set: {
+            target_today: findUser.default_target
+          }})
+          return {
+            success: true,
+            message: "Target successfully updated"
+          }
+        } else {
+          return {
+            success: true,
+            message: "Agent is absent"
+          }
+        }
+        
+ 
+      } catch (error) {
+        throw new CustomError(error.message, 500)           
+      }
+    },
     updateProduction: async(_,{type},{user}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
@@ -610,6 +931,48 @@ const productionResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }  
+    },
+    lockAgent: async(_,__,{user}) => {
+      try {
+        const startDate = new Date()
+        startDate.setHours(0,0,0,0)
+
+        const endDate = new Date()  
+        endDate.setHours(23,59,59,999)
+
+        const lockUser = await User.findByIdAndUpdate(user._id,{$set:{ isLock: true } } )
+
+        if(!lockUser) throw new CustomError('User not found',404)
+
+        const addproduction = await Production.findOne({$and: [{user: new mongoose.Types.ObjectId(user._id)}, {createdAt: {$gte: startDate, $lt: endDate}}]})
+        
+        addproduction.prod_history.push({
+          type: "LOCK",
+          existing: false,
+          start: new Date()
+        })
+
+        await addproduction.save()
+
+        await pubsub.publish(AGENT_LOCK, {
+          agentLocked: {
+            agentId: lockUser._id,
+            message: AGENT_LOCK
+          },
+        });
+
+        return {
+          success: true,
+          message: "Account lock"
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500)        
+      }
+    }
+  },
+  Subscription: {
+    agentLocked: {
+      subscribe:() => pubsub.asyncIterableIterator([AGENT_LOCK])
     }
   }
 }

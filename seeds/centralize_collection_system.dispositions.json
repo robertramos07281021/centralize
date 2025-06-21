@@ -1,0 +1,90 @@
+[{
+  "_id": {
+    "$oid": "684980ad9033a9c247e9bb27"
+  },
+  "amount": 10000,
+  "customer_account": {
+    "$oid": "68491f5bb231465dc0e9b214"
+  },
+  "payment": "partial",
+  "disposition": {
+    "$oid": "67f38299447ae4a5e297f35c"
+  },
+  "payment_date": "2025-06-18",
+  "payment_method": "",
+  "ref_no": "",
+  "comment": "",
+  "existing": false,
+  "ptp": true,
+  "contact_method": "calls",
+  "user": {
+    "$oid": "681dda9e1a84830c931c51af"
+  },
+  "createdAt": {
+    "$date": "2025-06-11T13:12:13.415Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-16T06:08:11.586Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "684fb4cb89e4231224045070"
+  },
+  "amount": 30000,
+  "customer_account": {
+    "$oid": "68491f5bb231465dc0e9b214"
+  },
+  "payment": "partial",
+  "disposition": {
+    "$oid": "67f38301447ae4a5e297f37c"
+  },
+  "payment_date": "",
+  "payment_method": "",
+  "ref_no": "",
+  "comment": "",
+  "existing": true,
+  "ptp": true,
+  "contact_method": "calls",
+  "user": {
+    "$oid": "681dda9e1a84830c931c51af"
+  },
+  "createdAt": {
+    "$date": "2025-06-16T06:08:11.582Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-16T06:08:11.582Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "685130e600ed3c2b14e61c7e"
+  },
+  "amount": 78759.86,
+  "customer_account": {
+    "$oid": "68491f3db231465dc0e9b06c"
+  },
+  "payment": "full",
+  "disposition": {
+    "$oid": "67f3828d447ae4a5e297f355"
+  },
+  "payment_date": "2025-06-16",
+  "payment_method": "",
+  "ref_no": "",
+  "comment": "",
+  "existing": true,
+  "ptp": false,
+  "contact_method": "calls",
+  "user": {
+    "$oid": "681ddaf21a84830c931c51cd"
+  },
+  "createdAt": {
+    "$date": "2025-06-12T09:09:58.311Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-12T09:09:58.311Z"
+  },
+  "__v": 0
+}]

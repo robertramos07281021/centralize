@@ -17,6 +17,7 @@
     "centralize_collection_system": "file:..",
     "chart.js": "^4.4.8",
     "chartjs-plugin-datalabels": "^2.2.0",
+    "crypto-js": "^4.2.0",
     "flowbite-react": "^0.11.7",
     "graphql": "^16.10.0",
     "graphql-tag": "^2.12.6",
@@ -34,6 +35,7 @@
   "devDependencies": {
     "@eslint/js": "^9.21.0",
     "@tailwindcss/vite": "^4.1.7",
+    "@types/crypto-js": "^4.2.2",
     "@types/react": "^19.0.10",
     "@types/react-dom": "^19.0.4",
     "@vitejs/plugin-react": "^4.3.4",

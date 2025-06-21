@@ -43,7 +43,7 @@ const CampaignStats = () => {
         aomDeptError,
         monthlyTargetError
       ]
-      console.log("Error in CampaignStats: ",isError.filter(e=> e !== undefined)) 
+      console.log("Error in CampaignStats: ",isError.filter(e=> e !== undefined).toString()) 
       dispatch(setServerError(true))
     }
   },[monthlyTargetError,aomDeptError,dispatch])

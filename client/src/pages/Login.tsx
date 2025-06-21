@@ -67,6 +67,7 @@ interface Login {
 }
 
 
+
 const Login = () => {
   const {userLogged,selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const navigate = useNavigate() 
@@ -88,6 +89,10 @@ const Login = () => {
   const [username, setUsername] = useState<string>("")
   const [password, setPassword] = useState<string>("") 
   const [already, setAlready] = useState<boolean>(false)
+  const [lock, setLock] = useState<boolean>(false)
+
+
+
 
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: () => {
@@ -127,6 +132,12 @@ const Login = () => {
           navigate(userRoutes[res.login.user.type  as keyof typeof userRoutes])
         }
       }
+    },
+    onError: (error) => {
+      const errorMessage = ['Invalid','Already','Lock']
+      if(!errorMessage.includes(error.message)) {
+        dispatch(setServerError(true))
+      }
     }
   })  
 
@@ -146,19 +157,26 @@ const Login = () => {
       if (error instanceof Error) {
         const newError = error?.message 
         if(newError === 'Invalid') {
+          setRequired(false)
           setRequired(true)
+          setAlready(false)
           setUsername("")
           setPassword("")
-          setAlready(false)
         }
         if(newError === 'Already') {
           setRequired(false)
           setAlready(true)
           setUsername("")
+          setLock(false)
           setPassword("")
         }
-      } else {        
-        dispatch(setServerError(true))
+        if(newError === 'Lock') {
+          setRequired(false)
+          setAlready(false)
+          setUsername("")
+          setLock(true)
+          setPassword("")
+        }
       }
     }
   }
@@ -208,6 +226,10 @@ const Login = () => {
           }
           { already &&
             <h1 className="text-xs text-center text-red-500 font-medium">Account already logged in.</h1>
+          }
+          {
+            lock &&
+            <h1 className="text-xs text-center text-red-500 font-medium">Account has been lock.</h1>
           }
           <div className="w-full">
             <label>

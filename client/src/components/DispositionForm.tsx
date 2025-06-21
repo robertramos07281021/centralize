@@ -5,8 +5,7 @@ import { RootState, useAppDispatch } from "../redux/store"
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { Success } from "../middleware/types"
 import SuccessToast from "./SuccessToast"
-import { setDeselectCustomer } from "../redux/slices/authSlice"
-
+import { setDeselectCustomer, setServerError } from "../redux/slices/authSlice"
 
 interface Data {
   amount: string
@@ -25,7 +24,6 @@ interface Disposition {
   code: string
 }
 
-
 const GET_DISPOSITION_TYPES = gql`
   query Query {
     getDispositionTypes {
@@ -36,7 +34,6 @@ const GET_DISPOSITION_TYPES = gql`
   }
 `
 
-
 const CREATE_DISPOSITION = gql`
   mutation CreateDisposition($input: CreateDispo) {
     createDisposition(input:$input) {
@@ -45,6 +42,27 @@ const CREATE_DISPOSITION = gql`
     }
   }
 `
+
+const TL_ESCATATION = gql`
+  mutation TlEscalation($id: ID!) {
+    tlEscalation(id: $id) {
+      message
+      success
+    }
+  }
+`
+
+const DESELECT_TASK = gql`
+  mutation deselectTask($id: ID!) {
+    deselectTask(id: $id) {
+      message
+      success
+    }
+  }
+`
+
+
+
 
 const DispositionForm = () => {
   const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
@@ -121,7 +139,7 @@ const DispositionForm = () => {
 
         dispatch(setDeselectCustomer())
       } catch (error) {
-        console.log(error)
+        dispatch(setServerError(true))
       }
     },
   })
@@ -150,7 +168,7 @@ const DispositionForm = () => {
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "LOGOUT" | "UPLOADED",
+    toggle: "CREATE" as "CREATE" | "ESCALATE",
     yes: () => {},
     no: () => {}
   })
@@ -164,17 +182,54 @@ const DispositionForm = () => {
       setConfirm(true)
       setModalProps({
         message: "Do you want to create the disposition?",
-        toggle: "UPLOADED",
+        toggle: "CREATE",
         yes: async() => {
           try {
             await createDisposition({variables: { input: {...data, customer_account: selectedCustomer._id} }})
           } catch (error) {
-            console.log(error)
+            dispatch(setServerError(true))
           }
         },
         no: () => {setConfirm(false)}
       })
     }
+  }
+  const [deselectTask] = useMutation<{deselectTask:Success}>(DESELECT_TASK,{
+    onCompleted: ()=> {
+      dispatch(setDeselectCustomer()) 
+    }
+  })
+
+  const [tlEscalation] = useMutation<{tlEscalation:Success}>(TL_ESCATATION,{
+    onCompleted: async(res)=> {
+      setSuccess({
+        success: res.tlEscalation.success,
+        message: res.tlEscalation.message
+      })
+      try {
+        await deselectTask({variables: {id:selectedCustomer._id}})
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    }
+  })
+
+
+
+  const handleSubmitEscalationToTl = async(id:string) => {
+    setConfirm(true)
+    setModalProps({
+    message: "Do you want to transfer this to your team leader?",
+    toggle: "ESCALATE",
+    yes: async() => {
+      try {
+        await tlEscalation({variables: {id}})
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    },
+    no: () => {setConfirm(false)}
+  })
   }
 
   const anabledDispo = ["PAID","PTP","UNEG"]
@@ -368,6 +423,16 @@ const DispositionForm = () => {
               <button 
                 type="submit" 
                 className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white  focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 py-2.5 me-2 mb-2 cursor-pointer`}>Submit</button>
+            }
+            {
+              data.disposition && userLogged.type === "AGENT" &&
+              <button
+                type="button"
+                className="bg-red-500 hover:bg-red-600 focus:outline-none text-white  focus:ring-4 focus:ring-red-400 font-medium rounded-lg px-5 py-2.5 me-2 mb-2 cursor-pointer"
+                onClick={()=> handleSubmitEscalationToTl(selectedCustomer._id)}
+                >
+                TL Escalation
+              </button>
             }
             </div>
           </div>

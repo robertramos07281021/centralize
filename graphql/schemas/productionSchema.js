@@ -64,10 +64,51 @@ const productionTypeDefs = gql`
     count: Int
   }
 
-  type ProductionReport{
+  type ProductionReport {
     totalDisposition: Int
     dispotypes: [DipotypeCount]
+  }
+  
+  type History {
+    type: String
+    existing: Boolean
+    start: String
+  }
 
+
+  type AgentProduction {
+    _id: ID
+    user: ID
+    prod_history: [History]
+    createdAt: DateTime
+    target_today: Float
+  }
+  
+  type DispositionInfo {
+    _id: ID
+    customer_name: String
+    payment: String
+    amount: Float
+    dispotype: String
+    payment_date: String
+    ref_no: String
+    comment: String
+    contact_no: [String]
+    createdAt: DateTime
+  }
+
+  type AgentDispo {
+    dispositions: [DispositionInfo]
+    total: Int
+  }
+
+  type SubsribeSuccess {
+    message: String
+    agentId: ID
+  }
+
+  type Subscription {
+    agentLocked:SubsribeSuccess
   }
 
   type Query {
@@ -77,13 +118,17 @@ const productionTypeDefs = gql`
     getAgentTotalDispositions:[AgentTotalDispo]
     getAgentDailyCollection: DailyCollection
     ProductionReport(dispositions:[ID],from:String,to:String):ProductionReport
+    getAgentProductions:[AgentProduction]
+    getAgentDispositionRecords(agentID:ID, limit:Int, page:Int, from:String, to:String, search: String):AgentDispo
   }
-
 
   type Mutation {
+    resetTarget(id:ID,userId:ID):Success
     updateProduction(type: String!):Success
     loginToProd(password: String):Login
+    lockAgent:Success
   }
+
 `
 
 export default productionTypeDefs

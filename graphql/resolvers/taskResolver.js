@@ -6,8 +6,11 @@ import CustomerAccount from "../../models/customerAccount.js"
 import Disposition from "../../models/disposition.js"
 import Group from "../../models/group.js"
 import { PubSub } from "graphql-subscriptions"
+import User from "../../models/user.js"
 const pubsub = new PubSub()
-const SOMETHING_CHANGED_TOPIC = "something_changed";
+const SOMETHING_CHANGED_TOPIC = "SOMETHING_CHANGED_TOPIC";
+
+
 
 const taskResolver = {
   Query: {
@@ -138,12 +141,37 @@ const taskResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)  
       }
+    },
+    tlEscalation: async(_,{id}) => {
+      try {
+        const escalateToTL = await CustomerAccount.findById(id)
+        if(!escalateToTL) throw new CustomError('Customer not found', 404)
+        const findUser = await User.find({buckets: escalateToTL.bucket})
+        const filterTL = findUser.find(e=> e.type === "TL" )
+
+        await CustomerAccount.updateOne({_id: id},{$set: {assigned: filterTL._id}})
+
+        await pubsub.publish(SOMETHING_CHANGED_TOPIC, {
+          somethingChanged: {
+            members: filterTL,
+            message: "TASK_SELECTION"
+          },
+        });
+
+        return {
+          success: true,
+          message: "Successfully transfer to team leader"
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500)          
+      }
     }
   },
   Subscription: {
     somethingChanged: {
       subscribe:() => pubsub.asyncIterableIterator([SOMETHING_CHANGED_TOPIC])
     }
+
   }
 }
 

@@ -10,10 +10,11 @@ import {DateTime} from "../../middlewares/dateTime.js";
 import Production from "../../models/production.js";
 import Bucket from "../../models/bucket.js";
 import { PubSub } from "graphql-subscriptions";
-
+import mongoose from "mongoose";
 
 const pubsub = new PubSub()
 const CHECKING = "CHECKING";
+const SOMETHING_ON_AGENT_ACCOUNT = 'SOMETHING_ON_AGENT_ACCOUNT' 
 
 const userResolvers = {
   DateTime,
@@ -97,13 +98,13 @@ const userResolvers = {
     findDeptAgents: async(_,__,{user})=> {
       if (!user) throw new CustomError("Not authenticated",401);
       try {
-        const agent = await User.find({departments: user.departments})
+        const agent = await User.find({departments: {$in: user.departments}})
+
         return agent
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
     },
-
     findAgents: async(_,__,{user}) => {
       if (!user) throw new CustomError("Not authenticated",401);
       try {
@@ -118,7 +119,6 @@ const userResolvers = {
         const aomCampaign = await Department.find({aom: user._id}).lean()
         const aomCampaignNameArray = aomCampaign.map(e => e._id)
   
-
         const assignedUserPerCampagin = await User.aggregate([
           {
             $addFields: {
@@ -144,12 +144,30 @@ const userResolvers = {
               assigned: 1
             }
           }
-
         ])
 
         return assignedUserPerCampagin
       } catch (error) {
-        throw new CustomError(error.message, 500) 
+        throw new CustomError(error.message, 500)
+      }
+    }
+  },
+  DeptUser: {
+    buckets: async(parent)=> {
+      try {
+        const buckets = await Bucket.find({_id: {$in: parent.buckets}})
+        return buckets
+      } catch (error) {
+        throw new CustomError(error.message, 500)        
+      }
+    },
+    departments: async(parent) => {
+      try {
+        const departments = await Department.find({_id: {$in: parent.departments}})
+
+        return departments
+      } catch (error) {
+        throw new CustomError(error.message, 500)         
       }
     }
   },
@@ -239,37 +257,58 @@ const userResolvers = {
         
         const user = await User.findOne({username})
         if(!user) throw new CustomError("Invalid",401)
-        
-        
+
+        if(user.isLock) throw new CustomError('Lock',401)  
+          
         const validatePassword = await bcrypt.compare(password, user.password)
-        if(!validatePassword) throw new CustomError("Invalid",401)
-        
+
+        if(!validatePassword) {
+          if(user.type === "AGENT") {
+            user.attempt_login++;
+            if(user.attempt_login >= 2) {
+              user.isLock = true
+              await pubsub.publish(SOMETHING_ON_AGENT_ACCOUNT, {
+                somethingOnAgentAccount: {
+                  buckets: user.buckets,
+                  message: SOMETHING_ON_AGENT_ACCOUNT
+                },
+              });
+            }
+            await user.save();
+          }
+          throw new CustomError("Invalid",401)
+        }
+            
         if(user.isOnline) throw new CustomError('Already',401)
+        
+      
         
         const token = jwt.sign({id: user._id,username: user.username}, process.env.SECRET)
 
         // req.session.user = user._id 
 
-        user.isOnline = true
-        await user.save()
 
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
         
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
-
-        const findProd = await Production.find({$and: [{user: user._id},{createdAt: {$gte: todayStart, $lt: todayEnd}}]})
         
+        const [findProd, firstProd] = await Promise.all([
+          Production.find({$and: [{user: user._id},{createdAt: {$gte: todayStart, $lt: todayEnd}}]}),Production.find({user: new mongoose.Types.ObjectId(user._id)}).sort({'createdAt': -1})
+        ])
+
         res.cookie('token', token, {
           httpOnly: true,
         });
         
         const prodLength = findProd.length <= 0
-
+        
         if (prodLength && user.type === "AGENT") {
+          const today_prod = firstProd.length > 0 ? (firstProd[0]?.target_today + user.default_target) : user.default_target
           await Production.create({
             user: user._id,
+            target_today: today_prod
           });
         }
         
@@ -278,13 +317,14 @@ const userResolvers = {
         const status = !prodLength ? existingProd : "WELCOME"
         
         const start = findProd[0]?.prod_history?.filter(e => e.existing === true)
-        
-        
+
+        user.attempt_login = 0;
+        user.isOnline = true;
+        await user.save()
 
         return { user: user, prodStatus: status , start: start ? start?.map(e=> e.start).toString() : new Date().toString() }
         
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message,500)
       }
     },
@@ -335,8 +375,8 @@ const userResolvers = {
       }
     } ,
     updateActiveStatus: async(_,{id},{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
         const findUser = await User.findById(id)
         if(!findUser) throw CustomError("User not found",404)
         findUser.active = !findUser.active
@@ -367,11 +407,51 @@ const userResolvers = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
+    },
+    
+    unlockUser: async(_,{id},{user})=> {
+      try {
+        if(!user) throw new CustomError("Unauthorized",401)
+        
+        const unlockUser = await User.findByIdAndUpdate( id , { $set: {
+          isLock: false,
+          attempt_login: 0
+        } } )
+
+        if(!unlockUser) throw new CustomError('Agent not found',404)
+
+        return {
+          success: true,
+          message: `Successfully unlock ${unlockUser.user_id}` 
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500)        
+      }
+    },
+    authorization: async(_,{password},{user}) => {
+      try { 
+        if(!user) throw new CustomError("Unauthorized",401)
+        
+        const validatePassword = await bcrypt.compare(password, user.password)
+
+        if(!validatePassword) throw new CustomError('Invalid')
+
+        return {
+          success: true,
+          message: "Password is valid"
+        } 
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
     }
   },
   Subscription: {
     ping: {
       subscribe:() => pubsub.asyncIterableIterator([CHECKING])
+    },
+    somethingOnAgentAccount: {
+      subscribe:() => pubsub.asyncIterableIterator([SOMETHING_ON_AGENT_ACCOUNT])
+      
     }
   }
 };

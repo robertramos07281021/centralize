@@ -7,13 +7,12 @@ import SuccessToast from "../components/SuccessToast"
 import AccountInfo from "../components/AccountInfo"
 import DispositionForm from "../components/DispositionForm"
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { Search } from "../middleware/types"
+import { Search, Success } from "../middleware/types"
 import { setDeselectCustomer, setSelectedCustomer, setServerError } from "../redux/slices/authSlice"
 import AgentTimer from "../components/AgentTimer"
 import DispositionRecords from "../components/DispositionRecords"
 import MyTaskSection from "../components/MyTaskSection"
 import { BreakEnum } from "../middleware/exports"
-
 
 const DESELECT_TASK = gql`
   mutation DeselectTask($id: ID!) {
@@ -23,6 +22,7 @@ const DESELECT_TASK = gql`
     }
   }
 `
+
 const SEARCH = gql`
   query Search($search: String) {
     search(search: $search) {
@@ -75,8 +75,6 @@ const SELECT_TASK = gql`
   }
 `
 
-
-
 const CustomerDisposition = () => {
   const {userLogged, selectedCustomer, breakValue} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
@@ -92,8 +90,6 @@ const CustomerDisposition = () => {
   const [search, setSearch] = useState("")
 
   const {data:searchData ,refetch, error} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search}})
-
-  
 
   const length = searchData?.search?.length || 0;
 
@@ -130,7 +126,7 @@ const CustomerDisposition = () => {
     }
   },[location.search])
 
-  const [deselectTask] = useMutation(DESELECT_TASK,{
+  const [deselectTask] = useMutation<{deselectTask:Success}>(DESELECT_TASK,{
     onCompleted: ()=> {
       dispatch(setDeselectCustomer()) 
     }
@@ -174,7 +170,6 @@ const CustomerDisposition = () => {
     }
   },[breakValue,navigate])
 
-
   return userLogged._id ? (
     <div className="h-full w-full overflow-auto"> 
       {
@@ -183,7 +178,6 @@ const CustomerDisposition = () => {
       }
       <div>
         <div className="p-5">
-
         {
           userLogged.type === "AGENT" &&
           <AgentTimer/>
@@ -191,6 +185,12 @@ const CustomerDisposition = () => {
         <MyTaskSection/>
         </div>
       <div className="w-full grid grid-cols-2 gap-5 px-5 pb-5">
+
+        {/* {
+          selectedCustomer._id 
+        } */}
+
+        
         <div className="flex flex-col items-center"> 
           <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Information</h1>
           <div className="border flex flex-col rounded-xl border-slate-400 w-full h-full items-center justify-center p-5 gap-1.5">

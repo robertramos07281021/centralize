@@ -66,7 +66,15 @@ const userSchema = new Schema(
     active: {
       type: Boolean,
       default:true 
-    }
+    },
+    attempt_login: {
+      type: Number,
+      default: 0
+    },
+    isLock: {
+      type: Boolean,
+      default: false
+    },
   },
   { timestamps: true }
 );

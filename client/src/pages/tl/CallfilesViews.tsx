@@ -134,9 +134,6 @@ const TL_BUCKET = gql`
     }
   }
 `
-
-
-
 const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpload}) => {
   const {limit, productionManagerPage,userLogged } = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()

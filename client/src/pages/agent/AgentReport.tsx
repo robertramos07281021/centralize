@@ -99,6 +99,23 @@ const AgentReport = () => {
             {
               popUpDispo &&
               <div className="w-full h-96 overflow-y-auto border absolute top-10 bg-white left-0 flex flex-col p-2 border-slate-300 shadow-lg shadow-black/30">
+                    <label className="flex gap-2 px-2 py-1.5 text-sm">
+                      <input 
+                        type="checkbox" 
+                        name='all'
+                        id='all'
+                        onChange={(e)=> {
+                          if(e.target.checked){
+                            const dispotype:string[] = dispotypeData?.getDispositionTypes.map(y => y.id) || []
+                            setSelectedDispoAgent(dispotype)
+                          } else {
+                            setSelectedDispoAgent([])
+                          }
+                        }}
+                        checked={dispotypeData?.getDispositionTypes.length === selectedDispoAgent.length}
+                        />
+                      <span className="select-none">SELECT ALL</span>
+                    </label>
                 {
                   dispotypeData?.getDispositionTypes.map((dispotype) => 
                     <label key={dispotype.id} className="flex gap-2 px-2 py-1.5 text-sm">
@@ -109,7 +126,7 @@ const AgentReport = () => {
                         onChange={(e)=> handleCheckeDisposition(dispotype.id,e)}
                         checked={selectedDispoAgent.toString().includes(dispotype.id)}
                         />
-                      <span>{dispotype.name} - {dispotype.code}</span>
+                      <span className="select-none">{dispotype.name} - {dispotype.code}</span>
                     </label>
                   )
                 }

@@ -27,6 +27,7 @@ import AgentReport from "./pages/agent/AgentReport"
 import ProductionManagerView from "./pages/tl/ProductionManagerView"
 import BreakView from "./pages/agent/BreakView"
 import AgentView from "./pages/tl/AgentView"
+import AgentRecordingView from "./pages/tl/AgentRecordingView"
 
 
 function App() {
@@ -66,6 +67,7 @@ function App() {
           <Route path="/tl-dashboard" element={<TlDashboard/>}/>
           <Route path="/tl-production-manager" element={<ProductionManagerView/>}/>
           <Route path="/agent-production" element={<AgentView/>}/>
+          <Route path="/agent-recordings" element={<AgentRecordingView/>}/>
           <Route path="/tl-task-manager" element={<TaskManagerView/>}/>
           <Route path="/tl-cip" element={<CustomerDisposition/>}/>
           <Route path="/tl-reports" element={<BacklogManagementView/>}/>

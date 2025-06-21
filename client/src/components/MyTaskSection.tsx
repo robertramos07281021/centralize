@@ -4,7 +4,7 @@ import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { dateAndTime } from "../middleware/dateAndTime"
-import { setSelectedCustomer } from "../redux/slices/authSlice"
+import { setSelectedCustomer, setServerError } from "../redux/slices/authSlice"
 // import Uploader from "./Uploader"
 import { useNavigate } from "react-router-dom"
 
@@ -338,7 +338,7 @@ const MyTaskSection = () => {
         dispatch(setSelectedCustomer(data))
       }
     } catch (error) { 
-      console.log(error)
+      dispatch(setServerError(true))
     }
   }
 
@@ -369,9 +369,15 @@ const MyTaskSection = () => {
       {
         selection.trim() !== "" &&
         <div className="absolute border border-slate-300 rounded-lg shadow-md shadow-black/20 w-2/4 h-96 translate-y-1/2 -bottom-50 right-5 p-2 text-slate-500 flex flex-col bg-white">
+          <div className="py-1.5 2xl:text-xs lg:text-[0.6em] bg-slate-200 grid grid-cols-4 px-5 items-center">
+            <div className="px-2 text-nowrap truncate">Customer Name</div>
+            <div >Disposition</div>
+            <div >Date Assigned</div>
+            <div className="text-end pr-2">Action</div>
+          </div>
           <div className="h-full overflow-y-auto">
             {data?.map(d => (
-              <div key={d._id} className="py-1.5 2xl:text-xs lg:text-[0.6em] hover:bg-blue-100 even:bg-slate-100 grid grid-cols-4 px-5">
+              <div key={d._id} className="py-1.5 2xl:text-xs lg:text-[0.6em] hover:bg-blue-100 even:bg-slate-100 grid grid-cols-4 px-5 items-center">
                 <div className="px-2 text-nowrap truncate">{d.customer_info.fullName}</div>
                 <div>{d.current_disposition.disposition ? d.current_disposition.disposition : "N/A" }</div>
                 <div>

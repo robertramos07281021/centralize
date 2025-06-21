@@ -13,6 +13,10 @@ const bucketSchema = new Schema(
       type: String,
       required: true,
       uppercase: true
+    },
+    ip: {
+      type: String,
+      required: true
     }
   },
   { timestamps: true }

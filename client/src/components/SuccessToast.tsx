@@ -52,7 +52,29 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
     FINISHED: {
       toast: "bg-green-400",
       close: "text-green-400"
-    }
+    },
+    ABSENT: {
+      toast: "bg-red-400",
+      close: "text-red-400"
+    },
+    DOWNLOADED: {
+      toast: "bg-green-400",
+      close: "text-green-400"
+    },
+    TRANSFER: {
+      toast: "bg-green-400",
+      close: "text-green-400"
+    },
+    UNLOCK: {
+      toast: "bg-green-400",
+      close: "text-green-400"
+    },
+    INCORRECT: {
+      toast: "bg-red-400",
+      close: "text-red-400"
+    },
+
+
   } as const;
   useEffect(()=> {
     const timer = setTimeout(()=> {
@@ -74,6 +96,11 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
   if (messageText.includes("ADDED")) successType = "ADDED";
   if (messageText.includes("DUPLICATE")) successType = "DUPLICATE";
   if (messageText.includes("FINISHED")) successType = "FINISHED";
+  if (messageText.includes("ABSENT")) successType = "ABSENT";
+  if (messageText.includes("DOWNLOADED")) successType = "DOWNLOADED";
+  if (messageText.includes("TRANSFER")) successType = "TRANSFER";
+  if (messageText.includes("UNLOCK")) successType = "UNLOCK";
+  if (messageText.includes("INCORRECT")) successType = "INCORRECT";
   if (messageText.includes("NOT INCLUDED")) successType = "NOT INCLUDED";
 
   return (

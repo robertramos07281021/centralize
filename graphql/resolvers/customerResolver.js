@@ -383,9 +383,6 @@ const customerResolver = {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
 
-        const endOfTheDay = new Date()
-        endOfTheDay.setDate(endOfTheDay.getDate() + 1)
-        endOfTheDay.setHours(0,0,0,0)
         let selected = ''
         if (groupId) {
           const [group, userSelected] = await Promise.all([
@@ -396,31 +393,13 @@ const customerResolver = {
         }
 
 
-        const bucket = selectedBucket ? { $eq: new mongoose.Types.ObjectId (selectedBucket)} : { $in: user.buckets.map(e=> new mongoose.Types.ObjectId(e)) }
+        const bucket = selectedBucket ? { $eq: new mongoose.Types.ObjectId(selectedBucket) } : { $in: user.buckets.map(e=> new mongoose.Types.ObjectId(e)) }
         
         const search = [
           { "account_bucket._id": bucket },
-          { 
-            $or: [
-              {
-                "dispoType.code": { $nin: ["PAID", "PTP"] }
-              },
-              {
-                $and: [
-                  {"dispoType.code": {$eq: "PAID"}},
-                  {"currentDisposition.payment": {$eq: 'partial'}}
-                ]
-              },
-              {
-                $and: [
-                  {"dispoType.code": {$eq: "PTP"}},
-                  {"paymentDate": {$lt: endOfTheDay}}
-                ]
-              }
-            ]
-          }
+          { "dispoType.code" : {$ne: "PAID"} }
         ];
-        
+     
         if (disposition && disposition.length > 0) {
           search.push({ "dispoType.name": { $in: disposition } });
         }
@@ -435,7 +414,6 @@ const customerResolver = {
           search.push({ assigned: null });
         }
   
-
         const accounts = await CustomerAccount.aggregate([
           {
             $lookup: {
@@ -541,9 +519,7 @@ const customerResolver = {
     selectAllCustomerAccount: async(_,{disposition,groupId,assigned, selectedBucket},{user}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401) 
-        const endOfTheDay = new Date()
-        endOfTheDay.setDate(endOfTheDay.getDate() + 1)
-        endOfTheDay.setHours(0,0,0,0)
+
         let selected = ''
         if(groupId) {
           const group = await Group.findOne({_id: groupId})
@@ -553,39 +529,23 @@ const customerResolver = {
         }
         
         const searhBucket =selectedBucket ? {$eq: new mongoose.Types.ObjectId(selectedBucket) } :  {$in :user.buckets.map(e=> new mongoose.Types.ObjectId(e))}
-        let search = [
-          { 
-            $or: [
-              {
-                "dispoType.code": { $nin: ["PAID", "PTP"] }
-              },
-              {
-                $and: [
-                  {"dispoType.code": {$eq: "PAID"}},
-                  {"currentDisposition.payment": {$eq: 'partial'}}
-                ]
-              },
-              {
-                $and: [
-                  {"dispoType.code": {$eq: "PTP"}},
-                  {"paymentDate": {$lt: endOfTheDay}}
-                ]
-              }
-            ]
-          },
+        const search = [
+          { "dispoType.code" : {$ne: "PAID"} },
           {"account_bucket._id": searhBucket }
         ]
 
-        if(Boolean(disposition.length > 0 && groupId)){
-          search.push({"dispoType.name": {$in: disposition }})
-          search.push({assigned: assigned == "assigned" ? selected : null})
-        } else if (Boolean(disposition.length === 0 && !groupId)) {
-          search.push({assigned: assigned == "assigned" ? {$ne: null} : null})
-        } else if (disposition.length > 0 && !groupId) {
-          search.push({"dispoType.name": {$in: disposition }})
-          search.push({assigned: assigned == "assigned" ? selected : null})
-        } else if(Boolean(disposition.length === 0 && groupId)) {
-          search.push({assigned: assigned == "assigned" ? selected : null})
+        if (disposition && disposition.length > 0) {
+          search.push({ "dispoType.name": { $in: disposition } });
+        }
+        
+        if (assigned === "assigned") {
+          if (selected) {
+            search.push({ assigned: new mongoose.Types.ObjectId(selected) });
+          } else {
+            search.push({ assigned: { $ne: null } });
+          }
+        } else {
+          search.push({ assigned: null });
         }
 
         const accounts = await CustomerAccount.aggregate([

@@ -119,7 +119,6 @@ const BacklogManagementView = () => {
   const {data:reportsData} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: searchAgent, bucket: searchBucket, disposition: selectedDisposition, from: dateDistance.from, to: dateDistance.to}})
   const [newReportsDispo, setNewReportsDispo] = useState<Record<string,number>>({})
   
-
   useEffect(()=> {
     const reportsDispo:{[key: string]: number} = {};
     if(reportsData) {
@@ -129,8 +128,6 @@ const BacklogManagementView = () => {
       setNewReportsDispo(reportsDispo)
     }
   },[reportsData])
-
-
 
   useEffect(()=> {
     const filteredAgent = searchAgent?.trim() != "" ? agentSelector?.findAgents?.filter((e) => e.name.toLowerCase()?.includes(searchAgent?.toLowerCase()) || e.user_id?.includes(searchAgent ? searchAgent: "")) : agentSelector?.findAgents

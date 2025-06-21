@@ -38,10 +38,9 @@ import productionTypeDefs from "./graphql/schemas/productionSchema.js";
 import session from "express-session";
 import callfileResolver from "./graphql/resolvers/callfileResolver.js";
 import callfileTypeDefs from "./graphql/schemas/callfileSchema.js";
-
-// import { fileURLToPath } from "url";
-// import path from "path";
-
+import compression from "compression";
+import recordingsResolver from "./graphql/resolvers/recordingsResolver.js";
+import recordingTypeDefs from "./graphql/schemas/recordingsSchema.js";
 
 const app = express()
 connectDB()
@@ -52,6 +51,7 @@ app.use(cors({
 }));
 app.use(express.json())
 app.use(cookieParser())
+app.use(compression())
 // app.use(
 //   session({
 //     secret: process.env.SECRET,
@@ -65,24 +65,12 @@ app.use(cookieParser())
 //   })
 // );
 
-// const __filename = fileURLToPath(import.meta.url);
-// const __dirname = path.dirname(__filename);
+const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver,callfileResolver, recordingsResolver]);
 
-// app.use(express.static(path.join(__dirname, "/client/dist")));
-
-
-// app.get("*", (req, res) => {
-//   res.sendFile(path.join(__dirname, "/client/dist/index.html"));
-// });
-
-
-const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver,callfileResolver ]);
-
-const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs, productionTypeDefs, callfileTypeDefs]);
+const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs, productionTypeDefs, callfileTypeDefs, recordingTypeDefs]);
 
 const httpServer = createServer(app);
 const schema = makeExecutableSchema({ typeDefs, resolvers });
-
 
 const wsServer = new WebSocketServer({
   server: httpServer,
@@ -109,18 +97,18 @@ useServer({ schema,
     }
     return {user: null };
   },
-  onDisconnect: async (ctx, code, reason) => {
-    const userId = ctx.extra?.userId;
-    if (userId) {
-      try {
-        if(code === 1001 || code === 1006) {
-          await User.findByIdAndUpdate(userId, { isOnline: false });
-        }
-      } catch (err) {
-        console.error("onDisconnect error:", err.message);
-      }
-    }
-  }
+  // onDisconnect: async (ctx, code, reason) => {
+  //   const userId = ctx.extra?.userId;
+  //   if (userId) {
+  //     try {
+  //       if(code === 1001 || code === 1006) {
+  //         await User.findByIdAndUpdate(userId, { isOnline: false });
+  //       }
+  //     } catch (err) {
+  //       console.error("onDisconnect error:", err.message);
+  //     }
+  //   }
+  // }
  }, wsServer);
 
 const startServer = async() => {
@@ -148,7 +136,7 @@ const startServer = async() => {
             } catch (error) {
               console.log(error.message);
             }
-          // }
+          //  }
 
           return { user: null, res, req};
         },

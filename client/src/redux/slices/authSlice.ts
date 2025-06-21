@@ -48,6 +48,7 @@ interface UserState {
   breakValue: keyof typeof BreakEnum,
   breakTimer: number,
   start: string
+  agentRecordingPage: number,
 }
 
 const initialState:UserState = {
@@ -59,6 +60,7 @@ const initialState:UserState = {
   taskFilter: TaskFilter.assigned,
   selectedDisposition: [] as string[],
   limit: 20,
+  agentRecordingPage: 1,
   productionManagerPage: 1,
   breakTimer: 0,
   start: "",
@@ -157,6 +159,9 @@ const authSlice = createSlice({
     },
     setProductionManagerPage: (state, action:PayloadAction<number>) => {
       state.productionManagerPage = action.payload
+    },
+    setAgentRecordingPage: (state, action:PayloadAction<number>) => {
+      state.agentRecordingPage = action.payload
     },
     setBreakValue: (state, action:PayloadAction<keyof typeof BreakEnum>)=> {
       state.breakValue = action.payload
@@ -274,7 +279,8 @@ const authSlice = createSlice({
       state.tasker = Tasker.group
       state.taskFilter = TaskFilter.assigned
       state.selectedDisposition = [] 
-      state.productionManagerPage= 1
+      state.productionManagerPage = 1
+      state.agentRecordingPage = 1
       state.breakTimer = 0
       state.start =  ""
       state.breakValue = BreakEnum.WELCOME
@@ -299,6 +305,7 @@ export const {
   setBreakValue,
   increamentBreakTimer,
   setBreakTimer,
-  setStart
+  setStart, 
+  setAgentRecordingPage,
 } = authSlice.actions;
 export default authSlice.reducer;

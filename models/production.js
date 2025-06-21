@@ -7,7 +7,7 @@ const productionSchema = new Schema(
     prod_history: [{
       type: {
         type: String,
-        enum: ['LUNCH','COFFEE','MEETING','TECHSUPP','CRBREAK','COACHING','HRMEETING','HANDSETNEGO','SKIPTRACING','CLINIC','PROD']
+        enum: ['LUNCH','COFFEE','MEETING','TECHSUPP','CRBREAK','COACHING','HRMEETING','HANDSETNEGO','SKIPTRACING','CLINIC','PROD','LOCK']
       },
       existing: {
         type: Boolean

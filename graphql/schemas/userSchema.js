@@ -52,11 +52,27 @@ const userTypeDefs = gql`
     total: Int
   }
 
+  type Bucket {
+    _id: ID
+    name: String
+  }
+
+  type Department {
+    _id: ID
+    name: String
+  }
+
   type DeptUser {
     _id: ID
     name: String
     user_id: String,
+    type: String
     group: ID 
+    isLock: Boolean
+    isOnline: Boolean
+    buckets: [Bucket]
+    default_target: Float
+    departments: [Department] 
   }
 
   type CampaignUser {
@@ -74,13 +90,17 @@ const userTypeDefs = gql`
     findAgents:[Users],
     getCampaignAssigned: [CampaignUser]
   }
+  type SubscriptionSuccess {
+    buckets: [ID],
+    message: String
+  }
 
   type Subscription {
-    ping: String!
+    ping: String!,
+    somethingOnAgentAccount: SubscriptionSuccess
   }
 
   type Mutation {
-
     createUser( 
       name: String!, 
       username: String!, 
@@ -106,6 +126,8 @@ const userTypeDefs = gql`
     logout: Success
     logoutToPersist(id:ID!):Success
     updateActiveStatus(id:ID!): Success
+    unlockUser(id:ID!): Success
+    authorization(password:String!):Success 
   }
 `;
 

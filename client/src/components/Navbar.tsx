@@ -1,4 +1,4 @@
-import { gql, useMutation, useQuery, useSubscription } from "@apollo/client"
+import { gql, useApolloClient, useMutation, useQuery, useSubscription } from "@apollo/client"
 import { BsFillPersonVcardFill } from "react-icons/bs";
 import { IoMdLogOut } from "react-icons/io";
 import {  useCallback, useEffect, useRef, useState } from "react";
@@ -25,11 +25,8 @@ type UserInfo = {
   user_id:string
 };
 
-
-
-
 const myUserInfos = gql` 
-  query GetMe { 
+  query getMe { 
     getMe {
       _id
       name
@@ -91,6 +88,19 @@ const UPDATE_PRODUCTION = gql`
   }
 `
 
+interface AgentLock {
+  message: string
+  agentId: string
+}
+const LOCK_AGENT = gql`
+  subscription AgentLocked {
+    agentLocked {
+      message
+      agentId
+    }
+  }
+`
+
 const Navbar = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
@@ -98,6 +108,7 @@ const Navbar = () => {
   const modalRef = useRef<HTMLDivElement>(null)
   const {error} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
   const [poPupUser, setPopUpUser] = useState<boolean>(false) 
+  const client = useApolloClient()
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: ()=> {
       dispatch(setDeselectCustomer())
@@ -105,17 +116,30 @@ const Navbar = () => {
   })
   const [popUpBreak, setPopUpBreak] = useState<boolean>(false)
 
-
-
   useSubscription(DUMMY_SUB)
 
+
+  useSubscription<{agentLocked:AgentLock}>(LOCK_AGENT, {
+    onData: ({data}) => {
+      if(data) {
+        if(data.data?.agentLocked.message === "AGENT_LOCK" && data.data?.agentLocked.agentId === userLogged._id ){
+          setTimeout(()=> {
+            client.refetchQueries({
+              include: ['getMe']
+            })
+          },50)
+        }
+      }
+    }
+  })
+
+ 
   const [logout, {loading}] = useMutation(LOGOUT,{
     onCompleted: () => {
       dispatch(setLogout())
       navigate('/')
     },
   })
-
 
   const [confirmation, setConfirmation] = useState<boolean>(false)
 
@@ -243,11 +267,11 @@ const Navbar = () => {
         <div className="p-2 bg-blue-500 flex justify-between items-center ">
           <div className="flex text-2xl gap-2 font-medium items-center text-white italic">
             <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
-            Centralize Collection System
-            {/* {
-              (userLogged.type === "AGENT") && 
+            Centralized Collection System
+            {
+              (userLogged.type === "AGENT") && breakValue !== BreakEnum.WELCOME && 
               <IdleAutoLogout/> 
-            } */}
+            }
 
           </div>
           <div className="p-1 flex gap-2 text-xs z-50">
