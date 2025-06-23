@@ -2,9 +2,9 @@
 
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { useEffect, useState } from "react"
-import Confirmation from "./Confirmation"
+import Confirmation from "../../components/Confirmation"
 import { PiNotePencilBold, PiTrashFill } from "react-icons/pi";
-import SuccessToast from "./SuccessToast"
+import SuccessToast from "../../components/SuccessToast"
 
 interface Success {
   success: boolean;

@@ -38,17 +38,18 @@ interface UserState {
   search: search
   page: number
   selectedCustomer:Search
-  selectedGroup: string,
+  selectedGroup: string
   selectedAgent: string
   tasker: Tasker
   taskFilter: TaskFilter
   selectedDisposition: string[] 
   limit: number
   productionManagerPage: number
-  breakValue: keyof typeof BreakEnum,
-  breakTimer: number,
+  breakValue: keyof typeof BreakEnum
+  breakTimer: number
   start: string
-  agentRecordingPage: number,
+  agentRecordingPage: number
+  adminUsersPage: number
 }
 
 const initialState:UserState = {
@@ -64,6 +65,7 @@ const initialState:UserState = {
   productionManagerPage: 1,
   breakTimer: 0,
   start: "",
+  adminUsersPage: 1,
   breakValue: BreakEnum.WELCOME,
   userLogged: {
     _id: "",
@@ -215,6 +217,9 @@ const authSlice = createSlice({
     setStart: (state, action:PayloadAction<string>)=> {
       state.start = action.payload
     },
+    setAdminUsersPage: (state, action:PayloadAction<number>) => {
+      state.adminUsersPage = action.payload
+    },
     setLogout: (state) => {
       state.selectedCustomer = {
         _id: "",
@@ -284,6 +289,7 @@ const authSlice = createSlice({
       state.breakTimer = 0
       state.start =  ""
       state.breakValue = BreakEnum.WELCOME
+      state.adminUsersPage = 1
     }
   },
 });
@@ -307,5 +313,6 @@ export const {
   setBreakTimer,
   setStart, 
   setAgentRecordingPage,
+  setAdminUsersPage,
 } = authSlice.actions;
 export default authSlice.reducer;

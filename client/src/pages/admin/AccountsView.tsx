@@ -1,9 +1,14 @@
 import { gql, useQuery } from "@apollo/client"
 import { Link, useNavigate } from "react-router-dom"
-import { Users } from "../../middleware/types"
 import { FaCircle } from "react-icons/fa";
 import { useEffect, useState } from "react";
 import { CiSearch } from "react-icons/ci";
+import { useSelector } from "react-redux";
+import { RootState, useAppDispatch } from "../../redux/store";
+import Pagination from "../../components/Pagination";
+import { setAdminUsersPage } from "../../redux/slices/authSlice";
+import { BsFillUnlockFill, BsFillLockFill } from "react-icons/bs";
+
 
 interface DeptBranchBucket {
   id: string
@@ -37,8 +42,8 @@ const GET_ALL_BUCKET = gql`
 `
 
 const GET_ALL_USERS = gql`
-  query Query($page: Int!) {
-    getUsers(page:$page) {
+  query Query($page: Int!,$limit: Int!) {
+    getUsers(page:$page, limit: $limit) {
       total
       users {
         _id
@@ -49,6 +54,7 @@ const GET_ALL_USERS = gql`
         branch
         change_password
         active
+        isLock
         isOnline
         buckets
         createdAt
@@ -58,8 +64,8 @@ const GET_ALL_USERS = gql`
   }
 `
 const FIND_QUERY = gql` 
-  query Query($search: String!, $page: Int!) {
-    findUsers(search: $search, page:$page ) {
+  query Query($search: String!, $page: Int!, $limit: Int!) {
+    findUsers(search: $search, page:$page, limit: $limit ) {
       total
       users {
         _id
@@ -68,6 +74,7 @@ const FIND_QUERY = gql`
         type
         departments
         branch
+        isLock
         change_password
         active
         isOnline
@@ -79,7 +86,29 @@ const FIND_QUERY = gql`
   }
 `
 
+interface Users  {
+  _id: string;
+  type: "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" | "MIS";
+  branch: string;
+  username: string;
+  name: string;
+  change_password: boolean
+  departments: string[]
+  buckets: string[]
+  isOnline: boolean
+  isLock: boolean
+  active: boolean
+  createdAt: string
+  user_id: string
+}
+
+
 const AccountsView = () => {
+  const [page, setPage] = useState<string>('1')
+  const [search, setSearch] = useState("")
+  const navigate = useNavigate()
+  const dispatch = useAppDispatch()
+  const {limit, adminUsersPage} = useSelector((state:RootState)=> state.auth)
 
   const {data:getDeptData} = useQuery<{getDepts:DeptBranchBucket[]}>(GET_DEPTS)
   const {data:getBranchData} = useQuery<{getBranches:DeptBranchBucket[]}>(GET_BRANCHES)
@@ -87,7 +116,7 @@ const AccountsView = () => {
   const [deptObject, setDeptObject] = useState<{[key:string]:string}>({})
   const [branchObject, setBranchObject] = useState<{[key:string]:string}>({})
   const [bucketObject, setBucketObject] = useState<{[key:string]:string}>({})
-
+  const [totalPage, setTotalPage] = useState<number>(1)
 
 
   useEffect(()=> {
@@ -115,14 +144,23 @@ const AccountsView = () => {
   },[getDeptData, getBranchData, getAllBucketsData])
 
 
-  const [page] = useState<number>(1)
-  const [search, setSearch] = useState("")
-  const navigate = useNavigate()
 
-  const {data, refetch, } = useQuery<{getUsers:{users:Users[],total:number}}>(GET_ALL_USERS,{variables: {page: page},skip: !!search })
-  const {data:searchData, } = useQuery<{findUsers:{users:Users[],total:number}}>(FIND_QUERY,{variables: { search, page}, skip: !search})
+
+  const {data, refetch } = useQuery<{getUsers:{users:Users[],total:number}}>(GET_ALL_USERS,{variables: {page: adminUsersPage, limit }, skip: !!search })
+  const {data:searchData } = useQuery<{findUsers:{users:Users[],total:number}}>(FIND_QUERY,{variables: { search, page: adminUsersPage, limit}, skip: !search})
   const users = search ? searchData?.findUsers?.users || [] : data?.getUsers?.users || [];
   
+
+
+  useEffect(()=> {  
+    if(data || searchData) {
+      const dataExistingPages = Math.ceil((data?.getUsers?.total || 1) / limit )
+      const searchExistingPages = Math.ceil((searchData?.findUsers.total || 1) / limit)
+      const pageExists = dataExistingPages | searchExistingPages
+      setTotalPage(pageExists)
+    }
+
+  },[data,searchData])
 
 
   useEffect(()=> {
@@ -131,100 +169,96 @@ const AccountsView = () => {
 
 
   return (
-    <div className="h-full overflow-y-auto">
-      <div className="p-5 flex justify-between">
-        <h1 className="text-2xl font-medium text-slate-500">Account</h1>
+    <div className="h-full flex flex-col overflow-hidden p-2">
+      <div className=" flex justify-between p-3">
+        <h1 className="text-2xl font-medium text-slate-500">Accounts</h1>
         <Link to="/register">
           <button type="button" className="focus:outline-none text-white bg-green-700   hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 cursor-pointer">Create Account</button>
         </Link>
       </div>
-      <form className="max-w-md mx-auto">   
-        <label htmlFor="default-search" className="mb-2 text-sm font-medium text-gray-900 sr-only dark:text-white">Search</label>
-        <div className="relative">
-            <div className="absolute inset-y-0 start-0 flex items-center ps-3 pointer-events-none">
+      <div className="flex justify-center ">
+
+        <label className="flex border border-slate-500 rounded-xl w-96">
+            <div className=" inset-y-0 start-0 flex items-center px-2 pointer-events-none">
               <CiSearch />
             </div>
             <input 
             type="search" 
             id="default-search" 
             name="default-search"
-            className="block w-full p-4 ps-10 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:border-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500" 
+            autoComplete="off"
+            className="p-2 w-full focus:outline-none" 
             placeholder="Search . . ." 
             onChange={(e)=> setSearch(e.target.value)}
             required />
+        </label>
+      </div>
+
+      <div className=" h-full overflow-y-hidden flex flex-col mx-5 mt-2 ">
+        <div className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-11 py-2 font-bold px-2">
+          <div>Name</div>
+          <div>Username</div>      
+          <div>Agent ID</div>      
+          <div>Type</div>
+          <div>Branch</div>
+          <div>Campaign</div>
+          <div>Bucket</div>
+          <div>Active</div>
+          <div>Online</div>
+          <div>Lock</div>
+          <div></div>
         </div>
-      </form>
-      <div className=" p-5">
-        <table className="w-full text-sm text-left rtl:text-right text-gray-500 dark:text-gray-400">
-          <thead className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400">
-            <tr>
-              <th scope="col" className="px-6 py-3">
-                Name
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Username
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Type
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Branch
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Campaign
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Bucket
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Active
-              </th>
-              <th scope="col" className="px-6 py-3">
-                Online
-              </th>
-              <th scope="col" className="px-6 py-3">
-                  
-              </th>
-            </tr>
-          </thead>
-          <tbody>
+        <div className="overflow-y-auto">
           {
             users?.map((user)=> 
-              <tr key={user._id} className="odd:bg-white odd:dark:bg-gray-900 even:bg-gray-50 even:dark:bg-gray-800 border-b dark:border-gray-700 border-gray-200 hover:bg-slate-200 hover:text-black">
-                <th scope="row" className="px-6 py-4 font-medium text-gray-900 whitespace-nowrap dark:text-white">
+              <div key={user._id} className="grid grid-cols-11 text-xs py-2 hover:bg-blue-50 even:bg-gray-50">
+                <div className="font-medium px-2 text-gray-900 whitespace-nowrap dark:text-white">
                   {user.name.toUpperCase()}
-                </th>
-                <td className="px-6 py-4">
+                </div>
+                <div>
                   {user.username}
-                </td>
-                <td className="px-6 py-4">
+                </div>
+                <div>
+                  {user.user_id}
+                </div>
+                <div >
                   {user.type}
-                </td>
-                <td className="px-6 py-4 uppercase">
+                </div>
+                <div >
                   {branchObject[user.branch]}
-                </td>
-                <td className="px-6 py-4">
+                </div>
+                <div >
                   {user.departments?.map((e)=> deptObject[e]?.toString()).join(', ')}
-                </td>
-                <td className="px-6 py-4">
+                </div>
+                <div >
                   {user.buckets?.map(b => bucketObject[b]?.toString()).join(', ')}
-                </td>
-                <td className="px-6 py-4">
+                </div>
+                <div >
                   <FaCircle className={`${user.active ? "text-green-400" : "text-gray-950"} `} />
-                </td>
-                <td className="px-6 py-4">
+                </div>
+                <div >
                 
                   <FaCircle className={`${user.isOnline ? "text-green-400" : "text-gray-950"} `} />
               
-                </td>
-                <td className="px-6 py-4">
+                </div>
+                <div className="text-xl">
+                  {
+                    user.isLock ?
+                    <BsFillLockFill className="text-red-400" />
+                    :
+                    <BsFillUnlockFill /> 
+                  }
+                </div>
+                <div className="flex justify-center">
                   <Link to="/user-account" state={user} className="font-medium text-blue-600 dark:text-blue-500 hover:underline">View</Link>
-                </td>
-              </tr>
+                </div>
+              </div>
             )
           }
-          </tbody>
-        </table>
+        </div>
+      </div>
+      <div className="">
+        <Pagination value={page} onChangeValue={(e) => setPage(e)} onKeyDownValue={(e)=> dispatch(setAdminUsersPage(e))} totalPage={totalPage} currentPage={adminUsersPage}/>
       </div>
     </div>
   )

@@ -1,4 +1,4 @@
-import AgentTimer from "../../components/AgentTimer"
+import AgentTimer from "./AgentTimer"
 import DailyCollections from "./DailyCollections"
 import MixedChartView from "./MixedChartView"
 import MixedChartMonthView from "./MixedChartMonthView"

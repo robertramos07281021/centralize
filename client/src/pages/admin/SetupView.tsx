@@ -1,6 +1,6 @@
-import BranchSection from "../../components/BranchSection"
-import BucketSection from "../../components/BucketSection"
-import DepartmentSection from "../../components/DepartmentSection"
+import BranchSection from "./BranchSection"
+import BucketSection from "./BucketSection"
+import DepartmentSection from "./DepartmentSection"
 
 
 const SetupView = () => {

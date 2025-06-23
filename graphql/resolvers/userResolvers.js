@@ -61,25 +61,28 @@ const userResolvers = {
         throw new CustomError(error.message, 500)
       }
     },
-    findUsers: async(_,{search, page}) => {
+    findUsers: async(_,{search, page, limit}) => {
       try {
+
+        const searchFilter = {$regex: search, $options: "i"}
         const res = await User.aggregate([
           {
             $match: { 
               $or: [
-                {name: {$regex: search, $options: "i"} },
-                {username: {$regex: search, $options: "i"}},
-                {type: {$regex: search, $options: "i"}},
-                {branch: {$regex: search, $options: "i"}},
-                {department: {$regex: search, $options: "i"}}
+                { name:  searchFilter },
+                { username: searchFilter },
+                { type: searchFilter },
+                { branch: searchFilter },
+                { department: searchFilter },
+                { user_id: searchFilter }
               ]
             }
           },
           {
             $facet: {
               users: [
-                { $skip: (page - 1) * 20 },
-                { $limit: 20 }
+                { $skip: (page - 1) * limit },
+                { $limit: limit }
               ],
               total: [{$count: "totalUser"}]
             }
@@ -263,7 +266,7 @@ const userResolvers = {
         const validatePassword = await bcrypt.compare(password, user.password)
 
         if(!validatePassword) {
-          if(user.type === "AGENT") {
+          if(user.type === "AGENT" && !user.isOnline) {
             user.attempt_login++;
             if(user.attempt_login >= 2) {
               user.isLock = true
@@ -337,7 +340,7 @@ const userResolvers = {
         if(!findUser) {
           throw CustomError("User not found",404)
         }
-        // res.clearCookie('connect.sid');
+        res.clearCookie('connect.sid');
         res.clearCookie('token');
 
         return { success: true, message: "Successfully logout"}
@@ -397,7 +400,7 @@ const userResolvers = {
           throw CustomError("User not found",404)
         }
 
-        // res.clearCookie('connect.sid');
+        res.clearCookie('connect.sid');
         res.clearCookie('token');
 
         return {
@@ -451,7 +454,6 @@ const userResolvers = {
     },
     somethingOnAgentAccount: {
       subscribe:() => pubsub.asyncIterableIterator([SOMETHING_ON_AGENT_ACCOUNT])
-      
     }
   }
 };

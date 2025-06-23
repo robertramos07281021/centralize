@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { gql, useMutation, useQuery } from "@apollo/client"
-import {  Department, Success } from "../middleware/types"
+import {  Department, Success } from "../../middleware/types"
 import { useEffect, useMemo, useState } from "react";
-import Confirmation from "./Confirmation";
+import Confirmation from "../../components/Confirmation";
 import { PiNotePencilBold, PiTrashFill  } from "react-icons/pi";
-import SuccessToast from "./SuccessToast";
+import SuccessToast from "../../components/SuccessToast";
 
 interface Bucket {
   name: string

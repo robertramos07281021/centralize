@@ -41,6 +41,7 @@ const userTypeDefs = gql`
     buckets: [ID]
     isOnline: Boolean
     active: Boolean
+    isLock: Boolean
     createdAt: DateTime
     user_id: String
     group: ID
@@ -70,6 +71,7 @@ const userTypeDefs = gql`
     group: ID 
     isLock: Boolean
     isOnline: Boolean
+    attempt_login: Int
     buckets: [Bucket]
     default_target: Float
     departments: [Department] 
@@ -81,11 +83,11 @@ const userTypeDefs = gql`
   }
 
   type Query {
-    getUsers(page: Int!): PaginatedUsers!
+    getUsers(page: Int!, limit: Int!): PaginatedUsers!
     getUser(id: ID): Users
     getMe: Users
     getAomUser: [Users]
-    findUsers(search: String!, page: Int!): PaginatedUsers!
+    findUsers(search: String!, page: Int!, limit: Int!): PaginatedUsers!
     findDeptAgents:[DeptUser]
     findAgents:[Users],
     getCampaignAssigned: [CampaignUser]

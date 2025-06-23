@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { gql, useMutation, useQuery } from "@apollo/client"
 import {  useRef, useState } from "react"
-import { Success } from "../middleware/types"
+import { Success } from "../../middleware/types"
 import { PiNotePencilBold, PiTrashFill  } from "react-icons/pi";
-import Confirmation from "./Confirmation"
-import SuccessToast from "./SuccessToast"
+import Confirmation from "../../components/Confirmation"
+import SuccessToast from "../../components/SuccessToast"
 
 
 const BRANCH_QUERY = gql`

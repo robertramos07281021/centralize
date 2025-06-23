@@ -71,6 +71,7 @@ const taskTypeDefs = gql`
     members: [ID]
   }
 
+
   type Subscription {
     somethingChanged: SubsribeSuccess
   }

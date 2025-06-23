@@ -23,6 +23,7 @@ const TL_AGENT = gql`
       type
       isOnline
       isLock
+      attempt_login
       buckets {
         name
       }
@@ -50,6 +51,7 @@ interface TLAgent {
   default_target: number
   isOnline: boolean
   isLock: boolean
+  attempt_login: number
   buckets: Bucket[]
   departments: Department[]
 }
@@ -123,6 +125,8 @@ const AgentView = () => {
     success: false,
     message: ""
   })
+  
+  
 
   useSubscription<{somethingOnAgentAccount:{buckets:string[],message: string}}>(SOMETHING_LOCK,{
     onData: ({data}) => {
@@ -208,28 +212,22 @@ const AgentView = () => {
     }
   }
 
-  const onClickAction = (id:string | null, userId:string | null,lock: boolean,  eventMethod:keyof typeof ButtonType) => {
-    const isTrue = eventMethod === ButtonType.RESET
-    const message = isTrue ? "reset" : "unlock"
-
-    if((lock && !isTrue) || isTrue) {
+  const onClickAction = (id:string | null, userId:string | null,lock: boolean,  eventMethod:keyof typeof ButtonType, attempt: number) => {
+    const message = eventMethod === ButtonType.RESET ? "reset" : "unlock"
+    if((lock && eventMethod === ButtonType.UNLOCK && attempt === 0) || eventMethod === ButtonType.RESET) {
       setIsAuthorize(true)
-    } else {
-      return
-    }
- 
-    setAuthentication({
-      yesMessage: message,
-      event: () => { eventType[eventMethod]?.(id,userId)},
-      no: ()=> {setIsAuthorize(false)},
-      invalid: ()=> {
-        setSuccess({
-          success: true,
-          message: "Password is incorrect"
-        })
-      }
-    })
-
+      setAuthentication({
+        yesMessage: message,
+        event: () => { eventType[eventMethod]?.(id,userId)},
+        no: ()=> {setIsAuthorize(false)},
+        invalid: ()=> {
+          setSuccess({
+            success: true,
+            message: "Password is incorrect"
+          })
+        }
+      })
+    } 
   }
 
   return (
@@ -254,21 +252,20 @@ const AgentView = () => {
         <div className="h-full overflow-hidden m-5">
           <div className="grid grid-cols-9 font-medium text-slate-500 bg-slate-100">
             <div className="px-2 py-1">Name</div>
-            <div className="px-2 py-1 truncate">Agent ID</div>
-            <div className="px-2 py-1 truncate">Bucket</div>
-            <div className="px-2 py-1 truncate">Campaign</div>
-            <div className="px-2 py-1 truncate">Online</div>
-            <div className="px-2 py-1 truncate">Lock</div>
-            <div className="px-2 py-1 truncate">Status</div>
-            <div className="px-2 py-1 truncate">Target</div>
-            <div className="px-2 py-1 truncate">Action</div>
+            <div className="py-1 truncate">Agent ID</div>
+            <div className="py-1 truncate">Bucket</div>
+            <div className="py-1 truncate">Campaign</div>
+            <div className="py-1 truncate">Online</div>
+            <div className="py-1 truncate">Lock</div>
+            <div className="py-1 truncate">Status</div>
+            <div className="py-1 truncate">Target</div>
+            <div className="py-1 truncate">Action</div>
           </div>
           <div className="h-full overflow-y-auto">
             {
               agentProduction.map((e) => {
                 const findAgentProd = agentProdData?.getAgentProductions.find(y=> y.user === e._id)
                 const findExsitingStatus = findAgentProd?.prod_history.find(x=> x.existing === true)
-                 
                 return e.type === "AGENT" && (
                   
                   <div key={e._id} className="px-2 py-1 grid grid-cols-9 text-sm text-gray-500 font-normal even:bg-slate-50 hover:bg-blue-50">
@@ -295,14 +292,14 @@ const AgentView = () => {
                     <div className="pl-2 flex gap-5">
                       <div className="relative">
                         <button className="bg-blue-500 rounded-full py-1 px-1 text-white hover:scale-110 duration-100 ease-in-out cursor-pointer peer"
-                        onClick={()=> onClickAction(null, e._id,e.isLock, ButtonType.UNLOCK)}
+                        onClick={()=> onClickAction(null, e._id,e.isLock, ButtonType.UNLOCK, e.attempt_login)}
                         ><BsFillKeyFill  /></button>
                         <div className="absolute text-nowrap px-1 bg-white z-50 left-full top-0 ml-2 peer-hover:block hidden border">Unlock Agent</div>
                       </div>
 
                       <div className="relative">
                         <button className="bg-orange-500 rounded-full py-1 px-1 text-white hover:scale-110 duration-100 ease-in-out cursor-pointer peer"
-                        onClick={()=> onClickAction(findAgentProd?._id || null, e._id, e.isLock, ButtonType.RESET)}
+                        onClick={()=> onClickAction(findAgentProd?._id || null, e._id, e.isLock, ButtonType.RESET, e.attempt_login)}
                         ><RxReset /></button>
                         <div className="absolute text-nowrap px-1 bg-white z-50 left-full top-0 ml-2 peer-hover:block hidden border">Reset Target</div>
                       </div>

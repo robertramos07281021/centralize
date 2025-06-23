@@ -314,6 +314,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
       setConfirm(false)
       setTaskToAdd([])
       setHandleCheckAll(false)
+      setRequired(false)
       setSuccess({
         success:true,
         message: "Task successfully removed"
@@ -322,24 +323,24 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   })
 
   const handleClickDeleteGroupTaskButton = ()=> {
-    if(selectAllCustomerAccountData && selectAllCustomerAccountData?.selectAllCustomerAccount?.length < 1 ) {
+    if(taskToAdd.length === 0) {
       setRequired(true)
     } else {
-    setConfirm(true)
-    setModalProps({
-      message: `Remove this task?`,
-      toggle: "DELETE",
-      yes: async() => {
-        try {
-          await deleteGroupTask({variables: {caIds: taskToAdd}})
-        } catch (_error) {
-          dispatch(setServerError(true))
+      setConfirm(true)
+      setModalProps({
+        message: `Remove this task?`,
+        toggle: "DELETE",
+        yes: async() => {
+          try {
+            await deleteGroupTask({variables: {caIds: taskToAdd}})
+          } catch (_error) {
+            dispatch(setServerError(true))
+          }
+        },
+        no: () => {
+          setConfirm(false)
         }
-      },
-      no: () => {
-        setConfirm(false)
-      }
-    })
+      })
     }
   }
 

@@ -397,7 +397,7 @@ const customerResolver = {
         
         const search = [
           { "account_bucket._id": bucket },
-          { "dispoType.code" : {$ne: "PAID"} }
+          { "dispoType.code" : {$nin: ["PAID","DNC"]} }
         ];
      
         if (disposition && disposition.length > 0) {

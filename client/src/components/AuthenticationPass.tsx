@@ -6,14 +6,12 @@ import { useMutation } from "@apollo/client";
 import { useAppDispatch } from "../redux/store";
 import { setServerError } from "../redux/slices/authSlice";
 
-
 interface modalComponents {
   yesMessage: string
   no: ()=> void
   event: () => void
   invalid: () => void
 }
-
 
 const AUTHORIZATION = gql`
   mutation authorization($password: String!) {
@@ -23,7 +21,6 @@ const AUTHORIZATION = gql`
     }
   }
 `
-
 const AuthenticationPass:React.FC<modalComponents> = ({yesMessage, event, no, invalid}) => {
   const [eye,setEye] = useState<boolean>(false)
   const handleEyeClick = () => {
@@ -64,6 +61,11 @@ const AuthenticationPass:React.FC<modalComponents> = ({yesMessage, event, no, in
             value={password}
             className="outline-none text-sm w-full"
             onChange={(e)=> setPassword(e.target.value)}
+            onKeyDown={async (e) => {
+              if (e.key === "Enter") {
+                await authorization({ variables: { password } });
+              }
+            }}
           />
           {
             eye ? (
@@ -76,10 +78,11 @@ const AuthenticationPass:React.FC<modalComponents> = ({yesMessage, event, no, in
         </label>
 
         <div className="flex gap-5 lg:text-xs 2xl:text-sm">
-          <button className="border py-2 px-5 bg-red-500 rounded text-white hover:bg-red-700" onClick={handleAuthSubmit}>
+          <button className="border py-2 px-5 bg-red-500 rounded text-white hover:bg-red-700"   
+          onClick={handleAuthSubmit}>
             Yes, I want to {yesMessage}
           </button>
-          
+
           <button className="border py-1 px-5 bg-gray-500 rounded text-white hover:bg-gray-700" onClick={no}>
             No, Thanks
           </button>

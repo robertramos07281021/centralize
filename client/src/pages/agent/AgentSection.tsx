@@ -1,8 +1,8 @@
 import { useQuery } from '@apollo/client'
 import gql from 'graphql-tag'
 import { useEffect, useState } from 'react'
-import { useAppDispatch } from '../redux/store'
-import { setAgent } from '../redux/slices/authSlice'
+import { useAppDispatch } from '../../redux/store'
+import { setAgent } from '../../redux/slices/authSlice'
 
 
 

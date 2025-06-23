@@ -90,7 +90,8 @@ const Login = () => {
   const [password, setPassword] = useState<string>("") 
   const [already, setAlready] = useState<boolean>(false)
   const [lock, setLock] = useState<boolean>(false)
-
+  const [invalid, setInvalid] = useState<boolean>(false)
+  
 
 
 
@@ -137,6 +138,32 @@ const Login = () => {
       const errorMessage = ['Invalid','Already','Lock']
       if(!errorMessage.includes(error.message)) {
         dispatch(setServerError(true))
+      } else {
+        const message = error.message
+        if(message === 'Invalid') {
+          setRequired(false)
+          setInvalid(true)
+          setAlready(false)
+          setLock(false)
+          setUsername("")
+          setPassword("")
+        }
+        if(message === 'Already') {
+          setRequired(false)
+          setInvalid(false)
+          setAlready(true)
+          setLock(false)
+          setUsername("")
+          setPassword("")
+        }
+        if(message === 'Lock') {
+          setRequired(false)
+          setInvalid(false)
+          setAlready(false)
+          setLock(true)
+          setUsername("")
+          setPassword("")
+        }
       }
     }
   })  
@@ -149,36 +176,12 @@ const Login = () => {
     e.preventDefault()
     if(!loginForm?.current?.checkValidity()){
       setRequired(true)
+      setInvalid(false)
+      setAlready(false)
+      setLock(false)
       return
     }
-    try {
-      await login({ variables: { username, password } })
-    } catch (error) {
-      if (error instanceof Error) {
-        const newError = error?.message 
-        if(newError === 'Invalid') {
-          setRequired(false)
-          setRequired(true)
-          setAlready(false)
-          setUsername("")
-          setPassword("")
-        }
-        if(newError === 'Already') {
-          setRequired(false)
-          setAlready(true)
-          setUsername("")
-          setLock(false)
-          setPassword("")
-        }
-        if(newError === 'Lock') {
-          setRequired(false)
-          setAlready(false)
-          setUsername("")
-          setLock(true)
-          setPassword("")
-        }
-      }
-    }
+    await login({ variables: { username, password } })
   }
 
   useEffect(()=> {
@@ -204,6 +207,7 @@ const Login = () => {
     }
   },[dispatch, userLogged, logout, selectedCustomer,deselectTask])
 
+
   if(loading) return <Loading/>
 
   return (
@@ -221,7 +225,7 @@ const Login = () => {
           <h1 className="text-2xl font-medium dark:text-white ">Centralize Collection System</h1>
         </div>
         <div className="flex gap-5 w-full flex-col px-10">
-          { required &&
+          { invalid &&
             <h1 className="text-xs text-center text-red-500 font-medium">Incorrect username or password.</h1>
           }
           { already &&
@@ -230,6 +234,10 @@ const Login = () => {
           {
             lock &&
             <h1 className="text-xs text-center text-red-500 font-medium">Account has been lock.</h1>
+          }
+          {
+            required &&
+            <h1 className="text-xs text-center text-red-500 font-medium">All fields are required</h1>
           }
           <div className="w-full">
             <label>

@@ -1,8 +1,10 @@
 import { useLocation } from "react-router-dom"
-import UpdateUserForm from "../../components/UpdateUserForm"
+import UpdateUserForm from "./UpdateUserForm"
 import { gql, useQuery } from "@apollo/client"
 import { ModifyRecords } from "../../middleware/types"
 import { useEffect } from "react"
+import {BsFillLockFill } from "react-icons/bs";
+
 
  const MODIFY_RECORD_QUERY = gql`
   query Query($id: ID!) {
@@ -21,18 +23,19 @@ const UserView = () => {
   useEffect(()=> {
     refetch()
   },[state, refetch])
-
+  console.log(state)
   return (
-    <div className="p-5 h-screen flex flex-col">
-      <h1 className="text-2xl font-medium text-slate-500">User Account</h1>
-      <div className="min-h-140 flex items-center">
-        <div className="h-full w-full grid grid-cols-3 ">
-          <UpdateUserForm state={state}/>
-          <div className="rounded-xl border h-full border-slate-300 py-5 px-2 flex flex-col overflow-y-auto">
-            <div className="">
-              
-            </div>
-            <div className="flex flex-col h-125 overflow-y-auto">
+    <>
+      <div className="p-5 h-screen flex flex-col overflow-hidden">
+        <h1 className="text-2xl font-medium text-slate-500 capitalize">{state.name}</h1>
+        <div className="h-full flex items-center overflow-hidden">
+          <div className="h-full w-full flex ">
+            <UpdateUserForm state={state}/>
+            <div className="rounded-lg border h-full w-5/8 border-slate-300 py-2 px-2 flex flex-col overflow-y-auto">
+              <div className="grid grid-cols-2 py-1.5 px-2 odd:bg-slate-100">
+                <div>Name</div>
+                <div>Date</div>
+              </div>
               {
                 data?.getModifyReport?.map( mr => 
                   <div key={mr.id} className="grid grid-cols-2 py-1.5 px-2 odd:bg-slate-100">
@@ -45,7 +48,7 @@ const UserView = () => {
           </div>
         </div>
       </div>
-    </div>
+    </>
   )
 }
 

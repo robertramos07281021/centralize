@@ -10,8 +10,6 @@ import User from "../../models/user.js"
 const pubsub = new PubSub()
 const SOMETHING_CHANGED_TOPIC = "SOMETHING_CHANGED_TOPIC";
 
-
-
 const taskResolver = {
   Query: {
     myTasks: async(_,__,{user}) => {
@@ -150,19 +148,21 @@ const taskResolver = {
         const filterTL = findUser.find(e=> e.type === "TL" )
 
         await CustomerAccount.updateOne({_id: id},{$set: {assigned: filterTL._id}})
-
+        
         await pubsub.publish(SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
-            members: filterTL,
+            members: [filterTL._id],
             message: "TASK_SELECTION"
           },
         });
-
+    
+        
         return {
           success: true,
           message: "Successfully transfer to team leader"
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)          
       }
     }
@@ -170,7 +170,7 @@ const taskResolver = {
   Subscription: {
     somethingChanged: {
       subscribe:() => pubsub.asyncIterableIterator([SOMETHING_CHANGED_TOPIC])
-    }
+    },
 
   }
 }

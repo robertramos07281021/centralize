@@ -23,7 +23,7 @@ const LOCK = gql`
 `
 
 const IdleAutoLogout = () => {
-  const timeout = 10 * 1000;
+  const timeout = 20 * 60 * 1000;
   const dispatch = useAppDispatch()
   const timerRef = useRef<NodeJS.Timeout | null>(null)
   const [logout] = useMutation(LOGOUT)

@@ -856,7 +856,6 @@ const productionResolver = {
           }
         }
         
- 
       } catch (error) {
         throw new CustomError(error.message, 500)           
       }

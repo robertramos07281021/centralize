@@ -38,6 +38,7 @@ export type Users = {
   departments: string[]
   buckets: string[]
   isOnline: boolean
+  isLock: boolean
   active: boolean
   createdAt: string
   user_id: string

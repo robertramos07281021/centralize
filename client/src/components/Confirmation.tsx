@@ -40,6 +40,10 @@ const color = {
     title: "bg-red-500",
     button: "bg-red-500 hover:bg-red-600 focus:ring-red-300"
   },
+  UNLOCK: {
+    title: "bg-red-500",
+    button: "bg-red-500 hover:bg-red-600 focus:ring-red-300"
+  }
 }
 
 type toggleType = keyof typeof color

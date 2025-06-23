@@ -3,7 +3,7 @@ import { useSelector } from "react-redux"
 import { RootState } from "../redux/store"
 import { accountsNavbar } from "../middleware/exports.ts"
 import gql from "graphql-tag"
-import { useApolloClient, useQuery, useSubscription } from "@apollo/client"
+import {  useApolloClient, useQuery, useSubscription } from "@apollo/client"
 
 interface MyTask {
   case_id: string
@@ -24,8 +24,8 @@ interface SubSuccess {
 }
   
 
-const SOMETHING_NEW_IN_TASK = gql`
-  subscription somethingChanged {
+const SOMETHING_ESCALATING = gql`
+  subscription somethingEscalating {
     somethingChanged {
       members
       message
@@ -45,24 +45,25 @@ const TASK_CHANGING = gql`
 const NavbarExtn = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
-    const client = useApolloClient()
+  const client = useApolloClient()
+  const {data:myTask} = useQuery<{myTasks:MyTask[]}>(MY_TASK)
 
-  useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK, {
-    onData: (data)=> {
+  useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_ESCALATING, {
+    onData: ({data})=> {
       if(data) {
-        if(data.data.data?.somethingChanged.message === "TASK_SELECTION" && data.data.data.somethingChanged.members.toString().includes(userLogged._id)) {
+        if(data.data?.somethingChanged.message === "TASK_SELECTION" && data.data?.somethingChanged.members.toString().includes(userLogged._id)) {
           client.refetchQueries({
             include: ['myTasks']
           })
         }
       }
-    }
+    },
   })
   
   useSubscription<{taskChanging:SubSuccess}>(TASK_CHANGING, {
-    onData: (data)=> {
+    onData: ({data})=> {
       if(data) {
-        if(data.data.data?.taskChanging.message === "TASK_CHANGING" && data.data.data.taskChanging.members.toString().includes(userLogged._id)) {
+        if(data.data?.taskChanging.message === "TASK_CHANGING" && data.data?.taskChanging.members.toString().includes(userLogged._id)) {
           client.refetchQueries({
             include: ['myTasks']
           })
@@ -75,7 +76,6 @@ const NavbarExtn = () => {
 
   if (!userType || !accountsNavbar[userType]) return null; 
 
-  const {data:myTask} = useQuery<{myTasks:MyTask[]}>(MY_TASK)
   const length = myTask?.myTasks.length || 0
 
   return (

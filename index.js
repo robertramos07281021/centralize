@@ -45,6 +45,8 @@ import recordingTypeDefs from "./graphql/schemas/recordingsSchema.js";
 const app = express()
 connectDB()
 
+
+
 app.use(cors({
   origin: true,
   credentials: true,
@@ -77,38 +79,38 @@ const wsServer = new WebSocketServer({
   path: '/graphql',
 });
 
-
 useServer({ schema,
   context: async (ctx, msg, args) => {
     const cookieHeader  = ctx.extra.request.headers.cookie || '';
 
     const cookies = cookie.parse(cookieHeader)
+    let user = null
 
     const token = cookies.token
     if (token) {
       try {
         const decoded = jwt.verify(token, process.env.SECRET);
-        const user = await User.findById(decoded.id);
+        user = await User.findById(decoded.id);
         ctx.extra.userId = decoded.id;
         return { user };
       } catch (err) {
         console.log("WebSocket token error:", err.message);
       }
     }
-    return {user: null };
+    return {user };
   },
-  // onDisconnect: async (ctx, code, reason) => {
-  //   const userId = ctx.extra?.userId;
-  //   if (userId) {
-  //     try {
-  //       if(code === 1001 || code === 1006) {
-  //         await User.findByIdAndUpdate(userId, { isOnline: false });
-  //       }
-  //     } catch (err) {
-  //       console.error("onDisconnect error:", err.message);
-  //     }
-  //   }
-  // }
+  onDisconnect: async (ctx, code, reason) => {
+    const userId = ctx.extra?.userId;
+    if (userId) {
+      try {
+        if(code === 1001 || code === 1006) {
+          await User.findByIdAndUpdate(userId, { isOnline: false });
+        }
+      } catch (err) {
+        console.error("onDisconnect error:", err.message);
+      }
+    }
+  }
  }, wsServer);
 
 const startServer = async() => {
@@ -123,22 +125,22 @@ const startServer = async() => {
       "/graphql",
       expressMiddleware(server, {
         context: async ({ req, res }) => {
+     
           const token = req.cookies?.token;
           // const sessionUser = req.session?.user;
- 
+          let user = null
           // if (sessionUser) {
             try {
               if (token) {
                 const decoded = jwt.verify(token, process.env.SECRET);
-                const user = await User.findById(decoded.id);
+                user = await User.findById(decoded.id);
                 return { user, res, req };
               }
             } catch (error) {
               console.log(error.message);
             }
-          //  }
-
-          return { user: null, res, req};
+          // }
+          return { user, res, req};
         },
       })
     );

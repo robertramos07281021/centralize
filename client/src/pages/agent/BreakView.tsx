@@ -6,7 +6,7 @@ import { useEffect, useState } from "react"
 import { increamentBreakTimer, setBreakTimer, setBreakValue, setServerError, setStart } from "../../redux/slices/authSlice"
 import gql from "graphql-tag"
 import { useMutation } from "@apollo/client"
-import AgentTimer from "../../components/AgentTimer"
+import AgentTimer from "./AgentTimer"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
 
 

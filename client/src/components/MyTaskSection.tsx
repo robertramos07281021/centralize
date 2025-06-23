@@ -248,7 +248,6 @@ const MyTaskSection = () => {
     onData: ({data})=> {
       if(data) {
         if(data.data?.taskChanging?.message === "TASK_CHANGING" && (data.data?.taskChanging?.members?.toString().includes(userLogged._id)||data.data?.taskChanging?.members?.toString().includes(userLogged.group))) {
-      
           client.refetchQueries({
             include: ['myTasks','groupTask']
           })

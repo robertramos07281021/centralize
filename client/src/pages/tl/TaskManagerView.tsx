@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { RiArrowDownSFill, RiArrowUpSFill   } from "react-icons/ri";
 import GroupSection from "../../components/GroupSection";
 import TaskDispoSection from "./TaskDispoSection";
-import AgentSection from "../../components/AgentSection";
+import AgentSection from "../agent/AgentSection";
 import { RootState, useAppDispatch } from "../../redux/store";
 import { setAgent, setSelectedDisposition, setSelectedGroup, setServerError, setTasker, setTaskFilter, Tasker, TaskFilter } from "../../redux/slices/authSlice";
 import { useSelector } from "react-redux";

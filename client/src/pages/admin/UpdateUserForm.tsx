@@ -1,11 +1,14 @@
 
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { useEffect, useState } from "react"
-import { Success, Users } from "../middleware/types"
-import Confirmation from "./Confirmation"
+import { Success, Users } from "../../middleware/types"
+import Confirmation from "../../components/Confirmation"
 import { useLocation, useNavigate } from "react-router-dom"
-import SuccessToast from "./SuccessToast"
-import { MdKeyboardArrowDown } from "react-icons/md";
+import SuccessToast from "../../components/SuccessToast"
+import { MdKeyboardArrowDown, MdNextWeek } from "react-icons/md";
+import UserOptionSettings from "./UserOptionSettings"
+import { useAppDispatch } from "../../redux/store"
+import { setServerError } from "../../redux/slices/authSlice"
 
 
 interface modalProps {
@@ -87,6 +90,8 @@ const RESET_PASSWORD = gql`
         branch
         change_password
         buckets
+        isLock
+        active
         _id
         user_id
       }
@@ -106,6 +111,8 @@ const UPDATE_USER = gql`
         type
         departments
         branch
+        active
+        isLock
         change_password
         buckets
         _id
@@ -127,6 +134,8 @@ const STATUS_UPDATE = gql`
         type
         departments
         branch
+        active
+        isLock
         change_password
         buckets
         _id
@@ -136,10 +145,38 @@ const STATUS_UPDATE = gql`
   }
 `
 
+
+const UNLOCK_USER = gql`
+  mutation unlockUser($id: ID!) {
+    unlockUser(id: $id) {
+      message
+      success
+      user {
+        _id
+        name
+        username
+        type
+        departments
+        branch
+        change_password
+        buckets
+        isOnline
+        active
+        isLock
+        createdAt
+        user_id
+        group
+        account_type
+      }
+    }
+  }
+`
+
 const UpdateUserForm:React.FC<modalProps> = ({state}) => {
 
   const location = useLocation()
   const navigate = useNavigate()
+  const dispatch = useAppDispatch()
   const validForCampaignAndBucket = ["AGENT", "TL", "MIS"]
   const [branchObject, setBranchObject] = useState<{[key:string]:string}>({})
   const {data:branchesData} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
@@ -257,13 +294,23 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     },
   })
 
-//  ====================================================================== 
 
+  const [unlockUser] = useMutation(UNLOCK_USER, {
+    onCompleted: (res) => {
+      navigate(location.pathname, {state: {...res.unlockUser.user, newKey: 'newKey'}})
+      setSuccess({
+        success: res.unlockUser.success,
+        message: res.unlockUser.message
+      })
+    }
+  })
+
+//  ====================================================================== 
 
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "LOGOUT",
+    toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "UNLOCK",
     yes: () => {},
     no: () => {}
   })
@@ -302,7 +349,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             await updateUser({variables: {...data, id: state._id }})
             setConfirm(false)
           } catch (error) {
-           console.log(error)
+            dispatch(setServerError(true))
           }
         },
         message: "Are you sure you want to update this user?",
@@ -318,7 +365,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             await resetPassword({variables: {id: state._id}})
             setConfirm(false)
           } catch (error) {
-           console.log(error)
+            dispatch(setServerError(true))
           }
         },
         message: "Are you sure you want to reset password of this user?",
@@ -334,16 +381,33 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             await updateActiveStatus({variables: {id: state._id}})
             setConfirm(false)
           } catch (error) {
-           console.log(error)
+            dispatch(setServerError(true))
           }
         },
         message: `Are you sure you want to ${state.active ? "Deactivate" : "Activate"} of this user?`,
         toggle: "UPDATE"
       })
     },
+    UNLOCK: async()=> {
+      setConfirm(true)
+      setModalProps({
+        no:()=> {setConfirm(false); setCheck(state.active)},
+        yes:async() => { 
+          try {
+            await unlockUser({variables: {id: state._id}})
+            setConfirm(false)
+          } catch (error) {
+            console.log(error)
+            dispatch(setServerError(true))
+          }
+        },
+        message: `Are you sure you want to unlock this user?`,
+        toggle: "UNLOCK"
+      })
+    }
   }
 
-  const handleSubmit = (action: "UPDATE" | "RESET" | "STATUS",status:boolean) => {
+  const handleSubmit = (action: "UPDATE" | "RESET" | "STATUS" | "UNLOCK",status:boolean) => {
     submitValue[action]?.()
     if(action === "STATUS") {
       setCheck(status)
@@ -365,9 +429,9 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
         success?.success &&
         (<SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>)
       }
-      <div className="px-5 py-2 w-full grid grid-cols-2 gap-10 col-span-2">
+      <div className="px-5 w-full grid grid-cols-2 gap-10 col-span-2">
    
-        <div className=" w-full  flex flex-col gap-2 items-center justify-center ">
+        <div className=" w-full flex flex-col gap-2 py-5">
           {
             required && 
           <div className="text-center text-xs text-red-500">All fields are required.</div>
@@ -520,28 +584,6 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             }
           </div>
 
-          {/* <label className="w-full">
-            <p className=" text-base font-medium text-slate-500">Bucket</p>
-            <select
-              id="bucket"
-              name="bucket"
-              value={data?.buckets || ""}
-              // onChange={(e)=> setData({...data,buckets: e.target.value})}
-              disabled={!isUpdate || !anabled.toString().includes(data.type)}
-              className={`
-            
-                  // (data?.departments?.trim() === "") || !anabled.toString().includes(data.type)  ? "bg-gray-200" : "bg-gray-50"
-              
-                 border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
-              >
-              <option value="">Choose a bucket</option>
-              {
-                deptBucket?.findDeptBucket.map((bucket)=> 
-                  <option key={bucket.id} value={bucket.name}>{bucket.name.toUpperCase()}</option>
-              )
-            }
-            </select>
-          </label> */}
           <div>
           {
             isUpdate ? 
@@ -560,26 +602,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
           }
           </div>
         </div>
-        <div className="flex flex-col gap-5">
-          <div>
-            <button 
-              type="button" 
-              className="bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5" 
-              onClick={()=> handleSubmit("RESET",false)}
-            >Reset Password</button>
-          </div>
-          <label className="inline-flex items-center cursor-pointer">
-            <input 
-              type="checkbox" 
-              checked={check}
-              id="activation"
-              name="activation"
-              onChange={(e) => handleSubmit("STATUS",e.target.checked)}
-              className="sr-only peer"/>
-            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"></div>
-            <span className="ms-3 text-sm font-medium text-gray-900 dark:text-gray-300">{check ? "Activated": "Deactivated"}</span>
-          </label>
-        </div>
+
+        <UserOptionSettings Submit={(action: "UPDATE" | "RESET" | "STATUS" | "UNLOCK", status)=> handleSubmit(action, status)} check={check} isLock={state.isLock}  />
       </div>
       { confirm &&
         <Confirmation {...modalProps}/>
