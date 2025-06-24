@@ -89,6 +89,10 @@ export const accountsNavbar:{[key:string]:links[]} = {
       name: "Branch & Depts",
       link: "/setup"
     },
+    {
+      name: "Disposition Configuration",
+      link: "/disposition-settings"
+    },
   ],
   AGENT: [
     {

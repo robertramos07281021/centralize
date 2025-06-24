@@ -17,7 +17,6 @@ import AccountsView from "./pages/admin/AccountsView"
 import RegisterView from "./pages/admin/RegisterView"
 import SetupView from "./pages/admin/SetupView"
 import UserView from "./pages/admin/UserView"
-
 import CustomerDisposition from "./pages/CustomerDisposition"
 import StatisticsView from "./pages/agent/StatisticsView"
 import BacklogManagementView from "./pages/tl/BacklogManagementView"
@@ -28,7 +27,7 @@ import ProductionManagerView from "./pages/tl/ProductionManagerView"
 import BreakView from "./pages/agent/BreakView"
 import AgentView from "./pages/tl/AgentView"
 import AgentRecordingView from "./pages/tl/AgentRecordingView"
-
+import DispositionConfigurationView from "./pages/admin/DispositionConfigurationView"
 
 function App() {
 
@@ -46,6 +45,8 @@ function App() {
           <Route path="/accounts" element={<AccountsView/>}/>
           <Route path="/register" element={<RegisterView/>}/>
           <Route path="/user-account" element={<UserView/>}/>
+          <Route path="/disposition-settings" element={<DispositionConfigurationView/>}/>
+
         </Route>
         <Route element={<AgentRoute/>}>
           <Route path="/agent-dashboard" element={<StatisticsView/>}/>

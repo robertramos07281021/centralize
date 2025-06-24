@@ -3,7 +3,6 @@ import UpdateUserForm from "./UpdateUserForm"
 import { gql, useQuery } from "@apollo/client"
 import { ModifyRecords } from "../../middleware/types"
 import { useEffect } from "react"
-import {BsFillLockFill } from "react-icons/bs";
 
 
  const MODIFY_RECORD_QUERY = gql`

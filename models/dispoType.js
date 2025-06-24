@@ -1,4 +1,5 @@
 import mongoose from "mongoose";
+import { ref } from "process";
 
 
 
@@ -17,8 +18,30 @@ const dispositionTypeSchema = new Schema(
       required: true,
       uppercase:true,
       unique: true
+    },
+    buckets: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Bucket" 
+    }],
+    contact_methods: {
+      skipper : {
+        type: Boolean,
+        default: false
+      },
+      field: {
+        type: Boolean,
+        default: false
+      },
+      caller: {
+        type: Boolean,
+        default: false
+      }
+    },
+    active: {
+      type: Boolean,
+      default: true
     }
-  },
+  },{timestamps: true}
 );
 
 const DispoType = mongoose.model("DispoType", dispositionTypeSchema);

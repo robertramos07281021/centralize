@@ -3,12 +3,14 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions'
 import { createClient } from 'graphql-ws'
 import { getMainDefinition } from '@apollo/client/utilities'
 
+
+
 const httpLink = new HttpLink({
-  uri: 'http://localhost:3000/graphql',
+  uri: import.meta.env.REACT_HTTP,
 });
 
 const wsLink = new GraphQLWsLink(createClient({
-  url: 'ws://localhost:3000/graphql',
+  url: import.meta.env.REACT_WS,
 }));
 
 const splitLink = split(

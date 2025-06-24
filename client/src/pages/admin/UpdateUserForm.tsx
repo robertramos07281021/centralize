@@ -5,7 +5,7 @@ import { Success, Users } from "../../middleware/types"
 import Confirmation from "../../components/Confirmation"
 import { useLocation, useNavigate } from "react-router-dom"
 import SuccessToast from "../../components/SuccessToast"
-import { MdKeyboardArrowDown, MdNextWeek } from "react-icons/md";
+import { MdKeyboardArrowDown } from "react-icons/md";
 import UserOptionSettings from "./UserOptionSettings"
 import { useAppDispatch } from "../../redux/store"
 import { setServerError } from "../../redux/slices/authSlice"
@@ -14,7 +14,6 @@ import { setServerError } from "../../redux/slices/authSlice"
 interface modalProps {
   state: Users
 }
-
 
 interface Bucket {
   name: string

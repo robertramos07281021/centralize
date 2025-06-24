@@ -73,6 +73,10 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
       toast: "bg-red-400",
       close: "text-red-400"
     },
+    ACTIVATE: {
+      toast: "bg-green-400",
+      close: "text-green-400"
+    }
 
 
   } as const;
@@ -101,6 +105,7 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
   if (messageText.includes("TRANSFER")) successType = "TRANSFER";
   if (messageText.includes("UNLOCK")) successType = "UNLOCK";
   if (messageText.includes("INCORRECT")) successType = "INCORRECT";
+  if (messageText.includes("ACTIVATE")) successType = "ACTIVATE";
   if (messageText.includes("NOT INCLUDED")) successType = "NOT INCLUDED";
 
   return (

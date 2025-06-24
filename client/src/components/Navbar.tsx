@@ -263,7 +263,7 @@ const Navbar = () => {
         serverError &&
         <ServerError/>
       }
-      <div className="sticky top-0 z-40 print:hidden">
+      <div className="sticky top-0 z-40 print:hidden" >
         <div className="p-2 bg-blue-500 flex justify-between items-center ">
           <div className="flex text-2xl gap-2 font-medium items-center text-white italic">
             <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
