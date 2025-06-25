@@ -84,6 +84,7 @@ useServer({ schema,
     const cookieHeader  = ctx.extra.request.headers.cookie || '';
 
     const cookies = cookie.parse(cookieHeader)
+
     let user = null
 
     const token = cookies.token
@@ -97,7 +98,7 @@ useServer({ schema,
         console.log("WebSocket token error:", err.message);
       }
     }
-    return {user };
+    return { user };
   },
   onDisconnect: async (ctx, code, reason) => {
     const userId = ctx.extra?.userId;
@@ -115,7 +116,7 @@ useServer({ schema,
 
 const startServer = async() => {
   const server = new ApolloServer({
-    schema
+    schema,
   })
 
   try {
@@ -130,15 +131,15 @@ const startServer = async() => {
           // const sessionUser = req.session?.user;
           let user = null
           // if (sessionUser) {
+          if (token) {
             try {
-              if (token) {
-                const decoded = jwt.verify(token, process.env.SECRET);
-                user = await User.findById(decoded.id);
-                return { user, res, req };
-              }
+              const decoded = jwt.verify(token, process.env.SECRET);
+              user = await User.findById(decoded.id);
+              return { user, res, req };
             } catch (error) {
               console.log(error.message);
             }
+          }
           // }
           return { user, res, req};
         },

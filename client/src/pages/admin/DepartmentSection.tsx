@@ -310,13 +310,14 @@ const DepartmentSection = () => {
           <div className="inline-flex items-center justify-center w-full">
             <hr className="w-full h-1 my-8 bg-gray-200 border-0 rounded-sm dark:bg-gray-700"/>
             <div className="absolute px-4 -translate-x-1/2 bg-white left-1/2 dark:bg-gray-900"> 
-              <h1 className="font-medium text-2xl text-slate-600">Department</h1>
+              <h1 className="font-medium text-2xl text-slate-600">Campaign</h1>
             </div>
           </div>
           <div className="flex  gap-5 justify-center"> 
             <div className="h-100 w-2/3 border border-slate-300 rounded-xl p-4 overflow-y-auto">
               {
-                dept?.getDepts.map((d) => 
+                dept?.getDepts.map((d) => {
+                  return d.name !== "ADMIN" && (
                   <div key={d.id} className="justify-between px-2 py-2 border-b border-slate-300 last:border-b-0 hover:bg-slate-200/60 text-base font-medium text-slate-500 grid grid-cols-5 text-center items-center">
                     <div className="col-span-2 ">{d?.name.replace(/_/g, " ")}</div>
                     <div className="text-xs">{d?.branch.toUpperCase()}</div>
@@ -329,7 +330,8 @@ const DepartmentSection = () => {
                         />
                     </div>
                   </div>
-                )
+                  )
+                })
               }
 
             </div>

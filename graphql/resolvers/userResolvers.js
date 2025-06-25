@@ -285,11 +285,9 @@ const userResolvers = {
         if(user.isOnline) throw new CustomError('Already',401)
         
       
+        // req.session.user = user
         
         const token = jwt.sign({id: user._id,username: user.username}, process.env.SECRET)
-
-        // req.session.user = user._id 
-
 
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
@@ -303,6 +301,8 @@ const userResolvers = {
 
         res.cookie('token', token, {
           httpOnly: true,
+          secure:false ,
+          sameSite: "Lax"
         });
         
         const prodLength = findProd.length <= 0

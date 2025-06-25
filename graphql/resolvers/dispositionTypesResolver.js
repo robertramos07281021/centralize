@@ -17,35 +17,42 @@ const dispositionTypeResolver = {
   Mutation: {
     createDispositionType: async(_,{input}, {user}) => {
       try {
-
         if(!user) throw new CustomError("Unauthorized",401)
-        const skipper = input.contact_method.includes('skipper')
-        const field = input.contact_method.includes('field')
-        const caller = input.contact_method.includes('caller')
-        console.log(input.contact_method)
+        const skipper = input.contact_method.toString().includes('skipper')
+        const field = input.contact_method.toString().includes('field')
+        const caller = input.contact_method.toString().includes('caller')
 
-        const newDispotype  = await DispoType.create({...input, "contact_method.skipper": skipper, "contact_method.field": field, "contact_method.caller": caller })
+        const contactMethod = {
+          skipper,
+          field,
+          caller
+        };
+
+        const newDispotype  = await DispoType.create({...input, contact_methods: contactMethod })
+
         return {success: true, message: `${newDispotype.name} has been created`}
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
-     },
-     updateDispositionType: async(_,{id, input}) => {
+    },
+     updateDispositionType: async(_,{id, input},{user}) => {
       try {
-        const skipper = input.contact_method.includes('skipper')
-        const field = input.contact_method.includes('field')
-        const caller = input.contact_method.includes('caller')
+        if(!user) throw new CustomError("Unauthorized",401)
+        const { contact_method, ...restInput } = input
 
+        const skipper = contact_method.toString().includes('skipper')
+        const field = contact_method.toString().includes('field')
+        const caller = contact_method.toString().includes('caller')
 
+        const contact_methods = { skipper, field, caller };
 
         const findDispoType = await DispoType.findByIdAndUpdate(id,{
           $set: {
-            ...input,
-            "contact_methods.skipper": skipper, 
-            "contact_methods.field": field, 
-            "contact_methods.caller": caller 
+            ...restInput,
+            contact_methods: contact_methods
           }
-        })
+        },{ new: true })
+        
         return {success: true, message: `${findDispoType.name.toUpperCase()} successfully updated`}
       } catch (error) {
         throw new CustomError(error.message, 500)

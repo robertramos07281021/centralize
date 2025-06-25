@@ -293,7 +293,7 @@ const RegisterView = () => {
               />
           </label>
           <label className="w-full">
-            <p className="w-full text-base font-medium text-slate-500">User Id</p>
+            <p className="w-full text-base font-medium text-slate-500">SIP Id</p>
             <input 
               type="text" 
               name="id_number" 

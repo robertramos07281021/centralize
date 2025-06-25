@@ -71,7 +71,7 @@ interface Dispotype {
   code: string
   buckets: string[]
   active: boolean
-  contact_method: CA
+  contact_methods: CA
 }
 
 const UPDATE_DISPO = gql`
@@ -97,7 +97,7 @@ const DispositionConfigurationView = () => {
       setBucketObject(newObject)
     }
   },[bucketsData])
-  const {data:dispotypeData} = useQuery<{getDispositionTypes:Dispotype[]}>(GET_ALL_DISPO_TYPE)
+  const {data:dispotypeData, refetch} = useQuery<{getDispositionTypes:Dispotype[]}>(GET_ALL_DISPO_TYPE)
   const [selectingBuckets, setSelectingBuckets] = useState<boolean>(false)
   const [selectedBuckets, setSelectedBuckets] = useState<string[]>([])
   const [selectingContactMethod, setSelectingContactMethod] = useState<boolean>(false)
@@ -138,6 +138,7 @@ const DispositionConfigurationView = () => {
   // mutations =====================================
   const [createDispositionType] = useMutation<{createDispositionType:{success: boolean, message: string}}>(CREATE_DISPO_TYPE, {
     onCompleted: (res) => {
+      refetch()
       setSuccess({
         success: res.createDispositionType.success,
         message: res.createDispositionType.message
@@ -157,6 +158,7 @@ const DispositionConfigurationView = () => {
 
   const [updateDispositionType] = useMutation<{updateDispositionType:{success:boolean, message: string}}>(UPDATE_DISPO,{
     onCompleted: (res)=> {
+      refetch()
       setSuccess({
         success: res.updateDispositionType.success,
         message: res.updateDispositionType.message
@@ -165,10 +167,14 @@ const DispositionConfigurationView = () => {
         name: "",
         code: ""
       })
+      setIsUpdate(false)
       setConfirm(false)
       setSelectedBuckets([])
       setSelectedContactMethod([])
     },
+    onError: () => {
+      dispatch(setServerError(true))
+    }
   })
 
 // =======================
@@ -234,13 +240,13 @@ const DispositionConfigurationView = () => {
       const selectedCA = []
       setInputValue({code: toUpdateDispo.code, name: toUpdateDispo.name})
       setSelectedBuckets(toUpdateDispo.buckets)
-      if(toUpdateDispo.contact_method?.caller) {
+      if(toUpdateDispo.contact_methods?.caller) {
         selectedCA.push(Method.caller)
       } 
-      if(toUpdateDispo.contact_method?.field) {
+      if(toUpdateDispo.contact_methods?.field) {
         selectedCA.push(Method.field)
       }   
-      if(toUpdateDispo.contact_method?.skipper) {
+      if(toUpdateDispo.contact_methods?.skipper) {
         selectedCA.push(Method.skipper)
       } 
       setSelectedContactMethod(selectedCA)
@@ -425,22 +431,23 @@ const DispositionConfigurationView = () => {
               {
                 dispoData.map((dispo)=> {
                   const dispoCA = []
-                  if(dispo.contact_method?.caller) {
+                  if(dispo.contact_methods?.caller) {
                     dispoCA.push(Method.caller)
                   }
-                  if(dispo.contact_method?.field) {
+                  if(dispo.contact_methods?.field) {
                     dispoCA.push(Method.field)
                   }
-                  if(dispo.contact_method?.skipper) {
+                  if(dispo.contact_methods?.skipper) {
                     dispoCA.push(Method.skipper)
                   }
 
+
                   return (
-                    <div key={dispo.id}className="grid grid-cols-5 text-sm py-1">
+                    <div key={dispo.id}className="grid grid-cols-5 text-sm py-1 hover:bg-blue-50 even:bg-slate-50">
                       <div>{dispo.name}</div>
                       <div>{dispo.code}</div>
                       <div className="truncate">{dispo.buckets.map((e)=> bucketObject[e]).join(', ')}</div>
-                      <div className="truncate">{dispoCA?.join(', ')}</div>
+                      <div className="truncate capitalize">{dispoCA?.join(', ')}</div>
                       <div><FaEdit className="text-xl text-orange-500 cursor-pointer" onClick={()=> (handleOnUpdate(dispo))}/></div>
                     </div>
                   )

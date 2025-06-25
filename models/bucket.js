@@ -14,9 +14,11 @@ const bucketSchema = new Schema(
       required: true,
       uppercase: true
     },
-    ip: {
+    viciIp: {
       type: String,
-      required: true
+    },
+    issabelIp: {
+      type: String,
     }
   },
   { timestamps: true }

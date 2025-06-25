@@ -123,35 +123,43 @@ const bucketResolver = {
     
   },
   Mutation: {
-    createBucket: async(_,{name,dept},{user}) => {
+    createBucket: async(_,{ name, dept, viciIp, issabelIp },{ user }) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
+        
+        if(!viciIp && !issabelIp) throw new CustomError('Missing Ip addresses',404)
 
         const checkDept = await Department.findOne({name: dept})
         if(!checkDept) throw new CustomError("Department not found",404)
-          
+
         const checkName = await Bucket.findOne({$and: [
           {name},
-          {dept}
+          {dept},
         ]})
         if(checkName) throw new CustomError("Duplicate",400)
     
-        await Bucket.create({name, dept})
+        await Bucket.create({name, dept, viciIp, issabelIp})
         return {message: "Bucket successfully created", success: true}
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
-    updateBucket: async(_,{id, name},{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
+    updateBucket: async(_,{input},{user}) => {
       try {
-        const updateBucket = await Bucket.findById(id,)
+        if(!user) throw new CustomError("Unauthorized",401)
+
+        const {viciIp, issabelIp, id, name} = input
+        if(!viciIp && !issabelIp) throw new CustomError('Missing Ip addresses',404)
+
+        const updateBucket = await Bucket.findById(id)
         if(!updateBucket) throw new CustomError("Bucket not found",404)
 
-        const checkBucket = await Bucket.findOne({$and: [{name},{dept: updateBucket.dept}]})
-        if(checkBucket) throw new CustomError("Duplicate", 400) 
+        const checkBucket = await Bucket.find({$and: [{name},{dept: updateBucket.dept}, {_id: {$ne: updateBucket._id}}]})
+        if(checkBucket.length > 0) throw new CustomError("Duplicate", 400) 
+            
+        await Bucket.findByIdAndUpdate(updateBucket._id,{$set: { name ,viciIp, issabelIp }},{new: true})
 
-        await updateBucket.updateOne({$set: { name }})
         return {message: "Bucket successfully updated",success: true}
       } catch (error) {
         throw new CustomError(error.message, 500)

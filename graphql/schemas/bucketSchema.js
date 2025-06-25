@@ -7,6 +7,8 @@ const bucketTypeDefs = gql`
     id:ID
     name: String
     dept: String
+    viciIp: String
+    issabelIp: String
   }
   
   type Success {
@@ -24,6 +26,14 @@ const bucketTypeDefs = gql`
     buckets: [Bucket]
   }
 
+
+  input UpdateBucket {
+    id: ID
+    name: String
+    viciIp: String
+    issabelIp: String
+  }
+
   type Query {
     getBuckets(dept:[ID]):[GetBuckets]
     getBucket(name:String): Bucket
@@ -36,8 +46,8 @@ const bucketTypeDefs = gql`
   }
 
   type Mutation {
-    createBucket(name:String!, dept: String!): Success
-    updateBucket(id:ID!, name:String!): Success
+    createBucket(name:String!, dept: String!, viciIp: String, issabelIp: String): Success
+    updateBucket(input:UpdateBucket): Success
     deleteBucket(id:ID!): Success
   }
 `
