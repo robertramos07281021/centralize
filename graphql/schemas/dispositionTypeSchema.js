@@ -41,6 +41,7 @@ const dispositionTypeTypeDefs = gql`
   type Mutation {
     createDispositionType(input:CreatingDispo):Success
     updateDispositionType(id:ID!,input:CreatingDispo): Success
+    activateDeactivateDispotype(id:ID!) : Success
   }
 `
 

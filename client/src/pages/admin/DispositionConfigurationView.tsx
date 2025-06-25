@@ -7,11 +7,13 @@ import SuccessToast from "../../components/SuccessToast";
 import { useAppDispatch } from "../../redux/store";
 import { setServerError } from "../../redux/slices/authSlice";
 import { FaEdit } from "react-icons/fa";
+import ActivationButton from "./ActivationButton";
 
 
 interface Bucket {
   _id: string
   name: string
+  dept: string
 }
 
 const GET_ALL_BUCKET = gql`
@@ -19,6 +21,7 @@ const GET_ALL_BUCKET = gql`
     getAllBucket {
       _id
       name
+      dept
     }
   }
 `
@@ -257,6 +260,15 @@ const DispositionConfigurationView = () => {
     }
   },[toUpdateDispo])
 
+  const handleCheckAll = (e:React.ChangeEvent<HTMLInputElement>)=> {
+    if(e.target.checked) {
+      const bucketsIds:string[] = bucketsData?.getAllBucket.map((e)=> e._id) || []
+      setSelectedBuckets(bucketsIds)
+    } else {
+      setSelectedBuckets([])
+    }
+  }
+
   return (
     <>
       {
@@ -275,7 +287,12 @@ const DispositionConfigurationView = () => {
         <h1 className="text-2xl font-medium text-gray-600">Disposition Configuration</h1>
         <div className="w-full h-full flex overflow-hidden">
           <div className="w-full flex-col gap-10 flex items-center justify-center">
-            <h1 className="text-xl font-medium text-gray-500">Create Disposition</h1>
+            {
+              isUpdate ? 
+                <h1 className="text-xl font-medium text-gray-500">Update Disposition</h1>
+              :
+                <h1 className="text-xl font-medium text-gray-500">Create Disposition</h1>
+            }
             <form 
               className="flex flex-col gap-5 2xl:w-96 lg:w-80" 
               ref={form} 
@@ -321,6 +338,16 @@ const DispositionConfigurationView = () => {
                 {
                   selectingBuckets &&
                   <div className="absolute max-h-50 overflow-y-auto bg-white border w-full top-15 border-slate-500 shadow-md shadow-black/50 flex z-50 flex-col px-2 py-1">
+                  <label className="flex items-center gap-2 select-none">
+                    <input 
+                      type="checkbox" 
+                      name="all"
+                      id='all' 
+                      onChange={(e)=> handleCheckAll(e)}
+  
+                    />
+                    <span className="text-sm text-gray-600">Select All</span>
+                  </label>
                   {
                     bucketsData?.getAllBucket.map(ab=> {
                       const onClick = (e:React.ChangeEvent<HTMLInputElement>) => {
@@ -330,6 +357,7 @@ const DispositionConfigurationView = () => {
                           setSelectedBuckets(prev => prev.includes(ab._id) ? prev.filter(id => id !== ab._id) : [...prev, ab._id])
                         }
                       }
+                
                       return (
                         <label key={ab._id} className="flex items-center gap-2 select-none">
                           <input 
@@ -339,7 +367,7 @@ const DispositionConfigurationView = () => {
                             onChange={onClick}
                             checked = {selectedBuckets.includes(ab._id)}
                           />
-                          <span>{ab.name}</span>
+                          <span className="text-sm text-gray-600">{ab.name} - {ab.dept}</span>
                         </label>
                       )
                     })
@@ -383,7 +411,7 @@ const DispositionConfigurationView = () => {
                             onChange={onClick}
                             checked = {selectedContactMethod.includes(cm)}
                           />
-                          <span className="capitalize">{cm}</span>
+                          <span className="capitalize text-gray-600">{cm}</span>
                         </label>
                       )
                     })
@@ -441,14 +469,17 @@ const DispositionConfigurationView = () => {
                     dispoCA.push(Method.skipper)
                   }
 
-
                   return (
-                    <div key={dispo.id}className="grid grid-cols-5 text-sm py-1 hover:bg-blue-50 even:bg-slate-50">
+                    <div key={dispo.id}className="grid grid-cols-5 text-sm py-1 hover:bg-blue-50 even:bg-slate-50 text-gray-600">
                       <div>{dispo.name}</div>
                       <div>{dispo.code}</div>
                       <div className="truncate">{dispo.buckets.map((e)=> bucketObject[e]).join(', ')}</div>
                       <div className="truncate capitalize">{dispoCA?.join(', ')}</div>
-                      <div><FaEdit className="text-xl text-orange-500 cursor-pointer" onClick={()=> (handleOnUpdate(dispo))}/></div>
+
+                      <div className="flex gap-5">
+                        <FaEdit className="text-xl text-orange-500 cursor-pointer" onClick={()=> (handleOnUpdate(dispo))}/>
+                        <ActivationButton id={dispo.id} active={dispo.active} refetch={()=> refetch()} success={(success:boolean,message:string) => setSuccess({success, message})}/>
+                      </div>
                     </div>
                   )
                 })

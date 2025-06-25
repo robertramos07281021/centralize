@@ -52,8 +52,27 @@ const dispositionTypeResolver = {
             contact_methods: contact_methods
           }
         },{ new: true })
-        
+
         return {success: true, message: `${findDispoType.name.toUpperCase()} successfully updated`}
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+     },
+     activateDeactivateDispotype: async(_,{id},{user})=> {
+      try {
+        if(!user) throw new CustomError("Unauthorized",401)
+        
+        const dispotype = await DispoType.findById(id)
+
+        if(!dispotype) throw new CustomError('Dispotype not found',404)
+
+        dispotype.active = !dispotype.active
+        await dispotype.save()
+
+        return {
+          success: true,
+          message: `Dispotype successfully ${dispotype.active ? "activate" : "deactivate"}`,
+        };
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
