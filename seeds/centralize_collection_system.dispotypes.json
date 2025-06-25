@@ -4,7 +4,40 @@
   },
   "name": "DISPUTE",
   "code": "DISP",
-  "__v": 0
+  "__v": 1,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:19:03.906Z"
+  }
 },
 {
   "_id": {
@@ -12,7 +45,40 @@
   },
   "name": "FOLLOW UP PAYMENT",
   "code": "FFUP",
-  "__v": 0
+  "__v": 1,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:20:26.063Z"
+  }
 },
 {
   "_id": {
@@ -20,7 +86,40 @@
   },
   "name": "FAILED VERIFICATION",
   "code": "FV",
-  "__v": 0
+  "__v": 1,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:36:56.031Z"
+  }
 },
 {
   "_id": {
@@ -28,7 +127,40 @@
   },
   "name": "HUNG UP",
   "code": "HUP",
-  "__v": 0
+  "__v": 1,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:37:03.583Z"
+  }
 },
 {
   "_id": {
@@ -36,7 +168,40 @@
   },
   "name": "INCAPACITY TO PAY",
   "code": "ITP",
-  "__v": 0
+  "__v": 1,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:37:11.527Z"
+  }
 },
 {
   "_id": {
@@ -44,7 +209,40 @@
   },
   "name": "LEAVE MESSAGE",
   "code": "LM",
-  "__v": 0
+  "__v": 0,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:37:17.936Z"
+  }
 },
 {
   "_id": {
@@ -52,7 +250,40 @@
   },
   "name": "PAID",
   "code": "PAID",
-  "__v": 0
+  "__v": 0,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:37:24.474Z"
+  }
 },
 {
   "_id": {
@@ -60,7 +291,40 @@
   },
   "name": "PROMISE TO PAY",
   "code": "PTP",
-  "__v": 0
+  "__v": 1,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:37:30.455Z"
+  }
 },
 {
   "_id": {
@@ -68,7 +332,40 @@
   },
   "name": "RPC CALL BACK",
   "code": "RPCCB",
-  "__v": 0
+  "__v": 0,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:37:37.432Z"
+  }
 },
 {
   "_id": {
@@ -76,7 +373,40 @@
   },
   "name": "REFUSE TO PAY",
   "code": "RTP",
-  "__v": 0
+  "__v": 1,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:38:03.776Z"
+  }
 },
 {
   "_id": {
@@ -84,7 +414,40 @@
   },
   "name": "UNDERNEGO",
   "code": "UNEG",
-  "__v": 0
+  "__v": 1,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:37:53.054Z"
+  }
 },
 {
   "_id": {
@@ -92,7 +455,40 @@
   },
   "name": "ANSWERING MACHINE",
   "code": "ANSM",
-  "__v": 0
+  "__v": 0,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:39:29.943Z"
+  }
 },
 {
   "_id": {
@@ -100,7 +496,40 @@
   },
   "name": "WRONG NUMBER",
   "code": "WN",
-  "__v": 0
+  "__v": 0,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:38:39.214Z"
+  }
 },
 {
   "_id": {
@@ -108,7 +537,40 @@
   },
   "name": "NO ANSWER",
   "code": "NOA",
-  "__v": 0
+  "__v": 0,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:39:30.781Z"
+  }
 },
 {
   "_id": {
@@ -116,7 +578,40 @@
   },
   "name": "KEEP ON RINGING",
   "code": "KOR",
-  "__v": 0
+  "__v": 0,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:38:54.855Z"
+  }
 },
 {
   "_id": {
@@ -124,7 +619,40 @@
   },
   "name": "OUT OF COVERAGE AREA",
   "code": "OCA",
-  "__v": 0
+  "__v": 0,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:39:02.326Z"
+  }
 },
 {
   "_id": {
@@ -132,7 +660,40 @@
   },
   "name": "NOT IN SERVICE",
   "code": "NIS",
-  "__v": 0
+  "__v": 1,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:39:32.815Z"
+  }
 },
 {
   "_id": {
@@ -140,7 +701,40 @@
   },
   "name": "BUSY",
   "code": "BUSY",
-  "__v": 0
+  "__v": 0,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
+  },
+  "updatedAt": {
+    "$date": "2025-06-25T13:39:15.727Z"
+  }
 },
 {
   "_id": {
@@ -148,13 +742,38 @@
   },
   "name": "DECEASED",
   "code": "DEC",
-  "__v": 0
-},
-{
-  "_id": {
-    "$oid": "67f3908cd11420e20449ba5d"
+  "__v": 0,
+  "active": true,
+  "contact_method": "caller",
+  "buckets": [
+    {
+      "$oid": "681dbbe4fb307d5ae0cb128a"
+    },
+    {
+      "$oid": "681dbbeafb307d5ae0cb1296"
+    },
+    {
+      "$oid": "681dbbf0fb307d5ae0cb12a1"
+    },
+    {
+      "$oid": "681dbbf4fb307d5ae0cb12ad"
+    },
+    {
+      "$oid": "681dbbfafb307d5ae0cb12bb"
+    },
+    {
+      "$oid": "681dbc00fb307d5ae0cb12c7"
+    },
+    {
+      "$oid": "685be1ded6e7acd431ee8e24"
+    }
+  ],
+  "contact_methods": {
+    "skipper": true,
+    "field": true,
+    "caller": true
   },
-  "name": "UNKNOWN",
-  "code": "UNK",
-  "__v": 0
+  "updatedAt": {
+    "$date": "2025-06-25T13:39:34.255Z"
+  }
 }]
