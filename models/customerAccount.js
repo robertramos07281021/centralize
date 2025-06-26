@@ -60,24 +60,31 @@ const customerAccountSchema = new Schema(
     out_standing_details: {
       principal_os: {
         type: Number,
+        default: 0
       },
       interest_os: {
-        type: Number
+        type: Number,
+        default: 0
       },
       admin_fee_os: {
-        type: Number
+        type: Number,
+        default: 0
       },
       txn_fee_os: {
-        type: Number
+        type: Number,
+        default: 0
       },
       late_charge_os: {
-        type: Number
+        type: Number,
+        default: 0
       },
       dst_fee_os: {
-        type: Number
+        type: Number,
+        default: 0
       },
       total_os: {
-        type: Number
+        type: Number,
+        default: 0
       }
     },
     //object

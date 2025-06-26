@@ -5,8 +5,8 @@ import { gql, useMutation, useQuery } from "@apollo/client";
 import {  useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../redux/store";
-import { setDeselectCustomer, setSelectedCustomer } from "../redux/slices/authSlice";
-import { Search } from "../middleware/types";
+import { setSelectedCustomer } from "../redux/slices/authSlice";
+import { CustomerRegistered, Search } from "../middleware/types";
 
 const UPDATE_CUSTOMER = gql` mutation
   updateCustomer($fullName:String!, $dob:String!, $gender:String!, $mobiles:[String], $emails:[String], $addresses:[String],$id:ID!) {
@@ -68,14 +68,22 @@ const SEARCH = gql`
   }
 `
 
-const DESELECT_TASK = gql`
-  mutation DeselectTask($id: ID!) {
-    deselectTask(id: $id) {
-      message
-      success
-    }
-  }
-`
+
+// interface Customer {
+//   address: string[]
+//   contact_no: string[]
+//   dob: string
+//   emails: string[]
+//   fullName: string
+//   gender: string
+//   _id: string
+// }
+
+interface UpdatedCustomer {
+  customer: CustomerRegistered,
+  success: boolean,
+  message: string
+}
 
 interface CustomerUpdateFormProps {
   cancel: () => void, 
@@ -86,11 +94,11 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const dispatch = useAppDispatch()
   const [id, setId] = useState("")
   const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: id}})
-  const [deselectTask] = useMutation(DESELECT_TASK,{
-    onCompleted: ()=> {
-      dispatch(setDeselectCustomer())  
-    }
-  })
+  // const [deselectTask] = useMutation(DESELECT_TASK,{
+  //   onCompleted: ()=> {
+  //     dispatch(setDeselectCustomer())  
+  //   }
+  // })
   const location = useLocation()
   useEffect(()=> {
     if(searchData?.search.length === 1) {
@@ -177,15 +185,14 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const [confirm, setConfirm] = useState(false)
 
   const [required, setRequired] = useState(false)
-  const [updateCustomer] = useMutation(UPDATE_CUSTOMER, {
+  const [updateCustomer] = useMutation<{updateCustomer:UpdatedCustomer}>(UPDATE_CUSTOMER, {
     onCompleted: async(res) => {
       cancel()
       navigate(`${location.pathname}?success=true`)
       setId(res.updateCustomer.customer._id)
       refetch()
-      deselectTask({variables: {id: selectedCustomer._id}}).catch(console.log)
-      
-      
+      const updatedCustomer = {...selectedCustomer, customer_info: res.updateCustomer.customer}
+      dispatch(setSelectedCustomer(updatedCustomer))
     },
   })
   const updateForm = useRef<HTMLFormElement | null>(null)
@@ -265,8 +272,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
               value={data.dob}
               onChange={(e)=> setData({...data, dob: e.target.value})} 
               id="dob" 
-              required
-              className={`${required && !data.dob ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"}  border  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}  />
+              className={` bg-gray-50 border-gray-300  border  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}  />
           </div>
           <div> 
             <label 

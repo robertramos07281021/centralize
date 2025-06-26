@@ -5,6 +5,7 @@ import { useDropzone } from "react-dropzone";
 import { gql, useMutation } from "@apollo/client";
 import Confirmation from "../components/Confirmation";
 import SuccessToast from "./SuccessToast";
+import Loading from "../pages/Loading";
 
 interface Success {
   success: boolean;
@@ -93,14 +94,14 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           case_id: String(row.case_id),
           platform_user_id: String(row.platform_user_id),
         }))
-        setExcelData(dateConverting.slice(0,dateConverting.length - 1)); 
+        setExcelData(dateConverting.slice(0,dateConverting.length)); 
       };
       reader.readAsBinaryString(file);
     } catch (error) {
       console.log(error)
     }
   }, []);
-
+  console.log(excelData.length)
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [], 
@@ -114,7 +115,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     },
   });
   
-  const [createCustomer] = useMutation(CREATE_CUSTOMER, {
+  const [createCustomer,{loading}] = useMutation(CREATE_CUSTOMER, {
     onCompleted: async() => {
       setSuccess({
         success: true,
@@ -191,6 +192,10 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     }
   }
 
+  
+
+  if(loading) return <Loading/>
+  
   return (
     <>
       {

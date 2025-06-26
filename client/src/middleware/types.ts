@@ -104,7 +104,7 @@ type  AccountBucket = {
   dept: string
 }
 
-type CustomerRegistered = {
+export type CustomerRegistered = {
   fullName:string
   dob:string
   gender:string

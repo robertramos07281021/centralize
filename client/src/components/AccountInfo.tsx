@@ -14,11 +14,11 @@ const AccountInfo = () => {
           </div>
           <div className="grid grid-cols-4 items-center">
             <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Case ID</p>
-            <div className={`${selectedCustomer._id ?  "p-2": "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.case_id}</div>
+            <div className={`${selectedCustomer.case_id != "undefined" && Boolean(selectedCustomer?.case_id) ? "p-2": "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.case_id != "undefined" ? selectedCustomer?.case_id : ""}</div>
           </div>
           <div className="grid grid-cols-4 items-center">
             <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Credit ID</p>
-            <div className={`${selectedCustomer._id ?  "p-2": "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.credit_customer_id}</div>
+            <div className={`${selectedCustomer.credit_customer_id ? "p-2": "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.credit_customer_id}</div>
           </div>
           <div className="grid grid-cols-4 items-center">
             <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Account ID</p>
@@ -28,7 +28,7 @@ const AccountInfo = () => {
         <div className="flex flex-col gap-2">
           <div className="grid grid-cols-4 items-center">
             <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Endorsement Date</p>
-            <div className={`${selectedCustomer._id ?  "p-2": "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.endorsement_date}</div>
+            <div className={`${selectedCustomer.endorsement_date ?  "p-2": "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.endorsement_date}</div>
           </div>
           <div className="grid grid-cols-4 items-center">
             <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs ">Bill Due Date</p>

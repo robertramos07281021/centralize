@@ -164,6 +164,8 @@ const CustomerDisposition = () => {
     setSearch("")
   },[selectedCustomer._id])
 
+
+
   useEffect(()=> {
     if(breakValue !== BreakEnum.PROD && userLogged.type === "AGENT") {
       navigate('/break-view')
@@ -239,20 +241,24 @@ const CustomerDisposition = () => {
             }
             <div className="ms-5 mt-5 2xl:text-sm lg:text-xs">
               <div className="font-bold text-slate-500 uppercase">Full Name</div>
-              <div className={`${selectedCustomer._id ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
+              <div className={`${selectedCustomer.customer_info?.fullName ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
                 {selectedCustomer.customer_info?.fullName}
               </div>
             </div>
             <div className="ms-5 2xl:text-sm lg:text-xs">
               <div className=" font-bold text-slate-500">Date Of Birth (yyyy-mm-dd)</div>
-              <div className={`${selectedCustomer._id ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
+              <div className={`${selectedCustomer.customer_info?.dob ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
                 {selectedCustomer?.customer_info?.dob}
               </div>
             </div>
             <div className="ms-5 2xl:text-sm lg:text-xs">
               <div className="font-bold text-slate-500">Gender</div>
-              <div className={`p-2.5 w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
-                {selectedCustomer?.customer_info?.gender === "F" ? "Female" : "Male"}
+              <div className={`${selectedCustomer.customer_info?.gender ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
+
+                {
+                  Boolean(selectedCustomer?.customer_info?.gender ) ? 
+                  selectedCustomer?.customer_info?.gender === "F" ? "Female" : "Male" : ""
+                }
               </div>
             </div>
             <div className="ms-5 2xl:text-sm lg:text-xs">
