@@ -29,6 +29,33 @@ import AgentView from "./pages/tl/AgentView"
 import AgentRecordingView from "./pages/tl/AgentRecordingView"
 import DispositionConfigurationView from "./pages/admin/DispositionConfigurationView"
 
+
+import { Chart,
+  registerables, 
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend 
+} from 'chart.js';
+
+import ChartDataLabels from 'chartjs-plugin-datalabels';
+import MISDashboard from "./pages/tl/MISDashboard"
+import FTEUserView from "./pages/aom/FTEUserView"
+
+Chart.register(...registerables,
+  ChartDataLabels,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend
+);
+
+
+
 function App() {
 
 
@@ -57,7 +84,7 @@ function App() {
         <Route element={<AomRoute/>}>
           <Route path="/aom-dashboard" element={<AomDashboard/>}/>
           <Route path="/aom-reports" element={<Reports/>} />
-
+          <Route path="/aom-fte-user" element={<FTEUserView/>}/>
         </Route>
         <Route element={<OpsRoute/>}>
           <Route path="/operation-dashboard" element={<OperationDashboard/>}/>
@@ -66,6 +93,7 @@ function App() {
         </Route>
         <Route element={<TlRoute/>}>
           <Route path="/tl-dashboard" element={<TlDashboard/>}/>
+          <Route path="/mis-dashboard" element={<MISDashboard/>}/>
           <Route path="/tl-production-manager" element={<ProductionManagerView/>}/>
           <Route path="/agent-production" element={<AgentView/>}/>
           <Route path="/agent-recordings" element={<AgentRecordingView/>}/>

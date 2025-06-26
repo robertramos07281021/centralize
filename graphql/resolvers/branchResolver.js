@@ -15,7 +15,6 @@ const branchResolver = {
         const res = await Branch.findOne({name}) 
         return res 
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

@@ -61,6 +61,7 @@ const userTypeDefs = gql`
   type Department {
     _id: ID
     name: String
+    branch: String
   }
 
   type DeptUser {
@@ -71,6 +72,7 @@ const userTypeDefs = gql`
     group: ID 
     isLock: Boolean
     isOnline: Boolean
+    account_type: String
     attempt_login: Int
     buckets: [Bucket]
     default_target: Float
@@ -82,6 +84,11 @@ const userTypeDefs = gql`
     assigned: Int
   }
 
+  type AOM_FTE {
+    department: Department
+    users: [Users]
+  }
+
   type Query {
     getUsers(page: Int!, limit: Int!): PaginatedUsers!
     getUser(id: ID): Users
@@ -91,6 +98,7 @@ const userTypeDefs = gql`
     findDeptAgents:[DeptUser]
     findAgents:[Users],
     getCampaignAssigned: [CampaignUser]
+    getAOMCampaignFTE: [AOM_FTE]
   }
   type SubscriptionSuccess {
     buckets: [ID],
@@ -111,6 +119,7 @@ const userTypeDefs = gql`
       branch: ID, 
       user_id: String, 
       buckets:[ID] 
+      account_type: String
     ): Success
 
     updateUser(
@@ -119,6 +128,7 @@ const userTypeDefs = gql`
       departments:[ID], 
       branch:ID, 
       buckets:[ID], 
+      account_type: String
       id:ID!
     ): Success
 

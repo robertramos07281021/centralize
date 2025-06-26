@@ -1,5 +1,5 @@
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import SuccessToast from "../../components/SuccessToast"
 import Confirmation from "../../components/Confirmation"
 import { MdKeyboardArrowDown } from "react-icons/md";
@@ -28,8 +28,8 @@ interface DeptBucket {
 
 
 const CREATE_ACCOUNT = gql`
-  mutation createUser($name: String!, $username: String!, $type: String!, $departments: [ID], $branch: ID!, $user_id: String, $buckets:[ID]) {
-    createUser(name: $name, username: $username, type: $type, departments: $departments, branch: $branch, user_id: $user_id, buckets:$buckets) {
+  mutation createUser($name: String!, $username: String!, $type: String!, $departments: [ID], $branch: ID!, $user_id: String, $buckets:[ID], $account_type: String) {
+    createUser(name: $name, username: $username, type: $type, departments: $departments, branch: $branch, user_id: $user_id, buckets:$buckets, account_type:$account_type) {
       success
       message
     }
@@ -80,7 +80,8 @@ const RegisterView = () => {
     branch: string,
     departments: string[],
     user_id: string,
-    buckets: string[]
+    buckets: string[],
+    account_type: string
   }>({
     type: "",
     name: "",
@@ -88,7 +89,8 @@ const RegisterView = () => {
     branch: "",
     departments: [],
     user_id: "",
-    buckets: []
+    buckets: [],
+    account_type: ""
   })
 
   const [success, setSuccess] = useState({
@@ -138,7 +140,8 @@ const RegisterView = () => {
         branch: "",
         departments: [],
         user_id: "",
-        buckets: []
+        buckets: [],
+        account_type: ""
       })
       setSuccess({
         success: true,
@@ -146,6 +149,25 @@ const RegisterView = () => {
       })
       setConfirm(false)
     },
+    onError: (error) => {
+      const errorMessage = error?.message;
+      if (errorMessage?.includes("E11000")) {
+        setSuccess({
+          success: true,
+          message: "Username already exists",
+        });
+        setData({
+          type: "",
+          name: "",
+          username: "",
+          branch: "",
+          departments: [],
+          user_id: "",
+          buckets: [],
+          account_type: ""
+        });
+      }
+    }
   })
 
   const [required, setRequired] = useState(false)
@@ -163,29 +185,10 @@ const RegisterView = () => {
   
   const validateOther = () =>
     data.name && data.username;
-  
+
   const handleCreateUser = async () => {
-    try {
-      await createUser({ variables: { ...data } });
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    } catch (error: any) {
-      const errorMessage = error?.graphQLErrors?.[0]?.message;
-      if (errorMessage?.includes("E11000")) {
-        setSuccess({
-          success: true,
-          message: "Username already exists",
-        });
-        setData({
-          type: "",
-          name: "",
-          username: "",
-          branch: "",
-          departments: [],
-          user_id: "",
-          buckets: [],
-        });
-      }
-    }
+    await createUser({ variables: { ...data } });
+   
   };
 
   const submitForm = () => {
@@ -231,6 +234,10 @@ const RegisterView = () => {
     }
   }, [data.type, data])
 
+  const bucketDiv  = useRef<HTMLDivElement | null>(null)
+  const campaignDiv  = useRef<HTMLDivElement | null>(null)
+
+
 
   return (
     <>
@@ -239,7 +246,14 @@ const RegisterView = () => {
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
       }
     
-      <div className="w-full justify-center items-center flex flex-col bg-[]" >
+      <div className="w-full justify-center items-center flex flex-col bg-[]" onMouseDown={(e)=>{
+        if(!bucketDiv.current?.contains(e.target as Node)){
+          setSelectBucket(false)
+        }
+        if(!campaignDiv.current?.contains(e.target as Node)){
+          setSelectDept(false)
+        }
+      }}>
         <div className="p-5 text-2xl font-medium text-slate-500 ">Create Account</div>
         <form className=" lg:w-3/8 2xl:w-2/8 px-5 py-2 flex flex-col gap-2 items-center justify-center ">
           {
@@ -305,6 +319,24 @@ const RegisterView = () => {
               className={`${data.type.trim() === "" || !validForCampaignAndBucket.toString().includes(data.type)  ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
               />
           </label>
+
+          <label className="w-full">
+            <p className="w-full text-base font-medium text-slate-500">Account Type</p>
+            <select
+              id="account_type"
+              name="account"
+              value={data.account_type}
+              disabled={data.type.trim() === ""}
+              onChange={(e)=> setData({...data, account_type: e.target.value})}
+              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+            >
+              <option value="">Choose a account type</option>
+              <option value="caller">Caller</option>
+              <option value="field">Field</option>
+              <option value="skipper">Skipper</option>
+            </select>
+          </label>
+
           <label className="w-full">
             <p className="w-full text-base font-medium text-slate-500">Branch</p>
             <select
@@ -323,7 +355,8 @@ const RegisterView = () => {
               }
             </select>
           </label>
-          <div className="w-full relative">
+    
+          <div className="w-full relative" ref={campaignDiv}>
             <p className="w-full text-base font-medium text-slate-500">Campaign</p>
             <div className={`${(!data.branch || !validForCampaignAndBucket.toString().includes(data.type)) && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectDept && data.branch ? "border-blue-500" : "border-slate-300"}`}>
               <div className="w-full p-2.5 text-nowrap truncate cursor-default" title={data.departments.map(deptId => Object.entries(deptObject).find(([, val]) => val.toString() === deptId)?.[0]).join(', ').replace(/_/g, " ")} onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type)) {setSelectDept(!selectDept); setSelectBucket(false)} }}>
@@ -353,7 +386,7 @@ const RegisterView = () => {
               </div>
             }
           </div>
-          <div className="w-full relative">
+          <div className="w-full relative" ref={bucketDiv}>
             <p className="w-full text-base font-medium text-slate-500">Bucket</p>
             <div className={`${data.departments.length === 0 && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectBucket && data.departments.length > 0 ? "border-blue-500" : "border-slate-300"}`}>
               <div className="w-full p-2.5 text-nowrap truncate cursor-default" title={data.buckets.map(bucketId => Object.entries(bucketObject).find(([, val]) => val.toString() === bucketId)?.[0]).join(', ').replace(/_/g, " ")} onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type)) setSelectBucket(!selectBucket)}}>

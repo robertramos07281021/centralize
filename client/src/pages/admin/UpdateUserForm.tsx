@@ -1,6 +1,6 @@
 
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { useEffect, useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { Success, Users } from "../../middleware/types"
 import Confirmation from "../../components/Confirmation"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -65,12 +65,10 @@ const BRANCH_QUERY = gql`
 `
 
 const BRANCH_DEPARTMENT_QUERY = gql`
-  query Query($branch: String) {
+  query getBranchDept($branch: String) {
     getBranchDept(branch: $branch){
       id
       name
-      branch
-      aom
     }
   }
 `
@@ -90,6 +88,7 @@ const RESET_PASSWORD = gql`
         change_password
         buckets
         isLock
+        account_type
         active
         _id
         user_id
@@ -99,8 +98,8 @@ const RESET_PASSWORD = gql`
 `
 
 const UPDATE_USER = gql`
-  mutation updateUser( $name:String!, $type: String!, $branch:ID!, $departments: [ID], $buckets:[ID], $id: ID!) {
-    updateUser( name:$name, type:$type, branch:$branch, departments:$departments, buckets:$buckets, id:$id){
+  mutation updateUser( $name:String!, $type: String!, $branch:ID!, $departments: [ID], $buckets:[ID], $id: ID!, $account_type: String) {
+    updateUser( name:$name, type:$type, branch:$branch, departments:$departments, buckets:$buckets, id:$id, account_type:$account_type){
       success
       message
       user {
@@ -111,6 +110,7 @@ const UPDATE_USER = gql`
         departments
         branch
         active
+        account_type
         isLock
         change_password
         buckets
@@ -134,6 +134,7 @@ const STATUS_UPDATE = gql`
         departments
         branch
         active
+        account_type
         isLock
         change_password
         buckets
@@ -172,12 +173,12 @@ const UNLOCK_USER = gql`
 `
 
 const UpdateUserForm:React.FC<modalProps> = ({state}) => {
-
   const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const validForCampaignAndBucket = ["AGENT", "TL", "MIS"]
-  const [branchObject, setBranchObject] = useState<{[key:string]:string}>({})
+  const [branchObject, setBranchObject] = useState<{[key:string]:string}>({}) // id to name
+  const [objectBranch, setObjectbranch] = useState<{[key:string]:string}>({})// name to id
   const {data:branchesData} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
   const [isUpdate, setIsUpdate] = useState(false)
   const [required, setRequired] = useState(false)
@@ -186,7 +187,6 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   const [bucketObject,setBucketObject] = useState<{[key:string]:string}>({})
   const [selectionDept, setSelectionDept] = useState<boolean>(false)
   const [selectionBucket,setSelectionBucket] = useState<boolean>(false)
-
   type UserType = "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" ;
 
   const isValidUserType = (value: string): value is UserType => {
@@ -209,28 +209,32 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     branch: string;
     departments: string[];
     buckets: string[];
+    account_type: string
   }>({
     username: state?.username,
     type: safeType,
     name: state?.name,
     branch: state?.branch,
     departments: state?.departments,
-    buckets: state?.buckets || []
+    buckets: state?.buckets || [],
+    account_type: state?.account_type
   })
   
-  const {data:branchDeptData} = useQuery<{getBranchDept:Dept[]}>(
+  const {data:branchDeptData, refetch:branchDeptRefetch} = useQuery<{getBranchDept:Dept[]}>(
     BRANCH_DEPARTMENT_QUERY, 
     {
       variables: {branch: branchObject[data.branch]},
-    } 
+    },
   )
 
-  console.log(branchDeptData)
+
 
   const {data:deptBucket} = useQuery<{getBuckets:DeptBucket[]}>(DEPT_BUCKET_QUERY,{
     variables: {dept: data.departments},
-
   })
+
+
+
   useEffect(()=> {
     if(branchDeptData) {
       const newObject:{[key:string]:string} = {}
@@ -241,9 +245,13 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     }
     if(branchesData) {
       const newObject:{[key:string]:string} = {}
+      const objectNew:{[key:string]:string} = {}
+      
       branchesData.getBranches.map((b)=> {
         newObject[b.id] = b.name
+        objectNew[b.name] = b.id
       })
+      setObjectbranch(objectNew)
       setBranchObject(newObject)
     }
 
@@ -272,7 +280,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       
       setIsUpdate(false)
     },
-    onError: () => {
+    onError: (error) => {
+      console.log(error)
       dispatch(setServerError(true))
     }
   })
@@ -335,7 +344,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       name: state?.name,
       branch: state?.branch,
       departments: state?.departments,
-      buckets: state?.buckets
+      buckets: state?.buckets,
+      account_type: state.account_type
     })
   }
 
@@ -353,7 +363,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       setModalProps({
         no:()=> setConfirm(false),
         yes:async() => { 
-          await updateUser({variables: {...data, id: state._id , branch: branchObject[data.branch]}})
+          await updateUser({variables: {...data, id: state._id}})
           setConfirm(false)
         },
         message: "Are you sure you want to update this user?",
@@ -413,6 +423,13 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     setData({...data, buckets: check})
   }
   
+  useEffect(()=> {
+    branchDeptRefetch()
+  },[data.branch])
+  
+  const campaignDiv = useRef<HTMLDivElement | null>(null)
+  const bucketDiv = useRef<HTMLDivElement | null>(null)
+
 
   return (
     <>
@@ -420,8 +437,15 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
         success?.success &&
         (<SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>)
       }
-      <div className="px-5 w-full grid grid-cols-2 gap-10 col-span-2">
-   
+      <div className="px-5 w-full grid grid-cols-2 gap-10 col-span-2" onMouseDown={(e)=> 
+        {
+          if(!campaignDiv.current?.contains(e.target as Node)) {
+              setSelectionDept(false)
+          }
+          if(!bucketDiv.current?.contains(e.target as Node)) {
+            setSelectionBucket(false)
+          }
+      }}>
         <div className=" w-full flex flex-col gap-2 py-5">
           {
             required && 
@@ -477,14 +501,31 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
               />
           </label>
-          
+    
+          <label className="w-full">
+            <p className=" text-base font-medium text-slate-500">Account Type</p>
+            <select
+              id="branch"
+              name="branch"
+              value={data.account_type || ""}
+              onChange={(e)=> setData({...data, account_type: e.target.value})}
+              disabled={!isUpdate}
+              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+            >
+              <option value="">Choose account type</option>
+              <option value="caller">Caller</option>
+              <option value="field">Field</option>
+              <option value="skipper">Skipper</option>
+           
+            </select>
+          </label>
           <label className="w-full">
             <p className=" text-base font-medium text-slate-500">Branch</p>
             <select
               id="branch"
               name="branch"
               value={branchObject[data.branch]}
-              onChange={(e)=> setData({...data, branch: e.target.value})}
+              onChange={(e)=> {setData({...data, branch: objectBranch[e.target.value], departments: [], buckets: []})}}
               disabled={!isUpdate}
               className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
@@ -497,7 +538,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             </select>
           </label>
         
-          <div className="w-full relative">
+          <div className="w-full relative" ref={campaignDiv}>
             <p className="w-full text-base font-medium text-slate-500">Campaign</p>
             <div className={`${data.departments.length === 0 && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectionDept && data.departments.length > 0 ? "border-blue-500" : "border-slate-300"}`}>
               <div 
@@ -515,26 +556,30 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               />
             </div>
             {
-              (selectionDept && data.branch) &&
+              (selectionDept && data.branch ) &&
               <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-70 overflow-y-auto border z-40">
                 {
-                  branchDeptData?.getBranchDept.map((e)=> 
-                    <label key={e.id} className="flex gap-2">
-                      <input 
-                      type="checkbox"
-                      name={e.name} 
-                      id={e.name} 
-                      value={e.name}
-                      onChange={(e)=> handleCheckedDept(e, e.target.value)} 
-                      checked={data.departments.toString().includes(e.id)} />
-                      <span>{e.name.replace(/_/g," ")}</span>
-                    </label>
-                  )
+                  branchDeptData?.getBranchDept.map((e)=> {
+                    return e.name !== "ADMIN" &&(
+                      <label key={e.id} className="flex gap-2">
+                        <input 
+                        type="checkbox"
+                        name={e.name} 
+                        id={e.name} 
+                        value={e.name}
+                        onChange={(e)=> handleCheckedDept(e, e.target.value)} 
+                        checked={data.departments.toString().includes(e.id)} />
+                        <span>{e.name.replace(/_/g," ")}</span>
+                      </label>
+                    )
+                  })
                 }
               </div>
             }
           </div>
-          <div className="w-full relative">
+
+          
+          <div className="w-full relative" ref={bucketDiv}>
             <p className="w-full text-base font-medium text-slate-500">Bucket</p>
             <div className={`${data.departments.length === 0 && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectionBucket && data.departments.length > 0 ? "border-blue-500" : "border-slate-300"}`}>
               <div className="w-full p-2.5 text-nowrap truncate cursor-default" title={data.buckets.map(bucketId => Object.entries(bucketObject).find(([, val]) => val.toString() === bucketId)?.[0]).join(', ').replace(/_/g, " ")} onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type) && isUpdate) setSelectionBucket(!selectionBucket)}}>
@@ -549,24 +594,24 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-50 overflow-y-auto border z-40">
                 {
                   deptBucket?.getBuckets.map((e,index)=> 
-                  
-                    <div key={index} className="py-0.5">
-                      <div className="uppercase text-sm">{e.dept}</div>
-                      {
-                        e.buckets.map(e => 
-                        <label key={e.id} className="flex gap-2 text-xs">
-                          <input 
-                          type="checkbox"
-                          name={e.name} 
-                          id={e.name} 
-                          value={e.name}
-                          onChange={(e)=> handleCheckedBucket(e, e.target.value)} 
-                          checked={data.buckets.toString().includes(e.id)} />
-                          <span className="uppercase">{e.name.replace(/_/g," ")}</span>
-                        </label>
-                        )
-                      }
-                    </div>
+                      <div key={index} className="py-0.5">
+                        <div className="uppercase text-sm">{e.dept}</div>
+                        {
+                          e.buckets.map(e => 
+                          <label key={e.id} className="flex gap-2 text-xs">
+                            <input 
+                            type="checkbox"
+                            name={e.name} 
+                            id={e.name} 
+                            value={e.name}
+                            onChange={(e)=> handleCheckedBucket(e, e.target.value)} 
+                            checked={data.buckets.toString().includes(e.id)} />
+                            <span className="uppercase">{e.name.replace(/_/g," ")}</span>
+                          </label>
+                          )
+                        }
+                      </div>
+                
                   
                   )
 

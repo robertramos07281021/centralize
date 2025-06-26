@@ -162,7 +162,6 @@ const taskResolver = {
           message: "Successfully transfer to team leader"
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)          
       }
     }

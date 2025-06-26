@@ -32,19 +32,7 @@ export const date:Record<string, number> = {
   December: 31
 }
 
-export const options = { 
-  plugins: {
-    datalabels: {
-      color: 'oklch(0 0 0)',
-      font: {
-        weight: "bold", 
-        size: 10,
-      } as const,
-    },
-  },
-  responsive: true, 
-  maintainAspectRatio: false
-}
+
 
 export const color = [
   "oklch(0.75 0.15 0)",     // Red
@@ -134,16 +122,45 @@ export const accountsNavbar:{[key:string]:links[]} = {
       link: "/tl-reports"
     },
   ],
+  MIS: [
+    {
+      name: "Dashboard",
+      link: "/mis-dashboard"
+    },
+    {
+      name: "Customer Interaction Panel",
+      link: "/tl-cip"
+    },
+    {
+      name: "Task Manager",
+      link: "/tl-task-manager"
+    },
+    {
+      name: "Production Manager",
+      link: '/tl-production-manager'
+    },
+    {
+      name: "Agent Production",
+      link: "/agent-production"
+    },
+    {
+      name: "Reports",
+      link: "/tl-reports"
+    },
+  ],
   AOM: [
     {
       name: "Dashboard",
       link: "/aom-dashboard"
     },
     {
+      name: "Full Time Employee",
+      link: '/aom-fte-user'
+    },
+    {
       name: "Report",
       link: "/aom-reports"
-    }
-
+    },
   ]
 }
 

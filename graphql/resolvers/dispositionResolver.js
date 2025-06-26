@@ -292,7 +292,6 @@ const dispositionResolver = {
           }
         ])
 
-        console.log(dailyFTE)
 
         const newDailyFTE = dailyFTE.map(e => {
           const newCampaignArray = aomCampaign.find(c=> e.campaign === c.name)
@@ -1791,7 +1790,7 @@ const dispositionResolver = {
           message: "Disposition successfully created"
         }
       } catch (error) {
-        console.log(error)
+
         throw new CustomError(error.message, 500)
       }
     }

@@ -22,7 +22,6 @@ const UserView = () => {
   useEffect(()=> {
     refetch()
   },[state, refetch])
-  console.log(state)
   return (
     <>
       <div className="p-5 h-screen flex flex-col overflow-hidden">

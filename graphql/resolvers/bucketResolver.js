@@ -141,7 +141,6 @@ const bucketResolver = {
         await Bucket.create({name, dept, viciIp, issabelIp})
         return {message: "Bucket successfully created", success: true}
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },

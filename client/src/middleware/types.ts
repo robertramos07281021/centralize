@@ -41,6 +41,7 @@ export type Users = {
   isLock: boolean
   active: boolean
   createdAt: string
+  account_type: string
   user_id: string
 }
 

@@ -73,6 +73,18 @@ const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, b
 const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs, productionTypeDefs, callfileTypeDefs, recordingTypeDefs]);
 
 const httpServer = createServer(app);
+
+
+httpServer.on('connection', (socket) => {
+  socket.on('error', (err) => {
+    if (err.code === 'ECONNRESET') {
+      console.warn('⚠️ Socket connection reset (ECONNRESET).');
+    } else {
+      console.error('❌ Socket error:', err);
+    }
+  });
+});
+
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
 const wsServer = new WebSocketServer({
@@ -112,7 +124,10 @@ useServer({ schema,
         console.error("onDisconnect error:", err.message);
       }
     }
-  }
+  },
+  onError: (ctx, msg, errors) => {
+    console.error('GraphQL WebSocket error:', errors);
+  },
  }, wsServer);
 
 const startServer = async() => {

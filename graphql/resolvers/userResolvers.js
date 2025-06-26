@@ -99,8 +99,8 @@ const userResolvers = {
       }
     },
     findDeptAgents: async(_,__,{user})=> {
-      if (!user) throw new CustomError("Not authenticated",401);
       try {
+        if (!user) throw new CustomError("Not authenticated",401);
         const agent = await User.find({departments: {$in: user.departments}})
 
         return agent
@@ -153,6 +153,62 @@ const userResolvers = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
+    },
+    getAOMCampaignFTE: async(_,__,{user})=> {
+      try {
+        if (!user) throw new CustomError("Not authenticated",401);
+        
+        const aomFTEs = await User.aggregate([
+          {
+            $match: {
+              type: "AGENT"
+            }
+          },
+          {
+            $unwind: {path: "$departments", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "departments",
+              localField: "departments", 
+              foreignField: "_id",
+              as: "department"
+            }
+          },
+          {
+            $unwind: {path: "$department", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $group: {
+              _id: {
+                _id : "$department._id", 
+                name: "$department.name",
+                branch: "$department.branch"
+              },
+              users: {
+                $push: {
+                  isOnline: "$isOnline",
+                  user_id: "$user_id",
+                  name: "$name",
+                  buckets: "$buckets"
+                }
+              },
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              department: "$_id",
+              users: 1
+            }
+          }
+        ])
+
+        return aomFTEs
+        
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
     }
   },
   DeptUser: {
@@ -175,58 +231,58 @@ const userResolvers = {
     }
   },
   Mutation: {
-    createUser: async (
-      _,
-      { name, username, branch, departments, type, user_id,buckets}, {user}) => {
-        try {
-          if(!user) throw new CustomError("Unauthorized",401)
+    createUser: async (_,{ name, username, branch, departments, type, user_id,buckets, account_type }, {user}) => {
+      try {
+        if(!user) throw new CustomError("Unauthorized",401)
+        
+        if(type === "AGENT") {
+          await Promise.all(
+            departments.map(async (deptId) => {
+              const found = await Department.findById(deptId);
+              if (!found) throw new Error(`Department not found: ${deptId}`);
+            })
+          );
+
+          await Promise.all(
+            buckets.map(async (bucketId) => {
+              const found = await Bucket.findById(bucketId);
+              if (!found) throw new Error(`Bucket not found: ${bucketId}`);
+            })
+          );
           
-          if(type === "AGENT") {
-            await Promise.all(
-              departments.map(async (deptId) => {
-                const found = await Department.findById(deptId);
-                if (!found) throw new Error(`Department not found: ${deptId}`);
-              })
-            );
-
-            await Promise.all(
-              buckets.map(async (bucketId) => {
-                const found = await Bucket.findById(bucketId);
-                if (!found) throw new Error(`Bucket not found: ${bucketId}`);
-              })
-            );
-            
-            const findBranch = await Branch.findById(branch)
-            if(!findBranch) throw new Error("Branch not found")
-          }
-
-          const saltPassword = await bcrypt.genSalt(10)
-          const password = type.toLowerCase() === "admin" ? "adminadmin" : "Bernales2025";
-
-          const hashPassword = await bcrypt.hash(password, saltPassword)
-
-          const newUser = new User({ 
-            name, 
-            username, 
-            password:hashPassword , 
-            branch: branch || null, 
-            departments, 
-            type ,
-            user_id, 
-            buckets});
-
-          await newUser.save();
-
-          await ModifyRecord.create({name: "Created", user: newUser._id})
-
-          return {
-            success: true,
-            message: "New Account Created"
-          };
-          
-        } catch (error) {
-          throw new CustomError(error.message,500)
+          const findBranch = await Branch.findById(branch)
+          if(!findBranch) throw new Error("Branch not found")
         }
+
+        const saltPassword = await bcrypt.genSalt(10)
+        const password = type.toLowerCase() === "admin" ? "adminadmin" : "Bernales2025";
+
+        const hashPassword = await bcrypt.hash(password, saltPassword)
+
+        const newUser = new User({ 
+          name, 
+          username, 
+          password:hashPassword , 
+          branch: branch || null, 
+          departments, 
+          type ,
+          user_id, 
+          account_type,
+          buckets
+        });
+
+        await newUser.save();
+
+        await ModifyRecord.create({name: "Created", user: newUser._id})
+
+        return {
+          success: true,
+          message: "New Account Created"
+        };
+        
+      } catch (error) {
+        throw new CustomError(error.message,500)
+      }
     },
 
     updatePassword: async (_, { password, confirmPass }, { user }) => {
@@ -363,10 +419,10 @@ const userResolvers = {
         throw new CustomError(error.message, 500)
       }
     },
-    updateUser: async(_,{id, name, type, branch, departments, buckets },{user}) => {
+    updateUser: async(_,{ id, name, type, branch, departments, buckets, account_type },{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const updateUser = await User.findByIdAndUpdate(id,{name, type, branch, departments, buckets},{new: true})
+        const updateUser = await User.findByIdAndUpdate(id,{$set: {name, type, branch, departments, buckets, account_type}},{new: true})
         if(!updateUser) throw new CustomError("User not found",404)
         
         await ModifyRecord.create({name: "Update User Info", user: updateUser._id})

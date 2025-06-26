@@ -41,7 +41,7 @@ const userSchema = new Schema(
     },
     account_type: {
       type: String ,
-      enum: ['caller','skiper','field']
+      enum: ['caller','skiper','field','']
     },
     buckets: [{
       type: mongoose.Schema.Types.ObjectId,

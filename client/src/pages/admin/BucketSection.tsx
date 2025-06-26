@@ -313,20 +313,21 @@ const BucketSection = () => {
           <div className="w-96 h-80 rounded-xl border border-slate-300 p-2 overflow-y-auto">
             {
               newDepts.map((nd,index)=> {
+                const findBucket = dept?.getDepts.find(x => x.id === nd)
                 return deptObject[nd] !== "ADMIN" && (
                   <div 
                     key={index} 
                     className={`${nd === deptSelected && "bg-slate-200"} text-base uppercase font-medium text-slate-500 p-2 border-b border-slate-300 last:border-b-0 hover:bg-slate-100 cursor-pointer`}
                     onClick={()=> handleSelectDept(nd)}
                   >
-                    <p>{deptObject[nd]?.replace(/_/g," ")}</p>
-                  
+                    <p className="text-sm">{deptObject[nd]?.replace(/_/g," ")}- <span>{findBucket?.branch}</span></p>
                   </div>
                 )
               }
               )
-            }
             
+            }
+          
           </div>
           <div className="w-150 h-80 rounded-xl border border-slate-300 p-2 overflow-y-auto">
               <div className="grid grid-cols-4 text-base font-bold text-gray-500 bg-gray-50 py-0.5">

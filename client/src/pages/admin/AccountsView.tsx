@@ -58,6 +58,7 @@ const GET_ALL_USERS = gql`
         isOnline
         buckets
         createdAt
+        account_type
         user_id
       }
     }
@@ -75,6 +76,7 @@ const FIND_QUERY = gql`
         departments
         branch
         isLock
+        account_type
         change_password
         active
         isOnline
@@ -98,6 +100,7 @@ interface Users  {
   isOnline: boolean
   isLock: boolean
   active: boolean
+  account_type: string
   createdAt: string
   user_id: string
 }
