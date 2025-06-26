@@ -225,6 +225,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     } 
   )
 
+  console.log(branchDeptData)
 
   const {data:deptBucket} = useQuery<{getBuckets:DeptBucket[]}>(DEPT_BUCKET_QUERY,{
     variables: {dept: data.departments},
@@ -271,8 +272,11 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       
       setIsUpdate(false)
     },
+    onError: () => {
+      dispatch(setServerError(true))
+    }
   })
-
+  
   const [resetPassword] = useMutation(RESET_PASSWORD, {
     onCompleted: (res) => {
       navigate(location.pathname, { state: { ...state, newKey: "newKey" } });
@@ -281,6 +285,9 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
         message: res.resetPassword.message
       })
     },
+    onError:() => {
+      dispatch(setServerError(true))
+    }
   })
 
   const [updateActiveStatus] = useMutation(STATUS_UPDATE,{
@@ -291,6 +298,9 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
         message: res.updateActiveStatus.message
       })
     },
+    onError:  ()=> {
+      dispatch(setServerError(true))
+    }
   })
 
 
@@ -301,11 +311,13 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
         success: res.unlockUser.success,
         message: res.unlockUser.message
       })
+    },
+    onError:() => {
+      dispatch(setServerError(true))
     }
   })
 
 //  ====================================================================== 
-
 
   const [modalProps, setModalProps] = useState({
     message: "",
@@ -313,10 +325,6 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     yes: () => {},
     no: () => {}
   })
-
-
-
-
 
   const handleCancel = () => {
     setIsUpdate(false)
@@ -327,7 +335,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       name: state?.name,
       branch: state?.branch,
       departments: state?.departments,
-      buckets: state?.buckets})
+      buckets: state?.buckets
+    })
   }
 
   const submitValue: Record<string, () => Promise<void>>  = {
@@ -344,12 +353,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       setModalProps({
         no:()=> setConfirm(false),
         yes:async() => { 
-          try {
-            await updateUser({variables: {...data, id: state._id }})
-            setConfirm(false)
-          } catch (error) {
-            dispatch(setServerError(true))
-          }
+          await updateUser({variables: {...data, id: state._id , branch: branchObject[data.branch]}})
+          setConfirm(false)
         },
         message: "Are you sure you want to update this user?",
         toggle: "UPDATE"
@@ -360,12 +365,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       setModalProps({
         no:()=> setConfirm(false),
         yes:async() => { 
-          try {
-            await resetPassword({variables: {id: state._id}})
-            setConfirm(false)
-          } catch (error) {
-            dispatch(setServerError(true))
-          }
+          await resetPassword({variables: {id: state._id}})
+          setConfirm(false)
         },
         message: "Are you sure you want to reset password of this user?",
         toggle: "UPDATE"
@@ -376,12 +377,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       setModalProps({
         no:()=> {setConfirm(false); setCheck(state.active)},
         yes:async() => { 
-          try {
-            await updateActiveStatus({variables: {id: state._id}})
-            setConfirm(false)
-          } catch (error) {
-            dispatch(setServerError(true))
-          }
+          await updateActiveStatus({variables: {id: state._id}})
+          setConfirm(false)
         },
         message: `Are you sure you want to ${state.active ? "Deactivate" : "Activate"} of this user?`,
         toggle: "UPDATE"
@@ -392,13 +389,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       setModalProps({
         no:()=> {setConfirm(false); setCheck(state.active)},
         yes:async() => { 
-          try {
-            await unlockUser({variables: {id: state._id}})
-            setConfirm(false)
-          } catch (error) {
-            console.log(error)
-            dispatch(setServerError(true))
-          }
+          await unlockUser({variables: {id: state._id}})
+          setConfirm(false)
         },
         message: `Are you sure you want to unlock this user?`,
         toggle: "UNLOCK"

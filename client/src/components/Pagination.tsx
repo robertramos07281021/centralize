@@ -44,7 +44,7 @@ const Pagination:React.FC<modalProps> = ({value, onChangeValue, onKeyDownValue, 
           className="border max-w-8  py-0.5 px-1.5 rounded-md focus:outline-0" />
         <span>of {totalPage}</span>
         <MdOutlineKeyboardArrowRight className={`text-lg ${currentPage ===  totalPage ? "text-slate-300" : "text-slate-500"} `} onClick={()=> {
-          if(totalPage > currentPage){ onKeyDownValue(currentPage + 1) ; console.log("hello")}
+          if(totalPage > currentPage){ onKeyDownValue(currentPage + 1)}
         }}/>
         <MdOutlineKeyboardDoubleArrowRight className={`text-lg ${currentPage ===  totalPage ? "text-slate-300" : "text-slate-500"} `} onClick={()=> {
           if(totalPage >= currentPage){ onKeyDownValue(totalPage)}
