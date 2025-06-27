@@ -1488,7 +1488,7 @@ const dispositionResolver = {
     agentDispoDaily: async(_,__,{user})=> {
       try {
         
-
+      
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -1504,7 +1504,7 @@ const dispositionResolver = {
         const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
         const newBucket = campaignBucket.map(e=> e._id)
 
-
+    
         function setGroupForDailyCollection (name,ptp,start,end) {
       
           const andArray = [
@@ -1515,18 +1515,19 @@ const dispositionResolver = {
               $lt: ['$createdAt',end]
             },
           ]
+
           if(name === 'PTP') {
             andArray.push({ $eq: ['$dispotype.code','PTP'] }) 
           }
 
-          if(name === 'PAID' && ptp) {
+          if(name === 'PAID' && ptp === true) {
             andArray.push({$eq: ['$dispotype.code','PAID']}) 
             andArray.push({$eq: ['$ptp', ptp]} )
           }
           
-          if(name === 'PAID' && !ptp) {
+          if(name === 'PAID' && ptp === false) {
             andArray.push({ $eq: ['$dispotype.code','PAID']}) 
-            andArray.push({$eq: ['$ptp', !ptp]} )
+            andArray.push({$eq: ['$ptp', ptp]} )
           }
 
           return {
@@ -1602,40 +1603,6 @@ const dispositionResolver = {
                         {
                           $lt: ['$createdAt',todayEnd]
                         },
-                        // {
-                        //   $or: [
-                        //     {
-                        //       $and: [
-                        //         {
-                        //           $ne: ['$dispotype.code','PAID']
-                        //         }
-                        //       ]
-                        //     },
-                        //     {
-                        //       $and: [
-                        //         {
-                        //           $eq: ['$dispotype.code','PAID']
-                        //         },
-                        //         {
-                        //           $eq: ['$existing',true]
-                        //         },
-                        //         {
-                        //           $eq: ['$ptp',true]
-                        //         }
-                        //       ]
-                        //     },
-                        //     {
-                        //       $and: [
-                        //         {
-                        //           $eq: ['$dispotype.code','PAID']
-                        //         },
-                        //         {
-                        //           $eq: ['$ptp',false]
-                        //         }
-                        //       ] 
-                        //     }
-                        //   ]
-                        // }
                       ]
                     },
                     1,

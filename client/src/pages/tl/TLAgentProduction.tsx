@@ -92,6 +92,7 @@ const TLAgentProduction = () => {
       setBucketObject(newObject)
     }
   },[tlBucketData])
+  console.log(agentDailyProd)
 
   return (
     <div className='col-span-3 border border-slate-400 bg-white rounded-xl overflow-auto p-2'>
@@ -115,10 +116,10 @@ const TLAgentProduction = () => {
             const arrow = sumOfDaily === 0 ? <HiOutlineMinusSm className="text-blue-500"/> : ((((sumOfDaily || 0) - (sumOfYesterday || 0)) > 0) ? <IoMdArrowUp className="text-green-500"/> : (((sumOfYesterday || 0) - (sumOfYesterday || 0)) === 0) ? <HiOutlineMinusSm className="text-blue-500"/> : <IoMdArrowDown className="text-red-500"/>) 
 
             return  (
-              <div key={agent._id} className='grid grid-cols-10 bg-white text-xs text-slate-500 py-0.5'>
+              <div key={agent._id} className='grid grid-cols-10 bg-white lg:text-[0.6rem] 2xl:text-xs text-slate-500 py-0.5'>
                 <div className='col-span-2 uppercase truncate'>{agent.name}</div>
                 <div className='truncate'>{agent.buckets.map(e=> bucketObject[e]).join(', ')}</div>
-                <div>{agent.user_id}</div>
+                <div className="truncate pr-2">{agent.user_id}</div>
                 <div>{getDailyProd?.count || 0}</div>
                 <div className="lg:text-[0.75em] 2xl:text-[0.8em]">{getDailyProd?.ptp.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
                 <div className="lg:text-[0.75em] 2xl:text-[0.8em]">{getDailyProd?.pk.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>

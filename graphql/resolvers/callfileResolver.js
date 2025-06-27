@@ -189,6 +189,16 @@ const callfileResolver = {
         throw new CustomError(error.message,500)    
       }
 
+    },
+    monthlyDetails: async(_,__,{user})=> {
+      try {
+        if(!user) throw new CustomError("Unauthorized",401)
+        
+          
+
+      } catch (error) {
+        throw new CustomError(error.message,500)  
+      }
     }
   },
   Result: {

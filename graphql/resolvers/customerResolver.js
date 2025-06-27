@@ -769,7 +769,7 @@ const customerResolver = {
             await CustomerAccount.create({
               customer: customer._id,
               bucket: findBucket._id,
-              case_id: element.case_id,
+              case_id: element.case_id || "",
               callfile: newCallfile._id,
               credit_customer_id: element.credit_user_id,
               endorsement_date: element.endorsement_date,

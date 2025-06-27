@@ -34,10 +34,18 @@ const callfileTypeDefs = gql`
     result: [Result]
     count: Int
   }
-  
+  type MonthlyDetails {
+    success: Int,
+    positive: Int,
+    unconnected: Int
+    total: Int
+  }
+
+
   type Query {
     getCallfiles(bucket:ID, limit:Int! , page:Int! ,status: String!):CallFilesResult
     downloadCallfiles(callfile:ID!): String!
+    monthlyDetails: MonthlyDetails
   }
 
   type SubsribeSuccess {

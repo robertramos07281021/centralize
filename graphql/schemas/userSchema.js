@@ -89,6 +89,7 @@ const userTypeDefs = gql`
     users: [Users]
   }
 
+
   type Query {
     getUsers(page: Int!, limit: Int!): PaginatedUsers!
     getUser(id: ID): Users
@@ -98,7 +99,8 @@ const userTypeDefs = gql`
     findDeptAgents:[DeptUser]
     findAgents:[Users],
     getCampaignAssigned: [CampaignUser]
-    getAOMCampaignFTE: [AOM_FTE]
+    getAOMCampaignFTE: [AOM_FTE],
+    getHelperAgent: [Users]
   }
   type SubscriptionSuccess {
     buckets: [ID],

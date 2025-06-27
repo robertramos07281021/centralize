@@ -161,11 +161,11 @@ const userResolvers = {
         const aomFTEs = await User.aggregate([
           {
             $match: {
-              type: "AGENT"
+              type: "AGENT",
+              $expr: {
+                $eq: [ { $size : "$departments" }, 1 ]
+              },
             }
-          },
-          {
-            $unwind: {path: "$departments", preserveNullAndEmptyArrays: true}
           },
           {
             $lookup: {
@@ -177,6 +177,11 @@ const userResolvers = {
           },
           {
             $unwind: {path: "$department", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              "department.aom" : new mongoose.Types.ObjectId(user._id)
+            }
           },
           {
             $group: {
@@ -196,17 +201,72 @@ const userResolvers = {
             }
           },
           {
+            $sort: {"_id.name": 1}
+          },
+          {
             $project: {
               _id: 0,
               department: "$_id",
               users: 1
             }
-          }
+          },
+     
         ])
 
         return aomFTEs
         
       } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getHelperAgent: async(_,__,{user})=> {
+      try {
+        if (!user) throw new CustomError("Not authenticated",401);
+
+        const userId = new mongoose.Types.ObjectId(user._id)
+
+        const UserHelper = await User.aggregate([
+          {
+            $lookup: {
+              from: "departments",
+              localField: "departments",
+              foreignField: "_id",
+              as: "department"
+            }
+          },
+          {
+            $addFields: {
+              filteredDepartments: {
+                $filter: {
+                  input: "$department",
+                  as: "dep",
+                  cond: {
+                    $eq: ["$$dep.aom", userId]
+                  }
+                }
+              }
+            }
+          },
+          {
+            $match: {
+              $expr: {
+                $and: [
+                  {
+                    $gt: [{ $size: "$filteredDepartments" }, 0],
+                  },
+                  {
+                    $gt: [{ $size: "$departments" }, 1]
+                  }
+                ]
+              },
+              type: "AGENT"
+            }
+          },
+        ])
+ 
+        return UserHelper
+      } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }
@@ -313,8 +373,11 @@ const userResolvers = {
 
     login: async(_,{ username, password },{ res , req}) => {
       try {
+
         
+        console.log(username)
         const user = await User.findOne({username})
+      
         if(!user) throw new CustomError("Invalid",401)
 
         if(user.isLock) throw new CustomError('Lock',401)  
@@ -335,6 +398,7 @@ const userResolvers = {
             }
             await user.save();
           }
+          console.log("hello")
           throw new CustomError("Invalid",401)
         }
             
@@ -384,6 +448,7 @@ const userResolvers = {
         return { user: user, prodStatus: status , start: start ? start?.map(e=> e.start).toString() : new Date().toString() }
         
       } catch (error) {
+
         throw new CustomError(error.message,500)
       }
     },

@@ -189,7 +189,7 @@ const dispositionTypeDefs = gql`
     getTLDailyCollected: [TLDailyCollected]
     agentDispoDaily: [AgentDispo]
     getTargetPerCampaign: [BucketTargets]
-
+    
   }
 
   type Mutation {

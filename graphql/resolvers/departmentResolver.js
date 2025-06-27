@@ -88,6 +88,7 @@ const deptResolver = {
     updateDept: async(_,{id,name, branch, aom},{user}) => {
     
       if(!user) throw new CustomError("Unauthorized",401)
+        
       try {
         const findBranch = await Branch.findOne({name: branch})
         if(!findBranch) throw new CustomError("Branch not existing",400)
