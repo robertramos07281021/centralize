@@ -2,6 +2,7 @@ import { gql, useQuery } from "@apollo/client"
 import { useEffect, useState } from "react"
 import { Doughnut } from 'react-chartjs-2';
 import { colorDispo } from "../../middleware/exports";
+import { Chart, ChartData, ChartOptions } from "chart.js";
 
 const GET_DISPOSITION_REPORTS = gql`
   query GetDispositionReports($agent: String, $bucket: String, $disposition: [String], $from: String, $to: String) {
@@ -83,7 +84,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
     setChartFull(!chartFull)
   }
   const [dispositionData, setDispositionData] = useState<Dispositions[]>([])
-  const [totalCount, setTotalCount] = useState<number>(0)
+
     
   const [newReportsDispo, setNewReportsDispo] = useState<Record<string,number>>({})
   const {data:reportsData} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: search.searchAgent, bucket: search.searchBucket, disposition: search.selectedDisposition, from: search.dateDistance.from, to: search.dateDistance.to}})
@@ -106,9 +107,6 @@ const ReportsView:React.FC<Props> = ({search}) => {
         count: Number(newReportsDispo[e.code]) ? Number(newReportsDispo[e.code]) : 0 ,
         color: colorDispo[e.code] || '#ccc', 
       }));
-       
-      setTotalCount(updatedData.map((e)=> e.count).reduce((total, value)=> 
-        total + value, 0))
 
       setDispositionData(updatedData);
     }
@@ -121,15 +119,10 @@ const ReportsView:React.FC<Props> = ({search}) => {
   }
 
   const dataLabels = dispositionData.map(d=> d.code)
-  const dataCount = dispositionData.map(d => { 
-    const count = d.count;
-    if (!totalCount || totalCount === 0) return 0; 
-    const percent = parseInt(Math.floor((Number(count) / totalCount) * 100).toPrecision(2));
-    return percent === 100 ? 1 : percent;
-  })
+  const dataCount = dispositionData.map(d => d.count)
   const dataColor = dispositionData.map(d=> d.color)
 
-  const data = {
+  const data:ChartData<'doughnut'> = {
     labels: dataLabels,
     datasets: [{
       label: 'Percentage',
@@ -139,20 +132,33 @@ const ReportsView:React.FC<Props> = ({search}) => {
     }],
   };
   
-  const options = {
+  const options:ChartOptions<'doughnut'> = {
     plugins: {
       datalabels: {
         color: 'oklch(0 0 0)',
         font: {
           weight: "bold", 
           size: 12,
-        } as const,
-        formatter: (value: number) => {return value === 0 ? "" : Math.ceil(value/100 * totalCount)}
+        },
+        formatter: (value: number) => {
+          return value === 0 ? "" : value
+        }
       },
       legend: {
-        position: 'bottom' as const,
+        position: 'bottom',
         display: false
       },
+      tooltip: {
+      callbacks: {
+        label: function (context) {
+          const dataset = context.dataset;
+          const total = dataset.data.reduce((sum: number, val: any) => sum + val, 0);
+          const currentValue = context.raw as number;
+          const percentage = ((currentValue / total) * 100).toFixed(1);
+          return `Percentage: ${percentage}%`;
+        }
+      }
+    }
     },
     responsive: true,
     maintainAspectRatio: false,
