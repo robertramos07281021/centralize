@@ -92,7 +92,6 @@ const TLAgentProduction = () => {
       setBucketObject(newObject)
     }
   },[tlBucketData])
-  console.log(agentDailyProd)
 
   return (
     <div className='col-span-3 border border-slate-400 bg-white rounded-xl overflow-auto p-2'>

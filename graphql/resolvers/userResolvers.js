@@ -373,9 +373,6 @@ const userResolvers = {
 
     login: async(_,{ username, password },{ res , req}) => {
       try {
-
-        
-        console.log(username)
         const user = await User.findOne({username})
       
         if(!user) throw new CustomError("Invalid",401)
