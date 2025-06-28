@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo } from "react"
 import { IoMdArrowDown,IoMdArrowUp  } from "react-icons/io";
 import { HiOutlineMinusSm } from "react-icons/hi";
 import { useAppDispatch } from "../../redux/store";
@@ -72,8 +72,6 @@ const TLAgentProduction = () => {
   const dispatch = useAppDispatch()
   const {data:agentBucketData, error:abdError} = useQuery<{findAgents:Agent[]}>(GET_DEPARTMENT_AGENT)
 
-  const [bucketObject, setBucketObject]= useState<{[key:string]:string}>({})
-
   const {data:tlBucketData, error:tlbdError} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
 
   useEffect(()=> {
@@ -82,15 +80,9 @@ const TLAgentProduction = () => {
     }
   },[addError,abdError,tlbdError])
 
-
-  useEffect(()=> {
-    if(tlBucketData) {
-      const newObject:{[key: string]:string} = {}
-      tlBucketData.getDeptBucket.map(e=> {
-        newObject[e.id] = e.name
-      })
-      setBucketObject(newObject)
-    }
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const tlBuckets = tlBucketData?.getDeptBucket || []
+    return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
   },[tlBucketData])
 
   return (

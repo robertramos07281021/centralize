@@ -2,7 +2,7 @@ import { gql, useQuery } from "@apollo/client"
 import { useEffect, useState } from "react"
 import { Doughnut } from 'react-chartjs-2';
 import { colorDispo } from "../../middleware/exports";
-import { Chart, ChartData, ChartOptions } from "chart.js";
+import {  ChartData, ChartOptions } from "chart.js";
 
 const GET_DISPOSITION_REPORTS = gql`
   query GetDispositionReports($agent: String, $bucket: String, $disposition: [String], $from: String, $to: String) {
@@ -149,16 +149,16 @@ const ReportsView:React.FC<Props> = ({search}) => {
         display: false
       },
       tooltip: {
-      callbacks: {
-        label: function (context) {
-          const dataset = context.dataset;
-          const total = dataset.data.reduce((sum: number, val: any) => sum + val, 0);
-          const currentValue = context.raw as number;
-          const percentage = ((currentValue / total) * 100).toFixed(1);
-          return `Percentage: ${percentage}%`;
+        callbacks: {
+          label: function (context) {
+            const dataset = context.dataset;
+            const total = dataset.data.reduce((sum: number, val: any) => sum + val, 0);
+            const currentValue = context.raw as number;
+            const percentage = ((currentValue / total) * 100).toFixed(1);
+            return `Percentage: ${percentage}%`;
+          }
         }
       }
-    }
     },
     responsive: true,
     maintainAspectRatio: false,

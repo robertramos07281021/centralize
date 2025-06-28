@@ -2,6 +2,7 @@ import { useQuery } from '@apollo/client'
 import gql from 'graphql-tag'
 import {  Chart } from 'react-chartjs-2'
 import { ChartData, ChartDataset, ChartOptions } from 'chart.js'
+import { useEffect } from 'react'
 
 
 
@@ -53,9 +54,14 @@ const oklchColors = [
 ];
 
 const PTPBar = () => {
+  
+  const {data:ptpPerDay,refetch:ptpPerDayRefetch} = useQuery<{getAOMPTPPerDay:PTPPerDay[]}>(PTP_PER_DAY)
+  const {data:aomDeptData, refetch:aomDeptRefetch} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
 
-  const {data:ptpPerDay} = useQuery<{getAOMPTPPerDay:PTPPerDay[]}>(PTP_PER_DAY)
-  const {data:aomDeptData} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
+  useEffect(()=> {
+    ptpPerDayRefetch()
+    aomDeptRefetch()
+  },[])
 
   const fields: {
     label: string;

@@ -101,6 +101,7 @@ const userTypeDefs = gql`
     getCampaignAssigned: [CampaignUser]
     getAOMCampaignFTE: [AOM_FTE],
     getHelperAgent: [Users]
+    getBucketTL:[Users]
   }
   type SubscriptionSuccess {
     buckets: [ID],

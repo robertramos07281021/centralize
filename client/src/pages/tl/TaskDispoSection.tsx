@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import React, { useEffect, useState } from "react"
+import React, { useEffect, useMemo, useState } from "react"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../../redux/store"
 import Confirmation from "../../components/Confirmation"
@@ -250,8 +250,14 @@ interface Props {
 
 const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   const dispatch = useAppDispatch()
-  const [groupDataNewObject, setGroupDataNewObject] = useState<{[key:string]:string}>({})
+  const {data:GroupData} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
   const {selectedGroup, selectedAgent, page, tasker, taskFilter, selectedDisposition, limit} = useSelector((state:RootState)=> state.auth)
+  
+  const groupDataNewObject:{[key:string]:string} = useMemo(()=> {
+    const group = GroupData?.findGroup || []
+    return Object.fromEntries(group.map(e=> [e.name, e._id]))
+  },[GroupData])
+
   const selected = selectedGroup ? groupDataNewObject[selectedGroup] : selectedAgent
   const {data:CustomerAccountsData, refetch:CADRefetch, loading, error:fcaError} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId: selected, assigned: taskFilter, limit: limit, selectedBucket: selectedBucket}})
   const [handleCheckAll, setHandleCheckAll] = useState<boolean>(false)
@@ -259,7 +265,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   const {data:selectAllCustomerAccountData, refetch:SACARefetch,error:sacaError} = useQuery<{selectAllCustomerAccount:string[]}>(SELECT_ALL_CUSTOMER_ACCOUNT,{variables: {disposition: selectedDisposition, groupId:selected, assigned: taskFilter, selectedBucket}})
   const [required, setRequired] = useState<boolean>(false)
   const [confirm, setConfirm] = useState<boolean>(false)
-  const {data:GroupData} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
+
   const [success, setSuccess] = useState<Success>({
     success:false,
     message: ""
@@ -289,16 +295,6 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
     setHandleCheckAll(false)
     SACARefetch()
   },[selectedGroup,CADRefetch,tasker, taskFilter,SACARefetch, selectedAgent, selectedDisposition])
-
-  useEffect(()=> {
-    const newObject:{[key:string]:string}= {}
-    if(GroupData){
-      GroupData.findGroup.map((e)=> {
-        newObject[e.name] = e._id
-      })
-    }
-    setGroupDataNewObject(newObject)
-  },[GroupData])
 
   const [modalProps, setModalProps] = useState({
     message: "",

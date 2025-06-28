@@ -5,6 +5,8 @@ import { useEffect, useState } from "react"
 import Confirmation from "../../components/Confirmation"
 import { PiNotePencilBold, PiTrashFill } from "react-icons/pi";
 import SuccessToast from "../../components/SuccessToast"
+import { setServerError } from "../../redux/slices/authSlice";
+import { useAppDispatch } from "../../redux/store";
 
 interface Success {
   success: boolean;
@@ -89,7 +91,7 @@ const DEPARTMENT_QUERY = gql`
 
 const DepartmentSection = () => {
   const {data, refetch } = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
-
+  const dispatch = useAppDispatch()
   const {data:dept, refetch:refetchDept} = useQuery<{getDepts:Department[]}>(DEPARTMENT_QUERY)
   
   const [name, setName] = useState<string>("")
@@ -127,6 +129,21 @@ const DepartmentSection = () => {
       setBranch("")
       setAom("")
     },
+    onError: (error)=> {
+      const errorMessage = error.message
+      if (errorMessage?.includes("Duplicate")) {
+        setSuccess({
+          success: true,
+          message: "Department already exists"
+        })
+        setName("")
+        setBranch("")
+        setAom("")
+        setConfirm(false)
+      } else {
+        dispatch(setServerError(true))
+      }
+    }
   })
 
   const [updateDept] = useMutation(UPDATEDEPT, {
@@ -152,6 +169,21 @@ const DepartmentSection = () => {
         }
       })
     },
+    onError: (error)=> {
+      const errorMessage = error.message
+      if (errorMessage?.includes("Duplicate")) {
+        setSuccess({
+          success: true,
+          message: "Department already exists"
+        })
+        setConfirm(false)
+        setName("")
+        setBranch("")
+        setAom("")
+      } else {
+        dispatch(setServerError(true))
+      }
+    }
   })
 
   const [deleteDept] = useMutation(DELETEDEPT, {
@@ -163,6 +195,10 @@ const DepartmentSection = () => {
         message: "Department successfully deleted"
       })
     },
+    onError: ()=> {
+      dispatch(setServerError(true))
+
+    }
   })
 
 // =================================================================
@@ -175,47 +211,14 @@ const DepartmentSection = () => {
 
   const confirmationFunction: Record<string, (dept:Department|null) => Promise<void>> = {
     CREATE: async() => {
-      try {
-        await createDept({variables: { name:name, branch:branch, aom:aom }});
-      } catch (error:any) {
-        const errorMessage = error?.graphQLErrors?.[0]?.message;
-        if (errorMessage?.includes("Duplicate")) {
-          setSuccess({
-            success: true,
-            message: "Department already exists"
-          })
-          setName("")
-          setBranch("")
-          setAom("")
-          setConfirm(false)
-        }
-      }
+      await createDept({variables: { name:name, branch:branch, aom:aom }});
     },
     UPDATE: async(dept) => {
-      try {
-        await updateDept({variables: {id: dept?.id, name: name, branch: branch, aom: aom}})
-      
-      } catch (error:any) {
-        const errorMessage = error?.graphQLErrors?.[0]?.message;
-        if (errorMessage?.includes("Duplicate")) {
-          setSuccess({
-            success: true,
-            message: "Department already exists"
-          })
-          setConfirm(false)
-          setName("")
-          setBranch("")
-          setAom("")
-        }
-      }
+      await updateDept({variables: {id: dept?.id, name: name, branch: branch, aom: aom}})
     },
     DELETE:async (dept) => {
-      try {
-        await deleteDept({variables: { id: dept?.id } })
-        setConfirm(false)
-      } catch (error) {
-        console.log(error)
-      }
+      await deleteDept({variables: { id: dept?.id } })
+      setConfirm(false)
     }
   };
 

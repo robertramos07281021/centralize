@@ -1,7 +1,7 @@
 import { gql, useQuery } from "@apollo/client"
 import { Link, useNavigate } from "react-router-dom"
 import { FaCircle } from "react-icons/fa";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { CiSearch } from "react-icons/ci";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../redux/store";
@@ -116,50 +116,37 @@ const AccountsView = () => {
   const {data:getDeptData} = useQuery<{getDepts:DeptBranchBucket[]}>(GET_DEPTS)
   const {data:getBranchData} = useQuery<{getBranches:DeptBranchBucket[]}>(GET_BRANCHES)
   const {data: getAllBucketsData} = useQuery<{getAllBucket:DeptBranchBucket[]}>(GET_ALL_BUCKET) 
-  const [deptObject, setDeptObject] = useState<{[key:string]:string}>({})
-  const [branchObject, setBranchObject] = useState<{[key:string]:string}>({})
-  const [bucketObject, setBucketObject] = useState<{[key:string]:string}>({})
   const [totalPage, setTotalPage] = useState<number>(1)
 
+  const deptObject:{[key:string]:string} = useMemo(()=> {
+    const deptData = getDeptData?.getDepts || []
+    return Object.fromEntries(deptData.map((db)=> [db.id, db.name]))
+  },[getDeptData])
 
-  useEffect(()=> {
-    if(getDeptData) {
-      const newObject:{[key:string]:string} = {}
-      getDeptData.getDepts.map((e)=> {
-        newObject[e.id] = e.name
-      })
-      setDeptObject(newObject)
-    }
-    if(getBranchData) {
-      const newObject:{[key:string]:string} = {}
-      getBranchData.getBranches.map((e)=> {
-        newObject[e.id] = e.name
-      })
-      setBranchObject(newObject)
-    }
-    if(getAllBucketsData) {
-      const newObject:{[key:string]:string} = {}
-      getAllBucketsData.getAllBucket.map((e)=> {
-        newObject[e.id] = e.name
-      })
-      setBucketObject(newObject)
-    }
-  },[getDeptData, getBranchData, getAllBucketsData])
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const allBucketData = getAllBucketsData?.getAllBucket || []
+    return Object.fromEntries(allBucketData.map((adb)=> [adb.id, adb.name]))
+  },[getAllBucketsData])
 
-
-
+  const branchObject:{[key:string]:string} = useMemo(()=> {
+    const branchData = getBranchData?.getBranches || []
+    return Object.fromEntries(branchData.map((bd)=> [bd.id, bd.name]))
+  },[getBranchData])
 
   const {data, refetch } = useQuery<{getUsers:{users:Users[],total:number}}>(GET_ALL_USERS,{variables: {page: adminUsersPage, limit }, skip: !!search })
   const {data:searchData } = useQuery<{findUsers:{users:Users[],total:number}}>(FIND_QUERY,{variables: { search, page: adminUsersPage, limit}, skip: !search})
   const users = search ? searchData?.findUsers?.users || [] : data?.getUsers?.users || [];
   
+  useEffect(()=> {
+    setPage(adminUsersPage.toString())
+  },[adminUsersPage])
 
 
   useEffect(()=> {  
     if(data || searchData) {
       const dataExistingPages = Math.ceil((data?.getUsers?.total || 1) / limit )
       const searchExistingPages = Math.ceil((searchData?.findUsers.total || 1) / limit)
-      const pageExists = dataExistingPages | searchExistingPages
+      const pageExists = dataExistingPages || searchExistingPages
       setTotalPage(pageExists)
     }
 

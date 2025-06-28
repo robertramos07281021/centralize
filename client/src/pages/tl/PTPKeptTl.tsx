@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 import { IoMdArrowDown,IoMdArrowUp  } from "react-icons/io";
 
 interface PTPKept {
@@ -21,7 +21,6 @@ const PTP_KEPT_TOTAL = gql`
   }
 `
 
-
 interface Bucket {
   id:string
   name: string
@@ -36,24 +35,12 @@ const TL_BUCKET = gql`
   }
 `
 
-
-
-
 const PTPKeptTl = () => {
-
-  const [bucketObject, setBucketObject]= useState<{[key:string]:string}>({})
-
   const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
-  useEffect(()=> {
-    if(tlBucketData) {
-      const newObject:{[key: string]:string} = {}
-      tlBucketData.getDeptBucket.map(e=> {
-        newObject[e.id] = e.name
-      })
-      setBucketObject(newObject)
-    }
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const tlBuckets = tlBucketData?.getDeptBucket || []
+    return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
   },[tlBucketData])
-
   const {data:ptpKetpData} = useQuery<{getTLPTPKeptTotals:PTPKept[]}>(PTP_KEPT_TOTAL)
   return (
     <div className='border-green-400 border bg-green-200 rounded-xl p-2 flex flex-col'>
@@ -72,8 +59,6 @@ const PTPKeptTl = () => {
             )
           }) 
         }
-
-
       </div>  
     </div>
   )

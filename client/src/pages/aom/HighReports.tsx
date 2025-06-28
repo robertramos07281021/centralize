@@ -1,6 +1,6 @@
 import { gql, useQuery } from "@apollo/client"
 import { ChartOptions } from "chart.js"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Doughnut } from "react-chartjs-2"
 import ReportsView from "./ReportsView"
 import { useAppDispatch } from "../../redux/store"
@@ -102,25 +102,13 @@ const HighReports:React.FC<modalProps> = ({setCampaign, reportsVariables, setRep
 
   useEffect(()=> {
     if(aomDeptError || monthlyPerError){
-      const isError = [
-        monthlyPerError,
-        aomDeptError
-      ]
-      console.log("Error in HighReports: ", isError.filter(e=> e !== undefined))
       dispatch(setServerError(true))
     }
   },[dispatch,monthlyPerError,aomDeptError])
 
-
-  const [deptId, setDeptId] = useState<{[key: string]: string}>({})
-  useEffect(()=> {
-    if(aomDeptData){
-      const newObject:{[key: string]:string} = {}
-      aomDeptData?.getAomDept?.map((e)=> {
-        newObject[e.id] = e.name
-      })
-      setDeptId(newObject)
-    } 
+  const deptId = useMemo(()=> {
+    const di = aomDeptData?.getAomDept || []
+    return Object.fromEntries(di.map(e=> [e.id, e.name]))
   },[aomDeptData])
 
   useEffect(()=> {

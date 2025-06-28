@@ -1,6 +1,7 @@
 import {  Chart } from "react-chartjs-2";
 import { gql, useQuery } from "@apollo/client";
 import { ChartData, ChartDataset, ChartOptions } from "chart.js";
+import { useEffect } from "react";
 
 
 interface PaidPerDay {
@@ -50,9 +51,14 @@ const oklchColors = [
 ];
 
 const PaidBar = () => {
-  const {data:paidData} = useQuery<{getAOMPaidPerDay:PaidPerDay[]}>(PAID_PER_DAY)
-  const {data:aomDeptData} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
+  const {data:paidData,refetch:paidRefetch} = useQuery<{getAOMPaidPerDay:PaidPerDay[]}>(PAID_PER_DAY)
+  const {data:aomDeptData,refetch:aomDeptDataRefetch} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
   
+  useEffect(()=> {
+    paidRefetch()
+    aomDeptDataRefetch()
+  },[])
+
   const fields: {
     label: string;
     key: keyof PaidPerDay;

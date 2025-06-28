@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo } from "react";
 import { IoMdArrowDown,IoMdArrowUp  } from "react-icons/io";
 import { useAppDispatch } from "../../redux/store";
 import { setServerError } from "../../redux/slices/authSlice";
@@ -38,27 +38,24 @@ const TL_BUCKET = gql`
 
 
 const TLDailyCollected = () => {
-    const [bucketObject, setBucketObject]= useState<{[key:string]:string}>({})
-    const dispatch = useAppDispatch()
-    const {data:tlBucketData,error} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
-    
-    useEffect(()=> {
-      if(tlBucketData) {
-        const newObject:{[key: string]:string} = {}
-        tlBucketData.getDeptBucket.map(e=> {
-          newObject[e.id] = e.name
-        })
-        setBucketObject(newObject)
-      }
-    },[tlBucketData])
-    const {data:dailyCollected,error:tlDailyCollectedError} = useQuery<{getTLDailyCollected:Collected[]}>(DAILY_COLLECTION)
 
-    useEffect(()=> {
-      if(error || tlDailyCollectedError) {
-        dispatch(setServerError(true))
-      }
-        
-    },[error, tlDailyCollectedError, dispatch])
+  const dispatch = useAppDispatch()
+  const {data:tlBucketData,error} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+  
+
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const tlBuckets = tlBucketData?.getDeptBucket || []
+    return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
+  },[tlBucketData])
+
+  const {data:dailyCollected,error:tlDailyCollectedError} = useQuery<{getTLDailyCollected:Collected[]}>(DAILY_COLLECTION)
+
+  useEffect(()=> {
+    if(error || tlDailyCollectedError) {
+      dispatch(setServerError(true))
+    }
+      
+  },[error, tlDailyCollectedError, dispatch])
 
   return (
     <div className='border-yellow-400 border bg-yellow-200 rounded-xl p-2 flex flex-col'>

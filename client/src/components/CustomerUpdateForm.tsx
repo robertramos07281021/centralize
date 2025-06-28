@@ -5,7 +5,7 @@ import { gql, useMutation, useQuery } from "@apollo/client";
 import {  useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../redux/store";
-import { setSelectedCustomer } from "../redux/slices/authSlice";
+import { setSelectedCustomer, setServerError } from "../redux/slices/authSlice";
 import { CustomerRegistered, Search } from "../middleware/types";
 
 const UPDATE_CUSTOMER = gql` mutation
@@ -68,17 +68,6 @@ const SEARCH = gql`
   }
 `
 
-
-// interface Customer {
-//   address: string[]
-//   contact_no: string[]
-//   dob: string
-//   emails: string[]
-//   fullName: string
-//   gender: string
-//   _id: string
-// }
-
 interface UpdatedCustomer {
   customer: CustomerRegistered,
   success: boolean,
@@ -94,11 +83,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const dispatch = useAppDispatch()
   const [id, setId] = useState("")
   const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: id}})
-  // const [deselectTask] = useMutation(DESELECT_TASK,{
-  //   onCompleted: ()=> {
-  //     dispatch(setDeselectCustomer())  
-  //   }
-  // })
+
   const location = useLocation()
   useEffect(()=> {
     if(searchData?.search.length === 1) {
@@ -113,7 +98,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const handleAddMobile = () => {
     setMobiles([...mobiles, ""])
   }
-  
 
   const validatePhone = (phone: string): boolean => /^09\d{9}$/.test(phone);
 
@@ -194,6 +178,9 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
       const updatedCustomer = {...selectedCustomer, customer_info: res.updateCustomer.customer}
       dispatch(setSelectedCustomer(updatedCustomer))
     },
+    onError: ()=> {
+      dispatch(setServerError(true))
+    }
   })
   const updateForm = useRef<HTMLFormElement | null>(null)
   const handleSubmitUpdateForm = (e:React.FormEvent<HTMLFormElement>) => {
@@ -207,13 +194,8 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
         message: "Are you sure you want to update this customer profile?",
         toggle: "UPDATE" ,
         yes: async() => {
-          try {
-            await updateCustomer({variables: {...data, mobiles: mobiles, emails: emails, addresses: address, id:selectedCustomer.customer_info._id}})
-            
-            setConfirm(false)
-          } catch (error) {
-            console.log(error)
-          }
+          await updateCustomer({variables: {...data, mobiles: mobiles, emails: emails, addresses: address, id:selectedCustomer.customer_info._id}})
+          setConfirm(false)
         },
         no: () => {setConfirm(false)}
       })

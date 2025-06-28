@@ -44,8 +44,8 @@ const CREATE_DISPOSITION = gql`
 `
 
 const TL_ESCATATION = gql`
-  mutation TlEscalation($id: ID!) {
-    tlEscalation(id: $id) {
+  mutation TlEscalation($id: ID!, $tlUserId: ID!) {
+    tlEscalation(id: $id, tlUserId:$tlUserId) {
       message
       success
     }
@@ -61,7 +61,19 @@ const DESELECT_TASK = gql`
   }
 `
 
+const USER_TL = gql`
+  query GetBucketTL {
+    getBucketTL {
+      _id
+      name
+    }
+  }
 
+`
+interface TL {
+  _id: string
+  name: string
+}
 
 
 const DispositionForm = () => {
@@ -118,30 +130,28 @@ const DispositionForm = () => {
   },[disposition])
 
   const [createDisposition] = useMutation(CREATE_DISPOSITION,{
-    onCompleted: async() => {
-      try {
-        setSuccess({
-          success: true,
-          message: "Disposition successfully created"
-        })
-        setConfirm(false)
-        setSelectedDispo('')
-        setData({
-          amount: "",
-          payment: "",
-          disposition: "",
-          payment_date: "",
-          payment_method: "",
-          ref_no: "",
-          comment: "",
-          contact_method: "calls"
-        })
-
-        dispatch(setDeselectCustomer())
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
+    onCompleted: () => {
+      setSuccess({
+        success: true,
+        message: "Disposition successfully created"
+      })
+      setConfirm(false)
+      setSelectedDispo('')
+      setData({
+        amount: "",
+        payment: "",
+        disposition: "",
+        payment_date: "",
+        payment_method: "",
+        ref_no: "",
+        comment: "",
+        contact_method: "calls"
+      })
+      dispatch(setDeselectCustomer())
     },
+    onError: () => {
+      dispatch(setServerError(true))
+    }
   })
 
   const handleOnChangeAmount = (e:React.ChangeEvent<HTMLInputElement>) => {
@@ -184,19 +194,19 @@ const DispositionForm = () => {
         message: "Do you want to create the disposition?",
         toggle: "CREATE",
         yes: async() => {
-          try {
-            await createDisposition({variables: { input: {...data, customer_account: selectedCustomer._id} }})
-          } catch (error) {
-            dispatch(setServerError(true))
-          }
+          await createDisposition({variables: { input: {...data, customer_account: selectedCustomer._id} }})
         },
         no: () => {setConfirm(false)}
       })
     }
   }
+
   const [deselectTask] = useMutation<{deselectTask:Success}>(DESELECT_TASK,{
     onCompleted: ()=> {
       dispatch(setDeselectCustomer()) 
+    },
+    onError: ()=> {
+      dispatch(setServerError(true))
     }
   })
 
@@ -206,30 +216,45 @@ const DispositionForm = () => {
         success: res.tlEscalation.success,
         message: res.tlEscalation.message
       })
-      try {
-        await deselectTask({variables: {id:selectedCustomer._id}})
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
+      await deselectTask({variables: {id:selectedCustomer._id}})
+    },
+    onError: ()=> {
+      dispatch(setServerError(true))
     }
   })
+  const [escalateTo, setEscalateTo] = useState<boolean>(false)
+  const [caToEscalate, setCAToEscalate] = useState<string>("")
+  const [selectedTL, setSelectedTL] = useState<string>("")
 
+  const handleSubmitEscalation = ()=> {
+    setConfirm(true)
+    setModalProps({
+      message: "Do you want to transfer this to your team leader?",
+      toggle: "ESCALATE",
+      yes: async() => {
+        await tlEscalation({variables: {id:caToEscalate, tlUserId: selectedTL}})
+      },
+      no: () => {setConfirm(false)}
+    })
+  }
 
 
   const handleSubmitEscalationToTl = async(id:string) => {
-    setConfirm(true)
-    setModalProps({
-    message: "Do you want to transfer this to your team leader?",
-    toggle: "ESCALATE",
-    yes: async() => {
-      try {
-        await tlEscalation({variables: {id}})
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
-    },
-    no: () => {setConfirm(false)}
-  })
+    if(tlData &&  tlData?.getBucketTL.length > 1) {
+      setEscalateTo(true)
+      setCAToEscalate(id)
+
+    } else {
+      setConfirm(true)
+      setModalProps({
+        message: "Do you want to transfer this to your team leader?",
+        toggle: "ESCALATE",
+        yes: async() => {
+          await tlEscalation({variables: {id, tlUserId: tlData?.getBucketTL.flat()}})
+        },
+        no: () => {setConfirm(false)}
+      })
+    }
   }
 
   const anabledDispo = ["PAID","PTP","UNEG"]
@@ -238,11 +263,56 @@ const DispositionForm = () => {
 
   const contactMethod = highUser.includes(userLogged.type) ? ['calls','sms','email','skip','field'] : (userLogged.account_type === 'caller' ? ['calls','sms','email'] : [ userLogged.account_type ])
 
+
+  const {data:tlData} = useQuery<{getBucketTL:TL[]}>(USER_TL)
+
+
   return  (
     <>
       {
         success?.success &&
         <SuccessToast successObject={success} close={()=> setSuccess({success:false, message:""})}/>
+      }
+      {
+        escalateTo &&
+        <div className="absolute top-0 left-0 w-full h-full bg-white/10 backdrop-blur-[1px] z-50 flex items-center justify-center">
+          <div className="w-2/8 h-1/3 border bg-white rounded-lg border-slate-300 shadow-md shadow-black/50 overflow-hidden flex flex-col">
+            <h1 className="p-2 bg-red-500 lg:text-sm 2xl:text-base text-white font-bold">Escalate To</h1>
+            <div className="w-full h-full flex flex-col items-center justify-center gap-10">
+              <select 
+                name="tl_account" 
+                id="tl_account" 
+                onChange={(e)=> {
+                  const value = e.target.value
+                  const selectedTl:TL | {_id: "", name: ""} =  tlData?.getBucketTL.find(e=> e.name === value) || {_id: "", name: ""}
+                    setSelectedTL(selectedTl._id)
+                }}
+                className="capitalize border p-2  lg:text-sm 2xl:text-lg w-8/10 outline-none border-slate-500 rounded-md text-gray-500">
+                <option value="" className="">Select TL</option>
+                {
+                  tlData?.getBucketTL.map((e)=> 
+                    <option 
+                      key={e._id} 
+                      value={e.name} 
+                      className="capitalize"
+                    >{e.name}</option> 
+                  )
+                }
+              </select>
+              <div className="flex gap-10">
+                <button className="rounded-md border py-2 px-4 bg-red-500 text-white font-medium hover:bg-red-700 lg:text-sm 2xl:text-lg " onClick={handleSubmitEscalation}>
+                  Submit
+                </button>
+                <button className="rounded-md border py-2 px-4 bg-slate-500 text-white font-medium hover:bg-slate-700 lg:text-sm 2xl:text-lg " 
+                  onClick={()=> setEscalateTo(false)}
+                >
+                  Cancel
+                </button>
+              </div>
+            </div>
+          </div>
+
+        </div>
       }
 
       <form ref={Form} className="flex flex-col p-4" noValidate onSubmit={handleSubmitForm}>

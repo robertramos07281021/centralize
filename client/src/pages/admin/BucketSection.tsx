@@ -65,7 +65,7 @@ const DELETEBUCKET = gql `mutation
 
 const BucketSection = () => {
   const dispatch = useAppDispatch()
-  const {data:dept, refetch} = useQuery<{getDepts:Department[], getDept:Department}>(DEPARTMENT_QUERY,{ variables: { name: "admin" } })
+  const {data:dept, refetch} = useQuery<{getDepts:Department[]}>(DEPARTMENT_QUERY,{ variables: { name: "admin" } })
   const campaignOnly = dept?.getDepts.filter((d)=> d.name!== "admin")
   const newDepts = useMemo(() => [...new Set(campaignOnly?.map((d) => d.id))], [campaignOnly])
   const [deptSelected,setDeptSelected] = useState<string | null>(null)
@@ -73,15 +73,11 @@ const BucketSection = () => {
     success: false,
     message: ""
   })
-  const [deptObject, setDeptObject] = useState<{[key:string]:string}>({})
-  useEffect(()=> {
-    if(dept) {
-      const newObject:{[key:string]:string} = {}
-      dept?.getDepts?.map((d)=> {
-        newObject[d.id] = d.name
-      })
-      setDeptObject(newObject)
-    }
+  // const [deptObject, setDeptObject] = useState<{[key:string]:string}>({})
+
+  const deptObject:{[key:string]:string} = useMemo(()=> {
+    const deptArray = dept?.getDepts || []
+    return Object.fromEntries(deptArray.map((da)=> [da.id, da.name]))
   },[dept])
 
   const [issabelIp, setIssabelIp] = useState<string>("")

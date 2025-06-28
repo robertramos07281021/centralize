@@ -1,6 +1,6 @@
 import { useQuery } from '@apollo/client'
 import gql from 'graphql-tag'
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useAppDispatch } from '../../redux/store'
 import { setAgent } from '../../redux/slices/authSlice'
 
@@ -45,27 +45,19 @@ const GET_DEPT_BUCKETS = gql`
 const AgentSection = () => {
   const {data:AgentsData} = useQuery<{findAgents:Agent[]}>(FIND_AGENT)
   const [selectedAgent, setSelectedAgent] = useState<string>("")
-  const [agentsNewObject, setAgentsNewObject] = useState<{[key:string]:string}>({})
   const dispatch = useAppDispatch()
-  const [bucketObject, setBucketObject] = useState<{[key:string]:string}>({})
+
   const {data:deptBucketData} = useQuery<{getDeptBucket:Bucket[]}>(GET_DEPT_BUCKETS)
 
-  useEffect(()=> {
-    if(AgentsData) {
-      const newObject:{[key:string]:string} = {}
-      AgentsData?.findAgents?.map((ad) => 
-        newObject[ad.user_id] = ad._id
-      )
-      setAgentsNewObject(newObject)
-    }
-    if(deptBucketData) {
-      const newObject:{[key:string]:string} = {}
-      deptBucketData?.getDeptBucket?.map((b) => 
-        newObject[b.id] = b.name
-      )
-      setBucketObject(newObject)
-    }
-  },[AgentsData, deptBucketData])
+  const agentsNewObject:{[key:string]:string} = useMemo(()=> {
+    const ad = AgentsData?.findAgents || []
+    return Object.fromEntries(ad.map(e=> [e.user_id, e._id]))
+  },[AgentsData])
+  
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const ad = deptBucketData?.getDeptBucket || []
+    return Object.fromEntries(ad.map(e=> [e.id, e.name]))
+  },[deptBucketData])
 
   useEffect(()=> {
     dispatch(setAgent(agentsNewObject[selectedAgent]))

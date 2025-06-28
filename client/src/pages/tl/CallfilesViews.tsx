@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import SuccessToast from "../../components/SuccessToast";
 import Confirmation from "../../components/Confirmation";
 import { setServerError } from "../../redux/slices/authSlice";
+import Loading from "../Loading";
 
 interface Finished {
   name: string
@@ -138,7 +139,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   const {limit, productionManagerPage,userLogged } = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const client = useApolloClient()
-  const {data,refetch} = useQuery<{getCallfiles:CallFilesResult}>(GET_CALLFILES,{
+  const {data,refetch,loading} = useQuery<{getCallfiles:CallFilesResult}>(GET_CALLFILES,{
     variables: {
       bucket,
       status: status,
@@ -146,16 +147,15 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       page: productionManagerPage
     }
   })
-  
 
-  const {data:deptBucket,refetch:bucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+  const {data:deptBucket,refetch:bucketRefetch, loading:bucketLoading} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
 
   
 
   useEffect(()=> {
     refetch()
     bucketRefetch()
-  },[bucket,refetch, bucketRefetch])
+  },[bucket, refetch, bucketRefetch])
 
   const [downloadCallfiles] = useLazyQuery(GET_CSV_FILES)
 
@@ -290,11 +290,16 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     }
   },[data,setTotalPage,setCanUpload])
 
+  
+
   return (
     <>
       {
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
+      }
+      {
+        loading || bucketLoading && <Loading/>
       }
       <div className=" h-full overflow-y-auto flex flex-col relative">
         {

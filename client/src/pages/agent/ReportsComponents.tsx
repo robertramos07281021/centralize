@@ -3,6 +3,7 @@ import gql from "graphql-tag"
 import { Doughnut } from "react-chartjs-2"
 import { colorDispo } from "../../middleware/exports"
 import { useEffect, useState } from "react"
+import { ChartData, ChartOptions } from "chart.js"
 
 
 const REPORT = gql`
@@ -91,35 +92,40 @@ const ReportsComponents:React.FC<ReportsComponents> = ({dispositions, from, to})
     refetch()
   },[dispositions.length,from,to])
 
-  const data = {
+  const data:ChartData<'doughnut'> = {
     labels:doughnutData.labels,
     datasets: [{
-      label: 'Count',
+      label: 'Percentage',
       data: doughnutData.datas,
       backgroundColor:doughnutData.colors,
       hoverOffset: 30,
     }],
   };
 
-  const options = {
+  const options:ChartOptions<'doughnut'> = {
     plugins: {
       datalabels: {
         color: 'oklch(0 0 0)',
         font: {
           weight: "bold", 
-          size: 12,
+          size: 10,
         } as const,
-        formatter: (value: number) => {
-          const total:number = productionReportData?.ProductionReport?.totalDisposition || 1
-          const percentage = value/total * 100
-
-          return (percentage.toFixed(2) + `%`)
-        }
       },
       legend: {
         position: 'bottom' as const,
         display: false
       },
+      tooltip: {
+        callbacks: {
+          label: function (context) {
+            const dataset = context.dataset;
+            const total = dataset.data.reduce((sum: number, val: any) => sum + val, 0);
+            const currentValue = context.raw as number;
+            const percentage = ((currentValue / total) * 100).toFixed(1);
+            return `Percentage: ${percentage}%`;
+          }
+        }
+      }
     },
     responsive: true,
     maintainAspectRatio: false,

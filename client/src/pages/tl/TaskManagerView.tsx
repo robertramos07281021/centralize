@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { RiArrowDownSFill, RiArrowUpSFill   } from "react-icons/ri";
 import GroupSection from "../../components/GroupSection";
 import TaskDispoSection from "./TaskDispoSection";
@@ -45,7 +45,7 @@ const TaskManagerView = () => {
   const {tasker, taskFilter, selectedDisposition} = useSelector((state:RootState)=> state.auth)
   const {data:DispositionTypes, error:dispoTypeError} = useQuery<{getDispositionTypes:DispositionTypes[]}>(GET_ALL_DISPOSITION_TYPE)
   const {data:bucketData, error:bucketError} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS)
-  const [bucketObject, setBucketObject] = useState<Record<string, string>>({})
+
   const [bucketSelect, setBucketSelect] = useState<keyof typeof bucketObject | "">("")
 
   useEffect(()=> {
@@ -53,16 +53,12 @@ const TaskManagerView = () => {
       dispatch(setServerError(true))
     }
   },[dispoTypeError,bucketError,dispatch ])
-
-  useEffect(()=> {
-    if(bucketData) {
-      const newObject:{[key:string]:string} = {}
-      bucketData.getTLBucket.map(e=> {
-        newObject[e.name] = e.id
-      })
-      setBucketObject(newObject)
-    }
+  
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const tlBuckets = bucketData?.getTLBucket || []
+    return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
   },[bucketData])
+
 
   useEffect(()=> {
     dispatch(setSelectedGroup(""))

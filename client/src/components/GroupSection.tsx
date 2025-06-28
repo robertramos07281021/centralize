@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@apollo/client";
 import gql from "graphql-tag";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { FaPlusCircle, FaMinusCircle, FaEdit  } from "react-icons/fa";
 import SuccessToast from "./SuccessToast";
 import Confirmation from "./Confirmation";
@@ -144,24 +144,24 @@ const GroupSection = () => {
   const {data:deptGroupData, refetch:deptGroupDataRefetch} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
   const {data:deptAgentData, refetch:deptAgentDataRefetch} = useQuery<{findAgents:DeptAgent[]}>(DEPT_AGENT)
   const selectedGroupData = deptGroupData?.findGroup.find((dgd)=> dgd.name === selectedGroup)
-  const [dgdObject, setDgdObject] = useState<{[key: string]:string}>({})
-  const [dgdObjectName, setdgdObjectName] = useState<{[key: string]:string}>({})
+
   const [updatedGroup, setUpdateGroup] = useState<boolean>(false)
+  const {data:deptBucketData} = useQuery<{getDeptBucket:Bucket[]}>(GET_DEPT_BUCKETS)
 
-    const [bucketObject, setBucketObject] = useState<{[key:string]:string}>({})
-    const {data:deptBucketData} = useQuery<{getDeptBucket:Bucket[]}>(GET_DEPT_BUCKETS)
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const bucketData = deptBucketData?.getDeptBucket || []
+    return Object.fromEntries(bucketData.map(bd=> [bd.id, bd.name]))
+    },[deptBucketData])
+
+  const dgdObject:{[key:string]:string} = useMemo(()=> {
+    const deptGroup = deptGroupData?.findGroup || []
+    return Object.fromEntries(deptGroup.map(fg=> [fg.name, fg._id]))
+    },[deptGroupData])
   
-    useEffect(()=> {
-
-      if(deptBucketData) {
-        const newObject:{[key:string]:string} = {}
-        deptBucketData?.getDeptBucket?.map((b) => 
-          newObject[b.id] = b.name
-        )
-        setBucketObject(newObject)
-      }
-    },[ deptBucketData])
-
+  const dgdObjectName:{[key:string]:string} = useMemo(()=> {
+    const deptGroup = deptGroupData?.findGroup || []
+    return Object.fromEntries(deptGroup.map(fg=> [fg._id, fg.name]))
+  },[deptGroupData])
 
   useEffect(()=> {
     setUpdateGroup(false)
@@ -176,22 +176,6 @@ const GroupSection = () => {
       setDescription("")
     }
   },[updatedGroup,selectedGroupData])
-
-
-  useEffect(()=> {
-    if(deptGroupData) {
-      const newDataObject:{[key: string]: string} = {}
-      deptGroupData.findGroup.forEach(dgd => 
-        newDataObject[dgd.name] = dgd._id
-      )
-      setDgdObject(newDataObject)
-      const newDataObjectName:{[key: string]: string} = {}
-      deptGroupData.findGroup.forEach(dgd => 
-        newDataObjectName[dgd._id] = dgd.name
-      )
-      setdgdObjectName(newDataObjectName)
-    }
-  },[deptGroupData])
 
 //mutations ============================================================================
   const [createGroup] = useMutation(CREATE_GROUP,{

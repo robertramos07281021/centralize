@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { IoMdArrowDropdown } from "react-icons/io";
 import {  FaDownload} from "react-icons/fa6";
 import ReportsComponents from "./ReportsComponents";
@@ -23,19 +23,11 @@ const GET_DISPOSITION_TYPES = gql`
 
 
 const AgentReport = () => {
-  const [dispotypeObject ,setDispotypeObject] = useState<{[key:string]:string}>({})
   const {data:dispotypeData} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
-  
-  useEffect(()=> {
-    if(dispotypeData) {
-      const newObject:{[key:string]:string} = {}
-      dispotypeData.getDispositionTypes.forEach(e => {
-        newObject[e.id] = e.name
-      })
-      setDispotypeObject(newObject)
-    }
+  const dispotypeObject:{[key:string]:string} = useMemo(()=> {
+    const db = dispotypeData?.getDispositionTypes || []
+    return Object.fromEntries(db.map(e=> [e.id, e.name]))
   },[dispotypeData])
-
 
   const [selectedDispoAgent, setSelectedDispoAgent] = useState<string[]>([])
 
@@ -46,6 +38,7 @@ const AgentReport = () => {
       setSelectedDispoAgent(prev => prev.filter(item => item !== value))
     }
   }
+
   const [date, setDate] = useState<{from:string, to:string}>({
     from: "",
     to: ""
@@ -57,25 +50,25 @@ const AgentReport = () => {
     setPopUpDispo(!popUpDispo)
   }
 
-    const modalRef = useRef<HTMLDivElement>(null)
+  const modalRef = useRef<HTMLDivElement>(null)
+
+  const handleClickOutside = (event: MouseEvent) => {
+    if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
+      setPopUpDispo(false);
+    }
+  };
   
-    const handleClickOutside = (event: MouseEvent) => {
-      if (modalRef.current && !modalRef.current.contains(event.target as Node)) {
-        setPopUpDispo(false);
-      }
+  useEffect(() => {
+    if (popUpDispo) {
+      document.addEventListener('mousedown', handleClickOutside);
+    } else {
+      document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
     };
-  
-    useEffect(() => {
-      if (popUpDispo) {
-        document.addEventListener('mousedown', handleClickOutside);
-      } else {
-        document.removeEventListener('mousedown', handleClickOutside);
-      }
-      return () => {
-        document.removeEventListener('mousedown', handleClickOutside);
-      };
-    }, [popUpDispo]);
-  
+  }, [popUpDispo]);
+
 
   return (
     <div className="flex h-full w-full overflow-hidden flex-col ">

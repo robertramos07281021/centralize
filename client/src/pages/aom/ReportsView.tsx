@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useEffect, useState } from "react"
+import {  useMemo } from "react"
 
 interface Variables  {
   campaign: string
@@ -30,19 +30,10 @@ const GET_AOM_DEPT = gql`
 `
 
 const ReportsView:React.FC<modalProps> = ({variables}) => {
-
   const {data:aomDeptData} = useQuery<{getAomDept:AomDept[]}>(GET_AOM_DEPT)
-
-  const [deptId, setDeptId] = useState<{[key: string]: string}>({})
-  console.log(variables)
-  useEffect(()=> {
-    if(aomDeptData){
-      const newObject:{[key: string]:string} = {}
-      aomDeptData?.getAomDept?.map((e)=> {
-        newObject[e.id] = e.name
-      })
-      setDeptId(newObject)
-    } 
+  const deptId = useMemo(()=> {
+    const add = aomDeptData?.getAomDept || []
+    return Object.fromEntries(add.map(e=> [e.id,e.name]))
   },[aomDeptData])
 
   return (

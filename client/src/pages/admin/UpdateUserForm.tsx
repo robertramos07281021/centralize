@@ -227,13 +227,9 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     },
   )
 
-
-
   const {data:deptBucket} = useQuery<{getBuckets:DeptBucket[]}>(DEPT_BUCKET_QUERY,{
     variables: {dept: data.departments},
   })
-
-
 
   useEffect(()=> {
     if(branchDeptData) {
@@ -577,8 +573,6 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               </div>
             }
           </div>
-
-          
           <div className="w-full relative" ref={bucketDiv}>
             <p className="w-full text-base font-medium text-slate-500">Bucket</p>
             <div className={`${data.departments.length === 0 && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectionBucket && data.departments.length > 0 ? "border-blue-500" : "border-slate-300"}`}>
@@ -594,27 +588,24 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-50 overflow-y-auto border z-40">
                 {
                   deptBucket?.getBuckets.map((e,index)=> 
-                      <div key={index} className="py-0.5">
-                        <div className="uppercase text-sm">{e.dept}</div>
-                        {
-                          e.buckets.map(e => 
-                          <label key={e.id} className="flex gap-2 text-xs">
-                            <input 
-                            type="checkbox"
-                            name={e.name} 
-                            id={e.name} 
-                            value={e.name}
-                            onChange={(e)=> handleCheckedBucket(e, e.target.value)} 
-                            checked={data.buckets.toString().includes(e.id)} />
-                            <span className="uppercase">{e.name.replace(/_/g," ")}</span>
-                          </label>
-                          )
-                        }
-                      </div>
-                
-                  
+                    <div key={index} className="py-0.5">
+                      <div className="uppercase text-sm">{e.dept}</div>
+                      {
+                        e.buckets.map(e => 
+                        <label key={e.id} className="flex gap-2 text-xs">
+                          <input 
+                          type="checkbox"
+                          name={e.name} 
+                          id={e.name} 
+                          value={e.name}
+                          onChange={(e)=> handleCheckedBucket(e, e.target.value)} 
+                          checked={data.buckets.toString().includes(e.id)} />
+                          <span className="uppercase">{e.name.replace(/_/g," ")}</span>
+                        </label>
+                        )
+                      }
+                    </div>
                   )
-
                 }
               </div>
             }

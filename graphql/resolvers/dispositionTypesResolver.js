@@ -7,6 +7,14 @@ const dispositionTypeResolver = {
   Query: {
     getDispositionTypes: async() => {
       try {
+        const dipositionTypes = await DispoType.find({active: {$ne: false}}) 
+        return dipositionTypes
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getDispositionTypesAll: async() => {
+      try {
         const dipositionTypes = await DispoType.find() 
         return dipositionTypes
       } catch (error) {

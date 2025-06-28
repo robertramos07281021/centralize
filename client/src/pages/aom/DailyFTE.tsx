@@ -55,7 +55,7 @@ const DailyFTE = () => {
   const {data:dailyFTEData, error:dailyFTEError} = useQuery<{getDailyFTE:DailyFTE[]}>(DAILY_FTE)
   
   const {data:campagnedData, error:campaignAssignedError} = useQuery<{getCampaignAssigned:CampaignAssigned[]}>(CAMPAIGN_ASSIGNED)
-  console.log(error)
+
 
   useEffect(()=> {
     if(error || dailyFTEError || campaignAssignedError) {

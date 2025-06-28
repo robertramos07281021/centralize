@@ -45,8 +45,6 @@ import recordingTypeDefs from "./graphql/schemas/recordingsSchema.js";
 const app = express()
 connectDB()
 
-
-
 app.use(cors({
   origin: true,
   credentials: true,
@@ -55,18 +53,18 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser())
 app.use(compression())
-// app.use(
-//   session({
-//     secret: process.env.SECRET,
-//     resave: false,
-//     saveUninitialized: true,
-//     cookie: {
-//       maxAge: 1000 * 60 * 60 * 24,
-//       secure: false,
-//       httpOnly: true,
-//     },
-//   })
-// );
+app.use(
+  session({
+    secret: process.env.SECRET,
+    resave: false,
+    saveUninitialized: true,
+    cookie: {
+      maxAge: 1000 * 60 * 60 * 24,
+      secure: false,
+      httpOnly: true,
+    },
+  })
+);
 
 const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver,callfileResolver, recordingsResolver]);
 
@@ -137,26 +135,20 @@ const startServer = async() => {
 
   try {
     await server.start()
-
     app.use(
       "/graphql",
       expressMiddleware(server, {
         context: async ({ req, res }) => {
-     
-          const token = req.cookies?.token;
-          // const sessionUser = req.session?.user;
+          const sessionUser = req.session?.user;
           let user = null
-          // if (sessionUser) {
-          if (token) {
+          if (sessionUser) {
             try {
-              const decoded = jwt.verify(token, process.env.SECRET);
-              user = await User.findById(decoded.id);
+              user = await User.findById(sessionUser._id);
               return { user, res, req };
             } catch (error) {
               console.log(error.message);
             }
           }
-          // }
           return { user, res, req};
         },
       })
@@ -173,3 +165,5 @@ const startServer = async() => {
 }
 
 startServer()
+ 
+     

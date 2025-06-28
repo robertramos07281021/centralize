@@ -6,12 +6,11 @@ import authReducer from "./slices/authSlice"
 import { useDispatch } from "react-redux";
 import { WebStorage } from "redux-persist";
 
-
 const rootReducer = combineReducers({
   auth: authReducer
 });
 
-const secretKey = import.meta.env.VITE_CRYPTO_KEY ?? ''
+const secretKey = import.meta.env.VITE_CRYPTO_KEY ?? ""
 
 const encryptor: WebStorage = {
   setItem: (key: string, value: string): Promise<void> => {

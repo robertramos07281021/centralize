@@ -1,4 +1,6 @@
+import { useQuery } from "@apollo/client";
 import { ChartOptions } from "chart.js";
+import gql from "graphql-tag";
 import { Bar } from "react-chartjs-2"
 
 const color = [
@@ -10,7 +12,31 @@ const color = [
   "oklch(71.8% 0.202 349.761)"     
 ]
 
+const CALLFILE = gql`
+  query MonthlyDetails {
+    monthlyDetails {
+      department
+      success
+      positive
+      unconnected
+    }
+  }
+`
+interface Callfile {
+  department: string
+  success:number
+  positive:number
+  unconnected:number
+}
+
+
 const CallsRatings = () => {
+
+  const {data:callfilesData} = useQuery<{monthlyDetails:Callfile[]}>(CALLFILE) 
+
+
+  
+  console.log(callfilesData)
   const options:ChartOptions<'bar'> = {
 
     plugins: {

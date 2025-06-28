@@ -1,7 +1,7 @@
 import gql from "graphql-tag"
 import Uploader from "../../components/Uploader"
 import { useQuery } from "@apollo/client"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import {  useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../redux/store";
 import { setProductionManagerPage } from "../../redux/slices/authSlice";
@@ -33,7 +33,6 @@ const ProductionManagerView = () => {
   const dispatch = useAppDispatch()
   const {productionManagerPage} = useSelector((state:RootState)=> state.auth)
   const {data:bucketData, refetch} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS)
-  const [bucketObject, setBucketObject] = useState<{[key:string]:string}>({})
   const [callfileBucket, setCallfileBucket] = useState<string>("")
   const [required, setRequired] = useState(false)
   const [page, setPage] = useState<string>("1")
@@ -41,14 +40,9 @@ const ProductionManagerView = () => {
   const [totalPage, setTotalPage] = useState<number>(1)
   const [canUpload, setCanUpload] = useState<boolean>(false)
 
-  useEffect(()=> {
-    if(bucketData) {
-      const newObject:{[key:string]:string} = {}
-      bucketData.getTLBucket.map(e=> {
-        newObject[e.name] = e.id
-      })
-      setBucketObject(newObject)
-    }
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const tlBuckets = bucketData?.getTLBucket || []
+    return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
   },[bucketData])
 
   useEffect(()=> {

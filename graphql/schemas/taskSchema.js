@@ -83,7 +83,7 @@ const taskTypeDefs = gql`
   type Mutation{
     selectTask(id:ID!):Success
     deselectTask(id:ID!):Success
-    tlEscalation(id:ID!):Success
+    tlEscalation(id:ID!,tlUserId:ID!):Success
   }
 `
 

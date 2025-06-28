@@ -1,7 +1,7 @@
 import { useQuery } from "@apollo/client"
 import { ChartOptions } from "chart.js"
 import gql from "graphql-tag"
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { Bar } from "react-chartjs-2"
 
 interface PtpProd {
@@ -48,17 +48,14 @@ const oklchColors = [
 
 
 const PTPBarProd = () => {
-  const [bucketObject, setBucketObject]= useState<{[key:string]:string}>({})
+
   const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
-  useEffect(()=> {
-    if(tlBucketData) {
-      const newObject:{[key: string]:string} = {}
-      tlBucketData.getDeptBucket.map(e=> {
-        newObject[e.id] = e.name
-      })
-      setBucketObject(newObject)
-    }
+
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const tlBuckets = tlBucketData?.getDeptBucket || []
+    return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
   },[tlBucketData])
+
   const {data:ptpData} = useQuery<{getTLPTPToday:PtpProd[]}>(PTP_PROD)
   const [labels, setLabels] = useState<string[]>([])
   const [callsData, setCallsData] = useState<number[]>([])

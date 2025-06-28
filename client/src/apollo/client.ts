@@ -3,14 +3,20 @@ import { GraphQLWsLink } from '@apollo/client/link/subscriptions'
 import { createClient } from 'graphql-ws'
 import { getMainDefinition } from '@apollo/client/utilities'
 
-
-
 const httpLink = new HttpLink({
-  uri: import.meta.env.REACT_HTTP,
+  uri:import.meta.env.VITE_GRAPHQL_HTTP,
+  credentials: 'include',
 });
 
 const wsLink = new GraphQLWsLink(createClient({
-  url: import.meta.env.REACT_WS,
+  url:import.meta.env.VITE_GRAPHQL_WS,
+  connectionParams: () => {
+    return {
+      headers: {
+        cookie: document.cookie,
+      }
+    };
+  }
 }));
 
 const splitLink = split(

@@ -104,16 +104,16 @@ const CustomerDisposition = () => {
     onCompleted: ()=> {
       setSearch("")
       refetch()
+    },
+    onError: ()=>{
+      dispatch(setServerError(true))
     }
   })
 
   const onClickSearch = async(customer:Search) => {
-    try {
-      await selectTask({variables: {id: customer._id}})
-      dispatch(setSelectedCustomer(customer))
-    } catch (_error) {
-      dispatch(setServerError(true))
-    }
+    await selectTask({variables: {id: customer._id}})
+    dispatch(setSelectedCustomer(customer))
+
   }
 
   useEffect(()=> {
@@ -129,6 +129,9 @@ const CustomerDisposition = () => {
   const [deselectTask] = useMutation<{deselectTask:Success}>(DESELECT_TASK,{
     onCompleted: ()=> {
       dispatch(setDeselectCustomer()) 
+    },
+    onError: ()=> {
+      dispatch(setServerError(true))
     }
   })
 
@@ -142,29 +145,18 @@ const CustomerDisposition = () => {
     const id = selectedCustomer._id;
     if(!id) return
     const timer = setTimeout(async()=> {
-      try {
-        await deselectTask({ variables: { id } })
-      } catch (_error) {
-        dispatch(setServerError(true))
-      }
+      await deselectTask({ variables: { id } })
     })
     return ()=> clearTimeout(timer)
-
   },[navigate, deselectTask, dispatch])
 
   const clearSelectedCustomer = async() => {
-    try {
-      await deselectTask({variables: {id: selectedCustomer._id}}) 
-    } catch (_error) {
-      dispatch(setServerError(true))
-    }
+    await deselectTask({variables: {id: selectedCustomer._id}}) 
   }
   
   useEffect(()=> {
     setSearch("")
   },[selectedCustomer._id])
-
-
 
   useEffect(()=> {
     if(breakValue !== BreakEnum.PROD && userLogged.type === "AGENT") {
@@ -187,10 +179,6 @@ const CustomerDisposition = () => {
         <MyTaskSection/>
         </div>
       <div className="w-full grid grid-cols-2 gap-5 px-5 pb-5">
-
-        {/* {
-          selectedCustomer._id 
-        } */}
 
         
         <div className="flex flex-col items-center"> 

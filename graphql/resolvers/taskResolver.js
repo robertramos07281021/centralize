@@ -140,23 +140,23 @@ const taskResolver = {
         throw new CustomError(error.message, 500)  
       }
     },
-    tlEscalation: async(_,{id}) => {
+    tlEscalation: async(_,{id,tlUserId}) => {
       try {
         const escalateToTL = await CustomerAccount.findById(id)
         if(!escalateToTL) throw new CustomError('Customer not found', 404)
-        const findUser = await User.find({buckets: escalateToTL.bucket})
-        const filterTL = findUser.find(e=> e.type === "TL" )
 
-        await CustomerAccount.updateOne({_id: id},{$set: {assigned: filterTL._id}})
+        const findTl = await User.findById(tlUserId)
+        if(!findTl) throw new CustomError('User not found',404)
+
+        await CustomerAccount.updateOne({_id: id},{$set: {assigned: findTl._id}})
         
         await pubsub.publish(SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
-            members: [filterTL._id],
+            members: [findTl._id],
             message: "TASK_SELECTION"
           },
         });
     
-        
         return {
           success: true,
           message: "Successfully transfer to team leader"

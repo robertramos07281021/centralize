@@ -36,6 +36,7 @@ const dispositionTypeTypeDefs = gql`
 
   type Query {
     getDispositionTypes:[DispositionType]
+    getDispositionTypesAll:[DispositionType]
   }
 
   type Mutation {

@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 import { IoMdArrowDown,IoMdArrowUp  } from "react-icons/io";
 
 
@@ -12,7 +12,7 @@ interface Paid {
 }
 
 const PAID_DAILY = gql`
-  query GetTLPaidTotals {
+  query getTLPaidTotals {
     getTLPaidTotals {
       bucket
       count
@@ -37,21 +37,14 @@ const TL_BUCKET = gql`
 `
 
 const Paid = () => {
-  const [bucketObject, setBucketObject]= useState<{[key:string]:string}>({})
-
   const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
-  useEffect(()=> {
-    if(tlBucketData) {
-      const newObject:{[key: string]:string} = {}
-      tlBucketData.getDeptBucket.map(e=> {
-        newObject[e.id] = e.name
-      })
-      setBucketObject(newObject)
-    }
+
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const tlBuckets = tlBucketData?.getDeptBucket || []
+    return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
   },[tlBucketData])
+
   const {data:paidData} = useQuery<{getTLPaidTotals:Paid[]}>(PAID_DAILY)
-
-
   return (
     <div className='border-blue-400 border bg-blue-200 rounded-xl p-2 flex flex-col'>
       <h1 className='lg:text-base 2xl:text-xl font-black text-blue-500'>Amount Collected <span className="text-sm font-medium">(Daily)</span></h1>

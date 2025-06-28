@@ -5,6 +5,7 @@ import Callfile from "../../models/callfile.js"
 import CustomerAccount from "../../models/customerAccount.js"
 import { PubSub } from "graphql-subscriptions"
 import {json2csv} from 'json-2-csv'
+import Department from "../../models/department.js"
 const SOMETHING_NEW_ON_CALLFILE = "SOMETHING_NEW_ON_CALLFILE"
 const pubsub = new PubSub()
 
@@ -193,8 +194,138 @@ const callfileResolver = {
     monthlyDetails: async(_,__,{user})=> {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
+        const findAomDept = await Department.find({aom: user._id})
+        const deptArray = findAomDept.map(e=> e.name)
+
+        const findCallfile = await Callfile.aggregate([
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "bucket",
+              foreignField: "_id",
+              as: "callfileBucket"
+            },
+          },
+          {
+            $unwind: {path: "$callfileBucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              "callfileBucket.dept": {$in: deptArray},
+              "endo": {$eq: null}
+            }
+          }
+        ])
+
+        const callfile = findCallfile.map(e=> e._id)
         
-          
+        const positive = ['KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
+        const success = ['PTP','PAID','UNEG','FFUP','RPCCB']
+        const unsuccess = ['WN','DISP','OCA','NIS','BUSY']
+
+        const customerAccounts = await CustomerAccount.aggregate([
+          {
+            $match: {
+              callfile: { $in: callfile }
+            }
+          }, 
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "bucket",
+              foreignField: "_id",
+              as: "ca_bucket"
+            },
+          },
+          {
+            $unwind: {path: "$ca_bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "current_disposition",
+              foreignField: "_id",
+              as: "ca_current_dispo"
+            },
+          },
+          {
+            $unwind: {path: "$ca_current_dispo",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "ca_current_dispo.disposition",
+              foreignField: "_id",
+              as: "dispotype"
+            },
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $group: {
+              _id: {
+                callfile: "$callfile",
+                department: "$ca_bucket.dept"
+              },
+              success: {
+                $sum: {
+                  $cond: [
+                    {
+                     $in: ["$dispotype.code", success]
+                    },
+                    1,
+                    0
+                  ]
+                }
+              },
+              positive: {
+                $sum: {
+                  $cond: [
+                    {
+                     $in: ["$dispotype.code", positive]
+                    },
+                    1,
+                    0
+                  ]
+                }
+              },
+              unconnected: {
+                $sum: {
+                  $cond: [
+                    {
+                      $or: [
+                        {
+                          $in: ["$dispotype.code", unsuccess]
+                        },
+                        { 
+                          $not: ["$current_disposition"] 
+                        }
+                      ]
+                    },
+                    1,
+                    0
+                  ]
+                }
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              department: "$_id.department",
+              success: 1,
+              positive: 1,
+              unconnected: 1
+            }
+          },{
+            $sort: {
+              "department" : 1
+            }
+          }
+        ])
+        
+        return customerAccounts
 
       } catch (error) {
         throw new CustomError(error.message,500)  

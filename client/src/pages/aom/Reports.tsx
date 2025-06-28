@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import HighReports from "./HighReports";
 
 interface AomDept {
@@ -44,15 +44,9 @@ const Reports = () => {
   const [from, setFrom] = useState<string>("")
   const [to, setTo] = useState<string>("")
 
-  const [deptId, setDeptId] = useState<{[key: string]: string}>({})
-  useEffect(()=> {
-    if(aomDeptData){
-      const newObject:{[key: string]:string} = {}
-      aomDeptData?.getAomDept?.map((e)=> {
-        newObject[e.name] = e.id
-      })
-      setDeptId(newObject)
-    } 
+  const deptId = useMemo(()=> {
+    const add = aomDeptData?.getAomDept || []
+    return Object.fromEntries(add.map(e=> [e.name, e.id]))
   },[aomDeptData])
 
   const {data:deptBucketData} = useQuery<{findDeptBucket:DeptBucket[]}>(GET_DEPT_BUCKET,{variables: {dept: deptId[campaign]} })

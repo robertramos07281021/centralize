@@ -1,5 +1,5 @@
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import SuccessToast from "../../components/SuccessToast"
 import Confirmation from "../../components/Confirmation"
 import { MdKeyboardArrowDown } from "react-icons/md";
@@ -46,7 +46,7 @@ const BRANCH_QUERY = gql`
 `
 
 const BRANCH_DEPARTMENT_QUERY = gql`
-  query Query($branch: String) {
+  query getBranchDept($branch: String) {
     getBranchDept(branch: $branch){
       id
       name
@@ -98,39 +98,29 @@ const RegisterView = () => {
     message: ""
   })
  
-  const [deptObject,setDeptObject] = useState<{[key:string]:string}>({})
-  const [bucketObject, setBucketObject] = useState<{[key:string]:string}>({})
-  const [branchObject, setBranchObject] = useState<{[key:string]:string}>({})
-
   const {data:branchQuery} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
+  const {data:getDeptBucketData} = useQuery<{getBuckets:DeptBucket[]}>(GET_DEPT_BUCKET,{variables: {dept: data.departments}})
+  
+  const branchObject:{[key:string]:string} = useMemo(()=> {
+    const bqd = branchQuery?.getBranches || []
+    return Object.fromEntries(bqd.map(e=>[e.name, e.id] ))
+  },[branchQuery])
+
   const {data:branchDeptData} = useQuery<{getBranchDept:Dept[]}>(
     BRANCH_DEPARTMENT_QUERY, {variables: {branch: Object.keys(branchObject).find((key) => branchObject[key] === data.branch)}})
-  const {data:getDeptBucketData} = useQuery<{getBuckets:DeptBucket[]}>(GET_DEPT_BUCKET,{variables: {dept: data.departments}})
 
-  useEffect(()=> {
-    if(branchDeptData) {
-      const newObject:{[key:string]:string} = {}
-      branchDeptData.getBranchDept.map(d=> newObject[d.name]= d.id)
-      setDeptObject(newObject)
-    }
+  const deptObject:{[key:string]:string} = useMemo(()=> {
+    const bdd = branchDeptData?.getBranchDept || []
+    return Object.fromEntries(bdd.map(e=> [e.name, e.id]))
+  },[branchDeptData])
+    
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const dbd = getDeptBucketData?.getBuckets || []
+    return Object.fromEntries(dbd.map(e=> e.buckets.map(y=> [y.name, y.id])))
+  },[getDeptBucketData])
+  
+    
 
-    if(getDeptBucketData){
-      const newObject:{[key:string]:string} = {}
-      getDeptBucketData.getBuckets.map(e=> {
-        e.buckets.map((b)=> 
-          newObject[b.name] = b.id
-        )
-      })
-      setBucketObject(newObject)
-    }
-
-    if(branchQuery) {
-      const newObject:{[key:string]:string} = {}
-      branchQuery.getBranches.map(e=> {newObject[e.name] = e.id})
-      setBranchObject(newObject)
-    }
-  },[getDeptBucketData, branchDeptData, branchQuery])
- 
   const [createUser] = useMutation(CREATE_ACCOUNT, {
     onCompleted: () => {
       setData({
@@ -236,7 +226,6 @@ const RegisterView = () => {
 
   const bucketDiv  = useRef<HTMLDivElement | null>(null)
   const campaignDiv  = useRef<HTMLDivElement | null>(null)
-
 
 
   return (

@@ -266,7 +266,22 @@ const userResolvers = {
  
         return UserHelper
       } catch (error) {
-        console.log(error)
+        throw new CustomError(error.message, 500)
+      }
+    },
+    getBucketTL: async(_,__,{user})=>{
+      try {
+        if (!user) throw new CustomError("Not authenticated",401);
+        const findUserTLs = await User.aggregate([
+          {
+            $match: {
+              buckets: {$in: user.buckets.map(e=> new mongoose.Types.ObjectId(e))},
+              type: "TL"
+            }
+          }
+        ])
+        return findUserTLs
+      } catch (error) {
         throw new CustomError(error.message, 500)
       }
     }
@@ -395,14 +410,12 @@ const userResolvers = {
             }
             await user.save();
           }
-          console.log("hello")
           throw new CustomError("Invalid",401)
         }
             
         if(user.isOnline) throw new CustomError('Already',401)
-        
       
-        // req.session.user = user
+        req.session.user = user
         
         const token = jwt.sign({id: user._id,username: user.username}, process.env.SECRET)
 

@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { RiArrowDropDownFill } from "react-icons/ri";
 import Confirmation from "../../components/Confirmation";
 import SuccessToast from "../../components/SuccessToast";
@@ -89,17 +89,12 @@ const UPDATE_DISPO = gql`
 
 const DispositionConfigurationView = () => {
   const dispatch = useAppDispatch()
-  const [bucketObject, setBucketObject] = useState<{[key:string]:string}>({})
   const {data:bucketsData} = useQuery<{getAllBucket:Bucket[]}>(GET_ALL_BUCKET)
-  useEffect(()=> {
-    if(bucketsData) {
-      const newObject:{[key:string]:string} = {}
-      bucketsData.getAllBucket.forEach((e)=>
-        newObject[e._id] = e.name
-      )
-      setBucketObject(newObject)
-    }
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const buckets = bucketsData?.getAllBucket || []
+    return Object.fromEntries(buckets.map(b=> [b._id, b.name]))
   },[bucketsData])
+
   const {data:dispotypeData, refetch} = useQuery<{getDispositionTypes:Dispotype[]}>(GET_ALL_DISPO_TYPE)
   const [selectingBuckets, setSelectingBuckets] = useState<boolean>(false)
   const [selectedBuckets, setSelectedBuckets] = useState<string[]>([])
