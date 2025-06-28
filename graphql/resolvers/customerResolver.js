@@ -381,7 +381,6 @@ const customerResolver = {
     findCustomerAccount: async(_,{disposition, groupId ,page, assigned, limit, selectedBucket}, {user}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
-
         let selected = ''
         if (groupId) {
           const [group, userSelected] = await Promise.all([
@@ -390,7 +389,7 @@ const customerResolver = {
           ]);
           selected = group?._id || userSelected?._id || null;
         }
-
+    
 
         const bucket = selectedBucket ? { $eq: new mongoose.Types.ObjectId(selectedBucket) } : { $in: user.buckets.map(e=> new mongoose.Types.ObjectId(e)) }
         

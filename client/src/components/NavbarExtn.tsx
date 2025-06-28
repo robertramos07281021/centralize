@@ -4,6 +4,7 @@ import { RootState } from "../redux/store"
 import { accountsNavbar } from "../middleware/exports.ts"
 import gql from "graphql-tag"
 import {  useApolloClient, useQuery, useSubscription } from "@apollo/client"
+import { useEffect } from "react"
 
 interface MyTask {
   case_id: string
@@ -46,7 +47,11 @@ const NavbarExtn = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
   const client = useApolloClient()
-  const {data:myTask} = useQuery<{myTasks:MyTask[]}>(MY_TASK)
+  const {data:myTask, refetch} = useQuery<{myTasks:MyTask[]}>(MY_TASK)
+
+  useEffect(()=> {
+    refetch()
+  },[])
 
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_ESCALATING, {
     onData: ({data})=> {

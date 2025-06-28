@@ -2,9 +2,9 @@ import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { useEffect, useMemo, useState } from "react";
 import { RiArrowDownSFill, RiArrowUpSFill   } from "react-icons/ri";
-import GroupSection from "../../components/GroupSection";
+import GroupSection from "./GroupSection";
 import TaskDispoSection from "./TaskDispoSection";
-import AgentSection from "../agent/AgentSection";
+import AgentSection from "./AgentSection";
 import { RootState, useAppDispatch } from "../../redux/store";
 import { setAgent, setSelectedDisposition, setSelectedGroup, setServerError, setTasker, setTaskFilter, Tasker, TaskFilter } from "../../redux/slices/authSlice";
 import { useSelector } from "react-redux";
@@ -56,7 +56,7 @@ const TaskManagerView = () => {
   
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = bucketData?.getTLBucket || []
-    return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
+    return Object.fromEntries(tlBuckets.map(e=> [e.name, e.id]))
   },[bucketData])
 
 

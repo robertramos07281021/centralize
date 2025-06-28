@@ -51,13 +51,16 @@ const AgentSection = () => {
 
   const agentsNewObject:{[key:string]:string} = useMemo(()=> {
     const ad = AgentsData?.findAgents || []
-    return Object.fromEntries(ad.map(e=> [e.user_id, e._id]))
+    return Object.fromEntries(ad.map(e=> [e.name, e._id]))
   },[AgentsData])
   
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const ad = deptBucketData?.getDeptBucket || []
     return Object.fromEntries(ad.map(e=> [e.id, e.name]))
   },[deptBucketData])
+
+
+  console.log(agentsNewObject[selectedAgent])
 
   useEffect(()=> {
     dispatch(setAgent(agentsNewObject[selectedAgent]))
@@ -74,7 +77,7 @@ const AgentSection = () => {
         <option value="">Select Agent</option>
         {
           AgentsData?.findAgents.map((a)=> (
-            <option key={a._id} value={a.user_id} className='uppercase'>
+            <option key={a._id} value={a.name} className='uppercase'>
               {a.user_id} - {a.name.toUpperCase()} - {a.buckets.map((b)=> bucketObject[b]).join(", ")}
             </option>
           ))

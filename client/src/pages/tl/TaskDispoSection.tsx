@@ -257,12 +257,14 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
     const group = GroupData?.findGroup || []
     return Object.fromEntries(group.map(e=> [e.name, e._id]))
   },[GroupData])
-
+  console.log(selectedAgent)
   const selected = selectedGroup ? groupDataNewObject[selectedGroup] : selectedAgent
+
   const {data:CustomerAccountsData, refetch:CADRefetch, loading, error:fcaError} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId: selected, assigned: taskFilter, limit: limit, selectedBucket: selectedBucket}})
   const [handleCheckAll, setHandleCheckAll] = useState<boolean>(false)
   const [taskToAdd, setTaskToAdd] = useState<string[]>([])
   const {data:selectAllCustomerAccountData, refetch:SACARefetch,error:sacaError} = useQuery<{selectAllCustomerAccount:string[]}>(SELECT_ALL_CUSTOMER_ACCOUNT,{variables: {disposition: selectedDisposition, groupId:selected, assigned: taskFilter, selectedBucket}})
+
   const [required, setRequired] = useState<boolean>(false)
   const [confirm, setConfirm] = useState<boolean>(false)
 
@@ -271,7 +273,6 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
     message: ""
   })
   const [taskManagerPage, setTaskManagerPage] = useState("1")
-
   useEffect(()=> {
     if(sacaError || sacaError) {
       dispatch(setServerError(true))

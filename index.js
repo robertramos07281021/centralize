@@ -75,12 +75,10 @@ const httpServer = createServer(app);
 
 httpServer.on('connection', (socket) => {
   socket.on('error', (err) => {
-    if (err.code === 'ECONNRESET') {
-      console.warn('⚠️ Socket connection reset (ECONNRESET).');
-    } else {
+  if (err.code !== 'ECONNRESET') {
       console.error('❌ Socket error:', err);
     }
-  });
+  })
 });
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });

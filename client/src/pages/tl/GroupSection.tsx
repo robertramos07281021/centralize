@@ -2,10 +2,10 @@ import { useMutation, useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { useEffect, useMemo, useState } from "react";
 import { FaPlusCircle, FaMinusCircle, FaEdit  } from "react-icons/fa";
-import SuccessToast from "./SuccessToast";
-import Confirmation from "./Confirmation";
-import { setSelectedGroup } from "../redux/slices/authSlice";
-import { RootState, useAppDispatch } from "../redux/store";
+import SuccessToast from "../../components/SuccessToast";
+import Confirmation from "../../components/Confirmation";
+import { setSelectedGroup } from "../../redux/slices/authSlice";
+import { RootState, useAppDispatch } from "../../redux/store";
 import { useSelector } from "react-redux";
 
 
