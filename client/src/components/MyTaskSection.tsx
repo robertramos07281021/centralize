@@ -311,7 +311,6 @@ const MyTaskSection = () => {
     groupTaskRefetch()
   },[refetch,groupTaskRefetch,navigate])
 
-
   const handleClickMyTask = () => {
     if(selection && selection.trim() !== "group_task"){
       setSelection("")
@@ -355,14 +354,14 @@ const MyTaskSection = () => {
         taskLength !== undefined && taskLength > 0 &&
         <div className="flex flex-col gap-2 justify-between w-1/15">
           <p className="lg:text-[0.6em] 2xl:text-xs font-bold flex justify-between"><span>Task:</span><span>{taskLength?.toLocaleString()}</span></p>
-          <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5  dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleClickMyTask}>{selection.trim() !== "my_task" ? "My Tasks" : "Close"}</button>
+          <button type="button" className={`text-white ${selection.trim() !== "my_task" ? "bg-red-500 hover:bg-red-700" : "bg-gray-700 hover:bg-gray-900"}  focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 `} onClick={handleClickMyTask}>{selection.trim() !== "my_task" ? "My Tasks" : "Close"}</button>
         </div>
       }
       {
         (groupLength && groupLength > 0) &&
         <div className="flex flex-col gap-2 justify-between w-1/15">
           <p className="lg:text-[0.6em] 2xl:text-xs font-bold flex justify-between"><span>Task:</span> <span>{groupLength?.toLocaleString()}</span></p>
-          <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg lg:text-[0.6em] 2xl:text-xs px-5 py-2.5  dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={handleClickGroupTask}>{selection.trim() !== "group_task" ? "Group Tasks" : "Close"}</button>
+          <button type="button" className={`${selection.trim() !== "group_task" ? "bg-blue-500 hover:bg-blue-700" : "bg-gray-700 hover:bg-gray-900"} text-white bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg lg:text-[0.6em] 2xl:text-xs px-5 py-2.5`} onClick={handleClickGroupTask}>{selection.trim() !== "group_task" ? "Group Tasks" : "Close"}</button>
         </div>
       }
       {

@@ -252,7 +252,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   const dispatch = useAppDispatch()
   const {data:GroupData} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
   const {selectedGroup, selectedAgent, page, tasker, taskFilter, selectedDisposition, limit} = useSelector((state:RootState)=> state.auth)
-  
+
   const groupDataNewObject:{[key:string]:string} = useMemo(()=> {
     const group = GroupData?.findGroup || []
     return Object.fromEntries(group.map(e=> [e.name, e._id]))
@@ -394,7 +394,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
     }
   }
 
-  const pages = CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts ? Math.round(CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts/limit) : 1
+  const pages = CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts ? Math.ceil(CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts/limit) : 1
 
   const valuePage = parseInt(taskManagerPage) > pages ? pages.toString() : taskManagerPage 
 

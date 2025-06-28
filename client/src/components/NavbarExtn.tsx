@@ -63,6 +63,7 @@ const NavbarExtn = () => {
   useSubscription<{taskChanging:SubSuccess}>(TASK_CHANGING, {
     onData: ({data})=> {
       if(data) {
+        console.log(data)
         if(data.data?.taskChanging.message === "TASK_CHANGING" && data.data?.taskChanging.members.toString().includes(userLogged._id)) {
           client.refetchQueries({
             include: ['myTasks']
@@ -87,7 +88,7 @@ const NavbarExtn = () => {
             {an.name}
           </div>
           { 
-            (userLogged.type === "TL" && an.name.includes('Panel') && length > 0) &&
+            (an.name.includes('Panel') && length > 0) &&
             <>
               <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center text-white rounded-full bg-red-500 -top-3 border-white border-2 -right-1 z-50">
                 {length}
