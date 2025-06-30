@@ -41,6 +41,13 @@ import callfileTypeDefs from "./graphql/schemas/callfileSchema.js";
 import compression from "compression";
 import recordingsResolver from "./graphql/resolvers/recordingsResolver.js";
 import recordingTypeDefs from "./graphql/schemas/recordingsSchema.js";
+import { PUBSUB_EVENTS } from "./middlewares/pubsubEvents.js";
+import pubsub from "./middlewares/pubsub.js";
+import subscriptionResolvers from "./graphql/resolvers/subscriptionResolvers.js";
+import subscriptionTypeDefs from "./graphql/schemas/subcriptionSchema.js";
+
+
+
 
 const app = express()
 connectDB()
@@ -66,16 +73,16 @@ app.use(
   })
 );
 
-const resolvers = mergeResolvers([userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver,callfileResolver, recordingsResolver]);
+const resolvers = mergeResolvers([ subscriptionResolvers, userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver,callfileResolver, recordingsResolver ]);
 
-const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs, productionTypeDefs, callfileTypeDefs, recordingTypeDefs]);
+const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs, productionTypeDefs, callfileTypeDefs, recordingTypeDefs, subscriptionTypeDefs]);
 
 const httpServer = createServer(app);
 
-
 httpServer.on('connection', (socket) => {
+  socket.setMaxListeners(100)
   socket.on('error', (err) => {
-  if (err.code !== 'ECONNRESET') {
+  if (err.code !== 'ECONNRESET' && err.code !== 'ECONNABORTED') {
       console.error('❌ Socket error:', err);
     }
   })
@@ -102,12 +109,12 @@ useServer({ schema,
         const decoded = jwt.verify(token, process.env.SECRET);
         user = await User.findById(decoded.id);
         ctx.extra.userId = decoded.id;
-        return { user };
+        return { user , pubsub , PUBSUB_EVENTS };
       } catch (err) {
         console.log("WebSocket token error:", err.message);
       }
     }
-    return { user };
+    return { user, pubsub, PUBSUB_EVENTS };
   },
   onDisconnect: async (ctx, code, reason) => {
     const userId = ctx.extra?.userId;
@@ -142,12 +149,12 @@ const startServer = async() => {
           if (sessionUser) {
             try {
               user = await User.findById(sessionUser._id);
-              return { user, res, req };
+              return { user, res, req, pubsub, PUBSUB_EVENTS };
             } catch (error) {
               console.log(error.message);
             }
           }
-          return { user, res, req};
+          return { user, res, req, pubsub, PUBSUB_EVENTS };
         },
       })
     );

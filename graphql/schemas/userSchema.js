@@ -103,15 +103,7 @@ const userTypeDefs = gql`
     getHelperAgent: [Users]
     getBucketTL:[Users]
   }
-  type SubscriptionSuccess {
-    buckets: [ID],
-    message: String
-  }
 
-  type Subscription {
-    ping: String!,
-    somethingOnAgentAccount: SubscriptionSuccess
-  }
 
   type Mutation {
     createUser( 

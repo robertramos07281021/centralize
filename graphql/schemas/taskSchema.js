@@ -66,16 +66,6 @@ const taskTypeDefs = gql`
     customer_info: CustomerInfo
   }
 
-  type SubsribeSuccess {
-    message: String
-    members: [ID]
-  }
-
-
-  type Subscription {
-    somethingChanged: SubsribeSuccess
-  }
-
   type Query {
     myTasks:[MyTasks]
     groupTask:GroupTask

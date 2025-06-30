@@ -3,11 +3,8 @@ import { DateTime } from "../../middlewares/dateTime.js"
 import CustomError from "../../middlewares/errors.js"
 import Callfile from "../../models/callfile.js"
 import CustomerAccount from "../../models/customerAccount.js"
-import { PubSub } from "graphql-subscriptions"
 import {json2csv} from 'json-2-csv'
 import Department from "../../models/department.js"
-const SOMETHING_NEW_ON_CALLFILE = "SOMETHING_NEW_ON_CALLFILE"
-const pubsub = new PubSub()
 
 const callfileResolver = {
   DateTime,
@@ -342,7 +339,7 @@ const callfileResolver = {
     }
   },
   Mutation: {
-    finishedCallfile: async(_,{callfile},{user}) => {
+    finishedCallfile: async(_,{callfile},{user,pubsub, PUBSUB_EVENTS}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
         const finishedCallfile = await Callfile.findByIdAndUpdate(callfile,{
@@ -355,10 +352,10 @@ const callfileResolver = {
 
         if(!finishedCallfile) throw CustomError("Callfile not found",404) 
 
-        await pubsub.publish(SOMETHING_NEW_ON_CALLFILE, {
+        await pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
           updateOnCallfiles: {
             bucket: finishedCallfile.bucket ,
-            message: SOMETHING_NEW_ON_CALLFILE
+            message: PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE
           },
         });
 
@@ -371,16 +368,16 @@ const callfileResolver = {
         throw new CustomError(error.message,500)        
       }
     },
-    deleteCallfile: async(_,{callfile}) => {
+    deleteCallfile: async(_,{callfile},{pubsub, PUBSUB_EVENTS}) => {
       try {
         const deleteCallfile = await Callfile.findByIdAndDelete(callfile)
 
         if(!deleteCallfile) throw CustomError("Callfile not found",404) 
         
-        await pubsub.publish(SOMETHING_NEW_ON_CALLFILE, {
+        await pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
           updateOnCallfiles: {
             bucket: deleteCallfile.bucket ,
-            message: SOMETHING_NEW_ON_CALLFILE
+            message: PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE
           },
         });
 
@@ -393,11 +390,6 @@ const callfileResolver = {
       }
     } 
   },
-  Subscription: {
-    updateOnCallfiles: {
-      subscribe:() => pubsub.asyncIterableIterator([SOMETHING_NEW_ON_CALLFILE])
-    }
-  }
 }
 
 

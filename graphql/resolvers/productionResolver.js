@@ -9,10 +9,6 @@ import bcrypt from "bcryptjs";
 import DispoType from "../../models/dispoType.js";
 import ftp from "basic-ftp"
 import 'dotenv/config.js'
-import { PubSub } from "graphql-subscriptions";
-
-const pubsub = new PubSub()
-const AGENT_LOCK = "AGENT_LOCK";
 
 const productionResolver = {
   DateTime,
@@ -931,7 +927,7 @@ const productionResolver = {
         throw new CustomError(error.message, 500)
       }  
     },
-    lockAgent: async(_,__,{user}) => {
+    lockAgent: async(_,__,{user, pubsub, PUBSUB_EVENTS}) => {
       try {
         const startDate = new Date()
         startDate.setHours(0,0,0,0)
@@ -953,10 +949,10 @@ const productionResolver = {
 
         await addproduction.save()
 
-        await pubsub.publish(AGENT_LOCK, {
+        await pubsub.publish(PUBSUB_EVENTS.AGENT_LOCK, {
           agentLocked: {
             agentId: lockUser._id,
-            message: AGENT_LOCK
+            message: PUBSUB_EVENTS.AGENT_LOCK
           },
         });
 
@@ -969,11 +965,7 @@ const productionResolver = {
       }
     }
   },
-  Subscription: {
-    agentLocked: {
-      subscribe:() => pubsub.asyncIterableIterator([AGENT_LOCK])
-    }
-  }
+
 }
 
 

@@ -102,15 +102,6 @@ const productionTypeDefs = gql`
     total: Int
   }
 
-  type SubsribeSuccess {
-    message: String
-    agentId: ID
-  }
-
-  type Subscription {
-    agentLocked:SubsribeSuccess
-  }
-
   type Query {
     getProductions:[Disposition]
     getAgentProductionPerDay:[PerDay]

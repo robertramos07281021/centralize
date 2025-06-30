@@ -9,12 +9,7 @@ import ModifyRecord from "../../models/modifyRecord.js";
 import {DateTime} from "../../middlewares/dateTime.js";
 import Production from "../../models/production.js";
 import Bucket from "../../models/bucket.js";
-import { PubSub } from "graphql-subscriptions";
 import mongoose from "mongoose";
-
-const pubsub = new PubSub()
-const CHECKING = "CHECKING";
-const SOMETHING_ON_AGENT_ACCOUNT = 'SOMETHING_ON_AGENT_ACCOUNT' 
 
 const userResolvers = {
   DateTime,
@@ -386,10 +381,10 @@ const userResolvers = {
       }
     },
 
-    login: async(_,{ username, password },{ res , req}) => {
+    login: async(_,{ username, password },{ res , req, pubsub, PUBSUB_EVENTS}) => {
       try {
         const user = await User.findOne({username})
-      
+
         if(!user) throw new CustomError("Invalid",401)
 
         if(user.isLock) throw new CustomError('Lock',401)  
@@ -401,10 +396,10 @@ const userResolvers = {
             user.attempt_login++;
             if(user.attempt_login >= 2) {
               user.isLock = true
-              await pubsub.publish(SOMETHING_ON_AGENT_ACCOUNT, {
+              await pubsub.publish(PUBSUB_EVENTS.SOMETHING_ON_AGENT_ACCOUNT, {
                 somethingOnAgentAccount: {
                   buckets: user.buckets,
-                  message: SOMETHING_ON_AGENT_ACCOUNT
+                  message: PUBSUB_EVENTS.SOMETHING_ON_AGENT_ACCOUNT
                 },
               });
             }
@@ -426,7 +421,7 @@ const userResolvers = {
         todayEnd.setHours(23, 59, 59, 999);
         
         const [findProd, firstProd] = await Promise.all([
-          Production.find({$and: [{user: user._id},{createdAt: {$gte: todayStart, $lt: todayEnd}}]}),Production.find({user: new mongoose.Types.ObjectId(user._id)}).sort({'createdAt': -1})
+          Production.find({$and: [{user: user._id},{createdAt: {$gte: todayStart, $lt: todayEnd}}]}),Production.find({user: new mongoose.Types.ObjectId(user._id)}).sort({'createdAt': 1})
         ])
 
         res.cookie('token', token, {
@@ -458,7 +453,6 @@ const userResolvers = {
         return { user: user, prodStatus: status , start: start ? start?.map(e=> e.start).toString() : new Date().toString() }
         
       } catch (error) {
-
         throw new CustomError(error.message,500)
       }
     },
@@ -579,14 +573,6 @@ const userResolvers = {
       }
     }
   },
-  Subscription: {
-    ping: {
-      subscribe:() => pubsub.asyncIterableIterator([CHECKING])
-    },
-    somethingOnAgentAccount: {
-      subscribe:() => pubsub.asyncIterableIterator([SOMETHING_ON_AGENT_ACCOUNT])
-    }
-  }
 };
 
 export default userResolvers;

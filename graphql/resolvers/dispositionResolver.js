@@ -1,4 +1,4 @@
-import mongoose, { mongo } from "mongoose"
+import mongoose from "mongoose"
 import { DateTime } from "../../middlewares/dateTime.js"
 import CustomError from "../../middlewares/errors.js"
 import CustomerAccount from "../../models/customerAccount.js"
@@ -7,12 +7,9 @@ import Production from "../../models/production.js"
 import User from "../../models/user.js"
 import Bucket from "../../models/bucket.js"
 import DispoType from "../../models/dispoType.js"
-import { PubSub } from "graphql-subscriptions"
 import Group from "../../models/group.js"
 import Department from "../../models/department.js"
-import Callfile from "../../models/callfile.js"
-const pubsub = new PubSub()
-const DISPOSITION_UPDATE = "DISPOSITION_UPDATE";
+
 
 const dispositionResolver = {
   DateTime,
@@ -1678,7 +1675,7 @@ const dispositionResolver = {
   },
 
   Mutation: {
-    createDisposition: async(_,{input},{user}) => {
+    createDisposition: async(_,{input},{user, pubsub, PUBSUB_EVENTS}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
 
@@ -1724,7 +1721,7 @@ const dispositionResolver = {
 
         const assigned = group ? group.members : customerAccount.assigned ? [customerAccount.assigned] : [];
 
-        await pubsub.publish(DISPOSITION_UPDATE, {
+        await pubsub.publish(PUBSUB_EVENTS.DISPOSITION_UPDATE, {
           dispositionUpdated: {
             members: [...new Set([...assigned, user._id.toString() ])],
             message: "NEW_DISPOSITION"
@@ -1763,11 +1760,6 @@ const dispositionResolver = {
       }
     }
   },
-  Subscription: {
-    dispositionUpdated: {
-      subscribe:() => pubsub.asyncIterableIterator([DISPOSITION_UPDATE])
-    }
-  }
 }
 
 export default dispositionResolver

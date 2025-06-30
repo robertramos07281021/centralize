@@ -42,7 +42,7 @@ const ProductionManagerView = () => {
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = bucketData?.getTLBucket || []
-    return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
+    return Object.fromEntries(tlBuckets.map(e=> [e.name, e.id]))
   },[bucketData])
 
   useEffect(()=> {

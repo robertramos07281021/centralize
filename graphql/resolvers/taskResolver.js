@@ -5,10 +5,8 @@ import Customer from "../../models/customer.js"
 import CustomerAccount from "../../models/customerAccount.js"
 import Disposition from "../../models/disposition.js"
 import Group from "../../models/group.js"
-import { PubSub } from "graphql-subscriptions"
 import User from "../../models/user.js"
-const pubsub = new PubSub()
-const SOMETHING_CHANGED_TOPIC = "SOMETHING_CHANGED_TOPIC";
+
 
 const taskResolver = {
   Query: {
@@ -83,7 +81,7 @@ const taskResolver = {
     
   },
   Mutation: {
-    selectTask: async(_,{id}, {user})=>{
+    selectTask: async(_,{id}, {user, pubsub, PUBSUB_EVENTS})=>{
       if(!user) throw new CustomError("Unauthorized",401)
       try {
     
@@ -100,7 +98,7 @@ const taskResolver = {
 
         await ca.save()
         
-        await pubsub.publish(SOMETHING_CHANGED_TOPIC, {
+        await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
             members: [...new Set([...assigned,user._id])],
             message: "TASK_SELECTION"
@@ -116,7 +114,7 @@ const taskResolver = {
       }
 
     } ,
-    deselectTask: async(_,{id}) => {
+    deselectTask: async(_,{id},{PUBSUB_EVENTS, pubsub}) => {
       try {
         const ca = await CustomerAccount.findByIdAndUpdate(id,{$set: {on_hands: false}},{new: true})
         if(!ca) throw new CustomError("Customer account not found", 404) 
@@ -125,7 +123,7 @@ const taskResolver = {
       
         const assigned = ca?.assigned ? (group ? [...group.members] : [ca.assigned]) : []
 
-        await pubsub.publish(SOMETHING_CHANGED_TOPIC, {
+        await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
             members: assigned,
             message: "TASK_SELECTION"
@@ -140,7 +138,7 @@ const taskResolver = {
         throw new CustomError(error.message, 500)  
       }
     },
-    tlEscalation: async(_,{id,tlUserId}) => {
+    tlEscalation: async(_,{id,tlUserId},{PUBSUB_EVENTS, pubsub}) => {
       try {
         const escalateToTL = await CustomerAccount.findById(id)
         if(!escalateToTL) throw new CustomError('Customer not found', 404)
@@ -150,7 +148,7 @@ const taskResolver = {
 
         await CustomerAccount.updateOne({_id: id},{$set: {assigned: findTl._id}})
         
-        await pubsub.publish(SOMETHING_CHANGED_TOPIC, {
+        await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
             members: [findTl._id],
             message: "TASK_SELECTION"
@@ -166,12 +164,7 @@ const taskResolver = {
       }
     }
   },
-  Subscription: {
-    somethingChanged: {
-      subscribe:() => pubsub.asyncIterableIterator([SOMETHING_CHANGED_TOPIC])
-    },
 
-  }
 }
 
 export default taskResolver

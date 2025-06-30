@@ -222,7 +222,7 @@ const Login = () => {
         noValidate>
         <div className="flex flex-col gap-5 text-center text-blue-500">
           <h1 className="text-xl font-black italic">Bernales & Associates</h1>
-          <h1 className="text-2xl font-medium dark:text-white ">Centralize Collection System</h1>
+          <h1 className="text-2xl font-medium dark:text-white ">Collection System</h1>
         </div>
         <div className="flex gap-5 w-full flex-col px-10">
           { invalid &&

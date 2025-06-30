@@ -48,15 +48,6 @@ const callfileTypeDefs = gql`
     monthlyDetails: [MonthlyDetails]
   }
 
-  type SubsribeSuccess {
-    message: String
-    bucket: ID
-  }
-
-  type Subscription {
-    updateOnCallfiles: SubsribeSuccess
-  }
-
   type Mutation {
     finishedCallfile(callfile:ID!):Success
     deleteCallfile(callfile:ID!):Success

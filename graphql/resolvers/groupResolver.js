@@ -1,15 +1,9 @@
-
 import CustomError from "../../middlewares/errors.js"
 import Group from "../../models/group.js"
 import User from "../../models/user.js"
 import CustomerAccount from "../../models/customerAccount.js"
-import { PubSub } from "graphql-subscriptions"
-const pubsub = new PubSub()
-const GROUP_CHANGING = "GROUP_CHANGING";
-const TASK_CHANGING = 'TASK_CHANGING'
 
 const groupResolver = {
-
   Query: {
     findGroup: async(_,__,{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
@@ -31,7 +25,6 @@ const groupResolver = {
       }
     }
   },
-
   Mutation: {
     createGroup: async(_,{name,description}, {user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
@@ -67,7 +60,7 @@ const groupResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    addGroupMember: async(_,{id,member},{user}) => {
+    addGroupMember: async(_,{id,member},{user, pubsub, PUBSUB_EVENTS}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
 
@@ -81,10 +74,10 @@ const groupResolver = {
         findGroup.members.push(member)
         await findGroup.save()
 
-        await pubsub.publish(GROUP_CHANGING, {
+        await pubsub.publish(PUBSUB_EVENTS.GROUP_CHANGING, {
           groupChanging: {
             members: [member],
-            message: "GROUP_CHANGING"
+            message: PUBSUB_EVENTS.GROUP_CHANGING
           },
         });
 
@@ -96,7 +89,7 @@ const groupResolver = {
         throw new CustomError(error.message, 500) 
       }
     },
-    deleteGroupMember: async(_,{id,member}, {user}) => {
+    deleteGroupMember: async(_,{id,member}, {user, pubsub, PUBSUB_EVENTS}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
 
@@ -110,10 +103,10 @@ const groupResolver = {
         const updateUser = await User.findByIdAndUpdate(member, {$set: {group: null}})
         if(!updateUser) throw new CustomError("User not found", 404)
 
-        await pubsub.publish(GROUP_CHANGING, {
+        await pubsub.publish(PUBSUB_EVENTS.GROUP_CHANGING, {
           groupChanging: {
             members: [member],
-            message: "GROUP_CHANGING"
+            message: PUBSUB_EVENTS.GROUP_CHANGING
           },
         });
 
@@ -121,12 +114,13 @@ const groupResolver = {
           success: true,
           message: `Member successfully deleted`
         }
+        
       } catch (error) {
         
         throw new CustomError(error.message, 500) 
       }
     },
-    addGroupTask: async(_,{groupId,task}, {user}) =>  {
+    addGroupTask: async(_,{groupId,task}, {user, pubsub, PUBSUB_EVENTS}) =>  {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
         const findGroup = await Group.findById(groupId)
@@ -136,10 +130,10 @@ const groupResolver = {
 
         await CustomerAccount.updateMany({_id: {$in: task}}, {$set: {assigned: id, assigned_date: new Date() }})
 
-        await pubsub.publish(TASK_CHANGING, {
+        await pubsub.publish(PUBSUB_EVENTS.TASK_CHANGING, {
           taskChanging: {
             members: [id],
-            message: "TASK_CHANGING"
+            message: PUBSUB_EVENTS.TASK_CHANGING
           },
         });
 
@@ -152,7 +146,7 @@ const groupResolver = {
       }
 
     },
-    deleteGroupTask: async(_,{caIds}) => {
+    deleteGroupTask: async(_,{ caIds },{ pubsub, PUBSUB_EVENTS }) => {
       try {
         const findAccounts = await CustomerAccount.find({_id: {$in: caIds}})
         await Promise.all(findAccounts.map(async(e)=> {
@@ -160,10 +154,10 @@ const groupResolver = {
         }))
 
         const agent = new Set(findAccounts.map(e=> e.assigned))
-        await pubsub.publish(TASK_CHANGING, {
+        await pubsub.publish(PUBSUB_EVENTS.TASK_CHANGING, {
           taskChanging: {
             members: agent,
-            message: "TASK_CHANGING"
+            message: PUBSUB_EVENTS.TASK_CHANGING
           },
         });
 
@@ -176,14 +170,6 @@ const groupResolver = {
       }
     },
   },
-  Subscription: {
-    groupChanging: {
-      subscribe:() => pubsub.asyncIterableIterator([GROUP_CHANGING])
-    },
-    taskChanging: {
-      subscribe: () => pubsub.asyncIterableIterator([TASK_CHANGING])
-    }
-  }
 }
 
 export default groupResolver

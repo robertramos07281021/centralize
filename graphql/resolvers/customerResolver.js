@@ -11,9 +11,6 @@ import User from "../../models/user.js";
 import Department from "../../models/department.js";
 import Callfile from "../../models/callfile.js";
 import Disposition from "../../models/disposition.js";
-import { PubSub } from "graphql-subscriptions";
-const SOMETHING_NEW_ON_CALLFILE = "SOMETHING_NEW_ON_CALLFILE"
-const pubsub = new PubSub()
 
 const customerResolver = {
   DateTime,
@@ -743,7 +740,7 @@ const customerResolver = {
   },
   
   Mutation: {
-    createCustomer: async(_,{input, callfile, bucket},{user}) => {
+    createCustomer: async(_,{input, callfile, bucket},{user, pubsub, PUBSUB_EVENTS}) => {
       if(!user) throw new CustomError("Unauthorized",401)
 
       try {
@@ -795,10 +792,10 @@ const customerResolver = {
           
         }));
 
-        await pubsub.publish(SOMETHING_NEW_ON_CALLFILE, {
+        await pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
           newCallfile: {
-            bucket: bucket ,
-            message: SOMETHING_NEW_ON_CALLFILE
+            bucket: bucket,
+            message: PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE
           },
         });
         return {
@@ -825,11 +822,6 @@ const customerResolver = {
       }
     }
   },
-  Subscription: {
-    newCallfile: {
-      subscribe:() => pubsub.asyncIterableIterator([SOMETHING_NEW_ON_CALLFILE])
-    }
-  }
 }
 
 export default customerResolver

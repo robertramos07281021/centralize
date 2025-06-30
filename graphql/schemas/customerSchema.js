@@ -183,7 +183,6 @@ const customerTypeDefs = gql`
   }
   type AomReportsResult {
     campaign: ID
-
   }
 
   input AomReport {
@@ -193,9 +192,6 @@ const customerTypeDefs = gql`
     to:String
   }
 
-  type Subscription {
-    newCallfile: SubsribeSuccess
-  }
 
   type Query {
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]

@@ -407,6 +407,27 @@ const DispositionForm = () => {
                     }
                 </select>
               </label>
+              {
+                data.contact_method === "calls" &&
+                <label className="grid grid-cols-4 items-center">
+                  <p className="text-gray-800 font-bold ">Outbound</p>
+                  <select 
+                    name="contact_method" 
+                    id="contact_method"
+                    required
+                    
+                  
+                    className={`${required && !data.contact_method ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
+                    >
+                      <option value="">Select Outbound</option>
+                      {
+                        contactMethod.map((e,index)=> 
+                          <option key={index} value={e}>{e.toUpperCase()}</option>
+                        )
+                      }
+                  </select>
+                </label>
+              }
 
           </div>
           <div className="flex flex-col gap-2"> 

@@ -61,15 +61,6 @@ const dispositionTypeDefs = gql`
     count: Int
   }
 
-  type SubsribeSuccess {
-    message: String
-    members: [ID]
-  }
-
-  type Subscription {
-    dispositionUpdated: SubsribeSuccess
-  }
-
   type User {
     name: String
     user_id: String
@@ -189,7 +180,7 @@ const dispositionTypeDefs = gql`
     getTLDailyCollected: [TLDailyCollected]
     agentDispoDaily: [AgentDispo]
     getTargetPerCampaign: [BucketTargets]
-    
+
   }
 
   type Mutation {
