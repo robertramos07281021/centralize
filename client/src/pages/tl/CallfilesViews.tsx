@@ -150,7 +150,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
 
   const {data:deptBucket,refetch:bucketRefetch, loading:bucketLoading} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
 
-  console.log(bucket)  
+
 
   useEffect(()=> {
     refetch()

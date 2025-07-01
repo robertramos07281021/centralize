@@ -159,6 +159,7 @@ const dispositionTypeDefs = gql`
     payment_method:String
     ref_no:String
     comment:String
+    dialer: String
     contact_method: ContactMethod!
   }
 

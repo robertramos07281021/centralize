@@ -22,7 +22,8 @@ type UserInfo = {
   change_password: boolean
   department: string[]
   bucket: string[]
-  user_id:string
+  user_id:string,
+  isOnline: boolean
 };
 
 const myUserInfos = gql` 
@@ -35,6 +36,7 @@ const myUserInfos = gql`
       departments
       branch
       change_password
+      isOnline
     }
   } 
 `
@@ -46,7 +48,7 @@ const LOGOUT = gql `
       success 
     } 
   }
-`;
+`
 
 const DESELECT_TASK = gql`
   mutation DeselectTask($id: ID!) {
@@ -106,12 +108,15 @@ const Navbar = () => {
   const dispatch = useAppDispatch()
   const {userLogged,selectedCustomer,breakValue, serverError} = useSelector((state:RootState)=> state.auth)
   const modalRef = useRef<HTMLDivElement>(null)
-  const {error} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
+  const {error, data} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
   const [poPupUser, setPopUpUser] = useState<boolean>(false) 
   const client = useApolloClient()
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: ()=> {
       dispatch(setDeselectCustomer())
+    },
+    onError: () => {
+      dispatch(setServerError(true))
     }
   })
   const [popUpBreak, setPopUpBreak] = useState<boolean>(false)
@@ -134,11 +139,15 @@ const Navbar = () => {
   })
 
  
+ 
   const [logout, {loading}] = useMutation(LOGOUT,{
     onCompleted: () => {
       dispatch(setLogout())
       navigate('/')
     },
+    onError: () => {
+      dispatch(setServerError(true))
+    }
   })
 
   const [confirmation, setConfirmation] = useState<boolean>(false)
@@ -155,13 +164,9 @@ const Navbar = () => {
     setModalProps({
       no:()=> setConfirmation(false),
       yes: async() => {
-        try {
-          await logout();
-          if(selectedCustomer._id) {
-            await deselectTask({variables: {id:selectedCustomer._id}});
-          }
-        } catch (error) {
-          dispatch(setServerError(true))
+        await logout();
+        if(selectedCustomer._id) {
+          await deselectTask({variables: {id:selectedCustomer._id}});
         }
       },
       message: "Are you sure you want to logout?",
@@ -174,23 +179,25 @@ const Navbar = () => {
       dispatch(setLogout())
       navigate("/")
     },
+    onError: () => {
+      dispatch(setServerError(true));
+    }
   })
 
   const [updateProduction] = useMutation<{updateProduction:UpdateProduction}>(UPDATE_PRODUCTION,{
     onCompleted: () => {
       dispatch(setStart(new Date().toString()))
+    },
+    onError: ()=> {
+      dispatch(setServerError(true))
     }
   })
 
   const forceLogout = async () => {
-    try {
-      if (selectedCustomer._id) {
-        await deselectTask({ variables: { id: selectedCustomer._id, user_id: userLogged._id } });
-      }
-      await logoutToPersist({ variables: { id: userLogged._id } });
-    } catch {
-      dispatch(setServerError(true));
+    if (selectedCustomer._id) {
+      await deselectTask({ variables: { id: selectedCustomer._id, user_id: userLogged._id } });
     }
+    await logoutToPersist({ variables: { id: userLogged._id } });
   };
 
   useEffect(()=> {
@@ -226,14 +233,10 @@ const Navbar = () => {
   
   const onClickBreakSelection = async(value:string,e:React.ChangeEvent<HTMLInputElement>)=> {
     if(e.target.checked) {
-      try {
-        setPopUpBreak(false)
-        setPopUpUser(false)
-        dispatch(setBreakValue(BreakEnum[value as keyof typeof BreakEnum]))
-        await updateProduction({variables: {type: value }})
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
+      setPopUpBreak(false)
+      setPopUpUser(false)
+      dispatch(setBreakValue(BreakEnum[value as keyof typeof BreakEnum]))
+      await updateProduction({variables: {type: value }})
     }
   }
 
@@ -254,6 +257,29 @@ const Navbar = () => {
     };
   }, [poPupUser]);
 
+
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      if(data) {
+        if(!data.getMe.isOnline) {
+          setConfirmation(true)
+          setModalProps({
+            no: ()=> {
+              setConfirmation(false); 
+              forceLogout()
+            },
+            yes: () => { 
+              setConfirmation(false);
+              forceLogout()
+            },
+            message: "You have been force to logout!",
+            toggle: "IDLE"
+          })
+        }
+      }
+    })
+    return () => clearTimeout(timer)
+  },[data])
   
   if(loading || logoutToPEristsLoading) return <Loading/>
 

@@ -1,8 +1,9 @@
 import mongoose from "mongoose";
+import "dotenv/config.js"
 
 const connectDB = async () => {
   try {
-    await mongoose.connect("mongodb://127.0.0.1:27017/centralize_collection_system",{
+    await mongoose.connect(process.env.MONGO_URL,{
       maxPoolSize: 20,
       minPoolSize: 5,
       serverSelectionTimeoutMS: 3000,

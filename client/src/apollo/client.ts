@@ -8,15 +8,9 @@ const httpLink = new HttpLink({
   credentials: 'include',
 });
 
+
 const wsLink = new GraphQLWsLink(createClient({
   url:import.meta.env.VITE_GRAPHQL_WS,
-  connectionParams: () => {
-    return {
-      headers: {
-        cookie: document.cookie,
-      }
-    };
-  }
 }));
 
 const splitLink = split(

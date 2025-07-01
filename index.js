@@ -45,9 +45,10 @@ import { PUBSUB_EVENTS } from "./middlewares/pubsubEvents.js";
 import pubsub from "./middlewares/pubsub.js";
 import subscriptionResolvers from "./graphql/resolvers/subscriptionResolvers.js";
 import subscriptionTypeDefs from "./graphql/schemas/subcriptionSchema.js";
+import MongoStore from "connect-mongo";
+import { unsign } from "cookie-signature";
 
-
-
+const connectedUsers = new Map(); 
 
 const app = express()
 connectDB()
@@ -60,18 +61,25 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser())
 app.use(compression())
+
+const sessionStore = MongoStore.create({
+  mongoUrl: process.env.MONGO_URL,
+  collectionName: 'sessions',
+});
+
 app.use(
   session({
     secret: process.env.SECRET,
     resave: false,
     saveUninitialized: true,
+    store: sessionStore,
     cookie: {
-      maxAge: 1000 * 60 * 60 * 24,
       secure: false,
       httpOnly: true,
     },
   })
 );
+
 
 const resolvers = mergeResolvers([ subscriptionResolvers, userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver,callfileResolver, recordingsResolver ]);
 
@@ -90,19 +98,21 @@ httpServer.on('connection', (socket) => {
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
+
+
 const wsServer = new WebSocketServer({
   server: httpServer,
   path: '/graphql',
 });
 
+
+
+
 useServer({ schema,
   context: async (ctx, msg, args) => {
     const cookieHeader  = ctx.extra.request.headers.cookie || '';
-
     const cookies = cookie.parse(cookieHeader)
-
     let user = null
-
     const token = cookies.token
     if (token) {
       try {
@@ -115,18 +125,6 @@ useServer({ schema,
       }
     }
     return { user, pubsub, PUBSUB_EVENTS };
-  },
-  onDisconnect: async (ctx, code, reason) => {
-    const userId = ctx.extra?.userId;
-    if (userId) {
-      try {
-        if(code === 1001 || code === 1006) {
-          await User.findByIdAndUpdate(userId, { isOnline: false });
-        }
-      } catch (err) {
-        console.error("onDisconnect error:", err.message);
-      }
-    }
   },
   onError: (ctx, msg, errors) => {
     console.error('GraphQL WebSocket error:', errors);

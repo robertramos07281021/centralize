@@ -43,6 +43,10 @@ const dispositionSchema = new Schema(
       type: String,
       enum: ['calls','sms','email','skip','field']
     },
+    dialer: {
+      type: String,
+      enum: ['issabel','vici']
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

@@ -58,7 +58,6 @@ Chart.register(...registerables,
 
 function App() {
 
-
   return (
     <BrowserRouter>
       <Routes>

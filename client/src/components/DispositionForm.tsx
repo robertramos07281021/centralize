@@ -16,6 +16,7 @@ interface Data {
   ref_no: string
   comment: string
   contact_method: string
+  dialer: string
 }
 
 interface Disposition {
@@ -76,7 +77,12 @@ interface TL {
 }
 
 
+
 const DispositionForm = () => {
+  
+  
+  const successDispo = ['PTP','PAID','UNEG','FFUP','RPCCB','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
+
   const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
 
   const [selectedDispo, setSelectedDispo] = useState<string>('')
@@ -96,7 +102,8 @@ const DispositionForm = () => {
     payment_method: "",
     ref_no: "",
     comment: "",
-    contact_method: ""
+    contact_method: "",
+    dialer: ""
   })
 
   useEffect(()=> {
@@ -110,7 +117,8 @@ const DispositionForm = () => {
         payment_method: "",
         ref_no: "",
         comment: "",
-        contact_method: "calls"
+        contact_method: "calls",
+        dialer: ""
       })
     }
   },[selectedCustomer])
@@ -145,7 +153,8 @@ const DispositionForm = () => {
         payment_method: "",
         ref_no: "",
         comment: "",
-        contact_method: "calls"
+        contact_method: "calls",
+        dialer: ""
       })
       dispatch(setDeselectCustomer())
     },
@@ -261,7 +270,7 @@ const DispositionForm = () => {
   const requiredDispo = ["PAID",'PTP']
   const highUser = ['TL','MIS']
 
-  const contactMethod = highUser.includes(userLogged.type) ? ['calls','sms','email','skip','field'] : (userLogged.account_type === 'caller' ? ['calls','sms','email'] : [ userLogged.account_type ])
+  const contactMethod = highUser.includes(userLogged.type) ? ['calls','sms','email','skip','field'] : (userLogged.account_type === 'caller' ? ['calls','sms','email','field'] : [ userLogged.account_type ])
 
 
   const {data:tlData} = useQuery<{getBucketTL:TL[]}>(USER_TL)
@@ -410,21 +419,20 @@ const DispositionForm = () => {
               {
                 data.contact_method === "calls" &&
                 <label className="grid grid-cols-4 items-center">
-                  <p className="text-gray-800 font-bold ">Outbound</p>
+                  <p className="text-gray-800 font-bold ">Dialer</p>
                   <select 
                     name="contact_method" 
                     id="contact_method"
-                    required
-                    
-                  
-                    className={`${required && !data.contact_method ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
+                    required = {(() => {
+                      const findDispo = disposition?.getDispositionTypes.find(e=> e.id)
+                      return successDispo.includes(findDispo?.code || "" )
+                    })()}
+                    onChange={(e)=> setData({...data, dialer: e.target.value})}
+                    className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
                     >
-                      <option value="">Select Outbound</option>
-                      {
-                        contactMethod.map((e,index)=> 
-                          <option key={index} value={e}>{e.toUpperCase()}</option>
-                        )
-                      }
+                      <option value="">Select Dialer</option>
+                      <option value="issabel">Issabel</option>
+                      <option value="vici">Vici</option>
                   </select>
                 </label>
               }

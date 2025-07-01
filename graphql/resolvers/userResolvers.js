@@ -556,6 +556,25 @@ const userResolvers = {
         throw new CustomError(error.message, 500)        
       }
     },
+    adminLogout: async(_,{id}, {user}) => {
+      try {
+        if(!user) throw new CustomError("Unauthorized",401)
+          
+        const logoutUser = await User.findByIdAndUpdate(id, {$set: {isOnline: false}},{new: true})
+
+        if(!logoutUser) throw new CustomError('User not found',404)
+        
+        await ModifyRecord.create({name: "Logout", user: logoutUser._id})  
+
+        return {
+          success: true,
+          message: "Successfully logout",
+          user: logoutUser
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500) 
+      }
+    },
     authorization: async(_,{password},{user}) => {
       try { 
         if(!user) throw new CustomError("Unauthorized",401)

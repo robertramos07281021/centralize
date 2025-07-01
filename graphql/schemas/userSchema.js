@@ -89,7 +89,6 @@ const userTypeDefs = gql`
     users: [Users]
   }
 
-
   type Query {
     getUsers(page: Int!, limit: Int!): PaginatedUsers!
     getUser(id: ID): Users
@@ -103,7 +102,6 @@ const userTypeDefs = gql`
     getHelperAgent: [Users]
     getBucketTL:[Users]
   }
-
 
   type Mutation {
     createUser( 
@@ -131,6 +129,7 @@ const userTypeDefs = gql`
     resetPassword(id:ID!): Success
     login(username:String!, password:String!) : Login
     logout: Success
+    adminLogout(id: ID): Success
     logoutToPersist(id:ID!):Success
     updateActiveStatus(id:ID!): Success
     unlockUser(id:ID!): Success

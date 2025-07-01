@@ -1,12 +1,13 @@
 
 interface modalProps {
-  Submit: (action:"RESET" | "STATUS" | "UNLOCK" , status:boolean)=> void,
+  Submit: (action:"RESET" | "STATUS" | "UNLOCK" | "LOGOUT" , status:boolean)=> void,
   check: boolean,
-  isLock: boolean
+  isLock: boolean,
+  isOnline: boolean
 }
 
 
-const UserOptionSettings:React.FC<modalProps> = ({Submit, check, isLock}) => {
+const UserOptionSettings:React.FC<modalProps> = ({Submit, check, isLock, isOnline}) => {
   return (
     <div className="flex flex-col gap-5 py-6">
       <div>
@@ -35,6 +36,16 @@ const UserOptionSettings:React.FC<modalProps> = ({Submit, check, isLock}) => {
             onClick={()=>Submit("UNLOCK",false)}
             className="bg-red-600 hover:bg-red-700 focus:outline-none text-white focus:ring-4 focus:ring-red-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5" 
           >Unlock User</button>
+        </div>
+      }
+      {
+        isOnline &&
+        <div>
+          <button 
+            type="button" 
+            className="bg-red-500 hover:bg-red-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5" 
+            onClick={()=> Submit("LOGOUT",false)}
+          >Logout</button>
         </div>
       }
     </div>

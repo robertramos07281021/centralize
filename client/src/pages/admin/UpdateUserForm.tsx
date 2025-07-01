@@ -145,10 +145,35 @@ const STATUS_UPDATE = gql`
   }
 `
 
-
 const UNLOCK_USER = gql`
   mutation unlockUser($id: ID!) {
     unlockUser(id: $id) {
+      message
+      success
+      user {
+        _id
+        name
+        username
+        type
+        departments
+        branch
+        change_password
+        buckets
+        isOnline
+        active
+        isLock
+        createdAt
+        user_id
+        group
+        account_type
+      }
+    }
+  }
+`
+
+const LOGOUT_USER = gql`
+  mutation adminLogout($id: ID) {
+    adminLogout(id: $id) {
       message
       success
       user {
@@ -276,8 +301,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       
       setIsUpdate(false)
     },
-    onError: (error) => {
-      console.log(error)
+    onError: () => {
       dispatch(setServerError(true))
     }
   })
@@ -322,11 +346,24 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     }
   })
 
+  const [adminLogout] = useMutation(LOGOUT_USER, {
+    onCompleted: (res)=> {
+      navigate(location.pathname, {state: {...res.adminLogout.user, newKey: "newKey"}})
+      setSuccess({
+        success: res.adminLogout.success,
+        message: res.adminLogout.message
+      })
+    },
+    onError:() => {
+      dispatch(setServerError(true))
+    }
+  })
+
 //  ====================================================================== 
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "UNLOCK",
+    toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "UNLOCK" | "LOGOUT",
     yes: () => {},
     no: () => {}
   })
@@ -401,10 +438,22 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
         message: `Are you sure you want to unlock this user?`,
         toggle: "UNLOCK"
       })
+    },
+    LOGOUT: async()=> {
+      setConfirm(true)
+      setModalProps({
+        no:()=> {setConfirm(false)},
+        yes:async() => { 
+          await adminLogout({variables: {id: state._id}})
+          setConfirm(false)
+        },
+        message: `Are you sure you want to logout this user?`,
+        toggle: "LOGOUT"
+      })
     }
   }
 
-  const handleSubmit = (action: "UPDATE" | "RESET" | "STATUS" | "UNLOCK",status:boolean) => {
+  const handleSubmit = (action: "UPDATE" | "RESET" | "STATUS" | "UNLOCK" | "LOGOUT",status:boolean) => {
     submitValue[action]?.()
     if(action === "STATUS") {
       setCheck(status)
@@ -630,7 +679,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
           </div>
         </div>
 
-        <UserOptionSettings Submit={(action: "UPDATE" | "RESET" | "STATUS" | "UNLOCK", status)=> handleSubmit(action, status)} check={check} isLock={state.isLock}  />
+        <UserOptionSettings Submit={(action: "UPDATE" | "RESET" | "STATUS" | "UNLOCK" | "LOGOUT", status)=> handleSubmit(action, status)} check={check} isLock={state.isLock} isOnline={state.isOnline} />
       </div>
       { confirm &&
         <Confirmation {...modalProps}/>
