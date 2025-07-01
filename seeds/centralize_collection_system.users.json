@@ -19,17 +19,21 @@
     "$date": "2025-05-08T08:49:53.288Z"
   },
   "updatedAt": {
-    "$date": "2025-06-16T13:10:17.733Z"
+    "$date": "2025-06-27T08:29:42.600Z"
   },
   "__v": 1,
   "departments": [],
-  "new_account": false
+  "new_account": false,
+  "attempt_login": 0,
+  "default_target": 50000,
+  "isLock": false,
+  "account_type": "caller"
 },
 {
   "_id": {
     "$oid": "681db798fb307d5ae0cb10ed"
   },
-  "username": "LjBesana2025",
+  "username": "LjBesana",
   "password": "$2b$10$5fOvDPEV/H5iwoO.BL/YDuWI7pvpEP2WbkmYrQOZce8/GzvCkB/Yu",
   "name": "lj besana",
   "type": "AOM",
@@ -43,63 +47,74 @@
     "$date": "2025-05-09T08:06:48.937Z"
   },
   "updatedAt": {
-    "$date": "2025-06-16T13:12:48.256Z"
+    "$date": "2025-06-26T08:03:38.196Z"
   },
   "__v": 0,
   "new_account": false,
-  "default_target": 50000
+  "default_target": 50000,
+  "attempt_login": 0,
+  "isLock": false,
+  "account_type": "caller"
 },
 {
   "_id": {
     "$oid": "681dba17fb307d5ae0cb11c8"
   },
-  "username": "RhoseM2025",
-  "password": "$2b$10$NQmY9vduPpTpmU1e6XUi7ucmZBDACvy54yxSsnGSHnYI1WgZHH3BC",
+  "username": "MRManzon",
+  "password": "$2b$10$ArJu0Poor2YwRUPi/poaK.jdL2cnlqzDYOlt0j/j7/UzcjkkO9euq",
   "name": "marry rose manzon",
   "type": "AOM",
   "departments": [],
   "branch": null,
   "isOnline": false,
-  "change_password": false,
+  "change_password": true,
   "buckets": [],
   "active": true,
   "createdAt": {
     "$date": "2025-05-09T08:17:27.337Z"
   },
   "updatedAt": {
-    "$date": "2025-05-09T08:17:27.337Z"
+    "$date": "2025-06-26T08:04:06.955Z"
   },
   "__v": 0,
-  "new_account": false
+  "new_account": false,
+  "attempt_login": 0,
+  "default_target": 50000,
+  "isLock": false,
+  "account_type": "caller"
 },
 {
   "_id": {
     "$oid": "681dba50fb307d5ae0cb11e2"
   },
-  "username": "JzelBarroso2025",
-  "password": "$2b$10$GIgiYBK3xYR2S1sal4hPOOCwB24L1i1eTr034F1WPnJ5fWCMfC5N2",
+  "username": "JBarroso",
+  "password": "$2b$10$HUB/49xEGmrWifPqK1nf0eLR5r4QGJnQO9uHck276ZTfm8Ws7pSZW",
   "name": "j-azzle barroso",
   "type": "AOM",
   "departments": [],
   "branch": null,
-  "isOnline": false,
-  "change_password": false,
+  "isOnline": true,
+  "change_password": true,
   "buckets": [],
   "active": true,
   "createdAt": {
     "$date": "2025-05-09T08:18:24.846Z"
   },
   "updatedAt": {
-    "$date": "2025-05-09T08:18:24.846Z"
+    "$date": "2025-06-27T04:56:24.099Z"
   },
   "__v": 0,
-  "new_account": false
+  "new_account": false,
+  "attempt_login": 0,
+  "default_target": 50000,
+  "isLock": false,
+  "account_type": "caller"
 },
 {
   "_id": {
     "$oid": "681dba61fb307d5ae0cb11e8"
   },
-  "username": "BerlindaBoco2025",
+  "username": "BBoco",
   "password": "$2b$10$KVLLVmWj73PMJLtBu3BcneHLRJ7wppWHVCjGgDfnkEzUEzw4qkGNK",
   "name": "berlinda boco",
   "type": "AOM",
@@ -116,36 +131,41 @@
     "$date": "2025-05-09T08:18:41.637Z"
   },
   "__v": 0,
-  "new_account": false
+  "new_account": false,
+  "account_type": "caller"
 },
 {
   "_id": {
     "$oid": "681dbb5afb307d5ae0cb1208"
   },
-  "username": "LonelBerto2025",
-  "password": "$2b$10$xZmKL7qgRt0aISXVmLu4aOO8VAgU3gnFMjcMiEqLeHJ5pufIYgIvC",
+  "username": "LBerto",
+  "password": "$2b$10$qUj.aKh/inCXn7VPIArOHuWydkeN6k0GuI3K/safUtw9r.4zMfLGm",
   "name": "lonel berto",
   "type": "AOM",
   "departments": [],
   "branch": null,
   "isOnline": false,
-  "change_password": false,
+  "change_password": true,
   "buckets": [],
   "active": true,
   "createdAt": {
     "$date": "2025-05-09T08:22:50.946Z"
   },
   "updatedAt": {
-    "$date": "2025-05-09T08:22:50.946Z"
+    "$date": "2025-06-26T08:04:34.913Z"
   },
   "__v": 0,
-  "new_account": false
+  "new_account": false,
+  "attempt_login": 0,
+  "default_target": 50000,
+  "isLock": false,
+  "account_type": "caller"
 },
 {
   "_id": {
     "$oid": "681dbb8ffb307d5ae0cb122f"
   },
-  "username": "MAVillaruel2025",
+  "username": "MAVillaruel",
   "password": "$2b$10$CSTIs7c2qkVAUmmIcYISZefhvR3W7nRn5HzTvUXiUgJHT8/87ATSy",
   "name": "mary ann villaruel",
   "type": "AOM",
@@ -162,44 +182,8 @@
     "$date": "2025-05-09T08:23:43.291Z"
   },
   "__v": 0,
-  "new_account": false
-},
-{
-  "_id": {
-    "$oid": "681dda9e1a84830c931c51af"
-  },
-  "username": "ChristianE2025",
-  "password": "$2b$10$rwOfj5JBTzJgjEYs3wVyx.cBkQgB1rPWz0DDZQh6K66cfRbYzXf/W",
-  "name": "christian ebit",
-  "type": "AGENT",
-  "departments": [
-    {
-      "$oid": "681dbbb4fb307d5ae0cb1249"
-    }
-  ],
-  "branch": {
-    "$oid": "67da646086a127ef3dd6d5a1"
-  },
-  "isOnline": false,
-  "change_password": true,
-  "buckets": [
-    {
-      "$oid": "681dbbe4fb307d5ae0cb128a"
-    }
-  ],
-  "user_id": "2103",
-  "active": true,
-  "createdAt": {
-    "$date": "2025-05-09T10:36:14.487Z"
-  },
-  "updatedAt": {
-    "$date": "2025-06-17T08:31:08.380Z"
-  },
-  "__v": 0,
-  "group": null,
-  "account_type": "caller",
   "new_account": false,
-  "default_target": 50000
+  "account_type": "caller"
 },
 {
   "_id": {
@@ -235,51 +219,6 @@
   "__v": 0,
   "group": null,
   "account_type": "caller",
-  "new_account": false,
-  "default_target": 50000
-},
-{
-  "_id": {
-    "$oid": "681ddaf21a84830c931c51cd"
-  },
-  "username": "TLAccountTest2025",
-  "password": "$2b$10$.mPY370OYBzX9cDqYHpoT.wAtGixxx.Qg3UU3OWi64GprS7fjkTp.",
-  "name": "tl account test",
-  "type": "TL",
-  "departments": [
-    {
-      "$oid": "681dbbb4fb307d5ae0cb1249"
-    },
-    {
-      "$oid": "681dbbccfb307d5ae0cb1261"
-    }
-  ],
-  "branch": {
-    "$oid": "67da646086a127ef3dd6d5a1"
-  },
-  "isOnline": false,
-  "change_password": true,
-  "buckets": [
-    {
-      "$oid": "681dbbe4fb307d5ae0cb128a"
-    },
-    {
-      "$oid": "681dbbeafb307d5ae0cb1296"
-    },
-    {
-      "$oid": "681dbbf0fb307d5ae0cb12a1"
-    }
-  ],
-  "user_id": "2170",
-  "active": true,
-  "createdAt": {
-    "$date": "2025-05-09T10:37:38.602Z"
-  },
-  "updatedAt": {
-    "$date": "2025-06-17T23:50:06.872Z"
-  },
-  "__v": 0,
-  "group": null,
   "new_account": false,
   "default_target": 50000
 },
@@ -324,7 +263,7 @@
   "_id": {
     "$oid": "683d967d652d8b9b9caa202b"
   },
-  "username": "MikeBernales2025",
+  "username": "MBernales",
   "password": "$2b$10$tXDl..D.mdCXGjQtDMAPEukwBsDc37/hOtcICpV8tUDKncZ2UliD.",
   "name": "mike bernales",
   "type": "CEO",
@@ -332,7 +271,7 @@
   "branch": null,
   "isOnline": false,
   "change_password": true,
-  "account_type": 1,
+  "account_type": "caller",
   "buckets": [],
   "user_id": "",
   "active": true,
@@ -347,85 +286,15 @@
 },
 {
   "_id": {
-    "$oid": "68415093dc30c6093fc80ba2"
+    "$oid": "685c82d188d8094e2dd38d55"
   },
-  "username": "WilliyMNBernales2025",
-  "password": "$2b$10$XlCShVWKG4nRpG1DxUNHA.YlP8YPRXLwpY2vExYGvrc9Tg3CML9Ca",
-  "name": "willy",
+  "username": "GGabot",
+  "password": "$2b$10$740s0eGGU.PLOLPJ6rkBUOV2EPieOHCRNgMpimw2QE06rd0k67xW2",
+  "name": "grace gabot",
   "type": "AGENT",
   "departments": [
     {
-      "$oid": "681dbbccfb307d5ae0cb1261"
-    }
-  ],
-  "branch": {
-    "$oid": "67da646086a127ef3dd6d5a1"
-  },
-  "isOnline": false,
-  "change_password": false,
-  "buckets": [
-    {
-      "$oid": "681dbbf0fb307d5ae0cb12a1"
-    }
-  ],
-  "user_id": "3215",
-  "new_account": false,
-  "active": true,
-  "createdAt": {
-    "$date": "2025-06-05T08:08:51.171Z"
-  },
-  "updatedAt": {
-    "$date": "2025-06-05T08:08:51.171Z"
-  },
-  "__v": 0,
-  "default_target": 50000
-},
-{
-  "_id": {
-    "$oid": "684150afdc30c6093fc80bb2"
-  },
-  "username": "JMBernales2025",
-  "password": "$2b$10$MqlFpugbikCj07VPuNi0r.u6Xm2VsTQwlIvGo6wW6/ZRTplNSYYH.",
-  "name": "john mark",
-  "type": "AGENT",
-  "departments": [
-    {
-      "$oid": "681dbbd7fb307d5ae0cb1273"
-    }
-  ],
-  "branch": {
-    "$oid": "67da646086a127ef3dd6d5a1"
-  },
-  "isOnline": false,
-  "change_password": false,
-  "buckets": [
-    {
-      "$oid": "681dbbfafb307d5ae0cb12bb"
-    }
-  ],
-  "user_id": "5487",
-  "new_account": false,
-  "active": true,
-  "createdAt": {
-    "$date": "2025-06-05T08:09:19.019Z"
-  },
-  "updatedAt": {
-    "$date": "2025-06-05T08:09:19.019Z"
-  },
-  "__v": 0,
-  "default_target": 50000
-},
-{
-  "_id": {
-    "$oid": "684150dedc30c6093fc80bc3"
-  },
-  "username": "JJBernales2025",
-  "password": "$2b$10$Ca/r7fwRg8Cbjj4YmfWarehrCAteK4By4sQhnhIS6hRUB837INxfC",
-  "name": "jan jan",
-  "type": "AGENT",
-  "departments": [
-    {
-      "$oid": "681dbbccfb307d5ae0cb1261"
+      "$oid": "685c819e88d8094e2dd38ced"
     }
   ],
   "branch": {
@@ -435,18 +304,485 @@
   "change_password": true,
   "buckets": [
     {
-      "$oid": "681dbbf0fb307d5ae0cb12a1"
+      "$oid": "685c86b788d8094e2dd38f74"
     }
   ],
-  "user_id": "5131",
+  "user_id": "20220001",
   "new_account": false,
+  "default_target": 50000,
   "active": true,
+  "attempt_login": 0,
+  "isLock": false,
   "createdAt": {
-    "$date": "2025-06-05T08:10:06.951Z"
+    "$date": "2025-06-25T23:14:25.182Z"
   },
   "updatedAt": {
-    "$date": "2025-06-12T09:25:04.761Z"
+    "$date": "2025-06-27T09:16:15.367Z"
   },
   "__v": 0,
-  "default_target": 50000
+  "account_type": "caller"
+},
+{
+  "_id": {
+    "$oid": "685c837b88d8094e2dd38daa"
+  },
+  "username": "KAOgena",
+  "password": "$2b$10$CoSXwo.NNRNmp20Ioyl.3ujmlNbpZFalk0SBVOlfu4ri5nuJ/3kqy",
+  "name": "kelly ann ogena",
+  "type": "AGENT",
+  "departments": [
+    {
+      "$oid": "685c819e88d8094e2dd38ced"
+    }
+  ],
+  "branch": {
+    "$oid": "67da646086a127ef3dd6d5a1"
+  },
+  "isOnline": false,
+  "change_password": true,
+  "buckets": [
+    {
+      "$oid": "685c86b788d8094e2dd38f74"
+    }
+  ],
+  "user_id": "5291999",
+  "new_account": false,
+  "default_target": 50000,
+  "active": true,
+  "attempt_login": 0,
+  "isLock": false,
+  "createdAt": {
+    "$date": "2025-06-25T23:17:15.689Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-27T09:15:47.917Z"
+  },
+  "__v": 0,
+  "account_type": "caller"
+},
+{
+  "_id": {
+    "$oid": "685c851c88d8094e2dd38eb9"
+  },
+  "username": "NAncheta",
+  "password": "$2b$10$MDreFdC1WFcq9XTPPb.HIOwXIJRfTcqMiA2BVF2Mk8KwZuDhJ46WC",
+  "name": "nhelson ancheta",
+  "type": "TL",
+  "departments": [
+    {
+      "$oid": "685c819e88d8094e2dd38ced"
+    },
+    {
+      "$oid": "685c81aa88d8094e2dd38d09"
+    },
+    {
+      "$oid": "685c817c88d8094e2dd38ccc"
+    }
+  ],
+  "branch": {
+    "$oid": "67da646086a127ef3dd6d5a1"
+  },
+  "isOnline": true,
+  "change_password": true,
+  "buckets": [
+    {
+      "$oid": "685c86b788d8094e2dd38f74"
+    },
+    {
+      "$oid": "685ccd9a88d8094e2dd39f7b"
+    },
+    {
+      "$oid": "685d368ee14569794bbd0c75"
+    }
+  ],
+  "user_id": "00002",
+  "new_account": false,
+  "default_target": 50000,
+  "active": true,
+  "attempt_login": 0,
+  "isLock": false,
+  "createdAt": {
+    "$date": "2025-06-25T23:24:12.087Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-27T08:37:59.417Z"
+  },
+  "__v": 0,
+  "account_type": "caller"
+},
+{
+  "_id": {
+    "$oid": "685ccc7c88d8094e2dd39ec1"
+  },
+  "username": "ATenorio",
+  "password": "$2b$10$MstmLJermlutUpOhPHL.XuqnXcJfyFf4H5VihdhWWCzVtWt8CdVta",
+  "name": "annaliza tenorio",
+  "type": "AGENT",
+  "departments": [
+    {
+      "$oid": "685c817c88d8094e2dd38ccc"
+    }
+  ],
+  "branch": {
+    "$oid": "67da646086a127ef3dd6d5a1"
+  },
+  "isOnline": false,
+  "change_password": false,
+  "buckets": [
+    {
+      "$oid": "685c86b788d8094e2dd38f74"
+    }
+  ],
+  "user_id": "10105",
+  "new_account": true,
+  "default_target": 50000,
+  "active": true,
+  "attempt_login": 0,
+  "isLock": false,
+  "createdAt": {
+    "$date": "2025-06-26T04:28:44.034Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-26T04:39:32.617Z"
+  },
+  "__v": 0,
+  "account_type": "caller"
+},
+{
+  "_id": {
+    "$oid": "685ccca188d8094e2dd39ed0"
+  },
+  "username": "SEspina",
+  "password": "$2b$10$28H4MyS.x3pFrSJocDyu9OhtJwXRJg0uqYE27ReieIdNDF.WjtQZ2",
+  "name": "sherelyn espina",
+  "type": "AGENT",
+  "departments": [
+    {
+      "$oid": "685c817c88d8094e2dd38ccc"
+    }
+  ],
+  "branch": {
+    "$oid": "67da646086a127ef3dd6d5a1"
+  },
+  "isOnline": false,
+  "change_password": false,
+  "buckets": [
+    {
+      "$oid": "685c86b788d8094e2dd38f74"
+    }
+  ],
+  "user_id": "10107",
+  "new_account": true,
+  "default_target": 50000,
+  "active": true,
+  "attempt_login": 0,
+  "isLock": false,
+  "createdAt": {
+    "$date": "2025-06-26T04:29:21.265Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-26T04:32:18.748Z"
+  },
+  "__v": 0,
+  "account_type": "caller"
+},
+{
+  "_id": {
+    "$oid": "685cccbc88d8094e2dd39edb"
+  },
+  "username": "JACantancio",
+  "password": "$2b$10$QmL48syAa7jkOYrssuA/iu4S9nsWTNql4/P89QcnQlMJcK8fuAoqG",
+  "name": "jean ann cantancio",
+  "type": "AGENT",
+  "departments": [
+    {
+      "$oid": "685c817c88d8094e2dd38ccc"
+    }
+  ],
+  "branch": {
+    "$oid": "67da646086a127ef3dd6d5a1"
+  },
+  "isOnline": false,
+  "change_password": false,
+  "buckets": [
+    {
+      "$oid": "685c86b788d8094e2dd38f74"
+    },
+    {
+      "$oid": "685ccd9a88d8094e2dd39f7b"
+    }
+  ],
+  "user_id": "5241218",
+  "new_account": true,
+  "default_target": 50000,
+  "active": true,
+  "attempt_login": 0,
+  "isLock": false,
+  "createdAt": {
+    "$date": "2025-06-26T04:29:48.408Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-26T04:33:59.549Z"
+  },
+  "__v": 0,
+  "account_type": "caller"
+},
+{
+  "_id": {
+    "$oid": "685cccd988d8094e2dd39ee5"
+  },
+  "username": "JGumapac",
+  "password": "$2b$10$BmWAz2K2ZbDBxEyroCY5ouDR2t2WvvQqSpvqK5RCbUpUxzI0D3sqa",
+  "name": "jaybelle gumapac",
+  "type": "AGENT",
+  "departments": [
+    {
+      "$oid": "685c817c88d8094e2dd38ccc"
+    }
+  ],
+  "branch": {
+    "$oid": "67da646086a127ef3dd6d5a1"
+  },
+  "isOnline": false,
+  "change_password": false,
+  "buckets": [
+    {
+      "$oid": "685c86b788d8094e2dd38f74"
+    },
+    {
+      "$oid": "685ccd9a88d8094e2dd39f7b"
+    }
+  ],
+  "user_id": "9290",
+  "new_account": true,
+  "default_target": 50000,
+  "active": true,
+  "attempt_login": 0,
+  "isLock": false,
+  "createdAt": {
+    "$date": "2025-06-26T04:30:17.580Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-26T04:33:51.093Z"
+  },
+  "__v": 0,
+  "account_type": "caller"
+},
+{
+  "_id": {
+    "$oid": "685ccd0a88d8094e2dd39ef6"
+  },
+  "username": "EJCadena",
+  "password": "$2b$10$CKl/T97yESfCaBhsGC0GneJPCNlitZ3H6tp9xK/EUdPB2YXeFv45.",
+  "name": "edward jayson cadena",
+  "type": "AGENT",
+  "departments": [
+    {
+      "$oid": "685c817c88d8094e2dd38ccc"
+    }
+  ],
+  "branch": {
+    "$oid": "67da646086a127ef3dd6d5a1"
+  },
+  "isOnline": false,
+  "change_password": false,
+  "buckets": [
+    {
+      "$oid": "685ccd9a88d8094e2dd39f7b"
+    }
+  ],
+  "user_id": "9289",
+  "new_account": true,
+  "default_target": 50000,
+  "active": true,
+  "attempt_login": 0,
+  "isLock": false,
+  "createdAt": {
+    "$date": "2025-06-26T04:31:06.472Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-26T04:33:42.465Z"
+  },
+  "__v": 0,
+  "account_type": "caller"
+},
+{
+  "_id": {
+    "$oid": "685cd73288d8094e2dd3a14d"
+  },
+  "username": "ECtelic",
+  "password": "$2b$10$RBajvHERebfGIqZQChxP8O9.drQQX7ii.fWw8s//2nW9/XOYNXTZu",
+  "name": "emilio telic",
+  "type": "ADMIN",
+  "departments": [],
+  "branch": {
+    "$oid": "67da646086a127ef3dd6d5a1"
+  },
+  "isOnline": false,
+  "change_password": true,
+  "buckets": [],
+  "user_id": "",
+  "new_account": false,
+  "default_target": 50000,
+  "active": true,
+  "attempt_login": 0,
+  "isLock": false,
+  "createdAt": {
+    "$date": "2025-06-26T05:14:26.334Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-27T07:20:27.145Z"
+  },
+  "__v": 0,
+  "account_type": "caller"
+},
+{
+  "_id": {
+    "$oid": "685cf3a68161a802f84607ee"
+  },
+  "username": "SMCopio",
+  "password": "$2b$10$U4oPAmO54NoVdcZVlQkJmOLUDBmsKRn9e9OTSUMd..26H3Phi9LLa",
+  "name": "sarah mae copio",
+  "type": "AGENT",
+  "departments": [
+    {
+      "$oid": "685c819e88d8094e2dd38ced"
+    },
+    {
+      "$oid": "685c81aa88d8094e2dd38d09"
+    },
+    {
+      "$oid": "685c817c88d8094e2dd38ccc"
+    }
+  ],
+  "branch": {
+    "$oid": "67da646086a127ef3dd6d5a1"
+  },
+  "isOnline": false,
+  "change_password": true,
+  "buckets": [
+    {
+      "$oid": "685c86b788d8094e2dd38f74"
+    },
+    {
+      "$oid": "685ccd9a88d8094e2dd39f7b"
+    },
+    {
+      "$oid": "685d368ee14569794bbd0c75"
+    }
+  ],
+  "user_id": "0002",
+  "new_account": false,
+  "default_target": 50000,
+  "active": true,
+  "attempt_login": 0,
+  "isLock": true,
+  "createdAt": {
+    "$date": "2025-06-26T07:15:50.473Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-27T09:03:48.948Z"
+  },
+  "__v": 0,
+  "account_type": "caller"
+},
+{
+  "_id": {
+    "$oid": "685e0024a0f1d817a5e672e5"
+  },
+  "username": "tl-cignal",
+  "password": "$2b$10$GVvaAGYtIUJJPt8rogX1WOI6t05phbxcpIyK74T8my9ktc26i00UO",
+  "name": "tl-cignal",
+  "type": "TL",
+  "departments": [
+    {
+      "$oid": "685c819e88d8094e2dd38ced"
+    },
+    {
+      "$oid": "685c817c88d8094e2dd38ccc"
+    },
+    {
+      "$oid": "685c81aa88d8094e2dd38d09"
+    }
+  ],
+  "branch": {
+    "$oid": "67da646086a127ef3dd6d5a1"
+  },
+  "isOnline": true,
+  "change_password": true,
+  "account_type": "",
+  "buckets": [
+    {
+      "$oid": "685ccd9a88d8094e2dd39f7b"
+    },
+    {
+      "$oid": "685d368ee14569794bbd0c75"
+    },
+    {
+      "$oid": "685c86b788d8094e2dd38f74"
+    }
+  ],
+  "user_id": "0000",
+  "new_account": false,
+  "default_target": 50000,
+  "active": true,
+  "attempt_login": 0,
+  "isLock": false,
+  "createdAt": {
+    "$date": "2025-06-27T02:21:24.371Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-27T08:40:32.041Z"
+  },
+  "__v": 0
+},
+{
+  "_id": {
+    "$oid": "685e0626a0f1d817a5e67ea0"
+  },
+  "username": "MAcero",
+  "password": "$2b$10$Vt1JzsLkN9ZDXZCh1Vjbp.JHTq.kQS6w8aL8aXZ.y1D6TzdHr4Jg.",
+  "name": "marites acero",
+  "type": "TL",
+  "departments": [
+    {
+      "$oid": "685c819e88d8094e2dd38ced"
+    },
+    {
+      "$oid": "685c817c88d8094e2dd38ccc"
+    },
+    {
+      "$oid": "685c81aa88d8094e2dd38d09"
+    }
+  ],
+  "branch": {
+    "$oid": "67da646086a127ef3dd6d5a1"
+  },
+  "isOnline": false,
+  "change_password": true,
+  "account_type": "",
+  "buckets": [
+    {
+      "$oid": "685ccd9a88d8094e2dd39f7b"
+    },
+    {
+      "$oid": "685d368ee14569794bbd0c75"
+    },
+    {
+      "$oid": "685c86b788d8094e2dd38f74"
+    }
+  ],
+  "user_id": "0000",
+  "new_account": true,
+  "default_target": 50000,
+  "active": true,
+  "attempt_login": 0,
+  "isLock": false,
+  "createdAt": {
+    "$date": "2025-06-27T02:47:02.843Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-27T09:15:53.109Z"
+  },
+  "__v": 0
 }]

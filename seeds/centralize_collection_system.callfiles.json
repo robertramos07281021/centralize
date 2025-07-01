@@ -1,0 +1,17 @@
+[{
+  "_id": {
+    "$oid": "685cedf35159b9300c7058e9"
+  },
+  "name": "CIGNAL TV-CCS TEMPLATE 6-24-2025",
+  "bucket": {
+    "$oid": "685c86b788d8094e2dd38f74"
+  },
+  "active": true,
+  "createdAt": {
+    "$date": "2025-06-26T06:51:31.954Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-26T06:51:31.954Z"
+  },
+  "__v": 0
+}]
