@@ -14,4 +14,21 @@
     "$date": "2025-06-26T06:51:31.954Z"
   },
   "__v": 0
+},
+{
+  "_id": {
+    "$oid": "686248dcdf1beb5fe839a03f"
+  },
+  "name": "AVON TC-CCS TEMPLATE 6-28-2025",
+  "bucket": {
+    "$oid": "685ccd9a88d8094e2dd39f7b"
+  },
+  "active": true,
+  "createdAt": {
+    "$date": "2025-06-30T08:20:44.032Z"
+  },
+  "updatedAt": {
+    "$date": "2025-06-30T08:20:44.032Z"
+  },
+  "__v": 0
 }]
