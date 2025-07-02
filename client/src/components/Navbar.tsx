@@ -60,7 +60,7 @@ const DESELECT_TASK = gql`
 `
 
 const LOGOUT_USING_PERSIST = gql`
-  mutation LogoutUsingPersist($id:ID!) {
+  mutation logoutToPersist($id:ID!) {
     logoutToPersist(id: $id) {
       message
       success
@@ -280,8 +280,9 @@ const Navbar = () => {
     })
     return () => clearTimeout(timer)
   },[data])
+ 
 
-  
+
   if(loading || logoutToPEristsLoading) return <Loading/>
 
   return (

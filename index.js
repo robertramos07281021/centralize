@@ -47,7 +47,6 @@ import subscriptionResolvers from "./graphql/resolvers/subscriptionResolvers.js"
 import subscriptionTypeDefs from "./graphql/schemas/subcriptionSchema.js";
 import MongoStore from "connect-mongo";
 import CustomError from "./middlewares/errors.js";
-import CustomerAccount from "./models/customerAccount.js";
 
 const connectedUsers = new Map();
 
@@ -124,17 +123,32 @@ const wsServer = new WebSocketServer({
 useServer({ schema,
   context: async (ctx, msg, args) => {
     const cookieHeader  = ctx.connectionParams.authorization.split(" ")[1] || '';
+  
     let user = null
     const token = cookieHeader
     if (!token) throw new CustomError('Missing Token', 401)
     try {
-    const decoded = jwt.verify(token, process.env.SECRET);
-    user = await User.findById(decoded.id);
-    ctx.extra.userId = decoded.id;
-    const socket = ctx.extra.socket;
-    const sockets = connectedUsers.get(user._id.toString()) || new Set();
-    sockets.add(socket);
-    connectedUsers.set(user._id.toString(), sockets);
+      const decoded = jwt.verify(token, process.env.SECRET);
+      user = await User.findById(decoded.id);
+      ctx.extra.userId = decoded.id;
+      
+      const userId = user._id.toString();
+      const socket = ctx.extra.socket;
+      let entry = connectedUsers.get(userId);
+    
+      if (!entry) {
+        connectedUsers.set(userId, {
+          sockets: new Set([socket]),
+          cleanupTimer: null,
+        });
+      } else {
+        entry.sockets.add(socket);
+
+        if (entry.cleanupTimer) {
+          clearTimeout(entry.cleanupTimer);
+          entry.cleanupTimer = null;
+        }
+      }
 
     } catch (err) {
       console.log("WebSocket token error:", err.message);
@@ -142,27 +156,29 @@ useServer({ schema,
     
     return { user, pubsub, PUBSUB_EVENTS };
   },
+   
   onDisconnect: async (ctx) => {
-    const socket = ctx.extra.socket;
+    const socket = ctx.extra?.socket;
+    const userId = ctx.extra?.userId;
 
- 
-    const userEntry = [...connectedUsers.entries()].find(([_, sockets]) =>
-      sockets.has(socket)
-    );
-    if (!userEntry) return;
+    if (!userId || !socket) return;
 
-    const [userId, sockets] = userEntry;
+    const entry = connectedUsers.get(userId);
+    if (!entry) return;
 
-    sockets.delete(socket);
+    entry.sockets.delete(socket);
 
-    setTimeout(async () => {
-      const stillConnected = connectedUsers.get(userId);
-      if (!stillConnected || stillConnected.size === 0) {
-        connectedUsers.delete(userId);
-        await User.findByIdAndUpdate(userId, { isOnline: false });
-      }
-    }, 5000);
+    if (entry.sockets.size === 0) {
+      entry.cleanupTimer = setTimeout(async () => {
+        const latest = connectedUsers.get(userId);
+        if (!latest || latest.sockets.size === 0) {
+          connectedUsers.delete(userId);
+          await User.findByIdAndUpdate(userId, { isOnline: false });
+        }
+      }, 5000); 
+    }
   },
+
   onError: (ctx, msg, errors) => {
     console.error('GraphQL WebSocket error:', errors);
   },
