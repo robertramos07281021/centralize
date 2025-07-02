@@ -1,11 +1,11 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { gql, useMutation } from "@apollo/client";
 import Confirmation from "../components/Confirmation";
 import SuccessToast from "./SuccessToast";
 import Loading from "../pages/Loading";
+import { useAppDispatch } from "../redux/store";
+import { setServerError } from "../redux/slices/authSlice";
 
 interface Success {
   success: boolean;
@@ -69,6 +69,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     message: ""
   })
   
+  const dispatch = useAppDispatch()
 
   const [excelData, setExcelData] = useState<Data[]>([]);
   const [file, setFile] = useState<File[]>([]);
@@ -93,7 +94,12 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           grass_date:SSF.format("yyyy-mm-dd", row.grass_date),
           case_id: String(row.case_id),
           platform_user_id: String(row.platform_user_id),
+          contact: String(row.contact),
+          contact_2: String(row.contact_2),
+          contact_3: String(row.contact_3)
         }))
+
+
         setExcelData(dateConverting.slice(0,dateConverting.length)); 
       };
       reader.readAsBinaryString(file);
@@ -101,6 +107,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       console.log(error)
     }
   }, []);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [], 
@@ -125,15 +132,28 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       onSuccess()
     },
     onError: (error)=> {
-      if(error.message.includes('E11000')) {
-        setSuccess({
-          success: true,
-          message: "Duplicate file name"
-        })
-        setExcelData([])
-        setFile([])
-      }
+
+    const errorMessage = error.message;
+    if (errorMessage?.includes("Not Included")) {
+      setSuccess({
+        success: true,
+        message: "There is a buckets not included"
+      })
+      setExcelData([])
+      setFile([])
+      setConfirm(false)
+    } else if(error.message.includes('E11000')) {
+      setSuccess({
+        success: true,
+        message: "Duplicate file name"
+      })
+      setExcelData([])
+      setFile([])
+    } 
+    else {
+      dispatch(setServerError(true))
     }
+  }
   })
 
   const [confirm, setConfirm] = useState(false)
@@ -149,19 +169,16 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
   
   const submitUpload = () => {
     if(file.length === 0 || !bucket) {
-
       if(file.length === 0) {
         setRequired(true)
       } else {
         setRequired(false)
       }
-
       if(!bucket) {
         bucketRequired(true)
       } else {
         bucketRequired(false)
       }
-
     } else {
       bucketRequired(false)
       setRequired(false)
@@ -170,28 +187,13 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
         message: "You uploaded a file?",
         toggle: "UPLOADED",
         yes: async() => {
-          try {
-            await createCustomer({variables: {input:excelData, callfile: file[0].name.split('.')[0], bucket: bucket}});
-            setConfirm(false);
-          } catch (error:any) {
-            const errorMessage = error?.graphQLErrors?.[0]?.message;
-            if (errorMessage?.includes("Not Included")) {
-              setSuccess({
-                success: true,
-                message: "There is a buckets not included"
-              })
-              setExcelData([])
-              setFile([])
-              setConfirm(false)
-            }
-          }
+          await createCustomer({variables: {input:excelData, callfile: file[0].name.split('.')[0], bucket: bucket}});
+          setConfirm(false);
         },
         no: () => {setConfirm(false)}
       })
     }
   }
-
-  
 
   if(loading) return <Loading/>
   

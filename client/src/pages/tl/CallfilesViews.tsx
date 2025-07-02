@@ -314,8 +314,8 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
             const status = checkStatus ? "Active" : "Finished"
             const finishedBy = res.callfile.finished_by ? res.callfile.finished_by.name : "-"
             return (
-              <div key={index} className="w-full text-gray-500 uppercase font-medium even:bg-slate-100/80 2xl:text-xs lg:text-[0.6em] grid grid-cols-12 px-2 py-2">
-                <div>{res.callfile.name}</div>
+              <div key={index} className="w-full text-gray-500 uppercase font-medium even:bg-slate-100/80 2xl:text-xs lg:text-[0.6em] grid grid-cols-12 px-2 py-2 cursor-default">
+                <div className="truncate pr-2" title={res.callfile.name}>{res.callfile.name}</div>
                 <div>{findBucket?.name}</div>
                 <div>{new Date(res.callfile.createdAt).toLocaleDateString()}</div>
                 <div>{res.callfile.endo ? new Date(res.callfile.endo).toLocaleDateString() : "-" }</div>

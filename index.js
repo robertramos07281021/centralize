@@ -47,6 +47,7 @@ import subscriptionResolvers from "./graphql/resolvers/subscriptionResolvers.js"
 import subscriptionTypeDefs from "./graphql/schemas/subcriptionSchema.js";
 import MongoStore from "connect-mongo";
 import CustomError from "./middlewares/errors.js";
+import CustomerAccount from "./models/customerAccount.js";
 
 const connectedUsers = new Map();
 

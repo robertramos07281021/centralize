@@ -18,11 +18,11 @@ const customerTypeDefs = gql`
   platform_user_id: String 
   credit_user_id: String    
   customer_name: String
-   dpd_grp: String
+  dpd_grp: String
   dst_fee_os: Float
   email: String
-   email_2: String
-   email_3: String
+  email_2: String
+  email_3: String
   gender: String
   grass_region: String 
   interest_os: Float

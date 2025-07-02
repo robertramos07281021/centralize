@@ -96,9 +96,21 @@ const customerResolver = {
             $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
           },
           {
+            $lookup: {
+              from: "callfiles",
+              localField: "callfile",
+              foreignField: "_id",
+              as: "account_callfile",
+            },
+          },
+          { 
+            $unwind: { path: "$account_callfile", preserveNullAndEmptyArrays: true } 
+          },
+          {
             $match: {
               "account_bucket._id": {$in: user.buckets},
               on_hands: false,
+              "account_callfile.endo": {$exists: false},
               $or: [
                 { "customer_info.fullName": regexSearch },
                 { "customer_info.dob": regexSearch },
@@ -751,14 +763,46 @@ const customerResolver = {
 
 
         await Promise.all(input.map(async (element) => {
+          const contact_no = []
+          const addresses = []
+          const emails = []
+          if(element.contact != "undefined") {
+            contact_no.push(`0${element.contact}`)
+          }
+          if(element.contact_2 != "undefined") {
+            contact_no.push(`0${element.contact_2}`)
+          }
+          if(element.contact_3 != "undefined") {
+            contact_no.push(`0${element.contact_3}`)
+          }
+          if(element.address) {
+            addresses.push(element.address)
+          }
+          if(element.address_2) {
+            addresses.push(element.address_2)
+          }
+          if(element.address_3) {
+            addresses.push(element.address_3)
+          }
+
+          if(element.email) {
+            emails.push(element.email)
+          }
+          if(element.email_2) {
+            emails.push(element.email_2)
+          }
+          if(element.email_3) {
+            emails.push(element.email_3)
+          }
+
           const customer = new Customer({
               fullName: element.customer_name,
               platform_customer_id: element.platform_user_id,
               gender: element.gender,
               dob: element.birthday,
-              addresses: [element.address],
-              emails: [element.email],
-              contact_no: [element.contact],
+              addresses,
+              emails,
+              contact_no,
             });
             await customer.save();
   
@@ -803,6 +847,7 @@ const customerResolver = {
           message: "Callfile successfully created"
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
 

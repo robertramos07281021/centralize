@@ -13,9 +13,10 @@ import AgentTimer from "./agent/AgentTimer"
 import DispositionRecords from "../components/DispositionRecords"
 import MyTaskSection from "../components/MyTaskSection"
 import { BreakEnum } from "../middleware/exports"
+import Loading from "./Loading"
 
 const DESELECT_TASK = gql`
-  mutation DeselectTask($id: ID!) {
+  mutation deselectTask($id: ID!) {
     deselectTask(id: $id) {
       message
       success
@@ -126,7 +127,7 @@ const CustomerDisposition = () => {
     }
   },[location.search])
 
-  const [deselectTask] = useMutation<{deselectTask:Success}>(DESELECT_TASK,{
+  const [deselectTask,{loading}] = useMutation<{deselectTask:Success}>(DESELECT_TASK,{
     onCompleted: ()=> {
       dispatch(setDeselectCustomer()) 
     },
@@ -144,6 +145,7 @@ const CustomerDisposition = () => {
   useEffect(()=> {
     const id = selectedCustomer._id;
     if(!id) return
+
     const timer = setTimeout(async()=> {
       await deselectTask({ variables: { id } })
     })
@@ -163,6 +165,36 @@ const CustomerDisposition = () => {
       navigate('/break-view')
     }
   },[breakValue,navigate])
+
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      if (!selectedCustomer?._id) return;
+      const body = JSON.stringify({
+        query:`
+          mutation deselectTask($id: ID!) {
+            deselectTask(id: $id) {
+              message
+              success
+            }
+          }
+        `,
+        variables: { id: selectedCustomer._id }
+      });
+
+      const blob = new Blob([body], { type: 'application/json' });
+      navigator.sendBeacon('/graphql', blob);
+    };
+
+    window.addEventListener('beforeunload', handleBeforeUnload);
+
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload);
+    };
+
+  }, [selectedCustomer]);
+
+
+  if(loading) return <Loading/>
 
   return userLogged._id ? (
     <div className="h-full w-full overflow-auto"> 
@@ -266,13 +298,14 @@ const CustomerDisposition = () => {
             <div className="ms-5 2xl:text-sm lg:text-xs">
               <div className=" font-bold text-slate-500">Email</div>
               <div className="flex flex-col gap-2"> 
-                { !selectedCustomer._id &&
-                  <div className="w-96 border border-gray-300 p-5 rounded-lg  bg-gray-50 text-slate-500">
+                { 
+                  (!selectedCustomer?._id || selectedCustomer?.customer_info?.emails.length < 1) &&
+                  <div className="w-96 border border-gray-300 p-5 rounded-lg  bg-gray-50 text-slate-500 1">
                   </div>
                 }
                 {
-                  selectedCustomer?.customer_info?.emails.map((e,index)=> (
-                    <div key={index} className="w-96 border border-gray-300 p-2.5 rounded-lg bg-gray-50 text-slate-500">
+                  selectedCustomer?.customer_info?.emails.map((e,index)=>  (
+                    <div key={index} className={`w-96 border border-gray-300 ${selectedCustomer?.customer_info?.emails?.length > 0 ? "p-2.5" : "p-5"}  rounded-lg bg-gray-50 text-slate-500`}>
                       {e}
                     </div>
                   ))
