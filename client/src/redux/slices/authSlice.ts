@@ -49,11 +49,13 @@ interface UserState {
   breakTimer: number
   start: string
   agentRecordingPage: number
-  adminUsersPage: number
+  adminUsersPage: number,
+  myToken: string | null
 }
 
 const initialState:UserState = {
   serverError: false,
+  myToken: null,
   selectedGroup: "",
   selectedAgent: "",
   page: 1,
@@ -167,6 +169,9 @@ const authSlice = createSlice({
     },
     setBreakValue: (state, action:PayloadAction<keyof typeof BreakEnum>)=> {
       state.breakValue = action.payload
+    },
+    setMyToken: (state, action:PayloadAction<string>)=> {
+      state.myToken = action.payload
     },
     setDeselectCustomer: (state) => {
       state.selectedCustomer = {
@@ -290,6 +295,7 @@ const authSlice = createSlice({
       state.start =  ""
       state.breakValue = BreakEnum.WELCOME
       state.adminUsersPage = 1
+      state.myToken = null
     }
   },
 });
@@ -314,5 +320,6 @@ export const {
   setStart, 
   setAgentRecordingPage,
   setAdminUsersPage,
+  setMyToken
 } = authSlice.actions;
 export default authSlice.reducer;

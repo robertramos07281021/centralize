@@ -1,10 +1,10 @@
-import {   useEffect, useRef, useState } from "react"
+import {   useEffect, useMemo, useRef, useState } from "react"
 import Confirmation from "./Confirmation"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { Success } from "../middleware/types"
-import SuccessToast from "./SuccessToast"
+
+
 import { setDeselectCustomer, setServerError } from "../redux/slices/authSlice"
 
 interface Data {
@@ -34,6 +34,11 @@ const GET_DISPOSITION_TYPES = gql`
     }
   }
 `
+
+interface Success {
+  success: boolean
+  message: string
+}
 
 const CREATE_DISPOSITION = gql`
   mutation CreateDisposition($input: CreateDispo) {
@@ -76,9 +81,12 @@ interface TL {
   name: string
 }
 
+interface Props {
+  setSuccess: (success:boolean, message:string) => void
+}
 
 
-const DispositionForm = () => {
+const DispositionForm:React.FC<Props> = ({setSuccess}) => {
   
   
   const successDispo = ['PTP','PAID','UNEG','FFUP','RPCCB','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
@@ -86,11 +94,6 @@ const DispositionForm = () => {
   const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
 
   const [selectedDispo, setSelectedDispo] = useState<string>('')
-
-  const [success, setSuccess] = useState<Success | null>({
-    success: false,
-    message: ""
-  })
 
   const dispatch = useAppDispatch()
 
@@ -123,26 +126,20 @@ const DispositionForm = () => {
     }
   },[selectedCustomer])
 
-  const [dispoObject, setDispoObject] = useState<{[key:string]:string}>({})
+
 
   const {data:disposition} = useQuery<{getDispositionTypes:Disposition[]}>(GET_DISPOSITION_TYPES)
 
-  useEffect(()=> {
-    if(disposition){
-      const newObject:{[key:string]:string} = {}
-      disposition.getDispositionTypes.forEach((e)=> {
-        newObject[e.code] = e.id
-      })
-      setDispoObject(newObject)
-    }
+
+  const dispoObject:{[key:string]:string} = useMemo(()=> {
+    const d = disposition?.getDispositionTypes || []
+    return Object.fromEntries(d.map(e=> [e.code, e.id]))
   },[disposition])
 
-  const [createDisposition] = useMutation(CREATE_DISPOSITION,{
-    onCompleted: () => {
-      setSuccess({
-        success: true,
-        message: "Disposition successfully created"
-      })
+
+  const [createDisposition] = useMutation<{createDisposition:Success}>(CREATE_DISPOSITION,{
+    onCompleted: (res) => {
+      setSuccess(res.createDisposition.success,res.createDisposition.message)
       setConfirm(false)
       setSelectedDispo('')
       setData({
@@ -162,6 +159,7 @@ const DispositionForm = () => {
       dispatch(setServerError(true))
     }
   })
+
 
   const handleOnChangeAmount = (e:React.ChangeEvent<HTMLInputElement>) => {
     let inputValue = e.target.value
@@ -221,10 +219,7 @@ const DispositionForm = () => {
 
   const [tlEscalation] = useMutation<{tlEscalation:Success}>(TL_ESCATATION,{
     onCompleted: async(res)=> {
-      setSuccess({
-        success: res.tlEscalation.success,
-        message: res.tlEscalation.message
-      })
+      setSuccess(res.tlEscalation.success,res.tlEscalation.message)
       await deselectTask({variables: {id:selectedCustomer._id}})
     },
     onError: ()=> {
@@ -278,10 +273,10 @@ const DispositionForm = () => {
 
   return  (
     <>
-      {
+      {/* {
         success?.success &&
         <SuccessToast successObject={success} close={()=> setSuccess({success:false, message:""})}/>
-      }
+      } */}
       {
         escalateTo &&
         <div className="absolute top-0 left-0 w-full h-full bg-white/10 backdrop-blur-[1px] z-50 flex items-center justify-center">

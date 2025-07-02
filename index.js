@@ -46,9 +46,16 @@ import pubsub from "./middlewares/pubsub.js";
 import subscriptionResolvers from "./graphql/resolvers/subscriptionResolvers.js";
 import subscriptionTypeDefs from "./graphql/schemas/subcriptionSchema.js";
 import MongoStore from "connect-mongo";
-import { unsign } from "cookie-signature";
+import CustomError from "./middlewares/errors.js";
 
-const connectedUsers = new Map(); 
+const connectedUsers = new Map();
+
+function getMillisecondsUntilEndOfDay() {
+  const now = new Date();
+  const endOfDay = new Date(now);
+  endOfDay.setHours(23, 59, 59, 999);
+  return endOfDay.getTime() - now.getTime();
+}
 
 const app = express()
 connectDB()
@@ -65,20 +72,29 @@ app.use(compression())
 const sessionStore = MongoStore.create({
   mongoUrl: process.env.MONGO_URL,
   collectionName: 'sessions',
+  ttl: 60 * 60 * 24
 });
 
-app.use(
-  session({
-    secret: process.env.SECRET,
-    resave: false,
-    saveUninitialized: true,
-    store: sessionStore,
-    cookie: {
-      secure: false,
-      httpOnly: true,
-    },
-  })
-);
+const sessionMiddleware = session({
+  secret: process.env.SECRET,
+  resave: false,
+  saveUninitialized: true,
+  store: sessionStore,
+  cookie: {
+    httpOnly: true,
+    secure: false,
+    sameSite: 'lax',
+  },
+});
+
+app.use(sessionMiddleware);
+
+app.use((req, res, next) => {
+  if (req.session && !req.session.cookie.maxAge) {
+    req.session.cookie.maxAge = getMillisecondsUntilEndOfDay();
+  }
+  next();
+});
 
 
 const resolvers = mergeResolvers([ subscriptionResolvers, userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver,callfileResolver, recordingsResolver ]);
@@ -98,33 +114,53 @@ httpServer.on('connection', (socket) => {
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
 
-
-
 const wsServer = new WebSocketServer({
   server: httpServer,
   path: '/graphql',
 });
 
 
-
-
 useServer({ schema,
   context: async (ctx, msg, args) => {
-    const cookieHeader  = ctx.extra.request.headers.cookie || '';
-    const cookies = cookie.parse(cookieHeader)
+    const cookieHeader  = ctx.connectionParams.authorization.split(" ")[1] || '';
     let user = null
-    const token = cookies.token
-    if (token) {
-      try {
-        const decoded = jwt.verify(token, process.env.SECRET);
-        user = await User.findById(decoded.id);
-        ctx.extra.userId = decoded.id;
-        return { user , pubsub , PUBSUB_EVENTS };
-      } catch (err) {
-        console.log("WebSocket token error:", err.message);
-      }
+    const token = cookieHeader
+    if (!token) throw new CustomError('Missing Token', 401)
+    try {
+    const decoded = jwt.verify(token, process.env.SECRET);
+    user = await User.findById(decoded.id);
+    ctx.extra.userId = decoded.id;
+    const socket = ctx.extra.socket;
+    const sockets = connectedUsers.get(user._id.toString()) || new Set();
+    sockets.add(socket);
+    connectedUsers.set(user._id.toString(), sockets);
+
+    } catch (err) {
+      console.log("WebSocket token error:", err.message);
     }
+    
     return { user, pubsub, PUBSUB_EVENTS };
+  },
+  onDisconnect: async (ctx) => {
+    const socket = ctx.extra.socket;
+
+ 
+    const userEntry = [...connectedUsers.entries()].find(([_, sockets]) =>
+      sockets.has(socket)
+    );
+    if (!userEntry) return;
+
+    const [userId, sockets] = userEntry;
+
+    sockets.delete(socket);
+
+    setTimeout(async () => {
+      const stillConnected = connectedUsers.get(userId);
+      if (!stillConnected || stillConnected.size === 0) {
+        connectedUsers.delete(userId);
+        await User.findByIdAndUpdate(userId, { isOnline: false });
+      }
+    }, 5000);
   },
   onError: (ctx, msg, errors) => {
     console.error('GraphQL WebSocket error:', errors);

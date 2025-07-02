@@ -283,7 +283,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   useEffect(()=> {
     if(data) {
       setTotalPage(Math.ceil(data.getCallfiles.count/20) ) 
-      const newData = data?.getCallfiles.result.map(e=> e.callfile.active).toString().includes("true") || data?.getCallfiles?.result?.length
+      const newData = data?.getCallfiles.result.map(e=> e.callfile.active).toString().includes("true")
       setCanUpload(!newData)
     } else {
       setCanUpload(true)

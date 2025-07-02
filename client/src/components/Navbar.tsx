@@ -280,6 +280,7 @@ const Navbar = () => {
     })
     return () => clearTimeout(timer)
   },[data])
+
   
   if(loading || logoutToPEristsLoading) return <Loading/>
 

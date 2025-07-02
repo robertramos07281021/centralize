@@ -3,7 +3,7 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import {  useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
 import { gql, useMutation } from "@apollo/client";
-import {  setBreakValue, setDeselectCustomer, setServerError, setStart, setUserLogged } from "../redux/slices/authSlice";
+import {  setBreakValue, setDeselectCustomer, setMyToken, setServerError, setStart, setUserLogged } from "../redux/slices/authSlice";
 import Loading from "./Loading";
 import { useSelector } from "react-redux";
 import { BreakEnum } from "../middleware/exports";
@@ -13,6 +13,7 @@ const LOGIN = gql `
     login(username: $username, password: $password) { 
       prodStatus
       start
+      token
       user { 
         _id
         change_password
@@ -64,6 +65,7 @@ interface Login {
   user: User
   prodStatus: keyof typeof BreakEnum
   start: string
+  token: string
 }
 
 
@@ -121,6 +123,7 @@ const Login = () => {
   const [login, {loading}] = useMutation<{login:Login}>(LOGIN, {
     onCompleted: (res) => {
       dispatch(setUserLogged(res.login.user))
+      dispatch(setMyToken(res.login.token))
       if(!res.login.user.change_password) {
         navigate('/change-password', {state: res.login.user})
       } else {

@@ -28,6 +28,7 @@ const userTypeDefs = gql`
     user: Users
     prodStatus: Break
     start: String
+    token: String
   }
 
   type Users {

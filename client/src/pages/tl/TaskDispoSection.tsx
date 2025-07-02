@@ -257,7 +257,6 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
     const group = GroupData?.findGroup || []
     return Object.fromEntries(group.map(e=> [e.name, e._id]))
   },[GroupData])
-  console.log(selectedAgent)
   const selected = selectedGroup ? groupDataNewObject[selectedGroup] : selectedAgent
 
   const {data:CustomerAccountsData, refetch:CADRefetch, loading, error:fcaError} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId: selected, assigned: taskFilter, limit: limit, selectedBucket: selectedBucket}})

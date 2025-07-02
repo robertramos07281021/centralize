@@ -450,7 +450,7 @@ const userResolvers = {
         user.isOnline = true;
         await user.save()
 
-        return { user: user, prodStatus: status , start: start ? start?.map(e=> e.start).toString() : new Date().toString() }
+        return { user: user, prodStatus: status , start: start ? start?.map(e=> e.start).toString() : new Date().toString(), token}
         
       } catch (error) {
         throw new CustomError(error.message,500)

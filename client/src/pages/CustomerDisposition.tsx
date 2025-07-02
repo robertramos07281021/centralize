@@ -341,7 +341,7 @@ const CustomerDisposition = () => {
         <AccountInfo/>
         {
           selectedCustomer.balance > 0 &&
-          <DispositionForm/>
+          <DispositionForm setSuccess={(success:boolean,message:string)=> setSuccess({success:success,message:message})}/>
         }
       </div>
       <DispositionRecords/>
