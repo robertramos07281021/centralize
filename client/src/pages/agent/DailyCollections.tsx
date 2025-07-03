@@ -14,7 +14,7 @@ interface DailyCollection {
   paid_yesterday: number
 }
 
-const AGENT_DAILY_COLLECTIONS =gql`
+const AGENT_DAILY_COLLECTIONS = gql`
   query GetAgentDailyCollection {
     getAgentDailyCollection {
       ptp_amount
@@ -26,7 +26,6 @@ const AGENT_DAILY_COLLECTIONS =gql`
     }
   }
 `
-
 type RateProps = {
   label: string;
   current: number;
@@ -88,37 +87,34 @@ const StatCard = ({ label, current, previous, color }: RateProps) => {
 };
 
 export default function DailyCollections() {
-  const {data:dailyCollectionData,refetch} = useQuery<{getAgentDailyCollection:DailyCollection}>(AGENT_DAILY_COLLECTIONS)
+  const {data,refetch} = useQuery<{getAgentDailyCollection:DailyCollection}>(AGENT_DAILY_COLLECTIONS)
 
-  const stats = dailyCollectionData?.getAgentDailyCollection;
+  const stats = data?.getAgentDailyCollection;
 
   useEffect(()=> {
     refetch()
   },[refetch])
+
   return (
     <div className="grid grid-cols-3 gap-2">
-      {stats && (
-        <>
-          <StatCard
-            label="PTP"
-            current={stats.ptp_amount}
-            previous={stats.ptp_yesterday}
-            color="orange"
-          />
-          <StatCard
-            label="PTP Kept"
-            current={stats.ptp_kept_amount}
-            previous={stats.ptp_kept_yesterday}
-            color="green"
-          />
-          <StatCard
-            label="Paid"
-            current={stats.paid_amount}
-            previous={stats.paid_yesterday}
-            color="blue"
-          />
-        </>
-      )}
+      <StatCard
+        label="PTP"
+        current={stats?.ptp_amount || 0}
+        previous={stats?.ptp_yesterday || 0}
+        color="orange"
+      />
+      <StatCard
+        label="PTP Kept"
+        current={stats?.ptp_kept_amount || 0}
+        previous={stats?.ptp_kept_yesterday || 0}
+        color="green"
+      />
+      <StatCard
+        label="Amount Collected"
+        current={stats?.paid_amount || 0}
+        previous={stats?.paid_yesterday || 0}
+        color="blue"
+      />
     </div>
   )
 }

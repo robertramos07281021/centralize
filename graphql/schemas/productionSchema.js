@@ -16,6 +16,7 @@ const productionTypeDefs = gql`
     field: Float
     ptp_kept: Float
     paid: Float
+    ptp: Float
     total: Float
   }
   type perMonth {
@@ -27,6 +28,7 @@ const productionTypeDefs = gql`
     field: Float
     ptp_kept: Float
     paid: Float
+    ptp: Float
     total: Float
   }
   type AgentTotalDispo {
@@ -75,7 +77,6 @@ const productionTypeDefs = gql`
     start: String
   }
 
-
   type AgentProduction {
     _id: ID
     user: ID
@@ -102,14 +103,22 @@ const productionTypeDefs = gql`
     total: Int
   }
 
+
+  type MyProduction {
+    dtcCurrent: Float
+    dtcPrevious: Float
+    ytCurrent: Float
+    ytPrevious: Float
+  }
+
   type Query {
-    getProductions:[Disposition]
     getAgentProductionPerDay:[PerDay]
     getAgentProductionPerMonth:[perMonth]
     getAgentTotalDispositions:[AgentTotalDispo]
     getAgentDailyCollection: DailyCollection
     ProductionReport(dispositions:[ID],from:String,to:String):ProductionReport
     getAgentProductions:[AgentProduction]
+    agentProduction:MyProduction
     getAgentDispositionRecords(agentID:ID, limit:Int, page:Int, from:String, to:String, search: String):AgentDispo
   }
 
@@ -119,7 +128,6 @@ const productionTypeDefs = gql`
     loginToProd(password: String):Login
     lockAgent:Success
   }
-
 `
 
 export default productionTypeDefs

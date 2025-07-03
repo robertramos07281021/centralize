@@ -14,6 +14,7 @@ type AgentProdPerDay = {
   field: number
   total: number
   date: number
+  ptp: number
   ptp_kept: number
   paid: number
 }
@@ -28,19 +29,20 @@ const AGENT_PER_DAY_PROD = gql`
       field
       total
       date
+      ptp
       ptp_kept
       paid
     }
   }
 `
 
-const oklchColors = [
-  'oklch(60% 0.15 216)',
-  'oklch(60% 0.15 288)',
-  'oklch(60% 0.15 0)',
-  'oklch(60% 0.15 144)',
-  'oklch(60% 0.15 72)',
-];
+// const oklchColors = [
+//   'oklch(60% 0.15 216)',
+//   'oklch(60% 0.15 288)',
+//   'oklch(60% 0.15 0)',
+//   'oklch(60% 0.15 144)',
+//   'oklch(60% 0.15 72)',
+// ];
 
 
 const MixedChartView = () => {
@@ -68,14 +70,15 @@ const MixedChartView = () => {
     color: string;
     type: "bar" | "line";
   }[]= [
-    { label: "Calls", key: "calls", color: oklchColors[0], type: "bar" },
-    { label: "SMS", key: "sms", color: oklchColors[1], type: "bar" },
-    { label: "Email", key: "email", color: oklchColors[2], type: "bar" },
-    { label: "Skip", key: "skip", color: oklchColors[3], type: "bar" },
-    { label: "Field", key: "field", color: oklchColors[4], type: "bar" },
+    // { label: "Calls", key: "calls", color: oklchColors[0], type: "bar" },
+    // { label: "SMS", key: "sms", color: oklchColors[1], type: "bar" },
+    // { label: "Email", key: "email", color: oklchColors[2], type: "bar" },
+    // { label: "Skip", key: "skip", color: oklchColors[3], type: "bar" },
+    // { label: "Field", key: "field", color: oklchColors[4], type: "bar" },
+    { label: "PTP", key: "ptp", color: color[2], type: "bar" },
+    { label: "PTP Kept", key: "ptp_kept", color: color[7], type: "bar" },
+    { label: "Amount Collected", key: "paid", color: color[15], type: "bar" },
     { label: "Total", key: "total", color: "#000", type: "line" },
-    { label: "PTP Kept", key: "ptp_kept", color: color[7], type: "line" },
-    { label: "Paid", key: "paid", color: color[15], type: "line" },
   ];
 
   const datasets:ChartDataset<'bar' | 'line', number[]>[] = fields.map(({ label, key, color, type }) => ({
@@ -160,6 +163,7 @@ const MixedChartView = () => {
 
   return (
     <Chart type="bar" data={dataPerDay} options={optionPerDay} />
+  
   )
 }
 

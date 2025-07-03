@@ -13,62 +13,6 @@ import 'dotenv/config.js'
 const productionResolver = {
   DateTime,
   Query: {
-    getProductions: async(_,__,{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-      const start = new Date();
-      start.setHours(0, 0, 0, 0);
-      
-      const end = new Date();
-      end.setHours(23, 59, 59, 999);
-
-      try {
-        const res = await Disposition.aggregate([
-          {
-            $match: {
-              $and: [
-                {
-                  createdAt :{
-                    $gte: start,
-                    $lt: end
-                  }
-                },
-                {user: user._id}
-              ]
-            }
-          },
-         {
-            $lookup: {
-              from: "dispotypes",
-              localField: "disposition",
-              foreignField: "_id",
-              as: "dispotype",
-              pipeline: [
-                {$project: {name: 1, code: 1, _id: 1}}
-              ]
-            }
-          },
-          {
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
-          },
-          {
-            $group: {
-              _id: "$dispotype._id",
-              count: {$sum: 1}
-            }
-          },
-          {
-            $project: {
-              _id: "$_id",
-              count: 1
-            }
-          },
-        ])
-
-        return res
-      } catch (error) {
-        throw new CustomError(error.message, 500)
-      }
-    },
     getAgentProductionPerDay: async(_,__,{user}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
@@ -96,7 +40,7 @@ const productionResolver = {
             $match: {
               user: user._id,
               createdAt: {$gte: firstDay, $lt:lastDay},
-              "dispotype.code": {$eq: "PAID"}
+              "dispotype.code": {$in: ['PTP',"PAID"]}
             }
           },
           {
@@ -136,7 +80,14 @@ const productionResolver = {
                 $sum: {
                   $cond: [
                     {
-                      $eq: ['$ptp',true]
+                      $and: [
+                        {
+                          $eq: ['$ptp',true]
+                        },
+                        {
+                          $eq: ['$dispotype.code','PAID']
+                        }
+                      ]
                     },
                     "$amount",
                     0
@@ -147,7 +98,25 @@ const productionResolver = {
                 $sum: {
                   $cond: [
                     {
-                      $eq: ['$ptp',false]
+                      $and: [
+                        {
+                          $eq: ['$ptp',false]
+                        },
+                        {
+                          $eq: ['$dispotype.code','PAID']
+                        }
+                      ]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              ptp: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$dispotype.code','PTP']
                     },
                     "$amount",
                     0
@@ -166,6 +135,7 @@ const productionResolver = {
               field: 1,
               total: 1,
               paid: 1,
+              ptp: 1,
               ptp_kept: 1
             }
           }
@@ -174,6 +144,104 @@ const productionResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
+    },
+    agentProduction: async(_, __, {user})=> {
+      try {
+        if(!user) throw new CustomError("Unauthorized",401)
+
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const yesterdayStart = new Date();
+        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
+        yesterdayStart.setHours(0, 0, 0, 0);
+        const yesterDayEnd = new Date();
+        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
+        yesterDayEnd.setHours(23, 59, 59, 999);
+
+        const dtc = await Disposition.aggregate([
+          {
+            $match: {
+              user: new mongoose.Types.ObjectId(user._id),
+              createdAt: {$gte: yesterdayStart, $lt: todayEnd}
+            },
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $group: {
+              _id: null,
+              dtcCurrent: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $in: ["$dispotype.code",['PTP','PAID']]
+                        },
+                        {
+                          $gte: ['$createdAt',todayStart]
+                        },
+                        {
+                          $lt: ['$createdAt',todayEnd]
+                        }
+                      ]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              dtcPrevious: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $in: ["$dispotype.code",['PTP','PAID']]
+                        },
+                        {
+                          $gte: ['$createdAt',yesterdayStart]
+                        },
+                        {
+                          $lt: ['$createdAt',yesterDayEnd]
+                        }
+                      ]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              }
+            }
+          }
+        ]).then(res => res[0] || { dtcCurrent: 0, dtcPrevious: 0 });
+
+        
+
+        console.log(dtc)
+        
+        return {
+          dtcCurrent: dtc.dtcCurrent,
+          dtcPrevious: dtc.dtcPrevious,
+          ytCurrent: 0,
+          ytPrevious: 0
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500)   
+      } 
     },
     getAgentProductionPerMonth: async(_,__,{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
@@ -198,7 +266,7 @@ const productionResolver = {
             $match: {
               user: user._id,
               createdAt: { $gte: firstMonth, $lte: lastMonth },
-              'dispotype.code': {$eq: 'PAID'}
+              'dispotype.code': {$in: ['PAID','PTP']}
             }
           },
           {
@@ -238,7 +306,14 @@ const productionResolver = {
                 $sum: {
                   $cond: [
                     {
-                      $eq: ['$ptp',true]
+                      $and: [
+                        {
+                          $eq: ['$ptp',true]
+                        },
+                        {
+                          $eq: ['$dispotype.code','PAID']
+                        }
+                      ]
                     },
                     "$amount",
                     0
@@ -248,8 +323,26 @@ const productionResolver = {
               paid: {
                 $sum: {
                   $cond: [
+                     {
+                      $and: [
+                        {
+                          $eq: ['$ptp',false]
+                        },
+                        {
+                          $eq: ['$dispotype.code','PAID']
+                        }
+                      ]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              ptp: {
+                $sum: {
+                  $cond: [
                     {
-                      $eq: ['$ptp',false]
+                      $eq: ['$dispotype.code','PTP']
                     },
                     "$amount",
                     0
@@ -268,6 +361,7 @@ const productionResolver = {
               field: 1,
               total: 1,
               paid: 1,
+              ptp: 1,
               ptp_kept: 1
             }
           }
