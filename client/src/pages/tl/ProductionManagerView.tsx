@@ -53,7 +53,6 @@ const ProductionManagerView = () => {
     refetch()
   },[refetch])
 
-
   return (
     <div className="p-2 h-full overflow-y-auto">
       <div className="h-full flex flex-col ">

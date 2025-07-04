@@ -704,7 +704,7 @@ const productionResolver = {
           dateEnd.setHours(23,59,59,999)
           filtered['createdAt'] = {$gte: dateStart, $lt: dateEnd}
         }
-        
+
         const forFiltering = await Disposition.aggregate([
           {
             $lookup: {
@@ -778,6 +778,7 @@ const productionResolver = {
           secure: false,
         });
 
+
         const filteredWithRecording = [];
 
         for (const e of forFiltering) {
@@ -786,13 +787,37 @@ const productionResolver = {
           const monthCreated = months[createdAt.getMonth()];
           const dayCreated = createdAt.getDate();
           const contact = e.customer.contact_no;
-          const remoteDir = `/ISSABEL RECORDINGS/ISSABEl_${e.bucket.ip}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
+          const viciIpAddress = e.bucket.viciIp
+          const fileNale = {
+            "172.20.21.64" : "HOMECREDIT",
+            "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
+            "172.20.21.17" : "PSBANK",
+            "172.20.21.27" : "MIXED CAMPAIGN",
+            "172.20.21.30" : "MCC",
+            "172.20.21.35" : "MIXED CAMPAIGN",
+            "172.20.21.67" : "MIXED CAMPAIGN NEW",
+            '172.20.21.97' : "UB"
+          }
+          const year = new Date().getFullYear();
+          const month = new Date().getMonth() + 1;
+          const date = new Date().getDate();
+
+          function checkDate(number) {
+            return number > 9 ? number : `0${number}`;
+          }
+
+          const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${year}-${checkDate(month)}-${checkDate(date)}`
+          const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${e.bucket.issabelIp}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
      
+
+          const remoteDir = e.dialer === "vici" ? remoteDirVici : remoteDirIssabel
+
+          
           const contactPatterns = contact.map(num =>
             num.length < 11 ? num : num.slice(1, 11)
           );
           let skip = false;
-
+          
           try {
             const fileList = await client.list(remoteDir);
             const files = fileList.filter(y =>
@@ -895,7 +920,7 @@ const productionResolver = {
           { $skip: skip },
           { $limit: limit },
         ])
-
+        
         return {
           dispositions: dispositions,
           total: filteredWithRecording?.length

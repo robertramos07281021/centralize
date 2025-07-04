@@ -9,6 +9,7 @@ import { FaDownload } from "react-icons/fa6";
 import SuccessToast from "../../components/SuccessToast"
 import { CgSpinner } from "react-icons/cg";
 import Pagination from "../../components/Pagination"
+import Loading from "../Loading"
 
 
 const AGENT_RECORDING = gql`
@@ -86,7 +87,7 @@ const AgentRecordingView = () => {
     to: ""
   })
   const [search, setSearch] = useState<string>('')
-  const {data: recordings} = useQuery<{getAgentDispositionRecords:Record}>(AGENT_RECORDING,{variables: {
+  const {data: recordings, loading:recordingsLoading} = useQuery<{getAgentDispositionRecords:Record}>(AGENT_RECORDING,{variables: {
     agentID: location.state, limit: limit, page:parseInt(page), from: date.from, to: date.to, search
   }})
   const {data: agentInfoData} = useQuery<{getUser:Agent}>(AGENT_INFO,{variables: {id: location.state}})
@@ -125,6 +126,7 @@ const AgentRecordingView = () => {
     }
   }
 
+  if(recordingsLoading) return <Loading/>
  
   return (
     <>
@@ -203,7 +205,7 @@ const AgentRecordingView = () => {
                       }
                     </div>
                     <div className="relative">
-                      <p className="peer truncate cursor-default">
+                      <p className="peer truncate cursor-default pr-2">
                         {e.comment || "-"}
                       </p>
                       {
