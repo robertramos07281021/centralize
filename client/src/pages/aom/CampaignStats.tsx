@@ -37,6 +37,8 @@ const CampaignStats = () => {
   const {data:aomDeptData, error:aomDeptError} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
   const {data:monthlyTargetData, error:monthlyTargetError} = useQuery<{getMonthlyTarget:MonthlyTarget[]}>(MONTHLY_TARGET)
 
+  console.log(aomDeptData)
+  console.log(monthlyTargetData)
   useEffect(()=> {
     if(aomDeptError || monthlyTargetError){
 

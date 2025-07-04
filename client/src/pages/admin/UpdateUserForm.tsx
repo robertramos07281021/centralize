@@ -11,34 +11,29 @@ import { useAppDispatch } from "../../redux/store"
 import { setServerError } from "../../redux/slices/authSlice"
 
 
-interface modalProps {
-  state: Users
+type modalProps = {
+  state: Users;
 }
 
-interface Bucket {
-  name: string
-  dept: string
-  id: string
+type Bucket = {
+  name: string;
+  dept: string;
+  id: string;
 }
 
-interface Branch {
-  id:string
-  name: string
+type Branch = {
+  id:string;
+  name: string;
 }
 
-interface Dept {
-  id:string
-  name:string
-  branch:string
-  aom:string
+type Dept = {
+  id:string;
+  name:string;
+  branch:string;
+  aom:string;
 }
 
-interface Bucket {
-  id:string
-  name: string
-}
-
-interface DeptBucket {
+type DeptBucket = {
   dept: string
   buckets: Bucket[]
 }
