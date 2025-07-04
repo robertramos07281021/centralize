@@ -229,10 +229,6 @@ const productionResolver = {
           }
         ]).then(res => res[0] || { dtcCurrent: 0, dtcPrevious: 0 });
 
-        
-
-        console.log(dtc)
-        
         return {
           dtcCurrent: dtc.dtcCurrent,
           dtcPrevious: dtc.dtcPrevious,
