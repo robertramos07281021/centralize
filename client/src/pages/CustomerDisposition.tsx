@@ -14,6 +14,8 @@ import DispositionRecords from "../components/DispositionRecords"
 import MyTaskSection from "../components/MyTaskSection"
 import { BreakEnum } from "../middleware/exports"
 import Loading from "./Loading"
+import { IoRibbon } from "react-icons/io5";
+
 
 const DESELECT_TASK = gql`
   mutation deselectTask($id: ID!) {
@@ -62,6 +64,7 @@ const SEARCH = gql`
         emails
         addresses
         _id
+        isRPC
       }
     }
   }
@@ -93,6 +96,7 @@ const CustomerDisposition = () => {
   const {data:searchData ,refetch, error} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search}})
 
   const length = searchData?.search?.length || 0;
+
 
   useEffect(()=> {
     refetch()
@@ -193,6 +197,7 @@ const CustomerDisposition = () => {
 
   }, [selectedCustomer]);
 
+  console.log(selectedCustomer)
 
   if(loading) return <Loading/>
 
@@ -215,8 +220,13 @@ const CustomerDisposition = () => {
         
         <div className="flex flex-col items-center"> 
           <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Information</h1>
-          <div className="border flex flex-col rounded-xl border-slate-400 w-full h-full items-center justify-center p-5 gap-1.5">
-
+          <div className="border flex flex-col rounded-xl border-slate-400 w-full h-full items-center justify-center p-5 gap-1.5 relative">
+            
+          
+            {
+              selectedCustomer._id && selectedCustomer?.customer_info?.isRPC &&
+              <IoRibbon className="top-5 absolute left-5 text-5xl text-blue-500"/>
+            }
             {
               !selectedCustomer._id &&
               <div className="ms-5 relative">
@@ -358,7 +368,7 @@ const CustomerDisposition = () => {
         </div>
         <div className="flex flex-col items-center">
           <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Update Information</h1>
-          <div className={`border w-full flex justify-center h-full border-slate-400 rounded-xl ${!isUpdate && "flex items-center justify-center"}`}>
+          <div className={`border w-full flex justify-center h-full border-slate-400 rounded-xl relative ${!isUpdate && "flex items-center justify-center"}`}>
             {
               isUpdate ?
               <CustomerUpdateForm cancel={()=> setIsUpdate(false)} /> :

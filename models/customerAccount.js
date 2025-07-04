@@ -23,10 +23,6 @@ const customerAccountSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Callfile"
     },
-    isRPC: {
-      type: Boolean,
-      default: false
-    },
     case_id: {
       type: String,
     },

@@ -43,6 +43,7 @@ const customerTypeDefs = gql`
     emails: [String]
     addresses: [String]
     _id:ID
+    isRPC: Boolean
   }
 
   type getCustomers {
@@ -207,7 +208,7 @@ const customerTypeDefs = gql`
 
   type Mutation {
     createCustomer(input:[CustomerData], callfile: String!, bucket: ID!): Success
-    updateCustomer(fullName:String!, dob:String!, gender:String!, mobiles:[String], emails:[String], addresses:[String],id:ID!): Success
+    updateCustomer(fullName:String!, dob:String!, gender:String!, mobiles:[String], emails:[String], addresses:[String],id:ID!, isRPC:Boolean): Success
   }
 `
 

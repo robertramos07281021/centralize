@@ -9,8 +9,8 @@ import { setSelectedCustomer, setServerError } from "../redux/slices/authSlice";
 import { CustomerRegistered, Search } from "../middleware/types";
 
 const UPDATE_CUSTOMER = gql` mutation
-  updateCustomer($fullName:String!, $dob:String!, $gender:String!, $mobiles:[String], $emails:[String], $addresses:[String],$id:ID!) {
-    updateCustomer(fullName:$fullName, dob:$dob, gender:$gender, mobiles:$mobiles, emails:$emails, addresses:$addresses, id:$id) {
+  updateCustomer($fullName:String!, $dob:String!, $gender:String!, $mobiles:[String], $emails:[String], $addresses:[String],$id:ID!, $isRPC:Boolean) {
+    updateCustomer(fullName:$fullName, dob:$dob, gender:$gender, mobiles:$mobiles, emails:$emails, addresses:$addresses, id:$id, isRPC: $isRPC) {
       success
       message
       customer {
@@ -21,6 +21,7 @@ const UPDATE_CUSTOMER = gql` mutation
         emails
         addresses
         _id
+        isRPC
       }
     }
   }
@@ -85,6 +86,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: id}})
 
   const location = useLocation()
+
   useEffect(()=> {
     if(searchData?.search.length === 1) {
       dispatch(setSelectedCustomer(searchData?.search[0]))
@@ -92,6 +94,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   },[searchData,dispatch])
     
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
+
   // mobile =======================================================================
   const [mobiles, setMobiles] = useState<string[]>([""])
 
@@ -112,7 +115,8 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
     newMobile[index] = value
     setMobiles(newMobile)
   }
-  // email address ======================================================================
+
+  // email address ================================================================
   const [emails, setEmails] = useState<string[]>([""])
 
   const handleAddEmail = () => {
@@ -132,7 +136,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
     }
   };
 
-  //address =====================================================================================
+  //address =======================================================================
 
   const [address, setAddress] = useState<string[]>([""])
 
@@ -156,7 +160,8 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const [data, setData] = useState({
     fullName: "",
     dob: "",
-    gender: ""
+    gender: "",
+    isRPC: false
   })
 
   const [modalProps, setModalProps] = useState({
@@ -174,8 +179,9 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
       cancel()
       navigate(`${location.pathname}?success=true`)
       setId(res.updateCustomer.customer._id)
-      refetch()
+      console.log(res.updateCustomer.customer)
       const updatedCustomer = {...selectedCustomer, customer_info: res.updateCustomer.customer}
+      refetch()
       dispatch(setSelectedCustomer(updatedCustomer))
     },
     onError: ()=> {
@@ -202,12 +208,15 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
     }
   }
 
+  console.log(data)
+  
   useEffect(()=> {
     if(selectedCustomer) {
       setData({
         fullName:selectedCustomer.customer_info.fullName,
         dob: selectedCustomer.customer_info.dob,
-        gender: selectedCustomer.customer_info.gender
+        gender: selectedCustomer.customer_info.gender,
+        isRPC: selectedCustomer.customer_info.isRPC
       })
       setMobiles((prevMobiles) => [
         ...prevMobiles.filter(m => m !== ""),
@@ -227,8 +236,18 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
 
   return (
     <>
-      <form ref={updateForm} className="flex flex-col  gap-3" onSubmit={(e)=> handleSubmitUpdateForm(e)} noValidate>
-   
+      <form ref={updateForm} className="flex flex-col gap-3" onSubmit={(e)=> handleSubmitUpdateForm(e)} noValidate>
+        <label className="absolute left-5 top-5 flex gap-2">
+          <input type="checkbox" name="rpc" id="rpc"
+            checked={data.isRPC}
+            onChange={(e) =>{ 
+              let value = false
+              if(e.target.checked) value = true
+              setData({...data, isRPC: value})
+            }}
+          />
+          <h1>RPC</h1>
+        </label>
         <div className="flex flex-col gap-3 p-5">
 
           <div className="mt-5">

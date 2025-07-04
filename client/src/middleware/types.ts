@@ -108,6 +108,7 @@ export type CustomerRegistered = {
   emails:string[]
   addresses:string[]
   _id:string
+  isRPC: boolean
 }
 
 export type Search = {

@@ -245,9 +245,8 @@ const customerResolver = {
           )
         )
 
-
         const connectedDispo = ['FFUP','PAID','PRC','RPCCB','FV','LM','PTP','UNEG','DEC','ITP','RTP']
-        
+
         const accounts = await CustomerAccount.aggregate([
           {
             $match: {
@@ -367,8 +366,6 @@ const customerResolver = {
           }
         ])
 
-        
-       
         const newResult = accounts.map((com)=> {
           const findDept = aomCampaign.find(e => e.name === com.campaign)
           const camp = dispo.filter(x=> x.campaign === com.campaign).map(y => y.rate)
@@ -496,7 +493,6 @@ const customerResolver = {
               }
             }
           },
-   
           {
             $match: {
               $and: search
@@ -761,7 +757,6 @@ const customerResolver = {
 
         const newCallfile = await Callfile.create({name: callfile, bucket: findBucket._id})
 
-
         await Promise.all(input.map(async (element) => {
           const contact_no = []
           const addresses = []
@@ -847,17 +842,15 @@ const customerResolver = {
           message: "Callfile successfully created"
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
-
     },
-    updateCustomer: async(_,{fullName, dob, gender, addresses, mobiles, emails, id},{user}) => {
+    updateCustomer: async(_,{fullName, dob, gender, addresses, mobiles, emails, id, isRPC},{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
         const customer = await Customer.findByIdAndUpdate(id,{
           $set: {
-            fullName, dob, gender, addresses, emails, contact_no: mobiles
+            fullName, dob, gender, addresses, emails, contact_no: mobiles, isRPC
           }
         }, {new: true}) 
         if(!customer) throw new CustomError("Customer not found",404)

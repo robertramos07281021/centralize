@@ -683,7 +683,7 @@ const productionResolver = {
       try {
         const skip = ((page - 1) * limit)
 
-        const dispoWithRecordings = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RPCCB','RTP','ITP']
+        const dispoWithRecordings = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP']
 
         const filtered = {
           user: new mongoose.Types.ObjectId(agentID),

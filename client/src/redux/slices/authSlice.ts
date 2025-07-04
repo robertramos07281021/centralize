@@ -122,7 +122,8 @@ const initialState:UserState = {
       contact_no:[],
       emails:[],
       addresses:[],
-      _id:""
+      _id:"",
+      isRPC: false
     }
   }
 };
@@ -209,7 +210,8 @@ const authSlice = createSlice({
           contact_no:[],
           emails:[],
           addresses:[],
-          _id:""
+          _id:"",
+          isRPC: false
         }
       }
     },
@@ -261,7 +263,8 @@ const authSlice = createSlice({
           contact_no:[],
           emails:[],
           addresses:[],
-          _id:""
+          _id:"",
+          isRPC: false
         }
       }
       state.userLogged= {

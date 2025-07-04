@@ -18,6 +18,14 @@ const customerSchema = new Schema(
     gender: {
       type: String,
     },
+    updatedBy: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User"
+    }],
+    isRPC: {
+      type: Boolean,
+      default: false
+    }
   },
   { timestamps: true }
 );
