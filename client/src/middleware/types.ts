@@ -45,11 +45,6 @@ export type Users = {
   user_id: string
 }
 
-export type ModifyRecords = {
-  id: string
-  name: string
-  createdAt: string
-}
 
 export type CustomerData = {
   address: string

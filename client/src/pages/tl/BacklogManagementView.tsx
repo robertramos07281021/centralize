@@ -5,14 +5,14 @@ import {  useEffect, useState } from "react";
 import { FaDownload} from "react-icons/fa6";
 import ReportsView, { Search } from "./ReportsView";
 
-interface DispositionType  {
+type DispositionType = {
   id: string
   name: string
   code: string
   count: string
 }
 
-interface Bucket {
+type Bucket = {
   id: string,
   name: string,
   dept: string

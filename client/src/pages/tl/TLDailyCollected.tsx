@@ -5,7 +5,7 @@ import { IoMdArrowDown,IoMdArrowUp  } from "react-icons/io";
 import { useAppDispatch } from "../../redux/store";
 import { setServerError } from "../../redux/slices/authSlice";
 
-interface Collected {
+type Collected = {
   bucket: string
   amount: number
   yesterday: number
@@ -22,7 +22,7 @@ const DAILY_COLLECTION = gql`
   }
 `
 
-interface Bucket {
+type Bucket = {
   id:string
   name: string
 }

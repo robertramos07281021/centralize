@@ -10,7 +10,7 @@ import AgentTimer from "./AgentTimer"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
 
 
-interface UpdateProduction {
+type UpdateProduction = {
   message: string
   success: boolean
   start: string
@@ -34,7 +34,7 @@ const LOGIN_PRODUCTION = gql`
     }
   }
 `
-interface LoginProd {
+type LoginProd = {
   message: string
   success: boolean
 }

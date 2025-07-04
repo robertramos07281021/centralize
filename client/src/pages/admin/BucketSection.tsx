@@ -8,7 +8,7 @@ import SuccessToast from "../../components/SuccessToast";
 import { useAppDispatch } from "../../redux/store";
 import { setServerError } from "../../redux/slices/authSlice";
 
-interface Bucket {
+type Bucket = {
   name: string
   dept: string
   id: string

@@ -4,7 +4,7 @@ import { RootState } from "../../redux/store";
 import gql from "graphql-tag";
 import { useQuery } from "@apollo/client";
 
-interface Bucket {
+type Bucket = {
   id:string
   name:string
 }

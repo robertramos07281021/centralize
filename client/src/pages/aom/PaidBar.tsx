@@ -3,8 +3,7 @@ import { gql, useQuery } from "@apollo/client";
 import { ChartData, ChartDataset, ChartOptions } from "chart.js";
 import { useEffect } from "react";
 
-
-interface PaidPerDay {
+type PaidPerDay = {
   campaign: string
   calls: number
   sms: number
@@ -28,7 +27,7 @@ const PAID_PER_DAY = gql`
   }
 `
 
-interface AomDept {
+type AomDept = {
   id: string
   name: string
 }

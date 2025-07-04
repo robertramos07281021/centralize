@@ -7,9 +7,6 @@ import client from "./apollo/client";
 import { store, persistor } from "./redux/store";
 import App from "./App";
 
-
-
-
 ReactDOM.createRoot(document.getElementById('root')!).render(
 <Provider store={store}>
     <PersistGate loading={null} persistor={persistor}>

@@ -58,7 +58,7 @@ export const color = [
 ]
 
 
-interface links {
+type links = {
   name: string
   link: string
 }
@@ -179,7 +179,7 @@ export enum BreakEnum {
   WELCOME = "WELCOME"
 }
 
-interface Breaks {
+type Breaks = {
   name: string
   value: keyof typeof BreakEnum
 }

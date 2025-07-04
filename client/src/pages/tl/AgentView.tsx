@@ -34,15 +34,15 @@ const TL_AGENT = gql`
   }
 `
 
-interface Bucket {
+type Bucket = {
   name: string
 }
 
-interface Department {
+type Department = {
   name: string
 }
 
-interface TLAgent {
+type TLAgent = {
   _id: string
   name: string
   user_id: string
@@ -72,14 +72,14 @@ const AGENT_PRODUCTION = gql`
   }
 `
 
-interface ProdHistory {
+type ProdHistory = {
   type: string
   existing: boolean
   start :string
   target_today: number
 }
 
-interface AgentProductions {
+type AgentProductions = {
   _id: string
   user: string
   createdAt: string
@@ -126,8 +126,6 @@ const AgentView = () => {
     message: ""
   })
   
-  
-
   useSubscription<{somethingOnAgentAccount:{buckets:string[],message: string}}>(SOMETHING_LOCK,{
     onData: ({data}) => {
       if(data) {

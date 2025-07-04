@@ -6,11 +6,11 @@ import { useMutation } from "@apollo/client";
 import { useAppDispatch } from "../redux/store";
 import { setServerError } from "../redux/slices/authSlice";
 
-interface modalComponents {
-  yesMessage: string
-  no: ()=> void
-  event: () => void
-  invalid: () => void
+type modalComponents = {
+  yesMessage: string;
+  no: ()=> void;
+  event: () => void;
+  invalid: () => void;
 }
 
 const AUTHORIZATION = gql`

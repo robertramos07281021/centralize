@@ -3,7 +3,7 @@ import gql from "graphql-tag";
 import { useEffect, useMemo, useState } from "react";
 import HighReports from "./HighReports";
 
-interface AomDept {
+type AomDept = {
   branch: string
   id: string
   name: string
@@ -19,7 +19,7 @@ const GET_AOM_DEPT = gql`
   }
 `
 
-interface DeptBucket {
+type DeptBucket = {
   id: string
   name: string
 }

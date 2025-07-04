@@ -62,9 +62,9 @@ type CustomerData = {
     customer_info: CustomerRegistered
 }
 
-interface GroupTask {
-  task: CustomerData[]
-  _id: string
+type GroupTask = {
+  task: CustomerData[];
+  _id: string;
 }
 
 const MY_TASKS = gql`
@@ -165,7 +165,7 @@ const GROUP_TASKS =gql`
     }
   }
 `
-interface SubSuccess {
+type SubSuccess = {
   message:string
   members:string[]
 }

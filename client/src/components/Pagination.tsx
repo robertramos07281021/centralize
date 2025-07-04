@@ -1,7 +1,7 @@
 import { MdKeyboardDoubleArrowLeft, MdOutlineKeyboardArrowLeft, MdOutlineKeyboardDoubleArrowRight , MdOutlineKeyboardArrowRight } from "react-icons/md";
 import React from "react";
 
-interface modalProps {
+type modalProps = {
   value: string
   onChangeValue: (e:string) => void
   onKeyDownValue: (e:number) => void

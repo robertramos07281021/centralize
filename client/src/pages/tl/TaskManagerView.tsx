@@ -9,7 +9,7 @@ import { RootState, useAppDispatch } from "../../redux/store";
 import { setAgent, setSelectedDisposition, setSelectedGroup, setServerError, setTasker, setTaskFilter, Tasker, TaskFilter } from "../../redux/slices/authSlice";
 import { useSelector } from "react-redux";
 
-interface DispositionTypes {
+type DispositionTypes = {
   id:string
   name: string
   code: string
@@ -24,8 +24,7 @@ const GET_ALL_DISPOSITION_TYPE = gql`
   }
 }
 `
-
-interface Bucket {
+type Bucket = {
   id: string
   name: string
 }

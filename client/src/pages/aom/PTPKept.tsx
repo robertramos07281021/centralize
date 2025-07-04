@@ -6,7 +6,7 @@ import { useEffect } from 'react';
 
 
 
-interface AomDept {
+type AomDept = {
   id: string
   name: string
 }
@@ -20,7 +20,7 @@ const AOM_DEPT = gql`
   }
 `
 
-interface PTPKeptPerDay {
+type PTPKeptPerDay = {
   campaign: string
   calls: number
   sms: number
@@ -159,13 +159,8 @@ const PTPKept = () => {
         maintainAspectRatio: false
       } 
 
-
-
-
   return (
-  
-   <Chart type='bar' data={dataPerDay} options={optionPerDay}/>
-  
+    <Chart type='bar' data={dataPerDay} options={optionPerDay}/>
   )
 }
 

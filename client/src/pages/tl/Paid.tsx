@@ -4,7 +4,7 @@ import { useMemo } from "react"
 import { IoMdArrowDown,IoMdArrowUp  } from "react-icons/io";
 
 
-interface Paid {
+type Paid = {
   bucket: string
   count: number
   amount: number
@@ -22,7 +22,7 @@ const PAID_DAILY = gql`
   }
 `
 
-interface Bucket {
+type Bucket = {
   id:string
   name: string
 }

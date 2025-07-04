@@ -4,10 +4,7 @@ import { useEffect } from 'react'
 import {  useAppDispatch } from '../../redux/store'
 import { setServerError } from '../../redux/slices/authSlice'
 
-
-
-
-interface AomDept {
+type AomDept = {
   id: string
   name: string
 }
@@ -21,7 +18,7 @@ const AOM_DEPT = gql`
   }
 `
 
-interface DailyFTE {
+type DailyFTE = {
   campaign: string
   online:number
 }
@@ -35,7 +32,7 @@ const DAILY_FTE = gql`
   }
 `
 
-interface CampaignAssigned {
+type CampaignAssigned = {
   campaign: string
   assigned: number
 }

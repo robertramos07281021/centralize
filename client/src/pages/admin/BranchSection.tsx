@@ -37,7 +37,7 @@ const DELETEBRANCH = gql`mutation deleteBranch($id: ID!) {
 }
 `
 
-interface Branch {
+type Branch = {
   id:string
   name: string
 }

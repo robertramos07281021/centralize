@@ -6,7 +6,7 @@ import { HiOutlineMinusSm } from "react-icons/hi";
 import { useAppDispatch } from "../../redux/store";
 import { setServerError } from "../../redux/slices/authSlice";
 
-interface AgentDailies {
+type AgentDailies = {
   user: string
   count: number
   ptp: number
@@ -32,7 +32,7 @@ const AGENT_DAILY_PROD = gql`
   }
 `
 
-interface Agent {
+type Agent = {
   _id: string
   name: string
   user_id: string
@@ -52,7 +52,7 @@ const GET_DEPARTMENT_AGENT = gql`
   }
 `
 
-interface Bucket {
+type Bucket = {
   id:string
   name: string
 }

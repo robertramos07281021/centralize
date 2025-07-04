@@ -7,12 +7,12 @@ import Loading from "../pages/Loading";
 import { useAppDispatch } from "../redux/store";
 import { setServerError } from "../redux/slices/authSlice";
 
-interface Success {
+type Success = {
   success: boolean;
   message: string;
 }
 
-interface Data {
+type Data = {
   address: string
   address_2: string
   address_3: string
@@ -55,7 +55,7 @@ const CREATE_CUSTOMER = gql `mutation
     }
   }
 `
-interface modalProps {
+type modalProps = {
   width: string
   bucket: string
   bucketRequired: (e:boolean)=> void

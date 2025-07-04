@@ -7,22 +7,22 @@ import { gql, useMutation, useQuery } from "@apollo/client"
 
 import { setDeselectCustomer, setServerError } from "../redux/slices/authSlice"
 
-interface Data {
-  amount: string
-  payment: string
-  disposition: string
-  payment_date: string
-  payment_method: string
-  ref_no: string
-  comment: string
-  contact_method: string
-  dialer: string
+type Data = {
+  amount: string;
+  payment: string;
+  disposition: string;
+  payment_date: string;
+  payment_method: string;
+  ref_no: string;
+  comment: string;
+  contact_method: string;
+  dialer: string;
 }
 
-interface Disposition {
-  id: string
-  name: string
-  code: string
+type Disposition = {
+  id: string;
+  name: string;
+  code: string;
 }
 
 const GET_DISPOSITION_TYPES = gql`
@@ -35,9 +35,9 @@ const GET_DISPOSITION_TYPES = gql`
   }
 `
 
-interface Success {
-  success: boolean
-  message: string
+type Success = {
+  success: boolean;
+  message: string;
 }
 
 const CREATE_DISPOSITION = gql`
@@ -76,13 +76,13 @@ const USER_TL = gql`
   }
 
 `
-interface TL {
-  _id: string
-  name: string
+type TL = {
+  _id: string;
+  name: string;
 }
 
-interface Props {
-  setSuccess: (success:boolean, message:string) => void
+type Props = {
+  setSuccess: (success:boolean, message:string) => void;
 }
 
 

@@ -69,19 +69,28 @@ const ChangePassword = () => {
           group: ""
         }
       ))
+    },
+    onError: () => {
+      dispatch(setServerError(true))
     }
   })
 
   const [changePassword, {loading:changePassLoading}] = useMutation<{updatePassword: UserInfo}>(UPDATEPASSWORD, {
-      onCompleted: async() => {
+    onCompleted: async() => {
       refetch();
       navigate("/")
-      try {
-        await logout()
-      } catch (_error) {
+      await logout()
+    },
+    onError: (error)=> {
+      const errormessage = error.message
+      if(errormessage === "Invalid") {
+        setRequired(true)
+        setPassword("")
+        setConfirmPassword("")
+      } else {
         dispatch(setServerError(true))
       }
-    },
+    }
   })
 
 
@@ -98,19 +107,7 @@ const ChangePassword = () => {
       setNotMatch(true)
       setRequired(false)
     } else {
-      try {
-        await changePassword({variables: { password, confirmPassword}})
-      } catch (error) {
-        if (error instanceof Error) {
-          if(error?.message === "Invalid") {
-            setRequired(true)
-            setPassword("")
-            setConfirmPassword("")
-          }
-        } else {
-          dispatch(setServerError(true))
-        }
-      }
+      await changePassword({variables: { password, confirmPassword}})
     }
   }
 

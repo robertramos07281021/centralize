@@ -10,11 +10,11 @@ import Confirmation from "../../components/Confirmation";
 import { setServerError } from "../../redux/slices/authSlice";
 import Loading from "../Loading";
 
-interface Finished {
+type Finished = {
   name: string
 }
 
-interface Callfile {
+type Callfile = {
   _id: string
   bucket: string
   name: string
@@ -24,7 +24,7 @@ interface Callfile {
   finished_by: Finished
 }
 
-interface Result {
+type Result = {
   callfile: Callfile
   accounts: number
   connected: number
@@ -32,12 +32,12 @@ interface Result {
   collected: number
 }
 
-interface CallFilesResult {
+type CallFilesResult = {
   result: [Result]
   count: number
 }
 
-interface Success {
+type Success = {
   success: boolean
   message: string
 }
@@ -91,7 +91,7 @@ const GET_CSV_FILES = gql`
   }
 `
 
-interface Props {
+type Props = {
   bucket: string
   status: string
   setTotalPage: (e:number) => void
@@ -115,14 +115,14 @@ const NEW_UPLOADED_CALLFILE = gql`
   }
 `
 
-interface SubSuccess {
+type SubSuccess = {
   message: string
   bucket: string
 }
 
 
 
-interface Bucket {
+type Bucket = {
   id:string
   name: string
 }

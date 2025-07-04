@@ -8,17 +8,17 @@ import SuccessToast from "../../components/SuccessToast"
 import { setServerError } from "../../redux/slices/authSlice";
 import { useAppDispatch } from "../../redux/store";
 
-interface Success {
+type Success = {
   success: boolean;
   message: string;
 }
 
-interface UserInfo {
+type UserInfo = {
   _id: string;
   name: string;
 };
 
-interface Department {
+type Department = {
   id: string;
   name: string;
   branch: string;
@@ -49,7 +49,7 @@ const DELETEDEPT = gql `mutation
     }
   }
 `
-interface Branch {
+type Branch = {
   id:string
   name:string
 }

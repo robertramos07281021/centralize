@@ -10,12 +10,12 @@ import Loading from "../Loading"
 import { setPage, setServerError } from "../../redux/slices/authSlice"
 
 
-interface Success {
+type Success = {
   success: boolean,
   message: string
 }
 
-interface OutStandingDetails {
+type OutStandingDetails = {
   principal_os:number
   interest_os: number
   admin_fee_os: number
@@ -25,18 +25,18 @@ interface OutStandingDetails {
   total_os: number
 }
 
-interface GrassDetails {
+type GrassDetails = {
   grass_region: string
   vendor_endorsement: string
   grass_date: string
 }
 
-interface AccountBucket {
+type AccountBucket = {
   name: string
   dept:string 
 }
 
-interface CustomerInfo {
+type CustomerInfo = {
   fullName: string
   dob: string
   gender: string
@@ -46,7 +46,7 @@ interface CustomerInfo {
   _id: string
 }
 
-interface CurrentDisposition {
+type CurrentDisposition = {
   _id: string
   amount: number
   disposition: string
@@ -59,33 +59,28 @@ interface CurrentDisposition {
   user: string
 }
 
-interface DispoType {
+type DispoType = {
   _id: string
   name: string
   code: string
 }
 
-interface Disposition_user {
-  _id: string
-  name: string
-  user_id: string
-}
-
-interface Member {
+type Disposition_user = {
   _id: string
   name: string
   user_id: string
 }
 
 
-interface Group {
+
+type Group = {
   _id: string
   name: string
   description?: string
   members?: Member[]
 }
 
-interface User {
+type User = {
   _id: string
   name: string
   user_id: string
@@ -93,7 +88,7 @@ interface User {
 
 type Assigned = Group | User
 
-interface CustomerAccounts {
+type CustomerAccounts = {
     _id: string
     case_id: string
     account_id: string
@@ -113,7 +108,7 @@ interface CustomerAccounts {
     disposition_user : Disposition_user
 }
 
-interface FindCustomerAccount {
+type FindCustomerAccount = {
   CustomerAccounts: CustomerAccounts[],
   totalCountCustomerAccounts: number
 }
@@ -214,12 +209,11 @@ const ADD_GROUP_TASK = gql`
   }
 }
 `
-interface Member {
+type Member = {
   _id: string
   name: string
   user_id: string
 }
-
 
 const DEPT_GROUP = gql`
   query Query {
@@ -243,7 +237,7 @@ const DELETE_GROUP_TASK = gql`
     }
   }
 `
-interface Props {
+type Props = {
   selectedBucket:string
 }
 

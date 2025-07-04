@@ -4,30 +4,30 @@ import { useEffect, useMemo, useState } from "react";
 import { FaPlusCircle, FaMinusCircle, FaEdit  } from "react-icons/fa";
 import SuccessToast from "../../components/SuccessToast";
 import Confirmation from "../../components/Confirmation";
-import { setSelectedGroup } from "../../redux/slices/authSlice";
+import { setSelectedGroup, setServerError } from "../../redux/slices/authSlice";
 import { RootState, useAppDispatch } from "../../redux/store";
 import { useSelector } from "react-redux";
 
 
-interface Success {
+type Success = {
   success: boolean,
   message: string
 }
 
-interface Member {
+type Member = {
   _id: string
   name: string
   user_id: string
   buckets: string[]
 }
-interface Group {
+type Group = {
   _id:string
   name:string
   description:string
   members: Member[]
 }
 
-interface DeptAgent {
+type DeptAgent = {
   _id: string
   name: string
   user_id: string
@@ -111,7 +111,7 @@ const DELETE_GROUP_MEMBER = gql`
 }
 `
 
-interface Bucket {
+type Bucket = {
   id:string
   name: string
   dept: string
@@ -126,7 +126,6 @@ const GET_DEPT_BUCKETS = gql`
     }
   }
 `
-
 
 const GroupSection = () => {
   const dispatch = useAppDispatch()
@@ -189,6 +188,18 @@ const GroupSection = () => {
         message: result.createGroup.message
       })
     },
+    onError: (error) => {
+      const errorMessage = error.message;
+      if (errorMessage?.includes("E11000")) {
+        setSuccess({
+          success: true,
+          message: "Group name already exists"
+        })
+        setConfirm(false)
+      } else {
+        dispatch(setServerError(true))
+      }
+    }
   })
 
   const [updateGroup] = useMutation(UPDATE_GROUP, {
@@ -204,6 +215,18 @@ const GroupSection = () => {
         message: result.updateGroup.message
       })
     },
+    onError: (error)=> {
+      const errorMessage = error.message;
+      if (errorMessage?.includes("E11000")) {
+        setSuccess({
+          success: true,
+          message: "Group name already exists"
+        })
+        setConfirm(false)
+      } else {
+        dispatch(setServerError(true))
+      }
+    }
   })
 
   const [deleteGroup] = useMutation(DELETE_GROUP,{
@@ -220,6 +243,9 @@ const GroupSection = () => {
         message: result.deleteGroup.message
       })
     },
+    onError: ()=> {
+      dispatch(setServerError(true))
+    }
   })
   
   const [addGroupMember] = useMutation(ADD_GROUP_MEMBER,{
@@ -227,6 +253,9 @@ const GroupSection = () => {
       deptGroupDataRefetch()
       deptAgentDataRefetch()
     },
+    onError: ()=> {
+      dispatch(setServerError(true))
+    }
   })
 
   const [deleteGroupMember] = useMutation(DELETE_GROUP_MEMBER, {
@@ -234,6 +263,9 @@ const GroupSection = () => {
       deptGroupDataRefetch()
       deptAgentDataRefetch()
     },
+    onError: ()=> {
+      dispatch(setServerError(true))
+    }
   })
 
 //mutations end =========================================================================  
@@ -255,19 +287,7 @@ const GroupSection = () => {
         message: "Do you want to add this group?",
         toggle: "CREATE",
         yes: async() => {
-          try {
-            await createGroup({variables: {name, description}})
-            // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } catch (error:any) {
-            const errorMessage = error?.graphQLErrors?.[0]?.message;
-            if (errorMessage?.includes("E11000")) {
-              setSuccess({
-                success: true,
-                message: "Group name already exists"
-              })
-              setConfirm(false)
-            }
-          }
+          await createGroup({variables: {name, description}})
         },
         no: ()=> {setConfirm(false)}
       })
@@ -275,11 +295,7 @@ const GroupSection = () => {
   }
   
   const handleAddGroupMember = async(memberId:string) => {
-    try {
-      await addGroupMember({variables: {addGroupMemberId: dgdObject[selectedGroup],member:memberId}})
-    } catch (error) {
-      console.log(error)
-    }
+    await addGroupMember({variables: {addGroupMemberId: dgdObject[selectedGroup],member:memberId}})
   }
 
   const handleAddMemberTransition = () => {
@@ -296,11 +312,7 @@ const GroupSection = () => {
   }
 
   const handleDeleteMember = async(memberId:string) => {
-    try {
-      await deleteGroupMember({variables: {id: dgdObject[selectedGroup], member: memberId}})
-    } catch (error) {
-      console.log(error) 
-    }
+    await deleteGroupMember({variables: {id: dgdObject[selectedGroup], member: memberId}})
   } 
 
   const handleClickDeleteGroup = () => {
@@ -309,11 +321,7 @@ const GroupSection = () => {
       message: "Do you want to delete this group?",
       toggle: "DELETE",
       yes: async() => {
-        try {
-          await deleteGroup({variables: {id: dgdObject[selectedGroup]}})
-        } catch (error) {
-         console.log(error)
-        }
+        await deleteGroup({variables: {id: dgdObject[selectedGroup]}})
       },
       no: ()=> {setConfirm(false)}
     })
@@ -329,19 +337,7 @@ const GroupSection = () => {
         message: "Do you want to update this group?",
         toggle: "UPDATE",
         yes: async() => {
-          try {
-            await updateGroup({variables: {id: dgdObject[selectedGroup], name: name, description: description}})
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          } catch (error:any) {
-            const errorMessage = error?.graphQLErrors?.[0]?.message;
-            if (errorMessage?.includes("E11000")) {
-              setSuccess({
-                success: true,
-                message: "Group name already exists"
-              })
-              setConfirm(false)
-            }
-          }
+          await updateGroup({variables: {id: dgdObject[selectedGroup], name: name, description: description}})
         },
         no: ()=> {setConfirm(false)}
       })

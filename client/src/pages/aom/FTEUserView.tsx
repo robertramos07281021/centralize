@@ -22,20 +22,13 @@ const AOM_CAMPAIGN_FTE = gql`
   }
 `
 
-interface Dept {
+type Dept = {
   _id: string
   branch: string
   name: string
 }
 
-interface User {
-  isOnline: boolean
-  user_id: string
-  name: string
-  buckets: string[]
-}
-
-interface AOMFTE {
+type AOMFTE = {
   department:Dept
   users: User[]
 }
@@ -50,12 +43,12 @@ const GET_ALL_BUCKET = gql`
   }
 `
 
-interface Bucket {
+type Bucket = {
   _id: string
   name: string
 }
 
-interface Object {
+type Object = {
   [key:string] : string
 }
 
@@ -72,14 +65,13 @@ const ACCOUNT_HELPER = gql`
   }
 `
 
-interface User {
+type User = {
   name: string
   buckets: string[]
   departments: string[]
   isOnline: boolean
   user_id: string
 }
-
 
 const GET_AOM_CAMPAIGN = gql`
   query getAomDept {
@@ -89,13 +81,10 @@ const GET_AOM_CAMPAIGN = gql`
     }
   }
 `
-interface Campaign {
+type Campaign = {
   name: string
   _id: string
 }
-
-
-
 
 const FTEUserView = () => {
   const {data:AOMFTEData} = useQuery<{getAOMCampaignFTE:AOMFTE[]}>(AOM_CAMPAIGN_FTE)

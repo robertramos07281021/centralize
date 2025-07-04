@@ -4,10 +4,7 @@ import {  Chart } from 'react-chartjs-2'
 import { ChartData, ChartDataset, ChartOptions } from 'chart.js'
 import { useEffect } from 'react'
 
-
-
-
-interface PTPPerDay {
+type PTPPerDay = {
   campaign: string
   calls: number
   sms: number
@@ -31,7 +28,7 @@ const PTP_PER_DAY = gql`
   }
 `
 
-interface AomDept {
+type AomDept = {
   id: string
   name: string
 }

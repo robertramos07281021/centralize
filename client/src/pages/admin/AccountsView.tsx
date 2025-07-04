@@ -10,7 +10,7 @@ import { setAdminUsersPage } from "../../redux/slices/authSlice";
 import { BsFillUnlockFill, BsFillLockFill } from "react-icons/bs";
 
 
-interface DeptBranchBucket {
+type DeptBranchBucket = {
   id: string
   name: string
 }
@@ -88,7 +88,7 @@ const FIND_QUERY = gql`
   }
 `
 
-interface Users  {
+type Users = {
   _id: string;
   type: "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" | "MIS";
   branch: string;

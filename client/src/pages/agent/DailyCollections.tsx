@@ -5,7 +5,7 @@ import { HiOutlineMinusSm } from "react-icons/hi";
 import { useEffect } from "react";
 
 
-interface DailyCollection {
+type DailyCollection = {
   ptp_amount: number
   ptp_yesterday: number
   ptp_kept_amount: number

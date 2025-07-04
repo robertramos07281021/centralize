@@ -56,11 +56,11 @@ const color = {
 
 type toggleType = keyof typeof color
 
-interface modalProps {
+type modalProps = {
   yes: () => void;
   no: () => void;
   message: string;
-  toggle: toggleType
+  toggle: toggleType;
 }
 
 const Confirmation:React.FC<modalProps> = ({yes, no, message, toggle}) => {

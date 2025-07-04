@@ -74,7 +74,7 @@ const DUMMY_SUB = gql`
   }
 `
 
-interface UpdateProduction {
+type UpdateProduction = {
   message: string
   success: boolean
   start: string
@@ -90,7 +90,7 @@ const UPDATE_PRODUCTION = gql`
   }
 `
 
-interface AgentLock {
+type AgentLock = {
   message: string
   agentId: string
 }

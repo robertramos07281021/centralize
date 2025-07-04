@@ -6,7 +6,7 @@ import { setAgent } from '../../redux/slices/authSlice'
 
 
 
-interface Agent {
+type Agent = {
   _id:string
   name: string
   user_id: string
@@ -26,7 +26,7 @@ const FIND_AGENT = gql`
 
 `
 
-interface Bucket {
+type Bucket = {
   id:string
   name: string
   dept: string
@@ -58,9 +58,6 @@ const AgentSection = () => {
     const ad = deptBucketData?.getDeptBucket || []
     return Object.fromEntries(ad.map(e=> [e.id, e.name]))
   },[deptBucketData])
-
-
-  console.log(agentsNewObject[selectedAgent])
 
   useEffect(()=> {
     dispatch(setAgent(agentsNewObject[selectedAgent]))

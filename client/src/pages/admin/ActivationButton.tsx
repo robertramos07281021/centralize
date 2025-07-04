@@ -3,7 +3,7 @@ import gql from "graphql-tag"
 import { useAppDispatch } from "../../redux/store"
 import { setServerError } from "../../redux/slices/authSlice"
 
-interface ButtonProps {
+type ButtonProps = {
   id: string,
   active: boolean
   refetch: ()=> void

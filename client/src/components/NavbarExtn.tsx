@@ -6,7 +6,7 @@ import gql from "graphql-tag"
 import {  useApolloClient, useQuery, useSubscription } from "@apollo/client"
 import { useEffect } from "react"
 
-interface MyTask {
+type MyTask = {
   case_id: string
 }
 
@@ -19,7 +19,7 @@ const MY_TASK = gql`
 `
 
 
-interface SubSuccess {
+type SubSuccess = {
   message:string
   members:string[]
 }

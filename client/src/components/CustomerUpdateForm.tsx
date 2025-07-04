@@ -68,14 +68,14 @@ const SEARCH = gql`
   }
 `
 
-interface UpdatedCustomer {
-  customer: CustomerRegistered,
-  success: boolean,
-  message: string
+type UpdatedCustomer = {
+  customer: CustomerRegistered;
+  success: boolean;
+  message: string;
 }
 
-interface CustomerUpdateFormProps {
-  cancel: () => void, 
+type CustomerUpdateFormProps = {
+  cancel: () => void;
 }
 
 const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {

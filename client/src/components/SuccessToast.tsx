@@ -1,12 +1,12 @@
 import { useEffect } from "react";
 import { IoMdClose } from "react-icons/io";
 
-interface Success {
+type Success = {
   success: boolean
   message: string
 }
 
-interface modalProps {
+type modalProps = {
   successObject:Success | null;
   close: () => void;
 }

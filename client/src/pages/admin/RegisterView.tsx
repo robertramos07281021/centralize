@@ -4,27 +4,37 @@ import SuccessToast from "../../components/SuccessToast"
 import Confirmation from "../../components/Confirmation"
 import { MdKeyboardArrowDown } from "react-icons/md";
 
-interface Dept {
+type Dept = {
   id: string;
   name: string;
   branch: string;
 }
 
-interface Branch {
+type Branch = {
   id: string;
   name: string;
 }
 
-interface Bucket {
+type Bucket = {
   id:string
   name: string
 }
 
-interface DeptBucket {
+type DeptBucket = {
   dept: string
   buckets: Bucket[]
 }
 
+type Data = {
+  type: string,
+  name: string,
+  username: string,
+  branch: string,
+  departments: string[],
+  user_id: string,
+  buckets: string[],
+  account_type: string
+}
 
 
 const CREATE_ACCOUNT = gql`
@@ -73,16 +83,7 @@ const RegisterView = () => {
 
   const [selectDept, setSelectDept] = useState<boolean>(false)
   const [selectBucket, setSelectBucket] = useState<boolean>(false)
-  const [data, setData] = useState<{
-    type: string,
-    name: string,
-    username: string,
-    branch: string,
-    departments: string[],
-    user_id: string,
-    buckets: string[],
-    account_type: string
-  }>({
+  const [data, setData] = useState<Data>({
     type: "",
     name: "",
     username: "",

@@ -15,14 +15,14 @@ const AGENT_PRODUCTION = gql`
   }
 `
 
-interface Production {
+type Production = {
   dtcCurrent: number
   dtcPrevious: number
   ytCurrent: number
   ytPrevious: number
 }
 
-interface Divition {
+type Divition = {
   label: string;
   current: number;
   previous: number;

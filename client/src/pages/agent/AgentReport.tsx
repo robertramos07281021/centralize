@@ -5,7 +5,7 @@ import { IoMdArrowDropdown } from "react-icons/io";
 import {  FaDownload} from "react-icons/fa6";
 import ReportsComponents from "./ReportsComponents";
 
-interface DispositionType  {
+type DispositionType = {
   id: string
   name: string
   code: string

@@ -10,7 +10,7 @@ import { FaEdit } from "react-icons/fa";
 import ActivationButton from "./ActivationButton";
 
 
-interface Bucket {
+type Bucket = {
   _id: string
   name: string
   dept: string
@@ -41,7 +41,7 @@ enum Method {
   field = "field",
 }
 
-interface inpuValueState {
+type inpuValueState = {
   name: string
   code: string
 }
@@ -62,13 +62,13 @@ const GET_ALL_DISPO_TYPE = gql`
     }
   }
 `
-interface CA {
+type CA = {
   skipper: boolean
   caller: boolean
   field: boolean
 }
 
-interface Dispotype {
+type Dispotype = {
   id: string
   name: string
   code: string

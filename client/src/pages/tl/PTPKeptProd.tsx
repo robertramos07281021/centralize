@@ -6,7 +6,7 @@ import { Bar } from "react-chartjs-2"
 
 
 
-interface PtpKeptProd {
+type PtpKeptProd = {
   bucket: string
   calls: number
   sms: number
@@ -28,7 +28,7 @@ const TL_PTP_KEPT = gql`
     }
   }
 `
-interface Bucket {
+type Bucket = {
   id:string
   name: string
 }

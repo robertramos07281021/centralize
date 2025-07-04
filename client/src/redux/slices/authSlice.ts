@@ -32,7 +32,7 @@ export enum TaskFilter {
   unassigned = "unassigned"
 }
 
-interface UserState {
+type UserState = {
   serverError: boolean
   userLogged: User
   search: search

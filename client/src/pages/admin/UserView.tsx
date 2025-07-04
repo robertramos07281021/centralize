@@ -1,7 +1,6 @@
 import { useLocation } from "react-router-dom"
 import UpdateUserForm from "./UpdateUserForm"
 import { gql, useQuery } from "@apollo/client"
-import { ModifyRecords } from "../../middleware/types"
 import { useEffect } from "react"
 
 
@@ -14,6 +13,12 @@ import { useEffect } from "react"
     }
   }
 `
+
+type ModifyRecords = {
+  id: string
+  name: string
+  createdAt: string
+}
 
 const UserView = () => {
   const {state} = useLocation()

@@ -22,29 +22,28 @@ const REPORT = gql`
   }
 `
 
-interface Dispotype {
+type Dispotype = {
   _id: string
   code: string
   name: string
 }
 
-interface Dispotypes {
+type Dispotypes = {
   dispotype: Dispotype
   count: number
 }
-interface ProductionReport {
+type ProductionReport = {
   totalDisposition: number
   dispotypes: Dispotypes[]
-
 }
-interface ReportsComponents {
+
+type ReportsComponents = {
   dispositions: string[]
   from: string
   to: string
 }
 
-
-interface DoughnutData {
+type DoughnutData = {
   datas: number[]
   colors: string[]
   labels: string[]

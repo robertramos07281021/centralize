@@ -4,7 +4,7 @@ import gql from "graphql-tag";
 import { useEffect, useMemo, useState } from "react";
 import { Doughnut } from "react-chartjs-2"
 
-interface Target {
+type Target = {
   bucket: string
   collected: number
   target:number
@@ -20,7 +20,7 @@ const TARGET_PER_BUCKET = gql`
   }
 `
 
-interface Bucket {
+type Bucket = {
   id:string
   name: string
 }
@@ -36,9 +36,6 @@ const TL_BUCKET = gql`
 
 const Targets = () => {
   const {data:targetsData} = useQuery<{getTargetPerCampaign:Target[]}>(TARGET_PER_BUCKET)
-
-
-
   const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {

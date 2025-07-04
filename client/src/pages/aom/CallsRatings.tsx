@@ -22,7 +22,7 @@ const CALLFILE = gql`
     }
   }
 `
-interface Callfile {
+type Callfile = {
   department: string
   success:number
   positive:number

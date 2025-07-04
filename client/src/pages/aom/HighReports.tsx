@@ -6,7 +6,7 @@ import ReportsView from "./ReportsView"
 import { useAppDispatch } from "../../redux/store"
 import { setServerError } from "../../redux/slices/authSlice"
 
-// interface DispoType {
+// type DispoType = {
 //   id:string
 //   name: string
 //   code: string
@@ -22,7 +22,7 @@ import { setServerError } from "../../redux/slices/authSlice"
 //   }
 // `
 
-interface AomDept {
+type AomDept = {
 
   id: string
   name: string
@@ -37,7 +37,7 @@ const GET_AOM_DEPT = gql`
   }
 `
 
-// interface DeptBucket {
+// type DeptBucket = {
 //   id: string
 //   name: string
 // }
@@ -51,20 +51,20 @@ const GET_AOM_DEPT = gql`
 //   }
 // `
 
-interface Variables  {
+type Variables = {
   campaign: string
   bucket: string
   from: string
   to: string
 }
 
-interface modalProps {
+type modalProps = {
   setCampaign: (e:string)=> void
   reportsVariables: Variables
   setReportVariables: (e:string) => void
 }
 
-  interface PerformanceStatistic {
+  type PerformanceStatistic = {
     campaign: string
     totalAccounts: number
     connectedAccounts: number

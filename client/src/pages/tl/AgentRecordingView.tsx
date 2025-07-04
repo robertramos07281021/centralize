@@ -31,7 +31,7 @@ const AGENT_RECORDING = gql`
   }
 `
 
-interface Diposition {
+type Diposition = {
   _id: string
   customer_name: string
   payment: string
@@ -44,7 +44,7 @@ interface Diposition {
   createdAt: string
 }
 
-interface Record {
+type Record = {
   dispositions: Diposition[]
   total: number
 }
@@ -57,7 +57,7 @@ const AGENT_INFO = gql`
     }
   }
 `
-interface Agent {
+type Agent = {
   name: string
   user_id: string
 }
@@ -71,7 +71,7 @@ const DL_RECORDINGS = gql`
   }
 `
 
-interface Success {
+type Success = {
   success: boolean
   message: string
 }

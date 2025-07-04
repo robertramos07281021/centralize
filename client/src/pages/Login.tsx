@@ -48,7 +48,7 @@ const DESELECT_TASK = gql`
     }
   }
 `
-interface User {
+type User = {
   _id: string
   change_password : boolean
   name: string
@@ -61,7 +61,7 @@ interface User {
   group: string
 }
 
-interface Login {
+type Login = {
   user: User
   prodStatus: keyof typeof BreakEnum
   start: string
@@ -100,6 +100,9 @@ const Login = () => {
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: () => {
       dispatch(setDeselectCustomer())
+    },
+    onError: () => {
+      dispatch(setServerError(true))
     }
   })
 
@@ -117,6 +120,9 @@ const Login = () => {
         account_type: "",
         group: ""
       }))
+    }, 
+    onError: ()=> {
+      dispatch(setServerError(true))  
     }
   })
 
@@ -150,22 +156,22 @@ const Login = () => {
           setLock(false)
           setUsername("")
           setPassword("")
-        }
-        if(message === 'Already') {
+        } else if(message === 'Already') {
           setRequired(false)
           setInvalid(false)
           setAlready(true)
           setLock(false)
           setUsername("")
           setPassword("")
-        }
-        if(message === 'Lock') {
+        } else if(message === 'Lock') {
           setRequired(false)
           setInvalid(false)
           setAlready(false)
           setLock(true)
           setUsername("")
           setPassword("")
+        } else {
+          dispatch(setServerError(true))
         }
       }
     }
@@ -197,13 +203,9 @@ const Login = () => {
   useEffect(()=> {
     if(userLogged?._id && !userLogged.change_password) {
       const timer = setTimeout(async() =>  {
-        try {
-          await logout()
-          if(selectedCustomer._id) {
-            await deselectTask({variables: {id: selectedCustomer._id}})
-          }
-        } catch (_error) {
-          dispatch(setServerError(true))
+        await logout()
+        if(selectedCustomer._id) {
+          await deselectTask({variables: {id: selectedCustomer._id}})
         }
       })
       return () => clearTimeout(timer) 

@@ -3,7 +3,7 @@ import gql from "graphql-tag"
 import { useMemo } from "react"
 import { IoMdArrowDown,IoMdArrowUp  } from "react-icons/io";
 
-interface PTPKept {
+type PTPKept = {
   bucket: string
   count: number
   amount: number
@@ -21,7 +21,7 @@ const PTP_KEPT_TOTAL = gql`
   }
 `
 
-interface Bucket {
+type Bucket = {
   id:string
   name: string
 }

@@ -25,20 +25,20 @@ const GET_DISPOSITION_REPORTS = gql`
   }
 `
 
-interface Dispositions {
+type Dispositions = {
   code: string
   count: number
   color: string
 }
 
-interface DispositionType  {
+type DispositionType = {
   id: string
   name: string
   code: string
   count: string
 }
 
-interface Agent {
+type Agent = {
   _id: string
   name: string
   branch: string
@@ -47,7 +47,7 @@ interface Agent {
   buckets: string[]
 }
 
-interface Reports {
+type Reports = {
   agent: Agent
   bucket: string
   disposition: DispositionType[]
@@ -62,19 +62,19 @@ const GET_DISPOSITION_TYPES = gql`
     }
   }
 `
-interface Distance {
+type Distance = {
   from: string
   to: string
 }
 
-export interface Search {
+export type Search = {
   searchAgent: string
   searchBucket: string
   selectedDisposition : string[]
   dateDistance: Distance
 }
 
-interface Props {
+type Props = {
   search: Search
 }
 

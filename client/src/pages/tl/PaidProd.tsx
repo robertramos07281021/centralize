@@ -4,7 +4,7 @@ import gql from "graphql-tag";
 import { useEffect, useMemo, useState } from "react";
 import { Bar } from "react-chartjs-2"
 
-interface PaidProd {
+type PaidProd = {
   bucket: string
   calls: number
   sms: number
@@ -26,7 +26,7 @@ const PAID_PROD = gql`
   }
 `
 
-interface Bucket {
+type Bucket = {
   id:string
   name: string
 }

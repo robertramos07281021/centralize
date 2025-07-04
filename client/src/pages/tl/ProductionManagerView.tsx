@@ -9,7 +9,7 @@ import { setProductionManagerPage } from "../../redux/slices/authSlice";
 import Pagination from "../../components/Pagination";
 import CallfilesViews from "./CallfilesViews";
 
-interface Bucket {
+type Bucket = {
   id: string
   name: string
 }

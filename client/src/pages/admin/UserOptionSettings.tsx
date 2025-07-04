@@ -1,5 +1,5 @@
 
-interface modalProps {
+type modalProps = {
   Submit: (action:"RESET" | "STATUS" | "UNLOCK" | "LOGOUT" , status:boolean)=> void,
   check: boolean,
   isLock: boolean,

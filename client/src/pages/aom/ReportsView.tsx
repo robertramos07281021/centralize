@@ -2,18 +2,18 @@ import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
 import {  useMemo } from "react"
 
-interface Variables  {
+type Variables = {
   campaign: string
   bucket: string
   from: string
   to: string
 }
 
-interface modalProps {
+type modalProps = {
   variables: Variables
 }
 
-interface AomDept {
+type AomDept = {
   branch: string
   id: string
   name: string
