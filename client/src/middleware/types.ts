@@ -125,4 +125,5 @@ export type Search = {
     grass_details: grassDetails
     account_bucket: AccountBucket
     customer_info: CustomerRegistered
+    isRPCToday: boolean
 }

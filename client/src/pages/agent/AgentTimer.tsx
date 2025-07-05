@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import gql from "graphql-tag";
@@ -30,20 +30,19 @@ const AgentTimer = () => {
     }
   }, [userLogged]);
 
-  const [bucketObject, setBucketObject] = useState<{[key:string]:string}>({})
-  const {data:agentBucketData} = useQuery<{getDeptBucket:Bucket[]}>(GET_AGENT_BUCKET)
-
+  const {data:agentBucketData, refetch} = useQuery<{getDeptBucket:Bucket[]}>(GET_AGENT_BUCKET)
+  
   useEffect(()=> {
-    if(agentBucketData){
-      const newObject:{[key:string]:string} = {}
-      agentBucketData.getDeptBucket.map(e => 
-      {
-        newObject[e.id] = e.name
-      }
-      )
-      setBucketObject(newObject)
-    }
+    refetch()
+  },[refetch])
+  
+
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const db = agentBucketData?.getDeptBucket || []
+    return Object.fromEntries(db.map(e=> [e.id, e.name]))
   },[agentBucketData])
+
+
 
   const formattedTime = time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true }); 
 

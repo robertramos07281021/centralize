@@ -15,6 +15,7 @@ import MyTaskSection from "../components/MyTaskSection"
 import { BreakEnum } from "../middleware/exports"
 import Loading from "./Loading"
 import { IoRibbon } from "react-icons/io5";
+import Confirmation from "../components/Confirmation"
 
 
 const DESELECT_TASK = gql`
@@ -38,6 +39,7 @@ const SEARCH = gql`
       max_dpd
       balance
       paid_amount
+      isRPCToday
       out_standing_details {
         principal_os
         interest_os
@@ -96,7 +98,6 @@ const CustomerDisposition = () => {
   const {data:searchData ,refetch, error} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search}})
 
   const length = searchData?.search?.length || 0;
-
 
   useEffect(()=> {
     refetch()
@@ -184,7 +185,6 @@ const CustomerDisposition = () => {
         `,
         variables: { id: selectedCustomer._id }
       });
-
       const blob = new Blob([body], { type: 'application/json' });
       navigator.sendBeacon('/graphql', blob);
     };
@@ -197,12 +197,43 @@ const CustomerDisposition = () => {
 
   }, [selectedCustomer]);
 
-  console.log(selectedCustomer)
+  const [modalProps, setModalProps] = useState({
+    message: "",
+    toggle: "RPCTODAY" as "RPCTODAY",
+    yes: () => {},
+    no: () => {}
+  })
+  const [isRPCToday, setIsRPCToday] = useState<boolean>(false)
+
+  useEffect(()=> {
+    if(selectedCustomer._id) {
+      if(selectedCustomer.isRPCToday) {
+        setIsRPCToday(selectedCustomer.isRPCToday)
+        setModalProps({
+          message: "Client already called today!",
+          toggle: "RPCTODAY",
+          yes: () => {
+            setIsRPCToday(false)
+          },
+          no: ()=> {
+            setIsRPCToday(false)
+          }
+        })
+      }
+    } else {
+      setIsRPCToday(false)
+    }
+  },[selectedCustomer])
 
   if(loading) return <Loading/>
 
   return userLogged._id ? (
     <div className="h-full w-full overflow-auto"> 
+      {
+        isRPCToday &&
+        <Confirmation {...modalProps}/>
+      }
+      
       {
         success?.success &&
         <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
@@ -383,7 +414,7 @@ const CustomerDisposition = () => {
       <div className="p-5 grid grid-cols-2 gap-5">
         <AccountInfo/>
         {
-          selectedCustomer.balance > 0 &&
+          (selectedCustomer.balance > 0 && !selectedCustomer.isRPCToday) &&
           <DispositionForm setSuccess={(success:boolean,message:string)=> setSuccess({success:success,message:message})}/>
         }
       </div>

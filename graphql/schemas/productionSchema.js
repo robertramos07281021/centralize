@@ -44,10 +44,13 @@ const productionTypeDefs = gql`
 
   type DailyCollection {
     ptp_amount: Float
+    ptp_count: Int
     ptp_yesterday: Float
     ptp_kept_amount: Float
+    ptp_kept_count: Int
     ptp_kept_yesterday: Float
     paid_amount: Float
+    paid_count: Int
     paid_yesterday: Float
   }
   type Login {

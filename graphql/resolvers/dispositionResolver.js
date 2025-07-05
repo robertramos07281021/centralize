@@ -1485,8 +1485,6 @@ const dispositionResolver = {
     },
     agentDispoDaily: async(_,__,{user})=> {
       try {
-        
-      
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -1504,7 +1502,6 @@ const dispositionResolver = {
 
     
         function setGroupForDailyCollection (name,ptp,start,end) {
-      
           const andArray = [
             {
               $gte: ['$createdAt',start]
@@ -1555,6 +1552,17 @@ const dispositionResolver = {
           },
           {
             $lookup: {
+              from: "customers",
+              localField: "customerAccount.customer",
+              foreignField: "_id",
+              as: "customer"
+            },
+          },
+          {
+            $unwind: {path: "$customer",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
               from: "buckets",
               localField: "customerAccount.bucket",
               foreignField: "_id",
@@ -1590,6 +1598,27 @@ const dispositionResolver = {
               y_ptp: setGroupForDailyCollection('PTP',true, yesterdayStart, yesterDayEnd),
               y_pk: setGroupForDailyCollection('PAID',true, yesterdayStart, yesterDayEnd),
               y_ac: setGroupForDailyCollection('PAID',false, yesterdayStart, yesterDayEnd),
+              rpc: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $eq: ['$customer.isRPC', true]
+                        },
+                        {
+                          $gte: ["$createdAt",todayStart]
+                        },
+                        {
+                          $lt: ["$createdAt",todayEnd]
+                        }
+                      ]
+                    },
+                    1,
+                    0
+                  ]
+                }
+              },
               count: {
                 $sum: {
                   $cond: [
@@ -1617,6 +1646,7 @@ const dispositionResolver = {
               user: "$_id",
               pk: 1,
               ptp: 1,
+              rpc: 1,
               ac: 1,
               y_ac: 1,
               y_ptp: 1,

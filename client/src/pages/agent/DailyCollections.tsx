@@ -7,21 +7,28 @@ import { useEffect } from "react";
 
 type DailyCollection = {
   ptp_amount: number
+  ptp_count: number
   ptp_yesterday: number
   ptp_kept_amount: number
+  ptp_kept_count: number
   ptp_kept_yesterday: number
   paid_amount: number
+  paid_count: number
   paid_yesterday: number
+
 }
 
 const AGENT_DAILY_COLLECTIONS = gql`
   query GetAgentDailyCollection {
     getAgentDailyCollection {
       ptp_amount
+      ptp_count
       ptp_yesterday
       ptp_kept_amount
+      ptp_kept_count
       ptp_kept_yesterday
       paid_amount
+      paid_count
       paid_yesterday
     }
   }
@@ -31,6 +38,7 @@ type RateProps = {
   current: number;
   previous: number;
   color: string;
+  count: number
 };
 
 const RateIcon = ({ rate }: { rate: number }) => {
@@ -44,7 +52,7 @@ const RateIcon = ({ rate }: { rate: number }) => {
   );
 };
 
-const StatCard = ({ label, current, previous, color }: RateProps) => {
+const StatCard = ({ label, current, previous, color, count }: RateProps) => {
   const rate =
     previous === 0 ? -100 : ((current - previous) / previous) * 100;
   const formattedRate =
@@ -73,14 +81,23 @@ const StatCard = ({ label, current, previous, color }: RateProps) => {
         {label} <span className="lg:text-[0.7em] 2xl:text-xs">(Daily)</span>
       </h1>
       <div className="h-full flex flex-col justify-center">
-        <div className="flex justify-between items-center">
-          <h1 className="flex text-sm items-center gap-1">
-            <RateIcon rate={rate} />
-            <span className="text-xs">{formattedRate}</span>
-          </h1>
-          <h1 className="text-lg">{formattedValue}</h1>
+        <div className="flex flex-col items-center">
+          <div className="flex text-sm items-center justify-between w-full gap-1">
+            <div >
+              <div className="flex justify-between">
+                <RateIcon rate={rate} />
+                <span className="text-xs">{formattedRate}</span>
+
+              </div>
+              <div>{count}</div>
+            </div>
+            <div className="flex flex-col">
+              <h1 className="text-lg">{formattedValue}</h1>
+              <h1 className="text-end text-xs font-bold">Amount</h1>
+
+            </div>
+          </div>
         </div>
-        <h1 className="text-end text-xs font-bold">Amount</h1>
       </div>
     </div>
   );
@@ -102,17 +119,20 @@ export default function DailyCollections() {
         current={stats?.ptp_amount || 0}
         previous={stats?.ptp_yesterday || 0}
         color="orange"
+        count={stats?.ptp_count || 0}
       />
       <StatCard
         label="PTP Kept"
         current={stats?.ptp_kept_amount || 0}
         previous={stats?.ptp_kept_yesterday || 0}
+        count={stats?.ptp_kept_count || 0}
         color="green"
       />
       <StatCard
         label="Amount Collected"
         current={stats?.paid_amount || 0}
         previous={stats?.paid_yesterday || 0}
+        count={stats?.paid_count || 0}
         color="blue"
       />
     </div>

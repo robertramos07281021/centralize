@@ -151,7 +151,9 @@ export default function MixedChartMonthView() {
   },[PerMonthRefetch])
 
   return (
-    <Chart type="bar" data={dataPerMonth} options={optionPerMonth} />
+    <div className="border rounded-lg border-slate-200 col-span-7 row-span-2 p-2 shadow-md shadow-black/20 bg-white">
+      <Chart type="bar" data={dataPerMonth} options={optionPerMonth} />
+    </div>
   )
 }
 

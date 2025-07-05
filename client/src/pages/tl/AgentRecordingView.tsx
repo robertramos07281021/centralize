@@ -72,6 +72,7 @@ const DL_RECORDINGS = gql`
   }
 `
 
+
 type Success = {
   success: boolean
   message: string
@@ -99,6 +100,7 @@ const AgentRecordingView = () => {
   
   const [totalPage, setTotalPage] = useState<number>(1)
   
+
   useEffect(()=> {
     if(recordings) {
       const totalPage = Math.ceil(recordings?.getAgentDispositionRecords?.total/limit)

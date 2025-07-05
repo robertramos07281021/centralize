@@ -139,6 +139,7 @@ const dispositionTypeDefs = gql`
     ptp: Float
     pk: Float
     ac: Float
+    rpc: Int
     y_pk: Float
     y_ptp: Float
     y_ac: Float

@@ -24,6 +24,7 @@ const callfileTypeDefs = gql`
 
   type Result {
     callfile: Callfile
+    uncontactable: Int
     accounts: Int
     connected: Int
     target: Float

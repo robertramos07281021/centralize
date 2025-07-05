@@ -162,7 +162,9 @@ const MixedChartView = () => {
   }
 
   return (
-    <Chart type="bar" data={dataPerDay} options={optionPerDay} />
+    <div className="border flex rounded-lg border-slate-200 col-span-6 row-span-2 p-2 shadow-md shadow-black/20 bg-white">
+      <Chart type="bar" data={dataPerDay} options={optionPerDay} />
+    </div>
   
   )
 }

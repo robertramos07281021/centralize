@@ -30,6 +30,7 @@ type Result = {
   connected: number
   target: number
   collected: number
+  uncontactable: number
 }
 
 type CallFilesResult = {
@@ -79,6 +80,7 @@ const GET_CALLFILES = gql`
         connected
         target
         collected
+        uncontactable
       }
       count
     }
@@ -203,6 +205,10 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
         message: data.finishedCallfile.message
       })
       setConfirm(false)
+    },
+    onError: () => {
+      setConfirm(false)
+      dispatch(setServerError(true))
     }
   })
 
@@ -216,6 +222,10 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
         include: ['getCallfiles']
       })
       setConfirm(false)
+    },
+    onError: ()=> {
+      setConfirm(false)
+      dispatch(setServerError(true))
     }
   })
  
@@ -229,20 +239,10 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
 
     const fn = {
       FINISHED: async ()=> {
-        try {
-          await finishedCallfile({variables: {callfile: id}})
-        } catch (error) {
-          setConfirm(false)
-          dispatch(setServerError(true))
-        }
+        await finishedCallfile({variables: {callfile: id}})
       } ,
       DELETE: async()=> {
-        try {
-          await deleteCallfile({variables: {callfile: id}})
-        } catch (error) {
-          setConfirm(false)
-          dispatch(setServerError(true))
-        }
+        await deleteCallfile({variables: {callfile: id}})
       },
         
       DOWNLOAD: async()=> {
@@ -264,8 +264,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
           document.body.removeChild(link);
           setConfirm(false)
         } catch (error) {
-          setConfirm(false)
-          dispatch(setServerError(true))
+
         }
       }
     }
@@ -314,13 +313,14 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
             const status = checkStatus ? "Active" : "Finished"
             const finishedBy = res.callfile.finished_by ? res.callfile.finished_by.name : "-"
             return (
-              <div key={index} className="w-full text-gray-500 uppercase font-medium even:bg-slate-100/80 2xl:text-xs lg:text-[0.6em] grid grid-cols-12 px-2 py-2 cursor-default">
+              <div key={index} className="w-full text-gray-500 uppercase font-medium even:bg-slate-100/80 2xl:text-xs lg:text-[0.6em] grid grid-cols-13 px-2 py-2 cursor-default">
                 <div className="truncate pr-2" title={res.callfile.name}>{res.callfile.name}</div>
                 <div>{findBucket?.name}</div>
                 <div>{new Date(res.callfile.createdAt).toLocaleDateString()}</div>
                 <div>{res.callfile.endo ? new Date(res.callfile.endo).toLocaleDateString() : "-" }</div>
                 <div>{diffDays}</div>
                 <div>{res.accounts}</div>
+                <div>{res.uncontactable || 0}</div>
                 <div>{res.connected}</div>
                 <div>{res.target.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
                 <div>{res.collected.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>

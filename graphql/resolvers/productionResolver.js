@@ -406,7 +406,13 @@ const productionResolver = {
               dispotype: "$_id",
               count: 1
             }
+          },
+          {
+            $sort: {
+              count: -1
+            }
           }
+
         ])  
 
         return res
@@ -488,6 +494,17 @@ const productionResolver = {
                   ]
                 }
               },
+              ptp_count: {
+                $sum: {
+                  $cond: [
+                    { 
+                      $and: ["$isToday", { $eq: ["$code", "PTP"] }] 
+                    }, 
+                    1,
+                    0
+                  ]
+                }
+              },
               ptp_kept_amount: {
                 $sum: {
                   $cond: [
@@ -506,6 +523,17 @@ const productionResolver = {
                       $and: ["$isYesterday", { $eq: ["$code", "PAID"] }, { $eq: ['$ptp', true] }] 
                     }, 
                     "$amount",
+                    0
+                  ]
+                }
+              },
+              ptp_kept_count: {
+                $sum: {
+                  $cond: [
+                    { 
+                      $and: ["$isToday", { $eq: ["$code", "PAID"] }, {$eq: ['$ptp', true]}] 
+                    }, 
+                    1,
                     0
                   ]
                 }
@@ -532,16 +560,30 @@ const productionResolver = {
                   ]
                 }
               },
+              paid_count: {
+                $sum: {
+                  $cond: [
+                    { 
+                      $and: ["$isToday", { $eq: ["$code", "PAID"] }, { $eq: ['$ptp', false] }] 
+                    }, 
+                    1,
+                    0
+                  ]
+                }
+              },
             }
           },
           {
             $project: {
               _id: 0,
               ptp_amount: 1,
+              ptp_count: 1,
               ptp_yesterday: 1,
               ptp_kept_amount: 1,
+              ptp_kept_count: 1,
               ptp_kept_yesterday: 1,
               paid_amount: 1,
+              paid_count: 1,
               paid_yesterday: 1
             }
           }
@@ -781,11 +823,13 @@ const productionResolver = {
 
         const filteredWithRecording = [];
 
+
         for (const e of forFiltering) {
           const createdAt = new Date(e.createdAt);
           const yearCreated = createdAt.getFullYear();
           const monthCreated = months[createdAt.getMonth()];
           const dayCreated = createdAt.getDate();
+          const month = createdAt.getMonth() + 1;
           const contact = e.customer.contact_no;
           const viciIpAddress = e.bucket.viciIp
           const fileNale = {
@@ -798,21 +842,17 @@ const productionResolver = {
             "172.20.21.67" : "MIXED CAMPAIGN NEW",
             '172.20.21.97' : "UB"
           }
-          const year = new Date().getFullYear();
-          const month = new Date().getMonth() + 1;
-          const date = new Date().getDate();
+  
 
           function checkDate(number) {
             return number > 9 ? number : `0${number}`;
           }
-
-          const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${year}-${checkDate(month)}-${checkDate(date)}`
+          
+          const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`
           const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${e.bucket.issabelIp}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
      
-
           const remoteDir = e.dialer === "vici" ? remoteDirVici : remoteDirIssabel
-
-          
+    
           const contactPatterns = contact.map(num =>
             num.length < 11 ? num : num.slice(1, 11)
           );
@@ -820,13 +860,16 @@ const productionResolver = {
           
           try {
             const fileList = await client.list(remoteDir);
+          
             const files = fileList.filter(y =>
+
               contactPatterns.some(pattern => y.name.includes(pattern))
+             
+             
             );
             if (files.length > 0) {
               filteredWithRecording.push(e._id);
             }
-
           } catch (err) {
             skip = true;
           } 
@@ -838,7 +881,7 @@ const productionResolver = {
           ...filtered,
           _id: { $in: filteredWithRecording }
         };
-     
+
         const dispositions = await Disposition.aggregate([
           {
             $lookup: {
@@ -921,6 +964,7 @@ const productionResolver = {
           { $limit: limit },
         ])
         
+
         return {
           dispositions: dispositions,
           total: filteredWithRecording?.length
@@ -1030,7 +1074,7 @@ const productionResolver = {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
         const findUser = await User.findById(user._id)
-
+        
         const validatePassword = await bcrypt.compare(password, user.password)
         if(!validatePassword) throw new CustomError('Incorrect')
 

@@ -44,7 +44,10 @@ const PTPKeptTl = () => {
   const {data:ptpKetpData} = useQuery<{getTLPTPKeptTotals:PTPKept[]}>(PTP_KEPT_TOTAL)
   return (
     <div className='border-green-400 border bg-green-200 rounded-xl p-2 flex flex-col'>
-      <h1 className='lg:text-base 2xl:text-xl font-black text-green-500'>PTP Kept <span className="text-sm font-medium">(Daily)</span></h1>
+      <div className='lg:text-base 2xl:text-lg font-black text-green-500'>
+        <h1>PTP Kept </h1>
+        <p className="text-xs font-medium">(Daily per Bucket)</p>
+      </div>
       <div className='h-full w-full flex flex-col justify-center '>
         {
           ptpKetpData?.getTLPTPKeptTotals.map((tpt,index) => {

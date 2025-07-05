@@ -164,6 +164,7 @@ const customerTypeDefs = gql`
     grass_details: grassDetails
     account_bucket: AccountBucket
     customer_info: CustomerInfo
+    isRPCToday: Boolean
   }
 
   type PerformanceStatistic {

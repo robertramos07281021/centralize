@@ -1,9 +1,6 @@
 import { gql, useQuery } from "@apollo/client"
-import { useEffect, useState } from "react"
+import { useEffect } from "react"
 import { month } from "../../middleware/exports"
-import { Radar } from "react-chartjs-2"
-import { ChartData } from "chart.js"
-import { ChartOptions } from "chart.js"
 
 type AgentTotalDispo = {
   count: number
@@ -24,6 +21,7 @@ type DispositionType = {
   code: string
   name: string
 }
+
 const DISPO_TYPES = gql`
   query getDispositionTypes {
     getDispositionTypes {
@@ -37,57 +35,8 @@ const DISPO_TYPES = gql`
 export default function OverallPerformance () {
   const {data:agentTotalDispoData, refetch:TotalDispoRefetch} = useQuery<{getAgentTotalDispositions:AgentTotalDispo[]}>(AGENT_TOTAL_DISPO)
   const {data:dispotypeData, refetch:DispoTypeRefetch} = useQuery<{getDispositionTypes:DispositionType[]}>(DISPO_TYPES)
-  const [datasetsData, setDatasetsData] = useState<number[]>([])
-
-
-  useEffect(()=> {
-    if(dispotypeData) {
-      if(agentTotalDispoData) {
-        const newArray = dispotypeData.getDispositionTypes.map( e => {
-          const count =  agentTotalDispoData.getAgentTotalDispositions.find(y => y.dispotype === e.id) 
-          return count ? count?.count : 0 
-        })
-
-        setDatasetsData(newArray)
-      }
-
-
-    }
-  },[dispotypeData, agentTotalDispoData])
-
-  const data: ChartData<'radar'> = {
-    labels: dispotypeData?.getDispositionTypes.map(e=> e.code),
-    datasets: [
-      {
-        label: `Month of ${month[new Date().getMonth()]}`,
-        data: datasetsData,
-        backgroundColor: 'rgba(54, 162, 235, 0.2)',
-        borderColor: 'rgb(54, 162, 235)',
-        borderWidth: 2,
-        pointBackgroundColor: 'rgb(54, 162, 235)',
-        pointRadius: (ctx) => {
-        const value = ctx.raw;
-        return value === 0 ? 0 : 3;
-      },
-      },
-    ],
-  };
-
-  const options:ChartOptions<'radar'> = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-      datalabels: {
-        display: false,
-      },
-    },
-    scales: {
-      r: {
-        angleLines: { display: true },
-      },
-      
-    },
-  };
+  
+  const Month = new Date().getMonth() + 1
 
   useEffect(()=> {
     TotalDispoRefetch()
@@ -95,12 +44,36 @@ export default function OverallPerformance () {
   },[TotalDispoRefetch,DispoTypeRefetch])
 
   return (
-    <>
-      <h1 className="text-slate-500 font-bold text-[0.8em]">Overall Performance</h1>
-      <div className="h-full">
-        <Radar data={data} options={options}/>
+    <div className="border rounded-lg border-slate-200 col-span-2 row-span-2 shadow-md shadow-black/20 p-2 bg-white flex flex-col">
+      <h1 className="text-slate-500 font-bold text-[0.8em] py-1">Overall Performance Month of {month[Month]}</h1>
+      <div className="grid grid-cols-4 text-xs font-bold px-2 text-gray-500 bg-blue-50 py-2">
+        <div className="col-span-2">Name</div>
+        <div className="pl-3">Code</div>
+        <div className="text-end">Count</div>
+      </div>
+      <div className="h-full overflow-y-auto">
+        {
+          agentTotalDispoData?.getAgentTotalDispositions.map((e) => {
+            const findDispo = dispotypeData?.getDispositionTypes.find(y=> y.id === e.dispotype)
+            
+            return (
+              <div className="grid grid-cols-4 py-0.5 px-2 text-xs font-medium text-gray-500 cursor-default" key={e.dispotype}>
+                <div className="truncate pr-1 col-span-2" title={findDispo?.name}>
+                  {findDispo?.name}
+                </div>
+                <div className="pl-3">
+                  {findDispo?.code}
+                </div>
+                <div className="text-end">
+                  {e.count}
+                </div>
+              </div>
+            )
+          } )
+        }
+
       </div>  
-    </>
+    </div>
   )
 }
 
