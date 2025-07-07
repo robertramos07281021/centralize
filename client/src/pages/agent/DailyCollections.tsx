@@ -129,7 +129,7 @@ export default function DailyCollections() {
         color="green"
       />
       <StatCard
-        label="Amount Collected"
+        label="Paid Collected"
         current={stats?.paid_amount || 0}
         previous={stats?.paid_yesterday || 0}
         count={stats?.paid_count || 0}

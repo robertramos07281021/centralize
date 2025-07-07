@@ -334,9 +334,39 @@ const callfileResolver = {
             }
           },
           {
-            addFields: {
-              contactable: {
-                
+            $addFields: {
+              hasValidMobile: {
+                $anyElementTrue: {
+                  $map: {
+                    input: "$customer_info.contact_no",
+                    as: "num",
+                    in: {
+                      $regexMatch: {
+                        input: { $toString: "$$num" },
+                        regex: "^09\\d{9}$"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            $addFields: {
+              hasValidEmail: {
+                $anyElementTrue: {
+                  $map: {
+                    input: "$customer_info.emails",
+                    as: "email",
+                    in: {
+                      $regexMatch: {
+                        input: { $toString: "$$email" },
+                        regex: "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$",
+                        options: "i"
+                      }
+                    }
+                  }
+                }
               }
             }
           },
@@ -369,90 +399,114 @@ const callfileResolver = {
               payment_method:  "$currentDispo.payment_method",
               contact_method:  "$currentDispo.contact_method",
               comment: "$currentDispo.comment",
+              currentDispo: "$currendDispo",
               disposition: {
                 $ifNull: ["$dispotype.name", ""]
               },
+              contactable: {
+                $cond: {
+                  if: {
+                    $or: [
+                      {
+                        $eq: ['$hasValidEmail',true]
+                      },
+                      {
+                        $eq: ['$hasValidMobile',true]
+                      }
+                    ]
+                  },
+                  then: true,
+                  else : false
+                }
+              }
             }
           },
         ])
-        console.log(customers[0])
-        // const months = [
-        //   'January',
-        //   'February',
-        //   'March',
-        //   'April',
-        //   'May',
-        //   'June',
-        //   'July',
-        //   'August',
-        //   'September',
-        //   'October',
-        //   'November',
-        //   'December'
-        // ]
 
-        // await client.access({
-        //   host: process.env.FILEZILLA_HOST,
-        //   user: process.env.FILEZILLA_USER,
-        //   password: process.env.FILEZILLA_PASSWORD,
-        //   port: 21,
-        //   secure: false,
-        // });
+        const months = [
+          'January',
+          'February',
+          'March',
+          'April',
+          'May',
+          'June',
+          'July',
+          'August',
+          'September',
+          'October',
+          'November',
+          'December'
+        ]
+
+        await client.access({
+          host: process.env.FILEZILLA_HOST,
+          user: process.env.FILEZILLA_USER,
+          password: process.env.FILEZILLA_PASSWORD,
+          port: 21,
+          secure: false,
+        });
 
 
-        // for (const e of customers) {
-        //   if(e.currentDispo) {
-        //     const createdAt = new Date(e.currentDispo.createdAt);
-        //     const yearCreated = createdAt.getFullYear();
-        //     const monthCreated = months[createdAt.getMonth()];
-        //     const dayCreated = createdAt.getDate();
-        //     const month = createdAt.getMonth() + 1;
-        //     const contact = e.customer.contact_no;
-        //     const viciIpAddress = e.currentDispo.bucket.viciIp
-        //     const fileNale = {
-        //       "172.20.21.64" : "HOMECREDIT",
-        //       "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
-        //       "172.20.21.17" : "PSBANK",
-        //       "172.20.21.27" : "MIXED CAMPAIGN",
-        //       "172.20.21.30" : "MCC",
-        //       "172.20.21.35" : "MIXED CAMPAIGN",
-        //       "172.20.21.67" : "MIXED CAMPAIGN NEW",
-        //       '172.20.21.97' : "UB"
-        //     }
+        
+
+
+        for (const e of customers) {
+          if(e.disposition) {
+            const createdAt = new Date(e.currentDispo.createdAt);
+            const yearCreated = createdAt.getFullYear();
+            const monthCreated = months[createdAt.getMonth()];
+            const dayCreated = createdAt.getDate();
+            const month = createdAt.getMonth() + 1;
+            const contact = e.customer.contact_no;
+            const viciIpAddress = e.account_bucket.viciIp
+            const fileNale = {
+              "172.20.21.64" : "HOMECREDIT",
+              "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
+              "172.20.21.17" : "PSBANK",
+              "172.20.21.27" : "MIXED CAMPAIGN",
+              "172.20.21.30" : "MCC",
+              "172.20.21.35" : "MIXED CAMPAIGN",
+              "172.20.21.67" : "MIXED CAMPAIGN NEW",
+              '172.20.21.97' : "UB"
+            }
     
   
-        //     function checkDate(number) {
-        //       return number > 9 ? number : `0${number}`;
-        //     }
+            function checkDate(number) {
+              return number > 9 ? number : `0${number}`;
+            }
             
-        //     const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`
-        //     const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${e.bucket.issabelIp}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
+            const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`
+            const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${e.account_bucket.issabelIp}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
       
-        //     const remoteDir = e.dialer === "vici" ? remoteDirVici : remoteDirIssabel
+            const remoteDir = e.dialer === "vici" ? remoteDirVici : remoteDirIssabel
       
-        //     const contactPatterns = contact.map(num =>
-        //       num.length < 11 ? num : num.slice(1, 11)
-        //     );
-        //     let skip = false;
+            const contactPatterns = contact.map(num =>
+              num.length < 11 ? num : num.slice(1, 11)
+            );
+            let skip = false;
             
-        //     try {
-        //       const fileList = await client.list(remoteDir);
+            try {
+              const fileList = await client.list(remoteDir);
             
-        //       const files = fileList.filter(y =>
-  
-        //         contactPatterns.some(pattern => y.name.includes(pattern))
+              const files = fileList.filter(y =>
+                contactPatterns.some(pattern => y.name.includes(pattern))
               
-              
-        //       );
-        //       if (files.length > 0) {
-        //         filteredWithRecording.push(e._id);
-        //       }
-        //     } catch (err) {
-        //       skip = true;
-        //     } 
-        //     if (skip) continue;
-        //   }
-        // }
+              );
+              if (files.length > 0) {
+                filteredWithRecording.push(e._id);
+              }
+            } catch (err) {
+              skip = true;
+            } 
+            return {
+              ...e,
+              duration: 0
+            }
+
+          } else {
+            return e
+          }
+        }
   
         const csv = json2csv(customers, {
           keys: [

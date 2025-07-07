@@ -137,10 +137,8 @@ const TaskManagerView = () => {
                 <span>Unassigned</span>
               </label>
             </fieldset>
-
           </div>
           <div className="flex gap-5">
-
             <div className="w-1/2 border rounded-md h-10 border-slate-300 relative cursor-default z-50" title={selectedDisposition?.toString()} >
               {
                 showSelection ?
@@ -191,8 +189,6 @@ const TaskManagerView = () => {
           tasker === "group" ? <GroupSection/> : <AgentSection/>
         }
       </div>
-      
-      
       <TaskDispoSection selectedBucket={bucketObject[bucketSelect]}/>
     </div>
   )

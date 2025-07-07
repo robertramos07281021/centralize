@@ -108,7 +108,7 @@ const PaidProd = () => {
       },
       title: {
         display: true,
-        text: `Amount Collected Today`,
+        text: `Paid Collected Today`,
       },
        
      },

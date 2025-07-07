@@ -138,7 +138,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
         color: 'oklch(0 0 0)',
         font: {
           weight: "bold", 
-          size: 12,
+          size: 8,
         },
         formatter: (value: number) => {
           return value === 0 ? "" : value
@@ -212,7 +212,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
             >{chartFull ? "Minimize" : "Maximize"}</button>
           </div>
         </div>
-        <div className="w-8/10 flex justify-center h-full">
+        <div className="w-5/10 flex justify-center h-full">
           <Doughnut data={data} options={options} />
         </div>
       </div>

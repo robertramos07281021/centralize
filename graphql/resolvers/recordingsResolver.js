@@ -79,12 +79,16 @@ const recordingsResolver = {
         ])
 
         const myDispo = findDispo[0]
+
         const createdAt = new Date(myDispo.createdAt)
         const yearCreated = createdAt.getFullYear()
+        const createdAtHour = createdAt.getHours() 
         const monthCreated = months[createdAt.getMonth()]
         const dayCreated = createdAt.getDate()
         const contact = myDispo.customer.contact_no
         const issabelIpAddress = myDispo.bucket.issableIp
+        const month = createdAt.getMonth() + 1;
+
         const viciIpAddress = myDispo.bucket.viciIp
           const fileNale = {
           "172.20.21.64" : "HOMECREDIT",
@@ -96,9 +100,6 @@ const recordingsResolver = {
           "172.20.21.67" : "MIXED CAMPAIGN NEW",
           '172.20.21.97' : "UB"
         }
-        const year = new Date().getFullYear();
-        const month = new Date().getMonth() + 1;
-        const date = new Date().getDate();
 
         function checkDate(number) {
           return number > 9 ? number : `0${number}`;
@@ -116,7 +117,7 @@ const recordingsResolver = {
           secure: false,
         });
         
-        const remoteDirVici =  `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${year}-${checkDate(month)}-${checkDate(date)}`     
+        const remoteDirVici =  `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`     
         const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${issabelIpAddress}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`
         const localDir = '/downloads'
 
@@ -124,12 +125,12 @@ const recordingsResolver = {
           fs.mkdirSync(localDir, { recursive: true });
         }
         const remoteDir = myDispo.dialer === "vici" ? remoteDirVici : remoteDirIssabel
-
         const fileList = await client.list(remoteDir);
 
         const files = fileList.filter(e=> contactPatterns.some(pattern => e.name.includes(pattern)))
-
+        
         let numberOfFile = 1;
+
         function getOrdinalSuffix(n) {
           const j = n % 10,
                 k = n % 100;
@@ -139,15 +140,14 @@ const recordingsResolver = {
           if (j == 3) return n + "rd";
           return n + "th";
         }
-
-        for (const file of files) { 
-          
+        for (const file of files) {  
           if (file.type === ftp.FileType.File) {
             const remotePath = `${remoteDir}/${file.name}`;
-            const newFileName = file.name.split('.')
-
-            const localPath = `${localDir}/${myDispo.dispotype.code}-${newFileName[0]}-${getOrdinalSuffix(numberOfFile)}-call.wav`;
-            await client.downloadTo(localPath, remotePath);   
+            const getNumber = parseInt(file.name.split('-')[1].slice(0,2))
+            const localPath = `${localDir}/${myDispo.dispotype.code}-${file.name}`;
+            if(createdAtHour === getNumber) {
+              await client.downloadTo(localPath, remotePath);   
+            }
           } else {
             throw new CustomError('No recordings found',404)
           }
@@ -158,7 +158,6 @@ const recordingsResolver = {
           success: true,
           message: "Successfully downloaded"
         }
-
       } catch (err) {
         throw new CustomError(err.message, 500)
       } finally {
