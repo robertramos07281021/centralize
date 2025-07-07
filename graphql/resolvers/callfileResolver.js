@@ -334,69 +334,48 @@ const callfileResolver = {
             }
           },
           {
-            $group: {
-              _id: "$_id",
-              contact1: {$first: "$contact1"},
-              contact2: {$first: "$contact2"},
-              contact3: {$first: "$contact3"},
-              isRPC: {$first: "$customer_info.isRPC"},
-              fullname: {$first: "$customer_info.fullName"},
-              email1: {$first: "$email1"},
-              email2: {$first: "$email2"},
-              email3: {$first: "$email3"},
-              gender: {$first: "$customer_info.gender"},
-              address1: {$first: "$address1"},
-              address2: {$first: "$address2"},
-              address3: {$first: "$address3"},
-              dob: {$first: "$customer_info.dob"},
-              collector_sip: {$first: "$user.user_id"},
-              collector: {$first: "$user.name"},
-              outstanding_balance: {$first: "$out_standing_details.total_os"},
-              amount_paid: {$first: "$paid_amount"},
-              balance: {$first: "$balance"},
-              payment: {$first: "$currentDispo.payment"},
-              payment_date: {$first: "$currentDispo.payment_date"},
-              payment_method: {$first: "$currentDispo.payment_method"},
-              contact_method: {$first: "$currentDispo.contact_method"},
-              comment: {$first: "$currentDispo.comment"},
-              disposition: {
-                $first :{
-                  $ifNull: ["$dispotype.name", ""]
-                }
+            addFields: {
+              contactable: {
+                
               }
             }
           },
           {
             $project: {
               _id: 0,
-              contact1: 1,
-              contact2: 1,
-              contact3: 1,
-              isRPC: 1,
-              fullname: 1,
-              email1: 1,
-              email2: 1,
-              email3: 1,
-              gender:1,
-              address1: 1,
-              address2:1,
-              address3: 1,
-              dob: 1,
-              collector_sip: 1,
-              collector: 1,
-              outstanding_balance:1,
-              amount_paid:1,
-              balance:1,
-              payment: 1,
-              payment_date: 1,
-              payment_method: 1,
-              contact_method: 1,
-              comment: 1,
-              disposition: 1
+              contact1: "$contact1",
+              contact2: "$contact2",
+              contact3: "$contact3",
+              isRPC:  "$customer_info.isRPC",
+              fullname:"$customer_info.fullName",
+              email1:   {
+                  $ifNull: ["$email", ""]
+                },
+              account_bucket: "$accountBucket",
+              email2:  "$email2",
+              email3:  "$email3",
+              gender:  "$customer_info.gender",
+              address1:  "$address1",
+              address2:  "$address2",
+              address3:  "$address3",
+              dob: "$customer_info.dob",
+              collector_sip:  "$user.user_id",
+              collector:  "$user.name",
+              outstanding_balance:  "$out_standing_details.total_os",
+              amount_paid:  "$paid_amount",
+              balance:  "$balance",
+              payment:  "$currentDispo.payment",
+              payment_date:  "$currentDispo.payment_date",
+              payment_method:  "$currentDispo.payment_method",
+              contact_method:  "$currentDispo.contact_method",
+              comment: "$currentDispo.comment",
+              disposition: {
+                $ifNull: ["$dispotype.name", ""]
+              },
             }
-          }
+          },
         ])
-
+        console.log(customers[0])
         // const months = [
         //   'January',
         //   'February',
@@ -421,62 +400,88 @@ const callfileResolver = {
         // });
 
 
-        //  for (const e of customers) {
-        //   const createdAt = new Date(e.createdAt);
-        //   const yearCreated = createdAt.getFullYear();
-        //   const monthCreated = months[createdAt.getMonth()];
-        //   const dayCreated = createdAt.getDate();
-        //   const month = createdAt.getMonth() + 1;
-        //   const contact = e.customer.contact_no;
-        //   const viciIpAddress = e.bucket.viciIp
-        //   const fileNale = {
-        //     "172.20.21.64" : "HOMECREDIT",
-        //     "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
-        //     "172.20.21.17" : "PSBANK",
-        //     "172.20.21.27" : "MIXED CAMPAIGN",
-        //     "172.20.21.30" : "MCC",
-        //     "172.20.21.35" : "MIXED CAMPAIGN",
-        //     "172.20.21.67" : "MIXED CAMPAIGN NEW",
-        //     '172.20.21.97' : "UB"
-        //   }
-  
-
-        //   function checkDate(number) {
-        //     return number > 9 ? number : `0${number}`;
-        //   }
-          
-        //   const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`
-        //   const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${e.bucket.issabelIp}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
-     
-        //   const remoteDir = e.dialer === "vici" ? remoteDirVici : remoteDirIssabel
-    
-        //   const contactPatterns = contact.map(num =>
-        //     num.length < 11 ? num : num.slice(1, 11)
-        //   );
-        //   let skip = false;
-          
-        //   try {
-        //     const fileList = await client.list(remoteDir);
-          
-        //     const files = fileList.filter(y =>
-
-        //       contactPatterns.some(pattern => y.name.includes(pattern))
-             
-             
-        //     );
-        //     if (files.length > 0) {
-        //       filteredWithRecording.push(e._id);
+        // for (const e of customers) {
+        //   if(e.currentDispo) {
+        //     const createdAt = new Date(e.currentDispo.createdAt);
+        //     const yearCreated = createdAt.getFullYear();
+        //     const monthCreated = months[createdAt.getMonth()];
+        //     const dayCreated = createdAt.getDate();
+        //     const month = createdAt.getMonth() + 1;
+        //     const contact = e.customer.contact_no;
+        //     const viciIpAddress = e.currentDispo.bucket.viciIp
+        //     const fileNale = {
+        //       "172.20.21.64" : "HOMECREDIT",
+        //       "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
+        //       "172.20.21.17" : "PSBANK",
+        //       "172.20.21.27" : "MIXED CAMPAIGN",
+        //       "172.20.21.30" : "MCC",
+        //       "172.20.21.35" : "MIXED CAMPAIGN",
+        //       "172.20.21.67" : "MIXED CAMPAIGN NEW",
+        //       '172.20.21.97' : "UB"
         //     }
-        //   } catch (err) {
-        //     skip = true;
-        //   } 
-        //   if (skip) continue;
+    
+  
+        //     function checkDate(number) {
+        //       return number > 9 ? number : `0${number}`;
+        //     }
+            
+        //     const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`
+        //     const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${e.bucket.issabelIp}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
+      
+        //     const remoteDir = e.dialer === "vici" ? remoteDirVici : remoteDirIssabel
+      
+        //     const contactPatterns = contact.map(num =>
+        //       num.length < 11 ? num : num.slice(1, 11)
+        //     );
+        //     let skip = false;
+            
+        //     try {
+        //       const fileList = await client.list(remoteDir);
+            
+        //       const files = fileList.filter(y =>
+  
+        //         contactPatterns.some(pattern => y.name.includes(pattern))
+              
+              
+        //       );
+        //       if (files.length > 0) {
+        //         filteredWithRecording.push(e._id);
+        //       }
+        //     } catch (err) {
+        //       skip = true;
+        //     } 
+        //     if (skip) continue;
+        //   }
         // }
-        
-        console.log(customers[0])
-
-
-        const csv = json2csv(customers)
+  
+        const csv = json2csv(customers, {
+          keys: [
+            'contact1',
+            'contact2',
+            'contact3',
+            'isRPC',
+            "fullname",
+            'email1',
+            'email2',
+            'email3',
+            'gender',
+            'address1',
+            'address2',
+            'address3',
+            "dob",
+            'collector_sip',
+            'collector',
+            'outstanding_balance',
+            'amount_paid',
+            'balance',
+            'payment',
+            'payment_date',
+            'payment_method',
+            'contact_method',
+            'comment',
+            'disposition'
+          ]
+        })
 
   
         return csv

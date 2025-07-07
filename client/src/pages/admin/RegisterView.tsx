@@ -117,10 +117,8 @@ const RegisterView = () => {
     
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const dbd = getDeptBucketData?.getBuckets || []
-    return Object.fromEntries(dbd.map(e=> e.buckets.map(y=> [y.name, y.id])))
+    return Object.fromEntries(dbd.flatMap(e=> e.buckets.map(y=> [y.name, y.id])))
   },[getDeptBucketData])
-  
-    
 
   const [createUser] = useMutation(CREATE_ACCOUNT, {
     onCompleted: () => {
@@ -210,6 +208,7 @@ const RegisterView = () => {
     const check = e.target.checked ? [...data.buckets, bucketObject[value]] : data.buckets.filter((d) => d !== bucketObject[value] )
     setData({...data, buckets: check})
   }
+
 
   useEffect(() => {
     if (data.type === "" && (data.name || data.username || data.branch || data.departments.length > 0 || data.user_id)) {
