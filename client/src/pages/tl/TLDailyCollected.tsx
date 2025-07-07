@@ -59,7 +59,10 @@ const TLDailyCollected = () => {
 
   return (
     <div className='border-yellow-400 border bg-yellow-200 rounded-xl p-2 flex flex-col'>
-      <h1 className='lg:text-base 2xl:text-xl font-black text-yellow-500'>Daily Collected</h1>
+      <div className='lg:text-base 2xl:text-lg font-black text-yellow-500'>
+        <h1>Daily Collected </h1>
+        <p className="text-xs font-medium">(Daily per Campaign)</p>
+      </div>
       <div className='h-full w-full flex flex-col justify-center '>
         {
           dailyCollected?.getTLDailyCollected.map((daily,index) => {

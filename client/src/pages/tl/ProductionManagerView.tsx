@@ -115,7 +115,6 @@ const ProductionManagerView = () => {
                   <span>Finished</span>
                 </label>
               </fieldset>
-
             </div>
           </div>
     
