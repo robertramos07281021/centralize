@@ -5,6 +5,11 @@ import 'dotenv/config.js'
 import mongoose from "mongoose";
 import Disposition from "../../models/disposition.js";
 import CustomError from "../../middlewares/errors.js";
+import path from "path";
+import { spawn } from 'child_process';
+import ffmpegPath from 'ffmpeg-static';
+
+
 
 
 const recordingsResolver = {
@@ -78,6 +83,11 @@ const recordingsResolver = {
           }
         ])
 
+
+
+
+  
+
         const myDispo = findDispo[0]
 
         const createdAt = new Date(myDispo.createdAt)
@@ -116,55 +126,104 @@ const recordingsResolver = {
           port: 21,
           secure: false,
         });
-        
+        function convertToPlayableMp3(input, output) {
+          return new Promise((resolve, reject) => {
+            const ffmpeg = spawn(ffmpegPath, [
+              '-y', // overwrite
+              '-i', input,
+              '-acodec', 'libmp3lame',
+              '-ab', '128k',
+              output,
+            ]);
+
+            ffmpeg.stderr.on('data', (data) => {
+              const msg = data.toString();
+              if (msg.toLowerCase().includes('error')) {
+                console.error('[FFmpeg ERROR]', msg);
+              }
+            });
+
+            ffmpeg.on('close', (code) => {
+              if (code === 0) resolve(output);
+              else reject(new Error(`ffmpeg exited with code ${code}`));
+            });
+          });
+        }
+
+
         const remoteDirVici =  `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`     
         const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${issabelIpAddress}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`
-        const localDir = '/downloads'
-
+        const localDir = './recordings'
+        
         if (!fs.existsSync(localDir)) {
           fs.mkdirSync(localDir, { recursive: true });
         }
+
         const remoteDir = myDispo.dialer === "vici" ? remoteDirVici : remoteDirIssabel
         const fileList = await client.list(remoteDir);
-
+        
         const files = fileList.filter(e=> contactPatterns.some(pattern => e.name.includes(pattern)))
         
-        let numberOfFile = 1;
-
-        function getOrdinalSuffix(n) {
-          const j = n % 10,
-                k = n % 100;
-          if (k >= 11 && k <= 13) return n + "th";
-          if (j == 1) return n + "st";
-          if (j == 2) return n + "nd";
-          if (j == 3) return n + "rd";
-          return n + "th";
-        }
+        const fileToDownload = [];
+        
         for (const file of files) {  
           if (file.type === ftp.FileType.File) {
             const remotePath = `${remoteDir}/${file.name}`;
             const getNumber = parseInt(file.name.split('-')[1].slice(0,2))
-            const localPath = `${localDir}/${myDispo.dispotype.code}-${file.name}`;
+            const fileName = `${myDispo.dispotype.code}-${file.name}`
+            const localPath = `./recordings/${fileName}`;
             if(createdAtHour === getNumber) {
-              await client.downloadTo(localPath, remotePath);   
+              await client.downloadTo(localPath, remotePath);
+              const convertedPath = localPath.replace('.mp3', '-converted.mp3');
+              
+              await convertToPlayableMp3(localPath, convertedPath);
+              fs.unlink(localPath, (err)=> {
+                if(err) {
+                  throw new CustomError(err.message, 500) 
+                }
+              })
+              
+              if (!fs.existsSync(convertedPath)) {
+                throw new CustomError(`Converted file not found: ${convertedPath}`, 500);
+              }
+    
+              const toDownload = `http:/${process.env.MY_IP}:3000/recordings/${path.basename(convertedPath)}`
+              
+              fileToDownload.push(toDownload)
             }
           } else {
             throw new CustomError('No recordings found',404)
           }
-          numberOfFile++;
         }
-
         return {
           success: true,
+          url: fileToDownload,
           message: "Successfully downloaded"
         }
+
       } catch (err) {
         throw new CustomError(err.message, 500)
       } finally {
         client.close();
       }
     },
+    deleteRecordings: (_,{filename}) => {
+
+      const filePath = path.join('./recordings', filename);
+      fs.unlink(filePath, (err)=> {
+        if(err) {
+          throw new CustomError(err.message, 500) 
+        }
+      })
+
+      return {
+        success: true,
+        message: 'Successfully deleted'
+      }
+    
+    }
   },
 }
 
 export default recordingsResolver
+

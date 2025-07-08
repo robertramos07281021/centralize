@@ -371,6 +371,17 @@ const callfileResolver = {
             }
           },
           {
+            $addFields: {
+              hasCurrentDispo: {
+               $cond: {
+                  if: { $ne: ["$currentDispo", null] },
+                  then: true,
+                  else: false
+                }
+              }
+            }
+          },
+          {
             $project: {
               _id: 0,
               contact1: "$contact1",
@@ -389,19 +400,74 @@ const callfileResolver = {
               address2:  "$address2",
               address3:  "$address3",
               dob: "$customer_info.dob",
+              customer: "$customer_info",
               collector_sip:  "$user.user_id",
               collector:  "$user.name",
               outstanding_balance:  "$out_standing_details.total_os",
               amount_paid:  "$paid_amount",
               balance:  "$balance",
-              payment:  "$currentDispo.payment",
-              payment_date:  "$currentDispo.payment_date",
-              payment_method:  "$currentDispo.payment_method",
-              contact_method:  "$currentDispo.contact_method",
-              comment: "$currentDispo.comment",
-              currentDispo: "$currendDispo",
+              payment:  {
+                $cond: {
+                  if: {
+                    $eq: ['$hasCurrentDispo',true]
+                  },
+                  then: "$currentDispo.payment",
+                  else : ""
+                }
+              },
+              payment_date:  {
+                $cond: {
+                  if: {
+                    $eq: ['$hasCurrentDispo',true]
+                  },
+                  then: "$currentDispo.payment_date",
+                  else : ""
+                }
+              },
+              payment_method:  {
+                $cond: {
+                  if: {
+                    $eq: ['$hasCurrentDispo',true]
+                  },
+                  then: "$currentDispo.payment_method",
+                  else : ""
+                }
+              },
+              contact_method: {
+                $cond: {
+                  if: {
+                    $eq: ['$hasCurrentDispo',true]
+                  },
+                  then: "$currentDispo.contact_method",
+                  else : ""
+                }
+              },
+              comment:{
+                $cond: {
+                  if: {
+                    $eq: ['$hasCurrentDispo',true]
+                  },
+                  then: "$currentDispo.comment",
+                  else : ""
+                }
+              },
+              currentDispo: {
+                $cond: {
+                  if: {
+                    $eq: ['$hasCurrentDispo',true]
+                  },
+                  then: "$currentDispo",
+                  else : ""
+                }
+              },
               disposition: {
-                $ifNull: ["$dispotype.name", ""]
+                $cond: {
+                  if: {
+                    $eq: ['$hasCurrentDispo',true]
+                  },
+                  then: "$dispotype.name",
+                  else : ""
+                }
               },
               contactable: {
                 $cond: {
@@ -422,6 +488,17 @@ const callfileResolver = {
             }
           },
         ])
+
+        // function estimateMp3Duration(fileSizeBytes, assumedBitrate = 16000) {
+        //   const duration = (fileSizeBytes * 8) / assumedBitrate;
+        //   return Math.round(duration - 0.75);
+        // }
+
+        // function formatDuration(seconds) {
+        //   const mins = Math.floor(seconds / 60);
+        //   const secs = Math.floor(seconds % 60);
+        //   return `${mins}:${secs < 10 ? '0' + secs : secs}`;
+        // }
 
         const months = [
           'January',
@@ -446,68 +523,69 @@ const callfileResolver = {
           secure: false,
         });
 
-
-        
-
-
-        for (const e of customers) {
-          if(e.disposition) {
-            const createdAt = new Date(e.currentDispo.createdAt);
-            const yearCreated = createdAt.getFullYear();
-            const monthCreated = months[createdAt.getMonth()];
-            const dayCreated = createdAt.getDate();
-            const month = createdAt.getMonth() + 1;
-            const contact = e.customer.contact_no;
-            const viciIpAddress = e.account_bucket.viciIp
-            const fileNale = {
-              "172.20.21.64" : "HOMECREDIT",
-              "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
-              "172.20.21.17" : "PSBANK",
-              "172.20.21.27" : "MIXED CAMPAIGN",
-              "172.20.21.30" : "MCC",
-              "172.20.21.35" : "MIXED CAMPAIGN",
-              "172.20.21.67" : "MIXED CAMPAIGN NEW",
-              '172.20.21.97' : "UB"
-            }
-    
-  
-            function checkDate(number) {
-              return number > 9 ? number : `0${number}`;
-            }
-            
-            const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`
-            const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${e.account_bucket.issabelIp}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
-      
-            const remoteDir = e.dialer === "vici" ? remoteDirVici : remoteDirIssabel
-      
-            const contactPatterns = contact.map(num =>
-              num.length < 11 ? num : num.slice(1, 11)
-            );
-            let skip = false;
-            
-            try {
-              const fileList = await client.list(remoteDir);
-            
-              const files = fileList.filter(y =>
-                contactPatterns.some(pattern => y.name.includes(pattern))
-              
-              );
-              if (files.length > 0) {
-                filteredWithRecording.push(e._id);
+        const newCustomers = await Promise.all(customers.map(async(e)=> {
+          if(e.currentDispo) {
+            const dialer = ['vici','issabel']
+            if(dialer.includes(e.currentDispo.dialer)) {
+              const createdAt = new Date(e.currentDispo.createdAt);
+              const yearCreated = createdAt.getFullYear();
+              const monthCreated = months[createdAt.getMonth()];
+              const dayCreated = createdAt.getDate();
+              const month = createdAt.getMonth() + 1;
+              const contact = e.customer.contact_no;
+              const viciIpAddress = e.account_bucket.viciIp
+              const fileNale = {
+                "172.20.21.64" : "HOMECREDIT",
+                "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
+                "172.20.21.17" : "PSBANK",
+                "172.20.21.27" : "MIXED CAMPAIGN",
+                "172.20.21.30" : "MCC",
+                "172.20.21.35" : "MIXED CAMPAIGN",
+                "172.20.21.67" : "MIXED CAMPAIGN NEW",
+                '172.20.21.97' : "UB"
               }
-            } catch (err) {
-              skip = true;
-            } 
-            return {
-              ...e,
-              duration: 0
-            }
-
-          } else {
-            return e
-          }
-        }
+      
+    
+              function checkDate(number) {
+                return number > 9 ? number : `0${number}`;
+              }
+              
+              const filteredWithRecording = []
+              const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`
+              const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${e.account_bucket.issabelIp}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
+        
+              const remoteDir = e.dialer === "vici" ? remoteDirVici : remoteDirIssabel
+        
+              const contactPatterns = contact.map(num =>
+                num.length < 11 ? num : num.slice(1, 11)
+              );
   
+              let skip = false;
+              
+              try {
+                const fileList = await client.list(remoteDir);
+            
+                const files = fileList.filter(y =>
+                  contactPatterns.some(pattern => y.name.includes(pattern))
+                );
+                
+                if (files.length > 0) {
+                  filteredWithRecording.push(e._id);
+                }
+              } catch (err) {
+                skip = true;
+              } 
+              return {
+                ...e,
+                duration: 0
+              }
+            }
+          } else {
+            return e 
+          }
+        }))
+        console.log(newCustomers)
+     
         const csv = json2csv(customers, {
           keys: [
             'contact1',
@@ -533,7 +611,8 @@ const callfileResolver = {
             'payment_method',
             'contact_method',
             'comment',
-            'disposition'
+            'disposition',
+            'duration'
           ]
         })
 

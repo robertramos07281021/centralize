@@ -75,8 +75,8 @@ const customerResolver = {
         startOfTheDay.setHours(0,0,0,0)
         const endOfTheDay = new Date()
         endOfTheDay.setHours(23,59,59,999)
-        const success = ['PTP','PAID','UNEG','FFUP','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
-
+        const success = ['PTP','UNEG','FFUP','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
+        
 
         const accounts = await CustomerAccount.aggregate([
           {
@@ -186,13 +186,10 @@ const customerResolver = {
             },
           },
         ])
-
         return accounts
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
-     
     },
     getMonthlyPerformance: async(_,__,{user}) => {
   

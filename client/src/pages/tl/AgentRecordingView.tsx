@@ -32,6 +32,7 @@ const AGENT_RECORDING = gql`
   }
 `
 
+
 type Diposition = {
   _id: string
   customer_name: string
@@ -63,11 +64,22 @@ type Agent = {
   user_id: string
 }
 
+
 const DL_RECORDINGS = gql`
   mutation findRecordings($id: ID) {
     findRecordings(id: $id) {
       success
       message
+      url
+    }
+  }
+`
+
+const DELETE_RECORDING = gql`
+  mutation deleteRecordings($filename: String) {
+    deleteRecordings(filename: $filename) {
+      message
+      success
     }
   }
 `
@@ -75,7 +87,8 @@ const DL_RECORDINGS = gql`
 
 type Success = {
   success: boolean
-  message: string
+  message: string,
+  url: string[]
 }
 
 const AgentRecordingView = () => {
@@ -108,24 +121,42 @@ const AgentRecordingView = () => {
     }
   },[recordings])
 
+  const [deleteRecordings] = useMutation(DELETE_RECORDING,{
+    onError:()=> {
+      dispatch(setServerError(true))
+    }
+  })
 
   const [findRecordings,{loading}] = useMutation<{findRecordings:Success}>(DL_RECORDINGS,{
     onCompleted: (res)=> {
+      console.log(res)
       setSuccess({
         success: res.findRecordings.success,
         message: res.findRecordings.message
       })
+      res.findRecordings.url.forEach(async(url) => {
+        console.log(url)
+        const link = document.createElement("a");
+        link.href = url;
+        const newName = url.split('/')[3]
+        link.download = newName;
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        // setTimeout(async() => {
+        // await  deleteRecordings({ variables: { filename: newName } });
+        // }, 2000);
+      })
       setIsLoading('')
+    },
+    onError: () => {
+      dispatch(setServerError(true))
     }
   })
 
   const onDLRecordings = async(id:string) => {
-    try {
-      setIsLoading(id)
-      await findRecordings({variables: {id}})
-    } catch (error) {
-      dispatch(setServerError(true))
-    }
+    setIsLoading(id)
+    await findRecordings({variables: {id}})
   }
 
   if(recordingsLoading) return <Loading/>
@@ -141,7 +172,6 @@ const AgentRecordingView = () => {
         <h1 className="capitalize text-2xl font-bold text-gray-500 mb-5">{agentInfoData?.getUser?.name}</h1>
         <div className=" flex justify-end px-10 gap-5">
 
-          
           <input type="search"
             name="search" 
             id="search" 

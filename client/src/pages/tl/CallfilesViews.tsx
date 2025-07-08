@@ -264,7 +264,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
           document.body.removeChild(link);
           setConfirm(false)
         } catch (error) {
-
+          console.log(error)
         }
       }
     }

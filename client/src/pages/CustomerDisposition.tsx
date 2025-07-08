@@ -318,7 +318,7 @@ const CustomerDisposition = () => {
 
                 {
                   Boolean(selectedCustomer?.customer_info?.gender ) ? 
-                  selectedCustomer?.customer_info?.gender === "F" ? "Female" : "Male" : ""
+                  (selectedCustomer?.customer_info?.gender === "F" || selectedCustomer?.customer_info?.gender.toLocaleLowerCase() === "female")  ? "Female" : "Male" : ""
                 }
               </div>
             </div>

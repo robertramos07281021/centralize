@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { CiSquarePlus, CiSquareMinus } from "react-icons/ci";
 import Confirmation from "./Confirmation";
 import { gql, useMutation, useQuery } from "@apollo/client";
@@ -26,49 +26,6 @@ const UPDATE_CUSTOMER = gql` mutation
     }
   }
 `
-const SEARCH = gql`
-  query Search($search: String) {
-    search(search: $search) {
-      _id
-      case_id
-      account_id
-      endorsement_date
-      credit_customer_id
-      bill_due_day
-      max_dpd
-      balance
-      paid_amount
-      out_standing_details {
-        principal_os
-        interest_os
-        admin_fee_os
-        txn_fee_os
-        late_charge_os
-        dst_fee_os
-        total_os
-      }
-      grass_details {
-        grass_region
-        vendor_endorsement
-        grass_date
-      }
-      account_bucket {
-        name
-        dept
-      }
-      customer_info {
-        fullName
-        dob
-        gender
-        contact_no
-        emails
-        addresses
-        _id
-      }
-    }
-  }
-`
-
 type UpdatedCustomer = {
   customer: CustomerRegistered;
   success: boolean;
@@ -82,87 +39,92 @@ type CustomerUpdateFormProps = {
 const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const [id, setId] = useState("")
-  const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: id}})
-
   const location = useLocation()
-
-  useEffect(()=> {
-    if(searchData?.search.length === 1) {
-      dispatch(setSelectedCustomer(searchData?.search[0]))
-    }
-  },[searchData,dispatch])
-    
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
+  const [formState, setFormState] = useState({
+    fullName: "",
+    dob: "",
+    gender: "",
+    isRPC: false,
+    mobiles: [""],
+    emails: [""],
+    addresses: [""]
+  });
+    
 
   // mobile =======================================================================
-  const [mobiles, setMobiles] = useState<string[]>([""])
 
   const handleAddMobile = () => {
-    setMobiles([...mobiles, ""])
+    setFormState(prev => ({
+      ...prev,
+      mobiles: [...prev.mobiles, ""]
+    }));
   }
 
   const validatePhone = (phone: string): boolean => /^09\d{9}$/.test(phone);
 
   const handleMinusMobile = (index: number) => {
-    if (mobiles.length > 1) {
-      setMobiles(mobiles.filter((_, i) => i !== index));
-    }
+    setFormState(prev => ({
+      ...prev,
+      mobiles: prev.mobiles.filter((_, i) => i !== index)
+    }));
   };
 
   const handleMobileOnchange = (index:number, value:string) => {
-    const newMobile = [...mobiles];
-    newMobile[index] = value
-    setMobiles(newMobile)
+    setFormState(prev => ({
+      ...prev,
+      mobiles: prev.mobiles.map((val, i) => i === index ? value : val)
+    }));
   }
 
   // email address ================================================================
-  const [emails, setEmails] = useState<string[]>([""])
+
 
   const handleAddEmail = () => {
-    setEmails([...emails,""])
+    setFormState(prev => ({
+      ...prev,
+      emails: [...prev.emails, ""]
+    }));
   }
   const validateEmail = (email: string): boolean=>  /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim())
 
   const handleEmailOnchange = (index:number, value: string) => {
-    const newEmail = [...emails];
-    newEmail[index] = value;
-    setEmails(newEmail)
+    setFormState(prev => ({
+      ...prev,
+      emails: prev.emails.map((val, i) => i === index ? value : val)
+    }));
   }
   
   const handleMinusEmail = (index: number) => {
-    if (emails.length > 1) {
-      setEmails(emails.filter((_, i) => i !== index));
-    }
+    setFormState(prev => ({
+      ...prev,
+      emails: prev.emails.filter((_, i) => i !== index)
+    }));
   };
 
   //address =======================================================================
 
-  const [address, setAddress] = useState<string[]>([""])
 
   const handleAddAddress = () => {
-    setAddress([...address,""])
+    setFormState(prev => ({
+      ...prev,
+      addresses: [...prev.addresses, ""]
+    }));
   }
 
   const handleAddressOnchange = (index:number, value: string) => {
-    const newAddress = [...address];
-    newAddress[index] = value
-    setAddress(newAddress)
+    setFormState(prev => ({
+      ...prev,
+      addresses: prev.addresses.map((val, i) => i === index ? value : val)
+    }));
   }
 
   const handleMinusAddress = (index: number) => {
-    if(address.length > 1){
-      setAddress(address.filter((_,i)=> i !== index))
-    }
+    setFormState(prev => ({
+      ...prev,
+      addresses: prev.addresses.filter((_, i) => i !== index)
+    }));
   }
-
-  // customer data
-  const [data, setData] = useState({
-    fullName: "",
-    dob: "",
-    gender: "",
-    isRPC: false
-  })
 
   const [modalProps, setModalProps] = useState({
     message: "",
@@ -176,18 +138,25 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const [required, setRequired] = useState(false)
   const [updateCustomer] = useMutation<{updateCustomer:UpdatedCustomer}>(UPDATE_CUSTOMER, {
     onCompleted: async(res) => {
-      cancel()
-      navigate(`${location.pathname}?success=true`)
-      setId(res.updateCustomer.customer._id)
-      console.log(res.updateCustomer.customer)
-      const updatedCustomer = {...selectedCustomer, customer_info: res.updateCustomer.customer}
-      refetch()
-      dispatch(setSelectedCustomer(updatedCustomer))
+      dispatch(setSelectedCustomer({ ...selectedCustomer, customer_info: res.updateCustomer.customer }));
+      await new Promise(resolve => setTimeout(resolve, 300));
+      navigate(`${location.pathname}?success=true`);
+      cancel();
     },
     onError: ()=> {
       dispatch(setServerError(true))
     }
   })
+
+  const handleConfirmYes = useCallback(async () => {
+    await updateCustomer({ variables: { ...formState, id: selectedCustomer.customer_info._id } });
+    setConfirm(false);
+  }, [formState, selectedCustomer, updateCustomer]);
+
+  const handleConfirmNo = useCallback(() => {
+    setConfirm(false);
+  }, []);
+
   const updateForm = useRef<HTMLFormElement | null>(null)
   const handleSubmitUpdateForm = (e:React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -199,37 +168,30 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
       setModalProps({
         message: "Are you sure you want to update this customer profile?",
         toggle: "UPDATE" ,
-        yes: async() => {
-          await updateCustomer({variables: {...data, mobiles: mobiles, emails: emails, addresses: address, id:selectedCustomer.customer_info._id}})
-          setConfirm(false)
-        },
-        no: () => {setConfirm(false)}
+        yes: handleConfirmYes,
+        no: handleConfirmNo
       })
     }
   }
 
-  console.log(data)
   
   useEffect(()=> {
-    if(selectedCustomer) {
-      setData({
-        fullName:selectedCustomer.customer_info.fullName,
-        dob: selectedCustomer.customer_info.dob,
-        gender: selectedCustomer.customer_info.gender,
-        isRPC: selectedCustomer.customer_info.isRPC
-      })
-      setMobiles((prevMobiles) => [
-        ...prevMobiles.filter(m => m !== ""),
-        ...(selectedCustomer.customer_info.contact_no ?? [])
-      ]);
-      setAddress((prevAddress) => [
-        ...prevAddress.filter(a => a !== ""),
-        ...(selectedCustomer.customer_info.addresses ?? [])
-      ])
-      setEmails((prevEmail) => [
-        ...prevEmail.filter(e => e !== ""),
-        ...(selectedCustomer.customer_info.emails ?? [])
-      ])
+    if (selectedCustomer) {
+      setFormState({
+        fullName: selectedCustomer.customer_info.fullName || "",
+        dob: selectedCustomer.customer_info.dob || "",
+        gender: selectedCustomer.customer_info.gender || "",
+        isRPC: selectedCustomer.customer_info.isRPC || false,
+        mobiles: selectedCustomer.customer_info.contact_no?.length
+          ? selectedCustomer.customer_info.contact_no
+          : [""],
+        emails: selectedCustomer.customer_info.emails?.length
+          ? selectedCustomer.customer_info.emails
+          : [""],
+        addresses: selectedCustomer.customer_info.addresses?.length
+          ? selectedCustomer.customer_info.addresses
+          : [""]
+      });
     }
   },[selectedCustomer])
 
@@ -239,11 +201,9 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
       <form ref={updateForm} className="flex flex-col gap-3" onSubmit={(e)=> handleSubmitUpdateForm(e)} noValidate>
         <label className="absolute left-5 top-5 flex gap-2">
           <input type="checkbox" name="rpc" id="rpc"
-            checked={data.isRPC}
-            onChange={(e) =>{ 
-              let value = false
-              if(e.target.checked) value = true
-              setData({...data, isRPC: value})
+            checked={formState.isRPC}
+            onChange={(e) => {
+              setFormState(prev => ({ ...prev, isRPC: e.target.checked }));
             }}
           />
           <h1>RPC</h1>
@@ -258,10 +218,10 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
               type="text" 
               id="fullName"   
               name="fullName" 
-              value={data.fullName}
-              onChange={(e)=> setData({...data, fullName: e.target.value})}
+              value={formState.fullName}
+              onChange={(e)=> setFormState({...formState, fullName: e.target.value})}
               required
-              className={`${required && !data.fullName ? "bg-red-100 border-red-300": "bg-gray-50 border-gray-300"}  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Full Name"  />
+              className={`${required && !formState.fullName ? "bg-red-100 border-red-300": "bg-gray-50 border-gray-300"}  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Full Name"  />
           </div>
           <div> 
             <label 
@@ -270,8 +230,8 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
             <input 
               type="date" 
               name="dob"
-              value={data.dob}
-              onChange={(e)=> setData({...data, dob: e.target.value})} 
+              value={formState.dob}
+              onChange={(e)=> setFormState({...formState, dob: e.target.value})} 
               id="dob" 
               className={` bg-gray-50 border-gray-300  border  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}  />
           </div>
@@ -282,10 +242,10 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
             <select
               id="gender"
               name="gender"
-              value={data.gender}
+              value={(formState.gender === "FEMALE" || formState.gender === "F")  ? "F" : "M"}
               required
-              onChange={(e)=> setData({...data, gender: e.target.value})}
-              className={`${required && !data.gender ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}
+              onChange={(e)=> setFormState({...formState, gender: e.target.value})}
+              className={`${required && !formState.gender ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}
             >
               <option value="">Choose a gender</option>
               <option value="M">Male</option>
@@ -298,7 +258,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
               className="block text-sm font-bold text-slate-500 dark:text-white">Mobile No.</div>
             <div className="flex flex-col gap-2">
               {
-                mobiles.map((m,index)=> (
+                formState.mobiles.map((m,index)=> (
                   <div key={index} className="flex items-center gap-2">
                     <input 
                       type="text" 
@@ -308,7 +268,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
                       value={m}
                       required
                       onChange={(e)=> handleMobileOnchange(index,e.target.value)}
-                      className={`${required && (!mobiles[index] || !validatePhone(mobiles[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Mobile No."  
+                      className={`${required && (!formState.mobiles[index] || !validatePhone(formState.mobiles[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Mobile No."  
                     />
                     {
                       index === 0 &&
@@ -329,7 +289,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
             className="block text-sm font-bold text-slate-500 dark:text-white">Email Address</div>
             <div className="flex flex-col gap-2">
               {
-                emails.map((email,index)=> (
+                formState.emails.map((email,index)=> (
                 <div key={index} className="flex items-center gap-2">
                   <input 
                     type="email" 
@@ -338,7 +298,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
                     value={email}
                     required
                     onChange={(e)=> handleEmailOnchange(index,e.target.value)}
-                    className={`${required && (!emails[index] || !validateEmail(emails[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+                    className={`${required && (!formState.emails[index] || !validateEmail(formState.emails[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
                     placeholder="Enter Email Address" 
                     />
                     {
@@ -359,7 +319,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
               className="block text-sm font-bold text-slate-500 dark:text-white">Address</div>
             <div className="flex flex-col gap-2">
               {
-                address.map((a,index)=> (
+                formState.addresses.map((a,index)=> (
                   <div key={index} className="flex items-center gap-2">
                     <textarea 
                       id={`address_${index}`}   
@@ -367,7 +327,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
                       value={a}
                       required
                       onChange={(e)=> handleAddressOnchange(index,e.target.value)} 
-                      className={`${required && !address[index] ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 h-32 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Email Address">
+                      className={`${required && !formState.addresses[index] ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 h-32 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Email Address">
                     </textarea>
                     {
                       index === 0 &&

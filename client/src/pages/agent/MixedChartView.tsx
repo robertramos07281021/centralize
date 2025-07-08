@@ -1,5 +1,5 @@
 import { color, date, month } from "../../middleware/exports"
-import { ChartData, ChartDataset, ChartOptions } from "chart.js"
+import { ChartData, ChartDataset, ChartOptions, Plugin } from "chart.js"
 import gql from 'graphql-tag';
 import { useQuery } from '@apollo/client';
 import { useEffect } from 'react';
@@ -77,7 +77,7 @@ const MixedChartView = () => {
     // { label: "Field", key: "field", color: oklchColors[4], type: "bar" },
     { label: "PTP", key: "ptp", color: color[2], type: "bar" },
     { label: "PTP Kept", key: "ptp_kept", color: color[7], type: "bar" },
-    { label: "Amount Collected", key: "paid", color: color[15], type: "bar" },
+    { label: "Paid Collected", key: "paid", color: color[15], type: "bar" },
     { label: "Total", key: "total", color: "#000", type: "line" },
   ];
 
@@ -107,6 +107,29 @@ const MixedChartView = () => {
     datasets,
   };
 
+  const customGridLinePlugi:Plugin<'bar' | 'line'> = {
+    id: 'customGridLine',
+    beforeDraw: (chart) => {
+      const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+      const yValue = 2000;
+      const yPixel = y.getPixelForValue(yValue);
+
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(left, yPixel);
+      ctx.lineTo(right, yPixel);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'red';
+      ctx.stroke();
+
+      ctx.fillStyle = 'red';
+      ctx.font = '12px sans-serif';
+      ctx.fillText(``, left + 4, yPixel - 4);
+      ctx.restore();
+    }
+  };
+
+
   const optionPerDay:ChartOptions<'bar'| 'line'> = { 
     plugins: {
       datalabels:{
@@ -116,7 +139,7 @@ const MixedChartView = () => {
         display: true,
         labels: {
           font: {
-            size: 8,
+            size: 14,
             family: 'Arial',
             weight: 'bold',
           },
@@ -140,19 +163,16 @@ const MixedChartView = () => {
         position: 'left',
         ticks: {
           font: {
-            size: 10,
+            size: 12,
           },
         },
       },
       y1: {
         type: 'linear',
         position: 'right',
-        grid: {
-          drawOnChartArea: false,
-        },
         ticks: {
           font: {
-            size: 10,
+            size: 12,
           },
         },
       },
@@ -163,7 +183,7 @@ const MixedChartView = () => {
 
   return (
     <div className="border flex rounded-lg border-slate-200 col-span-6 row-span-2 p-2 shadow-md shadow-black/20 bg-white">
-      <Chart type="bar" data={dataPerDay} options={optionPerDay} />
+      <Chart type="bar" data={dataPerDay} options={optionPerDay} plugins={[customGridLinePlugi]}  />
     </div>
   
   )

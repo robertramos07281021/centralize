@@ -47,6 +47,7 @@ import subscriptionResolvers from "./graphql/resolvers/subscriptionResolvers.js"
 import subscriptionTypeDefs from "./graphql/schemas/subcriptionSchema.js";
 import MongoStore from "connect-mongo";
 import CustomError from "./middlewares/errors.js";
+import path from "path";
 
 const connectedUsers = new Map();
 
@@ -68,7 +69,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser())
 app.use(compression())
-
+app.use('/recordings', express.static(path.join(process.cwd(), 'recordings')));
 const sessionStore = MongoStore.create({
   mongoUrl: process.env.MONGO_URL,
   collectionName: 'sessions',

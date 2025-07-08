@@ -63,7 +63,7 @@ export default function MixedChartMonthView() {
     // { label: "Field", key: "field", color: oklchColors[4], type: "bar" },
     { label: "PTP", key: "ptp", color: color[2], type: "bar" },
     { label: "PTP Kept", key: "ptp_kept", color: color[7], type: "bar" },
-    { label: "Amount Collected", key: "paid", color: color[15], type: "bar" },
+    { label: "Paid Collected", key: "paid", color: color[15], type: "bar" },
     { label: "Total", key: "total", color: "#000", type: "line" },
   ];
 
@@ -101,7 +101,7 @@ export default function MixedChartMonthView() {
         display: true,
         labels: {
           font: {
-            size: 8,
+            size: 14,
             family: 'Arial',
             weight: 'bold',
           },
