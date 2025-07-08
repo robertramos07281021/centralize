@@ -37,6 +37,7 @@ type CustomerRegistered = {
   contact_no:string[]
   emails:string[]
   addresses:string[]
+  isRPC: boolean
   _id:string
 }
 
@@ -54,6 +55,7 @@ type CustomerData = {
     max_dpd: number
     balance: number
     paid_amount: number
+    isRPCToday: boolean
     assigned_date: string
     out_standing_details: outStandingDetails
     grass_details: grassDetails
@@ -109,6 +111,7 @@ const MY_TASKS = gql`
         contact_no
         emails
         addresses
+        isRPC
         _id
       }
     }
@@ -159,6 +162,7 @@ const GROUP_TASKS =gql`
           contact_no
           emails
           addresses
+          isRPC
           _id
         }
       }
@@ -333,7 +337,7 @@ const MyTaskSection = () => {
       }
       const res = await selectTask({variables: {id: data._id}})
       if(res.data.selectTask.success) {
-        dispatch(setSelectedCustomer(data))
+        dispatch(setSelectedCustomer({...data, isRPCToday: false}))
       }
     } catch (error) { 
       dispatch(setServerError(true))
@@ -366,7 +370,7 @@ const MyTaskSection = () => {
       }
       {
         selection.trim() !== "" &&
-        <div className="absolute border border-slate-300 rounded-lg shadow-md shadow-black/20 w-2/4 h-96 translate-y-1/2 -bottom-50 right-5 p-2 text-slate-500 flex flex-col bg-white">
+        <div className="absolute border border-slate-300 rounded-lg shadow-md shadow-black/20 w-2/4 h-96 translate-y-1/2 -bottom-50 right-5 p-2 text-slate-500 flex flex-col bg-white z-50">
           <div className="py-1.5 2xl:text-xs lg:text-[0.6em] bg-slate-200 grid grid-cols-4 px-5 items-center">
             <div className="px-2 text-nowrap truncate">Customer Name</div>
             <div >Disposition</div>

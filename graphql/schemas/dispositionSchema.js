@@ -150,6 +150,11 @@ const dispositionTypeDefs = gql`
     collected: Float
     target: Float
   }
+  enum Dialer {
+    vici,
+    issabel,
+    inbound
+  }
 
   input CreateDispo {
     customer_account:ID!
@@ -160,7 +165,7 @@ const dispositionTypeDefs = gql`
     payment_method:String
     ref_no:String
     comment:String
-    dialer: String
+    dialer: Dialer
     contact_method: ContactMethod!
   }
 

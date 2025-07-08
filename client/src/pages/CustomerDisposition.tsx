@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import CustomerUpdateForm from "../components/CustomerUpdateForm"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
@@ -7,7 +7,7 @@ import SuccessToast from "../components/SuccessToast"
 import AccountInfo from "../components/AccountInfo"
 import DispositionForm from "../components/DispositionForm"
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { Search, Success } from "../middleware/types"
+import { Search, Success, CustomerRegistered } from "../middleware/types"
 import { setDeselectCustomer, setSelectedCustomer, setServerError } from "../redux/slices/authSlice"
 import AgentTimer from "./agent/AgentTimer"
 import DispositionRecords from "../components/DispositionRecords"
@@ -81,12 +81,32 @@ const SELECT_TASK = gql`
   }
 `
 
+const UPDATE_RPC = gql`
+  mutation updateRPC($id: ID!) {
+    updateRPC(id: $id) {
+      message
+      customer {
+        fullName
+        dob
+        gender
+        contact_no
+        emails
+        addresses
+        _id
+        isRPC
+      }
+      success
+    }
+  }
+
+`
+
 const CustomerDisposition = () => {
   const {userLogged, selectedCustomer, breakValue} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-
+  const [isRPC, setIsRPC] = useState<boolean>(false)
   const [isUpdate, setIsUpdate] = useState<boolean>(false)
   const [success, setSuccess] = useState({
     success: false,
@@ -204,7 +224,7 @@ const CustomerDisposition = () => {
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "RPCTODAY" as "RPCTODAY",
+    toggle: "RPCTODAY" as "RPCTODAY" | "UPDATE",
     yes: () => {},
     no: () => {}
   })
@@ -230,6 +250,35 @@ const CustomerDisposition = () => {
     }
   },[selectedCustomer])
 
+  const [updateRPC] = useMutation<{updateRPC:{success: boolean, message: string, customer:CustomerRegistered}}>(UPDATE_RPC,{
+    onCompleted: async(res)=> {
+      setSuccess({
+        success: res.updateRPC.success,
+        message: res.updateRPC.message
+      })
+      dispatch(setSelectedCustomer({...selectedCustomer, customer_info: res.updateRPC.customer}))
+      setIsRPC(false)
+    }
+  })
+
+  const callbackUpdateRPC = useCallback(async()=> {
+    await updateRPC({variables: {id:selectedCustomer.customer_info._id}})
+  
+  },[updateRPC, selectedCustomer])
+
+  const callbackNo = useCallback(()=> {
+    setIsRPC(false)
+  },[])
+
+  const handleClickRPC = () => {
+    setIsRPC(true)
+    setModalProps({
+      message: "This client is a RPC?",
+      toggle: "UPDATE",
+      yes: callbackUpdateRPC,
+      no: callbackNo
+    })
+  }
 
   const searchResult = useMemo(()=> {
     return searchData?.search.slice(0,50).map((data) => (
@@ -264,13 +313,12 @@ const CustomerDisposition = () => {
     )) 
   },[searchData])
 
-
   if(loading) return <Loading/>
 
   return userLogged._id ? (
     <div className="h-full w-full overflow-auto"> 
       {
-        isRPCToday &&
+        isRPCToday || isRPC &&
         <Confirmation {...modalProps}/>
       }
       
@@ -287,12 +335,13 @@ const CustomerDisposition = () => {
         <MyTaskSection/>
         </div>
       <div className="w-full grid grid-cols-2 gap-5 px-5 pb-5">
-
-        
         <div className="flex flex-col items-center"> 
           <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Information</h1>
           <div className="border flex flex-col rounded-xl border-slate-400 w-full h-full items-center justify-center p-5 gap-1.5 relative">
-            
+            {
+              selectedCustomer._id && !selectedCustomer.customer_info.isRPC &&
+              <button className="absolute right-5 px-10 py-1.5 rounded text-white  font-bold  top-5 bg-orange-400 hover:bg-orange-600" onClick={handleClickRPC}>RPC</button>
+            }
           
             {
               selectedCustomer._id && selectedCustomer?.customer_info?.isRPC &&
@@ -433,7 +482,7 @@ const CustomerDisposition = () => {
         <AccountInfo/>
         {
           (selectedCustomer.balance > 0 && !selectedCustomer.isRPCToday) &&
-          <DispositionForm setSuccess={(success:boolean,message:string)=> setSuccess({success:success,message:message})}/>
+          <DispositionForm setSuccess={(success:boolean,message:string)=> setSuccess({success:success,message:message})} updateOf={()=> setIsUpdate(false)}/>
         }
       </div>
       <DispositionRecords/>

@@ -1,4 +1,4 @@
-import {   useEffect, useMemo, useRef, useState } from "react"
+import {   useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Confirmation from "./Confirmation"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
@@ -83,10 +83,11 @@ type TL = {
 
 type Props = {
   setSuccess: (success:boolean, message:string) => void;
+  updateOf: ()=> void
 }
 
 
-const DispositionForm:React.FC<Props> = ({setSuccess}) => {
+const DispositionForm:React.FC<Props> = ({setSuccess,updateOf}) => {
   const successDispo = ['PTP','PAID','UNEG','FFUP','RPCCB','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
   const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
   const [selectedDispo, setSelectedDispo] = useState<string>('')
@@ -147,6 +148,7 @@ const DispositionForm:React.FC<Props> = ({setSuccess}) => {
         contact_method: "calls",
         dialer: ""
       })
+      updateOf()
       dispatch(setDeselectCustomer())
     },
     onError: () => {
@@ -184,6 +186,14 @@ const DispositionForm:React.FC<Props> = ({setSuccess}) => {
     no: () => {}
   })
 
+  const creatingDispo = useCallback(async()=> {
+    await createDisposition({variables: { input: {...data, customer_account: selectedCustomer._id} }})
+  },[data, selectedCustomer, createDisposition])
+
+  const noCallback = useCallback(()=> {
+    setConfirm(false)
+  },[])
+
   const handleSubmitForm = (e:React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if(!Form.current?.checkValidity()) {
@@ -194,10 +204,8 @@ const DispositionForm:React.FC<Props> = ({setSuccess}) => {
       setModalProps({
         message: "Do you want to create the disposition?",
         toggle: "CREATE",
-        yes: async() => {
-          await createDisposition({variables: { input: {...data, customer_account: selectedCustomer._id} }})
-        },
-        no: () => {setConfirm(false)}
+        yes: creatingDispo,
+        no: noCallback
       })
     }
   }
@@ -224,33 +232,36 @@ const DispositionForm:React.FC<Props> = ({setSuccess}) => {
   const [caToEscalate, setCAToEscalate] = useState<string>("")
   const [selectedTL, setSelectedTL] = useState<string>("")
 
+  const tlEscalationCallback = useCallback(async()=> {
+    await tlEscalation({variables: {id:caToEscalate, tlUserId: selectedTL}})
+  },[caToEscalate, selectedTL])
+
   const handleSubmitEscalation = ()=> {
     setConfirm(true)
     setModalProps({
       message: "Do you want to transfer this to your team leader?",
       toggle: "ESCALATE",
-      yes: async() => {
-        await tlEscalation({variables: {id:caToEscalate, tlUserId: selectedTL}})
-      },
-      no: () => {setConfirm(false)}
+      yes: tlEscalationCallback,
+      no: noCallback
     })
   }
+  const {data:tlData} = useQuery<{getBucketTL:TL[]}>(USER_TL)
 
+  const callbackTLEscalation = useCallback(async(id:string)=> {
+     await tlEscalation({variables: {id, tlUserId: tlData?.getBucketTL.flat()}})
+  },[tlData?.getBucketTL, tlEscalation ])
 
   const handleSubmitEscalationToTl = async(id:string) => {
     if(tlData &&  tlData?.getBucketTL.length > 1) {
       setEscalateTo(true)
       setCAToEscalate(id)
-
     } else {
       setConfirm(true)
       setModalProps({
         message: "Do you want to transfer this to your team leader?",
         toggle: "ESCALATE",
-        yes: async() => {
-          await tlEscalation({variables: {id, tlUserId: tlData?.getBucketTL.flat()}})
-        },
-        no: () => {setConfirm(false)}
+        yes:() => callbackTLEscalation(id),
+        no: noCallback
       })
     }
   }
@@ -260,17 +271,8 @@ const DispositionForm:React.FC<Props> = ({setSuccess}) => {
   const highUser = ['TL','MIS']
 
   const contactMethod = highUser.includes(userLogged.type) ? ['calls','sms','email','skip','field'] : (userLogged.account_type === 'caller' ? ['calls','sms','email','field'] : [ userLogged.account_type ])
-
-
-  const {data:tlData} = useQuery<{getBucketTL:TL[]}>(USER_TL)
-
-
   return  (
     <>
-      {/* {
-        success?.success &&
-        <SuccessToast successObject={success} close={()=> setSuccess({success:false, message:""})}/>
-      } */}
       {
         escalateTo &&
         <div className="absolute top-0 left-0 w-full h-full bg-white/10 backdrop-blur-[1px] z-50 flex items-center justify-center">
@@ -422,6 +424,7 @@ const DispositionForm:React.FC<Props> = ({setSuccess}) => {
                       <option value="">Select Dialer</option>
                       <option value="issabel">Issabel</option>
                       <option value="vici">Vici</option>
+                      <option value="inbound">Inbound</option>
                   </select>
                 </label>
               }

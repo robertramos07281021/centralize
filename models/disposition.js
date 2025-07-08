@@ -45,7 +45,7 @@ const dispositionSchema = new Schema(
     },
     dialer: {
       type: String,
-      enum: ['issabel','vici',""]
+      enum: ['issabel','vici',"",'inbound']
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,

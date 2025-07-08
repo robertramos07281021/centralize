@@ -1758,6 +1758,7 @@ const dispositionResolver = {
           },
         });
 
+        
         await Disposition.findByIdAndUpdate(customerAccount.current_disposition, {$set: { existing: false }});
 
         const updateFields = {

@@ -905,8 +905,8 @@ const customerResolver = {
       }
     },
     updateCustomer: async(_,{fullName, dob, gender, addresses, mobiles, emails, id, isRPC},{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
         const customer = await Customer.findByIdAndUpdate(id,{
           $set: {
             fullName, dob, gender, addresses, emails, contact_no: mobiles, isRPC
@@ -916,7 +916,24 @@ const customerResolver = {
           }
         }, {new: true}) 
         if(!customer) throw new CustomError("Customer not found",404)
-        return {success: true, message: "Customer successfully updated", customer: customer }
+        return {success: true, message: "Customer successfully updated", customer }
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    },
+    updateRPC: async(_,{id},{user}) => {
+      try {
+        if(!user) throw new CustomError("Unauthorized",401)
+        const customer = await Customer.findByIdAndUpdate(id, {
+          $set: {
+            isRPC: true
+          },
+          $push: {
+            updatedBy: user._id
+          }
+        },{new: true})
+        if(!customer)throw new CustomError("Customer not found",404)
+          return {success: true, message: "Customer successfully updated", customer}
       } catch (error) {
         throw new CustomError(error.message, 500)
       }

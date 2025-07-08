@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { CiSquarePlus, CiSquareMinus } from "react-icons/ci";
 import Confirmation from "./Confirmation";
-import { gql, useMutation, useQuery } from "@apollo/client";
+import { gql, useMutation } from "@apollo/client";
 import {  useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../redux/store";
 import { setSelectedCustomer, setServerError } from "../redux/slices/authSlice";
-import { CustomerRegistered, Search } from "../middleware/types";
+import { CustomerRegistered } from "../middleware/types";
 
 const UPDATE_CUSTOMER = gql` mutation
   updateCustomer($fullName:String!, $dob:String!, $gender:String!, $mobiles:[String], $emails:[String], $addresses:[String],$id:ID!, $isRPC:Boolean) {
@@ -139,7 +139,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const [updateCustomer] = useMutation<{updateCustomer:UpdatedCustomer}>(UPDATE_CUSTOMER, {
     onCompleted: async(res) => {
       dispatch(setSelectedCustomer({ ...selectedCustomer, customer_info: res.updateCustomer.customer }));
-      await new Promise(resolve => setTimeout(resolve, 300));
       navigate(`${location.pathname}?success=true`);
       cancel();
     },
