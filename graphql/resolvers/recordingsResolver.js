@@ -131,9 +131,6 @@ const recordingsResolver = {
         
         const files = fileList.filter(e=> contactPatterns.some(pattern => e.name.includes(pattern)))
         
-        const fileToDownload = [];
-
-
         function extractTimeFromFilename(filename) {
           const match = filename.match(/-(\d{6})_/);
           if (!match) return null;
@@ -171,12 +168,11 @@ const recordingsResolver = {
         const bestMatch = findClosestRecording(files,myDispo.createdAt)
         if (bestMatch.type === ftp.FileType.File) {
           const remotePath = `${remoteDir}/${bestMatch.name}`;
-
           const fileName = `${myDispo.dispotype.code}-${bestMatch.name}`
           const localPath = `./recordings/${fileName}`;
           await client.downloadTo(localPath, remotePath);
           const toDownload = `http://${process.env.MY_IP}:4000/recordings/${fileName}`
-          fileToDownload.push(toDownload)
+       
           return {
             success: true,
             url: toDownload,

@@ -90,6 +90,8 @@ const customerResolver = {
           { 
             $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
           },
+
+
           {
             $lookup: {
               from: "buckets",
@@ -111,6 +113,25 @@ const customerResolver = {
           },
           { 
             $unwind: { path: "$account_callfile", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $match: {
+              "account_bucket._id": {$in: user.buckets},
+              on_hands: false,
+              "account_callfile.endo": {$exists: false},
+              $or: [
+                { "customer_info.fullName": regexSearch },
+                { "customer_info.dob": regexSearch },
+                { "customer_info.contact_no": { $elemMatch: regexSearch } },
+                { "customer_info.emails": { $elemMatch: regexSearch } },
+                { "customer_info.addresses": { $elemMatch: regexSearch } },
+                { credit_customer_id: regexSearch },
+                { account_id: regexSearch },
+                { "out_standing_details.total_os": regexSearch },
+                { case_id: regexSearch },
+                ...checkId,
+              ],
+            },
           },
           {
             $lookup: {
@@ -165,25 +186,6 @@ const customerResolver = {
                 }
               }
             }
-          },
-          {
-            $match: {
-              "account_bucket._id": {$in: user.buckets},
-              on_hands: false,
-              "account_callfile.endo": {$exists: false},
-              $or: [
-                { "customer_info.fullName": regexSearch },
-                { "customer_info.dob": regexSearch },
-                { "customer_info.contact_no": { $elemMatch: regexSearch } },
-                { "customer_info.emails": { $elemMatch: regexSearch } },
-                { "customer_info.addresses": { $elemMatch: regexSearch } },
-                { credit_customer_id: regexSearch },
-                { account_id: regexSearch },
-                { "out_standing_details.total_os": regexSearch },
-                { case_id: regexSearch },
-                ...checkId,
-              ],
-            },
           },
         ])
         return accounts

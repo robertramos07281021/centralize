@@ -55,10 +55,6 @@ const userSchema = new Schema(
       type: Boolean,
       default: true
     },
-    default_target: {
-      type: Number,
-      default: 50000
-    },
     group: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Group"
@@ -70,6 +66,20 @@ const userSchema = new Schema(
     attempt_login: {
       type: Number,
       default: 0
+    },
+    targets: {
+      daily: {
+        type: Number,
+        default: 0,
+      },
+      weekly: {
+        type: Number,
+        default: 0,
+      },
+      monthly: {
+        type: Number,
+        default: 0
+      }
     },
     isLock: {
       type: Boolean,

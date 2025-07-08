@@ -91,19 +91,34 @@ type Success = {
   url: string
 }
 
+type SearchRecordings = {
+  from: string
+  to: string
+  search: string
+}
+
 const AgentRecordingView = () => {
   const location = useLocation()
   const dispatch = useAppDispatch()
   const {limit, agentRecordingPage} = useSelector((state:RootState) => state.auth)
   const [page, setPage] = useState<string>("1")
-  const [date, setDate] = useState<{from: string, to:string}>({
+
+  const [dataSearch, setDataSearch] = useState<SearchRecordings>({
+    search: "",
     from: "",
     to: ""
   })
-  const [search, setSearch] = useState<string>('')
-  const {data: recordings, loading:recordingsLoading} = useQuery<{getAgentDispositionRecords:Record}>(AGENT_RECORDING,{variables: {
-    agentID: location.state, limit: limit, page:parseInt(page), from: date.from, to: date.to, search
+
+  const [triggeredSearch, setTriggeredSearch] = useState<SearchRecordings>({
+    search: "",
+    from: "",
+    to: ""
+  })
+
+  const {data: recordings, loading:recordingsLoading, refetch} = useQuery<{getAgentDispositionRecords:Record}>(AGENT_RECORDING,{variables: {
+    agentID: location.state, limit: limit, page:parseInt(page), from: triggeredSearch.from, to: triggeredSearch.to, search: triggeredSearch.search
   }})
+
   const {data: agentInfoData} = useQuery<{getUser:Agent}>(AGENT_INFO,{variables: {id: location.state}})
   const [success, setSuccess] = useState<{success: boolean, message: string}>({
     success:false,
@@ -134,21 +149,17 @@ const AgentRecordingView = () => {
         message: res.findRecordings.message
       })
       const url = res.findRecordings.url
-      try {
-        const response = await fetch(url);
-        if (!response.ok) throw new Error('Failed to fetch file');
-        const blob = await response.blob();
-        const link = document.createElement("a");
-        link.href = URL.createObjectURL(blob);
-        link.download = url.split('/').pop()  || "recording.mp3";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(link.href);
-        await deleteRecordings({ variables: { filename: link.download } });
-      } catch (error) {
-        console.error("Download failed for:", url, error);
-      }
+      const response = await fetch(url);
+      if (!response.ok) throw new Error('Failed to fetch file');
+      const blob = await response.blob();
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = url.split('/').pop()  || "recording.mp3";
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(link.href);
+      await deleteRecordings({ variables: { filename: link.download } });
       setIsLoading('')
     },
     onError: () => {
@@ -160,6 +171,12 @@ const AgentRecordingView = () => {
     setIsLoading(id)
     await findRecordings({variables: {id}})
   }
+
+  const onClickSearch = () => {
+    setTriggeredSearch(dataSearch)
+    refetch()
+  }
+
 
   if(recordingsLoading) return <Loading/>
  
@@ -177,18 +194,18 @@ const AgentRecordingView = () => {
           <input type="search"
             name="search" 
             id="search" 
-            value={search}
-            onChange={(e)=> setSearch(e.target.value)}
+            value={dataSearch.search}
+            onChange={(e)=> setDataSearch({...dataSearch,search:  e.target.value})}
             className="border rounded border-slate-300 px-2 text-sm w-50 py-1"
           />
-
           <label>
           <span className="text-gray-600 font-medium text-sm">From: </span>
             <input 
               type="date" 
               name="from" 
               id="from" 
-              onChange={(e) => setDate({...date, from: e.target.value})}
+              value={dataSearch.from}
+              onChange={(e) => setDataSearch({...dataSearch, from: e.target.value})}
               className="border rounded border-slate-300 px-2 text-sm w-50 py-1" 
             />     
 
@@ -197,14 +214,18 @@ const AgentRecordingView = () => {
             <span className="text-gray-600 font-medium text-sm">To: </span>
             <input 
               type="date" 
-              name="to" 
-              id="to" 
-              onChange={(e) => setDate({...date, to: e.target.value})}
+              name="to"
+              id="to"
+              value={dataSearch.to}
+              onChange={(e) => setDataSearch({...dataSearch, to: e.target.value})}
               className="border rounded border-slate-300 px-2 text-sm w-50 py-1" 
             />           
         
           </label>      
-          
+          <button 
+            className="bg-blue-500 text-white font-bold  rounded px-5 text-xs hover:bg-blue-800"
+            onClick={onClickSearch}
+            >Search</button>
         </div>
         <div className="h-full overflow-hidden w-full px-10 pt-3">
 

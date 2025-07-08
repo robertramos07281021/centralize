@@ -23,9 +23,6 @@ const productionSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
     },
-    target_today: {
-      type: Number
-    }
   },
   { timestamps: true }
 );

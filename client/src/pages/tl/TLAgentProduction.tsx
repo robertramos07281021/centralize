@@ -76,8 +76,6 @@ const TLAgentProduction = () => {
 
   const {data:tlBucketData, error:tlbdError} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
 
-  console.log(agentDailyProd)
-
   useEffect(()=> {
     if(addError || abdError || tlbdError) {
       dispatch(setServerError(true))

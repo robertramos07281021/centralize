@@ -31,6 +31,12 @@ const userTypeDefs = gql`
     token: String
   }
 
+  type Target {
+    daily: Float
+    weekly: Float
+    monthly: Float
+  }
+
   type Users {
     _id: ID
     name: String
@@ -46,6 +52,7 @@ const userTypeDefs = gql`
     createdAt: DateTime
     user_id: String
     group: ID
+    targets: Target
     account_type: String
   }
 
@@ -69,14 +76,14 @@ const userTypeDefs = gql`
     _id: ID
     name: String
     user_id: String,
-    type: String
     group: ID 
-    isLock: Boolean
+    type: String
     isOnline: Boolean
+    isLock: Boolean
     account_type: String
     attempt_login: Int
+    targets: Target
     buckets: [Bucket]
-    default_target: Float
     departments: [Department] 
   }
 

@@ -1,6 +1,7 @@
 
 import CustomError from "../../middlewares/errors.js"
 import Bucket from "../../models/bucket.js"
+import Callfile from "../../models/callfile.js"
 import Customer from "../../models/customer.js"
 import CustomerAccount from "../../models/customerAccount.js"
 import Disposition from "../../models/disposition.js"
@@ -112,9 +113,8 @@ const taskResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)  
       }
-
-    } ,
-    deselectTask: async(_,{id},{PUBSUB_EVENTS, pubsub}) => {
+    },
+    deselectTask: async(_,{id},{PUBSUB_EVENTS, pubsub, user}) => {
       try {
         const ca = await CustomerAccount.findByIdAndUpdate(id,{$set: {on_hands: false}},{new: true})
         if(!ca) throw new CustomError("Customer account not found", 404) 
@@ -135,6 +135,7 @@ const taskResolver = {
           message: "Successfully deselected"
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)  
       }
     },
