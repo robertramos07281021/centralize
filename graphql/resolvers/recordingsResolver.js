@@ -6,11 +6,6 @@ import mongoose from "mongoose";
 import Disposition from "../../models/disposition.js";
 import CustomError from "../../middlewares/errors.js";
 import path from "path";
-import { spawn } from 'child_process';
-import ffmpegPath from 'ffmpeg-static';
-
-
-
 
 const recordingsResolver = {
   Mutation: {
@@ -83,16 +78,10 @@ const recordingsResolver = {
           }
         ])
 
-
-
-
-  
-
         const myDispo = findDispo[0]
 
         const createdAt = new Date(myDispo.createdAt)
         const yearCreated = createdAt.getFullYear()
-        const createdAtHour = createdAt.getHours() 
         const monthCreated = months[createdAt.getMonth()]
         const dayCreated = createdAt.getDate()
         const contact = myDispo.customer.contact_no
@@ -126,29 +115,7 @@ const recordingsResolver = {
           port: 21,
           secure: false,
         });
-        function convertToPlayableMp3(input, output) {
-          return new Promise((resolve, reject) => {
-            const ffmpeg = spawn(ffmpegPath, [
-              '-y', // overwrite
-              '-i', input,
-              '-acodec', 'libmp3lame',
-              '-ab', '128k',
-              output,
-            ]);
 
-            ffmpeg.stderr.on('data', (data) => {
-              const msg = data.toString();
-              if (msg.toLowerCase().includes('error')) {
-                console.error('[FFmpeg ERROR]', msg);
-              }
-            });
-
-            ffmpeg.on('close', (code) => {
-              if (code === 0) resolve(output);
-              else reject(new Error(`ffmpeg exited with code ${code}`));
-            });
-          });
-        }
 
 
         const remoteDirVici =  `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`     
@@ -165,41 +132,58 @@ const recordingsResolver = {
         const files = fileList.filter(e=> contactPatterns.some(pattern => e.name.includes(pattern)))
         
         const fileToDownload = [];
-        
-        for (const file of files) {  
-          if (file.type === ftp.FileType.File) {
-            const remotePath = `${remoteDir}/${file.name}`;
-            const getNumber = parseInt(file.name.split('-')[1].slice(0,2))
-            const fileName = `${myDispo.dispotype.code}-${file.name}`
-            const localPath = `./recordings/${fileName}`;
-            if(createdAtHour === getNumber) {
-              await client.downloadTo(localPath, remotePath);
-              const convertedPath = localPath.replace('.mp3', '-converted.mp3');
-              
-              await convertToPlayableMp3(localPath, convertedPath);
-              fs.unlink(localPath, (err)=> {
-                if(err) {
-                  throw new CustomError(err.message, 500) 
-                }
-              })
-              
-              if (!fs.existsSync(convertedPath)) {
-                throw new CustomError(`Converted file not found: ${convertedPath}`, 500);
-              }
-    
-              const toDownload = `http:/${process.env.MY_IP}:3000/recordings/${path.basename(convertedPath)}`
-              
-              fileToDownload.push(toDownload)
+
+
+        function extractTimeFromFilename(filename) {
+          const match = filename.match(/-(\d{6})_/);
+          if (!match) return null;
+
+          const timeStr = match[1];
+          const hours = parseInt(timeStr.slice(0, 2), 10);
+          const minutes = parseInt(timeStr.slice(2, 4), 10);
+          const seconds = parseInt(timeStr.slice(4, 6), 10);
+
+          return new Date(0, 0, 0, hours, minutes, seconds).getTime();
+        }
+
+        function getTimeOnly(date) {
+          return new Date(0, 0, 0, date.getHours(), date.getMinutes(), date.getSeconds()).getTime();
+        }
+
+        function findClosestRecording(files, dispoCreatedAt) {
+          const dispoTime = getTimeOnly(new Date(dispoCreatedAt));
+
+          let bestMatch = null;
+          let minDiff = Infinity;
+
+          for (const file of files) {
+            const recTime = extractTimeFromFilename(file.name);
+            if (!recTime) continue;
+
+            const diff = Math.abs(dispoTime - recTime);
+            if (diff < minDiff) {
+              minDiff = diff;
+              bestMatch = file;
             }
-          } else {
-            throw new CustomError('No recordings found',404)
+          }
+          return bestMatch
+        }
+        const bestMatch = findClosestRecording(files,myDispo.createdAt)
+        if (bestMatch.type === ftp.FileType.File) {
+          const remotePath = `${remoteDir}/${bestMatch.name}`;
+
+          const fileName = `${myDispo.dispotype.code}-${bestMatch.name}`
+          const localPath = `./recordings/${fileName}`;
+          await client.downloadTo(localPath, remotePath);
+          const toDownload = `http://${process.env.MY_IP}:4000/recordings/${fileName}`
+          fileToDownload.push(toDownload)
+          return {
+            success: true,
+            url: toDownload,
+            message: "Successfully downloaded"
           }
         }
-        return {
-          success: true,
-          url: fileToDownload,
-          message: "Successfully downloaded"
-        }
+
 
       } catch (err) {
         throw new CustomError(err.message, 500)

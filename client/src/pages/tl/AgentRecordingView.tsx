@@ -88,7 +88,7 @@ const DELETE_RECORDING = gql`
 type Success = {
   success: boolean
   message: string,
-  url: string[]
+  url: string
 }
 
 const AgentRecordingView = () => {
@@ -128,25 +128,27 @@ const AgentRecordingView = () => {
   })
 
   const [findRecordings,{loading}] = useMutation<{findRecordings:Success}>(DL_RECORDINGS,{
-    onCompleted: (res)=> {
-      console.log(res)
+    onCompleted: async(res)=> {
       setSuccess({
         success: res.findRecordings.success,
         message: res.findRecordings.message
       })
-      res.findRecordings.url.forEach(async(url) => {
-        console.log(url)
+      const url = res.findRecordings.url
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch file');
+        const blob = await response.blob();
         const link = document.createElement("a");
-        link.href = url;
-        const newName = url.split('/')[3]
-        link.download = newName;
+        link.href = URL.createObjectURL(blob);
+        link.download = url.split('/').pop()  || "recording.mp3";
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-        // setTimeout(async() => {
-        // await  deleteRecordings({ variables: { filename: newName } });
-        // }, 2000);
-      })
+        URL.revokeObjectURL(link.href);
+        await deleteRecordings({ variables: { filename: link.download } });
+      } catch (error) {
+        console.error("Download failed for:", url, error);
+      }
       setIsLoading('')
     },
     onError: () => {
@@ -257,8 +259,10 @@ const AgentRecordingView = () => {
                       <div onClick={()=> onDLRecordings(e._id)} className="cursor-pointer relative">
                         <FaDownload className="text-lg text-fuchsia-700 peer"/>
                         <div className="absolute text-nowrap bg-white z-50 left-5 top-0 ml-2 peer-hover:block hidden border px-1">Download Recordings</div>
+                        
                       </div> 
                     }
+        
                   </div>
                 ) 
               })

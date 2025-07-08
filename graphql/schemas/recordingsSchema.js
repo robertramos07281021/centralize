@@ -5,7 +5,7 @@ const recordingTypeDefs = gql`
   type Success {
     success: Boolean
     message: String
-    url: [String]
+    url: String
   }
 
   type Mutation {
