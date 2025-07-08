@@ -87,16 +87,10 @@ type Props = {
 
 
 const DispositionForm:React.FC<Props> = ({setSuccess}) => {
-  
-  
   const successDispo = ['PTP','PAID','UNEG','FFUP','RPCCB','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
-
   const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
-
   const [selectedDispo, setSelectedDispo] = useState<string>('')
-
   const dispatch = useAppDispatch()
-
   const [data, setData] = useState<Data>({
     amount: "",
     payment: "",

@@ -24,6 +24,10 @@ const AccountInfo = () => {
             <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Account ID</p>
             <div className={`${selectedCustomer?.account_id ? "p-2" : "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.account_id ? selectedCustomer?.account_id : " "}</div>
           </div>
+          <div className="grid grid-cols-4 items-center">
+            <p className="text-gray-800 font-bold 2xl:text-sm lg:text-xs">Max DPD</p>
+            <div className={`${selectedCustomer?.max_dpd ? "p-2" : "p-4.5"} 2xl:text-sm lg:text-xs border rounded-lg border-slate-500 bg-gray-100 text-gray-600 col-span-3`}>{selectedCustomer?.max_dpd ? selectedCustomer?.max_dpd : " "}</div>
+          </div>
         </div>
         <div className="flex flex-col gap-2">
           <div className="grid grid-cols-4 items-center">

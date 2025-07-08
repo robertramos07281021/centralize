@@ -545,7 +545,6 @@ const callfileResolver = {
                 '172.20.21.97' : "UB"
               }
       
-    
               function checkDate(number) {
                 return number > 9 ? number : `0${number}`;
               }
@@ -564,7 +563,6 @@ const callfileResolver = {
               
               try {
                 const fileList = await client.list(remoteDir);
-            
                 const files = fileList.filter(y =>
                   contactPatterns.some(pattern => y.name.includes(pattern))
                 );
@@ -584,7 +582,7 @@ const callfileResolver = {
             return e 
           }
         }))
-        console.log(newCustomers)
+ 
      
         const csv = json2csv(customers, {
           keys: [

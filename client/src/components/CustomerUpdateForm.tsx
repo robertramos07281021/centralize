@@ -242,7 +242,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
             <select
               id="gender"
               name="gender"
-              value={(formState.gender === "FEMALE" || formState.gender === "F")  ? "F" : "M"}
+              value={(formState.gender.toLocaleLowerCase() === "female" || formState.gender.toLocaleLowerCase() === "f")  ? "F" : "M"}
               required
               onChange={(e)=> setFormState({...formState, gender: e.target.value})}
               className={`${required && !formState.gender ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}

@@ -91,7 +91,7 @@ const TLAgentProduction = () => {
 
   return (
     <div className='col-span-3 border border-slate-400 bg-white rounded-xl overflow-auto p-2'>
-      <div className='flex flex-col lg:h-115 2xl:h-130 overflow-auto relative'>
+      <div className='flex flex-col h-full overflow-y-auto relative'>
         <div className='sticky top-0 bg-white font-bold text-base text-slate-700'>Agent Production <span className="text-sm font-medium">(Daily)</span></div>
         <div className='sticky top-6 grid grid-cols-11 bg-white text-sm font-medium text-slate-600'>
           <div className='col-span-2'>Name</div>
@@ -126,7 +126,6 @@ const TLAgentProduction = () => {
             )
           })
         }
-        
       </div>
     </div>
   )

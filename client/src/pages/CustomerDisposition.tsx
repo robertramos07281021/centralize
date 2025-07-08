@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import CustomerUpdateForm from "../components/CustomerUpdateForm"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
@@ -100,11 +100,17 @@ const CustomerDisposition = () => {
   const length = searchData?.search?.length || 0;
 
   useEffect(()=> {
-    refetch()
-    if(error) {
-      dispatch(setServerError(true))
+    const delay = setTimeout(() => {
+      refetch()
+    }, 300);
+    return () => clearTimeout(delay);
+  },[search])
+
+  useEffect(() => {
+    if (error) {
+      dispatch(setServerError(true));
     }
-  },[search,refetch,error, dispatch])
+  }, [error, dispatch]);
 
   const [selectTask] = useMutation(SELECT_TASK,{
     onCompleted: ()=> {
@@ -119,7 +125,6 @@ const CustomerDisposition = () => {
   const onClickSearch = async(customer:Search) => {
     await selectTask({variables: {id: customer._id}})
     dispatch(setSelectedCustomer(customer))
-
   }
 
   useEffect(()=> {
@@ -225,6 +230,41 @@ const CustomerDisposition = () => {
     }
   },[selectedCustomer])
 
+
+  const searchResult = useMemo(()=> {
+    return searchData?.search.slice(0,50).map((data) => (
+      <div key={data._id} className="flex flex-col text-sm cursor-pointer hover:bg-slate-100 py-0.5"
+      onClick={() => onClickSearch(data)}
+      >
+        <div className="px-2 font-medium text-slate-600 uppercase"
+            dangerouslySetInnerHTML={{
+            __html: data.customer_info.fullName.replace(
+              new RegExp(search, "gi"),
+              (match) => `<mark>${match}</mark>`
+            ),
+          }}
+        />
+        <div className="text-slate-500 text-xs px-2">
+          <span>
+            {data.customer_info.dob},&nbsp; 
+          </span>
+            {data.customer_info.contact_no.map((contact,index) =>
+              <span key={index}>
+                {contact},&nbsp;
+              </span>
+            )}, 
+          <span>
+            {data.customer_info.addresses},&nbsp;
+          </span>
+          <span>
+            {data.credit_customer_id}
+          </span>
+        </div>
+      </div>
+    )) 
+  },[searchData])
+
+
   if(loading) return <Loading/>
 
   return userLogged._id ? (
@@ -271,31 +311,9 @@ const CustomerDisposition = () => {
                     placeholder="Search" 
                     className="w-96 p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "/>
           
-                <div className={`${length > 0 && search ? "" : "hidden"} absolute max-h-96 border border-slate-400 w-96 bg-white overflow-y-auto rounded-md`}>
+                <div className={`${length > 0 && search ? "" : "hidden"} absolute max-h-96 border border-slate-400 w-full left-0 bg-white overflow-y-auto rounded-md`}>
                   {
-                    searchData?.search.map((data) => (
-                      <div key={data._id} className="flex flex-col text-sm cursor-pointer hover:bg-slate-100 py-0.5"
-                      onClick={() => onClickSearch(data)}
-                      >
-                        <div className="px-2 font-medium text-slate-600 uppercase">{data.customer_info.fullName}</div>
-                        <div className="text-slate-500 text-xs px-2">
-                          <span>
-                            {data.customer_info.dob},&nbsp; 
-                          </span>
-                            {data.customer_info.contact_no.map((contact,index) =>
-                              <span key={index}>
-                                {contact},&nbsp;
-                              </span>
-                            )}, 
-                          <span>
-                            {data.customer_info.addresses},&nbsp;
-                          </span>
-                          <span>
-                            {data.credit_customer_id}
-                          </span>
-                        </div>
-                      </div>
-                    )) 
+                    searchResult
                   }
                 </div>
               </div>
