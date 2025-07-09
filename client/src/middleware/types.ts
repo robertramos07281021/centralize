@@ -17,11 +17,6 @@ export type Department = {
   aom: UserInfo | null;
 }
 
-export type Success = {
-  success: boolean;
-  message: string;
-}
-
 export type Dept = {
   name: string;
   branch: string;

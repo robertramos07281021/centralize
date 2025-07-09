@@ -1,8 +1,9 @@
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { useEffect, useMemo, useRef, useState } from "react"
-import SuccessToast from "../../components/SuccessToast"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import Confirmation from "../../components/Confirmation"
 import { MdKeyboardArrowDown } from "react-icons/md";
+import { useAppDispatch } from "../../redux/store";
+import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 
 type Dept = {
   id: string;
@@ -93,12 +94,9 @@ const RegisterView = () => {
     buckets: [],
     account_type: ""
   })
+  const dispatch = useAppDispatch()
 
-  const [success, setSuccess] = useState({
-    success: false,
-    message: ""
-  })
- 
+
   const {data:branchQuery} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
   const {data:getDeptBucketData} = useQuery<{getBuckets:DeptBucket[]}>(GET_DEPT_BUCKET,{variables: {dept: data.departments}})
   
@@ -132,19 +130,19 @@ const RegisterView = () => {
         buckets: [],
         account_type: ""
       })
-      setSuccess({
+      dispatch(setSuccess({
         success: true,
         message: "Account created"
-      })
+      }))
       setConfirm(false)
     },
     onError: (error) => {
       const errorMessage = error?.message;
       if (errorMessage?.includes("E11000")) {
-        setSuccess({
+        dispatch(setSuccess({
           success: true,
           message: "Username already exists",
-        });
+        }))
         setData({
           type: "",
           name: "",
@@ -155,6 +153,8 @@ const RegisterView = () => {
           buckets: [],
           account_type: ""
         });
+      } else {
+        dispatch(setServerError(true))
       }
     }
   })
@@ -175,10 +175,9 @@ const RegisterView = () => {
   const validateOther = () =>
     data.name && data.username;
 
-  const handleCreateUser = async () => {
+  const handleCreateUser = useCallback(async () => {
     await createUser({ variables: { ...data } });
-   
-  };
+  },[data, createUser]);
 
   const submitForm = () => {
     const isAgent = data.type === "AGENT";
@@ -230,11 +229,6 @@ const RegisterView = () => {
 
   return (
     <>
-      {
-        success?.success &&
-        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
-      }
-    
       <div className="w-full justify-center items-center flex flex-col bg-[]" onMouseDown={(e)=>{
         if(!bucketDiv.current?.contains(e.target as Node)){
           setSelectBucket(false)

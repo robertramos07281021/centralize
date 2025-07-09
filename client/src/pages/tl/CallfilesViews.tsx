@@ -5,9 +5,8 @@ import { FaSquareCheck, FaDownload} from "react-icons/fa6";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../redux/store";
 import React, { useEffect, useState } from "react";
-import SuccessToast from "../../components/SuccessToast";
 import Confirmation from "../../components/Confirmation";
-import { setServerError } from "../../redux/slices/authSlice";
+import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import Loading from "../Loading";
 
 type Finished = {
@@ -152,8 +151,6 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
 
   const {data:deptBucket,refetch:bucketRefetch, loading:bucketLoading} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
 
-
-
   useEffect(()=> {
     refetch()
     bucketRefetch()
@@ -172,6 +169,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       }
     }
   })
+
   useSubscription<{updateOnCallfiles:SubSuccess}>(UPDATE_ON_CALLFILES,{
     onData: ({data})=> {
       if(data){
@@ -185,10 +183,6 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   })
 
   const [confirm, setConfirm] = useState(false)
-  const [success, setSuccess] = useState<{success: boolean, message: string}>({
-    success: false,
-    message: ""
-  })
 
   const [modalProps, setModalProps] = useState({
     message: "",
@@ -197,13 +191,12 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     no: () => {}
   })
 
-
   const [finishedCallfile] = useMutation<{finishedCallfile:Success}>(FINISHED_CALLFILE,{
     onCompleted: (data)=> {
-      setSuccess({
+      dispatch(setSuccess({
         success: data.finishedCallfile.success,
         message: data.finishedCallfile.message
-      })
+      }))
       setConfirm(false)
     },
     onError: () => {
@@ -214,10 +207,10 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
 
   const [deleteCallfile] = useMutation<{deleteCallfile:Success}>(DELETE_CALLFILE, {
      onCompleted: (data)=> {
-      setSuccess({
+      dispatch(setSuccess({
         success: data.deleteCallfile.success,
         message: data.deleteCallfile.message
-      })
+      }))
       client.refetchQueries({
         include: ['getCallfiles']
       })
@@ -244,7 +237,6 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       DELETE: async()=> {
         await deleteCallfile({variables: {callfile: id}})
       },
-        
       DOWNLOAD: async()=> {
         try {
           const {data} = await downloadCallfiles({variables: {callfile: id}})
@@ -255,7 +247,6 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
           }
           const blob = new Blob([data.downloadCallfiles],{type: 'text/csv'})
           const url = window.URL.createObjectURL(blob)
-
           const link = document.createElement('a')
           link.href = url;
           link.setAttribute('download',`${name}.csv`);
@@ -263,8 +254,8 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
           link.click();
           document.body.removeChild(link);
           setConfirm(false)
-        } catch (error) {
-          console.log(error)
+        } catch (err) {
+          dispatch(setServerError(true))
         }
       }
     }
@@ -293,10 +284,6 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
 
   return (
     <>
-      {
-        success?.success &&
-        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
-      }
       {
         loading || bucketLoading && <Loading/>
       }

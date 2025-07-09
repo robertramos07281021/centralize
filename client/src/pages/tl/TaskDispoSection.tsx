@@ -4,16 +4,9 @@ import React, { useEffect, useMemo, useState } from "react"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../../redux/store"
 import Confirmation from "../../components/Confirmation"
-import SuccessToast from "../../components/SuccessToast"
 import Pagination from "../../components/Pagination"
 import Loading from "../Loading"
-import { setPage, setServerError } from "../../redux/slices/authSlice"
-
-
-type Success = {
-  success: boolean,
-  message: string
-}
+import { setPage, setServerError, setSuccess } from "../../redux/slices/authSlice"
 
 type OutStandingDetails = {
   principal_os:number
@@ -237,10 +230,10 @@ const DELETE_GROUP_TASK = gql`
     }
   }
 `
+
 type Props = {
   selectedBucket:string
 }
-
 
 const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   const dispatch = useAppDispatch()
@@ -261,10 +254,6 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   const [required, setRequired] = useState<boolean>(false)
   const [confirm, setConfirm] = useState<boolean>(false)
 
-  const [success, setSuccess] = useState<Success>({
-    success:false,
-    message: ""
-  })
   const [taskManagerPage, setTaskManagerPage] = useState("1")
   useEffect(()=> {
     if(sacaError || sacaError) {
@@ -305,11 +294,14 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
       setTaskToAdd([])
       setHandleCheckAll(false)
       setRequired(false)
-      setSuccess({
+      dispatch(setSuccess({
         success:true,
         message: "Task successfully removed"
-      })
+      }))
     },
+    onError: () => {
+      dispatch(setServerError(true))
+    }
   })
 
   const handleClickDeleteGroupTaskButton = ()=> {
@@ -321,11 +313,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
         message: `Remove this task?`,
         toggle: "DELETE",
         yes: async() => {
-          try {
-            await deleteGroupTask({variables: {caIds: taskToAdd}})
-          } catch (_error) {
-            dispatch(setServerError(true))
-          }
+          await deleteGroupTask({variables: {caIds: taskToAdd}})
         },
         no: () => {
           setConfirm(false)
@@ -358,11 +346,14 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
       setRequired(false)
       setTaskToAdd([])
       setHandleCheckAll(false)
-      setSuccess({
+      dispatch(setSuccess({
         success:true,
         message: "Task successfully added"
-      })
+      }))
     },
+    onError: () => {
+      dispatch(setServerError(true))
+    }
   })
 
   const handleAddTask = () => {
@@ -375,11 +366,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
         message: `You assigning the task?`,
         toggle: "CREATE",
         yes: async() => {
-          try {
-            await addGroupTask({variables: {groupId: selected ,task: taskToAdd}})
-          } catch (_error) {
-            dispatch(setServerError(true))
-          }
+          await addGroupTask({variables: {groupId: selected ,task: taskToAdd}})
         },
         no: () => {
           setConfirm(false)
@@ -396,10 +383,6 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
 
   return (
     <>
-      {
-        success?.success &&
-        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
-      }
       <div className="h-full w-full flex flex-col p-2 overflow-hidden">
         {
           (selectedGroup || selectedAgent) &&

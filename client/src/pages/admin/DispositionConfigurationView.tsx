@@ -1,11 +1,10 @@
 import { useMutation, useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RiArrowDropDownFill } from "react-icons/ri";
 import Confirmation from "../../components/Confirmation";
-import SuccessToast from "../../components/SuccessToast";
 import { useAppDispatch } from "../../redux/store";
-import { setServerError } from "../../redux/slices/authSlice";
+import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import { FaEdit } from "react-icons/fa";
 import ActivationButton from "./ActivationButton";
 
@@ -101,13 +100,7 @@ const DispositionConfigurationView = () => {
   const [selectingContactMethod, setSelectingContactMethod] = useState<boolean>(false)
   const [selectedContactMethod, setSelectedContactMethod] = useState<Method[]>([])
   const [confirm, setConfirm] = useState<boolean>(false)
-  const [success, setSuccess] = useState({
-    success: false,
-    message: ""
-  }) 
   const [toUpdateDispo, setToUpdateDispo] = useState<Dispotype | null>(null)
-
-
   const [dispoData, setDispoData] = useState<Dispotype[]>([])
   const [search, setSearch] =useState<string>('')
 
@@ -119,10 +112,8 @@ const DispositionConfigurationView = () => {
       } else {
         setDispoData(dispotypeData.getDispositionTypes)
       }
-
     }
   },[dispotypeData, search])
-
 
   const [required, setRequired] = useState<boolean>(false)
   const [inputValue, setInputValue] = useState<inpuValueState>({
@@ -137,10 +128,10 @@ const DispositionConfigurationView = () => {
   const [createDispositionType] = useMutation<{createDispositionType:{success: boolean, message: string}}>(CREATE_DISPO_TYPE, {
     onCompleted: (res) => {
       refetch()
-      setSuccess({
+      dispatch(setSuccess({
         success: res.createDispositionType.success,
         message: res.createDispositionType.message
-      })
+      }))
       setInputValue({
         name: "",
         code: ""
@@ -157,10 +148,10 @@ const DispositionConfigurationView = () => {
   const [updateDispositionType] = useMutation<{updateDispositionType:{success:boolean, message: string}}>(UPDATE_DISPO,{
     onCompleted: (res)=> {
       refetch()
-      setSuccess({
+      dispatch(setSuccess({
         success: res.updateDispositionType.success,
         message: res.updateDispositionType.message
-      }),
+      })),
       setInputValue({
         name: "",
         code: ""
@@ -187,18 +178,22 @@ const DispositionConfigurationView = () => {
     no: () => {}
   })
 
+  const creatingDispoType = useCallback(async()=> {
+    await createDispositionType({variables: {input: {...inputValue, buckets: selectedBuckets, contact_method: selectedContactMethod }}})
+  },[inputValue, selectedBuckets, selectedContactMethod, createDispositionType])
+
+  const updatingDispoType = useCallback(async()=> {
+    await updateDispositionType({variables: {id: toUpdateDispo?.id, input: {...inputValue, buckets: selectedBuckets, contact_method: selectedContactMethod }}})
+  },[selectedBuckets, selectedContactMethod, updateDispositionType, inputValue, toUpdateDispo])
+
   const submitActions:Record<string, {message:string, yes:()=> void}> = {
     CREATE: {
       message: "Do you want to add new disposition type?",
-      yes: async() => {
-        await createDispositionType({variables: {input: {...inputValue, buckets: selectedBuckets, contact_method: selectedContactMethod }}})
-      }
+      yes: creatingDispoType
     },
     UPDATE: {
       message: "Do you want to update this disposition type?",
-      yes: async() => {
-        await updateDispositionType({variables: {id: toUpdateDispo?.id, input: {...inputValue, buckets: selectedBuckets, contact_method: selectedContactMethod }}})
-      }
+      yes: updatingDispoType
     },
     ACTIVATE: {
       message: "Do you want to activate this disposition type?",
@@ -216,12 +211,12 @@ const DispositionConfigurationView = () => {
       setRequired(true)
     } else {
       setConfirm(true)
-     setModalProps({
-      message: submitActions[submitToggle].message,
-      toggle: submitToggle as 'CREATE' | 'UPDATE' | 'ACTIVATE' | 'DEACTIVATE',
-      yes: submitActions[submitToggle].yes,
-      no: () => { setConfirm(false) }
-     }) 
+      setModalProps({
+        message: submitActions[submitToggle].message,
+        toggle: submitToggle as 'CREATE' | 'UPDATE' | 'ACTIVATE' | 'DEACTIVATE',
+        yes: submitActions[submitToggle].yes,
+        no: () => { setConfirm(false) }
+      }) 
     }
   }
 
@@ -255,21 +250,17 @@ const DispositionConfigurationView = () => {
     }
   },[toUpdateDispo])
 
-  const handleCheckAll = (e:React.ChangeEvent<HTMLInputElement>)=> {
+  const handleCheckAll = useCallback((e:React.ChangeEvent<HTMLInputElement>)=> {
     if(e.target.checked) {
       const bucketsIds:string[] = bucketsData?.getAllBucket.map((e)=> e._id) || []
       setSelectedBuckets(bucketsIds)
     } else {
       setSelectedBuckets([])
     }
-  }
+  },[setSelectedBuckets, bucketsData])
 
   return (
     <>
-      {
-        success?.success &&
-        (<SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>)
-      }
       <div className="h-full w-full flex flex-col overflow-hidden p-2" onMouseDown={(e) => 
         { 
           if(!bucketRef.current?.contains(e.target as Node)) {
@@ -338,8 +329,7 @@ const DispositionConfigurationView = () => {
                       type="checkbox" 
                       name="all"
                       id='all' 
-                      onChange={(e)=> handleCheckAll(e)}
-  
+                      onChange={handleCheckAll}
                     />
                     <span className="text-sm text-gray-600">Select All</span>
                   </label>

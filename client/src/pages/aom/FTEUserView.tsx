@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useEffect, useState } from "react"
+import { useMemo } from "react"
 import { FaCircle } from "react-icons/fa";
 
 
@@ -48,10 +48,6 @@ type Bucket = {
   name: string
 }
 
-type Object = {
-  [key:string] : string
-}
-
 
 const ACCOUNT_HELPER = gql`
   query getHelperAgent {
@@ -89,28 +85,17 @@ type Campaign = {
 const FTEUserView = () => {
   const {data:AOMFTEData} = useQuery<{getAOMCampaignFTE:AOMFTE[]}>(AOM_CAMPAIGN_FTE)
   const {data:allBucket} = useQuery<{getAllBucket:Bucket[]}>(GET_ALL_BUCKET)
-  const [bucketObject,setBucketObject] = useState<Object>({})
   const {data:aomCampaign} = useQuery<{getAomDept:Campaign[]}>(GET_AOM_CAMPAIGN)
-  const [campaignObject, setCampaignObject] = useState<Object>({})
+  
+  const campaignObject:{[key:string]:string} = useMemo(()=> {
+    const campaign = aomCampaign?.getAomDept || []
+    return Object.fromEntries(campaign.map((c)=> [c._id, c.name]))
+  },[aomCampaign])
 
-
-  useEffect(()=> {
-    if(allBucket) {
-      const newObject:Object= {}
-      allBucket.getAllBucket.forEach(e=> {
-        newObject[e._id] = e.name
-      })
-      setBucketObject(newObject)
-    }
-    if(aomCampaign) {
-      const newObject:Object= {}
-      aomCampaign.getAomDept.forEach(e=> {
-        newObject[e._id] = e.name
-      })
-      setCampaignObject(newObject)
-    }
-  },[allBucket, aomCampaign])
-  console.log(campaignObject)
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const bucketArray = allBucket?.getAllBucket || []
+    return Object.fromEntries(bucketArray.map((ba)=> [ba._id, ba.name]))
+  },[allBucket])
 
   const {data:helperData} = useQuery<{getHelperAgent:User[]}>(ACCOUNT_HELPER)
 

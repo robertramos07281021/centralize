@@ -1,11 +1,16 @@
+import { useLocation, useNavigate } from "react-router-dom"
 import { setServerError } from "../redux/slices/authSlice"
 import { useAppDispatch } from "../redux/store"
 
 
 const ServerError = () => {
   const dispatch = useAppDispatch()
+  const location = useLocation()
+  const navigate = useNavigate()
+
 
   const handleClickOk = () => {
+    navigate(location.pathname)
     dispatch(setServerError(false))
   }
   

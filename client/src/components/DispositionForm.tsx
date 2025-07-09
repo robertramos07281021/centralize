@@ -16,7 +16,7 @@ type Data = {
   ref_no: string;
   comment: string;
   contact_method: string;
-  dialer: string;
+  dialer: Dialer;
 }
 
 type Disposition = {
@@ -81,11 +81,16 @@ type TL = {
   name: string;
 }
 
+enum Dialer  {
+  VICI = "vici",
+  ISSABEL = "issabel",
+  INBOUND = 'inbound',
+  NOT = ""
+}
 type Props = {
   setSuccess: (success:boolean, message:string) => void;
   updateOf: ()=> void
 }
-
 
 const DispositionForm:React.FC<Props> = ({setSuccess,updateOf}) => {
   const successDispo = ['PTP','PAID','UNEG','FFUP','RPCCB','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
@@ -101,8 +106,9 @@ const DispositionForm:React.FC<Props> = ({setSuccess,updateOf}) => {
     ref_no: "",
     comment: "",
     contact_method: "",
-    dialer: ""
+    dialer: Dialer.NOT
   })
+
 
   useEffect(()=> {
     if(!selectedCustomer._id) {
@@ -116,7 +122,7 @@ const DispositionForm:React.FC<Props> = ({setSuccess,updateOf}) => {
         ref_no: "",
         comment: "",
         contact_method: "calls",
-        dialer: ""
+        dialer: Dialer.NOT
       })
     }
   },[selectedCustomer])
@@ -146,13 +152,30 @@ const DispositionForm:React.FC<Props> = ({setSuccess,updateOf}) => {
         ref_no: "",
         comment: "",
         contact_method: "calls",
-        dialer: ""
+        dialer: Dialer.NOT
       })
       updateOf()
       dispatch(setDeselectCustomer())
     },
     onError: () => {
+      setConfirm(false)
+      setSelectedDispo('')
+      setData({
+        amount: "",
+        payment: "",
+        disposition: "",
+        payment_date: "",
+        payment_method: "",
+        ref_no: "",
+        comment: "",
+        contact_method: "calls",
+        dialer: Dialer.NOT
+      })
+      updateOf()
+      dispatch(setDeselectCustomer())
+
       dispatch(setServerError(true))
+      
     }
   })
 
@@ -412,19 +435,24 @@ const DispositionForm:React.FC<Props> = ({setSuccess,updateOf}) => {
                 <label className="grid grid-cols-4 items-center">
                   <p className="text-gray-800 font-bold ">Dialer</p>
                   <select 
-                    name="contact_method" 
-                    id="contact_method"
+                    name="dialer" 
+                    id="dialer"
                     required = {(() => {
                       const findDispo = disposition?.getDispositionTypes.find(e=> e.id)
                       return successDispo.includes(findDispo?.code || "" )
                     })()}
-                    onChange={(e)=> setData({...data, dialer: e.target.value})}
+                    onChange={(e)=> {
+                      if (!Object.values(Dialer).includes(e.target.value as Dialer)) {
+                        dispatch(setServerError(true));
+                      }
+                      setData({...data, dialer: e.target.value as Dialer})
+                    }}
                     className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 block p-2 col-span-3`}
                     >
-                      <option value="">Select Dialer</option>
-                      <option value="issabel">Issabel</option>
-                      <option value="vici">Vici</option>
-                      <option value="inbound">Inbound</option>
+                      <option value={Dialer.NOT}>Select Dialer</option>
+                      <option value={Dialer.ISSABEL}>Issabel</option>
+                      <option value={Dialer.VICI}>Vici</option>
+                      <option value={Dialer.INBOUND}>Inbound</option>
                   </select>
                 </label>
               }

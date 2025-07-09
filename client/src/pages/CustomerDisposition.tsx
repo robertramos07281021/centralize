@@ -3,12 +3,12 @@ import CustomerUpdateForm from "../components/CustomerUpdateForm"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { Navigate, useLocation, useNavigate } from "react-router-dom"
-import SuccessToast from "../components/SuccessToast"
+
 import AccountInfo from "../components/AccountInfo"
 import DispositionForm from "../components/DispositionForm"
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { Search, Success, CustomerRegistered } from "../middleware/types"
-import { setDeselectCustomer, setSelectedCustomer, setServerError } from "../redux/slices/authSlice"
+import { Search, CustomerRegistered } from "../middleware/types"
+import { setDeselectCustomer, setSelectedCustomer, setServerError, setSuccess } from "../redux/slices/authSlice"
 import AgentTimer from "./agent/AgentTimer"
 import DispositionRecords from "../components/DispositionRecords"
 import MyTaskSection from "../components/MyTaskSection"
@@ -102,16 +102,13 @@ const UPDATE_RPC = gql`
 `
 
 const CustomerDisposition = () => {
-  const {userLogged, selectedCustomer, breakValue} = useSelector((state:RootState)=> state.auth)
+  const {userLogged, selectedCustomer, breakValue , success} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const [isRPC, setIsRPC] = useState<boolean>(false)
   const [isUpdate, setIsUpdate] = useState<boolean>(false)
-  const [success, setSuccess] = useState({
-    success: false,
-    message: ""
-  })
+
   
   const [search, setSearch] = useState("")
 
@@ -150,14 +147,14 @@ const CustomerDisposition = () => {
   useEffect(()=> {
     const params = new URLSearchParams(location.search);
     if(params?.get("success")) {
-      setSuccess({
+      dispatch(setSuccess({
         success: true,
         message: "Customer successfully updated"
-      })
+      }))
     }
   },[location.search])
 
-  const [deselectTask,{loading}] = useMutation<{deselectTask:Success}>(DESELECT_TASK,{
+  const [deselectTask,{loading}] = useMutation<{deselectTask:{message: string, success: boolean}}>(DESELECT_TASK,{
     onCompleted: ()=> {
       dispatch(setDeselectCustomer()) 
     },
@@ -321,11 +318,6 @@ const CustomerDisposition = () => {
         isRPCToday || isRPC &&
         <Confirmation {...modalProps}/>
       }
-      
-      {
-        success?.success &&
-        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
-      }
       <div>
         <div className="p-5">
         {
@@ -482,7 +474,7 @@ const CustomerDisposition = () => {
         <AccountInfo/>
         {
           (selectedCustomer.balance > 0 && !selectedCustomer.isRPCToday) &&
-          <DispositionForm setSuccess={(success:boolean,message:string)=> setSuccess({success:success,message:message})} updateOf={()=> setIsUpdate(false)}/>
+          <DispositionForm setSuccess={(success:boolean,message:string)=> dispatch(setSuccess({success:success,message:message}))} updateOf={()=> setIsUpdate(false)}/>
         }
       </div>
       <DispositionRecords/>

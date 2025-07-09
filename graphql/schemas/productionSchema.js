@@ -114,6 +114,21 @@ const productionTypeDefs = gql`
     ytPrevious: Float
   }
 
+  input Targets {
+    daily: String
+    weekly: String
+    monthly: String
+  }
+
+  type Target {
+    daily: String
+    weekly: String
+    monthly: String
+  }
+
+  type 
+
+
   type Query {
     getAgentProductionPerDay:[PerDay]
     getAgentProductionPerMonth:[perMonth]
@@ -123,10 +138,11 @@ const productionTypeDefs = gql`
     getAgentProductions:[AgentProduction]
     agentProduction:MyProduction
     getAgentDispositionRecords(agentID:ID, limit:Int, page:Int, from:String, to:String, search: String):AgentDispo
+    getAgentsTargets:
   }
 
   type Mutation {
-    resetTarget(id:ID,userId:ID):Success
+    setTargets(userId:ID, targets: Targets):Success
     updateProduction(type: String!):Success
     loginToProd(password: String):Login
     lockAgent:Success

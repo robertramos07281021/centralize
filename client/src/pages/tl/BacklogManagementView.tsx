@@ -2,7 +2,7 @@ import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 import { useQuery, gql } from "@apollo/client";
 import {  Users } from "../../middleware/types";
 import {  useEffect, useState } from "react";
-import { FaDownload} from "react-icons/fa6";
+import { FaDownload } from "react-icons/fa6";
 import ReportsView, { Search } from "./ReportsView";
 
 type DispositionType = {
@@ -86,7 +86,7 @@ const BacklogManagementView = () => {
     }
   },[departmentBucket, searchBucket])
 
-  const handleCheckBox= (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCheckBox = (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
     const check = e.target.checked ? [...selectedDisposition, value] : selectedDisposition.filter((d) => d !== value )
     setSelectedDisposition(check)
   }
@@ -95,6 +95,7 @@ const BacklogManagementView = () => {
     setAgentDropdown(!agentDropdown)
     setBucketDropdown(false)
   }
+
   const handleBucketDropdown = ()=> {
     setBucketDropdown(!bucketDropdown)
     setAgentDropdown(false)

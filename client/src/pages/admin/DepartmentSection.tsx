@@ -1,17 +1,9 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import Confirmation from "../../components/Confirmation"
 import { PiNotePencilBold, PiTrashFill } from "react-icons/pi";
-import SuccessToast from "../../components/SuccessToast"
-import { setServerError } from "../../redux/slices/authSlice";
+import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import { useAppDispatch } from "../../redux/store";
-
-type Success = {
-  success: boolean;
-  message: string;
-}
 
 type UserInfo = {
   _id: string;
@@ -93,14 +85,9 @@ const DepartmentSection = () => {
   const {data, refetch } = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
   const dispatch = useAppDispatch()
   const {data:dept, refetch:refetchDept} = useQuery<{getDepts:Department[]}>(DEPARTMENT_QUERY)
-  
   const [name, setName] = useState<string>("")
   const [branch, setBranch] = useState<string>("")
   const [aom, setAom] = useState<string>("")
-  const [success, setSuccess] = useState<Success>({
-    success: false,
-    message: ""
-  })
   const [confirm, setConfirm] = useState<boolean>(false)
   const [required, setRequired] = useState<boolean>(false)
   const [isUpdate,setIsUpdate] = useState<boolean>(false)
@@ -112,8 +99,7 @@ const DepartmentSection = () => {
       _id: "",
       name: "",
     }
-  }) 
-
+  })
 
   const {data:aomUsers} = useQuery<{getAomUser:UserInfo[],}>(AOM_USER)
   // mutations ======================================================
@@ -121,10 +107,10 @@ const DepartmentSection = () => {
     onCompleted: () => {
       refetch();
       refetchDept()
-      setSuccess({
+      dispatch(setSuccess({
         success: true,
         message: "Department successfully created"
-      })
+      }))
       setName("")
       setBranch("")
       setAom("")
@@ -132,10 +118,10 @@ const DepartmentSection = () => {
     onError: (error)=> {
       const errorMessage = error.message
       if (errorMessage?.includes("Duplicate")) {
-        setSuccess({
+        dispatch(setSuccess({
           success: true,
           message: "Department already exists"
-        })
+        }))
         setName("")
         setBranch("")
         setAom("")
@@ -151,10 +137,10 @@ const DepartmentSection = () => {
       refetch();
       setConfirm(false)
       refetchDept();
-      setSuccess({
+      dispatch(setSuccess({
         success: true,
         message: "Department successfully updated"
-      })
+      }))
       setName("")
       setBranch("")
       setAom("")
@@ -172,10 +158,10 @@ const DepartmentSection = () => {
     onError: (error)=> {
       const errorMessage = error.message
       if (errorMessage?.includes("Duplicate")) {
-        setSuccess({
+        dispatch(setSuccess({
           success: true,
           message: "Department already exists"
-        })
+        }))
         setConfirm(false)
         setName("")
         setBranch("")
@@ -190,14 +176,13 @@ const DepartmentSection = () => {
     onCompleted: () => {
       refetch();
       refetchDept();
-      setSuccess({
+      dispatch(setSuccess({
         success: true,
         message: "Department successfully deleted"
-      })
+      }))
     },
     onError: ()=> {
       dispatch(setServerError(true))
-
     }
   })
 
@@ -209,17 +194,24 @@ const DepartmentSection = () => {
     no: () => {}
   })
 
+  const creatingCampaign = useCallback(async()=> {
+    await createDept({variables: { name, branch, aom }});
+  },[createDept,name,branch,aom])
+
+  const updatingCampaign = useCallback(async(dept:Department|null)=> {
+    await updateDept({variables: {id: dept?.id, name, branch, aom}})
+  },[name, branch, aom, updateDept])
+
+
+  const deletingCampaign = useCallback(async(dept:Department|null)=> {
+    await deleteDept({variables: { id: dept?.id } })
+    setConfirm(false)
+  },[name, branch, aom])
+
   const confirmationFunction: Record<string, (dept:Department|null) => Promise<void>> = {
-    CREATE: async() => {
-      await createDept({variables: { name:name, branch:branch, aom:aom }});
-    },
-    UPDATE: async(dept) => {
-      await updateDept({variables: {id: dept?.id, name: name, branch: branch, aom: aom}})
-    },
-    DELETE:async (dept) => {
-      await deleteDept({variables: { id: dept?.id } })
-      setConfirm(false)
-    }
+    CREATE: creatingCampaign,
+    UPDATE: updatingCampaign,
+    DELETE: deletingCampaign
   };
 
   const handleSubmitCreate = (action: "CREATE") => {
@@ -305,10 +297,6 @@ const DepartmentSection = () => {
 
   return (
     <div className="relative">
-      {
-        success?.success &&
-        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
-      }
       <div className="px-20">
           <div className="inline-flex items-center justify-center w-full">
             <hr className="w-full h-1 my-8 bg-gray-200 border-0 rounded-sm dark:bg-gray-700"/>

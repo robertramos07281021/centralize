@@ -81,7 +81,7 @@ const Divition = ({label, current, previous, color }: Divition ) => {
 
 export default function AgentTotalProduction () {
   const {data,refetch} = useQuery<{agentProduction:Production}>(AGENT_PRODUCTION)
-  
+
   const prod = data?.agentProduction;
 
   useEffect(()=> {
@@ -96,12 +96,21 @@ export default function AgentTotalProduction () {
         current={prod?.dtcCurrent || 0}
         color="purple"
       />
-      <Divition 
-        label="Your Target"
-        previous={160000}
-        current={178005}
-        color="teal"
-      />
+      <div className={`rounded-xl border p-2 ${colorsObject["teal"]} shadow shadow-black/20 flex flex-col`}>
+        <h1 className="lg:text-xs 2xl:text-sm font-bold">
+          <span className="lg:text-[0.7em] 2xl:text-xs"></span>
+        </h1>
+        <div className="h-full flex flex-col justify-center">
+          <div className="flex justify-between items-center">
+            <h1 className="flex text-sm items-center gap-1">
+              
+              <span className="text-xs"></span>
+            </h1>
+            <h1 className="text-lg"></h1>
+          </div>
+          <h1 className="text-end text-xs font-bold">Amount</h1>
+        </div>
+      </div>
     </div>
   )
 }

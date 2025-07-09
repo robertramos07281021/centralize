@@ -847,7 +847,7 @@ const productionResolver = {
           function checkDate(number) {
             return number > 9 ? number : `0${number}`;
           }
-          
+
           const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`
           const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${e.bucket.issabelIp}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
      
@@ -988,29 +988,17 @@ const productionResolver = {
     }
   },
   Mutation: {
-    resetTarget: async(_,{id,userId})=> {
+    setTargets: async(_,{userId, targets})=> {
       try {
-        const findUser = await User.findById(userId)
-
+        const {daily, weekly, monthly} = targets 
+        const findUser = await User.findByIdAndUpdate(userId,{$set: {targets: {daily: Number(daily), weekly: Number(weekly), monthly: Number(monthly)}}} )
         if(!findUser) {
           throw new CustomError('User not found',404)
         }
-
-        if(id) {
-          await Production.findByIdAndUpdate(id,{$set: {
-            target_today: findUser.default_target
-          }})
-          return {
-            success: true,
-            message: "Target successfully updated"
-          }
-        } else {
-          return {
-            success: true,
-            message: "Agent is absent"
-          }
-        }
-        
+        return {
+          success: true,
+          message: "Target successfully updated"
+        } 
       } catch (error) {
         throw new CustomError(error.message, 500)           
       }

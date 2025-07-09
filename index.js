@@ -12,7 +12,6 @@ import { useServer } from 'graphql-ws/use/ws';
 import { createServer } from 'http';
 import { WebSocketServer } from 'ws';
 import { makeExecutableSchema } from '@graphql-tools/schema';
-import cookie from 'cookie'
 import userResolvers from "./graphql/resolvers/userResolvers.js";
 import userTypeDefs from "./graphql/schemas/userSchema.js";
 import deptResolver from "./graphql/resolvers/departmentResolver.js";
@@ -183,6 +182,7 @@ useServer({ schema,
   onError: (ctx, msg, errors) => {
     console.error('GraphQL WebSocket error:', errors);
   },
+  keepAlive: 12000,
  }, wsServer);
 
 const startServer = async() => {

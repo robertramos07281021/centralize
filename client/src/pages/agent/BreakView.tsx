@@ -44,44 +44,40 @@ type LoginProd = {
 const BreakView = () => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
-
   const {breakValue,userLogged,breakTimer,start} = useSelector((state:RootState)=> state.auth)
-  
+  const [password, setPassword] = useState<string>('')
+  const [requried, setRequired] = useState<boolean>(false)
+  const [eye, setEye] = useState<boolean>(false)
+
   const [updateProduction] = useMutation<{updateProduction:UpdateProduction}>(UPDATE_PRODUCTION,{
     onCompleted: (res) => {
       dispatch(setBreakValue(BreakEnum.PROD))
       navigate('/agent-dashboard')
       dispatch(setStart(res.updateProduction.start))
+    },
+    onError: ()=> {
+      dispatch(setServerError(true))        
     }
   })
-
-  const [password, setPassword] = useState<string>('')
 
   const [loginToProd] = useMutation<{loginToProd:LoginProd}>(LOGIN_PRODUCTION,{
     onCompleted: async()=> {
       dispatch(setBreakValue(BreakEnum.PROD))
-      try {
-        await updateProduction({variables: {type: BreakEnum.PROD}})
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
+      setRequired(false)
+      await updateProduction({variables: {type: BreakEnum.PROD}})
+    },
+    onError: ()=> {
+      dispatch(setServerError(true))
     }
   })
   
   const OnSubmit = async() => {
     if(password) {
-      try {
-        await loginToProd({variables: {password: password}})
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
+      await loginToProd({variables: {password: password}})
     } else {
-
+      setRequired(true)
     }
   }
-
-
-  const [eye, setEye] = useState<boolean>(false)
 
   useEffect(()=> {
     if(start.length > 0) {
@@ -123,11 +119,7 @@ const BreakView = () => {
   }
 
   const onClickStart = async() => {
-    try {
-      await updateProduction({variables: {type: BreakEnum.PROD}})
-    } catch (error) {
-      dispatch(setServerError(true))
-    }
+    await updateProduction({variables: {type: BreakEnum.PROD}})
   }
 
   const formatTime = (seconds: number): string => {
@@ -156,6 +148,9 @@ const BreakView = () => {
             <h1 className="text-2xl font-bold text-gray-500 ">{formatTime(breakTimer)}</h1>
             <h1 className="text-5xl font-bold text-gray-600 text-shadow-sm text-shadow-black">{content?.name}</h1>
             <div className="border-2 mt-10 flex items-center rounded-md border-slate-500">
+              {
+                requried && <h1 className="text-sm text-red-500">Password is required</h1>
+              }
               <input type={`${eye ? 'text': "password"}`} name="password" id="password" className="text-sm py-1 outline-0 px-2 w-65" placeholder="Enter your password" onChange={(e)=> setPassword(e.target.value)}/>
               {
                 eye ? (

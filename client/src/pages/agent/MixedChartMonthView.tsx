@@ -116,7 +116,7 @@ export default function MixedChartMonthView() {
       x: {
         ticks: {
           font: {
-            size: 8,
+            size: 12,
           },
         },
       },
@@ -125,7 +125,7 @@ export default function MixedChartMonthView() {
         position: 'left',
         ticks: {
           font: {
-            size: 10,
+            size: 12,
           },
         },
       },
@@ -137,7 +137,7 @@ export default function MixedChartMonthView() {
         },
         ticks: {
           font: {
-            size: 10,
+            size: 12,
           },
         },
       },

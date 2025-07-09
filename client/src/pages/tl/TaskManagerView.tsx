@@ -44,7 +44,6 @@ const TaskManagerView = () => {
   const {tasker, taskFilter, selectedDisposition} = useSelector((state:RootState)=> state.auth)
   const {data:DispositionTypes, error:dispoTypeError} = useQuery<{getDispositionTypes:DispositionTypes[]}>(GET_ALL_DISPOSITION_TYPE)
   const {data:bucketData, error:bucketError} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS)
-
   const [bucketSelect, setBucketSelect] = useState<keyof typeof bucketObject | "">("")
 
   useEffect(()=> {
@@ -58,13 +57,12 @@ const TaskManagerView = () => {
     return Object.fromEntries(tlBuckets.map(e=> [e.name, e.id]))
   },[bucketData])
 
-
   useEffect(()=> {
     dispatch(setSelectedGroup(""))
     dispatch(setAgent(""))
   },[tasker,dispatch])
 
-  const handleCheckBox= (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCheckBox = (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
     const dispositions = selectedDisposition || [];
     if (e.target.checked) {
       dispatch(setSelectedDisposition([...dispositions, value]));

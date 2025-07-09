@@ -1,10 +1,10 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { gql, useMutation, useQuery } from "@apollo/client"
-import {  useRef, useState } from "react"
-import { Success } from "../../middleware/types"
+import {  useCallback, useRef, useState } from "react"
 import { PiNotePencilBold, PiTrashFill  } from "react-icons/pi";
 import Confirmation from "../../components/Confirmation"
-import SuccessToast from "../../components/SuccessToast"
+import { useAppDispatch } from "../../redux/store";
+import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 
 
 const BRANCH_QUERY = gql`
@@ -45,97 +45,105 @@ type Branch = {
 const BranchSection = () => {
 
   const {data,refetch} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
-
-  const [createBranch] = useMutation(CREATEBRANCH,{
-    onCompleted: async() => {
-      refetch();
-      setSuccess({
-        success: true,
-        message: "Branch successfully created"
-      })
-      setName("")
-    },
-  })
-
-  const [updateBranch] = useMutation(UPDATEBRANCH, {
-    onCompleted: () => {
-      refetch();
-      setSuccess({
-        success: true,
-        message: "Branch successfully updated"
-      })
-      setName("")
-      setBranchToUpdate(null)
-     
-    },
-  })
-  const [deleteBranch] = useMutation(DELETEBRANCH, {
-    onCompleted: () => {
-      refetch();
-      setSuccess({
-        success: true,
-        message: "Branch successfully deleted"
-      })
-      setName("")
-    },
-  })
+  const dispatch = useAppDispatch()
 
   const form = useRef<HTMLFormElement | null>(null)
   const [name, setName] = useState<string>("")
   const [isUpdate,setIsUpdate] = useState<boolean>(false)
-  const [success, setSuccess] = useState<Success | null>({
-    success: false,
-    message: ""
-  })
   const [required, setRequired] = useState<boolean>(false)
   const [confirm, setConfirm] = useState<boolean>(false)
   const [branchToUpdate, setBranchToUpdate] = useState<Branch | null>(null)
 
 
-  const confirmationFunction: Record<string, (branch?:Branch) => Promise<void>> = {
-    CREATE: async() => {
-      try {
-        await createBranch({variables: { name }});
-      } catch (error:any) {
-        const errorMessage = error?.graphQLErrors?.[0]?.message;
-        if (errorMessage?.includes("E11000")) {
-          setSuccess({
-            success: true,
-            message: "Branch already exists"
-          })
-          setName("")
-          setConfirm(false)
-        }
-      }
+  const [createBranch] = useMutation(CREATEBRANCH,{
+    onCompleted: async() => {
+      refetch();
+      dispatch(setSuccess({
+        success: true,
+        message: "Branch successfully created"
+      }))
+      setName("")
     },
-    UPDATE: async() => {
-      try {
-        await updateBranch({variables: {id: branchToUpdate?.id, name: name}})
-      } catch (error:any) {
-        const errorMessage = error?.graphQLErrors?.[0]?.message;
-        if (errorMessage?.includes("E11000")) {
-          setSuccess({
-            success: true,
-            message: "Branch already exists"
-          })
-          setConfirm(false)
-        }
-      }
-    },
-    DELETE:async (branch?:Branch) => {
-      if(!branch) return 
-      try {
-        await deleteBranch({variables: { id: branch?.id } })
-        setBranchToUpdate(null)
-      } catch (error) {
-        console.log(error)
+    onError: (error) => {
+      const errorMessage = error.message;
+      if (errorMessage?.includes("E11000")) {
+        dispatch(setSuccess({
+          success: true,
+          message: "Branch already exists"
+        }))
+        setName("")
+        setConfirm(false)
+      } else {
+        dispatch(setServerError(true))
       }
     }
+  })
+
+  const [updateBranch] = useMutation(UPDATEBRANCH, {
+    onCompleted: () => {
+      refetch();
+      dispatch(setSuccess({
+        success: true,
+        message: "Branch successfully updated"
+      }))
+      setName("")
+      setIsUpdate(false)
+      setBranchToUpdate(null)
+     
+    },
+    onError: (error) => {
+    const errorMessage = error.message;
+      if (errorMessage?.includes("E11000")) {
+        dispatch(setSuccess({
+          success: true,
+          message: "Branch already exists"
+        }))
+        setConfirm(false)
+      } else {
+        dispatch(setServerError(true))
+      }
+    }
+  })
+
+  const [deleteBranch] = useMutation(DELETEBRANCH, {
+    onCompleted: () => {
+      refetch();
+      dispatch(setSuccess({
+        success: true,
+        message: "Branch successfully deleted"
+      }))
+      setName("")
+    },
+    onError: () => {
+      dispatch(setServerError(true))
+    }
+  })
+
+
+  const creatingBranch = useCallback(async()=> {
+    await createBranch({variables: { name }});
+  },[createBranch, name])
+
+  const updatingBranch = useCallback(async()=> {
+      await updateBranch({variables: {id: branchToUpdate?.id, name}})
+
+  },[branchToUpdate, name])
+
+  const deletingBranch = useCallback(async(branch?:Branch)=> {
+    if (!branch) return;
+    await deleteBranch({variables: { id: branch.id } })
+    setBranchToUpdate(null)
+  },[deleteBranch, setBranchToUpdate])
+
+  const confirmationFunction: Record<string, (branch?:Branch) => Promise<void>> = {
+    CREATE: creatingBranch,
+    UPDATE: updatingBranch,
+    DELETE: deletingBranch
   };
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" | "LOGOUT",
+    toggle: "CREATE" as "CREATE" | "UPDATE" | "DELETE" ,
     yes: () => {},
     no: () => {}
   })
@@ -177,10 +185,6 @@ const BranchSection = () => {
 
   return (
     <div className="relative">
-      {
-        success?.success &&
-        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
-      }
       <div className="px-20">
         <div className="inline-flex items-center justify-center w-full">
             <hr className="w-full h-1 my-8 bg-gray-200 border-0 rounded-sm dark:bg-gray-700"/>

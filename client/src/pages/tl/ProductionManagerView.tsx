@@ -21,8 +21,8 @@ const BUCKETS = gql`
       name
     }
   }
-
 `
+
 enum Status {
   all = "all",
   active = "active",

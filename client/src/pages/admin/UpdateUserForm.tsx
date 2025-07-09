@@ -1,14 +1,14 @@
 
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { useEffect, useRef, useState } from "react"
-import { Success, Users } from "../../middleware/types"
+import { useEffect, useMemo, useRef, useState } from "react"
+import { Users } from "../../middleware/types"
 import Confirmation from "../../components/Confirmation"
 import { useLocation, useNavigate } from "react-router-dom"
-import SuccessToast from "../../components/SuccessToast"
+
 import { MdKeyboardArrowDown } from "react-icons/md";
 import UserOptionSettings from "./UserOptionSettings"
 import { useAppDispatch } from "../../redux/store"
-import { setServerError } from "../../redux/slices/authSlice"
+import { setServerError, setSuccess } from "../../redux/slices/authSlice"
 
 
 type modalProps = {
@@ -197,14 +197,11 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const validForCampaignAndBucket = ["AGENT", "TL", "MIS"]
-  const [branchObject, setBranchObject] = useState<{[key:string]:string}>({}) // id to name
-  const [objectBranch, setObjectbranch] = useState<{[key:string]:string}>({})// name to id
+
   const {data:branchesData} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
   const [isUpdate, setIsUpdate] = useState(false)
   const [required, setRequired] = useState(false)
   const [confirm, setConfirm] = useState(false)
-  const [dept, setDept] = useState<{[key:string]:string}>({})
-  const [bucketObject,setBucketObject] = useState<{[key:string]:string}>({})
   const [selectionDept, setSelectionDept] = useState<boolean>(false)
   const [selectionBucket,setSelectionBucket] = useState<boolean>(false)
   type UserType = "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" ;
@@ -215,11 +212,6 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   
   const safeType = isValidUserType(state?.type) ? state.type : "AGENT";
   
-  const [success, setSuccess] = useState<Success | null>({
-    success: false,
-    message: ""
-  })
-
   const [check, setCheck] = useState<boolean>(state?.active)
 
   const [data, setData] = useState<{
@@ -240,6 +232,12 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     account_type: state?.account_type
   })
   
+
+  const branchObject:{[key:string]:string} = useMemo(()=> {
+    const branchArray = branchesData?.getBranches || []
+    return Object.fromEntries(branchArray.map((ba)=> [ba.id, ba.name]))
+  },[branchesData])
+
   const {data:branchDeptData, refetch:branchDeptRefetch} = useQuery<{getBranchDept:Dept[]}>(
     BRANCH_DEPARTMENT_QUERY, 
     {
@@ -251,48 +249,33 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     variables: {dept: data.departments},
   })
 
-  useEffect(()=> {
-    if(branchDeptData) {
-      const newObject:{[key:string]:string} = {}
-      branchDeptData.getBranchDept.map((d)=> {
-        newObject[d.name.toString()] = d.id
-      })
-      setDept(newObject)
-    }
-    if(branchesData) {
-      const newObject:{[key:string]:string} = {}
-      const objectNew:{[key:string]:string} = {}
-      
-      branchesData.getBranches.map((b)=> {
-        newObject[b.id] = b.name
-        objectNew[b.name] = b.id
-      })
-      setObjectbranch(objectNew)
-      setBranchObject(newObject)
-    }
+  const dept:{[key:string]:string} = useMemo(()=> {
+    const deptArray = branchDeptData?.getBranchDept || []
+    return Object.fromEntries(deptArray.map((da)=> [da.name, da.id]))
+  },[branchDeptData])
 
-    if(deptBucket){
-      const newObject:{[key:string]:string} = {}
-      deptBucket.getBuckets.map(e=> {
-        e.buckets.map((b)=> 
-          newObject[b.name] = b.id
-        )
-      })
-      setBucketObject(newObject)
-    }
+  const objectBranch:{[key:string]:string} = useMemo(()=> {
+    const branchArray = branchesData?.getBranches || []
+    return Object.fromEntries(branchArray.map((ba)=> [ba.name, ba.id]))
+  },[branchesData])
 
 
-  },[branchDeptData,branchesData, deptBucket])
+  const bucketObject:{[key:string]:string} = useMemo(()=> {
+    const bucketArray = deptBucket?.getBuckets || []
+    return Object.fromEntries(bucketArray.flatMap((ba)=> ba.buckets.map(e => [e.name, e.id])))
+  },[deptBucket])
+
+  console.log(bucketObject)
 
 
   // ================ mutations ===================================
   const [updateUser] = useMutation(UPDATE_USER, {
     onCompleted: (res) => {
       navigate(location.pathname, { state: { ...res.updateUser.user, newKey: "newKey" } });
-      setSuccess({
+      dispatch(setSuccess({
         success: res.updateUser.success,
         message: res.updateUser.message
-      })
+      }))
       
       setIsUpdate(false)
     },
@@ -304,10 +287,10 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   const [resetPassword] = useMutation(RESET_PASSWORD, {
     onCompleted: (res) => {
       navigate(location.pathname, { state: { ...state, newKey: "newKey" } });
-      setSuccess({
+      dispatch(setSuccess({
         success: res.resetPassword.success,
         message: res.resetPassword.message
-      })
+      }))
     },
     onError:() => {
       dispatch(setServerError(true))
@@ -317,10 +300,10 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   const [updateActiveStatus] = useMutation(STATUS_UPDATE,{
     onCompleted: (res) => {
       navigate(location.pathname, { state: { ...res.updateActiveStatus.user, newKey: "newKey" } });
-      setSuccess({
+      dispatch(setSuccess({
         success: res.updateActiveStatus.success,
         message: res.updateActiveStatus.message
-      })
+      }))
     },
     onError:  ()=> {
       dispatch(setServerError(true))
@@ -331,10 +314,10 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   const [unlockUser] = useMutation(UNLOCK_USER, {
     onCompleted: (res) => {
       navigate(location.pathname, {state: {...res.unlockUser.user, newKey: 'newKey'}})
-      setSuccess({
+      dispatch(setSuccess({
         success: res.unlockUser.success,
         message: res.unlockUser.message
-      })
+      }))
     },
     onError:() => {
       dispatch(setServerError(true))
@@ -344,10 +327,10 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   const [adminLogout] = useMutation(LOGOUT_USER, {
     onCompleted: (res)=> {
       navigate(location.pathname, {state: {...res.adminLogout.user, newKey: "newKey"}})
-      setSuccess({
+      dispatch(setSuccess({
         success: res.adminLogout.success,
         message: res.adminLogout.message
-      })
+      }))
     },
     onError:() => {
       dispatch(setServerError(true))
@@ -376,6 +359,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       account_type: state.account_type
     })
   }
+
+
 
   const submitValue: Record<string, () => Promise<void>>  = {
     UPDATE: async() => {
@@ -456,10 +441,10 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   }
   const handleCheckedDept = (e:React.ChangeEvent<HTMLInputElement>, value: string)=> {
     const check = e.target.checked ? [...data.departments, dept[value]] : data.departments.filter((d) => d !== dept[value] )
-    setData({...data, departments: check})
+    setData({...data, departments: check,  buckets: []})
   }
   const handleCheckedBucket = (e:React.ChangeEvent<HTMLInputElement>, value: string)=> {
-    const check = e.target.checked ? [...data.buckets, bucketObject[value]] : data.buckets.filter((d) => d !== bucketObject[value] )
+    const check = e.target.checked ? [...data.buckets, bucketObject[value]] : data.buckets.filter((d) => d !== bucketObject[value])
     setData({...data, buckets: check})
   }
   
@@ -473,10 +458,6 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
 
   return (
     <>
-      {
-        success?.success &&
-        (<SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>)
-      }
       <div className="px-5 w-full grid grid-cols-2 gap-10 col-span-2" onMouseDown={(e)=> 
         {
           if(!campaignDiv.current?.contains(e.target as Node)) {

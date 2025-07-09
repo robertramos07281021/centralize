@@ -6,12 +6,13 @@ import Confirmation from "./Confirmation";
 import Loading from "../pages/Loading";
 import { Link, useNavigate } from "react-router-dom";
 import { RootState, useAppDispatch } from "../redux/store";
-import {  setBreakValue, setDeselectCustomer, setLogout, setServerError, setStart } from "../redux/slices/authSlice";
+import {  setBreakValue, setDeselectCustomer, setLogout, setServerError, setStart, setSuccess } from "../redux/slices/authSlice";
 import NavbarExtn from "./NavbarExtn";
 import { useSelector } from "react-redux";
 import IdleAutoLogout from "./IdleAutoLogout";
 import { accountsNavbar, BreakEnum, breaks } from "../middleware/exports";
 import ServerError from "../pages/ServerError";
+import SuccessToast from "./SuccessToast";
 
 type UserInfo = {
   _id: string;
@@ -106,7 +107,7 @@ const LOCK_AGENT = gql`
 const Navbar = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const {userLogged,selectedCustomer,breakValue, serverError} = useSelector((state:RootState)=> state.auth)
+  const {userLogged,selectedCustomer,breakValue, serverError, success} = useSelector((state:RootState)=> state.auth)
   const modalRef = useRef<HTMLDivElement>(null)
   const {error, data} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
   const [poPupUser, setPopUpUser] = useState<boolean>(false) 
@@ -138,8 +139,6 @@ const Navbar = () => {
     }
   })
 
- 
- 
   const [logout, {loading}] = useMutation(LOGOUT,{
     onCompleted: () => {
       dispatch(setLogout())
@@ -193,12 +192,12 @@ const Navbar = () => {
     }
   })
 
-  const forceLogout = async () => {
+  const forceLogout = useCallback(async()=> {
     if (selectedCustomer._id) {
       await deselectTask({ variables: { id: selectedCustomer._id, user_id: userLogged._id } });
     }
     await logoutToPersist({ variables: { id: userLogged._id } });
-  };
+  },[deselectTask, logoutToPersist, selectedCustomer, userLogged])
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {
@@ -280,8 +279,6 @@ const Navbar = () => {
     })
     return () => clearTimeout(timer)
   },[data])
- 
-
 
   if(loading || logoutToPEristsLoading) return <Loading/>
 
@@ -290,6 +287,10 @@ const Navbar = () => {
       {
         serverError &&
         <ServerError/>
+      }
+      {
+        success.success &&
+        <SuccessToast successObject={success || null} close={()=> dispatch(setSuccess({success:false, message:""}))}/>
       }
       <div className="sticky top-0 z-40 print:hidden" >
         <div className="p-2 bg-blue-500 flex justify-between items-center ">
@@ -311,7 +312,6 @@ const Navbar = () => {
                   accountsNavbar[userLogged.type].map((e,index)=> {
                     const navTo = (userLogged.type === "AGENT" && breakValue !== BreakEnum.PROD) ? '/break-view' : e.link
 
-                    
                     return (
                     <Link key={index} to={navTo} className={`${index === 0 && 'rounded-t-lg'} grow px-2 border-b border-slate-200 flex items-center hover:text-white hover:bg-slate-500 duration-200 ease-in-out cursor-pointer py-2`} onClick={()=> setPopUpUser(false) }>
                       {e.name === "Customer Interaction Panel" ? "CIP" : e.name}

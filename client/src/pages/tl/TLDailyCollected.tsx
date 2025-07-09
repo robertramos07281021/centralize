@@ -38,10 +38,8 @@ const TL_BUCKET = gql`
 
 
 const TLDailyCollected = () => {
-
   const dispatch = useAppDispatch()
   const {data:tlBucketData,error} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
-  
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = tlBucketData?.getDeptBucket || []
@@ -54,7 +52,6 @@ const TLDailyCollected = () => {
     if(error || tlDailyCollectedError) {
       dispatch(setServerError(true))
     }
-      
   },[error, tlDailyCollectedError, dispatch])
 
   return (

@@ -73,7 +73,6 @@ const TLAgentProduction = () => {
   const {data:agentDailyProd, error:addError} = useQuery<{agentDispoDaily:AgentDailies[]}>(AGENT_DAILY_PROD)
   const dispatch = useAppDispatch()
   const {data:agentBucketData, error:abdError} = useQuery<{findAgents:Agent[]}>(GET_DEPARTMENT_AGENT)
-
   const {data:tlBucketData, error:tlbdError} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
 
   useEffect(()=> {

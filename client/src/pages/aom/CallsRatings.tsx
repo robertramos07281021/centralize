@@ -34,9 +34,9 @@ const CallsRatings = () => {
 
   const {data:callfilesData} = useQuery<{monthlyDetails:Callfile[]}>(CALLFILE) 
 
-
-  
   console.log(callfilesData)
+  
+
   const options:ChartOptions<'bar'> = {
 
     plugins: {

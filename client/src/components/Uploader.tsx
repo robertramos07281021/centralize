@@ -2,15 +2,9 @@ import { useCallback, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import { gql, useMutation } from "@apollo/client";
 import Confirmation from "../components/Confirmation";
-import SuccessToast from "./SuccessToast";
 import Loading from "../pages/Loading";
 import { useAppDispatch } from "../redux/store";
-import { setServerError } from "../redux/slices/authSlice";
-
-type Success = {
-  success: boolean;
-  message: string;
-}
+import { setServerError, setSuccess } from "../redux/slices/authSlice";
 
 type Data = {
   address: string
@@ -64,13 +58,7 @@ type modalProps = {
 }
 
 const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,canUpload}) => {
-  const [success, setSuccess] = useState<Success>({
-    success: false,
-    message: ""
-  })
-  
   const dispatch = useAppDispatch()
-
   const [excelData, setExcelData] = useState<Data[]>([]);
   const [file, setFile] = useState<File[]>([]);
  
@@ -99,7 +87,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           contact_3: String(row.contact_3)
         }))
 
-
         setExcelData(dateConverting.slice(0,dateConverting.length)); 
       };
       reader.readAsBinaryString(file);
@@ -123,10 +110,10 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
   
   const [createCustomer,{loading}] = useMutation(CREATE_CUSTOMER, {
     onCompleted: async() => {
-      setSuccess({
+      dispatch(setSuccess({
         success: true,
         message: "File successfully uploaded"
-      })
+      }))
       setExcelData([])
       setFile([])
       onSuccess()
@@ -167,6 +154,13 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
 
   const [required, setRequired] = useState(false)
   
+  const creatingCustomer = useCallback(async()=> {
+    await createCustomer({variables: {input:excelData, callfile: file[0].name.split('.')[0], bucket: bucket}});
+    setConfirm(false)
+  },[createCustomer, excelData, file, setConfirm, bucket])
+
+
+
   const submitUpload = () => {
     if(file.length === 0 || !bucket) {
       if(file.length === 0) {
@@ -186,10 +180,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       setModalProps({
         message: "You uploaded a file?",
         toggle: "UPLOADED",
-        yes: async() => {
-          await createCustomer({variables: {input:excelData, callfile: file[0].name.split('.')[0], bucket: bucket}});
-          setConfirm(false);
-        },
+        yes: creatingCustomer,
         no: () => {setConfirm(false)}
       })
     }
@@ -199,10 +190,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
   
   return (
     <>
-      {
-        success?.success &&
-        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
-      }
       {
         canUpload &&
         <div className={`print:hidden flex gap-2 items-center ${width}`}>

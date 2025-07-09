@@ -2,17 +2,10 @@ import { useMutation, useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { useEffect, useMemo, useState } from "react";
 import { FaPlusCircle, FaMinusCircle, FaEdit  } from "react-icons/fa";
-import SuccessToast from "../../components/SuccessToast";
 import Confirmation from "../../components/Confirmation";
-import { setSelectedGroup, setServerError } from "../../redux/slices/authSlice";
+import { setSelectedGroup, setServerError, setSuccess } from "../../redux/slices/authSlice";
 import { RootState, useAppDispatch } from "../../redux/store";
 import { useSelector } from "react-redux";
-
-
-type Success = {
-  success: boolean,
-  message: string
-}
 
 type Member = {
   _id: string
@@ -34,9 +27,6 @@ type DeptAgent = {
   group: string
   buckets: string[]
 }
-
-
-
 
 const CREATE_GROUP = gql`
   mutation CreateGroup($name: String!, $description: String!) {
@@ -65,7 +55,6 @@ const UPDATE_GROUP = gql`
 
 `
 
-
 const DEPT_GROUP = gql`
   query Query {
     findGroup {
@@ -93,6 +82,7 @@ const DEPT_AGENT = gql`
     }
   }
 `
+
 const ADD_GROUP_MEMBER = gql`
   mutation AddGroupMember($addGroupMemberId: ID!, $member: ID!) {
     addGroupMember(id: $addGroupMemberId, member: $member) {
@@ -130,10 +120,6 @@ const GET_DEPT_BUCKETS = gql`
 const GroupSection = () => {
   const dispatch = useAppDispatch()
   const {selectedGroup} = useSelector((state:RootState)=> state.auth)
-  const [success, setSuccess] = useState<Success>({
-    success:false,
-    message: ""
-  })
   const [name, setName] = useState<string>("")
   const [description, setDescription] = useState<string>("")
   const [confirm, setConfirm] = useState<boolean>(false)
@@ -183,18 +169,18 @@ const GroupSection = () => {
       setDescription("")
       setConfirm(false)
       deptGroupDataRefetch()
-      setSuccess({
+      dispatch(setSuccess({
         success: result.createGroup.success,
         message: result.createGroup.message
-      })
+      }))
     },
     onError: (error) => {
       const errorMessage = error.message;
       if (errorMessage?.includes("E11000")) {
-        setSuccess({
+        dispatch(setSuccess({
           success: true,
           message: "Group name already exists"
-        })
+        }))
         setConfirm(false)
       } else {
         dispatch(setServerError(true))
@@ -210,18 +196,18 @@ const GroupSection = () => {
       dispatch(setSelectedGroup(""))
       deptGroupDataRefetch()
       setUpdateGroup(false)
-      setSuccess({
+      dispatch(setSuccess({
         success: result.updateGroup.success,
         message: result.updateGroup.message
-      })
+      }))
     },
     onError: (error)=> {
       const errorMessage = error.message;
       if (errorMessage?.includes("E11000")) {
-        setSuccess({
+        dispatch(setSuccess({
           success: true,
           message: "Group name already exists"
-        })
+        }))
         setConfirm(false)
       } else {
         dispatch(setServerError(true))
@@ -238,10 +224,10 @@ const GroupSection = () => {
       dispatch(setSelectedGroup(""))
       setConfirm(false)
       setAddMember(false)
-      setSuccess({
+      dispatch(setSuccess({
         success: result.deleteGroup.success,
         message: result.deleteGroup.message
-      })
+      }))
     },
     onError: ()=> {
       dispatch(setServerError(true))
@@ -313,7 +299,7 @@ const GroupSection = () => {
 
   const handleDeleteMember = async(memberId:string) => {
     await deleteGroupMember({variables: {id: dgdObject[selectedGroup], member: memberId}})
-  } 
+  }
 
   const handleClickDeleteGroup = () => {
     setConfirm(true)  
@@ -341,15 +327,11 @@ const GroupSection = () => {
         },
         no: ()=> {setConfirm(false)}
       })
-
     }
   }
+
   return (
     <>
-      {
-        success?.success &&
-        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
-      }
       <div className=" flex justify-end w-full gap-5 items-end flex-col">
         <div className="flex gap-5">
           <input 
@@ -370,15 +352,14 @@ const GroupSection = () => {
             className="border border-slate-300 bg-slate-50 rounded-md lg:px-1.5 lg:py-1  2xl:py-1.5 2xl:px-2 lg:w-70 2xl:w-96 2xl:text-xs lg:text-[0.6em]"
             onChange={(e)=> setDescription(e.target.value)}
             placeholder="Enter Group Description..."/>
-            {
-              !updatedGroup ? 
-              <button type="button" className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs px-5 h-10 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800" onClick={onSubmitCreateGroup}>Add Group</button> : 
-              <div className="flex gap-4 ">
-
-                <button type="button" className="focus:outline-none text-white bg-orange-700 hover:bg-orange-800 focus:ring-4 focus:ring-orange-300 font-medium rounded-lg text-xs px-5 h-10 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-green-800" onClick={handleClickUpdateGroupSubmit}>Submit</button>  
-                <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={()=> setUpdateGroup(false)}>Cancel</button>  
-              </div>
-            }
+          {
+            !updatedGroup ? 
+            <button type="button" className="focus:outline-none text-white bg-green-700 hover:bg-green-800 focus:ring-4 focus:ring-green-300 font-medium rounded-lg text-xs px-5 h-10 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800" onClick={onSubmitCreateGroup}>Add Group</button> : 
+            <div className="flex gap-4 ">
+              <button type="button" className="focus:outline-none text-white bg-orange-700 hover:bg-orange-800 focus:ring-4 focus:ring-orange-300 font-medium rounded-lg text-xs px-5 h-10 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-green-800" onClick={handleClickUpdateGroupSubmit}>Submit</button>  
+              <button type="button" className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700" onClick={()=> setUpdateGroup(false)}>Cancel</button>  
+            </div>
+          }
         </div>
         <div className="flex items-center gap-5 relative lg:text-[0.6em] 2xl:text-xs">
           {

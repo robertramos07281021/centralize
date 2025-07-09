@@ -1,17 +1,16 @@
 import { useApolloClient, useMutation, useQuery, useSubscription } from "@apollo/client"
 import gql from "graphql-tag"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { GoDotFill } from "react-icons/go";
-import { setServerError } from "../../redux/slices/authSlice";
+import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import { useDispatch, useSelector } from "react-redux";
-import SuccessToast from "../../components/SuccessToast";
 import { MdRecordVoiceOver } from "react-icons/md";
 import { Link } from "react-router-dom";
 import { BsFillUnlockFill, BsFillLockFill, BsFillKeyFill } from "react-icons/bs";
 import AuthenticationPass from "../../components/AuthenticationPass";
 import { RootState } from "../../redux/store";
 import { LuSettings } from "react-icons/lu";
-
+import SetTargetsModal from "./SetTargetsModal";
 
 const TL_AGENT = gql`
   query findDeptAgents {
@@ -94,15 +93,6 @@ type AgentProductions = {
   prod_history: ProdHistory[]
 }
 
-const RESET_TARGET = gql`
-  mutation resetTarget($id: ID, $userId: ID) {
-    resetTarget(id: $id, userId: $userId) {
-      success
-      message
-    }
-  }
-`
-
 const UNLOCK_USER = gql`
   mutation unlockUser($id: ID!) {
     unlockUser(id: $id) {
@@ -121,22 +111,16 @@ const SOMETHING_LOCK = gql`
   }
 `
 
+
 const AgentView = () => {
   const {userLogged} = useSelector((state:RootState) => state.auth)
   const client = useApolloClient()
   const dispatch = useDispatch()
-  const {data:tlAgentData} = useQuery<{findDeptAgents:TLAgent[]}>(TL_AGENT)
+  const {data:tlAgentData, refetch} = useQuery<{findDeptAgents:TLAgent[]}>(TL_AGENT)
 
 
-
-  const {data: agentProdData} = useQuery<{getAgentProductions:AgentProductions[]}>(AGENT_PRODUCTION)
+  const {data: agentProdData, refetch:agentProdDataRefetch} = useQuery<{getAgentProductions:AgentProductions[]}>(AGENT_PRODUCTION)
   const [agentProduction,setAgentProduction] = useState<TLAgent[]>([])
-  const [success, setSuccess] = useState<{success:boolean, message:string}>({
-    success: false,
-    message: ""
-  })
-
-    console.log(tlAgentData)
   useSubscription<{somethingOnAgentAccount:{buckets:string[],message: string}}>(SOMETHING_LOCK,{
     onData: ({data}) => {
       if(data) {
@@ -164,30 +148,13 @@ const AgentView = () => {
     }
   },[search,tlAgentData])
   
-  const [resetTarget] = useMutation<{resetTarget:{success:boolean, message: string}}>(RESET_TARGET,{
-    onCompleted: (res) => {
-      setIsAuthorize(false)
-      setSuccess({
-        success: res.resetTarget.success,
-        message: res.resetTarget.message
-      })
-      client.refetchQueries({
-        include: ['findDeptAgents','getAgentProductions']
-      })
-    },
-    onError: () => {
-      dispatch(setServerError(true))
-    }
-  })
-
-  
   const [unlockUser] = useMutation<{unlockUser:{success: boolean,message: string}}>(UNLOCK_USER, {
     onCompleted: (res) => {
       setIsAuthorize(false)
-      setSuccess({
+      dispatch(setSuccess({
         success: res.unlockUser.success,
         message: res.unlockUser.message 
-      })
+      }))
       client.refetchQueries({
         include: ['findDeptAgents','getAgentProductions']
       })
@@ -196,7 +163,6 @@ const AgentView = () => {
       dispatch(setServerError(true))
     }
   })
-
 
   const [authentication, setAuthentication] = useState({
     yesMessage: "",
@@ -212,15 +178,20 @@ const AgentView = () => {
     UNLOCK = "UNLOCK"
   }
 
-  const [userToUpdateTargets, setUserToUpdateTargets] = useState<string>('')
+  const [userToUpdateTargets, setUserToUpdateTargets] = useState<string | null>(null)
+  const [updateSetTargets, setUpdateSetTarget] = useState<boolean>(false)
+
+  const unlockingUser = useCallback(async(userId: string | null)=> {
+    await unlockUser({variables: {id:userId}})
+  },[unlockUser])
 
   const eventType:Record<keyof typeof ButtonType, (userId: string | null)=> Promise<void>> = {
     SET : async(userId) => {
-      await resetTarget({variables: { userId}})
+      setUserToUpdateTargets(userId)
+      setUpdateSetTarget(true)
+      setIsAuthorize(false)
     },
-    UNLOCK : async(userId) => {
-      await unlockUser({variables: {id:userId}})
-    }
+    UNLOCK : unlockingUser
   }
 
   const onClickAction = (userId:string | null,lock: boolean,  eventMethod:keyof typeof ButtonType, attempt: number) => {
@@ -244,9 +215,19 @@ const AgentView = () => {
   return (
     <>
       {
-        success?.success &&
-        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
+        updateSetTargets &&
+        <SetTargetsModal agentToUpdate={userToUpdateTargets || null} cancel={()=> {setUpdateSetTarget(false); setUserToUpdateTargets(null)}} success={(message, success)=> {
+          setSuccess({
+            success,
+            message
+          })
+          refetch()
+          agentProdDataRefetch()
+          setUserToUpdateTargets(null)
+          setUpdateSetTarget(false)
+        }}/>
       }
+      
       <div className="h-full w-full flex flex-col overflow-hidden p-2">
         <h1 className="p-2 text-xl font-medium text-gray-500">Agent Production</h1>
         <div className="flex justify-center">

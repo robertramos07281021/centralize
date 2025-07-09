@@ -1,12 +1,11 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { gql, useMutation, useQuery } from "@apollo/client"
-import {  Department, Success } from "../../middleware/types"
-import { useEffect, useMemo, useState } from "react";
+import {  Department } from "../../middleware/types"
+import { useCallback, useEffect, useMemo, useState } from "react";
 import Confirmation from "../../components/Confirmation";
 import { PiNotePencilBold, PiTrashFill  } from "react-icons/pi";
-import SuccessToast from "../../components/SuccessToast";
 import { useAppDispatch } from "../../redux/store";
-import { setServerError } from "../../redux/slices/authSlice";
+import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 
 type Bucket = {
   name: string
@@ -69,12 +68,6 @@ const BucketSection = () => {
   const campaignOnly = dept?.getDepts.filter((d)=> d.name!== "admin")
   const newDepts = useMemo(() => [...new Set(campaignOnly?.map((d) => d.id))], [campaignOnly])
   const [deptSelected,setDeptSelected] = useState<string | null>(null)
-  const [success, setSuccess] = useState<Success>({
-    success: false,
-    message: ""
-  })
-  // const [deptObject, setDeptObject] = useState<{[key:string]:string}>({})
-
   const deptObject:{[key:string]:string} = useMemo(()=> {
     const deptArray = dept?.getDepts || []
     return Object.fromEntries(deptArray.map((da)=> [da.id, da.name]))
@@ -82,8 +75,6 @@ const BucketSection = () => {
 
   const [issabelIp, setIssabelIp] = useState<string>("")
   const [viciIp, setViciIp] = useState<string>("")
-
-
   const [confirm,setConfirm] = useState<boolean>(false)
   const [bucket, setBucket] = useState<string>("")
 
@@ -127,25 +118,23 @@ const BucketSection = () => {
     onCompleted: async(res) => {
       refetch();
       bucketRefetch();
-      setSuccess({
+      dispatch(setSuccess({
         success: res.createBucket.success,
         message: res.createBucket.message
-      })
+      }))
       setBucket("")
       setViciIp("")
       setIssabelIp("")
     },
     onError: (error) => {
-    const errorMessage = error?.message
+      const errorMessage = error?.message
       if (errorMessage?.includes("Duplicate")) {
         setSuccess({
           success: true,
           message: "Bucket already exists"
         })
         setBucket("")
-      }
-
-      if(errorMessage?.includes('Response')) {
+      } else {
         dispatch(setServerError(true))
       }
     }
@@ -155,10 +144,10 @@ const BucketSection = () => {
     onCompleted: (res) => {
       refetch();
       bucketRefetch();
-      setSuccess({
+      dispatch(setSuccess({
         success: res.updateBucket.success,
         message: res.updateBucket.message
-      })
+      }))
       setBucket("")
       setIsUpdate(false)
       setBucketToUpdate({
@@ -172,17 +161,14 @@ const BucketSection = () => {
       setIssabelIp("")
     },
     onError: (error) => {
-    
       const errorMessage = error?.message;
-      console.log(errorMessage)
       if (errorMessage?.includes("Duplicate")) {
-        setSuccess({
+        dispatch(setSuccess({
           success: true,
           message: "Bucket already exists"
-        })
+        }))
         setConfirm(false)
-      }
-      if(errorMessage?.includes('Response')) {
+      } else {
         dispatch(setServerError(true))
       }
     }
@@ -192,10 +178,10 @@ const BucketSection = () => {
     onCompleted: (res) => {
       refetch();
       bucketRefetch();
-      setSuccess({
+      dispatch(setSuccess({
         success: res.deleteBucket.success,
         message: res.deleteBucket.message
-      })
+      }))
       setBucketToUpdate({
         id: "",
         name: "",
@@ -207,11 +193,8 @@ const BucketSection = () => {
       setIsUpdate(false)
       setRequired(false)
     },
-    onError: (error) => {
-      const errorMessage = error?.message;
-      if(errorMessage?.includes('Response')) {
-        dispatch(setServerError(true))
-      }
+    onError: () => {
+      dispatch(setServerError(true))
     }
   })
   
@@ -219,26 +202,32 @@ const BucketSection = () => {
 
   type BucketOperation = "CREATE" | "UPDATE" | "DELETE";
 
-  const confirmationFunction: Record<BucketOperation, (b:Bucket | null) => Promise<void>> = {
-    CREATE: async() => {
-      await createBucket({variables: { name:bucket, dept: deptObject[deptSelected || ""] , viciIp, issabelIp}});
-    },
-    UPDATE: async(b) => {
-      if(b) {
-        const input = {
-          name: bucket,
-          id: b.id,
-          viciIp,
-          issabelIp
-        }
-        await updateBucket({variables: {input}})
-      }
-    },
-    DELETE:async (b) => {
-      await deleteBucket({variables: { id: b?.id } })
-    }
-  };
 
+  const creatingBucket = useCallback(async()=> {
+    await createBucket({variables: { name:bucket, dept: deptObject[deptSelected || ""] , viciIp, issabelIp}})
+  },[createBucket,bucket, deptObject, deptSelected, viciIp ,issabelIp])
+
+  const updatingBucket = useCallback(async(b:Bucket | null)=> {
+    if(b) {
+      const input = {
+        name: bucket,
+        id: b.id,
+        viciIp,
+        issabelIp
+      }
+      await updateBucket({variables: {input}})
+    }
+  },[bucket, viciIp, issabelIp, updateBucket])
+
+  const deletingBucket = useCallback(async(b:Bucket | null)=> {
+    if(b) await deleteBucket({variables: { id: b.id } })
+  },[])
+
+  const confirmationFunction: Record<BucketOperation, (b:Bucket | null) => Promise<void>> = {
+    CREATE: creatingBucket,
+    UPDATE: updatingBucket,
+    DELETE: deletingBucket
+  };
 
   const [modalProps, setModalProps] = useState({
     message: "",
@@ -257,7 +246,6 @@ const BucketSection = () => {
       } else {
         setRequiredIps(false)
       }
-
       if(!bucket) {
         setRequired(true)
         return
@@ -293,12 +281,7 @@ const BucketSection = () => {
 
   return (
     <div className="relative">
-      {
-        success.success &&
-        <SuccessToast successObject={success || null} close={()=> setSuccess({success:false, message:""})}/>
-      }
       <div className="px-20">
-
         <div className="inline-flex items-center justify-center w-full">
           <hr className="w-full h-1 my-8 bg-gray-200 border-0 rounded-sm dark:bg-gray-700"/>
           <div className="absolute px-4 -translate-x-1/2 bg-white left-1/2 dark:bg-gray-900"> 
