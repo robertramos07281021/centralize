@@ -3,6 +3,8 @@ import { HiOutlineMinusSm } from "react-icons/hi";
 import gql from "graphql-tag";
 import { useQuery } from "@apollo/client";
 import { useEffect } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/store";
 
 const AGENT_PRODUCTION = gql`
   query agentProduction {
@@ -81,7 +83,7 @@ const Divition = ({label, current, previous, color }: Divition ) => {
 
 export default function AgentTotalProduction () {
   const {data,refetch} = useQuery<{agentProduction:Production}>(AGENT_PRODUCTION)
-
+  const {userLogged} = useSelector((state:RootState)=> state.auth)
   const prod = data?.agentProduction;
 
   useEffect(()=> {
@@ -98,15 +100,20 @@ export default function AgentTotalProduction () {
       />
       <div className={`rounded-xl border p-2 ${colorsObject["teal"]} shadow shadow-black/20 flex flex-col`}>
         <h1 className="lg:text-xs 2xl:text-sm font-bold">
-          <span className="lg:text-[0.7em] 2xl:text-xs"></span>
+          <span className="lg:text-[0.7em] 2xl:text-xs">Targets</span>
         </h1>
         <div className="h-full flex flex-col justify-center">
-          <div className="flex justify-between items-center">
-            <h1 className="flex text-sm items-center gap-1">
-              
-              <span className="text-xs"></span>
-            </h1>
-            <h1 className="text-lg"></h1>
+          <div className="flex justify-end items-center gap-2">
+            <p className="text-xs font-medium">(Daily)</p>
+            <div>{userLogged.targets.daily.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
+          </div>
+          <div className="flex justify-end items-center gap-2">
+            <p className="text-xs font-medium">(Weekly)</p>
+            <div>{userLogged.targets.weekly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
+          </div>
+          <div className="flex justify-end items-center gap-2">
+            <p className="text-xs font-medium">(Monthly)</p>
+            <div>{userLogged.targets.monthly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
           </div>
           <h1 className="text-end text-xs font-bold">Amount</h1>
         </div>

@@ -242,16 +242,23 @@ const AgentView = () => {
             autoComplete="off"/>
         </div>
         <div className="h-full overflow-hidden m-5 lg:text-xs 2xl:text-sm">
-          <div className="grid grid-cols-10 font-medium text-slate-500 bg-slate-100">
-            <div className="px-2 py-1">Name</div>
-            <div className="py-1 truncate">Agent ID</div>
-            <div className="py-1 truncate">Bucket</div>
-            <div className="py-1 truncate">Campaign</div>
-            <div className="py-1 truncate">Online</div>
-            <div className="py-1 truncate">Lock</div>
-            <div className="py-1 truncate">Status</div>
-            <div className="py-1 col-span-2">Targets (Daily)(Weekly)(Monthly)</div>
-            <div className="py-1 truncate">Action</div>
+          <div className="grid grid-cols-10 font-medium text-slate-500 bg-slate-100 ">
+            <div className="px-2 py-1 flex items-center">Name</div>
+            <div className="py-1 truncate flex items-center">Agent ID</div>
+            <div className="py-1 truncate flex items-center">Bucket</div>
+            <div className="py-1 truncate flex items-center">Campaign</div>
+            <div className="py-1 truncate flex items-center">Online</div>
+            <div className="py-1 truncate flex items-center">Lock</div>
+            <div className="py-1 truncate flex items-center">Status</div>
+            <div className="py-1 col-span-2 flex flex-col">
+              <div className="text-center">Targets</div>
+              <div className="grid grid-cols-3 text-[0.8em]">
+                <div>Daily</div>
+                <div>Weekly</div>
+                <div>Montly</div>
+              </div>
+            </div>
+            <div className="py-1 truncate flex items-center">Action</div>
           </div>
           <div className="h-full overflow-y-auto">
             {
@@ -275,10 +282,10 @@ const AgentView = () => {
                         <BsFillUnlockFill className="text-slate-600 text-xl" /> 
                       }
                     </div>
-                    <div className="flex items-center"> 
+                    <div className="flex items-center "> 
                       {findExsitingStatus ? findExsitingStatus?.type : "-"}
                     </div>
-                    <div className="col-span-2"> 
+                    <div className="col-span-2 "> 
                       <div className="w-full grid grid-cols-3">
                         <div>
                           {e.targets?.daily.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'})}

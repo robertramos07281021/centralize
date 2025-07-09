@@ -120,13 +120,10 @@ const productionTypeDefs = gql`
     monthly: String
   }
 
-  type Target {
-    daily: String
-    weekly: String
-    monthly: String
+  type Collected {
+    monthly: Float
+    weekly: Float
   }
-
-  type 
 
 
   type Query {
@@ -138,7 +135,7 @@ const productionTypeDefs = gql`
     getAgentProductions:[AgentProduction]
     agentProduction:MyProduction
     getAgentDispositionRecords(agentID:ID, limit:Int, page:Int, from:String, to:String, search: String):AgentDispo
-    getAgentsTargets:
+    monthlyWeeklyCollected:Collected
   }
 
   type Mutation {

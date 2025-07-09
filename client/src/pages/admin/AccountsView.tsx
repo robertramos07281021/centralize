@@ -179,7 +179,7 @@ const AccountsView = () => {
             autoComplete="off"
             className="p-2 w-full focus:outline-none" 
             placeholder="Search . . ." 
-            onChange={(e)=> setSearch(e.target.value)}
+            onChange={(e)=> {setSearch(e.target.value); dispatch(setAdminUsersPage(1)); setPage(adminUsersPage.toString())}}
             required />
         </label>
       </div>

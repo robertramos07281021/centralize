@@ -8,6 +8,8 @@ import Loading from "./Loading";
 import { useSelector } from "react-redux";
 import { BreakEnum } from "../middleware/exports";
 
+
+
 const LOGIN = gql `
   mutation login($username: String!, $password: String!) { 
     login(username: $username, password: $password) { 
@@ -25,6 +27,11 @@ const LOGIN = gql `
         buckets
         account_type
         group
+        targets {
+          daily
+          weekly
+          monthly
+        }
       }
     }
   }
@@ -48,6 +55,13 @@ const DESELECT_TASK = gql`
     }
   }
 `
+
+type Targets = {
+  daily: number,
+  weekly: number,
+  monthly: number
+}
+
 type User = {
   _id: string
   change_password : boolean
@@ -59,6 +73,7 @@ type User = {
   buckets:string[]
   account_type: string
   group: string
+  targets: Targets
 }
 
 type Login = {
@@ -94,9 +109,6 @@ const Login = () => {
   const [lock, setLock] = useState<boolean>(false)
   const [invalid, setInvalid] = useState<boolean>(false)
   
-
-
-
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: () => {
       dispatch(setDeselectCustomer())
@@ -118,7 +130,12 @@ const Login = () => {
         departments: [],
         buckets: [],
         account_type: "",
-        group: ""
+        group: "",
+        targets: {
+          daily: 0,
+          monthly: 0,
+          weekly: 0
+        }
       }))
     }, 
     onError: ()=> {

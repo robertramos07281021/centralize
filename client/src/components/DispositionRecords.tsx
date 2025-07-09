@@ -4,7 +4,6 @@ import { useQuery, gql } from "@apollo/client"
 import { useEffect, useState } from "react"
 import { ImSpinner9 } from "react-icons/im";
 
-
 type DispoType = {
   name: string
   code: string
@@ -66,6 +65,7 @@ const DispositionRecords = () => {
   const {data:dispositions,refetch, loading} = useQuery<{getAccountDispositions:Disposition[]}>(DISPOSITION_RECORDS,{variables: {id: selectedCustomer._id, limit: limit}})
   const {data:customerDispoCount} = useQuery<{getAccountDispoCount:{count:number}}>(CUSTOMER_DISPO_COUNT,{variables: {id: selectedCustomer._id}}) 
 
+
   const date = (date:string) => {
     const createdDate = new Date(date).toLocaleDateString()
     const time = new Date(date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })
@@ -80,7 +80,9 @@ const DispositionRecords = () => {
   }
 
   useEffect(()=> {
-    refetch()
+    if(selectedCustomer._id) {
+      refetch()
+    }
   },[selectedCustomer,refetch, limit])
 
   return selectedCustomer._id && dispositions?.getAccountDispositions && dispositions?.getAccountDispositions?.length > 0 && (

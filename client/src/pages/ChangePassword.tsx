@@ -66,7 +66,12 @@ const ChangePassword = () => {
           departments: [],
           buckets: [],
           account_type: "",
-          group: ""
+          group: "",
+          targets: {
+            daily: 0,
+            monthly: 0,
+            weekly: 0
+          }
         }
       ))
     },

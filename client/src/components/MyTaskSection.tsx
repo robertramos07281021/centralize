@@ -6,7 +6,7 @@ import { RootState, useAppDispatch } from "../redux/store"
 import { dateAndTime } from "../middleware/dateAndTime"
 import { setSelectedCustomer, setServerError } from "../redux/slices/authSlice"
 // import Uploader from "./Uploader"
-import { useNavigate } from "react-router-dom"
+
 
 type outStandingDetails = {
   principal_os: number
@@ -233,7 +233,7 @@ const MyTaskSection = () => {
   const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const client = useApolloClient()
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
 
 
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
@@ -284,7 +284,7 @@ const MyTaskSection = () => {
     }
   })
   
-  const {data:myTasksData, refetch} = useQuery<{myTasks:CustomerData[]}>(MY_TASKS)
+  const {data:myTasksData} = useQuery<{myTasks:CustomerData[]}>(MY_TASKS)
   const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
   const [data, setData] = useState<CustomerData[] | null>([])
   const [selection, setSelection] = useState<string>("")
@@ -300,20 +300,20 @@ const MyTaskSection = () => {
     }
   },[selection,myTasksData,groupTaskData,userLogged])
 
-  const [deselectTask] = useMutation(DESELECT_TASK)
-
-  useEffect(()=> {
-    groupTaskRefetch()
-  },[groupTaskRefetch,navigate])
+  const [deselectTask] = useMutation(DESELECT_TASK, {
+    onError: ()=> {
+      dispatch(setServerError(true))
+    }
+  })
 
   useEffect(()=> {
     setSelection("")
   },[selectedCustomer._id])
 
-  useEffect(()=> {
-    refetch()
-    groupTaskRefetch()
-  },[refetch,groupTaskRefetch,navigate])
+  // useEffect(()=> {
+  //   refetch()
+  //   groupTaskRefetch()
+  // },[refetch,groupTaskRefetch,navigate])
 
   const handleClickMyTask = () => {
     if(selection && selection.trim() !== "group_task"){
@@ -327,20 +327,19 @@ const MyTaskSection = () => {
     onCompleted: ()=> {
       groupTaskRefetch()
       setSelection("")
+    },
+    onError: ()=> {
+      dispatch(setServerError(true))
     }
   })
   
   const handleClickSelect = async(data:CustomerData) => {
-    try {
-      if(selectedCustomer._id) {
-        await deselectTask({variables: {id: selectedCustomer._id }})  
-      }
-      const res = await selectTask({variables: {id: data._id}})
-      if(res.data.selectTask.success) {
-        dispatch(setSelectedCustomer({...data, isRPCToday: false}))
-      }
-    } catch (error) { 
-      dispatch(setServerError(true))
+    if(selectedCustomer._id) {
+      await deselectTask({variables: {id: selectedCustomer._id }})  
+    }
+    const res = await selectTask({variables: {id: data._id}})
+    if(res.data.selectTask.success) {
+      dispatch(setSelectedCustomer({...data, isRPCToday: false}))
     }
   }
 

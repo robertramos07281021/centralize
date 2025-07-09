@@ -116,12 +116,6 @@ const CustomerDisposition = () => {
 
   const length = searchData?.search?.length || 0;
 
-  useEffect(()=> {
-    const delay = setTimeout(() => {
-      refetch()
-    }, 300);
-    return () => clearTimeout(delay);
-  },[search])
 
   useEffect(() => {
     if (error) {

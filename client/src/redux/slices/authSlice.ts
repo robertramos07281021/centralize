@@ -13,6 +13,7 @@ type User = {
   buckets: string[]
   account_type: string
   group: string
+  targets: Targets
 }
 
 type search = {
@@ -35,6 +36,12 @@ export enum TaskFilter {
 type success = {
   success: boolean,
   message: string
+}
+
+export type Targets = {
+  daily: number
+  weekly: number
+  monthly: number
 }
 
 type UserState = {
@@ -89,7 +96,12 @@ const initialState:UserState = {
     departments: [],
     buckets: [],
     account_type: "",
-    group: ""
+    group: "",
+    targets: {
+      daily: 0,
+      monthly: 0,
+      weekly: 0
+    }
   },
   search: {
     fullName: "",
@@ -290,7 +302,12 @@ const authSlice = createSlice({
         departments: [],
         buckets: [],
         account_type: "",
-        group: ""
+        group: "",
+        targets: {
+          daily: 0,
+          monthly: 0,
+          weekly: 0
+        }
       }
       state.search= {
         fullName: "",

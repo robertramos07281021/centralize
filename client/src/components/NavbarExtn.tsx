@@ -3,8 +3,7 @@ import { useSelector } from "react-redux"
 import { RootState } from "../redux/store"
 import { accountsNavbar } from "../middleware/exports.ts"
 import gql from "graphql-tag"
-import {  useApolloClient, useQuery, useSubscription } from "@apollo/client"
-import { useEffect } from "react"
+import {  useQuery, useSubscription } from "@apollo/client"
 
 type MyTask = {
   case_id: string
@@ -46,20 +45,14 @@ const TASK_CHANGING = gql`
 const NavbarExtn = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
-  const client = useApolloClient()
   const {data:myTask, refetch} = useQuery<{myTasks:MyTask[]}>(MY_TASK)
 
-  useEffect(()=> {
-    refetch()
-  },[])
 
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_ESCALATING, {
     onData: ({data})=> {
       if(data) {
         if(data.data?.somethingChanged.message === "TASK_SELECTION" && data.data?.somethingChanged.members.toString().includes(userLogged._id)) {
-          client.refetchQueries({
-            include: ['myTasks']
-          })
+         refetch()
         }
       }
     },
@@ -68,11 +61,8 @@ const NavbarExtn = () => {
   useSubscription<{taskChanging:SubSuccess}>(TASK_CHANGING, {
     onData: ({data})=> {
       if(data) {
-        console.log(data)
         if(data.data?.taskChanging.message === "TASK_CHANGING" && data.data?.taskChanging.members.toString().includes(userLogged._id)) {
-          client.refetchQueries({
-            include: ['myTasks']
-          })
+          refetch()
         }
       }
     }

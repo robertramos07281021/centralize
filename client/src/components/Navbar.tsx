@@ -6,13 +6,19 @@ import Confirmation from "./Confirmation";
 import Loading from "../pages/Loading";
 import { Link, useNavigate } from "react-router-dom";
 import { RootState, useAppDispatch } from "../redux/store";
-import {  setBreakValue, setDeselectCustomer, setLogout, setServerError, setStart, setSuccess } from "../redux/slices/authSlice";
+import {  setBreakValue, setDeselectCustomer, setLogout, setServerError, setStart, setSuccess, setUserLogged } from "../redux/slices/authSlice";
 import NavbarExtn from "./NavbarExtn";
 import { useSelector } from "react-redux";
 import IdleAutoLogout from "./IdleAutoLogout";
 import { accountsNavbar, BreakEnum, breaks } from "../middleware/exports";
 import ServerError from "../pages/ServerError";
 import SuccessToast from "./SuccessToast";
+
+type Targets = {
+  daily: number,
+  weekly: number,
+  monthly: number
+}
 
 type UserInfo = {
   _id: string;
@@ -25,6 +31,7 @@ type UserInfo = {
   bucket: string[]
   user_id:string,
   isOnline: boolean
+  targets: Targets
 };
 
 const myUserInfos = gql` 
@@ -38,6 +45,11 @@ const myUserInfos = gql`
       branch
       change_password
       isOnline
+      targets {
+        daily
+        weekly
+        monthly
+      }
     }
   } 
 `
@@ -69,12 +81,6 @@ const LOGOUT_USING_PERSIST = gql`
   }
 `
 
-const DUMMY_SUB = gql`
-  subscription DummyPing {
-    ping
-  }
-`
-
 type UpdateProduction = {
   message: string
   success: boolean
@@ -95,6 +101,7 @@ type AgentLock = {
   message: string
   agentId: string
 }
+
 const LOCK_AGENT = gql`
   subscription AgentLocked {
     agentLocked {
@@ -121,9 +128,6 @@ const Navbar = () => {
     }
   })
   const [popUpBreak, setPopUpBreak] = useState<boolean>(false)
-
-  useSubscription(DUMMY_SUB)
-
 
   useSubscription<{agentLocked:AgentLock}>(LOCK_AGENT, {
     onData: ({data}) => {
@@ -260,6 +264,7 @@ const Navbar = () => {
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       if(data) {
+        dispatch(setUserLogged({...userLogged, targets: data.getMe.targets || {daily: 0, weekly: 0, monthly: 0}}))
         if(!data.getMe.isOnline) {
           setConfirmation(true)
           setModalProps({

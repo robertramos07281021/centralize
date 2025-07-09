@@ -265,8 +265,6 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     return Object.fromEntries(bucketArray.flatMap((ba)=> ba.buckets.map(e => [e.name, e.id])))
   },[deptBucket])
 
-  console.log(bucketObject)
-
 
   // ================ mutations ===================================
   const [updateUser] = useMutation(UPDATE_USER, {
