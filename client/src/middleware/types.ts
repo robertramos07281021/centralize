@@ -40,7 +40,6 @@ export type Users = {
   user_id: string
 }
 
-
 export type CustomerData = {
   address: string
   admin_fee_os: number
@@ -106,19 +105,36 @@ export type CustomerRegistered = {
   isRPC: boolean
 }
 
+export type CurrentDispo = {
+  _id: string
+  amount: number
+  disposition: string
+  payment_date: string
+  ref_no: string
+  existing: string
+  comment: string
+  payment: String
+  payment_method: string
+  user: string
+  dialer: string
+  createdAt: string
+  contact_method: string
+}
+
 export type Search = {
-    _id: string
-    case_id: string
-    account_id: string
-    endorsement_date: string
-    credit_customer_id: string
-    bill_due_day: number
-    max_dpd: number
-    balance: number
-    paid_amount: number
-    out_standing_details: outStandingDetails
-    grass_details: grassDetails
-    account_bucket: AccountBucket
-    customer_info: CustomerRegistered
-    isRPCToday: boolean
+  _id: string
+  case_id: string
+  account_id: string
+  endorsement_date: string
+  credit_customer_id: string
+  bill_due_day: number
+  max_dpd: number
+  balance: number
+  paid_amount: number
+  out_standing_details: outStandingDetails
+  grass_details: grassDetails
+  account_bucket: AccountBucket
+  customer_info: CustomerRegistered
+  isRPCToday: boolean
+  dispo_history: CurrentDispo[]
 }

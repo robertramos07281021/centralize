@@ -11,6 +11,7 @@ import AuthenticationPass from "../../components/AuthenticationPass";
 import { RootState } from "../../redux/store";
 import { LuSettings } from "react-icons/lu";
 import SetTargetsModal from "./SetTargetsModal";
+import SetBucketTargetsModal from "./SetBucketTargetsModal";
 
 const TL_AGENT = gql`
   query findDeptAgents {
@@ -111,13 +112,11 @@ const SOMETHING_LOCK = gql`
   }
 `
 
-
 const AgentView = () => {
   const {userLogged} = useSelector((state:RootState) => state.auth)
   const client = useApolloClient()
   const dispatch = useDispatch()
   const {data:tlAgentData, refetch} = useQuery<{findDeptAgents:TLAgent[]}>(TL_AGENT)
-
 
   const {data: agentProdData, refetch:agentProdDataRefetch} = useQuery<{getAgentProductions:AgentProductions[]}>(AGENT_PRODUCTION)
   const [agentProduction,setAgentProduction] = useState<TLAgent[]>([])
@@ -142,7 +141,7 @@ const AgentView = () => {
   const [search,setSearch] = useState<string>("")
 
   useEffect(()=> {
-    const filteredData = tlAgentData?.findDeptAgents?.filter(e=> e.user_id.includes(search))
+    const filteredData = tlAgentData?.findDeptAgents?.filter(e=> e.user_id.includes(search) || e.name.toLowerCase().includes(search.toLowerCase()) || e.buckets.some(bucket => bucket.name.toLowerCase().includes(search.toLowerCase())) || e.departments.some(dept => dept.name.toLowerCase().includes(search.toLowerCase())) )
     if(filteredData){
       setAgentProduction(filteredData)
     }
@@ -175,11 +174,13 @@ const AgentView = () => {
 
   enum ButtonType {
     SET = "SET",
-    UNLOCK = "UNLOCK"
+    UNLOCK = "UNLOCK",
+    SET_TARGETS = "SET_TARGETS"
   }
 
   const [userToUpdateTargets, setUserToUpdateTargets] = useState<string | null>(null)
   const [updateSetTargets, setUpdateSetTarget] = useState<boolean>(false)
+  const [bucketTargetModal, setBucketTargetModal] = useState<boolean>(false) 
 
   const unlockingUser = useCallback(async(userId: string | null)=> {
     await unlockUser({variables: {id:userId}})
@@ -191,26 +192,33 @@ const AgentView = () => {
       setUpdateSetTarget(true)
       setIsAuthorize(false)
     },
-    UNLOCK : unlockingUser
+    UNLOCK : unlockingUser,
+    SET_TARGETS : async() => {
+      setBucketTargetModal(true)
+      setIsAuthorize(false)
+    }
   }
 
   const onClickAction = (userId:string | null,lock: boolean,  eventMethod:keyof typeof ButtonType, attempt: number) => {
-    const message = eventMethod === ButtonType.SET ? "set" : "unlock"
-    if((lock && eventMethod === ButtonType.UNLOCK && attempt === 0) || eventMethod === ButtonType.SET) {
+    console.log(eventMethod)
+
+    const message = eventMethod.toLowerCase()
+    if((lock && eventMethod === ButtonType.UNLOCK && attempt === 0) || eventMethod === ButtonType.SET || eventMethod === ButtonType.SET_TARGETS) {
       setIsAuthorize(true)
       setAuthentication({
         yesMessage: message,
         event: () => { eventType[eventMethod]?.(userId)},
         no: ()=> {setIsAuthorize(false)},
         invalid: ()=> {
-          setSuccess({
+          dispatch(setSuccess({
             success: true,
             message: "Password is incorrect"
-          })
+          }))
         }
       })
     } 
   }
+
 
   return (
     <>
@@ -227,10 +235,14 @@ const AgentView = () => {
           setUpdateSetTarget(false)
         }}/>
       }
+      {
+        bucketTargetModal && 
+        <SetBucketTargetsModal cancel={()=> setBucketTargetModal(false)} refetch={()=> {setBucketTargetModal(false); refetch(); agentProdDataRefetch()}}/>
+      }
       
       <div className="h-full w-full flex flex-col overflow-hidden p-2">
         <h1 className="p-2 text-xl font-medium text-gray-500">Agent Production</h1>
-        <div className="flex justify-center">
+        <div className="flex justify-center gap-20 relative">
           <input 
             type="search" 
             name="search" 
@@ -240,7 +252,9 @@ const AgentView = () => {
             className="border px-2 rounded-md text-gray-500 py-1.5 w-1/5 text-sm"
             placeholder="Enter Agent ID here..." 
             autoComplete="off"/>
+          <button className="right-5 absolute px-5 py-2 text-sm bg-orange-500 rounded-md text-white border hover:bg-orange-600" onClick={()=> onClickAction( null, false, ButtonType.SET_TARGETS, 0)}>Set Targets</button>
         </div>
+
         <div className="h-full overflow-hidden m-5 lg:text-xs 2xl:text-sm">
           <div className="grid grid-cols-10 font-medium text-slate-500 bg-slate-100 ">
             <div className="px-2 py-1 flex items-center">Name</div>
@@ -266,8 +280,7 @@ const AgentView = () => {
                 const findAgentProd = agentProdData?.getAgentProductions.find(y=> y.user === e._id)
                 const findExsitingStatus = findAgentProd?.prod_history.find(x=> x.existing === true)
                 return e.type === "AGENT" && (
-                  
-                  <div key={e._id} className="px-2 py-1 grid grid-cols-10 lg:text-xs 2xl:text-sm text-gray-500 font-normal even:bg-slate-50 hover:bg-blue-50">
+                  <div key={e._id} className="px-2 py-1 grid grid-cols-10 lg:text-xs 2xl:text-sm text-gray-500 font-normal even:bg-slate-50 hover:bg-blue-50 last:pb-4">
                     <div className="flex items-center capitalize truncate">{e.name}</div>
                     <div className="flex items-center">{e.user_id}</div>
                     <div className="flex items-center truncate">{e.buckets.map(e=> e.name).join(', ')}</div>
@@ -283,7 +296,7 @@ const AgentView = () => {
                       }
                     </div>
                     <div className="flex items-center "> 
-                      {findExsitingStatus ? findExsitingStatus?.type : "-"}
+                      { findExsitingStatus ? findExsitingStatus?.type : "-" }
                     </div>
                     <div className="col-span-2 "> 
                       <div className="w-full grid grid-cols-3">
@@ -313,8 +326,6 @@ const AgentView = () => {
                         ><LuSettings /></button>
                         <div className="absolute text-nowrap px-1 bg-white z-50 left-full top-0 ml-2 peer-hover:block hidden border">Set Targets</div>
                       </div>
-
-                   
 
                       <Link to="/agent-recordings" state={e._id} className="relative">
                         <button className="bg-green-500 w-auto rounded-full py-1 px-1 text-white hover:scale-110 duration-100 ease-in-out cursor-pointer peer"

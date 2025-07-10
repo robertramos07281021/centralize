@@ -40,6 +40,21 @@ const SEARCH = gql`
       balance
       paid_amount
       isRPCToday
+      dispo_history {
+         _id
+        amount
+        disposition
+        payment_date
+        ref_no
+        existing
+        comment
+        payment
+        payment_method
+        user
+        dialer
+        createdAt
+        contact_method
+      }
       out_standing_details {
         principal_os
         interest_os
@@ -113,15 +128,16 @@ const CustomerDisposition = () => {
   const [search, setSearch] = useState("")
 
   const {data:searchData ,refetch, error} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search}})
-
   const length = searchData?.search?.length || 0;
 
+  console.log(searchData)
 
   useEffect(() => {
     if (error) {
       dispatch(setServerError(true));
     }
   }, [error, dispatch]);
+
 
   const [selectTask] = useMutation(SELECT_TASK,{
     onCompleted: ()=> {
@@ -133,10 +149,12 @@ const CustomerDisposition = () => {
     }
   })
 
+
   const onClickSearch = async(customer:Search) => {
     await selectTask({variables: {id: customer._id}})
     dispatch(setSelectedCustomer(customer))
   }
+
 
   useEffect(()=> {
     const params = new URLSearchParams(location.search);
@@ -148,6 +166,7 @@ const CustomerDisposition = () => {
     }
   },[location.search])
 
+
   const [deselectTask,{loading}] = useMutation<{deselectTask:{message: string, success: boolean}}>(DESELECT_TASK,{
     onCompleted: ()=> {
       dispatch(setDeselectCustomer()) 
@@ -157,11 +176,13 @@ const CustomerDisposition = () => {
     }
   })
 
+
   useEffect(()=> {
     if(!success.success){
       navigate(location.pathname)
     }
   },[ success ,navigate,location.pathname ])
+
 
   useEffect(()=> {
     const id = selectedCustomer._id;
@@ -173,19 +194,23 @@ const CustomerDisposition = () => {
     return ()=> clearTimeout(timer)
   },[navigate, deselectTask, dispatch])
 
+
   const clearSelectedCustomer = async() => {
     await deselectTask({variables: {id: selectedCustomer._id}}) 
   }
   
+
   useEffect(()=> {
     setSearch("")
   },[selectedCustomer._id])
+
 
   useEffect(()=> {
     if(breakValue !== BreakEnum.PROD && userLogged.type === "AGENT") {
       navigate('/break-view')
     }
   },[breakValue,navigate])
+
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -220,7 +245,6 @@ const CustomerDisposition = () => {
     no: () => {}
   })
   const [isRPCToday, setIsRPCToday] = useState<boolean>(false)
-
   useEffect(()=> {
     if(selectedCustomer._id) {
       if(selectedCustomer.isRPCToday) {
@@ -309,7 +333,7 @@ const CustomerDisposition = () => {
   return userLogged._id ? (
     <div className="h-full w-full overflow-auto"> 
       {
-        isRPCToday || isRPC &&
+        (isRPCToday || isRPC) &&
         <Confirmation {...modalProps}/>
       }
       <div>
@@ -425,28 +449,28 @@ const CustomerDisposition = () => {
             </div>
             {
               !isUpdate &&
-            <div className="ms-5 2xl:text-sm lg:text-xs mt-5 flex gap-5">
-              { selectedCustomer._id &&
-                <>
-                  {
-                    selectedCustomer.balance != 0 &&
+              <div className="ms-5 2xl:text-sm lg:text-xs mt-5 flex gap-5">
+                { selectedCustomer._id &&
+                  <>
+                    {
+                      selectedCustomer.balance != 0 &&
+                      <button 
+                        type="button" 
+                        onClick={()=> setIsUpdate(true)}
+                        className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}>
+                        Update
+                      </button>
+                    }
                     <button 
                       type="button" 
-                      onClick={()=> setIsUpdate(true)}
-                      className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}>
-                      Update
+                      onClick={clearSelectedCustomer}
+                      className={`bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}>
+                      Cancel
                     </button>
-                  }
-                  <button 
-                    type="button" 
-                    onClick={clearSelectedCustomer}
-                    className={`bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}>
-                    Cancel
-                  </button>
-                </>
-                
-              }
-            </div>
+                  </>
+                  
+                }
+              </div>
             }
           </div>
         </div>
@@ -471,7 +495,10 @@ const CustomerDisposition = () => {
           <DispositionForm setSuccess={(success:boolean,message:string)=> dispatch(setSuccess({success:success,message:message}))} updateOf={()=> setIsUpdate(false)}/>
         }
       </div>
-      <DispositionRecords/>
+      {
+        selectedCustomer.dispo_history.length > 0 &&
+        <DispositionRecords/>
+      }
     </div>
   ) : (<Navigate to="/"/>)
 }

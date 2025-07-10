@@ -120,6 +120,7 @@ const initialState:UserState = {
     balance: 0,
     paid_amount: 0,
     isRPCToday: false,
+    dispo_history: [],
     out_standing_details: {
       principal_os: 0,
       interest_os: 0,
@@ -209,6 +210,7 @@ const authSlice = createSlice({
         balance: 0,
         paid_amount: 0,
         isRPCToday: false,
+        dispo_history: [],
         out_standing_details: {
           principal_os: 0,
           interest_os: 0,
@@ -263,6 +265,7 @@ const authSlice = createSlice({
         balance: 0,
         paid_amount: 0,
         isRPCToday: false,
+        dispo_history: [],
         out_standing_details: {
           principal_os: 0,
           interest_os: 0,

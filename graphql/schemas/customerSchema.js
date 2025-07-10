@@ -1,6 +1,7 @@
 import { gql } from "graphql-tag";
 
 const customerTypeDefs = gql`
+  scalar DateTime
 
   input CustomerData {
   address: String
@@ -102,6 +103,9 @@ const customerTypeDefs = gql`
     payment: String
     payment_method: String
     user: ID
+    dialer: String
+    createdAt: DateTime
+    contact_method: String
   }
 
   type GroupMember {
@@ -165,6 +169,7 @@ const customerTypeDefs = gql`
     account_bucket: AccountBucket
     customer_info: CustomerInfo
     isRPCToday: Boolean
+    dispo_history:[CurrentDispo]
   }
 
   type PerformanceStatistic {

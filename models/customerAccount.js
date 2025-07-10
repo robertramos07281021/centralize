@@ -99,6 +99,10 @@ const customerAccountSchema = new Schema(
         type: String,
       }
     },
+    history: [{
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Disposition"
+    }]
   },
   { timestamps: true }
 );

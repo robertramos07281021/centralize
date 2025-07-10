@@ -143,6 +143,7 @@ const productionTypeDefs = gql`
     updateProduction(type: String!):Success
     loginToProd(password: String):Login
     lockAgent:Success
+    setBucketTargets(bucketId:ID ,targets: Targets):Success
   }
 `
 

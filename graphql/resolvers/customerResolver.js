@@ -76,7 +76,6 @@ const customerResolver = {
         const endOfTheDay = new Date()
         endOfTheDay.setHours(23,59,59,999)
         const success = ['PTP','UNEG','FFUP','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
-        
 
         const accounts = await CustomerAccount.aggregate([
           {
@@ -161,6 +160,17 @@ const customerResolver = {
               localField: "cd.user",
               foreignField: "_id",
               as: "user",
+            },
+          },
+          { 
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "history",
+              foreignField: "_id",
+              as: "dispo_history",
             },
           },
           { 
@@ -297,7 +307,6 @@ const customerResolver = {
                 }
               },
             ])
-
             return {
               campaign: e.campaign,
               rate: users.length === 0 ? 0 : (e.users / users.length * 100)

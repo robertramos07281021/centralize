@@ -795,6 +795,9 @@ const productionResolver = {
           {
             $match: filtered
           },
+          { $sort: { "createdAt" : 1 } },
+          { $skip: skip },
+          { $limit: limit },
         ])
 
         const months = [
@@ -820,9 +823,7 @@ const productionResolver = {
           secure: false,
         });
 
-
         const filteredWithRecording = [];
-
 
         for (const e of forFiltering) {
           const createdAt = new Date(e.createdAt);
@@ -843,7 +844,6 @@ const productionResolver = {
             '172.20.21.97' : "UB"
           }
   
-
           function checkDate(number) {
             return number > 9 ? number : `0${number}`;
           }
@@ -862,9 +862,7 @@ const productionResolver = {
             const fileList = await client.list(remoteDir);
           
             const files = fileList.filter(y =>
-
               contactPatterns.some(pattern => y.name.includes(pattern))
-             
              
             );
             if (files.length > 0) {
@@ -875,7 +873,6 @@ const productionResolver = {
           } 
           if (skip) continue;
         }
-
 
         const filteredWithIds = {
           ...filtered,
@@ -975,6 +972,9 @@ const productionResolver = {
       } finally {
         client.close()
       }
+    },
+    monthlyWeeklyCollected: ()=> {
+      
     }
   },
   DipotypeCount: {
@@ -1074,6 +1074,43 @@ const productionResolver = {
         throw new CustomError(error.message, 500)
       }  
     },
+    setBucketTargets: async(_,{bucketId, targets})=> {
+      try {
+        const { daily, weekly, monthly } = targets;
+     
+        await User.updateMany(
+          {
+            $and: [
+              {
+                buckets: new mongoose.Types.ObjectId(bucketId)
+              },
+              {
+                type: { $eq: "AGENT" }
+              }
+            ]
+          }, 
+          {
+            $set: {
+              targets: {
+                daily: Number(daily), 
+                weekly: Number(weekly), 
+                monthly: Number(monthly)
+              }
+            }
+          }
+        );
+
+
+        return {
+          success: true,
+          message: "Targets successfully updated"
+        }
+
+      } catch (error) {
+    
+        throw new CustomError(error.message, 500)
+      }
+    },
     lockAgent: async(_,__,{user, pubsub, PUBSUB_EVENTS}) => {
       try {
         const startDate = new Date()
@@ -1110,7 +1147,8 @@ const productionResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)        
       }
-    }
+    },
+
   },
 
 }

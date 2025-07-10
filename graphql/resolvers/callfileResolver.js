@@ -405,6 +405,7 @@ const callfileResolver = {
               collector:  "$user.name",
               outstanding_balance:  "$out_standing_details.total_os",
               amount_paid:  "$paid_amount",
+              
               balance:  "$balance",
               payment:  {
                 $cond: {
@@ -582,8 +583,7 @@ const callfileResolver = {
             return e 
           }
         }))
- 
-     
+        
         const csv = json2csv(customers, {
           keys: [
             'contact1',
@@ -610,7 +610,8 @@ const callfileResolver = {
             'contact_method',
             'comment',
             'disposition',
-            'duration'
+            'duration',
+            'contactable'
           ]
         })
 

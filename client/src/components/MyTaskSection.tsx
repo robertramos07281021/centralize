@@ -5,8 +5,7 @@ import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { dateAndTime } from "../middleware/dateAndTime"
 import { setSelectedCustomer, setServerError } from "../redux/slices/authSlice"
-// import Uploader from "./Uploader"
-
+import { CurrentDispo } from "../middleware/types"
 
 type outStandingDetails = {
   principal_os: number
@@ -41,27 +40,28 @@ type CustomerRegistered = {
   _id:string
 }
 
-type CurrentDispo = {
+type CurrentDisposition = {
   disposition: string
 }
 
 type CustomerData = {
-    _id: string
-    case_id: string
-    account_id: string
-    endorsement_date: string
-    credit_customer_id: string
-    bill_due_day: number
-    max_dpd: number
-    balance: number
-    paid_amount: number
-    isRPCToday: boolean
-    assigned_date: string
-    out_standing_details: outStandingDetails
-    grass_details: grassDetails
-    account_bucket: AccountBucket
-    current_disposition: CurrentDispo
-    customer_info: CustomerRegistered
+  _id: string
+  case_id: string
+  account_id: string
+  endorsement_date: string
+  credit_customer_id: string
+  bill_due_day: number
+  max_dpd: number
+  balance: number
+  paid_amount: number
+  isRPCToday: boolean
+  assigned_date: string
+  out_standing_details: outStandingDetails
+  grass_details: grassDetails
+  account_bucket: AccountBucket
+  dispo_history: CurrentDispo[]
+  current_disposition: CurrentDisposition
+  customer_info: CustomerRegistered
 }
 
 type GroupTask = {
@@ -82,6 +82,21 @@ const MY_TASKS = gql`
       balance
       paid_amount
       assigned_date
+      dispo_history {
+         _id
+        amount
+        disposition
+        payment_date
+        ref_no
+        existing
+        comment
+        payment
+        payment_method
+        user
+        dialer
+        createdAt
+        contact_method
+      }
       out_standing_details {
         principal_os
         interest_os
@@ -133,6 +148,21 @@ const GROUP_TASKS =gql`
         balance
         paid_amount
         assigned_date
+        dispo_history {
+          _id
+          amount
+          disposition
+          payment_date
+          ref_no
+          existing
+          comment
+          payment
+          payment_method
+          user
+          dialer
+          createdAt
+          contact_method
+        }
         out_standing_details {
           principal_os
           interest_os
@@ -228,14 +258,12 @@ const DESELECT_TASK = gql`
   }
 `
 
-
 const MyTaskSection = () => {
   const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const client = useApolloClient()
   // const navigate = useNavigate()
-
-
+  
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
     onData: ({data})=> {
       if(data) {

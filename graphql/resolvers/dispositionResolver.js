@@ -1748,7 +1748,6 @@ const dispositionResolver = {
         })
 
         const group = customerAccount.assigned ? await Group.findById(customerAccount.assigned).lean() : null
-
         const assigned = group ? group.members : customerAccount.assigned ? [customerAccount.assigned] : [];
 
         await pubsub.publish(PUBSUB_EVENTS.DISPOSITION_UPDATE, {
@@ -1779,14 +1778,13 @@ const dispositionResolver = {
           });
         }
 
-        await CustomerAccount.updateOne({ _id: customerAccount._id }, { $set: updateFields });
+        await CustomerAccount.updateOne({ _id: customerAccount._id }, { $set: updateFields, $push: { history: newDisposition._id } });
 
         return {
           success: true,
           message: "Disposition successfully created"
         }
       } catch (error) {
-
         throw new CustomError(error.message, 500)
       }
     }
