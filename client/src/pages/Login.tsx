@@ -7,8 +7,7 @@ import {  setBreakValue, setDeselectCustomer, setMyToken, setServerError, setSta
 import Loading from "./Loading";
 import { useSelector } from "react-redux";
 import { BreakEnum } from "../middleware/exports";
-
-
+import { persistor } from "../redux/store";
 
 const LOGIN = gql `
   mutation login($username: String!, $password: String!) { 
@@ -46,7 +45,6 @@ const LOGOUT = gql`
   }
 `;
 
-
 const DESELECT_TASK = gql`
   mutation DeselectTask($id: ID!) {
     deselectTask(id: $id) {
@@ -82,8 +80,6 @@ type Login = {
   start: string
   token: string
 }
-
-
 
 const Login = () => {
   const {userLogged,selectedCustomer} = useSelector((state:RootState)=> state.auth)
@@ -144,7 +140,8 @@ const Login = () => {
   })
 
   const [login, {loading}] = useMutation<{login:Login}>(LOGIN, {
-    onCompleted: (res) => {
+    onCompleted: async(res) => {
+      await persistor.purge()
       dispatch(setUserLogged(res.login.user))
       dispatch(setMyToken(res.login.token))
       if(!res.login.user.change_password) {

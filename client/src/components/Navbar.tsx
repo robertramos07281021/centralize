@@ -13,6 +13,8 @@ import IdleAutoLogout from "./IdleAutoLogout";
 import { accountsNavbar, BreakEnum, breaks } from "../middleware/exports";
 import ServerError from "../pages/ServerError";
 import SuccessToast from "./SuccessToast";
+import { persistor } from "../redux/store";
+
 
 type Targets = {
   daily: number,
@@ -144,7 +146,8 @@ const Navbar = () => {
   })
 
   const [logout, {loading}] = useMutation(LOGOUT,{
-    onCompleted: () => {
+    onCompleted: async() => {
+      await persistor.purge()
       dispatch(setLogout())
       navigate('/')
     },
@@ -178,7 +181,8 @@ const Navbar = () => {
   },[selectedCustomer,setConfirmation, deselectTask, dispatch, logout, setServerError,setModalProps])
 
   const [logoutToPersist, {loading:logoutToPEristsLoading}] = useMutation<{logoutToPersist: {success: boolean, message: string}}>(LOGOUT_USING_PERSIST,{
-    onCompleted: ()=> {
+    onCompleted: async()=> {
+      await persistor.purge()
       dispatch(setLogout())
       navigate("/")
     },
