@@ -1,4 +1,5 @@
 
+import mongoose from "mongoose"
 import CustomError from "../../middlewares/errors.js"
 import Bucket from "../../models/bucket.js"
 import Callfile from "../../models/callfile.js"
@@ -162,6 +163,43 @@ const taskResolver = {
         }
       } catch (error) {
         throw new CustomError(error.message, 500)          
+      }
+    },
+    updateDatabase: async()=> {
+      try {
+        const findCustomersAccount = await CustomerAccount.find()
+
+        await Promise.all(
+          findCustomersAccount.map(async(e)=> {
+            const dispositions = await Disposition.find({customer_account: {$eq: new mongoose.Types.ObjectId(e._id)}})
+            await CustomerAccount.findByIdAndUpdate(e._id, {$push: {history: dispositions.map(x=> x._id)}})
+          })
+        )
+
+
+        // const findCustomer = await Customer.find({
+        //   contact_no: { $elemMatch: { $regex: /^00/ } }
+        // })
+
+        // await Promise.all(
+        //   findCustomer.map(async (account) => {
+        //     const updatedContacts = account.contact_no.map((num) => {
+        //       return num.startsWith("00") ? num.replace(/^00/, "0") : num;
+        //     });
+
+        //     await Customer.findByIdAndUpdate(account._id, {
+        //       $set: { contact_no: updatedContacts }
+        //     });
+        //   })
+        // )
+
+
+        return {
+          success: true,
+          message: "Customers Account Successfully update"
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500)
       }
     }
   },
