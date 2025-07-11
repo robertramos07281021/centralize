@@ -15,7 +15,20 @@ const taskResolver = {
     myTasks: async(_,__,{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const myTask = await CustomerAccount.find({$and : [{assigned: user._id},{ on_hands: false}]}) 
+        const myTask = await CustomerAccount.aggregate([
+        {
+          $match:
+          {$and : [{assigned: user._id},{ on_hands: false}]}
+        }, 
+        {
+          $lookup: {
+            from: "dispositions", 
+            localField: "history", 
+            foreignField: "_id",       
+            as: "dispo_history"         
+          }
+        }
+        ]) 
         return myTask
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -30,7 +43,21 @@ const taskResolver = {
           task: []
         }
 
-        const customerAccounts = await CustomerAccount.find({$and: [{assigned: myGroup._id},{on_hands: false}]})
+        const customerAccounts = await CustomerAccount.aggregate(
+          {
+            $match: {
+              $and: [{assigned: myGroup._id},{on_hands: false}]
+            }
+          },
+          {
+            $lookup: {
+              from: "dispositions", 
+              localField: "history", 
+              foreignField: "_id",       
+              as: "dispo_history"         
+            }
+          }
+        )
 
         return {
           _id: myGroup._id,

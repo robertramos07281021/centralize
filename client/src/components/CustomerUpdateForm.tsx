@@ -2,10 +2,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { CiSquarePlus, CiSquareMinus } from "react-icons/ci";
 import Confirmation from "./Confirmation";
 import { gql, useMutation } from "@apollo/client";
-import {  useLocation, useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../redux/store";
-import { setSelectedCustomer, setServerError } from "../redux/slices/authSlice";
+import { setSelectedCustomer, setServerError, setSuccess } from "../redux/slices/authSlice";
 import { CustomerRegistered } from "../middleware/types";
 
 const UPDATE_CUSTOMER = gql` mutation
@@ -37,9 +36,7 @@ type CustomerUpdateFormProps = {
 }
 
 const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
-  const navigate = useNavigate()
   const dispatch = useAppDispatch()
-  const location = useLocation()
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const [formState, setFormState] = useState({
     fullName: "",
@@ -138,8 +135,12 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const [required, setRequired] = useState(false)
   const [updateCustomer] = useMutation<{updateCustomer:UpdatedCustomer}>(UPDATE_CUSTOMER, {
     onCompleted: async(res) => {
-      dispatch(setSelectedCustomer({ ...selectedCustomer, customer_info: res.updateCustomer.customer }));
-      navigate(`${location.pathname}?success=true`);
+      const result = res.updateCustomer
+      dispatch(setSelectedCustomer({ ...selectedCustomer, customer_info: result.customer }));
+      dispatch(setSuccess({
+        success: result.success,
+        message: result.message
+      }))
       cancel();
     },
     onError: ()=> {

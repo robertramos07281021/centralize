@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useMemo, useState } from "react"
+import { memo, useCallback, useEffect, useMemo, useState } from "react"
 import CustomerUpdateForm from "../components/CustomerUpdateForm"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
-import { Navigate, useLocation, useNavigate } from "react-router-dom"
-
+import { Navigate, useNavigate } from "react-router-dom"
 import AccountInfo from "../components/AccountInfo"
 import DispositionForm from "../components/DispositionForm"
 import { gql, useMutation, useQuery } from "@apollo/client"
@@ -16,7 +15,7 @@ import { BreakEnum } from "../middleware/exports"
 import Loading from "./Loading"
 import { IoRibbon } from "react-icons/io5";
 import Confirmation from "../components/Confirmation"
-
+import {debounce} from 'lodash'
 
 const DESELECT_TASK = gql`
   mutation deselectTask($id: ID!) {
@@ -116,28 +115,112 @@ const UPDATE_RPC = gql`
 
 `
 
+  const SearchResult = memo(({ data, search, onClick }: { data: Search[], search: string, onClick: (c: Search) => void }) => 
+  {
+
+    
+    return (
+    <>
+      {data.slice(0, 50).map((customer) => (
+      <div
+      key={customer._id}
+      className="flex flex-col text-sm cursor-pointer hover:bg-slate-100 py-0.5"
+      onClick={() => onClick(customer)}
+      >
+        <div
+          className="px-2 font-medium text-slate-600 uppercase"
+          dangerouslySetInnerHTML={{
+            __html: customer.customer_info.fullName.replace(
+              new RegExp(search, "gi"),
+              (match) => `<mark>${match}</mark>`
+            ),
+          }}
+        />
+        <div className="text-slate-500 text-xs px-2">
+          <span>{customer.customer_info.dob}, </span>
+          {customer.customer_info.contact_no.map((num, i) => <span key={i}>{num}, </span>)}
+          <span>{customer.customer_info.addresses}, </span>
+          <span>{customer.credit_customer_id}</span>
+        </div>
+      </div>
+    ))}
+    </>
+  );
+});
+
+
+
+type Props = {
+  label: string;
+  values?: (string | null | undefined)[];
+  fallbackHeight?: string;
+};
+
+const FieldListDisplay = memo(({ label, values = [], fallbackHeight = "p-5" }: Props) => {
+  const isEmpty = !values || values.length === 0;
+
+  return (
+    <div className="ms-5 2xl:text-sm lg:text-xs">
+      <div className="font-bold text-slate-500">{label}</div>
+      <div className="flex flex-col gap-2">
+        {isEmpty ? (
+          <div className={`w-96 border border-gray-300 ${fallbackHeight} rounded-lg bg-gray-50 text-slate-500`} />
+        ) : (
+          values.map((val, index) => (
+            <div
+              key={index}
+              className="w-96 border border-gray-300 p-2.5 rounded-lg bg-gray-50 text-slate-500"
+            >
+              {val}
+            </div>
+          ))
+        )}
+      </div>
+    </div>
+  );
+});
+
+const FieldDisplay = memo(({ label, value }:{label:string, value:string | number | null | undefined | []}) => (
+  <div className="ms-5 mt-1 2xl:text-sm lg:text-xs">
+    <div className="font-bold text-slate-500 uppercase text-xs">{label}</div>
+    <div className={`${value ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
+        {value}
+      </div>
+  </div>
+));
+
 const CustomerDisposition = () => {
-  const {userLogged, selectedCustomer, breakValue , success} = useSelector((state:RootState)=> state.auth)
-  const location = useLocation()
+  const {userLogged, selectedCustomer, breakValue } = useSelector((state:RootState)=> state.auth)
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const [isRPC, setIsRPC] = useState<boolean>(false)
   const [isUpdate, setIsUpdate] = useState<boolean>(false)
-
-  
   const [search, setSearch] = useState("")
-
-  const {data:searchData ,refetch, error} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search}})
+  const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search}, skip: !search.length,})
   const length = searchData?.search?.length || 0;
 
-  console.log(searchData)
+  const debouncedSearch = useMemo(() => {
+  return debounce((val: string) => {
+    refetch({ search: val });
+  }, 300);
+}, [refetch]);
 
+  const handleSearchChange = useMemo(() => 
+  debounce((val: string) => setSearch(val), 300)
+, []);
+
+  // Run on search change
   useEffect(() => {
-    if (error) {
-      dispatch(setServerError(true));
-    }
-  }, [error, dispatch]);
+    if (search) debouncedSearch(search);
+  }, [search, debouncedSearch]);
 
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      handleSearchChange.cancel();
+      debouncedSearch.cancel();
+    }
+  }, [handleSearchChange,debouncedSearch]);
 
   const [selectTask] = useMutation(SELECT_TASK,{
     onCompleted: ()=> {
@@ -149,22 +232,10 @@ const CustomerDisposition = () => {
     }
   })
 
-
-  const onClickSearch = async(customer:Search) => {
+  const onClickSearch = useCallback(async(customer:Search) => {
     await selectTask({variables: {id: customer._id}})
     dispatch(setSelectedCustomer(customer))
-  }
-
-
-  useEffect(()=> {
-    const params = new URLSearchParams(location.search);
-    if(params?.get("success")) {
-      dispatch(setSuccess({
-        success: true,
-        message: "Customer successfully updated"
-      }))
-    }
-  },[location.search])
+  },[selectTask,dispatch])
 
 
   const [deselectTask,{loading}] = useMutation<{deselectTask:{message: string, success: boolean}}>(DESELECT_TASK,{
@@ -176,14 +247,6 @@ const CustomerDisposition = () => {
     }
   })
 
-
-  useEffect(()=> {
-    if(!success.success){
-      navigate(location.pathname)
-    }
-  },[ success ,navigate,location.pathname ])
-
-
   useEffect(()=> {
     const id = selectedCustomer._id;
     if(!id) return
@@ -192,25 +255,23 @@ const CustomerDisposition = () => {
       await deselectTask({ variables: { id } })
     })
     return ()=> clearTimeout(timer)
-  },[navigate, deselectTask, dispatch])
-
+  },[navigate, deselectTask])
 
   const clearSelectedCustomer = async() => {
     await deselectTask({variables: {id: selectedCustomer._id}}) 
   }
   
-
   useEffect(()=> {
-    setSearch("")
+    if(selectedCustomer._id) {
+      setSearch("")
+    }
   },[selectedCustomer._id])
-
 
   useEffect(()=> {
     if(breakValue !== BreakEnum.PROD && userLogged.type === "AGENT") {
       navigate('/break-view')
     }
   },[breakValue,navigate])
-
 
   useEffect(() => {
     const handleBeforeUnload = () => {
@@ -244,7 +305,9 @@ const CustomerDisposition = () => {
     yes: () => {},
     no: () => {}
   })
+
   const [isRPCToday, setIsRPCToday] = useState<boolean>(false)
+
   useEffect(()=> {
     if(selectedCustomer._id) {
       if(selectedCustomer.isRPCToday) {
@@ -278,7 +341,6 @@ const CustomerDisposition = () => {
 
   const callbackUpdateRPC = useCallback(async()=> {
     await updateRPC({variables: {id:selectedCustomer.customer_info._id}})
-  
   },[updateRPC, selectedCustomer])
 
   const callbackNo = useCallback(()=> {
@@ -294,39 +356,6 @@ const CustomerDisposition = () => {
       no: callbackNo
     })
   }
-
-  const searchResult = useMemo(()=> {
-    return searchData?.search.slice(0,50).map((data) => (
-      <div key={data._id} className="flex flex-col text-sm cursor-pointer hover:bg-slate-100 py-0.5"
-      onClick={() => onClickSearch(data)}
-      >
-        <div className="px-2 font-medium text-slate-600 uppercase"
-            dangerouslySetInnerHTML={{
-            __html: data.customer_info.fullName.replace(
-              new RegExp(search, "gi"),
-              (match) => `<mark>${match}</mark>`
-            ),
-          }}
-        />
-        <div className="text-slate-500 text-xs px-2">
-          <span>
-            {data.customer_info.dob},&nbsp; 
-          </span>
-            {data.customer_info.contact_no.map((contact,index) =>
-              <span key={index}>
-                {contact},&nbsp;
-              </span>
-            )}, 
-          <span>
-            {data.customer_info.addresses},&nbsp;
-          </span>
-          <span>
-            {data.credit_customer_id}
-          </span>
-        </div>
-      </div>
-    )) 
-  },[searchData])
 
   if(loading) return <Loading/>
 
@@ -365,88 +394,29 @@ const CustomerDisposition = () => {
                     name="search" 
                     autoComplete="off"
                     value={search}
-                    onChange={(e)=> {setSearch(e.target.value)}}
+                    onChange={(e)=> handleSearchChange(e.target.value)}
                     id="search"
                     placeholder="Search" 
                     className="w-96 p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "/>
           
                 <div className={`${length > 0 && search ? "" : "hidden"} absolute max-h-96 border border-slate-400 w-full left-0 bg-white overflow-y-auto rounded-md`}>
-                  {
-                    searchResult
-                  }
+                  <SearchResult data={searchData?.search || []} search={search} onClick={onClickSearch}/>
                 </div>
               </div>
             }
-            <div className="ms-5 mt-5 2xl:text-sm lg:text-xs">
-              <div className="font-bold text-slate-500 uppercase">Full Name</div>
-              <div className={`${selectedCustomer.customer_info?.fullName ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
-                {selectedCustomer.customer_info?.fullName}
-              </div>
-            </div>
-            <div className="ms-5 2xl:text-sm lg:text-xs">
-              <div className=" font-bold text-slate-500">Date Of Birth (yyyy-mm-dd)</div>
-              <div className={`${selectedCustomer.customer_info?.dob ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
-                {selectedCustomer?.customer_info?.dob}
-              </div>
-            </div>
-            <div className="ms-5 2xl:text-sm lg:text-xs">
-              <div className="font-bold text-slate-500">Gender</div>
-              <div className={`${selectedCustomer.customer_info?.gender ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
-
-                {
-                  Boolean(selectedCustomer?.customer_info?.gender ) ? 
-                  (selectedCustomer?.customer_info?.gender === "F" || selectedCustomer?.customer_info?.gender.toLocaleLowerCase() === "female")  ? "Female" : "Male" : ""
-                }
-              </div>
-            </div>
-            <div className="ms-5 2xl:text-sm lg:text-xs">
-              <div className="font-bold text-slate-500">Mobile No.</div>
-              <div className="flex flex-col gap-2">
-                { !selectedCustomer._id &&
-                  <div className="w-96 border border-gray-300 p-5 rounded-lg  bg-gray-50 text-slate-500">
-                  </div>
-                }
-                {selectedCustomer?.customer_info?.contact_no.map((cn,index)=> (
-                  <div key={index} className="w-96 border border-gray-300 p-2.5 rounded-lg  bg-gray-50 text-slate-500">
-                    {cn}
-                  </div>
-                ))}
-              </div>
-            </div>
-            <div className="ms-5 2xl:text-sm lg:text-xs">
-              <div className=" font-bold text-slate-500">Email</div>
-              <div className="flex flex-col gap-2"> 
-                { 
-                  (!selectedCustomer?._id || selectedCustomer?.customer_info?.emails.length < 1) &&
-                  <div className="w-96 border border-gray-300 p-5 rounded-lg  bg-gray-50 text-slate-500 1">
-                  </div>
-                }
-                {
-                  selectedCustomer?.customer_info?.emails.map((e,index)=>  (
-                    <div key={index} className={`w-96 border border-gray-300 ${selectedCustomer?.customer_info?.emails?.length > 0 ? "p-2.5" : "p-5"}  rounded-lg bg-gray-50 text-slate-500`}>
-                      {e}
-                    </div>
-                  ))
-                }
-              </div>
-            </div>
-            <div className="ms-5 2xl:text-sm lg:text-xs">
-              <div className="font-bold text-slate-500">Address</div>
-              <div className="flex flex-cols gap-2">
-                { !selectedCustomer._id &&
-                  <div className="w-96 h-36 border border-gray-300 rounded-lg bg-gray-50 text-slate-500">
-                  </div>
-                }
-                {
-                  selectedCustomer?.customer_info?.addresses.map((a, index)=> (
-                    <div key={index} className="w-96 max-h-96 border border-gray-300 p-2.5 rounded-lg  bg-gray-50 text-slate-500 text-justify">
-                      {a}
-                    </div>
-                  ))
-                }
-
-              </div>
-            </div>
+            <FieldDisplay label="Full Name" value={selectedCustomer.customer_info?.fullName}/>
+            <FieldDisplay label="Date Of Birth (yyyy-mm-dd)" value={selectedCustomer.customer_info?.dob}/>
+            <FieldDisplay label="Gender" 
+              value={
+                selectedCustomer.customer_info?.gender === "F" ? "Female"
+                : selectedCustomer.customer_info?.gender === "M" ? "Male"
+                : ""
+              }
+            />
+            <FieldListDisplay label="Mobile No." values={selectedCustomer?.customer_info?.contact_no} fallbackHeight="h-10"/>
+            <FieldListDisplay label="Email" values={selectedCustomer?.customer_info?.emails} fallbackHeight="h-10"/>
+            <FieldListDisplay label="Address" values={selectedCustomer?.customer_info?.addresses} fallbackHeight="h-36"/>
+    
             {
               !isUpdate &&
               <div className="ms-5 2xl:text-sm lg:text-xs mt-5 flex gap-5">

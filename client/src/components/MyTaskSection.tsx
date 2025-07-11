@@ -65,7 +65,7 @@ type CustomerData = {
 }
 
 type GroupTask = {
-  task: CustomerData[];
+  task: CustomerData[] | [];
   _id: string;
 }
 
@@ -262,8 +262,10 @@ const MyTaskSection = () => {
   const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const client = useApolloClient()
-  // const navigate = useNavigate()
+  const {data:myTasksData, refetch} = useQuery<{myTasks:CustomerData[] | []}>(MY_TASKS)
+  const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
   
+  console.log(myTasksData)
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
     onData: ({data})=> {
       if(data) {
@@ -312,8 +314,7 @@ const MyTaskSection = () => {
     }
   })
   
-  const {data:myTasksData} = useQuery<{myTasks:CustomerData[]}>(MY_TASKS)
-  const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
+
   const [data, setData] = useState<CustomerData[] | null>([])
   const [selection, setSelection] = useState<string>("")
 
@@ -338,10 +339,10 @@ const MyTaskSection = () => {
     setSelection("")
   },[selectedCustomer._id])
 
-  // useEffect(()=> {
-  //   refetch()
-  //   groupTaskRefetch()
-  // },[refetch,groupTaskRefetch,navigate])
+  useEffect(()=> {
+    refetch()
+    groupTaskRefetch()
+  },[refetch,groupTaskRefetch])
 
   const handleClickMyTask = () => {
     if(selection && selection.trim() !== "group_task"){

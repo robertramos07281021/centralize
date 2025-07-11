@@ -11,6 +11,22 @@ const taskTypeDefs = gql`
     addresses: [String]
   }
 
+  type CurrentDispo {
+    _id:ID
+    amount: Float
+    disposition: ID
+    payment_date: String
+    ref_no: String
+    existing: Boolean
+    comment: String
+    payment: String
+    payment_method: String
+    user: ID
+    dialer: String
+    createdAt: DateTime
+    contact_method: String
+  }
+
   type Success {
     success: Boolean
     message: String
@@ -64,6 +80,7 @@ const taskTypeDefs = gql`
     current_disposition: CurrentDispo
     account_bucket: AccountBucket
     customer_info: CustomerInfo
+    dispo_history: [CurrentDispo]
   }
 
   type Query {
