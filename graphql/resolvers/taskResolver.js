@@ -1,5 +1,5 @@
 
-import mongoose from "mongoose"
+import mongoose, { mongo } from "mongoose"
 import CustomError from "../../middlewares/errors.js"
 import Bucket from "../../models/bucket.js"
 import Callfile from "../../models/callfile.js"
@@ -220,27 +220,38 @@ const taskResolver = {
           }
         ])
 
-        const RPCDisponew = allDispotype[0]?.ids.map(y=> y.toString()) ?? [];
         
-      
+        
         const findCustomersAccount = await CustomerAccount.aggregate([
           {
             $match: {
               history: {$not: {$size: 0}}
             }
           },
+          {
+            $lookup: {
+              from: "dispositions", 
+              localField: "history", 
+              foreignField: "_id",       
+              as: "dispo_history"         
+            }
+          },
+          {
+            $match: {
+              "dispo_history.disposition": { $in: allDispotype[0]?.ids.map(x=> new mongoose.Types.ObjectId(x)) || [] }
+            }
+          }
         ])
-
-
+     
         await Promise.all(
           findCustomersAccount.map(async(e)=> {
-            const targets = new Set(RPCDisponew)
-            const isRPC = e.history.map(s=> s.toString()).some(item => targets.has(item))
-            await Customer.findByIdAndUpdate(e.customer, {$set: {isRPC: isRPC}})
+            await Customer.findByIdAndUpdate(e.customer, {$set: {isRPC: true}})
           })
         )
-
-
+        
+        // const RPCDisponew = allDispotype[0]?.ids.map(y=> y.toString()) ?? [];
+        
+        
         // await Promise.all(
         //   findCustomersAccount.map(async(e)=> {
         //     const dispositions = await Disposition.find({customer_account: {$eq: new mongoose.Types.ObjectId(e._id)}})

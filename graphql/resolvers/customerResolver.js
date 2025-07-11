@@ -67,8 +67,6 @@ const customerResolver = {
     search: async(_,{search},{user}) => {
       
       try {
-        const isValidObjectId = mongoose.Types.ObjectId.isValid(search);
-        const checkId =  isValidObjectId ? [{ "customer_info._id": new mongoose.Types.ObjectId(search) }] : [];
         const regexSearch = { $regex: search, $options: "i" };
 
         const startOfTheDay = new Date()
@@ -89,8 +87,6 @@ const customerResolver = {
           { 
             $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
           },
-
-
           {
             $lookup: {
               from: "buckets",
@@ -128,7 +124,6 @@ const customerResolver = {
                 { account_id: regexSearch },
                 { "out_standing_details.total_os": regexSearch },
                 { case_id: regexSearch },
-                ...checkId,
               ],
             },
           },
@@ -206,7 +201,6 @@ const customerResolver = {
     getMonthlyPerformance: async(_,__,{user}) => {
   
       try {
-        
         const year = new Date().getFullYear()
         const month = new Date().getMonth();
         const thisDay = new Date()
