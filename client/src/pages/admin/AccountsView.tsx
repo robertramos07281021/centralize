@@ -105,7 +105,6 @@ type Users = {
   user_id: string
 }
 
-
 const AccountsView = () => {
   const [page, setPage] = useState<string>('1')
   const [search, setSearch] = useState("")
@@ -141,7 +140,6 @@ const AccountsView = () => {
     setPage(adminUsersPage.toString())
   },[adminUsersPage])
 
-
   useEffect(()=> {  
     if(data || searchData) {
       const dataExistingPages = Math.ceil((data?.getUsers?.total || 1) / limit )
@@ -149,14 +147,11 @@ const AccountsView = () => {
       const pageExists = dataExistingPages || searchExistingPages
       setTotalPage(pageExists)
     }
-
   },[data,searchData])
-
 
   useEffect(()=> {
     refetch()
   },[navigate,refetch])
-
 
   return (
     <div className="h-full flex flex-col overflow-hidden p-2">

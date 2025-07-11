@@ -7,7 +7,6 @@ import Production from "../../models/production.js";
 import User from "../../models/user.js";
 import bcrypt from "bcryptjs";
 import DispoType from "../../models/dispoType.js";
-import ftp from "basic-ftp"
 import 'dotenv/config.js'
 
 const productionResolver = {
@@ -721,16 +720,27 @@ const productionResolver = {
     },
     getAgentDispositionRecords: async(_,{agentID, limit, page, from, to, search})=> {
       
-      const client = new ftp.Client();
       try {
         const skip = ((page - 1) * limit)
 
         const dispoWithRecordings = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP']
-
+        const today = new Date()
+        today.setHours(0,0,0,0)
+        const dialer = ["vici", 'issabel']
+    
         const filtered = {
           user: new mongoose.Types.ObjectId(agentID),
           "dispotype.code" : {$in: dispoWithRecordings},
-          "customer.contact_no" : {$elemMatch: { $regex: search, $options: "i" }}
+          createdAt: {$lt: today},
+          dialer: {$in: dialer},
+          $or: [
+            {
+              "customer.contact_no" : {$elemMatch: { $regex: search, $options: "i" }},
+            },
+            {
+              "customer.name" : { $regex: search, $options: "i" }
+            }
+          ]
         }
       
         if(from && to) { 
@@ -795,183 +805,43 @@ const productionResolver = {
           {
             $match: filtered
           },
-          { $sort: { "createdAt" : 1 } },
-          { $skip: skip },
-          { $limit: limit },
-        ])
-
-        const months = [
-          'January',
-          'February',
-          'March',
-          'April',
-          'May',
-          'June',
-          'July',
-          'August',
-          'September',
-          'October',
-          'November',
-          'December'
-        ]
-
-        await client.access({
-          host: process.env.FILEZILLA_HOST,
-          user: process.env.FILEZILLA_USER,
-          password: process.env.FILEZILLA_PASSWORD,
-          port: 21,
-          secure: false,
-        });
-
-        const filteredWithRecording = [];
-
-        for (const e of forFiltering) {
-          const createdAt = new Date(e.createdAt);
-          const yearCreated = createdAt.getFullYear();
-          const monthCreated = months[createdAt.getMonth()];
-          const dayCreated = createdAt.getDate();
-          const month = createdAt.getMonth() + 1;
-          const contact = e.customer.contact_no;
-          const viciIpAddress = e.bucket.viciIp
-          const fileNale = {
-            "172.20.21.64" : "HOMECREDIT",
-            "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
-            "172.20.21.17" : "PSBANK",
-            "172.20.21.27" : "MIXED CAMPAIGN",
-            "172.20.21.30" : "MCC",
-            "172.20.21.35" : "MIXED CAMPAIGN",
-            "172.20.21.67" : "MIXED CAMPAIGN NEW",
-            '172.20.21.97' : "UB"
-          }
-  
-          function checkDate(number) {
-            return number > 9 ? number : `0${number}`;
-          }
-
-          const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`
-          const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${e.bucket.issabelIp}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
-     
-          const remoteDir = e.dialer === "vici" ? remoteDirVici : remoteDirIssabel
-    
-          const contactPatterns = contact.map(num =>
-            num.length < 11 ? num : num.slice(1, 11)
-          );
-          let skip = false;
-          
-          try {
-            const fileList = await client.list(remoteDir);
-          
-            const files = fileList.filter(y =>
-              contactPatterns.some(pattern => y.name.includes(pattern))
-             
-            );
-            if (files.length > 0) {
-              filteredWithRecording.push(e._id);
-            }
-          } catch (err) {
-            skip = true;
-          } 
-          if (skip) continue;
-        }
-
-        const filteredWithIds = {
-          ...filtered,
-          _id: { $in: filteredWithRecording }
-        };
-
-        const dispositions = await Disposition.aggregate([
-          {
-            $lookup: {
-              from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
-              as: "ca",
-            }
-          },
-          {
-            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "customers",
-              localField: "ca.customer",
-              foreignField: "_id",
-              as: "customer",
-            }
-          },
-          {
-            $unwind: { path: "$customer", preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "ca.bucket",
-              foreignField: "_id",
-              as: "bucket",
-            }
-          },
-          {
-            $unwind: { path: "$bucket", preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "dispotypes",
-              localField: "disposition",
-              foreignField: "_id",
-              as: "dispotype",
-
-            }
-          },
-          {
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true}
-          },
-          {
-            $match: filteredWithIds
-          },
-          {
-            $group: {
-              _id: "$_id",
-              customer_name:{ $first: "$customer.fullName" },
-              payment: { $first: "$payment" },
-              amount: { $first: "$amount"},
-              dispotype: { $first: "$dispotype.code" },
-              payment_date: { $first: "$payment_date" },
-              ref_no: { $first: "$ref_no" },
-              comment: { $first: "$comment" },
-              contact_no: {$first: '$customer.contact_no'},
-              createdAt: {$first: "$createdAt"}
-            }
-          },
+          {$sort: { "createdAt" : -1 }},
           {
             $project: {
               _id: "$_id",
-              customer_name: 1 ,
-              payment: 1,
-              amount: 1,
-              dispotype: 1,
-              payment_date: 1,
-              ref_no: 1,
-              comment: 1,
-              contact_no: 1,
-              createdAt: 1
+              customer_name: "$customer.fullName",
+              payment: "$payment",
+              amount:  "$amount",
+              dispotype: "$dispotype.code",
+              payment_date:  "$payment_date",
+              ref_no: "$ref_no",
+              comment: "$comment",
+              contact_no: '$customer.contact_no',
+              createdAt: "$createdAt",
             }
           },
-          { $sort: { "createdAt" : 1 } },
-          { $skip: skip },
-          { $limit: limit },
+          {
+            $facet: {
+              metadata: [
+                { $count: "total" }
+              ],
+              data: [
+                {$skip: skip},
+                {$limit: limit},
+             
+              ],
+            }
+          }
         ])
-        
+        const result = forFiltering[0]?.data || []
 
         return {
-          dispositions: dispositions,
-          total: filteredWithRecording?.length
+          dispositions: result,
+          total: forFiltering[0].metadata[0].total || 0
         }
-
       } catch (error) {
         throw new CustomError(error.message, 500)  
-      } finally {
-        client.close()
-      }
+      } 
     },
     monthlyWeeklyCollected: ()=> {
       

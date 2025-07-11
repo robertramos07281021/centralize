@@ -121,6 +121,13 @@ const AgentRecordingView = () => {
   
   const [totalPage, setTotalPage] = useState<number>(1)
   
+  useEffect(()=> {
+    setPage(agentRecordingPage.toString())
+  },[agentRecordingPage])
+
+  useEffect(()=> {
+    dispatch(setAgentRecordingPage(1))
+  },[location.pathname])
 
   useEffect(()=> {
     if(recordings) {
@@ -142,20 +149,26 @@ const AgentRecordingView = () => {
         message: res.findRecordings.message
       }))
       const url = res.findRecordings.url
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('Failed to fetch file');
-      const blob = await response.blob();
-      const link = document.createElement("a");
-      link.href = URL.createObjectURL(blob);
-      link.download = url.split('/').pop()  || "recording.mp3";
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(link.href);
-      await deleteRecordings({ variables: { filename: link.download } });
+      try {
+        const response = await fetch(url);
+        if (!response.ok) throw new Error('Failed to fetch file');
+        const blob = await response.blob();
+        const link = document.createElement("a");
+        link.href = URL.createObjectURL(blob);
+        link.download = url.split('/').pop()  || "recording.mp3";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(link.href);
+        await deleteRecordings({ variables: { filename: link.download } });
+        
+      } catch (error) {
+        console.log(error)
+      }
       setIsLoading('')
     },
-    onError: () => {
+    onError: (error) => {
+      console.log(error)
       dispatch(setServerError(true))
     }
   })

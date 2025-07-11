@@ -332,6 +332,10 @@ const authSlice = createSlice({
       state.breakValue = BreakEnum.WELCOME
       state.adminUsersPage = 1
       state.myToken = null
+      state.success = {
+        success: false,
+        message: ""
+      }
     },
     setSuccess: (state, action:PayloadAction<success>) => {
       state.success = action.payload

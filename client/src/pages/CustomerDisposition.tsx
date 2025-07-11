@@ -225,7 +225,6 @@ const CustomerDisposition = () => {
   const [selectTask] = useMutation(SELECT_TASK,{
     onCompleted: ()=> {
       setSearch("")
-      refetch()
     },
     onError: ()=>{
       dispatch(setServerError(true))

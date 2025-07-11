@@ -26,6 +26,7 @@ const recordingsResolver = {
           'November',
           'December'
         ]
+
         const findDispo = await Disposition.aggregate([
           {
             $lookup: {
@@ -116,8 +117,6 @@ const recordingsResolver = {
           secure: false,
         });
 
-
-
         const remoteDirVici =  `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`     
         const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${issabelIpAddress}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`
         const localDir = './recordings'
@@ -127,8 +126,9 @@ const recordingsResolver = {
         }
 
         const remoteDir = myDispo.dialer === "vici" ? remoteDirVici : remoteDirIssabel
+    
         const fileList = await client.list(remoteDir);
-        
+    
         const files = fileList.filter(e=> contactPatterns.some(pattern => e.name.includes(pattern)))
         
         function extractTimeFromFilename(filename) {
@@ -166,6 +166,13 @@ const recordingsResolver = {
           return bestMatch
         }
         const bestMatch = findClosestRecording(files,myDispo.createdAt)
+        if(!bestMatch) {
+          return {
+            success: true,
+            message: "This one have no recordings to find"
+          }
+        }
+
         if (bestMatch.type === ftp.FileType.File) {
           const remotePath = `${remoteDir}/${bestMatch.name}`;
           const fileName = `${myDispo.dispotype.code}-${bestMatch.name}`
@@ -179,16 +186,14 @@ const recordingsResolver = {
             message: "Successfully downloaded"
           }
         }
-
-
       } catch (err) {
+        console.log(err)
         throw new CustomError(err.message, 500)
       } finally {
         client.close();
       }
     },
     deleteRecordings: (_,{filename}) => {
-
       const filePath = path.join('./recordings', filename);
       fs.unlink(filePath, (err)=> {
         if(err) {

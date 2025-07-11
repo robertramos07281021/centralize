@@ -8,6 +8,7 @@ import CustomerAccount from "../../models/customerAccount.js"
 import Disposition from "../../models/disposition.js"
 import Group from "../../models/group.js"
 import User from "../../models/user.js"
+import DispoType from "../../models/dispoType.js"
 
 
 const taskResolver = {
@@ -194,15 +195,58 @@ const taskResolver = {
     },
     updateDatabase: async()=> {
       try {
-        const findCustomersAccount = await CustomerAccount.find()
+
+        const RPCDispo = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP']
+
+        const allDispotype = await DispoType.aggregate([
+          {
+            $match: {
+              code: {$in: RPCDispo}
+            }
+          },
+          {
+            $group: {
+              _id: 0,
+              ids: {
+                $push: "$_id"
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              ids: 1
+            }
+          }
+        ])
+
+        const RPCDisponew = allDispotype[0]?.ids.map(y=> y.toString()) ?? [];
+        
+      
+        const findCustomersAccount = await CustomerAccount.aggregate([
+          {
+            $match: {
+              history: {$not: {$size: 0}}
+            }
+          },
+        ])
+
 
         await Promise.all(
           findCustomersAccount.map(async(e)=> {
-            const dispositions = await Disposition.find({customer_account: {$eq: new mongoose.Types.ObjectId(e._id)}})
-            await CustomerAccount.findByIdAndUpdate(e._id, {$push: {history: dispositions.map(x=> x._id)}})
+            const targets = new Set(RPCDisponew)
+            const isRPC = e.history.map(s=> s.toString()).some(item => targets.has(item))
+            await Customer.findByIdAndUpdate(e.customer, {$set: {isRPC: isRPC}})
           })
         )
 
+
+        // await Promise.all(
+        //   findCustomersAccount.map(async(e)=> {
+        //     const dispositions = await Disposition.find({customer_account: {$eq: new mongoose.Types.ObjectId(e._id)}})
+        //     await CustomerAccount.findByIdAndUpdate(e._id, {$push: {history: dispositions.map(x=> x._id)}})
+        //   })
+        // )
 
         // const findCustomer = await Customer.find({
         //   contact_no: { $elemMatch: { $regex: /^00/ } }
@@ -221,11 +265,14 @@ const taskResolver = {
         // )
 
 
+
+
         return {
           success: true,
           message: "Customers Account Successfully update"
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

@@ -265,7 +265,6 @@ const MyTaskSection = () => {
   const {data:myTasksData, refetch} = useQuery<{myTasks:CustomerData[] | []}>(MY_TASKS)
   const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
   
-  console.log(myTasksData)
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
     onData: ({data})=> {
       if(data) {
