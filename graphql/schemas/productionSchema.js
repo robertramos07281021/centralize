@@ -99,6 +99,7 @@ const productionTypeDefs = gql`
     comment: String
     contact_no: [String]
     createdAt: DateTime
+    dialer: String
   }
 
   type AgentDispo {

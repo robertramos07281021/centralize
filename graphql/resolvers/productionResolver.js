@@ -819,6 +819,7 @@ const productionResolver = {
               comment: "$comment",
               contact_no: '$customer.contact_no',
               createdAt: "$createdAt",
+              dialer: "$dialer"
             }
           },
           {

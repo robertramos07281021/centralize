@@ -787,6 +787,13 @@ const callfileResolver = {
           }
         },{new: true})
 
+        await CustomerAccount.updateMany(
+            { callfile: new mongoose.Types.ObjectId(finishedCallfile._id) }, 
+            { 
+              $unset: { assigned: "", assigned_date: ""}, 
+              $set: { on_hands: false }
+            }
+        )
         if(!finishedCallfile) throw CustomError("Callfile not found",404) 
 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {

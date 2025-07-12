@@ -24,6 +24,7 @@ const AGENT_RECORDING = gql`
         comment
         contact_no
         createdAt
+        dialer
       }
       total
     }
@@ -41,6 +42,7 @@ type Diposition = {
   comment: string
   contact_no: string[]
   createdAt: string
+  dialer: string
 }
 
 type Record = {
@@ -246,9 +248,10 @@ const AgentRecordingView = () => {
       </div>
       <div className="h-full overflow-hidden w-full px-10 pt-3">
 
-        <div className="grid grid-cols-11 2xl:text-base lg:text-sm text-gray-600 font-medium bg-slate-100 py-1">
+        <div className="grid grid-cols-12 2xl:text-base lg:text-sm text-gray-600 font-medium bg-slate-100 py-1">
           <div className="pl-5 col-span-2">Name</div>
           <div className="col-span-2">Contact No</div>
+          <div >Dialer</div>
           <div>Amount</div>
           <div>Payment Date</div>
           <div>Referrence No.</div>
@@ -261,9 +264,10 @@ const AgentRecordingView = () => {
           {
             recordings?.getAgentDispositionRecords.dispositions.map(e=> {
               return (
-                <div key={e._id} className="grid grid-cols-11 lg:text-[0.6em] 2xl:text-xs py-1 items-center text-gray-600 even:bg-slate-50 hover:bg-blue-50">
+                <div key={e._id} className="grid grid-cols-12 lg:text-[0.6em] 2xl:text-xs py-1 items-center text-gray-600 even:bg-slate-50 hover:bg-blue-50">
                   <div className="pl-2 text-wrap truncate cursor-default col-span-2">{e.customer_name}</div>
                   <div className="cursor-default truncate text-nowrap col-span-2">{e.contact_no.join(', ')}</div>
+                  <div className="cursor-default truncate text-nowrap">{e.dialer}</div>
                   <div className="cursor-default">{e.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'})}</div>
                   <div className="cursor-default">{e.payment_date ? new Date(e.payment_date).toLocaleDateString() : "-"}</div>
                   <div className="relative">
