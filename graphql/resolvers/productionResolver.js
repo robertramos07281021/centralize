@@ -723,7 +723,7 @@ const productionResolver = {
       try {
         const skip = ((page - 1) * limit)
 
-        const dispoWithRecordings = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP']
+        const dispoWithRecordings = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP','KOR']
         const today = new Date()
         today.setHours(0,0,0,0)
         const dialer = ["vici", 'issabel']
@@ -737,7 +737,7 @@ const productionResolver = {
               "customer.contact_no" : {$elemMatch: { $regex: search, $options: "i" }},
             },
             {
-              "customer.name" : { $regex: search, $options: "i" }
+              "customer.fullName" : { $regex: search, $options: "i" }
             }
           ]
         }

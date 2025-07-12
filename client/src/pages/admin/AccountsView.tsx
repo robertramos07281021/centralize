@@ -41,29 +41,6 @@ const GET_ALL_BUCKET = gql`
 
 `
 
-const GET_ALL_USERS = gql`
-  query Query($page: Int!,$limit: Int!) {
-    getUsers(page:$page, limit: $limit) {
-      total
-      users {
-        _id
-        name
-        username
-        type
-        departments
-        branch
-        change_password
-        active
-        isLock
-        isOnline
-        buckets
-        createdAt
-        account_type
-        user_id
-      }
-    }
-  }
-`
 const FIND_QUERY = gql` 
   query Query($search: String!, $page: Int!, $limit: Int!) {
     findUsers(search: $search, page:$page, limit: $limit ) {
@@ -132,26 +109,24 @@ const AccountsView = () => {
     return Object.fromEntries(branchData.map((bd)=> [bd.id, bd.name]))
   },[getBranchData])
 
-  const {data, refetch } = useQuery<{getUsers:{users:Users[],total:number}}>(GET_ALL_USERS,{variables: {page: adminUsersPage, limit }, skip: !!search })
-  const {data:searchData } = useQuery<{findUsers:{users:Users[],total:number}}>(FIND_QUERY,{variables: { search, page: adminUsersPage, limit}, skip: !search})
-  const users = search ? searchData?.findUsers?.users || [] : data?.getUsers?.users || [];
-  
+  const {data:searchData, refetch } = useQuery<{findUsers:{users:Users[],total:number}}>(FIND_QUERY,{variables: { search, page: adminUsersPage, limit}})
+
+  const users = searchData?.findUsers.users || [];
+
   useEffect(()=> {
     setPage(adminUsersPage.toString())
   },[adminUsersPage])
 
   useEffect(()=> {  
-    if(data || searchData) {
-      const dataExistingPages = Math.ceil((data?.getUsers?.total || 1) / limit )
+    if(searchData) {
       const searchExistingPages = Math.ceil((searchData?.findUsers.total || 1) / limit)
-      const pageExists = dataExistingPages || searchExistingPages
-      setTotalPage(pageExists)
+      setTotalPage(searchExistingPages)
     }
-  },[data,searchData])
+  },[searchData])
 
   useEffect(()=> {
     refetch()
-  },[navigate,refetch])
+  },[navigate])
 
   return (
     <div className="h-full flex flex-col overflow-hidden p-2">

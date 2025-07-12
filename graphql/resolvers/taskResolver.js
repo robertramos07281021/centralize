@@ -1,15 +1,10 @@
-
-import mongoose, { mongo } from "mongoose"
 import CustomError from "../../middlewares/errors.js"
 import Bucket from "../../models/bucket.js"
-import Callfile from "../../models/callfile.js"
 import Customer from "../../models/customer.js"
 import CustomerAccount from "../../models/customerAccount.js"
 import Disposition from "../../models/disposition.js"
 import Group from "../../models/group.js"
 import User from "../../models/user.js"
-import DispoType from "../../models/dispoType.js"
-
 
 const taskResolver = {
   Query: {

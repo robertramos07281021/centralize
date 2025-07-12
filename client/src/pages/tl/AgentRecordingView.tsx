@@ -111,9 +111,11 @@ const AgentRecordingView = () => {
     to: ""
   })
 
+  const searchPage = triggeredSearch.search ? 1 : agentRecordingPage
+
   const {data: recordings, loading:recordingsLoading, refetch} = useQuery<{getAgentDispositionRecords:Record}>(AGENT_RECORDING,{variables: {
-    agentID: location.state, limit: limit, page:parseInt(page), from: triggeredSearch.from, to: triggeredSearch.to, search: triggeredSearch.search
-  }})
+    agentID: location.state, limit: limit, page:searchPage, from: triggeredSearch.from, to: triggeredSearch.to, search: triggeredSearch.search
+  } })
 
   const {data: agentInfoData} = useQuery<{getUser:Agent}>(AGENT_INFO,{variables: {id: location.state}})
 
@@ -126,6 +128,13 @@ const AgentRecordingView = () => {
   },[agentRecordingPage])
 
   useEffect(()=> {
+    if(triggeredSearch.search) {
+      setPage("1")
+      dispatch(setAgentRecordingPage(1))
+    }
+  },[triggeredSearch.search])
+
+  useEffect(()=> {
     dispatch(setAgentRecordingPage(1))
   },[location.pathname])
 
@@ -135,6 +144,7 @@ const AgentRecordingView = () => {
       setTotalPage(totalPage)
     }
   },[recordings])
+
 
   const [deleteRecordings] = useMutation(DELETE_RECORDING,{
     onError:()=> {
