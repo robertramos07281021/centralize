@@ -10,7 +10,11 @@ const ServerError = () => {
 
 
   const handleClickOk = () => {
-    navigate(location.pathname)
+    if(location.pathname === "/agent-recordings") {
+      navigate('/agent-production')
+    } else {
+      navigate(location.pathname)
+    }
     dispatch(setServerError(false))
   }
   

@@ -168,9 +168,9 @@ const AgentRecordingView = () => {
         }
       }
     },
-    onError: () => {
-    
-      dispatch(setServerError(true))
+    onError: (error) => {
+      console.log(error)
+      // dispatch(setServerError(true))
     }
   })
 

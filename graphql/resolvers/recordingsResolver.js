@@ -86,9 +86,8 @@ const recordingsResolver = {
         const monthCreated = months[createdAt.getMonth()]
         const dayCreated = createdAt.getDate()
         const contact = myDispo.customer.contact_no
-        const issabelIpAddress = myDispo.bucket.issableIp
+        const issabelIpAddress = myDispo.bucket.issabelIp
         const month = createdAt.getMonth() + 1;
-
         const viciIpAddress = myDispo.bucket.viciIp
           const fileNale = {
           "172.20.21.64" : "HOMECREDIT",
@@ -118,17 +117,27 @@ const recordingsResolver = {
         });
 
         const remoteDirVici =  `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`     
-        const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${issabelIpAddress}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`
+        const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${issabelIpAddress}/${monthCreated + ' ' + yearCreated}/${checkDate(dayCreated)}`
         const localDir = './recordings'
-        
+
         if (!fs.existsSync(localDir)) {
           fs.mkdirSync(localDir, { recursive: true });
         }
 
         const remoteDir = myDispo.dialer === "vici" ? remoteDirVici : remoteDirIssabel
-    
-        const fileList = await client.list(remoteDir);
-    
+
+        let fileList = []
+
+        try {
+          const res = await client.list(remoteDir)
+          fileList = res
+        } catch (error) {
+          return {
+            success: true,
+            message: 'Recordings not ready to download'
+          }
+        }
+
         const files = fileList.filter(e=> contactPatterns.some(pattern => e.name.includes(pattern)))
         
         function extractTimeFromFilename(filename) {
@@ -169,7 +178,7 @@ const recordingsResolver = {
         if(!bestMatch) {
           return {
             success: true,
-            message: "This one have no recordings to find"
+            message: "Recordings not found"
           }
         }
 
@@ -187,7 +196,6 @@ const recordingsResolver = {
           }
         }
       } catch (err) {
-        console.log(err)
         throw new CustomError(err.message, 500)
       } finally {
         client.close();
