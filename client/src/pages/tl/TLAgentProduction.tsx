@@ -109,9 +109,9 @@ const TLAgentProduction = () => {
             const arrow = sumOfDaily === 0 ? <HiOutlineMinusSm className="text-blue-500"/> : ((((sumOfDaily || 0) - (sumOfYesterday || 0)) > 0) ? <IoMdArrowUp className="text-green-500"/> : (((sumOfYesterday || 0) - (sumOfYesterday || 0)) === 0) ? <HiOutlineMinusSm className="text-blue-500"/> : <IoMdArrowDown className="text-red-500"/>) 
 
             return  (
-              <div key={agent._id} className='grid grid-cols-11 bg-white lg:text-[0.6rem] 2xl:text-xs text-slate-500 py-0.5'>
-                <div className='col-span-2 uppercase truncate'>{agent.name}</div>
-                <div className='truncate'>{agent.buckets.map(e=> bucketObject[e]).join(', ')}</div>
+              <div key={agent._id} className='grid grid-cols-11 bg-white lg:text-[0.6rem] 2xl:text-xs text-slate-500 py-0.5 cursor-default'>
+                <div className='col-span-2 uppercase truncate pr-2' title={agent.name.toUpperCase()}>{agent.name}</div>
+                <div className='truncate' title={agent.buckets.map(e=> bucketObject[e]).join(', ')}>{agent.buckets.map(e=> bucketObject[e]).join(', ')}</div>
                 <div className="truncate pr-2">{agent.user_id}</div>
                 <div>{getDailyProd?.rpc || 0}</div>
                 <div>{getDailyProd?.count || 0}</div>

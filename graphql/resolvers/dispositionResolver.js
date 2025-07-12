@@ -1709,7 +1709,6 @@ const dispositionResolver = {
     createDisposition: async(_,{input},{user, pubsub, PUBSUB_EVENTS}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
-        const RPCDispo = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP']
         const start = new Date();
         start.setHours(0, 0, 0, 0);
         const end = new Date();  
@@ -1778,9 +1777,6 @@ const dispositionResolver = {
             balance: newBalance,
           });
         }
-
-        const checkIfRPC = RPCDispo.includes(dispoType.code)
-        await Customer.findByIdAndUpdate(customerAccount._id , {$set: {isRPC: checkIfRPC}})
 
         await CustomerAccount.updateOne({ _id: customerAccount._id }, { $set: updateFields, $push: { history: newDisposition._id } });
 

@@ -164,7 +164,6 @@ const taskResolver = {
           message: "Successfully deselected"
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)  
       }
     },
@@ -196,59 +195,59 @@ const taskResolver = {
     updateDatabase: async()=> {
       try {
 
-        const RPCDispo = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP']
+        // const RPCDispo = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP']
 
-        const allDispotype = await DispoType.aggregate([
-          {
-            $match: {
-              code: {$in: RPCDispo}
-            }
-          },
-          {
-            $group: {
-              _id: 0,
-              ids: {
-                $push: "$_id"
-              }
-            }
-          },
-          {
-            $project: {
-              _id: 0,
-              ids: 1
-            }
-          }
-        ])
+        // const allDispotype = await DispoType.aggregate([
+        //   {
+        //     $match: {
+        //       code: {$in: RPCDispo}
+        //     }
+        //   },
+        //   {
+        //     $group: {
+        //       _id: 0,
+        //       ids: {
+        //         $push: "$_id"
+        //       }
+        //     }
+        //   },
+        //   {
+        //     $project: {
+        //       _id: 0,
+        //       ids: 1
+        //     }
+        //   }
+        // ])
 
         
         
-        const findCustomersAccount = await CustomerAccount.aggregate([
-          {
-            $match: {
-              history: {$not: {$size: 0}}
-            }
-          },
-          {
-            $lookup: {
-              from: "dispositions", 
-              localField: "history", 
-              foreignField: "_id",       
-              as: "dispo_history"         
-            }
-          },
-          {
-            $match: {
-              "dispo_history.disposition": { $in: allDispotype[0]?.ids.map(x=> new mongoose.Types.ObjectId(x)) || [] }
-            }
-          }
-        ])
+        // const findCustomersAccount = await CustomerAccount.aggregate([
+        //   {
+        //     $match: {
+        //       history: {$not: {$size: 0}}
+        //     }
+        //   },
+        //   {
+        //     $lookup: {
+        //       from: "dispositions", 
+        //       localField: "history", 
+        //       foreignField: "_id",       
+        //       as: "dispo_history"         
+        //     }
+        //   },
+        //   {
+        //     $match: {
+        //       "dispo_history.disposition": { $in: allDispotype[0]?.ids.map(x=> new mongoose.Types.ObjectId(x)) || [] }
+        //     }
+        //   }
+        // ])
      
-        await Promise.all(
-          findCustomersAccount.map(async(e)=> {
-            const res = await Customer.findByIdAndUpdate(e.customer, {$set: {isRPC: true}})
-            console.log(res)
-          })
-        )
+        // await Promise.all(
+        //   findCustomersAccount.map(async(e)=> {
+        //     const res = await Customer.findByIdAndUpdate(e.customer, {$set: {isRPC: true}})
+           
+        //   })
+        // )
 
         // const RPCDisponew = allDispotype[0]?.ids.map(y=> y.toString()) ?? [];
         
