@@ -149,6 +149,7 @@ const AgentRecordingView = () => {
   useEffect(()=> {
     if(recordings) {
       const totalPage = Math.ceil(recordings?.getAgentDispositionRecords?.total/limit)
+
       setTotalPage(totalPage)
     }
   },[recordings])
@@ -191,7 +192,6 @@ const AgentRecordingView = () => {
       }
     },
     onError: () => {
-
       dispatch(setServerError(true))
     }
   })
@@ -221,7 +221,6 @@ const AgentRecordingView = () => {
     }
   },[setDataSearch])
 
-
   if(recordingsLoading) return <Loading/>
  
   return (
@@ -230,7 +229,6 @@ const AgentRecordingView = () => {
         setSelectingDispotype(false)
       }
     }}>
-
       <h1 className="capitalize text-2xl font-bold text-gray-500 mb-5">{agentInfoData?.getUser?.name}</h1>
       <div className=" flex justify-end px-10 gap-5">
         <div className="w-60 h-8 relative" ref={dispotypeRef} >
@@ -238,7 +236,7 @@ const AgentRecordingView = () => {
             {
               triggeredSearch.dispotype.length > 0 ? <p className="text-xs text-gray-500 cursor-default select-none">{triggeredSearch.dispotype.join(', ')}</p> :
               <>
-                <p className="text-xs text-gray-500 cursor-default select-none">Filter Disposition type</p>
+                <p className="text-xs text-gray-500 cursor-default select-none truncate" title={dataSearch.dispotype.join(', ')}>{dataSearch.dispotype.length > 0 ? dataSearch.dispotype.join(', ') : "Filter Disposition type"}</p>
                 <RiArrowDropDownFill className="text-2xl"/>
               </>
               }
@@ -253,6 +251,7 @@ const AgentRecordingView = () => {
                     name={e} 
                     id={e} 
                     value={e}
+                    checked={dataSearch.dispotype.includes(e)}
                     onChange={(e)=> handleOnCheck(e,e.target.value)}
                   />
                   <span>{e}</span>
@@ -268,6 +267,7 @@ const AgentRecordingView = () => {
           id="search" 
           autoComplete="off"
           value={dataSearch.search}
+          placeholder="Search . . ."
           onChange={(e)=> setDataSearch({...dataSearch,search:  e.target.value})}
           className="border rounded border-slate-300 px-2 text-sm w-50 py-1 outline-none"
         />
