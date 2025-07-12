@@ -1792,8 +1792,8 @@ const dispositionResolver = {
           });
         }
 
-        await CustomerAccount.updateOne({ _id: customerAccount._id }, { $set: updateFields, $push: { history: newDisposition._id } });
-
+        await CustomerAccount.findByIdAndUpdate(customerAccount._id, { $set: updateFields, $push: { history: newDisposition._id } });
+        
         return {
           success: true,
           message: "Disposition successfully created"
