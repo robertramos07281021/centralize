@@ -4,6 +4,8 @@ import gql from 'graphql-tag';
 import { useQuery } from '@apollo/client';
 import { useEffect } from 'react';
 import { Chart } from "react-chartjs-2";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/store";
 
 
 type AgentProdPerDay = {
@@ -47,10 +49,11 @@ const AGENT_PER_DAY_PROD = gql`
 
 const MixedChartView = () => {
   const {data:agentProdPerDayData, refetch:PerDayRefetch} = useQuery<{getAgentProductionPerDay:AgentProdPerDay[]}>(AGENT_PER_DAY_PROD)
-
+  const {userLogged} = useSelector((state:RootState)=> state.auth)
   useEffect(()=> {
   PerDayRefetch()
   },[PerDayRefetch])
+  const dailyTargets = userLogged?.targets?.daily
 
   function getDaysInMonth(): number {
     const currentMonth = new Date().getMonth();
@@ -111,9 +114,8 @@ const MixedChartView = () => {
     id: 'customGridLine',
     beforeDraw: (chart) => {
       const { ctx, chartArea: { left, right }, scales: { y } } = chart;
-      const yValue = 2000;
+      const yValue = dailyTargets;
       const yPixel = y.getPixelForValue(yValue);
-
       ctx.save();
       ctx.beginPath();
       ctx.moveTo(left, yPixel);
@@ -161,6 +163,8 @@ const MixedChartView = () => {
       y: {
         type: 'linear',
         position: 'left',
+        min: 0,
+        max: dailyTargets + 20000,
         ticks: {
           font: {
             size: 12,
@@ -170,6 +174,8 @@ const MixedChartView = () => {
       y1: {
         type: 'linear',
         position: 'right',
+        min: 0,
+        max: dailyTargets + 20000,
         ticks: {
           font: {
             size: 12,

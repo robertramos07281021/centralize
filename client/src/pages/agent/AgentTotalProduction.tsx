@@ -17,6 +17,15 @@ const AGENT_PRODUCTION = gql`
   }
 `
 
+const WEEKLY_AND_MONTLY_COLLECTION = gql`
+  query monthlyWeeklyCollected {
+    monthlyWeeklyCollected {
+      monthly
+      weekly
+    }
+  }
+`
+
 type Production = {
   dtcCurrent: number
   dtcPrevious: number
@@ -85,6 +94,7 @@ export default function AgentTotalProduction () {
   const {data,refetch} = useQuery<{agentProduction:Production}>(AGENT_PRODUCTION)
   const {userLogged} = useSelector((state:RootState)=> state.auth)
   const prod = data?.agentProduction;
+  const {data:collectionsData} = useQuery<{monthlyWeeklyCollected:{monthly: number, weekly: number}}>(WEEKLY_AND_MONTLY_COLLECTION)
 
   useEffect(()=> {
     refetch()
@@ -99,21 +109,29 @@ export default function AgentTotalProduction () {
         color="purple"
       />
       <div className={`rounded-xl border p-2 ${colorsObject["teal"]} shadow shadow-black/20 flex flex-col`}>
-        <h1 className="lg:text-xs 2xl:text-sm font-bold">
-          <span className="lg:text-[0.7em] 2xl:text-xs">Targets</span>
+        <h1 className="lg:text-xs 2xl:text-sm font-bold flex justify-between">
+          <p className="lg:text-[0.7em] 2xl:text-xs">Collected</p>
+          <p className="lg:text-[0.7em] 2xl:text-xs">Targets</p>
         </h1>
         <div className="h-full flex flex-col justify-center">
-          <div className="flex justify-end items-center gap-2">
+     
+          <div className="flex justify-end items-center gap-2 text-sm">
             <p className="text-xs font-medium">(Daily)</p>
             <div>{userLogged.targets.daily.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
           </div>
-          <div className="flex justify-end items-center gap-2">
-            <p className="text-xs font-medium">(Weekly)</p>
-            <div>{userLogged.targets.weekly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
+          <div className="flex justify-between items-center gap-2">
+            <div className="text-xs">{collectionsData?.monthlyWeeklyCollected.weekly.toLocaleString("en-PH", {style: "currency",currency: "PHP",})}</div>
+            <div className="flex jsutify-center items-center text-sm">
+              <p className="text-xs font-medium">(Weekly)</p>
+              <div>{userLogged.targets.weekly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
+            </div>
           </div>
-          <div className="flex justify-end items-center gap-2">
-            <p className="text-xs font-medium">(Monthly)</p>
-            <div>{userLogged.targets.monthly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
+          <div className="flex justify-between items-center gap-2">
+            <div className="text-xs">{collectionsData?.monthlyWeeklyCollected.monthly.toLocaleString("en-PH", {style: "currency",currency: "PHP",})}</div>
+            <div className="flex jsutify-center items-center text-sm">
+              <p className="text-xs font-medium">(Monthly)</p>
+              <div>{userLogged.targets.monthly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
+            </div>
           </div>
           <h1 className="text-end text-xs font-bold">Amount</h1>
         </div>

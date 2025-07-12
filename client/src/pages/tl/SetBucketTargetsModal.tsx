@@ -88,7 +88,10 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
                 setBucket(selected?.id || "")
               }}
               className={`border ${required && !bucket ? "border-red-500 bg-red-50 text-red-500" : " border-slate-500"} w-full rounded-md  px-2 py-1 text-gray-500 outline-none`}>
-              <option value="" >Select Bucket</option>
+              {
+                data && data?.getTLBucket.length > 1 &&
+                <option value="" >Select Bucket</option>
+              }
               {
                 data?.getTLBucket.map((e)=> 
                   <option key={e.id} id={e.name} value={e.name}>{e.name}</option>

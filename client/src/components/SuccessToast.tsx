@@ -80,6 +80,10 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
     DEACTIVATE: {
       toast: "bg-green-400",
       close: "text-green-400"
+    },
+    "NO RECORDINGS": {
+      toast: "bg-red-400",
+      close: "text-red-400"
     }
 
 
@@ -95,7 +99,6 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
   
   const messageText = successObject?.message.toUpperCase() ?? "";
   let successType: keyof typeof toastColor = "CREATED";
-
   if (messageText.includes("UPDATED")) successType = "UPDATED";
   if (messageText.includes("DELETED")) successType = "DELETED";
   if (messageText.includes("EXISTS")) successType = "EXISTS";
@@ -112,6 +115,7 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
   if (messageText.includes("ACTIVATE")) successType = "ACTIVATE";
   if (messageText.includes("DEACTIVATE")) successType = "DEACTIVATE";
   if (messageText.includes("NOT INCLUDED")) successType = "NOT INCLUDED";
+  if (messageText.includes("NO RECORDINGS")) successType = "NO RECORDINGS";
 
   return (
     <div className={`${toastColor[successType].toast} w-96 h-13 rounded-xl border-slate-100 shadow shadow-black/20 border fixed right-5 top-20 z-50 flex items-center px-4 font-medium text-white justify-between`}>

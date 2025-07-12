@@ -843,8 +843,104 @@ const productionResolver = {
         throw new CustomError(error.message, 500)  
       } 
     },
-    monthlyWeeklyCollected: ()=> {
-      
+    monthlyWeeklyCollected: async(_,__,{user})=> {
+      try {
+        const now = new Date();
+        const currentDay = now.getDay();
+        const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() + diffToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        endOfWeek.setMilliseconds(-1);
+
+    
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
+
+        const findDisposition = await Disposition.aggregate([
+          {
+            $match: {
+              user: new mongoose.Types.ObjectId(user._id),
+              createdAt: { $gte: startOfMonth, $lte: endOfMonth }
+            }
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              "dispotype.code": {$in: ['PTP','PAID']}
+            }
+          },
+          {
+            $group: {
+              _id: 0,
+              monthly: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $gte: ['$createdAt',startOfMonth]
+                        },
+                        {
+                          $lte: ['$createdAt',endOfMonth]
+                        }
+                      ]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              weekly: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $gte: ['$createdAt',startOfWeek]
+                        },
+                        {
+                          $lte: ['$createdAt',endOfWeek]
+                        }
+                      ]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              monthly: 1,
+              weekly: 1
+            }
+          }
+        ])
+        
+        const res = findDisposition[0] || {}
+        
+        return res
+      } catch (error) {
+        throw new CustomError(error.message, 500)   
+      }
     }
   },
   DipotypeCount: {

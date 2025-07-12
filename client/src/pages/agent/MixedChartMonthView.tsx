@@ -2,8 +2,10 @@ import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
 import { useEffect } from "react"
 import { color, month } from "../../middleware/exports"
-import { ChartData, ChartDataset, ChartOptions } from "chart.js"
+import { ChartData, ChartDataset, ChartOptions, Plugin } from "chart.js"
 import { Chart } from "react-chartjs-2"
+import { useSelector } from "react-redux"
+import { RootState } from "../../redux/store"
 
 
 type AgentProdPerMonth = {
@@ -47,9 +49,9 @@ const AGENT_PER_MONTH_PROD = gql`
 
 export default function MixedChartMonthView() {
   const {data:agentProdPerMonthData, refetch:PerMonthRefetch} = useQuery<{getAgentProductionPerMonth:AgentProdPerMonth[]}>(AGENT_PER_MONTH_PROD)
-
+  const {userLogged} = useSelector((state:RootState)=> state.auth)
   const labelsPermonth =  month.map((m)=> {return m.slice(0,3)})
-
+  const monthlyTarget = userLogged.targets.monthly || 0
   const fields: {
     label: string;
     key: keyof AgentProdPerMonth;
@@ -92,6 +94,27 @@ export default function MixedChartMonthView() {
     datasets
   }
 
+  const customGridLinePlugi:Plugin<'bar' | 'line'> = {
+    id: 'customGridLine',
+    beforeDraw: (chart) => {
+      const { ctx, chartArea: { left, right }, scales: { y } } = chart;
+      const yValue =  monthlyTarget;
+      const yPixel = y.getPixelForValue(yValue);
+      ctx.save();
+      ctx.beginPath();
+      ctx.moveTo(left, yPixel);
+      ctx.lineTo(right, yPixel);
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = 'red';
+      ctx.stroke();
+      ctx.fillStyle = 'red';
+      ctx.font = '12px sans-serif';
+      ctx.fillText(``, left + 4, yPixel - 4);
+      ctx.restore();
+    }
+  };
+
+
   const optionPerMonth:ChartOptions<'bar'| 'line'> = { 
     plugins: {
       datalabels:{
@@ -123,6 +146,8 @@ export default function MixedChartMonthView() {
       y: {
         type: 'linear',
         position: 'left',
+        min: 0,
+        max: monthlyTarget + 50000,
         ticks: {
           font: {
             size: 12,
@@ -132,6 +157,8 @@ export default function MixedChartMonthView() {
       y1: {
         type: 'linear',
         position: 'right',
+        min: 0,
+        max: monthlyTarget + 50000,
         grid: {
           drawOnChartArea: false,
         },
@@ -152,7 +179,7 @@ export default function MixedChartMonthView() {
 
   return (
     <div className="border rounded-lg border-slate-200 col-span-7 row-span-2 p-2 shadow-md shadow-black/20 bg-white">
-      <Chart type="bar" data={dataPerMonth} options={optionPerMonth} />
+      <Chart type="bar" data={dataPerMonth} options={optionPerMonth} plugins={[customGridLinePlugi]}/>
     </div>
   )
 }
