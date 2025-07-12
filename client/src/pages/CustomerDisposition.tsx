@@ -205,8 +205,6 @@ const CustomerDisposition = () => {
   }, 300);
 }, [refetch]);
 
-
-console.log(selectedCustomer)
   const handleSearchChange = useMemo(() => 
   debounce((val: string) => setSearch(val), 300)
 , []);
