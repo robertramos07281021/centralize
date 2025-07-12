@@ -144,10 +144,6 @@ const AgentRecordingView = () => {
 
   const [findRecordings,{loading}] = useMutation<{findRecordings:Success}>(DL_RECORDINGS,{
     onCompleted: async(res)=> {
-      dispatch(setSuccess({
-        success: res.findRecordings.success,
-        message: res.findRecordings.message
-      }))
       const url = res.findRecordings.url
       setIsLoading('')
       if(url) {
@@ -162,15 +158,24 @@ const AgentRecordingView = () => {
           link.click();
           document.body.removeChild(link);
           URL.revokeObjectURL(link.href);
+          dispatch(setSuccess({
+            success: res.findRecordings.success,
+            message: res.findRecordings.message
+          }))
           await deleteRecordings({ variables: { filename: link.download } });
         } catch (error) {
           console.log(error)
         }
+      } else {
+        dispatch(setSuccess({
+          success: res.findRecordings.success,
+          message: res.findRecordings.message
+        }))
       }
     },
-    onError: (error) => {
-      console.log(error)
-      // dispatch(setServerError(true))
+    onError: () => {
+
+      dispatch(setServerError(true))
     }
   })
 
