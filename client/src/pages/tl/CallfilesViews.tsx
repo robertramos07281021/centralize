@@ -156,7 +156,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     bucketRefetch()
   },[bucket, refetch, bucketRefetch])
 
-  const [downloadCallfiles] = useLazyQuery(GET_CSV_FILES)
+  const [downloadCallfiles, {loading:downloadCallfilesLoading}] = useLazyQuery(GET_CSV_FILES)
 
   useSubscription<{newCallfile:SubSuccess}>(NEW_UPLOADED_CALLFILE,{
     onData: ({data})=> {
@@ -280,7 +280,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     }
   },[data,setTotalPage,setCanUpload])
 
-  
+  if(downloadCallfilesLoading) return <Loading/>
 
   return (
     <>

@@ -1446,12 +1446,26 @@ const dispositionResolver = {
           },
           {
             $group: {
-              _id: "$bucket._id",
+              _id: "$bucket.dept",
               amount: {
                 $sum: {
-                  $cond: [{
-                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]},{$eq: ['$dispotype.code',"PAID"]}]
-                  },"$amount",0]
+                  $cond: [
+                    {
+                     $and: [
+                        {
+                          $gte: ["$createdAt",todayStart]
+                        },
+                        {
+                          $lt: ['$createdAt',todayEnd]
+                        },
+                        {
+                          $eq: ['$dispotype.code',"PAID"]
+                        }
+                      ]
+                    },
+                    "$amount",
+                    0
+                  ]
                 }
               },
               yesterday: {

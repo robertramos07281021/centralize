@@ -3,6 +3,7 @@ import { useEffect, useState } from "react"
 import { Doughnut } from 'react-chartjs-2';
 import { colorDispo } from "../../middleware/exports";
 import {  ChartData, ChartOptions } from "chart.js";
+import Loading from "../Loading";
 
 const GET_DISPOSITION_REPORTS = gql`
   query GetDispositionReports($agent: String, $bucket: String, $disposition: [String], $from: String, $to: String) {
@@ -87,8 +88,9 @@ const ReportsView:React.FC<Props> = ({search}) => {
 
     
   const [newReportsDispo, setNewReportsDispo] = useState<Record<string,number>>({})
-  const {data:reportsData} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: search.searchAgent, bucket: search.searchBucket, disposition: search.selectedDisposition, from: search.dateDistance.from, to: search.dateDistance.to}})
+  const {data:reportsData, loading:reportLoading} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: search.searchAgent, bucket: search.searchBucket, disposition: search.selectedDisposition, from: search.dateDistance.from, to: search.dateDistance.to}})
   const {data:disposition} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
+
   
   useEffect(()=> {
     const reportsDispo:{[key: string]: number} = {};
@@ -163,6 +165,8 @@ const ReportsView:React.FC<Props> = ({search}) => {
     responsive: true,
     maintainAspectRatio: false,
   };
+
+  if(reportLoading) return <Loading/>
 
   return (
     <div className={`print:hidden col-span-2 flex flex-col ${chartFull ? "fixed top-0 bg-white z-50 items-center justify-center w-full h-full px-10" : "h-5/6"}`}>

@@ -835,7 +835,6 @@ const productionResolver = {
           }
         ])
         const result = forFiltering[0]?.data || []
-
         return {
           dispositions: result,
           total: forFiltering[0].metadata[0].total || 0

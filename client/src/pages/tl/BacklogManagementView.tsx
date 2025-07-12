@@ -1,7 +1,7 @@
 import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 import { useQuery, gql } from "@apollo/client";
 import {  Users } from "../../middleware/types";
-import {  useEffect, useState } from "react";
+import {  useCallback, useEffect, useRef, useState } from "react";
 import { FaDownload } from "react-icons/fa6";
 import ReportsView, { Search } from "./ReportsView";
 
@@ -57,6 +57,8 @@ const BacklogManagementView = () => {
   const [agentDropdown, setAgentDropdown] = useState<boolean>(false)
   const [agents, setAgents] = useState<Users[] | null>(null)
   const [searchAgent, setSearchAgent] = useState<string>("")  
+  const userRef = useRef<HTMLDivElement | null>(null)
+
   const {data:disposition} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
   const [dateDistance, setDateDistance] = useState({
     from: "",
@@ -86,10 +88,10 @@ const BacklogManagementView = () => {
     }
   },[departmentBucket, searchBucket])
 
-  const handleCheckBox = (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCheckBox = useCallback((value:string, e: React.ChangeEvent<HTMLInputElement>) => {
     const check = e.target.checked ? [...selectedDisposition, value] : selectedDisposition.filter((d) => d !== value )
     setSelectedDisposition(check)
-  }
+  },[selectedDisposition, setSelectedDisposition])
 
   const handleAgentDropdown = ()=> {
     setAgentDropdown(!agentDropdown)
@@ -108,12 +110,14 @@ const BacklogManagementView = () => {
     dateDistance: dateDistance
   } 
 
+
+
   return (
-    <div className="grid grid-cols-3 grid-rows-1 h-full items-center">
+    <div className="grid grid-cols-3 grid-rows-1 h-full items-center" >
       <div className="h-full  flex flex-col justify-center">
         <h1 className="text-lg font-bold text-slate-700 text-center py-2">Select Report</h1>
         <div className="p-5 flex flex-col gap-2 justify-center">
-          <div className="grid grid-cols-4 relative">
+          <div className="grid grid-cols-4 relative" ref={userRef}>
             <div className="flex items-center lg:text-xs 2xl:text-sm font-medium text-slate-500">Agent </div>
             <div className="col-span-3 relative border flex items-center border-slate-400 rounded-lg">
               <input 
@@ -262,7 +266,7 @@ const BacklogManagementView = () => {
           </div>
         </div>
       </div>
-      <ReportsView search={SearchFilter}/>
+      <ReportsView search={SearchFilter} />
     </div>
   )
 }
