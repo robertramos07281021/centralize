@@ -718,7 +718,7 @@ const productionResolver = {
         throw new CustomError(error.message, 500)             
       }
     },
-    getAgentDispositionRecords: async(_,{agentID, limit, page, from, to, search})=> {
+    getAgentDispositionRecords: async(_,{agentID, limit, page, from, to, search, dispotype})=> {
       
       try {
         const skip = ((page - 1) * limit)
@@ -727,10 +727,10 @@ const productionResolver = {
         const today = new Date()
         today.setHours(0,0,0,0)
         const dialer = ["vici", 'issabel']
-    
-        const filtered = {
+        const dispoFilter = dispotype.length > 0  ? dispotype : dispoWithRecordings
+         const filtered = {
           user: new mongoose.Types.ObjectId(agentID),
-          "dispotype.code" : {$in: dispoWithRecordings},
+          "dispotype.code" : {$in: dispoFilter},
           dialer: {$in: dialer},
           $or: [
             {
@@ -738,7 +738,7 @@ const productionResolver = {
             },
             {
               "customer.fullName" : { $regex: search, $options: "i" }
-            }
+            },
           ]
         }
       
@@ -825,20 +825,38 @@ const productionResolver = {
           {
             $facet: {
               metadata: [
-                { $count: "total" }
+                {
+                  $group: {
+                    _id: null,
+                    total: { $sum: 1 },
+                    dispotypeCodes: { $addToSet: "$dispotype" }
+                  }
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    total: 1,
+                    dispotypeCodes: 1
+                  }
+                }
               ],
               data: [
                 {$skip: skip},
                 {$limit: limit},
-             
+          
               ],
             }
           }
         ])
+
+        const newMapForDispoCode = forFiltering[0]?.metadata[0].dispotypeCodes || []
+        const total = forFiltering[0]?.metadata[0].total || 0
         const result = forFiltering[0]?.data || []
+
         return {
           dispositions: result,
-          total: forFiltering[0].metadata[0].total || 0
+          dispocodes: newMapForDispoCode,
+          total: total
         }
       } catch (error) {
         throw new CustomError(error.message, 500)  

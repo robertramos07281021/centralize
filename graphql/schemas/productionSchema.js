@@ -104,6 +104,7 @@ const productionTypeDefs = gql`
 
   type AgentDispo {
     dispositions: [DispositionInfo]
+    dispocodes: [String]
     total: Int
   }
 
@@ -135,7 +136,7 @@ const productionTypeDefs = gql`
     ProductionReport(dispositions:[ID],from:String,to:String):ProductionReport
     getAgentProductions:[AgentProduction]
     agentProduction:MyProduction
-    getAgentDispositionRecords(agentID:ID, limit:Int, page:Int, from:String, to:String, search: String):AgentDispo
+    getAgentDispositionRecords(agentID:ID, limit:Int, page:Int, from:String, to:String, search: String, dispotype: [String]):AgentDispo
     monthlyWeeklyCollected:Collected
   }
 

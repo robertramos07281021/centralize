@@ -3,7 +3,8 @@ import gql from "graphql-tag"
 import { useSelector } from "react-redux"
 import { useLocation } from "react-router-dom"
 import { RootState, useAppDispatch } from "../../redux/store"
-import { useEffect, useState } from "react"
+import {  useCallback, useEffect, useRef, useState } from "react"
+import { RiArrowDropDownFill } from "react-icons/ri";
 import { setAgentRecordingPage, setServerError, setSuccess } from "../../redux/slices/authSlice"
 import { FaDownload } from "react-icons/fa6";
 import { CgSpinner } from "react-icons/cg";
@@ -11,8 +12,8 @@ import Pagination from "../../components/Pagination"
 import Loading from "../Loading"
 
 const AGENT_RECORDING = gql`
-  query getAgentDispositionRecords($agentID: ID, $limit: Int, $page: Int, $from: String, $to: String, $search: String) {
-    getAgentDispositionRecords(agentID: $agentID, limit: $limit, page: $page, from: $from, to: $to, search:$search ) {
+  query getAgentDispositionRecords($agentID: ID, $limit: Int, $page: Int, $from: String, $to: String, $search: String, $dispotype: [String]) {
+    getAgentDispositionRecords(agentID: $agentID, limit: $limit, page: $page, from: $from, to: $to, search:$search, dispotype: $dispotype ) {
       dispositions {
         _id
         customer_name
@@ -27,6 +28,7 @@ const AGENT_RECORDING = gql`
         dialer
       }
       total
+      dispocodes
     }
   }
 `
@@ -48,6 +50,7 @@ type Diposition = {
 type Record = {
   dispositions: Diposition[]
   total: number
+  dispocodes: string[]
 }
 
 const AGENT_INFO = gql`
@@ -93,6 +96,7 @@ type SearchRecordings = {
   from: string
   to: string
   search: string
+  dispotype: string[]
 }
 
 const AgentRecordingView = () => {
@@ -104,19 +108,21 @@ const AgentRecordingView = () => {
   const [dataSearch, setDataSearch] = useState<SearchRecordings>({
     search: "",
     from: "",
-    to: ""
+    to: "",
+    dispotype: []
   })
 
   const [triggeredSearch, setTriggeredSearch] = useState<SearchRecordings>({
     search: "",
     from: "",
-    to: ""
+    to: "",
+    dispotype: []
   })
 
   const searchPage = triggeredSearch.search ? 1 : agentRecordingPage
 
   const {data: recordings, loading:recordingsLoading, refetch} = useQuery<{getAgentDispositionRecords:Record}>(AGENT_RECORDING,{variables: {
-    agentID: location.state, limit: limit, page:searchPage, from: triggeredSearch.from, to: triggeredSearch.to, search: triggeredSearch.search
+    agentID: location.state, limit: limit, page:searchPage, from: triggeredSearch.from, to: triggeredSearch.to, search: triggeredSearch.search, dispotype: triggeredSearch.dispotype
   } })
 
   const {data: agentInfoData} = useQuery<{getUser:Agent}>(AGENT_INFO,{variables: {id: location.state}})
@@ -146,7 +152,6 @@ const AgentRecordingView = () => {
       setTotalPage(totalPage)
     }
   },[recordings])
-
 
   const [deleteRecordings] = useMutation(DELETE_RECORDING,{
     onError:()=> {
@@ -191,31 +196,80 @@ const AgentRecordingView = () => {
     }
   })
 
-  const onDLRecordings = async(id:string) => {
+  const onDLRecordings = useCallback(async(id:string) => {
     setIsLoading(id)
     await findRecordings({variables: {id}})
-  }
+  },[setIsLoading,findRecordings])
 
-  const onClickSearch = () => {
+
+  const onClickSearch = useCallback(() => {
     setTriggeredSearch(dataSearch)
+    setDataSearch(prev => ({...prev, dispotype: []}))
+    setPage("1")
+    dispatch(setAgentRecordingPage(1))
     refetch()
-  }
+  },[setTriggeredSearch,refetch,dataSearch,setDataSearch ])
+
+  const [selectingDispotype, setSelectingDispotype] = useState<boolean>(false)
+  const dispotypeRef = useRef<HTMLDivElement | null>(null)
+
+  const handleOnCheck = useCallback((e:React.ChangeEvent<HTMLInputElement>, value:string)=> {
+    if(e.target.checked) {
+      setDataSearch(prev => ({...prev, dispotype:[...prev.dispotype, value]}))
+    } else {
+      setDataSearch(prev => ({...prev, dispotype: prev.dispotype.filter(y=> y !== value)}))
+    }
+  },[setDataSearch])
 
 
   if(recordingsLoading) return <Loading/>
  
   return (
-    <div className="w-full h-full flex flex-col overflow-hidden p-2">
+    <div className="w-full h-full flex flex-col overflow-hidden p-2" onMouseDown={(e)=> {
+      if(!dispotypeRef.current?.contains(e.target as Node)) {
+        setSelectingDispotype(false)
+      }
+    }}>
 
       <h1 className="capitalize text-2xl font-bold text-gray-500 mb-5">{agentInfoData?.getUser?.name}</h1>
       <div className=" flex justify-end px-10 gap-5">
+        <div className="w-60 h-8 relative" ref={dispotypeRef} >
+          <div className="w-full rounded border-slate-300 border flex items-center px-2 h-full justify-between" onClick={()=> {setSelectingDispotype(!selectingDispotype)}}>
+            {
+              triggeredSearch.dispotype.length > 0 ? <p className="text-xs text-gray-500 cursor-default select-none">{triggeredSearch.dispotype.join(', ')}</p> :
+              <>
+                <p className="text-xs text-gray-500 cursor-default select-none">Filter Disposition type</p>
+                <RiArrowDropDownFill className="text-2xl"/>
+              </>
+              }
+          </div>
+          {
+            selectingDispotype && triggeredSearch.dispotype.length === 0 &&
+            <div className="absolute top-8 left-0 w-full border px-2 py-1 text-xs text-gray-500 flex flex-col max-h-80 overflow-y-auto bg-white z-50 border-slate-300 shadow-md shadow-black/20 select-none">
+            {
+              recordings?.getAgentDispositionRecords.dispocodes.map((e, index)=> 
+                <label key={index} className="py-1 flex gap-1 items-center">
+                  <input type="checkbox" 
+                    name={e} 
+                    id={e} 
+                    value={e}
+                    onChange={(e)=> handleOnCheck(e,e.target.value)}
+                  />
+                  <span>{e}</span>
+                </label>
+              )
+            }
+            </div>
+          }
+        </div>
 
         <input type="search"
           name="search" 
           id="search" 
+          autoComplete="off"
           value={dataSearch.search}
           onChange={(e)=> setDataSearch({...dataSearch,search:  e.target.value})}
-          className="border rounded border-slate-300 px-2 text-sm w-50 py-1"
+          className="border rounded border-slate-300 px-2 text-sm w-50 py-1 outline-none"
         />
         <label>
         <span className="text-gray-600 font-medium text-sm">From: </span>
@@ -267,7 +321,7 @@ const AgentRecordingView = () => {
                 <div key={e._id} className="grid grid-cols-12 lg:text-[0.6em] 2xl:text-xs py-1 items-center text-gray-600 even:bg-slate-50 hover:bg-blue-50">
                   <div className="pl-2 text-wrap truncate cursor-default col-span-2">{e.customer_name}</div>
                   <div className="cursor-default truncate text-nowrap col-span-2">{e.contact_no.join(', ')}</div>
-                  <div className="cursor-default truncate text-nowrap">{e.dialer}</div>
+                  <div className="cursor-default truncate text-nowrap capitalize">{e.dialer}</div>
                   <div className="cursor-default">{e.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'})}</div>
                   <div className="cursor-default">{e.payment_date ? new Date(e.payment_date).toLocaleDateString() : "-"}</div>
                   <div className="relative">
