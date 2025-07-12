@@ -103,12 +103,14 @@ const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, buck
 
 const httpServer = createServer(app);
 
+httpServer.setTimeout(60000);
+
 httpServer.on('connection', (socket) => {
   socket.setMaxListeners(100)
   socket.on('error', (err) => {
-  if (err.code !== 'ECONNRESET' && err.code !== 'ECONNABORTED') {
-      console.error('❌ Socket error:', err);
-    }
+  if (!['ECONNRESET', 'ECONNABORTED', 'ERR_HTTP_REQUEST_TIMEOUT'].includes(err.code)) {
+    console.error('❌ Socket error:', err);
+  }
   })
 });
 

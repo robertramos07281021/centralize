@@ -245,10 +245,11 @@ const taskResolver = {
      
         await Promise.all(
           findCustomersAccount.map(async(e)=> {
-            await Customer.findByIdAndUpdate(e.customer, {$set: {isRPC: true}})
+            const res = await Customer.findByIdAndUpdate(e.customer, {$set: {isRPC: true}})
+            console.log(res)
           })
         )
-        
+
         // const RPCDisponew = allDispotype[0]?.ids.map(y=> y.toString()) ?? [];
         
         
