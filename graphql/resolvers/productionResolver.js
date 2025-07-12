@@ -731,7 +731,6 @@ const productionResolver = {
         const filtered = {
           user: new mongoose.Types.ObjectId(agentID),
           "dispotype.code" : {$in: dispoWithRecordings},
-          createdAt: {$lt: today},
           dialer: {$in: dialer},
           $or: [
             {
@@ -755,6 +754,8 @@ const productionResolver = {
           const dateEnd = new Date(from || to)
           dateEnd.setHours(23,59,59,999)
           filtered['createdAt'] = {$gte: dateStart, $lt: dateEnd}
+        } else {
+          filtered['createdAt'] = {$lt: today}
         }
 
         const forFiltering = await Disposition.aggregate([

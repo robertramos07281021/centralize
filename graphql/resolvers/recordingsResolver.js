@@ -123,8 +123,9 @@ const recordingsResolver = {
         if (!fs.existsSync(localDir)) {
           fs.mkdirSync(localDir, { recursive: true });
         }
-
+        
         const remoteDir = myDispo.dialer === "vici" ? remoteDirVici : remoteDirIssabel
+
 
         let fileList = []
 
@@ -158,19 +159,20 @@ const recordingsResolver = {
 
         function findClosestRecording(files, dispoCreatedAt) {
           const dispoTime = getTimeOnly(new Date(dispoCreatedAt));
-
           let bestMatch = null;
           let minDiff = Infinity;
-
-          for (const file of files) {
-            const recTime = extractTimeFromFilename(file.name);
-            if (!recTime) continue;
-
-            const diff = Math.abs(dispoTime - recTime);
-            if (diff < minDiff) {
-              minDiff = diff;
-              bestMatch = file;
+          if(files.length > 1) {
+            for (const file of files) {
+              const recTime = extractTimeFromFilename(file.name);
+              if (!recTime) continue;
+              const diff = Math.abs(dispoTime - recTime);
+              if (diff < minDiff) {
+                minDiff = diff;
+                bestMatch = file;
+              }
             }
+          } else {
+            bestMatch = files[0]
           }
           return bestMatch
         }
