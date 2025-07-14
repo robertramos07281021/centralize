@@ -95,9 +95,9 @@ type Props = {
 
 const IFBANK = ({label}:{label:string})=> {
   return (
-    <div className="glex flex-col lg:flex-row items-center">
+    <div className="flex flex-col lg:flex-row items-center">
       <p className="text-gray-800 font-bold text-start w-full  lg:text-sm text-xs lg:w-2/6 leading-4 ">{label}</p>
-      <div className="col-span-3 rounded-lg p-4 bg-slate-400 border border-gray-400">
+      <div className=" rounded-lg bg-slate-400 border border-gray-400 text-xs lg:text-sm p-4 w-full">
       </div>
     </div>
   )
@@ -364,7 +364,7 @@ const DispositionForm:React.FC<Props> = ({setSuccess,updateOf}) => {
                     setData({...data, disposition: dispoObject[e.target.value]}); 
                     setSelectedDispo(e.target.value)}
                   }
-                  className={`${required && !data.disposition ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  w-full border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block text-xs lg:text-sm p-2 `}>
+                  className={`${required && !data.disposition ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  w-full border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm p-2 `}>
                   <option value="">Select Disposition</option>
                   {
                     disposition?.getDispositionTypes.map((dispo)=> (
