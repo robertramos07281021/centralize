@@ -74,7 +74,6 @@ const customerResolver = {
         endOfTheDay.setHours(23,59,59,999)
         const success = ['PTP','UNEG','FFUP','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
 
-
         const accounts = await Customer.aggregate([
           {
             $lookup: {
@@ -209,7 +208,7 @@ const customerResolver = {
             }
           }
         ])
-        console.log(accounts)
+
         return accounts
       } catch (error) {
         throw new CustomError(error.message, 500)
