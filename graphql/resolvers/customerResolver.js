@@ -476,12 +476,12 @@ const customerResolver = {
           selected = group?._id || userSelected?._id || null;
         }
     
-
         const bucket = selectedBucket ? { $eq: new mongoose.Types.ObjectId(selectedBucket) } : { $in: user.buckets.map(e=> new mongoose.Types.ObjectId(e)) }
         
         const search = [
-          { "account_bucket._id": bucket },
-          { "dispoType.code" : {$nin: ["PAID","DNC"]} }
+          { "bucket": bucket },
+          { "dispoType.code" : {$nin: ["PAID","DNC"]} },
+          {'ca_callfile.endo': {$exists: false}}
         ];
      
         if (disposition && disposition.length > 0) {
@@ -507,8 +507,21 @@ const customerResolver = {
               as: "customer_info",
             },
           },
+          
           { 
             $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $lookup: {
+              from: "callfiles",
+              localField: "callfile",
+              foreignField: "_id",
+              as: "ca_callfile",
+            },
+          },
+          
+          { 
+            $unwind: { path: "$ca_callfile", preserveNullAndEmptyArrays: true } 
           },
           {
             $lookup: {
