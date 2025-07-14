@@ -68,7 +68,6 @@ const customerResolver = {
       
       try {
         const regexSearch = { $regex: search, $options: "i" };
-
         const startOfTheDay = new Date()
         startOfTheDay.setHours(0,0,0,0)
         const endOfTheDay = new Date()
@@ -122,10 +121,6 @@ const customerResolver = {
                 { "customer_info.contact_no": { $elemMatch: regexSearch } },
                 { "customer_info.emails": { $elemMatch: regexSearch } },
                 { "customer_info.addresses": { $elemMatch: regexSearch } },
-                { credit_customer_id: regexSearch },
-                { account_id: regexSearch },
-                { "out_standing_details.total_os": regexSearch },
-                { case_id: regexSearch },
               ],
             },
           },
@@ -190,7 +185,6 @@ const customerResolver = {
         ])
         return accounts
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },

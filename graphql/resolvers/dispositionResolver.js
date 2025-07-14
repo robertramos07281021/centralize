@@ -1770,9 +1770,10 @@ const dispositionResolver = {
             message: "NEW_DISPOSITION"
           },
         });
-
         
-        await Disposition.findByIdAndUpdate(customerAccount.current_disposition._id, {$set: { existing: false }});
+        if(customerAccount?.current_disposition) {
+          await Disposition.findByIdAndUpdate(customerAccount.current_disposition._id, {$set: { existing: false }});
+        }
 
         const updateFields = {
           current_disposition: newDisposition._id,
@@ -1800,6 +1801,7 @@ const dispositionResolver = {
           message: "Disposition successfully created"
         }
       } catch (error) {
+       
         throw new CustomError(error.message, 500)
       }
     }

@@ -157,7 +157,8 @@ const DispositionForm:React.FC<Props> = ({setSuccess,updateOf}) => {
       updateOf()
       dispatch(setDeselectCustomer())
     },
-    onError: () => {
+    onError: (error) => {
+      console.log(error)
       setConfirm(false)
       setSelectedDispo('')
       setData({
