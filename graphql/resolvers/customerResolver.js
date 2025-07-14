@@ -119,7 +119,6 @@ const customerResolver = {
               "account_callfile.endo": {$exists: false},
               $or: [
                 { "customer_info.fullName": regexSearch },
-                { "customer_info.dob": regexSearch },
                 { "customer_info.contact_no": { $elemMatch: regexSearch } },
                 { "customer_info.emails": { $elemMatch: regexSearch } },
                 { "customer_info.addresses": { $elemMatch: regexSearch } },
@@ -171,9 +170,6 @@ const customerResolver = {
               as: "dispo_history",
             },
           },
-          { 
-            $unwind: { path: "$dispo_history", preserveNullAndEmptyArrays: true } 
-          },
           {
             $addFields: {
               isRPCToday: {
@@ -194,6 +190,7 @@ const customerResolver = {
         ])
         return accounts
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
