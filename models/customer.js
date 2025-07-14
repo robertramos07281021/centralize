@@ -18,6 +18,10 @@ const customerSchema = new Schema(
     gender: {
       type: String,
     },
+    customer_account: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CustomerAccount"
+    },
     updatedBy: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"

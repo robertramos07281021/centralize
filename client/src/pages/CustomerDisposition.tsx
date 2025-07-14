@@ -160,16 +160,16 @@ const FieldListDisplay = memo(({ label, values = [], fallbackHeight = "p-5" }: P
   const isEmpty = !values || values.length === 0;
 
   return (
-    <div className="ms-5 2xl:text-sm lg:text-xs">
-      <div className="font-bold text-slate-500">{label}</div>
+    <div className="2xl:w-1/2 w-full lg:w-8/10 lg:text-xs text-[0.8rem] ">
+      <div className="font-bold text-slate-500 lg:text-sm text-[0.9rem] uppercase">{label}</div>
       <div className="flex flex-col gap-2">
         {isEmpty ? (
-          <div className={`w-96 border border-gray-300 ${fallbackHeight} rounded-lg bg-gray-50 text-slate-500`} />
+          <div className={`w-full border border-gray-300 ${fallbackHeight} rounded-lg bg-gray-50 text-slate-500 text-wrap`} />
         ) : (
           values.map((val, index) => (
             <div
               key={index}
-              className="w-96 border border-gray-300 p-2.5 rounded-lg bg-gray-50 text-slate-500"
+              className="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 text-slate-500 flex flex-wrap"
             >
               {val}
             </div>
@@ -181,9 +181,9 @@ const FieldListDisplay = memo(({ label, values = [], fallbackHeight = "p-5" }: P
 });
 
 const FieldDisplay = memo(({ label, value }:{label:string, value:string | number | null | undefined | []}) => (
-  <div className="ms-5 mt-1 2xl:text-sm lg:text-xs">
-    <div className="font-bold text-slate-500 uppercase text-xs">{label}</div>
-    <div className={`${value ? "p-2.5" : "p-5"} w-96 border border-gray-300 rounded-lg  bg-gray-50 text-slate-500`}>
+  <div className="2xl:w-1/2 w-full lg:w-8/10 mt-1 lg:text-xs text-[0.8em] ">
+    <div className="font-bold text-slate-500 uppercase lg:text-sm text-[0.9rem]">{label}</div>
+    <div className={`${value ? "p-2.5" : "p-5"} w-full border border-gray-300 rounded-lg  bg-gray-50 text-slate-500 text-wrap`}>
         {value}
       </div>
   </div>
@@ -199,6 +199,9 @@ const CustomerDisposition = () => {
   const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search}, skip: !search.length,})
   const length = searchData?.search?.length || 0;
 
+  useEffect(()=> {
+    refetch()
+  },[search])
   const debouncedSearch = useMemo(() => {
   return debounce((val: string) => {
     refetch({ search: val });
@@ -376,29 +379,30 @@ const CustomerDisposition = () => {
         <div className="flex flex-col items-center"> 
           <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Information</h1>
           <div className="border flex flex-col rounded-xl border-slate-400 w-full h-full items-center justify-center p-5 gap-1.5 relative">
-            {
-              selectedCustomer._id && !selectedCustomer.customer_info.isRPC &&
-              <button className="absolute right-5 px-10 py-1.5 rounded text-white  font-bold  top-5 bg-orange-400 hover:bg-orange-600" onClick={handleClickRPC}>RPC</button>
-            }
-          
-            {
-              selectedCustomer._id && selectedCustomer?.customer_info?.isRPC &&
-              <IoRibbon className="top-5 absolute left-5 text-5xl text-blue-500"/>
-            }
+            <div className={`flex w-full ${selectedCustomer.customer_info.isRPC ? "justify-start": "justify-end"} `}>
+              {
+                selectedCustomer._id && !selectedCustomer.customer_info.isRPC &&
+                <button className={` px-10 py-1.5 rounded text-white font-bold bg-orange-400 hover:bg-orange-600 ${isUpdate ? "absolute top-5 right-5" : ""} `}onClick={handleClickRPC}>RPC</button>
+              }
+              {
+                selectedCustomer._id && selectedCustomer?.customer_info?.isRPC &&
+                <IoRibbon className=" text-5xl text-blue-500"/>
+              }
+            </div>
             {
               !selectedCustomer._id &&
-              <div className="ms-5 relative">
-                  <input 
-                    type="text"
-                    name="search" 
-                    autoComplete="off"
-                    value={search}
-                    onChange={(e)=> handleSearchChange(e.target.value)}
-                    id="search"
-                    placeholder="Search" 
-                    className="w-96 p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "/>
-          
-                <div className={`${length > 0 && search ? "" : "hidden"} absolute max-h-96 border border-slate-400 w-full left-0 bg-white overflow-y-auto rounded-md`}>
+              <div className="relative 2xl:w-1/2 w-full lg:w-8/10 flex justify-center">
+                <input 
+                  type="text"
+                  name="search" 
+                  autoComplete="off"
+                  value={search}
+                  onChange={(e)=> handleSearchChange(e.target.value)}
+                  id="search"
+                  placeholder="Search" 
+                  className=" w-full p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
+                />
+                <div className={`${length > 0 && search ? "" : "hidden"} absolute max-h-96 border border-slate-400 w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-md top-10`}>
                   <SearchResult data={searchData?.search || []} search={search} onClick={onClickSearch}/>
                 </div>
               </div>
@@ -418,7 +422,7 @@ const CustomerDisposition = () => {
     
             {
               !isUpdate &&
-              <div className="ms-5 2xl:text-sm lg:text-xs mt-5 flex gap-5">
+              <div className="2xl:text-sm lg:text-xs mt-5 flex gap-5">
                 { selectedCustomer._id &&
                   <>
                     {
@@ -449,7 +453,7 @@ const CustomerDisposition = () => {
             {
               isUpdate ?
               <CustomerUpdateForm cancel={()=> setIsUpdate(false)} /> :
-              <p className="text-2xl font-light text-slate-500">
+              <p className="w- 2xl:text-2xl font-light text-slate-500">
                 For Updating Customer Info Only
               </p>
             }

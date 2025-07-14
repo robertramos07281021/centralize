@@ -74,25 +74,23 @@ const customerResolver = {
         endOfTheDay.setHours(23,59,59,999)
         const success = ['PTP','UNEG','FFUP','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
 
-        const accounts = await CustomerAccount.aggregate([
+
+        const accounts = await Customer.aggregate([
           {
             $lookup: {
-              from: "customers",
-              localField: "customer",
+              from: "customeraccounts",
+              localField: "customer_account",
               foreignField: "_id",
-              pipeline: [
-                { $project: { fullName: 1, dob: 1, contact_no: 1, emails: 1, addresses: 1 } }
-              ],
-              as: "customer_info",
+              as: "ca",
             },
           },
           { 
-            $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
+            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true } 
           },
           {
             $lookup: {
               from: "buckets",
-              localField: "bucket",
+              localField: "ca.bucket",
               foreignField: "_id",
               as: "account_bucket",
             },
@@ -103,7 +101,7 @@ const customerResolver = {
           {
             $lookup: {
               from: "callfiles",
-              localField: "callfile",
+              localField: "ca.callfile",
               foreignField: "_id",
               as: "account_callfile",
             },
@@ -114,20 +112,20 @@ const customerResolver = {
           {
             $match: {
               "account_bucket._id": {$in: user.buckets},
-              on_hands: false,
+              "ca.on_hands": false,
               "account_callfile.endo": {$exists: false},
               $or: [
-                { "customer_info.fullName": regexSearch },
-                { "customer_info.contact_no": { $elemMatch: regexSearch } },
-                { "customer_info.emails": { $elemMatch: regexSearch } },
-                { "customer_info.addresses": { $elemMatch: regexSearch } },
+                { fullName: regexSearch },
+                { contact_no: { $elemMatch: regexSearch } },
+                { emails: { $elemMatch: regexSearch } },
+                { addresses: { $elemMatch: regexSearch } },
               ],
             },
           },
           {
             $lookup: {
               from: "dispositions",
-              localField: "current_disposition",
+              localField: "ca.current_disposition",
               foreignField: "_id",
               as: "cd",
             },
@@ -160,7 +158,7 @@ const customerResolver = {
           {
             $lookup: {
               from: "dispositions",
-              localField: "history",
+              localField: "ca.history",
               foreignField: "_id",
               as: "dispo_history",
             },
@@ -182,7 +180,36 @@ const customerResolver = {
               }
             }
           },
+          {
+            $project: {
+              _id: "$ca._id",
+              customer_info: {
+                fullName: "$fullName",
+                dob: "$dob",
+                gender: "$gender",
+                contact_no: "$contact_no",
+                emails: "$emails",
+                addresses: "$addresses",
+                isRPC: "$isRPC",
+                _id: "$_id"
+              },
+              case_id: "$ca.case_id",
+              account_id: "$ca.account_id",
+              endorsement_date: "$ca.endorsement_date",
+              credit_customer_id: "$ca.credit_customer_id",
+              bill_due_day: "$ca.bill_due_day",
+              max_dpd: "$ca.max_dpd",
+              balance: "$ca.balance",
+              paid_amount: "$ca.paid_amount",
+              isRPCToday: "$isRPCToday",
+              dispo_history: "$dispo_history",
+              out_standing_details: "$ca.out_standing_details",
+              grass_details: "$ca.grass_details",
+              account_bucket: "$account_bucket",
+            }
+          }
         ])
+        console.log(accounts)
         return accounts
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -815,14 +842,14 @@ const customerResolver = {
           const contact_no = []
           const addresses = []
           const emails = []
-          if(element.contact != "undefined") {
-            contact_no.push(`0${element.contact}`)
+          if(element.contact) {
+            contact_no.push(`${element.contact}`)
           }
-          if(element.contact_2 != "undefined") {
-            contact_no.push(`0${element.contact_2}`)
+          if(element.contact_2) {
+            contact_no.push(`${element.contact_2}`)
           }
-          if(element.contact_3 != "undefined") {
-            contact_no.push(`0${element.contact_3}`)
+          if(element.contact_3) {
+            contact_no.push(`${element.contact_3}`)
           }
           if(element.address) {
             addresses.push(element.address)
@@ -845,44 +872,45 @@ const customerResolver = {
           }
 
           const customer = new Customer({
-              fullName: element.customer_name,
-              platform_customer_id: element.platform_user_id,
-              gender: element.gender,
-              dob: element.birthday,
-              addresses,
-              emails,
-              contact_no,
-            });
-            await customer.save();
-  
-            await CustomerAccount.create({
-              customer: customer._id,
-              bucket: findBucket._id,
-              case_id: element.case_id || "",
-              callfile: newCallfile._id,
-              credit_customer_id: element.credit_user_id,
-              endorsement_date: element.endorsement_date,
-              bill_due_day: element.bill_due_day,
-              max_dpd: element.max_dpd,
-              balance: element.total_os,
-              paid_amount: 0,
-              account_id: element.account_id || null,
-              out_standing_details: {
-                principal_os: element.principal_os,
-                interest_os: element.interest_os,
-                admin_fee_os: element.admin_fee_os,
-                txn_fee_os: element.txn_fee_os,
-                late_charge_os: element.late_charge_os,
-                dst_fee_os: element.dst_fee_os,
-                total_os: element.total_os,
-              },
-              grass_details: {
-                grass_region: element.grass_region,
-                vendor_endorsement: element.vendor_endorsement,
-                grass_date: element.grass_date,
-              }
+            fullName: element.customer_name,
+            platform_customer_id: element.platform_user_id || null,
+            gender: element.gender || null,
+            dob: element.birthday || null,
+            addresses,
+            emails,
+            contact_no,
+          });
+
+          const caResult = await CustomerAccount.create({
+            customer: customer._id,
+            bucket: findBucket._id,
+            case_id: element.case_id || null,
+            callfile: newCallfile._id,
+            credit_customer_id: element.credit_user_id || null,
+            endorsement_date: element.endorsement_date || null,
+            bill_due_day: element.bill_due_day || null,
+            max_dpd: element.max_dpd || null,
+            balance: element.total_os,
+            paid_amount: 0,
+            account_id: element.account_id || null,
+            out_standing_details: {
+              principal_os: element.principal_os,
+              interest_os: element.interest_os,
+              admin_fee_os: element.admin_fee_os,
+              txn_fee_os: element.txn_fee_os,
+              late_charge_os: element.late_charge_os,
+              dst_fee_os: element.dst_fee_os,
+              total_os: element.total_os,
+            },
+            grass_details: {
+              grass_region: element.grass_region || null,
+              vendor_endorsement: element.vendor_endorsement || null,
+              grass_date: element.grass_date || null,
+            }
           });
           
+          customer.customer_account = caResult._id
+          await customer.save()
         }));
 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
@@ -891,6 +919,7 @@ const customerResolver = {
             message: PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE
           },
         });
+        
         return {
           success: true,
           message: "Callfile successfully created"

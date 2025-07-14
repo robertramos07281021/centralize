@@ -191,11 +191,14 @@ const taskResolver = {
     },
     updateDatabase: async()=> {
       try {
-
-
-        // const findCustomerAccounts = await CustomerAccount.find()
-
+        const findCustomerAccounts = await CustomerAccount.find()
         
+        await Promise.all(
+          findCustomerAccounts.map((async(e)=> {
+            await Customer.findByIdAndUpdate(e.customer,{$set: {customer_account: e._id}}) 
+          }))
+        )
+
         // await Promise.all(
         //   findCustomerAccounts.map(async(e, index)=> {
         //     const dispositions = await Disposition.find({customer_account: {$eq: new mongoose.Types.ObjectId(e._id)}})
@@ -235,14 +238,14 @@ const taskResolver = {
 
         
         
-        const findCustomersAccount = await CustomerAccount.aggregate([
-          {
-            $match: {
-              history:  {$size: 0}
-            }
-          },
-        ])
-        console.log(findCustomersAccount.length)
+        // const findCustomersAccount = await CustomerAccount.aggregate([
+        //   {
+        //     $match: {
+        //       history:  {$size: 0}
+        //     }
+        //   },
+        // ])
+        // console.log(findCustomersAccount.length)
         
         // const findCustomersAccount = await CustomerAccount.aggregate([
         //   {

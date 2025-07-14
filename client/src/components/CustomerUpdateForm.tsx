@@ -25,6 +25,7 @@ const UPDATE_CUSTOMER = gql` mutation
     }
   }
 `
+
 type UpdatedCustomer = {
   customer: CustomerRegistered;
   success: boolean;
@@ -173,7 +174,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
       })
     }
   }
-
   
   useEffect(()=> {
     if (selectedCustomer) {
@@ -195,11 +195,11 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
     }
   },[selectedCustomer])
 
-
   return (
     <>
-      <form ref={updateForm} className="flex flex-col gap-3" onSubmit={(e)=> handleSubmitUpdateForm(e)} noValidate>
-        <label className="absolute left-5 top-5 flex gap-2">
+      <form ref={updateForm} className="flex flex-col gap-3 w-full items-center justify-center p-5 lg:text-xs text-[0.8em]" onSubmit={(e)=> handleSubmitUpdateForm(e)} noValidate>
+   
+        <label className="flex gap-2 w-full">
           <input type="checkbox" name="rpc" id="rpc"
             checked={formState.isRPC}
             onChange={(e) => {
@@ -208,147 +208,143 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
           />
           <h1>RPC</h1>
         </label>
-        <div className="flex flex-col gap-3 p-5">
 
-          <div className="mt-5">
-            <label 
-              htmlFor="fullName" 
-              className="block text-sm font-bold text-slate-500 dark:text-white">Full Name</label>
-            <input 
-              type="text" 
-              id="fullName"   
-              name="fullName" 
-              value={formState.fullName}
-              onChange={(e)=> setFormState({...formState, fullName: e.target.value})}
-              required
-              className={`${required && !formState.fullName ? "bg-red-100 border-red-300": "bg-gray-50 border-gray-300"}  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Full Name"  />
-          </div>
-          <div> 
-            <label 
-              htmlFor="dob" 
-              className="block text-sm font-bold text-slate-500 dark:text-white">Date Of Birth</label>  
+        <label 
+          className="text-slate-500 dark:text-white 2xl:w-1/2 w-full lg:w-8/10">
+          <p className="font-bold uppercase lg:text-sm text-[0.9rem]">Full Name</p>
+          <input 
+            type="text" 
+            id="fullName"   
+            name="fullName" 
+            autoComplete="off"
+            value={formState.fullName}
+            onChange={(e)=> setFormState({...formState, fullName: e.target.value})}
+            required
+            className={`${required && !formState.fullName ? "bg-red-100 border-red-300": "bg-gray-50 border-gray-300"}  border rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`} placeholder="Enter Full Name"  />
+          </label>
+  
+          <label 
+            className="text-xs lg:text-sm text-slate-500 dark:text-white 2xl:w-1/2 w-full lg:w-8/10">
+            <p className="font-bold uppercase lg:text-sm text-[0.9rem]">Date Of Birth</p>
             <input 
               type="date" 
               name="dob"
               value={formState.dob}
               onChange={(e)=> setFormState({...formState, dob: e.target.value})} 
               id="dob" 
-              className={` bg-gray-50 border-gray-300  border  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}  />
-          </div>
-          <div> 
-            <label 
-              htmlFor="gender" 
-              className="block text-sm font-bold text-slate-500 dark:text-white">Gender</label>  
+              className={` bg-gray-50 border-gray-300  border  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 `}  
+            />
+          </label>  
+              
+          <label 
+            className="text-xs lg:text-sm text-slate-500 dark:text-white 2xl:w-1/2 w-full lg:w-8/10">
+            <p className="font-bold uppercase lg:text-sm text-[0.9rem]">Gender</p>
             <select
               id="gender"
               name="gender"
               value={(formState.gender.toLocaleLowerCase() === "female" || formState.gender.toLocaleLowerCase() === "f")  ? "F" : "M"}
               required
               onChange={(e)=> setFormState({...formState, gender: e.target.value})}
-              className={`${required && !formState.gender ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5`}
+              className={`${required && !formState.gender ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
               <option value="">Choose a gender</option>
               <option value="M">Male</option>
               <option value="F">Female</option>
             </select>
-          </div>
-
-          <div >
-            <div 
-              className="block text-sm font-bold text-slate-500 dark:text-white">Mobile No.</div>
-            <div className="flex flex-col gap-2">
-              {
-                formState.mobiles.map((m,index)=> (
-                  <div key={index} className="flex items-center gap-2">
-                    <input 
-                      type="text" 
-                      id={`contact_${index}`}   
-                      name={`contact_${index}`}
-                      pattern="^09\d{9}$"
-                      value={m}
-                      required
-                      onChange={(e)=> handleMobileOnchange(index,e.target.value)}
-                      className={`${required && (!formState.mobiles[index] || !validatePhone(formState.mobiles[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Mobile No."  
-                    />
-                    {
-                      index === 0 &&
-                      <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddMobile}/>
-                    }
-                    {
-                      index !== 0 &&
-                      <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusMobile(index)}/>
-                    }
-                  </div>
-                ))
-              }
-            </div>
-          </div>
-            
-          <div  className="">
-            <div 
-            className="block text-sm font-bold text-slate-500 dark:text-white">Email Address</div>
-            <div className="flex flex-col gap-2">
-              {
-                formState.emails.map((email,index)=> (
+          </label>  
+              
+        <div className="text-xs lg:text-sm text-slate-500 dark:text-white 2xl:w-1/2 w-full lg:w-8/10">
+          <p className="font-bold uppercase lg:text-sm text-[0.9rem]">Mobile No.</p>
+          <div className="flex flex-col gap-2">
+            {
+              formState.mobiles.map((m,index)=> (
                 <div key={index} className="flex items-center gap-2">
                   <input 
-                    type="email" 
-                    id={`email_${index}`}   
-                    name={`email_${index}`}
-                    value={email}
+                    type="text" 
+                    id={`contact_${index}`}   
+                    name={`contact_${index}`}
+                    pattern="^09\d{9}$"
+                    value={m}
                     required
-                    onChange={(e)=> handleEmailOnchange(index,e.target.value)}
-                    className={`${required && (!formState.emails[index] || !validateEmail(formState.emails[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
-                    placeholder="Enter Email Address" 
-                    />
-                    {
-                      index === 0 &&
-                      <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddEmail}/>
-                    }
-                    {
-                      index !== 0 &&
-                      <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusEmail(index)}/>
-                    }
+                    onChange={(e)=> handleMobileOnchange(index,e.target.value)}
+                    className={`${required && (!formState.mobiles[index] || !validatePhone(formState.mobiles[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Mobile No."  
+                  />
+                  {
+                    index === 0 &&
+                    <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddMobile}/>
+                  }
+                  {
+                    index !== 0 &&
+                    <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusMobile(index)}/>
+                  }
                 </div>
-                ))
-              }
-            </div>
+              ))
+            }
           </div>
-          <div className="">
-            <div 
-              className="block text-sm font-bold text-slate-500 dark:text-white">Address</div>
-            <div className="flex flex-col gap-2">
-              {
-                formState.addresses.map((a,index)=> (
-                  <div key={index} className="flex items-center gap-2">
-                    <textarea 
-                      id={`address_${index}`}   
-                      name={`address_${index}`}
-                      value={a}
-                      required
-                      onChange={(e)=> handleAddressOnchange(index,e.target.value)} 
-                      className={`${required && !formState.addresses[index] ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 h-32 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Email Address">
-                    </textarea>
-                    {
-                      index === 0 &&
-                      <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddAddress}/>
-                    }
-                    {
-                      index !== 0 &&
-                      <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusAddress(index)}/>
-                    }
-                  </div>
-                ))
-              }
-            </div>
+        </div>
+          
+        <div className="text-xs lg:text-sm text-slate-500 dark:text-white 2xl:w-1/2 w-full lg:w-8/10">
+          <p className="font-bold uppercase lg:text-sm text-[0.9rem]">Email Address</p>
+          <div className="flex flex-col gap-2">
+            {
+              formState.emails.map((email,index)=> (
+              <div key={index} className="flex items-center gap-2">
+                <input 
+                  type="email" 
+                  id={`email_${index}`}   
+                  name={`email_${index}`}
+                  value={email}
+                  required
+                  onChange={(e)=> handleEmailOnchange(index,e.target.value)}
+                  className={`${required && (!formState.emails[index] || !validateEmail(formState.emails[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+                  placeholder="Enter Email Address" 
+                  />
+                  {
+                    index === 0 &&
+                    <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddEmail}/>
+                  }
+                  {
+                    index !== 0 &&
+                    <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusEmail(index)}/>
+                  }
+              </div>
+              ))
+            }
           </div>
-          <div className="flex justify-center gap-5">
-            <button type="submit" className={`bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-500 font-medium rounded-lg text-sm w-24 py-2.5 me-2  cursor-pointer`}>Save</button>
-            <button 
-              type="button"
-              onClick={cancel} 
-              className={` bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg text-sm w-24 py-2.5 me-2 cursor-pointer`}>Cancel</button>
+        </div>
+        <div className="text-xs lg:text-sm text-slate-500 dark:text-white 2xl:w-1/2 w-full lg:w-8/10">
+          <p className="font-bold uppercase lg:text-sm text-[0.9rem]">Address</p>
+          <div className="flex flex-col gap-2">
+            {
+              formState.addresses.map((a,index)=> (
+                <div key={index} className="flex items-center gap-2">
+                  <textarea 
+                    id={`address_${index}`}   
+                    name={`address_${index}`}
+                    value={a}
+                    required
+                    onChange={(e)=> handleAddressOnchange(index,e.target.value)} 
+                    className={`${required && !formState.addresses[index] ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 h-32 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Email Address">
+                  </textarea>
+                  {
+                    index === 0 &&
+                    <CiSquarePlus className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out" onClick={handleAddAddress}/>
+                  }
+                  {
+                    index !== 0 &&
+                    <CiSquareMinus className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out" onClick={() => handleMinusAddress(index)}/>
+                  }
+                </div>
+              ))
+            }
           </div>
+        </div>
+        <div className="flex justify-center gap-5">
+          <button type="submit" className={`bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-500 font-medium rounded-lg text-sm w-24 py-2.5 me-2  cursor-pointer`}>Save</button>
+          <button 
+            type="button"
+            onClick={cancel} 
+            className={` bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg text-sm w-24 py-2.5 me-2 cursor-pointer`}>Cancel</button>
         </div>
       </form>
       { confirm &&

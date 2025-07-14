@@ -75,17 +75,53 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
   
         const jsonData:Data[] = utils.sheet_to_json(sheet); 
 
-        const dateConverting = jsonData.map((row: any) => ({
+        const dateConverting = jsonData.map((row: Data) => {
+          const {
+            interest_os, 
+            admin_fee_os, 
+            txn_fee_os, 
+            late_charge_os, 
+            penalty_interest_os, 
+            dst_fee_os, total_os, 
+            bill_due_day, 
+            contact_2, 
+            contact_3, 
+            contact, 
+            platform_user_id,
+            endorsement_date, 
+            birthday,
+            grass_date
+          } = row
+
+          const rows:any = {
+            birthday: birthday ? SSF.format("yyyy-mm-dd", birthday) : null,
+            endorsement_date: endorsement_date ?  SSF.format("yyyy-mm-dd", endorsement_date) : null,
+            grass_date: grass_date ? SSF.format("yyyy-mm-dd", grass_date) : null,
+            case_id: String(row.case_id) || null,
+            platform_user_id:platform_user_id ? String(platform_user_id) : null,
+            interest_os: interest_os || 0,
+            admin_fee_os: admin_fee_os || 0,
+            txn_fee_os: txn_fee_os || 0,
+            late_charge_os: late_charge_os || 0,
+            penalty_interest_os: penalty_interest_os || 0,
+            dst_fee_os:dst_fee_os || 0,
+            total_os: total_os || 0,
+            contact: `0${contact}`,
+            bill_due_day: bill_due_day || 0
+          }
+
+          if(contact_2) {
+            rows['contact_2'] = `0${contact_2}`
+          }
+
+          if(contact_3) {
+            rows['contact_3'] = `0${contact_3}`
+          }
+
+          return {
           ...row,
-          birthday: SSF.format("yyyy-mm-dd", row.birthday),
-          endorsement_date:  SSF.format("yyyy-mm-dd", row.endorsement_date),
-          grass_date:SSF.format("yyyy-mm-dd", row.grass_date),
-          case_id: String(row.case_id),
-          platform_user_id: String(row.platform_user_id),
-          contact: String(row.contact),
-          contact_2: String(row.contact_2),
-          contact_3: String(row.contact_3)
-        }))
+          ...rows
+        }})
 
         setExcelData(dateConverting.slice(0,dateConverting.length)); 
       };
@@ -119,7 +155,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       onSuccess()
     },
     onError: (error)=> {
-
     const errorMessage = error.message;
     if (errorMessage?.includes("Not Included")) {
       setSuccess({
