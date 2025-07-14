@@ -1,8 +1,10 @@
+import mongoose from "mongoose"
 import CustomError from "../../middlewares/errors.js"
 import Bucket from "../../models/bucket.js"
 import Customer from "../../models/customer.js"
 import CustomerAccount from "../../models/customerAccount.js"
 import Disposition from "../../models/disposition.js"
+import DispoType from "../../models/dispoType.js"
 import Group from "../../models/group.js"
 import User from "../../models/user.js"
 
@@ -190,6 +192,23 @@ const taskResolver = {
     updateDatabase: async()=> {
       try {
 
+
+        // const findCustomerAccounts = await CustomerAccount.find()
+
+        
+        // await Promise.all(
+        //   findCustomerAccounts.map(async(e, index)=> {
+        //     const dispositions = await Disposition.find({customer_account: {$eq: new mongoose.Types.ObjectId(e._id)}})
+        //     if(index === 1) {
+        //       console.log(dispositions)
+        //     }
+        //     const dispositionIds = dispositions.map(x => x._id);
+        //     await CustomerAccount.findByIdAndUpdate(e._id, {$set: {history: dispositionIds } })
+        //   })
+        // )
+
+
+
         // const RPCDispo = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP']
 
         // const allDispotype = await DispoType.aggregate([
@@ -215,6 +234,15 @@ const taskResolver = {
         // ])
 
         
+        
+        const findCustomersAccount = await CustomerAccount.aggregate([
+          {
+            $match: {
+              history:  {$size: 0}
+            }
+          },
+        ])
+        console.log(findCustomersAccount.length)
         
         // const findCustomersAccount = await CustomerAccount.aggregate([
         //   {
@@ -249,8 +277,7 @@ const taskResolver = {
         
         // await Promise.all(
         //   findCustomersAccount.map(async(e)=> {
-        //     const dispositions = await Disposition.find({customer_account: {$eq: new mongoose.Types.ObjectId(e._id)}})
-        //     await CustomerAccount.findByIdAndUpdate(e._id, {$push: {history: dispositions.map(x=> x._id)}})
+        //     await CustomerAccount.findByIdAndUpdate(e._id,{$set: {history: []}} )
         //   })
         // )
 

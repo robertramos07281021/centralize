@@ -81,6 +81,9 @@ const customerResolver = {
               from: "customers",
               localField: "customer",
               foreignField: "_id",
+              pipeline: [
+                { $project: { fullName: 1, dob: 1, contact_no: 1, emails: 1, addresses: 1 } }
+              ],
               as: "customer_info",
             },
           },
@@ -158,7 +161,7 @@ const customerResolver = {
             },
           },
           { 
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+            $unwind: { path: "$user", preserveNullAndEmptyArrays: true } 
           },
           {
             $lookup: {
@@ -169,7 +172,7 @@ const customerResolver = {
             },
           },
           { 
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+            $unwind: { path: "$dispo_history", preserveNullAndEmptyArrays: true } 
           },
           {
             $addFields: {
@@ -178,12 +181,8 @@ const customerResolver = {
                   if: {
                     $and: [
                       { $in: ["$dispotype.code", success] },
-                      {
-                        $and: [
-                          { $gte: ["$cd.createdAt", startOfTheDay] },
-                          { $lte: ["$cd.createdAt", endOfTheDay] }
-                        ]
-                      }
+                      { $gte: ["$cd.createdAt", startOfTheDay] },
+                      { $lte: ["$cd.createdAt", endOfTheDay] }
                     ]
                   },
                   then: true,

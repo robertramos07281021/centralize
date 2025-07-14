@@ -120,14 +120,14 @@ export default function AgentTotalProduction () {
             <div>{userLogged.targets.daily.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
           </div>
           <div className="flex justify-between items-center gap-2">
-            <div className="text-xs">{collectionsData?.monthlyWeeklyCollected.weekly.toLocaleString("en-PH", {style: "currency",currency: "PHP",})}</div>
+            <div className="text-xs">{collectionsData?.monthlyWeeklyCollected?.weekly?.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
             <div className="flex jsutify-center items-center text-sm">
               <p className="text-xs font-medium">(Weekly)</p>
               <div>{userLogged.targets.weekly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
             </div>
           </div>
           <div className="flex justify-between items-center gap-2">
-            <div className="text-xs">{collectionsData?.monthlyWeeklyCollected.monthly.toLocaleString("en-PH", {style: "currency",currency: "PHP",})}</div>
+            <div className="text-xs">{collectionsData?.monthlyWeeklyCollected?.monthly?.toLocaleString("en-PH", {style: "currency",currency: "PHP",})}</div>
             <div className="flex jsutify-center items-center text-sm">
               <p className="text-xs font-medium">(Monthly)</p>
               <div>{userLogged.targets.monthly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>

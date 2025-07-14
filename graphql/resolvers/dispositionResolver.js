@@ -1748,7 +1748,7 @@ const dispositionResolver = {
         if (isPaymentDisposition && !input.amount) {
           throw new CustomError("Amount is required", 401);
         }
-   
+        
         const ptp = (customerAccount?.current_disposition && customerAccount?.current_disposition.ptp === true) || dispoType.code === "PTP";
 
         const payment = customerAccount.balance - parseFloat(input.amount || 0) === 0 ? "full" : 'partial';
@@ -1772,7 +1772,7 @@ const dispositionResolver = {
         });
 
         
-        await Disposition.findByIdAndUpdate(customerAccount.current_disposition, {$set: { existing: false }});
+        await Disposition.findByIdAndUpdate(customerAccount.current_disposition._id, {$set: { existing: false }});
 
         const updateFields = {
           current_disposition: newDisposition._id,
@@ -1792,8 +1792,9 @@ const dispositionResolver = {
           });
         }
 
-        await CustomerAccount.findByIdAndUpdate(customerAccount._id, { $set: updateFields, $push: { history: newDisposition._id } });
+       await CustomerAccount.findByIdAndUpdate(customerAccount._id, { $set: updateFields, $push: { history: newDisposition._id } },{new: true});
         
+
         return {
           success: true,
           message: "Disposition successfully created"
