@@ -191,7 +191,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     no: () => {}
   })
 
-  const [finishedCallfile] = useMutation<{finishedCallfile:Success}>(FINISHED_CALLFILE,{
+  const [finishedCallfile, {loading:finishingLoading}] = useMutation<{finishedCallfile:Success}>(FINISHED_CALLFILE,{
     onCompleted: (data)=> {
       dispatch(setSuccess({
         success: data.finishedCallfile.success,
@@ -205,7 +205,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     }
   })
 
-  const [deleteCallfile] = useMutation<{deleteCallfile:Success}>(DELETE_CALLFILE, {
+  const [deleteCallfile, {loading:deleteLoading}] = useMutation<{deleteCallfile:Success}>(DELETE_CALLFILE, {
      onCompleted: (data)=> {
       dispatch(setSuccess({
         success: data.deleteCallfile.success,
@@ -280,7 +280,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     }
   },[data,setTotalPage,setCanUpload])
 
-  if(downloadCallfilesLoading || loading || bucketLoading) return <Loading/>
+  if(downloadCallfilesLoading || loading || bucketLoading || deleteLoading || finishingLoading) return <Loading/>
 
 
   return (
