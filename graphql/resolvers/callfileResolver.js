@@ -195,7 +195,6 @@ const callfileResolver = {
       }
     },
     downloadCallfiles: async(_,{callfile})=> {
-      const client = new ftp.Client();
       try {
    
         const customers = await CustomerAccount.aggregate([
@@ -491,100 +490,6 @@ const callfileResolver = {
           },
         ])
 
-        // function estimateMp3Duration(fileSizeBytes, assumedBitrate = 16000) {
-        //   const duration = (fileSizeBytes * 8) / assumedBitrate;
-        //   return Math.round(duration - 0.75);
-        // }
-
-        // function formatDuration(seconds) {
-        //   const mins = Math.floor(seconds / 60);
-        //   const secs = Math.floor(seconds % 60);
-        //   return `${mins}:${secs < 10 ? '0' + secs : secs}`;
-        // }
-
-        // const months = [
-        //   'January',
-        //   'February',
-        //   'March',
-        //   'April',
-        //   'May',
-        //   'June',
-        //   'July',
-        //   'August',
-        //   'September',
-        //   'October',
-        //   'November',
-        //   'December'
-        // ]
-
-        // await client.access({
-        //   host: process.env.FILEZILLA_HOST,
-        //   user: process.env.FILEZILLA_USER,
-        //   password: process.env.FILEZILLA_PASSWORD,
-        //   port: 21,
-        //   secure: false,
-        // });
-
-        // const newCustomers = await Promise.all(customers.map(async(e)=> {
-        //   if(e.currentDispo) {
-        //     const dialer = ['vici','issabel']
-        //     if(dialer.includes(e.currentDispo.dialer)) {
-        //       const createdAt = new Date(e.currentDispo.createdAt);
-        //       const yearCreated = createdAt.getFullYear();
-        //       const monthCreated = months[createdAt.getMonth()];
-        //       const dayCreated = createdAt.getDate();
-        //       const month = createdAt.getMonth() + 1;
-        //       const contact = e.customer.contact_no;
-        //       const viciIpAddress = e.account_bucket.viciIp
-        //       const fileNale = {
-        //         "172.20.21.64" : "HOMECREDIT",
-        //         "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
-        //         "172.20.21.17" : "PSBANK",
-        //         "172.20.21.27" : "MIXED CAMPAIGN",
-        //         "172.20.21.30" : "MCC",
-        //         "172.20.21.35" : "MIXED CAMPAIGN",
-        //         "172.20.21.67" : "MIXED CAMPAIGN NEW",
-        //         '172.20.21.97' : "UB"
-        //       }
-      
-        //       function checkDate(number) {
-        //         return number > 9 ? number : `0${number}`;
-        //       }
-              
-        //       const filteredWithRecording = []
-        //       const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`
-        //       const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${e.account_bucket.issabelIp}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
-        
-        //       const remoteDir = e.dialer === "vici" ? remoteDirVici : remoteDirIssabel
-        
-        //       const contactPatterns = contact.map(num =>
-        //         num.length < 11 ? num : num.slice(1, 11)
-        //       );
-  
-        //       let skip = false;
-              
-        //       try {
-        //         const fileList = await client.list(remoteDir);
-        //         const files = fileList.filter(y =>
-        //           contactPatterns.some(pattern => y.name.includes(pattern))
-        //         );
-                
-        //         if (files.length > 0) {
-        //           filteredWithRecording.push(e._id);
-        //         }
-        //       } catch (err) {
-        //         skip = true;
-        //       } 
-        //       return {
-        //         ...e,
-        //         duration: 0
-        //       }
-        //     }
-        //   } else {
-        //     return e 
-        //   }
-        // }))
-        
         const csv = json2csv(customers, {
           keys: [
             'contact1',
@@ -620,8 +525,6 @@ const callfileResolver = {
         return csv
       } catch (error) {
         throw new CustomError(error.message,500)    
-      } finally {
-        client.close()
       }
 
     },
@@ -779,6 +682,10 @@ const callfileResolver = {
     finishedCallfile: async(_,{callfile},{user,pubsub, PUBSUB_EVENTS}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
+
+        const checkIfFinished = await Callfile.findById(callfile)
+        if(checkIfFinished.endo) throw new CustomError("Already Finished", 400)
+
         const finishedCallfile = await Callfile.findByIdAndUpdate(callfile,{
           $set: {
             active: false,
@@ -788,13 +695,14 @@ const callfileResolver = {
         },{new: true})
 
         await CustomerAccount.updateMany(
-            { callfile: new mongoose.Types.ObjectId(finishedCallfile._id) }, 
-            { 
-              $unset: { assigned: "", assigned_date: ""}, 
-              $set: { on_hands: false }
-            }
+          { callfile: new mongoose.Types.ObjectId(finishedCallfile._id) }, 
+          { 
+            $unset: { assigned: "", assigned_date: ""}, 
+            $set: { on_hands: false }
+          }
         )
-        if(!finishedCallfile) throw CustomError("Callfile not found",404) 
+
+        if(!finishedCallfile) throw new CustomError("Callfile not found",404) 
 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
           updateOnCallfiles: {
