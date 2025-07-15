@@ -192,13 +192,53 @@ const taskResolver = {
     },
     updateDatabase: async()=> {
       try {
-        const findCustomerAccounts = await CustomerAccount.find()
+        // const findCustomerAccounts = await CustomerAccount.find()
 
-        await Promise.all(
-          findCustomerAccounts.map((async(e)=> {
-            await Customer.findByIdAndUpdate(e.customer,{$set: {customer_account: e._id}}) 
-          }))
-        )
+        // await Promise.all(
+        //   findCustomerAccounts.map((async(e)=> {
+        //     await Customer.findByIdAndUpdate(e.customer,{$set: {customer_account: e._id}}) 
+        //   }))
+        // )
+
+        await Customer.updateMany(
+        {
+          contact_no: { $exists: true }
+        },
+        [
+          {
+            $set: {
+              contact_no: {
+                $map: {
+                  input: "$contact_no",
+                  as: "num",
+                  in: {
+                    $let: {
+                      vars: {
+                        cleaned: {
+                          $replaceAll: {
+                            input: "$$num",
+                            find: "-",
+                            replacement: ""
+                          }
+                        }
+                      },
+                      in: {
+                        $cond: [
+                          { $regexMatch: { input: "$$cleaned", regex: /^00/ } },
+                          {
+                            $substr: ["$$cleaned", 1, { $strLenCP: "$$cleaned" }]
+                          },
+                          "$$cleaned"
+                        ]
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ]
+      );
 
         // await Promise.all(
         //   findCustomerAccounts.map(async(e, index)=> {

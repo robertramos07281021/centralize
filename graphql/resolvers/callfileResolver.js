@@ -5,7 +5,6 @@ import Callfile from "../../models/callfile.js"
 import CustomerAccount from "../../models/customerAccount.js"
 import {json2csv } from 'json-2-csv'
 import Department from "../../models/department.js"
-import ftp from "basic-ftp"
 
 const callfileResolver = {
   DateTime,
@@ -403,9 +402,10 @@ const callfileResolver = {
               customer: "$customer_info",
               collector_sip:  "$user.user_id",
               collector:  "$user.name",
+
               outstanding_balance:  "$out_standing_details.total_os",
               amount_paid:  "$paid_amount",
-              
+              amount: "$currentDispo.amount",
               balance:  "$balance",
               payment:  {
                 $cond: {
@@ -489,7 +489,8 @@ const callfileResolver = {
             }
           },
         ])
-
+        
+        console.log(customers[0])
         const csv = json2csv(customers, {
           keys: [
             'contact1',
@@ -509,6 +510,7 @@ const callfileResolver = {
             'collector',
             'outstanding_balance',
             'amount_paid',
+            'amount',
             'balance',
             'payment',
             'payment_date',
@@ -518,12 +520,14 @@ const callfileResolver = {
             'disposition',
             'duration',
             'contactable'
-          ]
+          ],
+          emptyFieldValue: ""
         })
-
+  
   
         return csv
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message,500)    
       }
 

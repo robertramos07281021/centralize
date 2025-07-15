@@ -100,6 +100,18 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             late_charge_waive_fee_os
           } = row
 
+          function normalizeContact(contact:string) {
+            const trimContact = contact.trim()
+
+            const cleaned = trimContact.replace(/-/g, '');
+
+            if (/^0\d{10}$/.test(cleaned)) {
+              return cleaned;
+            }
+  
+            return `0${cleaned}`;
+          }
+
           const rows:any = {
             ...row,
             birthday: birthday ? SSF.format("yyyy-mm-dd", birthday) : null,
@@ -114,7 +126,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             penalty_interest_os: Number(penalty_interest_os) || 0,
             dst_fee_os: Number(dst_fee_os) || 0,
             total_os: Number(total_os) || 0,
-            contact: `0${contact}`,
+            contact: normalizeContact(contact.toString()).toString(),
             max_dpd: Math.ceil(dpd) || Math.ceil(max_dpd),
             mpd: Math.ceil(mpd) || 0,
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
@@ -122,11 +134,11 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           }
 
           if(contact_2) {
-            rows['contact_2'] = `0${contact_2}`
+            rows['contact_2'] = normalizeContact(contact_2.toString()).toString()
           }
 
           if(contact_3) {
-            rows['contact_3'] = `0${contact_3}`
+            rows['contact_3'] = normalizeContact(contact_3.toString()).toString()
           }
 
           return {
@@ -137,6 +149,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       };
       reader.readAsBinaryString(file);
     } catch (error) {
+
       dispatch(setServerError(true))
     }
   }, []);
