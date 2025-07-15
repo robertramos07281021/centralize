@@ -140,8 +140,9 @@ const taskResolver = {
         throw new CustomError(error.message, 500)  
       }
     },
-    deselectTask: async(_,{id},{PUBSUB_EVENTS, pubsub, user}) => {
+    deselectTask: async(_,{id},{PUBSUB_EVENTS, pubsub}) => {
       try {
+        
         const ca = await CustomerAccount.findByIdAndUpdate(id,{$set: {on_hands: false}},{new: true})
         if(!ca) throw new CustomError("Customer account not found", 404) 
       
@@ -192,7 +193,7 @@ const taskResolver = {
     updateDatabase: async()=> {
       try {
         const findCustomerAccounts = await CustomerAccount.find()
-        
+
         await Promise.all(
           findCustomerAccounts.map((async(e)=> {
             await Customer.findByIdAndUpdate(e.customer,{$set: {customer_account: e._id}}) 

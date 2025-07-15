@@ -196,7 +196,7 @@ const CustomerDisposition = () => {
   const [isRPC, setIsRPC] = useState<boolean>(false)
   const [isUpdate, setIsUpdate] = useState<boolean>(false)
   const [search, setSearch] = useState("")
-  const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search}})
+  const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search},skip: search.length === 0})
   const length = searchData?.search?.length || 0;
 
   // useEffect(()=> {
@@ -260,9 +260,9 @@ const CustomerDisposition = () => {
     return ()=> clearTimeout(timer)
   },[navigate, deselectTask])
 
-  const clearSelectedCustomer = async() => {
+  const clearSelectedCustomer = useCallback(async() => {
     await deselectTask({variables: {id: selectedCustomer._id}}) 
-  }
+  },[selectedCustomer,deselectTask])
   
   useEffect(()=> {
     if(selectedCustomer._id) {
