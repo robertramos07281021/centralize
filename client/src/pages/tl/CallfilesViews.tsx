@@ -280,13 +280,11 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     }
   },[data,setTotalPage,setCanUpload])
 
-  if(downloadCallfilesLoading) return <Loading/>
+  if(downloadCallfilesLoading || loading || bucketLoading) return <Loading/>
+
 
   return (
     <>
-      {
-        loading || bucketLoading && <Loading/>
-      }
       <div className=" h-full overflow-y-auto flex flex-col relative">
         {
           data?.getCallfiles.result.map((res,index) => {
@@ -327,7 +325,6 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
             )
           })
         }
-        
       </div> 
       { confirm &&
         <Confirmation {...modalProps}/>

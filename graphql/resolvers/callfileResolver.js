@@ -13,6 +13,7 @@ const callfileResolver = {
     getCallfiles: async(_,{bucket,limit,page,status},{user})=> {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
+
         const active = (status !== "all" || !status) ? status === "active" : {$ne: null}
         const resBucket = bucket ? {$eq: new mongoose.Types.ObjectId(bucket)} : {$in: user.buckets.map(e=> new mongoose.Types.ObjectId(e))}
         const skip = (page - 1) * limit;
@@ -50,7 +51,7 @@ const callfileResolver = {
               CustomerAccount.aggregate([
                 {
                   $match: { 
-                    callfile: e._id 
+                    callfile: new mongoose.Types.ObjectId(e._id) 
                   } 
                 },
                 {
@@ -501,88 +502,88 @@ const callfileResolver = {
         //   return `${mins}:${secs < 10 ? '0' + secs : secs}`;
         // }
 
-        const months = [
-          'January',
-          'February',
-          'March',
-          'April',
-          'May',
-          'June',
-          'July',
-          'August',
-          'September',
-          'October',
-          'November',
-          'December'
-        ]
+        // const months = [
+        //   'January',
+        //   'February',
+        //   'March',
+        //   'April',
+        //   'May',
+        //   'June',
+        //   'July',
+        //   'August',
+        //   'September',
+        //   'October',
+        //   'November',
+        //   'December'
+        // ]
 
-        await client.access({
-          host: process.env.FILEZILLA_HOST,
-          user: process.env.FILEZILLA_USER,
-          password: process.env.FILEZILLA_PASSWORD,
-          port: 21,
-          secure: false,
-        });
+        // await client.access({
+        //   host: process.env.FILEZILLA_HOST,
+        //   user: process.env.FILEZILLA_USER,
+        //   password: process.env.FILEZILLA_PASSWORD,
+        //   port: 21,
+        //   secure: false,
+        // });
 
-        const newCustomers = await Promise.all(customers.map(async(e)=> {
-          if(e.currentDispo) {
-            const dialer = ['vici','issabel']
-            if(dialer.includes(e.currentDispo.dialer)) {
-              const createdAt = new Date(e.currentDispo.createdAt);
-              const yearCreated = createdAt.getFullYear();
-              const monthCreated = months[createdAt.getMonth()];
-              const dayCreated = createdAt.getDate();
-              const month = createdAt.getMonth() + 1;
-              const contact = e.customer.contact_no;
-              const viciIpAddress = e.account_bucket.viciIp
-              const fileNale = {
-                "172.20.21.64" : "HOMECREDIT",
-                "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
-                "172.20.21.17" : "PSBANK",
-                "172.20.21.27" : "MIXED CAMPAIGN",
-                "172.20.21.30" : "MCC",
-                "172.20.21.35" : "MIXED CAMPAIGN",
-                "172.20.21.67" : "MIXED CAMPAIGN NEW",
-                '172.20.21.97' : "UB"
-              }
+        // const newCustomers = await Promise.all(customers.map(async(e)=> {
+        //   if(e.currentDispo) {
+        //     const dialer = ['vici','issabel']
+        //     if(dialer.includes(e.currentDispo.dialer)) {
+        //       const createdAt = new Date(e.currentDispo.createdAt);
+        //       const yearCreated = createdAt.getFullYear();
+        //       const monthCreated = months[createdAt.getMonth()];
+        //       const dayCreated = createdAt.getDate();
+        //       const month = createdAt.getMonth() + 1;
+        //       const contact = e.customer.contact_no;
+        //       const viciIpAddress = e.account_bucket.viciIp
+        //       const fileNale = {
+        //         "172.20.21.64" : "HOMECREDIT",
+        //         "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
+        //         "172.20.21.17" : "PSBANK",
+        //         "172.20.21.27" : "MIXED CAMPAIGN",
+        //         "172.20.21.30" : "MCC",
+        //         "172.20.21.35" : "MIXED CAMPAIGN",
+        //         "172.20.21.67" : "MIXED CAMPAIGN NEW",
+        //         '172.20.21.97' : "UB"
+        //       }
       
-              function checkDate(number) {
-                return number > 9 ? number : `0${number}`;
-              }
+        //       function checkDate(number) {
+        //         return number > 9 ? number : `0${number}`;
+        //       }
               
-              const filteredWithRecording = []
-              const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`
-              const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${e.account_bucket.issabelIp}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
+        //       const filteredWithRecording = []
+        //       const remoteDirVici = `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`
+        //       const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${e.account_bucket.issabelIp}/${yearCreated}/${monthCreated + ' ' + yearCreated}/${dayCreated}`;
         
-              const remoteDir = e.dialer === "vici" ? remoteDirVici : remoteDirIssabel
+        //       const remoteDir = e.dialer === "vici" ? remoteDirVici : remoteDirIssabel
         
-              const contactPatterns = contact.map(num =>
-                num.length < 11 ? num : num.slice(1, 11)
-              );
+        //       const contactPatterns = contact.map(num =>
+        //         num.length < 11 ? num : num.slice(1, 11)
+        //       );
   
-              let skip = false;
+        //       let skip = false;
               
-              try {
-                const fileList = await client.list(remoteDir);
-                const files = fileList.filter(y =>
-                  contactPatterns.some(pattern => y.name.includes(pattern))
-                );
+        //       try {
+        //         const fileList = await client.list(remoteDir);
+        //         const files = fileList.filter(y =>
+        //           contactPatterns.some(pattern => y.name.includes(pattern))
+        //         );
                 
-                if (files.length > 0) {
-                  filteredWithRecording.push(e._id);
-                }
-              } catch (err) {
-                skip = true;
-              } 
-              return {
-                ...e,
-                duration: 0
-              }
-            }
-          } else {
-            return e 
-          }
-        }))
+        //         if (files.length > 0) {
+        //           filteredWithRecording.push(e._id);
+        //         }
+        //       } catch (err) {
+        //         skip = true;
+        //       } 
+        //       return {
+        //         ...e,
+        //         duration: 0
+        //       }
+        //     }
+        //   } else {
+        //     return e 
+        //   }
+        // }))
         
         const csv = json2csv(customers, {
           keys: [
@@ -618,7 +619,6 @@ const callfileResolver = {
   
         return csv
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message,500)    
       } finally {
         client.close()
