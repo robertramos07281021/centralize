@@ -490,7 +490,6 @@ const callfileResolver = {
           },
         ])
         
-        console.log(customers[0])
         const csv = json2csv(customers, {
           keys: [
             'contact1',
@@ -527,7 +526,6 @@ const callfileResolver = {
   
         return csv
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message,500)    
       }
 
