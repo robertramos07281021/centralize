@@ -200,8 +200,6 @@ const AgentView = () => {
   }
 
   const onClickAction = (userId:string | null,lock: boolean,  eventMethod:keyof typeof ButtonType, attempt: number) => {
-    console.log(eventMethod)
-
     const message = eventMethod.toLowerCase()
     if((lock && eventMethod === ButtonType.UNLOCK && attempt === 0) || eventMethod === ButtonType.SET || eventMethod === ButtonType.SET_TARGETS) {
       setIsAuthorize(true)
@@ -218,7 +216,6 @@ const AgentView = () => {
       })
     } 
   }
-
 
   return (
     <>
@@ -239,7 +236,6 @@ const AgentView = () => {
         bucketTargetModal && 
         <SetBucketTargetsModal cancel={()=> setBucketTargetModal(false)} refetch={()=> {setBucketTargetModal(false); refetch(); agentProdDataRefetch()}}/>
       }
-      
       <div className="h-full w-full flex flex-col overflow-hidden p-2">
         <h1 className="p-2 text-xl font-medium text-gray-500">Agent Production</h1>
         <div className="flex justify-center gap-20 relative">

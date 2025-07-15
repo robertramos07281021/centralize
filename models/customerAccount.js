@@ -40,10 +40,16 @@ const customerAccountSchema = new Schema(
       type: String,
     }, 
     bill_due_day: {
-      type: Number
+      type: Number,
+      default: 0
     },
     max_dpd: {
-      type: Number
+      type: Number,
+      default: 0
+    },
+    month_pd: {
+      type: Number,
+      default: 0
     },
     paid_amount: {
       type: Number,
@@ -83,6 +89,10 @@ const customerAccountSchema = new Schema(
         default: 0
       },
       dst_fee_os: {
+        type: Number,
+        default: 0
+      },
+      waive_fee_os: {
         type: Number,
         default: 0
       },

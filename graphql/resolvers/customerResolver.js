@@ -507,7 +507,6 @@ const customerResolver = {
               as: "customer_info",
             },
           },
-          
           { 
             $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
           },
@@ -519,9 +518,13 @@ const customerResolver = {
               as: "ca_callfile",
             },
           },
-          
           { 
             $unwind: { path: "$ca_callfile", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $match: {
+              "ca_callfile.endo": {$exists: false}
+            }
           },
           {
             $lookup: {
@@ -597,116 +600,33 @@ const customerResolver = {
                 { $skip: (page - 1) * limit },
                 { $limit: limit }
               ],
-              total: [{$count: "totalCustomerAccounts"}]
+              AllCustomerAccounts: [
+                {
+                  $group: {
+                    _id: null,
+                    ids: { $push: "$_id" }
+                  }
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    ids: 1
+                  }
+                }
+              ]
             }
           },
         ])
 
-        const total = accounts[0]?.total[0]?.totalCustomerAccounts || 0;
+      
+        const allAccounts = accounts[0]?.AllCustomerAccounts[0]?.ids || [];
 
         return {
           CustomerAccounts: accounts[0]?.FindCustomerAccount || [],
-          totalCountCustomerAccounts: total,
+          totalCountCustomerAccounts: allAccounts,
         }
       } catch (error) {
         throw new CustomError(error.message, 500)
-      }
-    },
-    selectAllCustomerAccount: async(_,{disposition,groupId,assigned, selectedBucket},{user}) => {
-      try {
-        if(!user) throw new CustomError("Unauthorized",401) 
-
-        let selected = ''
-        if(groupId) {
-          const group = await Group.findOne({_id: groupId})
-        
-          const userSelected = await User.findOne({_id: groupId})
-          selected = group ? group._id : userSelected._id
-        }
-        
-        const searhBucket =selectedBucket ? {$eq: new mongoose.Types.ObjectId(selectedBucket) } :  {$in :user.buckets.map(e=> new mongoose.Types.ObjectId(e))}
-        const search = [
-          { "dispoType.code" : {$ne: "PAID"} },
-          {"account_bucket._id": searhBucket }
-        ]
-
-        if (disposition && disposition.length > 0) {
-          search.push({ "dispoType.name": { $in: disposition } });
-        }
-        
-        if (assigned === "assigned") {
-          if (selected) {
-            search.push({ assigned: new mongoose.Types.ObjectId(selected) });
-          } else {
-            search.push({ assigned: { $ne: null } });
-          }
-        } else {
-          search.push({ assigned: null });
-        }
-
-        const accounts = await CustomerAccount.aggregate([
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "bucket",
-              foreignField: "_id",
-              as: "account_bucket",
-            },
-          },
-          { 
-            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
-          },
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "current_disposition",
-              foreignField: "_id",
-              as: "currentDisposition",
-            }
-          },
-          { 
-            $unwind: { path: "$currentDisposition", preserveNullAndEmptyArrays: true } 
-          },
-          {
-            $lookup: {
-              from: "dispotypes",
-              localField: "currentDisposition.disposition",
-              foreignField: "_id",
-              as: "dispoType",
-            }
-          },
-          { 
-            $unwind: { path: "$dispoType", preserveNullAndEmptyArrays: true } 
-          },
-          {
-            $addFields: {
-              paymentDate: {
-                $cond: [
-                  {
-                    $and: [
-                      { $ne: ["$currentDisposition.payment_date", null] },
-                      { $ne: ["$currentDisposition.payment_date", ""] },
-                      {
-                        $in: [{ $type: "$currentDisposition.payment_date" }, ["string", "date"]]
-                      }
-                    ]
-                  },
-                  { $toDate: "$currentDisposition.payment_date" },
-                  null
-                ]
-              }
-            }
-          },
-          {
-            $match: {
-              $and: search
-            }
-          }
-        ])
-
-        return accounts ? accounts.map(e => e._id) : []
-      } catch (error) {
-        throw new CustomError(error.message, 500) 
       }
     },
     accountsCount: async(_,__,{user}) => {
@@ -843,12 +763,11 @@ const customerResolver = {
   Mutation: {
     createCustomer: async(_,{input, callfile, bucket},{user, pubsub, PUBSUB_EVENTS}) => {
       if(!user) throw new CustomError("Unauthorized",401)
-
       try {
         const findBucket = await Bucket.findById(bucket)
         if(!findBucket) throw new CustomError('Bucket not found',404)
 
-        const newCallfile = new Callfile.create({name: callfile, bucket: findBucket._id})
+        const newCallfile = new Callfile({name: callfile, bucket: findBucket._id})
 
         await Promise.all(input.map(async (element) => {
           const contact_no = []
@@ -900,9 +819,10 @@ const customerResolver = {
             callfile: newCallfile._id,
             credit_customer_id: element.credit_user_id || null,
             endorsement_date: element.endorsement_date || null,
-            bill_due_day: element.bill_due_day || null,
-            max_dpd: element.max_dpd || null,
+            bill_due_day: element.bill_due_day,
+            max_dpd: element.max_dpd || element.dpd,
             balance: element.total_os,
+            month_pd: element.mpd,
             paid_amount: 0,
             account_id: element.account_id || null,
             out_standing_details: {
@@ -912,6 +832,7 @@ const customerResolver = {
               txn_fee_os: element.txn_fee_os,
               late_charge_os: element.late_charge_os,
               dst_fee_os: element.dst_fee_os,
+              waive_fee_os: element.late_charge_waive_fee_os,
               total_os: element.total_os,
             },
             grass_details: {

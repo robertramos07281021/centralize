@@ -103,7 +103,7 @@ type CustomerAccounts = {
 
 type FindCustomerAccount = {
   CustomerAccounts: CustomerAccounts[],
-  totalCountCustomerAccounts: number
+  totalCountCustomerAccounts: string[]
 }
 
 const FIND_CUSTOMER_ACCOUNTS = gql`
@@ -189,11 +189,7 @@ query findCustomerAccount($page: Int, $disposition: [String], $groupId: ID, $ass
   }
 }
 `
-const SELECT_ALL_CUSTOMER_ACCOUNT = gql`
-  query selectAllCustomerAccount($disposition: [String], $groupId:ID, $assigned:String, $selectedBucket:ID) {
-    selectAllCustomerAccount(disposition: $disposition,groupId: $groupId, assigned: $assigned,selectedBucket: $selectedBucket )
-  }
-`
+
 const ADD_GROUP_TASK = gql`
   mutation Mutation($groupId: ID!, $task: [ID]) {
   addGroupTask(groupId: $groupId, task: $task) {
@@ -246,21 +242,14 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   },[GroupData])
   const selected = selectedGroup ? groupDataNewObject[selectedGroup] : selectedAgent
 
-  const {data:CustomerAccountsData, refetch:CADRefetch, loading, error:fcaError} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId: selected, assigned: taskFilter, limit: limit, selectedBucket: selectedBucket}})
+  const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId: selected, assigned: taskFilter, limit: limit, selectedBucket: selectedBucket}})
   const [handleCheckAll, setHandleCheckAll] = useState<boolean>(false)
   const [taskToAdd, setTaskToAdd] = useState<string[]>([])
-  
-  const {data:selectAllCustomerAccountData, refetch:SACARefetch,error:sacaError} = useQuery<{selectAllCustomerAccount:string[]}>(SELECT_ALL_CUSTOMER_ACCOUNT,{variables: {disposition: selectedDisposition, groupId:selected, assigned: taskFilter, selectedBucket}})
 
   const [required, setRequired] = useState<boolean>(false)
   const [confirm, setConfirm] = useState<boolean>(false)
 
   const [taskManagerPage, setTaskManagerPage] = useState("1")
-  useEffect(()=> {
-    if(sacaError || sacaError) {
-      dispatch(setServerError(true))
-    }
-  },[dispatch, fcaError, sacaError])
 
 
   useEffect(()=> {
@@ -269,16 +258,14 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
 
   useEffect(()=> {
     CADRefetch()
-    SACARefetch()
-  },[selectedBucket,SACARefetch,CADRefetch])
+  },[selectedBucket,,CADRefetch])
 
   useEffect(()=> {
     setRequired(false)
     CADRefetch()
     setTaskToAdd([])
     setHandleCheckAll(false)
-    SACARefetch()
-  },[selectedGroup,CADRefetch,tasker, taskFilter,SACARefetch, selectedAgent, selectedDisposition])
+  },[selectedGroup,CADRefetch,tasker, taskFilter, selectedAgent, selectedDisposition])
 
   const [modalProps, setModalProps] = useState({
     message: "",
@@ -290,7 +277,6 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   const [deleteGroupTask] = useMutation(DELETE_GROUP_TASK, {
     onCompleted:() => {
       CADRefetch()
-      SACARefetch()
       setConfirm(false)
       setTaskToAdd([])
       setHandleCheckAll(false)
@@ -324,7 +310,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   }
 
   const handleSelectAllToAdd = (e:React.ChangeEvent<HTMLInputElement>) => {
-    const newArray = selectAllCustomerAccountData?.selectAllCustomerAccount.map(e => e.toString())
+    const newArray = CustomerAccountsData?.findCustomerAccount.totalCountCustomerAccounts.map(e => e.toString())
     if(e.target.checked){
       setTaskToAdd(newArray ?? [])
       setHandleCheckAll(true)
@@ -342,7 +328,6 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   const [addGroupTask] = useMutation(ADD_GROUP_TASK,{
     onCompleted:() => {
       CADRefetch()
-      SACARefetch()
       setConfirm(false)
       setRequired(false)
       setTaskToAdd([])
@@ -376,7 +361,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
     }
   }
 
-  const pages = CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts ? Math.ceil(CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts/limit) : 1
+  const pages = CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts ? Math.ceil(CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts.length/limit) : 1
 
   const valuePage = parseInt(taskManagerPage) > pages ? pages.toString() : taskManagerPage 
 

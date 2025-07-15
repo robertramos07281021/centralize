@@ -196,12 +196,13 @@ const CustomerDisposition = () => {
   const [isRPC, setIsRPC] = useState<boolean>(false)
   const [isUpdate, setIsUpdate] = useState<boolean>(false)
   const [search, setSearch] = useState("")
-  const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search}, skip: !search.length,})
+  const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search}})
   const length = searchData?.search?.length || 0;
 
-  useEffect(()=> {
-    refetch()
-  },[search])
+  // useEffect(()=> {
+  //   refetch()
+  // },[search])
+
   const debouncedSearch = useMemo(() => {
   return debounce((val: string) => {
     refetch({ search: val });

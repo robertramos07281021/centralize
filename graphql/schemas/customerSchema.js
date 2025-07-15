@@ -30,9 +30,12 @@ const customerTypeDefs = gql`
   late_charge_os: Float
   max_dpd: Float   
   penalty_interest_os: Float 
+  late_charge_waive_fee_os: Float
   principal_os: Float
   total_os: Float
   txn_fee_os: Float
+  dpd: Int
+  mpd: Int
   vendor_endorsement: String
   }
 
@@ -151,7 +154,7 @@ const customerTypeDefs = gql`
 
   type FindCustomerAccount {
     CustomerAccounts: [CustomerAccount],
-    totalCountCustomerAccounts: Int
+    totalCountCustomerAccounts: [ID]
   }
 
   type Search {
@@ -205,7 +208,6 @@ const customerTypeDefs = gql`
     getCustomers(page:Int): getCustomers!
     search(search:String):[Search]
     findCustomerAccount(disposition:[String],groupId:ID,page:Int, assigned:String, limit:Int,selectedBucket: ID):FindCustomerAccount
-    selectAllCustomerAccount(disposition:[String],groupId:ID,assigned:String, selectedBucket:ID):[ID]
     accountsCount:Int
     getMonthlyTarget:[MonthlyTarget]
     getMonthlyPerformance:[PerformanceStatistic]

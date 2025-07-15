@@ -38,7 +38,10 @@ type Data = {
   tagging:string 
   total_os:number
   txn_fee_os:number
-  vendor_endorsement:string
+  late_charge_waive_fee_os: number
+  vendor_endorsement:string,
+  dpd: number,
+  mpd: number
 }
 
 const CREATE_CUSTOMER = gql `mutation
@@ -90,24 +93,32 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             platform_user_id,
             endorsement_date, 
             birthday,
-            grass_date
+            grass_date,
+            dpd,
+            mpd,
+            max_dpd,
+            late_charge_waive_fee_os
           } = row
 
           const rows:any = {
+            ...row,
             birthday: birthday ? SSF.format("yyyy-mm-dd", birthday) : null,
             endorsement_date: endorsement_date ?  SSF.format("yyyy-mm-dd", endorsement_date) : null,
             grass_date: grass_date ? SSF.format("yyyy-mm-dd", grass_date) : null,
             case_id: String(row.case_id) || null,
             platform_user_id:platform_user_id ? String(platform_user_id) : null,
-            interest_os: interest_os || 0,
-            admin_fee_os: admin_fee_os || 0,
-            txn_fee_os: txn_fee_os || 0,
-            late_charge_os: late_charge_os || 0,
-            penalty_interest_os: penalty_interest_os || 0,
-            dst_fee_os:dst_fee_os || 0,
-            total_os: total_os || 0,
+            interest_os: Number(interest_os) || 0,
+            admin_fee_os: Number(admin_fee_os) || 0,
+            txn_fee_os: Number(txn_fee_os) || 0,
+            late_charge_os: Number(late_charge_os) || 0,
+            penalty_interest_os: Number(penalty_interest_os) || 0,
+            dst_fee_os: Number(dst_fee_os) || 0,
+            total_os: Number(total_os) || 0,
             contact: `0${contact}`,
-            bill_due_day: bill_due_day || 0
+            max_dpd: Math.ceil(dpd) || Math.ceil(max_dpd),
+            mpd: Math.ceil(mpd) || 0,
+            late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
+            bill_due_day: Number(bill_due_day) || 0
           }
 
           if(contact_2) {
@@ -119,7 +130,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           }
 
           return {
-          ...row,
           ...rows
         }})
 
@@ -127,7 +137,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       };
       reader.readAsBinaryString(file);
     } catch (error) {
-      console.log(error)
+      dispatch(setServerError(true))
     }
   }, []);
 

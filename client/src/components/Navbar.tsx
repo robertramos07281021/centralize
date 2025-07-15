@@ -147,8 +147,8 @@ const Navbar = () => {
 
   const [logout, {loading}] = useMutation(LOGOUT,{
     onCompleted: async() => {
-      await persistor.purge()
       dispatch(setLogout())
+      await persistor.purge()
       navigate('/')
     },
     onError: () => {
@@ -182,8 +182,8 @@ const Navbar = () => {
 
   const [logoutToPersist, {loading:logoutToPEristsLoading}] = useMutation<{logoutToPersist: {success: boolean, message: string}}>(LOGOUT_USING_PERSIST,{
     onCompleted: async()=> {
-      await persistor.purge()
       dispatch(setLogout())
+      await persistor.purge()
       navigate("/")
     },
     onError: () => {

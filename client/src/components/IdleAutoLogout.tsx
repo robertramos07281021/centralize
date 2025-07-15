@@ -1,8 +1,8 @@
 import { useMutation } from "@apollo/client";
 import gql from "graphql-tag";
 import { useEffect, useRef } from "react";
-import { useAppDispatch } from "../redux/store";
-import { setServerError } from "../redux/slices/authSlice";
+import { persistor, useAppDispatch } from "../redux/store";
+import { setLogout, setServerError } from "../redux/slices/authSlice";
 
 const LOGOUT = gql `
   mutation logout { 
@@ -26,7 +26,13 @@ const IdleAutoLogout = () => {
   const timeout = 10 * 60 * 1000;
   const dispatch = useAppDispatch()
   const timerRef = useRef<NodeJS.Timeout | null>(null)
-  const [logout] = useMutation(LOGOUT)
+  const [logout] = useMutation(LOGOUT,{
+    onCompleted: async()=> {
+      dispatch(setLogout())
+      await persistor.purge()
+    }
+  })
+  
   const [lockAgent] = useMutation(LOCK)
 
   const startTimer = () => {
