@@ -848,7 +848,7 @@ const customerResolver = {
         const findBucket = await Bucket.findById(bucket)
         if(!findBucket) throw new CustomError('Bucket not found',404)
 
-        const newCallfile = await Callfile.create({name: callfile, bucket: findBucket._id})
+        const newCallfile = new Callfile.create({name: callfile, bucket: findBucket._id})
 
         await Promise.all(input.map(async (element) => {
           const contact_no = []
@@ -924,6 +924,8 @@ const customerResolver = {
           customer.customer_account = caResult._id
           await customer.save()
         }));
+
+        await newCallfile.save()
 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
           newCallfile: {

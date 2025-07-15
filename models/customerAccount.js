@@ -13,12 +13,10 @@ const customerAccountSchema = new Schema(
     },
     assigned: {
       type: mongoose.Schema.Types.ObjectId,
-      required: true,
       refPath: 'assignedModel'
     },
     assignedModel: {
       type: String,
-      required: true,
       enum: ['Group', 'User']
     },
     current_disposition: {
