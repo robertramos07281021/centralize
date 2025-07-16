@@ -15,7 +15,7 @@ type Data = {
   birthday:string 
   endorsement_date: number
   grass_date: number 
-  case_id: number 
+  case_id: string
   contact: string
   contact_2: string
   contact_3: string
@@ -92,7 +92,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             contact_2, 
             contact_3, 
             contact, 
-            platform_user_id,
             endorsement_date, 
             birthday,
             grass_date,
@@ -100,7 +99,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             mpd,
             max_dpd,
             late_charge_waive_fee_os,
-            emergencyContactName,
             emergencyContactMobile,
             case_id
           } = row
@@ -137,12 +135,14 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             mpd: Math.ceil(mpd) || 0,
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
             bill_due_day: Number(bill_due_day) || 0,
-            emergencyContactName,
-            platform_user_id
           }
           
           if(emergencyContactMobile) {
             rows['emergencyContactMobile'] = normalizeContact(emergencyContactMobile)
+          }
+
+          if(case_id) {
+            rows['case_id'] = case_id.toString()
           }
 
           if(grass_date) {
@@ -150,7 +150,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           }
 
           if(case_id) {
-            rows['case_id'] = case_id
+            rows['case_id'] = case_id.toString()
           }
 
           if(endorsement_date) {
@@ -183,6 +183,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     }
   }, []);
 
+  console.log(excelData)
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
