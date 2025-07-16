@@ -39,8 +39,10 @@ type Data = {
   total_os:number
   txn_fee_os:number
   late_charge_waive_fee_os: number
-  vendor_endorsement:string,
-  dpd: number,
+  vendor_endorsement:string
+  emergencyContactName: string
+  emergencyContactMobile: string
+  dpd: number
   mpd: number
 }
 
@@ -97,28 +99,32 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             dpd,
             mpd,
             max_dpd,
-            late_charge_waive_fee_os
+            late_charge_waive_fee_os,
+            emergencyContactName,
+            emergencyContactMobile,
+            case_id
           } = row
 
           function normalizeContact(contact:string) {
-            const trimContact = contact.trim()
-
-            const cleaned = trimContact.replace(/-/g, '');
-
-            if (/^0\d{10}$/.test(cleaned)) {
-              return cleaned;
-            }
-  
-            return `0${cleaned}`;
+            const cleaned = contact.trim().replace(/-/g, '');
+            if (/^0\d{10}$/.test(cleaned)) return cleaned;
+              if (/^\+63\d{10}$/.test(cleaned)) {
+                return '0' + cleaned.slice(3);
+              }
+            if (/^\d{10}$/.test(cleaned)) return `0${cleaned}`;
+            return cleaned;
           }
+          const safeDate = (date: any) => {
+            try {
+              return date ? SSF.format("yyyy-mm-dd", date) : undefined;
+            } catch {
+              return undefined;
+            }
+          };
+
 
           const rows:any = {
             ...row,
-            birthday: birthday ? SSF.format("yyyy-mm-dd", birthday) : null,
-            endorsement_date: endorsement_date ?  SSF.format("yyyy-mm-dd", endorsement_date) : null,
-            grass_date: grass_date ? SSF.format("yyyy-mm-dd", grass_date) : null,
-            case_id: String(row.case_id) || null,
-            platform_user_id:platform_user_id ? String(platform_user_id) : null,
             interest_os: Number(interest_os) || 0,
             admin_fee_os: Number(admin_fee_os) || 0,
             txn_fee_os: Number(txn_fee_os) || 0,
@@ -126,11 +132,33 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             penalty_interest_os: Number(penalty_interest_os) || 0,
             dst_fee_os: Number(dst_fee_os) || 0,
             total_os: Number(total_os) || 0,
-            contact: normalizeContact(contact.toString()).toString(),
-            max_dpd: Math.ceil(dpd) || Math.ceil(max_dpd),
+            contact: contact ? normalizeContact(contact.toString()) : "",
+            max_dpd: Number.isFinite(dpd) ? Math.ceil(dpd) : Math.ceil(max_dpd) || 0,
             mpd: Math.ceil(mpd) || 0,
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
-            bill_due_day: Number(bill_due_day) || 0
+            bill_due_day: Number(bill_due_day) || 0,
+            emergencyContactName,
+            platform_user_id
+          }
+          
+          if(emergencyContactMobile) {
+            rows['emergencyContactMobile'] = normalizeContact(emergencyContactMobile)
+          }
+
+          if(grass_date) {
+            rows['grass_date'] = safeDate(grass_date)
+          }
+
+          if(case_id) {
+            rows['case_id'] = case_id
+          }
+
+          if(endorsement_date) {
+            rows['endorsement_date'] = safeDate(endorsement_date)
+          }
+
+          if(birthday) {
+            rows['birthday'] = safeDate(birthday)
           }
 
           if(contact_2) {
@@ -143,7 +171,8 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
 
           return {
           ...rows
-        }})
+          }
+        })
 
         setExcelData(dateConverting.slice(0,dateConverting.length)); 
       };
@@ -153,6 +182,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       dispatch(setServerError(true))
     }
   }, []);
+
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -217,8 +247,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     await createCustomer({variables: {input:excelData, callfile: file[0].name.split('.')[0], bucket: bucket}});
     setConfirm(false)
   },[createCustomer, excelData, file, setConfirm, bucket])
-
-
 
   const submitUpload = () => {
     if(file.length === 0 || !bucket) {

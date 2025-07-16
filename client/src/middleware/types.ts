@@ -81,6 +81,7 @@ type outStandingDetails = {
   late_charge_os: number
   dst_fee_os: number
   total_os: number
+  waive_fee_os: number
 }
 
 type grassDetails = {
@@ -92,6 +93,11 @@ type grassDetails = {
 type  AccountBucket = {
   name: string
   dept: string
+}
+
+type EmergencyContact = {
+  name: string
+  mobile: string
 }
 
 export type CustomerRegistered = {
@@ -131,10 +137,12 @@ export type Search = {
   max_dpd: number
   balance: number
   paid_amount: number
+  month_pd: number
   out_standing_details: outStandingDetails
   grass_details: grassDetails
   account_bucket: AccountBucket
   customer_info: CustomerRegistered
   isRPCToday: boolean
+  emergency_contact: EmergencyContact
   dispo_history: CurrentDispo[]
 }

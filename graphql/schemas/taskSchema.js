@@ -44,6 +44,7 @@ const taskTypeDefs = gql`
     late_charge_os: Float
     dst_fee_os: Float
     total_os: Float
+    waive_fee_os: Float
   }
 
   type grassDetails {
@@ -74,6 +75,7 @@ const taskTypeDefs = gql`
     max_dpd: Int
     balance: Float
     paid_amount: Float
+    month_pd: Int
     assigned_date: String
     out_standing_details: outStandingDetails
     grass_details: grassDetails

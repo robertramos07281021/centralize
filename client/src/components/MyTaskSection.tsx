@@ -15,6 +15,7 @@ type outStandingDetails = {
   late_charge_os: number
   dst_fee_os: number
   total_os: number
+  waive_fee_os: number
 }
 
 type grassDetails = {
@@ -44,6 +45,11 @@ type CurrentDisposition = {
   disposition: string
 }
 
+type EmergencyContact = {
+  name: string
+  mobile: string
+}
+
 type CustomerData = {
   _id: string
   case_id: string
@@ -54,12 +60,14 @@ type CustomerData = {
   max_dpd: number
   balance: number
   paid_amount: number
+  month_pd: number
   isRPCToday: boolean
   assigned_date: string
   out_standing_details: outStandingDetails
   grass_details: grassDetails
   account_bucket: AccountBucket
   dispo_history: CurrentDispo[]
+  emergency_contact: EmergencyContact
   current_disposition: CurrentDisposition
   customer_info: CustomerRegistered
 }
@@ -82,6 +90,11 @@ const MY_TASKS = gql`
       balance
       paid_amount
       assigned_date
+      month_pd
+      emergency_contact {
+        name
+        mobile
+      }
       dispo_history {
          _id
         amount
@@ -105,6 +118,7 @@ const MY_TASKS = gql`
         late_charge_os
         dst_fee_os
         total_os
+        waive_fee_os
       }
       grass_details {
         grass_region
@@ -148,6 +162,11 @@ const GROUP_TASKS =gql`
         balance
         paid_amount
         assigned_date
+        month_pd
+        emergency_contact {
+          name
+          mobile
+        }
         dispo_history {
           _id
           amount
@@ -171,6 +190,7 @@ const GROUP_TASKS =gql`
           late_charge_os
           dst_fee_os
           total_os
+          waive_fee_os
         }
         grass_details {
           grass_region

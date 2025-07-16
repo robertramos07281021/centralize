@@ -101,6 +101,14 @@ const customerAccountSchema = new Schema(
         default: 0
       }
     },
+    emergency_contact: {
+      name: {
+        type: String,
+      },
+      mobile: {
+        type: String
+      }
+    },
     //object
     grass_details: {
       grass_region: {

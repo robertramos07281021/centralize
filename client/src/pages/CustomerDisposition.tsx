@@ -39,6 +39,11 @@ const SEARCH = gql`
       balance
       paid_amount
       isRPCToday
+      month_pd
+      emergency_contact {
+        name
+        mobile
+      }
       dispo_history {
          _id
         amount
@@ -61,6 +66,7 @@ const SEARCH = gql`
         txn_fee_os
         late_charge_os
         dst_fee_os
+        waive_fee_os
         total_os
       }
       grass_details {
@@ -198,10 +204,6 @@ const CustomerDisposition = () => {
   const [search, setSearch] = useState("")
   const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search},skip: search.length === 0})
   const length = searchData?.search?.length || 0;
-
-  // useEffect(()=> {
-  //   refetch()
-  // },[search])
 
   const debouncedSearch = useMemo(() => {
   return debounce((val: string) => {
@@ -420,7 +422,18 @@ const CustomerDisposition = () => {
             <FieldListDisplay label="Mobile No." values={selectedCustomer?.customer_info?.contact_no} fallbackHeight="h-10"/>
             <FieldListDisplay label="Email" values={selectedCustomer?.customer_info?.emails} fallbackHeight="h-10"/>
             <FieldListDisplay label="Address" values={selectedCustomer?.customer_info?.addresses} fallbackHeight="h-36"/>
-    
+            
+            {
+              (selectedCustomer._id && selectedCustomer.emergency_contact) && 
+              <div className="2xl:w-1/2 w-full lg:w-8/10 mt-1 ">
+                <p className="font-bold text-slate-500 uppercase lg:text-sm text-[0.9rem]">Emergency Contact:</p>
+                <div className="flex gap-2 flex-col lg:flex-row">
+                  <FieldDisplay label="Name" value={selectedCustomer.emergency_contact.name}/>
+                  <FieldDisplay label="Contact" value={selectedCustomer.emergency_contact.mobile}/>
+                </div>
+              </div>
+            }
+            
             {
               !isUpdate &&
               <div className="2xl:text-sm lg:text-xs mt-5 flex gap-5">

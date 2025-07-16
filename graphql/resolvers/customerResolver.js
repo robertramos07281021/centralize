@@ -198,6 +198,7 @@ const customerResolver = {
               credit_customer_id: "$ca.credit_customer_id",
               bill_due_day: "$ca.bill_due_day",
               max_dpd: "$ca.max_dpd",
+              month_pd: "$ca.month_pd",
               balance: "$ca.balance",
               paid_amount: "$ca.paid_amount",
               isRPCToday: "$isRPCToday",
@@ -205,6 +206,7 @@ const customerResolver = {
               out_standing_details: "$ca.out_standing_details",
               grass_details: "$ca.grass_details",
               account_bucket: "$account_bucket",
+              emergency_contact: "$ca.emergency_contact"
             }
           }
         ])
@@ -815,16 +817,16 @@ const customerResolver = {
           const caResult = await CustomerAccount.create({
             customer: customer._id,
             bucket: findBucket._id,
-            case_id: element.case_id || null,
+            case_id: element.case_id,
             callfile: newCallfile._id,
-            credit_customer_id: element.credit_user_id || null,
-            endorsement_date: element.endorsement_date || null,
+            credit_customer_id: element.credit_user_id ,
+            endorsement_date: element.endorsement_date,
             bill_due_day: element.bill_due_day,
             max_dpd: element.max_dpd || element.dpd,
             balance: element.total_os,
             month_pd: element.mpd,
             paid_amount: 0,
-            account_id: element.account_id || null,
+            account_id: element.account_id ,
             out_standing_details: {
               principal_os: element.principal_os,
               interest_os: element.interest_os,
@@ -835,10 +837,14 @@ const customerResolver = {
               waive_fee_os: element.late_charge_waive_fee_os,
               total_os: element.total_os,
             },
+            emergency_contact: {
+              name:element.emergencyContactName,
+              mobile:element.emergencyContactMobile
+            },
             grass_details: {
-              grass_region: element.grass_region || null,
-              vendor_endorsement: element.vendor_endorsement || null,
-              grass_date: element.grass_date || null,
+              grass_region: element.grass_region,
+              vendor_endorsement: element.vendor_endorsement,
+              grass_date: element.grass_date,
             }
           });
           

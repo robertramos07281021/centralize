@@ -121,6 +121,11 @@ const initialState:UserState = {
     paid_amount: 0,
     isRPCToday: false,
     dispo_history: [],
+    month_pd: 0,
+    emergency_contact: {
+      name: "",
+      mobile: ""
+    },
     out_standing_details: {
       principal_os: 0,
       interest_os: 0,
@@ -128,6 +133,7 @@ const initialState:UserState = {
       txn_fee_os: 0,
       late_charge_os: 0,
       dst_fee_os: 0,
+      waive_fee_os: 0,
       total_os: 0
     },
     grass_details: {
@@ -211,6 +217,11 @@ const authSlice = createSlice({
         paid_amount: 0,
         isRPCToday: false,
         dispo_history: [],
+        month_pd: 0,
+        emergency_contact: {
+          name: "",
+          mobile: ""
+        },
         out_standing_details: {
           principal_os: 0,
           interest_os: 0,
@@ -218,7 +229,8 @@ const authSlice = createSlice({
           txn_fee_os: 0,
           late_charge_os: 0,
           dst_fee_os: 0,
-          total_os: 0
+          total_os: 0,
+          waive_fee_os: 0
         },
         grass_details: {
           grass_region: "",
@@ -262,10 +274,15 @@ const authSlice = createSlice({
         credit_customer_id: "",
         bill_due_day: 0,
         max_dpd: 0,
+        month_pd: 0,
         balance: 0,
         paid_amount: 0,
         isRPCToday: false,
         dispo_history: [],
+        emergency_contact: {
+          name: "",
+          mobile: ""
+        },
         out_standing_details: {
           principal_os: 0,
           interest_os: 0,
@@ -273,7 +290,8 @@ const authSlice = createSlice({
           txn_fee_os: 0,
           late_charge_os: 0,
           dst_fee_os: 0,
-          total_os: 0
+          total_os: 0,
+          waive_fee_os: 0
         },
         grass_details: {
           grass_region: "",

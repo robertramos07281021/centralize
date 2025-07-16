@@ -402,7 +402,6 @@ const callfileResolver = {
               customer: "$customer_info",
               collector_sip:  "$user.user_id",
               collector:  "$user.name",
-
               outstanding_balance:  "$out_standing_details.total_os",
               amount_paid:  "$paid_amount",
               amount: "$currentDispo.amount",

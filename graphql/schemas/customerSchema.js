@@ -34,6 +34,8 @@ const customerTypeDefs = gql`
   principal_os: Float
   total_os: Float
   txn_fee_os: Float
+  emergencyContactName: String
+  emergencyContactMobile: String
   dpd: Int
   mpd: Int
   vendor_endorsement: String
@@ -69,6 +71,7 @@ const customerTypeDefs = gql`
     late_charge_os: Float
     dst_fee_os: Float
     total_os: Float
+    waive_fee_os: Float
   }
 
   type grassDetails {
@@ -157,6 +160,11 @@ const customerTypeDefs = gql`
     totalCountCustomerAccounts: [ID]
   }
 
+  type EmergencyContact {
+    name: String,
+    mobile: String
+  }
+
   type Search {
     _id: ID
     case_id: String
@@ -166,12 +174,14 @@ const customerTypeDefs = gql`
     bill_due_day: Int
     max_dpd: Int
     balance: Float
+    month_pd: Int
     paid_amount: Float
     out_standing_details: outStandingDetails
     grass_details: grassDetails
     account_bucket: AccountBucket
     customer_info: CustomerInfo
     isRPCToday: Boolean
+    emergency_contact: EmergencyContact
     dispo_history:[CurrentDispo]
   }
 
