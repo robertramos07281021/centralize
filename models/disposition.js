@@ -39,6 +39,10 @@ const dispositionSchema = new Schema(
       type: Boolean,
       default: false
     },
+    bucket: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Bucket"
+    },
     contact_method: {
       type: String,
       enum: ['calls','sms','email','skip','field']

@@ -119,16 +119,15 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getDispositionReports: async(_,{agent, bucket, disposition, from, to}) => {
+    getDispositionReports: async(_,{agent, bucket, disposition, from, to},{user}) => {
       try {
-        
         const agentUser = agent && await User.findOne({user_id: agent}).lean()
         
         if (!agentUser && agent) throw new CustomError("Agent not found", 404);
         
         const findDispositions = disposition.length > 0 ? await DispoType.find({name: {$in: disposition}}).lean() : [];
 
-        const dispoTypesIds = disposition.length > 0 ? findDispositions.map((dt)=> dt._id) : []
+        const dispoTypesIds = disposition.length > 0 ? findDispositions.map((dt)=> new mongoose.Types.ObjectId(dt._id)) : []
    
         const findBucket = bucket && await Bucket.findOne({name: bucket}) 
         if (!findBucket && bucket) throw new CustomError("Bucket not found", 404);
@@ -138,7 +137,7 @@ const dispositionResolver = {
         : [];
      
         const query = [{}]
-
+        
         if(agent) query.push({user: new mongoose.Types.ObjectId(agentUser._id)})
 
         if(disposition.length > 0) query.push({disposition: {$in: dispoTypesIds}})
@@ -174,6 +173,29 @@ const dispositionResolver = {
             $unwind: {path: "$ca_disposition",preserveNullAndEmptyArrays: true}
           },
           {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "ca",
+            
+            }
+          },
+          {
+            $unwind: {path: "$ca",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $addFields: {
+              bucket: "$ca.bucket"
+            }
+          },
+          {
+            $match: {
+              bucket: {$in: user.buckets}
+            }
+            
+          },  
+          {
             $group: {
               _id:"$ca_disposition._id",
               name: { $first: "$ca_disposition.name" },
@@ -190,7 +212,7 @@ const dispositionResolver = {
             }
           }
         ])
-        
+
         return { 
           agent: agentUser ? {
             _id: agentUser._id,

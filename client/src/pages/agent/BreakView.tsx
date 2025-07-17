@@ -48,12 +48,15 @@ const BreakView = () => {
   const [password, setPassword] = useState<string>('')
   const [requried, setRequired] = useState<boolean>(false)
   const [eye, setEye] = useState<boolean>(false)
+  const [incorrect, setIncorrect] = useState<boolean>(false)
 
   const [updateProduction] = useMutation<{updateProduction:UpdateProduction}>(UPDATE_PRODUCTION,{
     onCompleted: (res) => {
       dispatch(setBreakValue(BreakEnum.PROD))
       navigate('/agent-dashboard')
       dispatch(setStart(res.updateProduction.start))
+      setIncorrect(false)
+      setRequired(false)
     },
     onError: ()=> {
       dispatch(setServerError(true))        
@@ -62,12 +65,19 @@ const BreakView = () => {
 
   const [loginToProd] = useMutation<{loginToProd:LoginProd}>(LOGIN_PRODUCTION,{
     onCompleted: async()=> {
+      setIncorrect(false)
       dispatch(setBreakValue(BreakEnum.PROD))
       setRequired(false)
       await updateProduction({variables: {type: BreakEnum.PROD}})
     },
-    onError: ()=> {
-      dispatch(setServerError(true))
+    onError: (error)=> {
+      const message = error.message
+      if(message.includes('Incorrect')) {
+        setIncorrect(true)
+        setRequired(false)
+      } else {
+        dispatch(setServerError(true))
+      }
     }
   })
   
@@ -75,6 +85,7 @@ const BreakView = () => {
     if(password) {
       await loginToProd({variables: {password: password}})
     } else {
+      setIncorrect(false)
       setRequired(true)
     }
   }
@@ -147,23 +158,35 @@ const BreakView = () => {
             <img src={images[breakValue]} alt={`${content?.name} icon`} className="w-80 animate-[bounce_20s_ease-in-out_infinite]" />
             <h1 className="text-2xl font-bold text-gray-500 ">{formatTime(breakTimer)}</h1>
             <h1 className="text-5xl font-bold text-gray-600 text-shadow-sm text-shadow-black">{content?.name}</h1>
-            <div className="border-2 mt-10 flex items-center rounded-md border-slate-500">
+             <div className="mt-10 flex flex-col gap-2">
               {
-                requried && <h1 className="text-sm text-red-500">Password is required</h1>
+                incorrect && <h1 className="text-sm text-red-500 text-center">Password is incorrect</h1>
               }
-              <input type={`${eye ? 'text': "password"}`} name="password" id="password" className="text-sm py-1 outline-0 px-2 w-65" placeholder="Enter your password" onChange={(e)=> setPassword(e.target.value)}/>
               {
-                eye ? (
-                  <div className="px-2" onClick={()=> setEye(false)}>
-                    <FaEyeSlash className=" top-9.5 text-xl"  />
-                  </div>
-                ) :
-                (
-                  <div className="px-2" onClick={()=> setEye(true)}>
-                      <FaEye  className=" top-9.5 text-xl " />
-                  </div>
-                )
+                requried && <h1 className="text-sm text-red-500 text-center">Password is required</h1>
               }
+              <div className="border-2 flex items-center rounded-md border-slate-500">
+                <input type={`${eye ? 'text': "password"}`} 
+                  name="password" 
+                  id="password" 
+                  autoComplete="off" 
+                  className="text-sm py-1 outline-0 px-2 w-65" 
+                  placeholder="Enter your password" 
+                  onChange={(e)=> setPassword(e.target.value)}
+                />
+                {
+                  eye ? (
+                    <div className="px-2" onClick={()=> setEye(false)}>
+                      <FaEyeSlash className=" top-9.5 text-xl"  />
+                    </div>
+                  ) :
+                  (
+                    <div className="px-2" onClick={()=> setEye(true)}>
+                        <FaEye  className=" top-9.5 text-xl " />
+                    </div>
+                  )
+                }
+              </div>
             </div>
             <button onClick={OnSubmit} className="py-2 mt-5 bg-blue-700 rounded px-10 text-white font-bold active:ring-8 hover:scale-110 ring-blue-200">Login</button>
           </>
