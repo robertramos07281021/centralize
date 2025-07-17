@@ -170,12 +170,12 @@ const FieldListDisplay = memo(({ label, values = [], fallbackHeight = "p-5" }: P
       <div className="font-bold text-slate-500 lg:text-sm text-[0.9rem] uppercase">{label}</div>
       <div className="flex flex-col gap-2">
         {isEmpty ? (
-          <div className={`w-full border border-gray-300 ${fallbackHeight} rounded-lg bg-gray-50 text-slate-500 text-wrap`} />
+          <div className={`w-full border border-gray-300 ${fallbackHeight}  rounded-lg bg-gray-50 text-slate-500 text-wrap`} />
         ) : (
           values.map((val, index) => (
             <div
               key={index}
-              className="w-full border border-gray-300 p-2.5 rounded-lg bg-gray-50 text-slate-500 flex flex-wrap"
+              className={`w-full ${label.toLowerCase() === 'address' ? "min-h-36": ""} border border-gray-300 p-2.5 rounded-lg bg-gray-50 text-slate-500 flex flex-wrap`}
             >
               {val}
             </div>
@@ -426,7 +426,7 @@ const CustomerDisposition = () => {
             {
               (selectedCustomer._id && selectedCustomer.emergency_contact) && 
               <div className="2xl:w-1/2 w-full lg:w-8/10 mt-1 ">
-                <p className="font-bold text-slate-500 uppercase lg:text-sm text-[0.9rem]">Emergency Contact:</p>
+                <p className="font-bold text-slate-500 uppercase lg:text-sm text-[0.9rem]">Emergency Contact Person :</p>
                 <div className="flex gap-2 flex-col lg:flex-row">
                   <FieldDisplay label="Name" value={selectedCustomer.emergency_contact.name}/>
                   <FieldDisplay label="Contact" value={selectedCustomer.emergency_contact.mobile}/>

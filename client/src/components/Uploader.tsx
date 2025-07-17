@@ -113,7 +113,13 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             if (/^63\d{10}$/.test(cleaned)) {
               return '0' + cleaned.slice(2);
             }
+           
+            if (/^\+630\d{10}$/.test(cleaned)) {
+              return '0' + cleaned.slice(4);
+            }
+
             if (/^\d{10}$/.test(cleaned)) return `0${cleaned}`;
+
             return cleaned;
           }
           const safeDate = (date: any) => {

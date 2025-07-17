@@ -407,6 +407,7 @@ const callfileResolver = {
               amount_paid:  "$paid_amount",
               amount: "$currentDispo.amount",
               balance:  "$balance",
+              platform_user_id: "$platform_customer_id",
               emergencyContactName: "$emergencyContact.emergencyContactName",
               emergencyContactMobile: "$emergencyContact.emergencyContactMobile",
               payment:  {
@@ -498,6 +499,7 @@ const callfileResolver = {
             'contact2',
             'contact3',
             'isRPC',
+            'platform_user_id',
             "fullname",
             'email1',
             'email2',
