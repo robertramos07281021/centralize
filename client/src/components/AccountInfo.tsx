@@ -44,13 +44,13 @@ const AccountInfo = () => {
           <FieldsDiv label="Bill Due Date" value={selectedCustomer.bill_due_day || selectedCustomer.max_dpd } endorsementDate={selectedCustomer.endorsement_date}/>
         </div>
         <div className="flex flex-col gap-2  w-full">
-          <FieldsDiv label="Principal OS" value={selectedCustomer?.out_standing_details.principal_os} endorsementDate={null}/>
-          <FieldsDiv label="Interest OS" value={selectedCustomer?.out_standing_details.interest_os} endorsementDate={null}/>
-          <FieldsDiv label="Admin Fee OS" value={selectedCustomer?.out_standing_details.admin_fee_os} endorsementDate={null}/>
-          <FieldsDiv label="Late Charge OS" value={selectedCustomer?.out_standing_details.late_charge_os} endorsementDate={null}/>
-          <FieldsDiv label="DST Fee OS" value={selectedCustomer?.out_standing_details.dst_fee_os} endorsementDate={null}/>
-          <FieldsDiv label="Txn Fee OS" value={selectedCustomer?.out_standing_details.txn_fee_os} endorsementDate={null}/>
-          <FieldsDiv label="Late Charge Waive Fee OS" value={selectedCustomer?.out_standing_details.waive_fee_os} endorsementDate={null}/>
+          <FieldsDiv label="Principal OS" value={selectedCustomer?.out_standing_details.principal_os || 0} endorsementDate={null}/>
+          <FieldsDiv label="Interest OS" value={selectedCustomer?.out_standing_details.interest_os || 0} endorsementDate={null}/>
+          <FieldsDiv label="Admin Fee OS" value={selectedCustomer?.out_standing_details.admin_fee_os || 0} endorsementDate={null}/>
+          <FieldsDiv label="Late Charge OS" value={selectedCustomer?.out_standing_details.late_charge_os || 0} endorsementDate={null}/>
+          <FieldsDiv label="DST Fee OS" value={selectedCustomer?.out_standing_details.dst_fee_os || 0} endorsementDate={null}/>
+          <FieldsDiv label="Txn Fee OS" value={selectedCustomer?.out_standing_details.txn_fee_os || 0} endorsementDate={null}/>
+          <FieldsDiv label="Late Charge Waive Fee OS" value={selectedCustomer?.out_standing_details.waive_fee_os || 0} endorsementDate={null}/>
         </div>
       </div>
       <div className="flex flex-col lg:flex-row items-center justify-center lg:gap-5 gap-2 mt-5 text-slate-500 font-medium">

@@ -282,7 +282,6 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
 
   if(downloadCallfilesLoading || loading || bucketLoading || deleteLoading || finishingLoading) return <Loading/>
 
-
   return (
     <>
       <div className=" h-full overflow-y-auto flex flex-col relative">
@@ -316,9 +315,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
                     checkStatus &&
                     <FaSquareCheck className="hover:scale-110 text-green-500 lg:text-xs 2xl:text-lg cursor-pointer" onClick={()=> onClickIcon(res.callfile._id, "FINISHED", res.callfile.name)}/>
                   }
-
                   <FaTrash className=" text-red-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DELETE", res.callfile.name)}/>
-
                   <FaDownload className="text-blue-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DOWNLOAD", res.callfile.name)}/>
                 </div>
               </div>

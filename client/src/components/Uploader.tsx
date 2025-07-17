@@ -19,7 +19,7 @@ type Data = {
   contact: string
   contact_2: string
   contact_3: string
-  platform_user_id:string
+  platform_user_id:string | number
   credit_user_id:string
   customer_name:string 
   dpd_grp:string
@@ -100,7 +100,8 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             max_dpd,
             late_charge_waive_fee_os,
             emergencyContactMobile,
-            case_id
+            case_id,
+            platform_user_id
           } = row
 
           function normalizeContact(contact:string) {
@@ -139,6 +140,9 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           
           if(emergencyContactMobile) {
             rows['emergencyContactMobile'] = normalizeContact(emergencyContactMobile)
+          }
+          if(platform_user_id) {
+            rows['platform_user_id'] = platform_user_id.toString()
           }
 
           if(case_id) {
@@ -183,7 +187,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     }
   }, []);
 
-  console.log(excelData)
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {

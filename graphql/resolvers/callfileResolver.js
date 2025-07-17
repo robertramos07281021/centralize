@@ -407,6 +407,8 @@ const callfileResolver = {
               amount_paid:  "$paid_amount",
               amount: "$currentDispo.amount",
               balance:  "$balance",
+              emergencyContactName: "$emergencyContact.emergencyContactName",
+              emergencyContactMobile: "$emergencyContact.emergencyContactMobile",
               payment:  {
                 $cond: {
                   if: {
@@ -517,7 +519,7 @@ const callfileResolver = {
             'contact_method',
             'comment',
             'disposition',
-            'duration',
+            'endorsement_date',
             'contactable'
           ],
           emptyFieldValue: ""
