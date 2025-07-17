@@ -195,7 +195,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
 
       <div className="flex justify-between w-full h-full pr-5">
         <div className="w-full flex justify-center item-center flex-col ">
-          <div  className="flex flex-col justify-center h-5/6 ">
+          <div  className="flex flex-col justify-center min-h-5/6">
             {disposition?.getDispositionTypes.map((d)=> 
               <div key={d.id}>
               {
@@ -210,7 +210,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
             )}
             
           </div>
-          <div className="flex justify-center">
+          <div className="flex justify-center mt-10">
             <button type="button" className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer" 
             onClick={handleChartFullScreen}
             >{chartFull ? "Minimize" : "Maximize"}</button>
