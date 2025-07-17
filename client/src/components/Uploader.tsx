@@ -215,7 +215,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       onSuccess()
     },
     onError: (error)=> {
-      console.log(error)
     const errorMessage = error.message;
     if (errorMessage?.includes("Not Included")) {
       setSuccess({
