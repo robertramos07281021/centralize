@@ -140,28 +140,43 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   const {limit, productionManagerPage,userLogged, success } = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const client = useApolloClient()
-  const {data,refetch,loading} = useQuery<{getCallfiles:CallFilesResult}>(GET_CALLFILES,{
+  const {data, refetch,loading} = useQuery<{getCallfiles:CallFilesResult}>(GET_CALLFILES,{
     variables: {
       bucket,
-      status: status,
+      status,
       limit,
       page: productionManagerPage
-    }
+    },
+    notifyOnNetworkStatusChange: true
   })
 
-  const {data:deptBucket,refetch:bucketRefetch, loading:bucketLoading} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+  const {data:deptBucket,refetch:bucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
 
   useEffect(()=> {
-    refetch()
-    bucketRefetch()
+    const timer = setTimeout(async()=> {
+      try {
+        await refetch()
+        await bucketRefetch()
+      } catch (error) {
+        dispatch(setServerError(true)) 
+      }
+    })
+    return () => clearTimeout(timer)
   },[bucket, refetch, bucketRefetch])
-  
+
   useEffect(()=> {
-    if(success.message.toLowerCase().includes('file successfully uploaded') && success.success) {
-      refetch()
-      bucketRefetch()
+    if(success?.message.toLowerCase().includes('file successfully uploaded') && success?.success) {
+      const timer = setTimeout(async()=> {
+        try {
+          await refetch()
+          await bucketRefetch()
+        } catch (error) {
+          dispatch(setServerError(true)) 
+        }
+      })
+      return () => clearTimeout(timer)
     }
-  },[refetch,bucketRefetch])
+  },[success])
 
   const [downloadCallfiles, {loading:downloadCallfilesLoading}] = useLazyQuery(GET_CSV_FILES)
 
@@ -213,15 +228,21 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   })
 
   const [deleteCallfile, {loading:deleteLoading}] = useMutation<{deleteCallfile:Success}>(DELETE_CALLFILE, {
-     onCompleted: (data)=> {
+     onCompleted: async(data)=> {
+   
       dispatch(setSuccess({
         success: data.deleteCallfile.success,
         message: data.deleteCallfile.message
       }))
-      client.refetchQueries({
-        include: ['getCallfiles']
-      })
       setConfirm(false)
+      try {
+        await refetch()
+        await bucketRefetch()
+      } catch (error) {
+        if(error) {
+          dispatch(setServerError(true))
+        }
+      }
     },
     onError: ()=> {
       setConfirm(false)
@@ -287,13 +308,13 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     }
   },[data,setTotalPage,setCanUpload])
 
-  if(downloadCallfilesLoading || loading || bucketLoading || deleteLoading || finishingLoading) return <Loading/>
+  if(downloadCallfilesLoading || deleteLoading || finishingLoading || loading) return <Loading/>
 
   return (
     <>
       <div className=" h-full overflow-y-auto flex flex-col relative">
         {
-          data?.getCallfiles.result.map((res,index) => {
+          data?.getCallfiles?.result?.map((res,index) => {
             const date = new Date(res.callfile.createdAt);
             const today = new Date();
             const findBucket = deptBucket?.getDeptBucket.find(e=> e.id === res.callfile.bucket)
@@ -304,8 +325,8 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
             const status = checkStatus ? "Active" : "Finished"
             const finishedBy = res.callfile.finished_by ? res.callfile.finished_by.name : "-"
             return (
-              <div key={index} className="w-full text-gray-500 uppercase font-medium even:bg-slate-100/80 2xl:text-xs lg:text-[0.6em] grid grid-cols-13 px-2 py-2 cursor-default">
-                <div className="truncate pr-2" title={res.callfile.name}>{res.callfile.name}</div>
+              <div key={index} className="w-full text-gray-500 uppercase font-medium even:bg-slate-100/80 2xl:text-xs lg:text-[0.6em] grid grid-cols-14 px-2 py-2 cursor-default">
+                <div className="truncate pr-2 col-span-2" title={res.callfile.name}>{res.callfile.name}</div>
                 <div>{findBucket?.name}</div>
                 <div>{new Date(res.callfile.createdAt).toLocaleDateString()}</div>
                 <div>{res.callfile.endo ? new Date(res.callfile.endo).toLocaleDateString() : "-" }</div>

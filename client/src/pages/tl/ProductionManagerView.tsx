@@ -126,8 +126,8 @@ const ProductionManagerView = () => {
           </div>
           
         </div>
-        <div className="sticky w-full top-0 text-gray-500 uppercase font-medium bg-blue-50 lg:text-xs 2xl:text-sm grid grid-cols-13 px-2 py-2">
-          <div>Name</div>
+        <div className="sticky w-full top-0 text-gray-500 uppercase font-medium bg-blue-50 lg:text-xs 2xl:text-sm grid grid-cols-14 px-2 py-2">
+          <div className="col-span-2">Name</div>
           <div>Bucket</div>
           <div>Date</div>
           <div>Endo</div>
