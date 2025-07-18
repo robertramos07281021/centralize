@@ -21,7 +21,7 @@ const FieldsDiv = ({label, value, endorsementDate}:{label:string, value:string |
   return (
     <div className="flex flex-col items-center xl:flex-row w-full ">
       <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-5/10 leading-4">{label} :</p>
-      <div className={`${newValue || null  ?  "p-2": "p-4"} xl:ml-2 text-xs lg:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
+      <div className={`${newValue || null  ?  "p-2": "p-4"} xl:ml-2 text-xs xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
     </div>
   )
 }
@@ -31,8 +31,8 @@ const AccountInfo = () => {
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
   return (
     <div className="p-4">
-      <h1 className="text-center font-bold text-slate-600 lg:text-base 2xl:text-lg mb-5">Account Information</h1>
-      <div className="flex lg:gap-10 gap-2 justify-center ">
+      <h1 className="text-center font-bold text-slate-600 xl:text-base 2xl:text-lg mb-5">Account Information</h1>
+      <div className="flex xl:gap-10 gap-2 justify-center ">
         <div className="flex flex-col gap-2  w-full">
           <FieldsDiv label="Bucket" value={selectedCustomer.account_bucket?.name} endorsementDate={null}/>
           <FieldsDiv label="Case ID" value={selectedCustomer.case_id} endorsementDate={null}/>

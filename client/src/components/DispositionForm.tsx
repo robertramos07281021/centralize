@@ -356,7 +356,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
         {
           selectedCustomer._id &&
 
-          <div className="flex xl:gap-10 gap-5 justify-center">
+          <div className="flex xl:gap-10 gap-2 justify-center">
             <div className="flex flex-col gap-2 w-full">
               <label className="flex flex-col xl:flex-row items-center">
                 <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4">Disposition</p>
