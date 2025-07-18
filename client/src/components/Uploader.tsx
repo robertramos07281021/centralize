@@ -60,9 +60,10 @@ type modalProps = {
   bucketRequired: (e:boolean)=> void
   onSuccess: ()=> void
   canUpload: boolean
+  successUpload: () => void
 }
 
-const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,canUpload}) => {
+const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,canUpload, successUpload}) => {
   const dispatch = useAppDispatch()
   const [excelData, setExcelData] = useState<Data[]>([]);
   const [file, setFile] = useState<File[]>([]);
@@ -189,7 +190,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       dispatch(setServerError(true))
     }
   }, []);
-  
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [], 
@@ -204,11 +205,8 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
   });
   
   const [createCustomer,{loading}] = useMutation(CREATE_CUSTOMER, {
-    onCompleted: async() => {
-      dispatch(setSuccess({
-        success: true,
-        message: "File successfully uploaded"
-      }))
+    onCompleted:() => {
+      successUpload()
       setExcelData([])
       setFile([])
       onSuccess()

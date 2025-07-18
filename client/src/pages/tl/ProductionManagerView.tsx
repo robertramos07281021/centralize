@@ -39,6 +39,7 @@ const ProductionManagerView = () => {
   const [status, setStatus] = useState<Status>(Status.all)
   const [totalPage, setTotalPage] = useState<number>(1)
   const [canUpload, setCanUpload] = useState<boolean>(false)
+  const [successUploading, setSuccessUploading] = useState<boolean>(false)
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = bucketData?.getTLBucket || []
@@ -121,7 +122,7 @@ const ProductionManagerView = () => {
           <div className="w-1/2 flex flex-col gap-2">
             <h1 className="lg:text-sm 2xl:text-sm font-medium text-gray-600 text-center">{ canUpload && "Uploader"}</h1>
             <div className=" h-full flex items-end">
-              <Uploader width="w-full" bucket={bucketObject[callfileBucket]} bucketRequired={(e:boolean)=> setRequired(e)} onSuccess={()=> setCallfileBucket("")} canUpload={canUpload} />
+              <Uploader width="w-full" bucket={bucketObject[callfileBucket]} bucketRequired={(e:boolean)=> setRequired(e)} onSuccess={()=> setCallfileBucket("")} canUpload={canUpload} successUpload={()=> setSuccessUploading(true)}/>
             </div>
           </div>
           
@@ -141,7 +142,7 @@ const ProductionManagerView = () => {
           <div>Finished By</div>
           <div className="text-center">Action</div>
         </div>
-        <CallfilesViews bucket={bucketObject[callfileBucket]} status={status} setTotalPage={(e)=> setTotalPage(e)} setCanUpload={(e)=> setCanUpload(e)}/>
+        <CallfilesViews bucket={bucketObject[callfileBucket]} status={status} setTotalPage={(e)=> setTotalPage(e)} setCanUpload={(e)=> setCanUpload(e)} successUpload={successUploading} setUploading={()=> {setSuccessUploading(false)}}/>
         <Pagination value={page} onChangeValue={(e) => setPage(e)} onKeyDownValue={(e)=> dispatch(setProductionManagerPage(e))} totalPage={totalPage} currentPage={productionManagerPage}/>
       </div> 
     </div>

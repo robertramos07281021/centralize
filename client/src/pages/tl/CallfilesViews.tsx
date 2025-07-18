@@ -95,8 +95,10 @@ const GET_CSV_FILES = gql`
 type Props = {
   bucket: string
   status: string
+  successUpload: boolean
   setTotalPage: (e:number) => void
   setCanUpload: (e:boolean) => void
+  setUploading: ()=> void
 }
 
 const UPDATE_ON_CALLFILES = gql`
@@ -136,8 +138,8 @@ const TL_BUCKET = gql`
     }
   }
 `
-const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpload}) => {
-  const {limit, productionManagerPage,userLogged, success } = useSelector((state:RootState)=> state.auth)
+const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpload, successUpload, setUploading}) => {
+  const {limit, productionManagerPage,userLogged } = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const client = useApolloClient()
   const {data, refetch,loading} = useQuery<{getCallfiles:CallFilesResult}>(GET_CALLFILES,{
@@ -165,7 +167,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   },[bucket, refetch, bucketRefetch])
 
   useEffect(()=> {
-    if(success?.message.toLowerCase().includes('file successfully uploaded') && success?.success) {
+    if(successUpload) {
       const timer = setTimeout(async()=> {
         try {
           await refetch()
@@ -176,7 +178,19 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       })
       return () => clearTimeout(timer)
     }
-  },[success])
+  },[successUpload])
+
+  useEffect(()=> {
+    if(!loading) {
+      if(successUpload) {
+        dispatch(setSuccess({
+          success: true,
+          message: "File successfully uploaded"
+        }))
+      }
+      setUploading()
+    }
+  },[loading])
 
   const [downloadCallfiles, {loading:downloadCallfilesLoading}] = useLazyQuery(GET_CSV_FILES)
 
