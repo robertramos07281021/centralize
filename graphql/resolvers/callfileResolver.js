@@ -408,8 +408,8 @@ const callfileResolver = {
               amount: "$currentDispo.amount",
               balance:  "$balance",
               platform_user_id: "$platform_customer_id",
-              emergencyContactName: "$emergencyContact.emergencyContactName",
-              emergencyContactMobile: "$emergencyContact.emergencyContactMobile",
+              emergencyContactName: "$emergency_contact.name",
+              emergencyContactMobile: "$emergency_contact.mobile",
               payment:  {
                 $cond: {
                   if: {
@@ -493,6 +493,8 @@ const callfileResolver = {
           },
         ])
         
+        console.log(customers[0])
+
         const csv = json2csv(customers, {
           keys: [
             'contact1',
@@ -509,6 +511,8 @@ const callfileResolver = {
             'address2',
             'address3',
             "dob",
+            "emergencyContactName",
+            'emergencyContactMobile',
             'collector_sip',
             'collector',
             'outstanding_balance',
@@ -522,7 +526,7 @@ const callfileResolver = {
             'comment',
             'disposition',
             'endorsement_date',
-            'contactable'
+            'contactable',
           ],
           emptyFieldValue: ""
         })

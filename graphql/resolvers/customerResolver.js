@@ -112,6 +112,7 @@ const customerResolver = {
             $match: {
               "account_bucket._id": {$in: user.buckets},
               "ca.on_hands": false,
+              "account_callfile.active": {$eq: true},
               "account_callfile.endo": {$exists: false},
               $or: [
                 { fullName: regexSearch },
@@ -803,7 +804,6 @@ const customerResolver = {
           if(element.email_3) {
             emails.push(element.email_3)
           }
-
           const customer = new Customer({
             fullName: element.customer_name,
             platform_customer_id: element.platform_user_id || null,

@@ -122,6 +122,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
 
             return cleaned;
           }
+
           const safeDate = (date: any) => {
             try {
               return date ? SSF.format("yyyy-mm-dd", date) : undefined;
@@ -129,7 +130,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
               return undefined;
             }
           };
-
 
           const rows:any = {
             ...row,
@@ -151,19 +151,15 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             rows['emergencyContactMobile'] = normalizeContact(emergencyContactMobile)
           }
           if(platform_user_id) {
-            rows['platform_user_id'] = platform_user_id.toString()
+            rows['platform_user_id'] = platform_user_id.toString().trim()
           }
 
           if(case_id) {
-            rows['case_id'] = case_id.toString()
+            rows['case_id'] = case_id.toString().trim()
           }
 
           if(grass_date) {
             rows['grass_date'] = safeDate(grass_date)
-          }
-
-          if(case_id) {
-            rows['case_id'] = case_id.toString()
           }
 
           if(endorsement_date) {
@@ -175,13 +171,12 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           }
 
           if(contact_2) {
-            rows['contact_2'] = normalizeContact(contact_2.toString()).toString()
+            rows['contact_2'] = normalizeContact(contact_2.toString()).toString().trim()
           }
 
           if(contact_3) {
-            rows['contact_3'] = normalizeContact(contact_3.toString()).toString()
+            rows['contact_3'] = normalizeContact(contact_3.toString()).toString().trim()
           }
-
           return {
           ...rows
           }
@@ -195,7 +190,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     }
   }, []);
 
-
+  console.log(excelData)
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [], 

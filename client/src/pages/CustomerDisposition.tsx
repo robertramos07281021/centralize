@@ -2,7 +2,7 @@ import { memo, useCallback, useEffect, useMemo, useState } from "react"
 import CustomerUpdateForm from "../components/CustomerUpdateForm"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
-import { Navigate, useNavigate } from "react-router-dom"
+import { Navigate, useLocation, useNavigate } from "react-router-dom"
 import AccountInfo from "../components/AccountInfo"
 import DispositionForm from "../components/DispositionForm"
 import { gql, useMutation, useQuery } from "@apollo/client"
@@ -154,8 +154,6 @@ const UPDATE_RPC = gql`
   );
 });
 
-
-
 type Props = {
   label: string;
   values?: (string | null | undefined)[];
@@ -204,6 +202,7 @@ const CustomerDisposition = () => {
   const [search, setSearch] = useState("")
   const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search},skip: search.length === 0})
   const length = searchData?.search?.length || 0;
+  const location = useLocation()
 
   const debouncedSearch = useMemo(() => {
   return debounce((val: string) => {
@@ -253,14 +252,16 @@ const CustomerDisposition = () => {
   })
 
   useEffect(()=> {
-    const id = selectedCustomer._id;
-    if(!id) return
-
-    const timer = setTimeout(async()=> {
-      await deselectTask({ variables: { id } })
-    })
-    return ()=> clearTimeout(timer)
-  },[navigate, deselectTask])
+    if(location.pathname) {
+      const id = selectedCustomer._id;
+      if(!id) return
+  
+      const timer = setTimeout(async()=> {
+        await deselectTask({ variables: { id } })
+      })
+      return ()=> clearTimeout(timer)
+    }
+  },[deselectTask,location])
 
   const clearSelectedCustomer = useCallback(async() => {
     await deselectTask({variables: {id: selectedCustomer._id}}) 
