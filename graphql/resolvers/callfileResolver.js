@@ -492,8 +492,6 @@ const callfileResolver = {
             }
           },
         ])
-        
-        console.log(customers[0])
 
         const csv = json2csv(customers, {
           keys: [
