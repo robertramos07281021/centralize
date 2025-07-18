@@ -4,7 +4,7 @@ import { IoMdLogOut } from "react-icons/io";
 import {  useCallback, useEffect, useRef, useState } from "react";
 import Confirmation from "./Confirmation";
 import Loading from "../pages/Loading";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { RootState, useAppDispatch } from "../redux/store";
 import {  setBreakValue, setDeselectCustomer, setLogout, setServerError, setStart, setSuccess, setUserLogged } from "../redux/slices/authSlice";
 import NavbarExtn from "./NavbarExtn";
@@ -116,6 +116,7 @@ const LOCK_AGENT = gql`
 const Navbar = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+  const location = useLocation()
   const {userLogged,selectedCustomer,breakValue, serverError, success} = useSelector((state:RootState)=> state.auth)
   const modalRef = useRef<HTMLDivElement>(null)
   const {error, data} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
@@ -144,6 +145,10 @@ const Navbar = () => {
       }
     }
   })
+
+  useEffect(()=> {
+    dispatch(setSuccess({success: false, message: ""}))
+  },[location.pathname])
 
   const [logout, {loading}] = useMutation(LOGOUT,{
     onCompleted: async() => {

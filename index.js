@@ -64,6 +64,7 @@ app.use(cors({
   origin: true,
   credentials: true,
 }));
+
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser())
@@ -121,7 +122,6 @@ const wsServer = new WebSocketServer({
   path: '/graphql',
 });
 
-
 useServer({ schema,
   context: async (ctx, msg, args) => {
     const cookieHeader  = ctx.connectionParams.authorization.split(" ")[1] || '';
@@ -151,7 +151,6 @@ useServer({ schema,
           entry.cleanupTimer = null;
         }
       }
-
     } catch (err) {
       console.log("WebSocket token error:", err.message);
     }

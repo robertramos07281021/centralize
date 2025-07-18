@@ -483,8 +483,8 @@ const customerResolver = {
         
         const search = [
           { "bucket": bucket },
-          { "dispoType.code" : {$nin: ["PAID","DNC"]} },
-          {'ca_callfile.endo': {$exists: false}}
+          { "dispoType.code" : { $nin: ["PAID","DNC"] } },
+          { 'ca_callfile.endo':  { $exists: false } },
         ];
      
         if (disposition && disposition.length > 0) {
@@ -525,8 +525,13 @@ const customerResolver = {
             $unwind: { path: "$ca_callfile", preserveNullAndEmptyArrays: true } 
           },
           {
+            $addFields: {
+              active: "$ca_callfile.active"
+            } 
+          },
+          {
             $match: {
-              "ca_callfile.endo": {$exists: false}
+              active: {$eq: true}
             }
           },
           {

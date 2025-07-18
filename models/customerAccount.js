@@ -121,6 +121,9 @@ const customerAccountSchema = new Schema(
         type: String,
       }
     },
+    active: {
+      type: Boolean
+    },
     history: [{
       type: mongoose.Schema.Types.ObjectId,
       ref: "Disposition"

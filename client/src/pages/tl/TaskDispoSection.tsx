@@ -418,7 +418,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
             </div>
           }
           {
-            CustomerAccountsData?.findCustomerAccount.CustomerAccounts.map((ca)=> ( 
+            CustomerAccountsData?.findCustomerAccount?.CustomerAccounts.map((ca)=> ( 
             <div key={ca._id} className="bg-white border-b border-gray-200 hover:bg-slate-100 grid grid-cols-5 py-2 items-center text-xs">
               <div className="font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
                   {ca.customer_info.fullName}

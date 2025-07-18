@@ -407,6 +407,7 @@ const callfileResolver = {
               amount_paid:  "$paid_amount",
               amount: "$currentDispo.amount",
               balance:  "$balance",
+              dialer: "$currentDispo.dialer",
               platform_user_id: "$platform_customer_id",
               emergencyContactName: "$emergency_contact.name",
               emergencyContactMobile: "$emergency_contact.mobile",
@@ -525,6 +526,7 @@ const callfileResolver = {
             'disposition',
             'endorsement_date',
             'contactable',
+            'dialer'
           ],
           emptyFieldValue: ""
         })
