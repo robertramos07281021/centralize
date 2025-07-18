@@ -98,7 +98,7 @@ type Props = {
   successUpload: boolean
   setTotalPage: (e:number) => void
   setCanUpload: (e:boolean) => void
-  setUploading: ()=> void
+  setUploading: () => void
 }
 
 const UPDATE_ON_CALLFILES = gql`
@@ -152,26 +152,31 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     notifyOnNetworkStatusChange: true
   })
 
-  const {data:deptBucket,refetch:bucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+  const {data:deptBucket} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       try {
         await refetch()
-        await bucketRefetch()
       } catch (error) {
         dispatch(setServerError(true)) 
       }
     })
     return () => clearTimeout(timer)
-  },[bucket, refetch, bucketRefetch])
+  },[bucket, refetch])
 
   useEffect(()=> {
     if(successUpload) {
       const timer = setTimeout(async()=> {
         try {
-          await refetch()
-          await bucketRefetch()
+          const res = await refetch()
+          if(res.data) {
+            dispatch(setSuccess({
+              success: true,
+              message: "File successfully uploaded"
+            }))
+          }
+          setUploading()
         } catch (error) {
           dispatch(setServerError(true)) 
         }
@@ -179,18 +184,6 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       return () => clearTimeout(timer)
     }
   },[successUpload])
-
-  useEffect(()=> {
-    if(!loading) {
-      if(successUpload) {
-        dispatch(setSuccess({
-          success: true,
-          message: "File successfully uploaded"
-        }))
-      }
-      setUploading()
-    }
-  },[loading])
 
   const [downloadCallfiles, {loading:downloadCallfilesLoading}] = useLazyQuery(GET_CSV_FILES)
 
@@ -228,12 +221,23 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   })
 
   const [finishedCallfile, {loading:finishingLoading}] = useMutation<{finishedCallfile:Success}>(FINISHED_CALLFILE,{
-    onCompleted: (data)=> {
-      dispatch(setSuccess({
-        success: data.finishedCallfile.success,
-        message: data.finishedCallfile.message
-      }))
+    onCompleted: async(data)=> {
+
       setConfirm(false)
+      try {
+        const res = await refetch()
+        if(res.data) {
+          dispatch(setSuccess({
+            success: data.finishedCallfile.success,
+            message: data.finishedCallfile.message
+          }))
+        }
+        
+      } catch (error) {
+        if(error) {
+          dispatch(setServerError(true))
+        }
+      }
     },
     onError: () => {
       setConfirm(false)
@@ -243,15 +247,15 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
 
   const [deleteCallfile, {loading:deleteLoading}] = useMutation<{deleteCallfile:Success}>(DELETE_CALLFILE, {
      onCompleted: async(data)=> {
-   
-      dispatch(setSuccess({
-        success: data.deleteCallfile.success,
-        message: data.deleteCallfile.message
-      }))
       setConfirm(false)
       try {
-        await refetch()
-        await bucketRefetch()
+        const res = await refetch()
+        if(res.data) {
+          dispatch(setSuccess({
+            success: data.deleteCallfile.success,
+            message: data.deleteCallfile.message
+          }))
+        }
       } catch (error) {
         if(error) {
           dispatch(setServerError(true))

@@ -142,7 +142,7 @@ const ProductionManagerView = () => {
           <div>Finished By</div>
           <div className="text-center">Action</div>
         </div>
-        <CallfilesViews bucket={bucketObject[callfileBucket]} status={status} setTotalPage={(e)=> setTotalPage(e)} setCanUpload={(e)=> setCanUpload(e)} successUpload={successUploading} setUploading={()=> {setSuccessUploading(false)}}/>
+        <CallfilesViews bucket={bucketObject[callfileBucket]} status={status} setTotalPage={(e)=> setTotalPage(e)} setCanUpload={(e)=> setCanUpload(e)} successUpload={successUploading} setUploading={()=> setSuccessUploading(false)}/>
         <Pagination value={page} onChangeValue={(e) => setPage(e)} onKeyDownValue={(e)=> dispatch(setProductionManagerPage(e))} totalPage={totalPage} currentPage={productionManagerPage}/>
       </div> 
     </div>
