@@ -94,9 +94,9 @@ type Props = {
 
 const IFBANK = ({label}:{label:string})=> {
   return (
-    <div className="flex flex-col lg:flex-row items-center">
-      <p className="text-gray-800 font-bold text-start w-full  lg:text-sm text-xs lg:w-2/6 leading-4 ">{label}</p>
-      <div className=" rounded-lg bg-slate-400 border border-gray-400 text-xs lg:text-sm p-4 w-full">
+    <div className="flex flex-col xl:flex-row items-center">
+      <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4 ">{label}</p>
+      <div className=" rounded-lg bg-slate-400 border border-gray-400 text-xs xl:text-sm p-4 w-full">
       </div>
     </div>
   )
@@ -137,7 +137,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     }
   },[selectedCustomer])
 
-  const {data:disposition} = useQuery<{getDispositionTypes:Disposition[]}>(GET_DISPOSITION_TYPES)
+  const {data:disposition} = useQuery<{getDispositionTypes:Disposition[]}>(GET_DISPOSITION_TYPES,{skip: !selectedCustomer._id})
 
   const dispoObject:{[key:string]:string} = useMemo(()=> {
     const d = disposition?.getDispositionTypes || []
@@ -281,7 +281,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
       no: noCallback
     })
   }
-  const {data:tlData} = useQuery<{getBucketTL:TL[]}>(USER_TL)
+  const {data:tlData} = useQuery<{getBucketTL:TL[]}>(USER_TL,{skip: !selectedCustomer._id})
 
   const callbackTLEscalation = useCallback(async(id:string)=> {
      await tlEscalation({variables: {id, tlUserId: tlData?.getBucketTL.flat()}})
@@ -313,7 +313,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
         escalateTo &&
         <div className="absolute top-0 left-0 w-full h-full bg-white/10 backdrop-blur-[1px] z-50 flex items-center justify-center ">
           <div className="w-2/8 h-1/3 border bg-white rounded-lg border-slate-300 shadow-md shadow-black/50 overflow-hidden flex flex-col">
-            <h1 className="p-2 bg-red-500 lg:text-sm 2xl:text-base text-white font-bold">Escalate To</h1>
+            <h1 className="p-2 bg-red-500 xl:text-sm 2xl:text-base text-white font-bold">Escalate To</h1>
             <div className="w-full h-full flex flex-col items-center justify-center gap-10">
               <select 
                 name="tl_account" 
@@ -323,7 +323,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                   const selectedTl:TL | {_id: "", name: ""} =  tlData?.getBucketTL.find(e=> e.name === value) || {_id: "", name: ""}
                     setSelectedTL(selectedTl._id)
                 }}
-                className="capitalize border p-2  lg:text-sm 2xl:text-lg w-8/10 outline-none border-slate-500 rounded-md text-gray-500">
+                className="capitalize border p-2  xl:text-sm 2xl:text-lg w-8/10 outline-none border-slate-500 rounded-md text-gray-500">
                 <option value="" className="">Select TL</option>
                 {
                   tlData?.getBucketTL.map((e)=> 
@@ -336,10 +336,10 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                 }
               </select>
               <div className="flex gap-10">
-                <button className="rounded-md border py-2 px-4 bg-red-500 text-white font-medium hover:bg-red-700 lg:text-sm 2xl:text-lg " onClick={handleSubmitEscalation}>
+                <button className="rounded-md border py-2 px-4 bg-red-500 text-white font-medium hover:bg-red-700 xl:text-sm 2xl:text-lg " onClick={handleSubmitEscalation}>
                   Submit
                 </button>
-                <button className="rounded-md border py-2 px-4 bg-slate-500 text-white font-medium hover:bg-slate-700 lg:text-sm 2xl:text-lg " 
+                <button className="rounded-md border py-2 px-4 bg-slate-500 text-white font-medium hover:bg-slate-700 xl:text-sm 2xl:text-lg " 
                   onClick={()=> setEscalateTo(false)}
                 >
                   Cancel
@@ -352,14 +352,14 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
       }
 
       <form ref={Form} className="flex flex-col p-4" noValidate onSubmit={handleSubmitForm}>
-        <h1 className="text-center font-bold text-slate-600 lg:text-base 2xl:text-lg mb-5">Customer Disposition</h1>
+        <h1 className="text-center font-bold text-slate-600 xl:text-base 2xl:text-lg mb-5">Customer Disposition</h1>
         {
           selectedCustomer._id &&
 
-          <div className="flex lg:gap-10 gap-5 justify-center">
+          <div className="flex xl:gap-10 gap-5 justify-center">
             <div className="flex flex-col gap-2 w-full">
-              <label className="flex flex-col lg:flex-row items-center">
-                <p className="text-gray-800 font-bold text-start w-full  lg:text-sm text-xs lg:w-2/6 leading-4">Disposition</p>
+              <label className="flex flex-col xl:flex-row items-center">
+                <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4">Disposition</p>
                 <select 
                   name="disposition" 
                   id="disposition" 
@@ -369,7 +369,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                     setData({...data, disposition: dispoObject[e.target.value]}); 
                     setSelectedDispo(e.target.value)}
                   }
-                  className={`${required && !data.disposition ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  w-full border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm p-2 `}>
+                  className={`${required && !data.disposition ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  w-full border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs xl:text-sm p-2 `}>
                   <option value="">Select Disposition</option>
                   {
                     disposition?.getDispositionTypes.map((dispo)=> (
@@ -380,8 +380,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
               </label>
               {
                 anabledDispo.includes(selectedDispo) ? 
-                <label className="flex flex-col lg:flex-row items-center">
-                  <p className="text-gray-800 font-bold text-start w-full  lg:text-sm text-xs lg:w-2/6 leading-4">Amount</p>
+                <label className="flex flex-col xl:flex-row items-center">
+                  <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4">Amount</p>
                     <div className={`flex border items-center rounded-lg w-full ${required && !data.amount ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} `}>
                       <p className="px-2">&#x20B1;</p>
                       <input 
@@ -394,7 +394,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                         pattern="^\d+(\.\d{1,2})?$"
                         placeholder="Enter amount"
                         required={requiredDispo.includes(selectedDispo)}
-                        className={`w-full text-xs lg:text-sm  text-gray-900 p-2 outline-none`}/>
+                        className={`w-full text-xs xl:text-sm  text-gray-900 p-2 outline-none`}/>
                     </div> 
                 </label> 
                 : 
@@ -402,15 +402,15 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
               }
               {
                 anabledDispo.includes(selectedDispo) ? 
-                  <label className="flex flex-col lg:flex-row items-center">
-                    <p className="text-gray-800 font-bold text-start w-full  lg:text-sm text-xs lg:w-2/6 leading-4">Payment</p>
+                  <label className="flex flex-col xl:flex-row items-center">
+                    <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4">Payment</p>
                     <select 
                       name="payment" 
                       id="payment"
                       required={requiredDispo.includes(selectedDispo)}
                       value={data.payment}
                       onChange={(e)=> setData({...data,payment: e.target.value})}
-                      className={`${required && !data.payment ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs lg:text-sm w-full`}
+                      className={`${required && !data.payment ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                       >
                       <option value="">Select Payment</option>
                       <option value="partial">Partial</option>
@@ -420,15 +420,15 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                 :
                 <IFBANK label="Payment"/>
               }
-                <label className="flex flex-col lg:flex-row items-center">
-                  <p className="text-gray-800 font-bold text-start w-full  lg:text-sm text-xs lg:w-2/6 leading-4 ">Contact Method</p>
+                <label className="flex flex-col xl:flex-row items-center">
+                  <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4 ">Contact Method</p>
                   <select 
                     name="contact_method" 
                     id="contact_method"
                     required
                     value={data.contact_method}
                     onChange={(e)=> setData({...data, contact_method: e.target.value})}
-                    className={`${required && !data.contact_method ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs lg:text-sm w-full`}
+                    className={`${required && !data.contact_method ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                     >
                       <option value="">Select Contact Method</option>
                       {
@@ -440,8 +440,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                 </label>
                 {
                   data.contact_method === "calls" &&
-                  <label className="flex flex-col lg:flex-row items-center">
-                    <p className="text-gray-800 font-bold text-start w-full  lg:text-sm text-xs lg:w-2/6 leading-4">Dialer</p>
+                  <label className="flex flex-col xl:flex-row items-center">
+                    <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4">Dialer</p>
                     <select 
                       name="dialer" 
                       id="dialer"
@@ -452,7 +452,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                         }
                         setData({...data, dialer: e.target.value as Dialer})
                       }}
-                      className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs lg:text-sm w-full`}
+                      className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                       >
                         <option value={Dialer.NOT}>Select Dialer</option>
                         <option value={Dialer.ISSABEL}>Issabel</option>
@@ -465,15 +465,15 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
             <div className="flex flex-col gap-2 w-full"> 
               {
                 anabledDispo.includes(selectedDispo) ? 
-                <label className="flex flex-col lg:flex-row items-center">
-                  <p className="text-gray-800 font-bold text-start w-full  lg:text-sm text-xs lg:w-2/6 leading-4">Payment Date</p>
+                <label className="flex flex-col xl:flex-row items-center">
+                  <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4">Payment Date</p>
                     <input 
                       type="date" 
                       id="payment_date" 
                       name="payment_date"
                       value={data.payment_date}
                       onChange={(e)=> setData({...data, payment_date: e.target.value})}
-                      className={`bg-gray-50 border-gray-500 border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs lg:text-sm w-full`}
+                      className={`bg-gray-50 border-gray-500 border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                     />
                 </label>
                 :
@@ -481,14 +481,14 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
               }
               {
                 anabledDispo.includes(selectedDispo) ? 
-                <label className="flex flex-col lg:flex-row items-center">
-                  <p className="text-gray-800 font-bold text-start w-full  lg:text-sm text-xs lg:w-2/6 leading-4 ">Payment Method</p>
+                <label className="flex flex-col xl:flex-row items-center">
+                  <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4 ">Payment Method</p>
                   <select 
                     name="payment_method" 
                     id="payment_method" 
                     value={data.payment_method}
                     onChange={(e)=> setData({...data, payment_method: e.target.value})}
-                    className={` bg-gray-50  border-gray-500 border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm w-full p-2`}>
+                    className={` bg-gray-50  border-gray-500 border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs xl:text-sm w-full p-2`}>
                     <option value="">Select Method</option>
                     <option value="Bank to Bank Transfer">Bank to Bank Transfer</option>
                     <option value="7/11">7/11</option>
@@ -501,8 +501,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
               }
               {
                 anabledDispo.includes(selectedDispo)   ?
-                <label className="flex flex-col lg:flex-row items-center">
-                  <p className="text-gray-800 font-bold text-start w-full  lg:text-sm text-xs lg:w-2/6 leading-4 ">Ref. No</p>
+                <label className="flex flex-col xl:flex-row items-center">
+                  <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4 ">Ref. No</p>
                     <input 
                       type="text" 
                       name="ref" 
@@ -511,20 +511,20 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       value={data.ref_no}
                       placeholder="Enter reference no."
                       onChange={(e)=> setData({...data, ref_no: e.target.value})}
-                      className={` bg-gray-50 border-gray-500 border rounded-lg text-xs lg:text-sm w-full p-2`}/>
+                      className={` bg-gray-50 border-gray-500 border rounded-lg text-xs xl:text-sm w-full p-2`}/>
                 </label>
                 :
                 <IFBANK label="Ref. No"/>
               }
-              <label className="flex flex-col lg:flex-row items-center">
-                <p className="text-gray-800 font-bold text-start w-full  lg:text-sm text-xs lg:w-2/6 leading-4 ">Comment</p>
+              <label className="flex flex-col xl:flex-row items-center">
+                <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4 ">Comment</p>
                 <textarea 
                   name="comment"
                   id="comment"
                   placeholder="Comment here..."
                   value={data.comment}
                   onChange={(e)=> setData({...data, comment: e.target.value})}
-                  className="bg-gray-50 border border-gray-500 text-gray-900 rounded-lg h-24 focus:ring-blue-500 focus:border-blue-500 text-xs lg:text-sm w-full p-2 resize-none"  
+                  className="bg-gray-50 border border-gray-500 text-gray-900 rounded-lg h-24 focus:ring-blue-500 focus:border-blue-500 text-xs xl:text-sm w-full p-2 resize-none"  
                 ></textarea>
 
               </label>
@@ -536,13 +536,13 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
               data.disposition &&
               <button 
                 type="submit" 
-                className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 lg:px-5 lg:py-2.5 lg:me-2l lg:mb-2 cursor-pointer lg:text-sm text-xs`}>Submit</button>
+                className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 xl:px-5 xl:py-2.5 xl:me-2l xl:mb-2 cursor-pointer xl:text-sm text-xs`}>Submit</button>
             }
             {
               data.disposition && userLogged.type === "AGENT" &&
               <button
                 type="button"
-                className="bg-red-500 hover:bg-red-600 focus:outline-none text-white  focus:ring-4 focus:ring-red-400 font-medium rounded-lg px-5 py-4 lg:px-5 lg:py-2.5 lg:me-2 lg:mb-2 cursor-pointer lg:text-sm text-xs"
+                className="bg-red-500 hover:bg-red-600 focus:outline-none text-white  focus:ring-4 focus:ring-red-400 font-medium rounded-lg px-5 py-4 xl:px-5 xl:py-2.5 xl:me-2 xl:mb-2 cursor-pointer xl:text-sm text-xs"
                 onClick={()=> handleSubmitEscalationToTl(selectedCustomer._id)}
                 >
                 TL Escalation

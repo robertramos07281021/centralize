@@ -201,6 +201,7 @@ const CustomerDisposition = () => {
   const [isUpdate, setIsUpdate] = useState<boolean>(false)
   const [search, setSearch] = useState("")
   const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search},skip: search.length === 0})
+
   const length = searchData?.search?.length || 0;
   const location = useLocation()
 
@@ -214,12 +215,11 @@ const CustomerDisposition = () => {
   debounce((val: string) => setSearch(val), 300)
 , []);
 
-  // Run on search change
   useEffect(() => {
     if (search) debouncedSearch(search);
   }, [search, debouncedSearch]);
 
-  // Cleanup
+
   useEffect(() => {
     return () => {
       handleSearchChange.cancel();
@@ -332,6 +332,7 @@ const CustomerDisposition = () => {
     } else {
       setIsRPCToday(false)
     }
+    
   },[selectedCustomer])
 
   const [updateRPC] = useMutation<{updateRPC:{success: boolean, message: string, customer:CustomerRegistered}}>(UPDATE_RPC,{

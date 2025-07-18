@@ -282,8 +282,8 @@ const MyTaskSection = () => {
   const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const client = useApolloClient()
-  const {data:myTasksData, refetch} = useQuery<{myTasks:CustomerData[] | []}>(MY_TASKS)
-  const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
+  const {data:myTasksData} = useQuery<{myTasks:CustomerData[] | []}>(MY_TASKS, {skip: true})
+  const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS, {skip: true})
   
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
     onData: ({data})=> {
@@ -357,11 +357,6 @@ const MyTaskSection = () => {
   useEffect(()=> {
     setSelection("")
   },[selectedCustomer._id])
-
-  useEffect(()=> {
-    refetch()
-    groupTaskRefetch()
-  },[refetch,groupTaskRefetch])
 
   const handleClickMyTask = () => {
     if(selection && selection.trim() !== "group_task"){

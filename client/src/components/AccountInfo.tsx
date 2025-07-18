@@ -19,9 +19,9 @@ const FieldsDiv = ({label, value, endorsementDate}:{label:string, value:string |
   }
 
   return (
-    <div className="flex flex-col items-center lg:flex-row w-full ">
-      <p className="text-gray-800 font-bold text-start w-full  lg:text-sm text-xs lg:w-5/10 leading-4">{label} :</p>
-      <div className={`${newValue || null  ?  "p-2": "p-4"} lg:ml-2 text-xs lg:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
+    <div className="flex flex-col items-center xl:flex-row w-full ">
+      <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-5/10 leading-4">{label} :</p>
+      <div className={`${newValue || null  ?  "p-2": "p-4"} xl:ml-2 text-xs lg:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
     </div>
   )
 }
@@ -53,7 +53,7 @@ const AccountInfo = () => {
           <FieldsDiv label="Late Charge Waive Fee OS" value={selectedCustomer?.out_standing_details.waive_fee_os || 0} endorsementDate={null}/>
         </div>
       </div>
-      <div className="flex flex-col lg:flex-row items-center justify-center lg:gap-5 gap-2 mt-5 text-slate-500 font-medium">
+      <div className="flex flex-col xl:flex-row items-center justify-center xl:gap-5 gap-2 mt-5 text-slate-500 font-medium">
         <div>
           <p className="font-medium 2xl:text-lg lg:text-base ">Outstanding Balance</p>
           <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
