@@ -155,15 +155,17 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   const {data:deptBucket} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
 
   useEffect(()=> {
-    const timer = setTimeout(async()=> {
-      try {
-        await refetch()
-      } catch (error) {
-        dispatch(setServerError(true)) 
-      }
-    })
-    return () => clearTimeout(timer)
-  },[bucket, refetch])
+    if(bucket?.length > 0) {
+      const timer = setTimeout(async()=> {
+        try {
+          await refetch()
+        } catch (error) {
+          dispatch(setServerError(true)) 
+        }
+      })
+      return () => clearTimeout(timer)
+    }
+  },[bucket,refetch])
 
   useEffect(()=> {
     if(successUpload) {
@@ -222,7 +224,6 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
 
   const [finishedCallfile, {loading:finishingLoading}] = useMutation<{finishedCallfile:Success}>(FINISHED_CALLFILE,{
     onCompleted: async(data)=> {
-
       setConfirm(false)
       try {
         const res = await refetch()
@@ -232,7 +233,6 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
             message: data.finishedCallfile.message
           }))
         }
-        
       } catch (error) {
         if(error) {
           dispatch(setServerError(true))
