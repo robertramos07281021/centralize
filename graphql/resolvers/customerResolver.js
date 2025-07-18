@@ -484,7 +484,7 @@ const customerResolver = {
         const search = [
           { "bucket": bucket },
           { "dispoType.code" : { $nin: ["PAID","DNC"] } },
-          { 'ca_callfile.endo':  { $exists: false } },
+  
         ];
      
         if (disposition && disposition.length > 0) {
@@ -526,12 +526,13 @@ const customerResolver = {
           },
           {
             $addFields: {
-              active: "$ca_callfile.active"
+              active: "$ca_callfile.active",
             } 
           },
           {
             $match: {
-              active: {$eq: true}
+              active: { $eq: true },
+              'ca_callfile.endo':  { $exists: false } ,
             }
           },
           {
