@@ -26,7 +26,8 @@ const taskResolver = {
             as: "dispo_history"         
           }
         }
-        ]) 
+        ])
+       
         return myTask
       } catch (error) {
         throw new CustomError(error.message, 500)

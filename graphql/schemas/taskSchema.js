@@ -65,6 +65,11 @@ const taskTypeDefs = gql`
 
   }
 
+  type EmergencyContact { 
+    name: String
+    mobile: String
+  }
+
   type MyTasks {
     _id: ID
     case_id: String
@@ -82,6 +87,7 @@ const taskTypeDefs = gql`
     current_disposition: CurrentDispo
     account_bucket: AccountBucket
     customer_info: CustomerInfo
+    emergency_contact: EmergencyContact
     dispo_history: [CurrentDispo]
   }
 

@@ -149,7 +149,8 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       limit,
       page: productionManagerPage
     },
-    notifyOnNetworkStatusChange: true
+    notifyOnNetworkStatusChange: true,
+    context: { queryDeduplication: false }
   })
 
   const {data:deptBucket} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
