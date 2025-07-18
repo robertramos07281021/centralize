@@ -2,7 +2,7 @@ import { useMutation, useQuery } from "@apollo/client"
 import gql from "graphql-tag"
 import { useCallback, useState } from "react"
 import { useAppDispatch } from "../../redux/store"
-import { setSuccess } from "../../redux/slices/authSlice"
+import { setServerError, setSuccess } from "../../redux/slices/authSlice"
 
 const BUCKETS = gql`
   query GetTLBucket {
@@ -50,8 +50,8 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
       }))
       refetch()
     },
-    onError: (error)=> {
-      console.log(error)
+    onError: ()=> {
+      dispatch(setServerError(true))
     }
     
   })

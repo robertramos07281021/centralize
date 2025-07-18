@@ -115,7 +115,7 @@ const Login = () => {
   })
 
   const [logout] = useMutation(LOGOUT,{
-    onCompleted: ()=> {
+    onCompleted: async()=> {
       dispatch(setUserLogged({
         _id: "",
         change_password: false,
@@ -133,6 +133,7 @@ const Login = () => {
           weekly: 0
         }
       }))
+      await persistor.purge()
     }, 
     onError: ()=> {
       dispatch(setServerError(true))  

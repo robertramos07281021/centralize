@@ -463,7 +463,7 @@ const DispositionConfigurationView = () => {
 
                       <div className="flex gap-5">
                         <FaEdit className="text-xl text-orange-500 cursor-pointer" onClick={()=> (handleOnUpdate(dispo))}/>
-                        <ActivationButton id={dispo.id} active={dispo.active} refetch={()=> refetch()} success={(success:boolean,message:string) => setSuccess({success, message})}/>
+                        <ActivationButton id={dispo.id} active={dispo.active} refetch={()=> refetch()} />
                       </div>
                     </div>
                   )

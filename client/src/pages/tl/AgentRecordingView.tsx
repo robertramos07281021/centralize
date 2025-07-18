@@ -182,7 +182,7 @@ const AgentRecordingView = () => {
           }))
           await deleteRecordings({ variables: { filename: link.download } });
         } catch (error) {
-          console.log(error)
+          dispatch(setServerError(true))
         }
       } else {
         dispatch(setSuccess({
@@ -355,10 +355,8 @@ const AgentRecordingView = () => {
                     <div onClick={()=> onDLRecordings(e._id)} className="cursor-pointer relative">
                       <FaDownload className="text-lg text-fuchsia-700 peer"/>
                       <div className="absolute text-nowrap bg-white z-50 left-5 top-0 ml-2 peer-hover:block hidden border px-1">Download Recordings</div>
-                      
                     </div> 
                   }
-      
                 </div>
               ) 
             })

@@ -4,13 +4,12 @@ import { CgDanger } from "react-icons/cg";
 import gql from "graphql-tag";
 import { useMutation } from "@apollo/client";
 import { useAppDispatch } from "../redux/store";
-import { setServerError } from "../redux/slices/authSlice";
+import { setServerError, setSuccess } from "../redux/slices/authSlice";
 
 type modalComponents = {
   yesMessage: string;
   no: ()=> void;
   event: () => void;
-  invalid: () => void;
 }
 
 const AUTHORIZATION = gql`
@@ -21,7 +20,8 @@ const AUTHORIZATION = gql`
     }
   }
 `
-const AuthenticationPass:React.FC<modalComponents> = ({yesMessage, event, no, invalid}) => {
+
+const AuthenticationPass:React.FC<modalComponents> = ({yesMessage, event, no}) => {
   const [eye,setEye] = useState<boolean>(false)
   const handleEyeClick = () => {
     setEye(!eye)
@@ -35,7 +35,10 @@ const AuthenticationPass:React.FC<modalComponents> = ({yesMessage, event, no, in
     },
     onError: (data)=> {
       if(data.message === "Invalid") {
-        invalid()
+        dispatch(setSuccess({
+          success: true,
+          message: "Password is incorrect"
+        }))
         no()
       } else {
         dispatch(setServerError(true))

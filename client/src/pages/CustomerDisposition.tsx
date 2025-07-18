@@ -335,10 +335,10 @@ const CustomerDisposition = () => {
 
   const [updateRPC] = useMutation<{updateRPC:{success: boolean, message: string, customer:CustomerRegistered}}>(UPDATE_RPC,{
     onCompleted: async(res)=> {
-      setSuccess({
+      dispatch(setSuccess({
         success: res.updateRPC.success,
         message: res.updateRPC.message
-      })
+      }))
       dispatch(setSelectedCustomer({...selectedCustomer, customer_info: res.updateRPC.customer}))
       setIsRPC(false)
     }
@@ -479,7 +479,7 @@ const CustomerDisposition = () => {
         <AccountInfo/>
         {
           (selectedCustomer.balance > 0 && !selectedCustomer.isRPCToday) &&
-          <DispositionForm setSuccess={(success:boolean,message:string)=> dispatch(setSuccess({success:success,message:message}))} updateOf={()=> setIsUpdate(false)}/>
+          <DispositionForm updateOf={()=> setIsUpdate(false)}/>
         }
       </div>
       {

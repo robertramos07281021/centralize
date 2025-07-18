@@ -191,7 +191,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       };
       reader.readAsBinaryString(file);
     } catch (error) {
-
       dispatch(setServerError(true))
     }
   }, []);
@@ -221,20 +220,21 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       onSuccess()
     },
     onError: (error)=> {
+    
     const errorMessage = error.message;
     if (errorMessage?.includes("Not Included")) {
-      setSuccess({
+      dispatch(setSuccess({
         success: true,
         message: "There is a buckets not included"
-      })
+      }))
       setExcelData([])
       setFile([])
       setConfirm(false)
-    } else if(error.message.includes('E11000')) {
-      setSuccess({
+    } else if(errorMessage.includes('E11000')) {
+      dispatch(setSuccess({
         success: true,
         message: "Duplicate file name"
-      })
+      }))
       setExcelData([])
       setFile([])
     } 

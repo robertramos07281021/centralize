@@ -166,8 +166,7 @@ const AgentView = () => {
   const [authentication, setAuthentication] = useState({
     yesMessage: "",
     event: () => {},
-    no: () => {},
-    invalid: ()=> {}
+    no: () => {}
   })
 
   const [isAuthorize, setIsAuthorize] = useState<boolean>(false)
@@ -206,13 +205,7 @@ const AgentView = () => {
       setAuthentication({
         yesMessage: message,
         event: () => { eventType[eventMethod]?.(userId)},
-        no: ()=> {setIsAuthorize(false)},
-        invalid: ()=> {
-          dispatch(setSuccess({
-            success: true,
-            message: "Password is incorrect"
-          }))
-        }
+        no: ()=> {setIsAuthorize(false)}
       })
     } 
   }
@@ -222,10 +215,10 @@ const AgentView = () => {
       {
         updateSetTargets &&
         <SetTargetsModal agentToUpdate={userToUpdateTargets || null} cancel={()=> {setUpdateSetTarget(false); setUserToUpdateTargets(null)}} success={(message, success)=> {
-          setSuccess({
+          dispatch(setSuccess({
             success,
             message
-          })
+          }))
           refetch()
           agentProdDataRefetch()
           setUserToUpdateTargets(null)

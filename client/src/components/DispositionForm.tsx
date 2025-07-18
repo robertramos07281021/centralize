@@ -5,7 +5,7 @@ import { RootState, useAppDispatch } from "../redux/store"
 import { gql, useMutation, useQuery } from "@apollo/client"
 
 
-import { setDeselectCustomer, setServerError } from "../redux/slices/authSlice"
+import { setDeselectCustomer, setServerError, setSuccess } from "../redux/slices/authSlice"
 
 type Data = {
   amount: string;
@@ -89,7 +89,6 @@ enum Dialer  {
 }
 
 type Props = {
-  setSuccess: (success:boolean, message:string) => void;
   updateOf: ()=> void
 }
 
@@ -104,7 +103,7 @@ const IFBANK = ({label}:{label:string})=> {
 }
 
 
-const DispositionForm:React.FC<Props> = ({setSuccess,updateOf}) => {
+const DispositionForm:React.FC<Props> = ({updateOf}) => {
   const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
   const [selectedDispo, setSelectedDispo] = useState<string>('')
   const dispatch = useAppDispatch()
@@ -148,7 +147,10 @@ const DispositionForm:React.FC<Props> = ({setSuccess,updateOf}) => {
 
   const [createDisposition] = useMutation<{createDisposition:Success}>(CREATE_DISPOSITION,{
     onCompleted: (res) => {
-      setSuccess(res.createDisposition.success,res.createDisposition.message)
+      dispatch(setSuccess({
+        success: res.createDisposition.success,
+        message: res.createDisposition.message
+      }))
       setConfirm(false)
       setSelectedDispo('')
       setData({
@@ -252,7 +254,10 @@ const DispositionForm:React.FC<Props> = ({setSuccess,updateOf}) => {
 
   const [tlEscalation] = useMutation<{tlEscalation:Success}>(TL_ESCATATION,{
     onCompleted: async(res)=> {
-      setSuccess(res.tlEscalation.success,res.tlEscalation.message)
+      dispatch(setSuccess({
+        success: res.tlEscalation.success,
+        message: res.tlEscalation.message
+      }))
       await deselectTask({variables: {id:selectedCustomer._id}})
     },
     onError: ()=> {
@@ -525,26 +530,26 @@ const DispositionForm:React.FC<Props> = ({setSuccess,updateOf}) => {
               </label>
             </div>
           </div>
-        }
-              <div className=" flex justify-end mt-5 gap-5">
-              {
-                data.disposition &&
-                <button 
-                  type="submit" 
-                  className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 lg:px-5 lg:py-2.5 lg:me-2l lg:mb-2 cursor-pointer lg:text-sm text-xs`}>Submit</button>
-              }
-              {
-                data.disposition && userLogged.type === "AGENT" &&
-                <button
-                  type="button"
-                  className="bg-red-500 hover:bg-red-600 focus:outline-none text-white  focus:ring-4 focus:ring-red-400 font-medium rounded-lg px-5 py-4 lg:px-5 lg:py-2.5 lg:me-2 lg:mb-2 cursor-pointer lg:text-sm text-xs"
-                  onClick={()=> handleSubmitEscalationToTl(selectedCustomer._id)}
-                  >
-                  TL Escalation
-                </button>
-              }
-              </div>
-      </form>
+          }
+          <div className=" flex justify-end mt-5 gap-5">
+            {
+              data.disposition &&
+              <button 
+                type="submit" 
+                className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 lg:px-5 lg:py-2.5 lg:me-2l lg:mb-2 cursor-pointer lg:text-sm text-xs`}>Submit</button>
+            }
+            {
+              data.disposition && userLogged.type === "AGENT" &&
+              <button
+                type="button"
+                className="bg-red-500 hover:bg-red-600 focus:outline-none text-white  focus:ring-4 focus:ring-red-400 font-medium rounded-lg px-5 py-4 lg:px-5 lg:py-2.5 lg:me-2 lg:mb-2 cursor-pointer lg:text-sm text-xs"
+                onClick={()=> handleSubmitEscalationToTl(selectedCustomer._id)}
+                >
+                TL Escalation
+              </button>
+            }
+          </div>
+        </form>
       { confirm &&
         <Confirmation {...modalProps}/>
       }

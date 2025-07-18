@@ -1,13 +1,12 @@
 import { useMutation } from "@apollo/client"
 import gql from "graphql-tag"
 import { useAppDispatch } from "../../redux/store"
-import { setServerError } from "../../redux/slices/authSlice"
+import { setServerError, setSuccess } from "../../redux/slices/authSlice"
 
 type ButtonProps = {
   id: string,
   active: boolean
   refetch: ()=> void
-  success: (success:boolean, message:string)=> void
 }
 
 const ACTIVATE_DEACTIVATE_DISPOTYPE = gql`
@@ -19,21 +18,20 @@ const ACTIVATE_DEACTIVATE_DISPOTYPE = gql`
   }
 `
 
-const ActivationButton:React.FC<ButtonProps> = ({id, active, refetch, success}) => {
+const ActivationButton:React.FC<ButtonProps> = ({id, active, refetch}) => {
   const dispatch = useAppDispatch()
   const [activateDeactivateDispotype] = useMutation<{activateDeactivateDispotype:{success:boolean, message: string}}>(ACTIVATE_DEACTIVATE_DISPOTYPE, {
     onCompleted: (res)=> {
       refetch()
-      success(
-        res.activateDeactivateDispotype.success,
-        res.activateDeactivateDispotype.message
-      )
+      dispatch(setSuccess({
+        success:res.activateDeactivateDispotype.success,
+        message:res.activateDeactivateDispotype.message
+      }))
     },
     onError: ()=> {
       dispatch(setServerError(true))
     }
   })
-
 
   const handleActivate = async()=> {
     await activateDeactivateDispotype({variables: {id}})
@@ -44,11 +42,10 @@ const ActivationButton:React.FC<ButtonProps> = ({id, active, refetch, success}) 
       <div className={`h-4 w-8 rounded-full border bg-blue-300 border-slate-400`}>
       </div>
       <div className={`h-5 w-5 border rounded-full border-slate-300 absolute ${active ? "left-0 bg-blue-700" : "right-0 bg-slate-700" } top-0 z-50 bg-blue-700 duration-200 ease-in-out`}></div>
-          
       <input 
         type="checkbox" 
-        name="" 
-        id="" 
+        name="acitvation" 
+        id="activation" 
         checked={active}
         hidden
         onChange={handleActivate}
