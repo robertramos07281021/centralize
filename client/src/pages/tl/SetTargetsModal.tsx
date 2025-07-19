@@ -79,7 +79,7 @@ const SetTargetsModal:React.FC<Props> = ({agentToUpdate, cancel, success}) => {
 
   const handleSubmitTargets = useCallback(async()=> {
     await setTargets({variables: {userId: agentToUpdate, targets}})
-  },[targets, setTargets])
+  },[targets, setTargets, agentToUpdate])
 
 
   return (

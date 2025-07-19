@@ -122,15 +122,13 @@ const userResolvers = {
           }
         ])
     
-        const users = res[0].users || []
-        const total = res[0].total[0].totalUser || 0
-        
+        const users = res[0]?.users || []
+        const total = res[0]?.total[0]?.totalUser || 0
         return {
           users: users,
           total: total,
         };
       } catch (error) {
-
         throw new CustomError(error.message, 500)
       }
     },
@@ -631,7 +629,21 @@ const userResolvers = {
         throw new CustomError(error.message, 500)
       }
     },
+    deleteUser: async(_,{id},{user}) => {
+      try {
+        if(!user) throw new CustomError("Unauthorized",401)
 
+        const deletedUser = await User.findByIdAndDelete(id)
+        if(!deletedUser) throw new CustomError("User not found",400)
+
+        return {
+          success: true,
+          message: "User successfully deleted"
+        } 
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    }
   },
 };
 

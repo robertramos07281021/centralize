@@ -2,6 +2,7 @@ import { useMutation } from "@apollo/client"
 import gql from "graphql-tag"
 import { useAppDispatch } from "../../redux/store"
 import { setServerError, setSuccess } from "../../redux/slices/authSlice"
+import { useCallback } from "react"
 
 type ButtonProps = {
   id: string,
@@ -33,9 +34,9 @@ const ActivationButton:React.FC<ButtonProps> = ({id, active, refetch}) => {
     }
   })
 
-  const handleActivate = async()=> {
+  const handleActivate = useCallback(async()=> {
     await activateDeactivateDispotype({variables: {id}})
-  }
+  },[activateDeactivateDispotype,id])
 
   return (
     <label className="flex h-full relative p-0.5">

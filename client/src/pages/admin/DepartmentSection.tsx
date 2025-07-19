@@ -101,16 +101,37 @@ const DepartmentSection = () => {
     }
   })
 
-  const {data:aomUsers} = useQuery<{getAomUser:UserInfo[],}>(AOM_USER)
+  const {data:aomUsers, refetch:aomRefetch} = useQuery<{getAomUser:UserInfo[],}>(AOM_USER)
+
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      try {
+        await aomRefetch()
+        await refetch()
+        await refetchDept()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
+  },[aomRefetch,refetch,refetchDept])
+
   // mutations ======================================================
   const [createDept,] = useMutation(CREATEDEPT,{
-    onCompleted: () => {
-      refetch();
-      refetchDept()
-      dispatch(setSuccess({
-        success: true,
-        message: "Department successfully created"
-      }))
+    onCompleted: async() => {
+      try {
+        const res = await refetch();
+        const resDept = await refetchDept()
+        if(res.data || resDept.data) {
+          dispatch(setSuccess({
+            success: true,
+            message: "Department successfully created"
+          }))
+        }
+        
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
       setName("")
       setBranch("")
       setAom("")
@@ -173,9 +194,15 @@ const DepartmentSection = () => {
   })
 
   const [deleteDept] = useMutation(DELETEDEPT, {
-    onCompleted: () => {
-      refetch();
-      refetchDept();
+    onCompleted: async() => {
+      try {
+        await refetch();
+        await refetchDept();
+        
+      } catch (error) {
+        
+        dispatch(setServerError(true))
+      }
       dispatch(setSuccess({
         success: true,
         message: "Department successfully deleted"
@@ -214,7 +241,7 @@ const DepartmentSection = () => {
     DELETE: deletingCampaign
   };
 
-  const handleSubmitCreate = (action: "CREATE") => {
+  const handleSubmitCreate = useCallback((action: "CREATE") => {
     if(!name || !branch || !aom) {
       setRequired(true)
     } else {
@@ -225,11 +252,11 @@ const DepartmentSection = () => {
         yes:() => { confirmationFunction[action]?.(null); setConfirm(false);},
         message: "Are you sure you want to add this department?",
         toggle: action
-        })
-      }
+      })
     }
+  },[setModalProps, setConfirm, setRequired, name, branch, aom, confirmationFunction])
 
-  const handleSubmitUpdate = (action: "UPDATE") => {
+  const handleSubmitUpdate = useCallback((action: "UPDATE") => {
     if(!name || !branch || (!aom && deptToModify?.name !== "admin")) {
       setRequired(true)
     } else {
@@ -242,9 +269,9 @@ const DepartmentSection = () => {
         toggle: action
       })
     }
-  }
+  },[name,branch,aom,deptToModify,setConfirm,setRequired,setModalProps,confirmationFunction])
   
-  const handleSubmitDelete = (dept:Department,action:"DELETE") => {
+  const handleSubmitDelete = useCallback((dept:Department,action:"DELETE") => {
     setConfirm(true)
     setDeptToModify({
       id: "",
@@ -264,12 +291,12 @@ const DepartmentSection = () => {
       message: "Are you sure you want to delete this department?",
       toggle: action
     })
-  }
+  },[setConfirm, setDeptToModify, setName, setBranch, setAom, setModalProps, confirmationFunction])
 
-  const handleUpdateDept = (dept:Department) => {
+  const handleUpdateDept = useCallback((dept:Department) => {
     setDeptToModify(dept)
     setIsUpdate(true)
-  }
+  },[setDeptToModify, setIsUpdate])
 
   useEffect(()=> {
     if(isUpdate) {
@@ -279,7 +306,7 @@ const DepartmentSection = () => {
     }
   },[deptToModify,isUpdate])
 
-  const handleCancelUpdate = () => {
+  const handleCancelUpdate = useCallback(() => {
     setIsUpdate(false)
     setDeptToModify({
       id: "",
@@ -293,7 +320,7 @@ const DepartmentSection = () => {
     setName("")
     setBranch("")
     setAom("")
-  }
+  },[setIsUpdate, setDeptToModify, setName, setBranch, setAom])
 
   return (
     <div className="relative">

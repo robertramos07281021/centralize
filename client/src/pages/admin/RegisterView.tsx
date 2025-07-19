@@ -26,15 +26,31 @@ type DeptBucket = {
   buckets: Bucket[]
 }
 
+enum Type {
+  AGENT = 'AGENT',
+  TL = 'TL',
+  AOM = 'AOM',
+  MIS = "MIS",
+  CEO = 'CEO',
+  ADMIN = 'ADMIN',
+  OPERATION = 'OPERATION'
+}
+
+enum AccountType {
+  CALLER = 'caller',
+  SKIPER = 'skiper',
+  FIELD = 'field'
+}
+
 type Data = {
-  type: string,
+  type: Type | null,
   name: string,
   username: string,
   branch: string,
   departments: string[],
   user_id: string,
   buckets: string[],
-  account_type: string
+  account_type: AccountType | null
 }
 
 
@@ -85,17 +101,16 @@ const RegisterView = () => {
   const [selectDept, setSelectDept] = useState<boolean>(false)
   const [selectBucket, setSelectBucket] = useState<boolean>(false)
   const [data, setData] = useState<Data>({
-    type: "",
+    type: null,
     name: "",
     username: "",
     branch: "",
     departments: [],
     user_id: "",
     buckets: [],
-    account_type: ""
+    account_type: null
   })
   const dispatch = useAppDispatch()
-
 
   const {data:branchQuery} = useQuery<{getBranches:Branch[]}>(BRANCH_QUERY)
   const {data:getDeptBucketData} = useQuery<{getBuckets:DeptBucket[]}>(GET_DEPT_BUCKET,{variables: {dept: data.departments}})
@@ -121,14 +136,14 @@ const RegisterView = () => {
   const [createUser] = useMutation(CREATE_ACCOUNT, {
     onCompleted: () => {
       setData({
-        type: "",
+        type: null,
         name: "",
         username: "",
         branch: "",
         departments: [],
         user_id: "",
         buckets: [],
-        account_type: ""
+        account_type: null
       })
       dispatch(setSuccess({
         success: true,
@@ -144,14 +159,14 @@ const RegisterView = () => {
           message: "Username already exists",
         }))
         setData({
-          type: "",
+          type: null,
           name: "",
           username: "",
           branch: "",
           departments: [],
           user_id: "",
           buckets: [],
-          account_type: ""
+          account_type: null
         });
       } else {
         dispatch(setServerError(true))
@@ -179,7 +194,7 @@ const RegisterView = () => {
     await createUser({ variables: { ...data } });
   },[data, createUser]);
 
-  const submitForm = () => {
+  const submitForm = useCallback(() => {
     const isAgent = data.type === "AGENT";
     const isValid = isAgent ? validateAgent() : validateOther();
   
@@ -196,21 +211,21 @@ const RegisterView = () => {
       message: "Are you sure you want to add this user?",
       toggle: "CREATE",
     })
-  }
+  },[data,setRequired, setConfirm, setModalProps ,handleCreateUser])
 
-  const handleCheckedDept = (e:React.ChangeEvent<HTMLInputElement>,value:string) => {
+  const handleCheckedDept = useCallback((e:React.ChangeEvent<HTMLInputElement>,value:string) => {
     const check = e.target.checked ? [...data.departments, deptObject[value]] : data.departments.filter((d) => d !== deptObject[value] )
     setData({...data, departments: check})
-  }
+  },[data,deptObject])
 
-  const handleCheckedBucket = (e:React.ChangeEvent<HTMLInputElement>,value:string) => {
+  const handleCheckedBucket = useCallback((e:React.ChangeEvent<HTMLInputElement>,value:string) => {
     const check = e.target.checked ? [...data.buckets, bucketObject[value]] : data.buckets.filter((d) => d !== bucketObject[value] )
     setData({...data, buckets: check})
-  }
+  },[data, bucketObject, setData])
 
 
   useEffect(() => {
-    if (data.type === "" && (data.name || data.username || data.branch || data.departments.length > 0 || data.user_id)) {
+    if (data.type === null && (data.name || data.username || data.branch || data.departments.length > 0 || data.user_id)) {
       setData(prev => ({
         ...prev,
         name: "",
@@ -218,7 +233,8 @@ const RegisterView = () => {
         branch: "",
         department: [],
         buckets: [],
-        user_id: ""
+        user_id: "",
+        account_type: null
       }));
     }
   }, [data.type, data])
@@ -248,18 +264,20 @@ const RegisterView = () => {
             <select
               id="type"
               name="type"
-              value={data.type}
-              onChange={(e)=> setData({...data, type: e.target.value})}
+              value={data.type === null ? "" : data.type as Type}
+              onChange={(e)=> {
+                const value = e.target.value === "" ? null : e.target.value as Type
+                setData(prev => ({...prev, type: value}))}}
               className={`bg-slate-50 border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
               >
               <option value="">Choose a type</option>
-              <option value="AGENT">AGENT</option>
-              <option value="TL">TL</option>
-              <option value="AOM">AOM</option>
-              <option value="MIS">MIS</option>
-              <option value="CEO">CEO</option>
-              <option value="ADMIN">ADMIN</option>
-              <option value="OPERATION">OPERATION</option>
+              <option value={Type.AGENT}>AGENT</option>
+              <option value={Type.TL}>TL</option>
+              <option value={Type.AOM}>AOM</option>
+              <option value={Type.MIS}>MIS</option>
+              <option value={Type.CEO}>CEO</option>
+              <option value={Type.ADMIN}>ADMIN</option>
+              <option value={Type.OPERATION}>OPERATION</option>
             </select>
           </label>
           <label className="w-full">
@@ -268,11 +286,11 @@ const RegisterView = () => {
               type="text" 
               id="name" 
               name="name" 
-              autoComplete="name"
+              autoComplete="off"
               value={data.name}
               onChange={(e)=> setData({...data, name: e.target.value})}
-              disabled={data.type.trim() === ""}
-              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
+              disabled={!data.type}
+              className={`${!data.type ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
               />
           </label>
           
@@ -282,11 +300,11 @@ const RegisterView = () => {
               type="text" 
               name="username" 
               id="username" 
-              autoComplete="username"
+              autoComplete="off"
               value={data.username}
               onChange={(e)=> setData({...data,username: e.target.value})}
-              disabled={data.type.trim() === ""}
-              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
+              disabled={!data.type}
+              className={`${!data.type ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
               />
           </label>
           <label className="w-full">
@@ -295,11 +313,11 @@ const RegisterView = () => {
               type="text" 
               name="id_number" 
               id="id_number" 
-              autoComplete="id_number"
+              autoComplete="off"
               value={data.user_id}
               onChange={(e)=> setData({...data,user_id: e.target.value})}
-              disabled={data.type.trim() === "" || !validForCampaignAndBucket.toString().includes(data.type)  }
-              className={`${data.type.trim() === "" || !validForCampaignAndBucket.toString().includes(data.type)  ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
+              disabled={!data.type || !validForCampaignAndBucket.toString().includes(data.type)  }
+              className={`${!data.type || !validForCampaignAndBucket.toString().includes(data.type)  ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
               />
           </label>
 
@@ -308,15 +326,16 @@ const RegisterView = () => {
             <select
               id="account_type"
               name="account"
-              value={data.account_type}
-              disabled={data.type.trim() === ""}
-              onChange={(e)=> setData({...data, account_type: e.target.value})}
-              className={`${data.type.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              disabled={!data.type}
+              onChange={(e)=> {
+                const value = e.target.value === "" ? null : e.target.value as AccountType
+                setData({...data, account_type: value})}}
+              className={`${!data.type ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
               <option value="">Choose a account type</option>
-              <option value="caller">Caller</option>
-              <option value="field">Field</option>
-              <option value="skipper">Skipper</option>
+              <option value={AccountType.CALLER}>Caller</option>
+              <option value={AccountType.FIELD}>Field</option>
+              <option value={AccountType.SKIPER}>Skipper</option>
             </select>
           </label>
 
@@ -327,8 +346,8 @@ const RegisterView = () => {
               name="branch"
               value={data.branch ? Object.keys(branchObject).find((key) => branchObject[key] === data.branch) : ""}
               onChange={(e)=> setData({...data, branch: branchObject[e.target.value]})}
-              disabled={data.type.trim() === "" || !validForCampaignAndBucket.toString().includes(data.type)}
-              className={`${data.type.trim() === "" || !validForCampaignAndBucket.toString().includes(data.type) ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              disabled={!data.type || !validForCampaignAndBucket.toString().includes(data.type)}
+              className={`${!data.type|| !validForCampaignAndBucket.toString().includes(data.type) ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
               <option value="">Choose a branch</option>
               {
@@ -341,16 +360,21 @@ const RegisterView = () => {
     
           <div className="w-full relative" ref={campaignDiv}>
             <p className="w-full text-base font-medium text-slate-500">Campaign</p>
-            <div className={`${(!data.branch || !validForCampaignAndBucket.toString().includes(data.type)) && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectDept && data.branch ? "border-blue-500" : "border-slate-300"}`}>
-              <div className="w-full p-2.5 text-nowrap truncate cursor-default" title={data.departments.map(deptId => Object.entries(deptObject).find(([, val]) => val.toString() === deptId)?.[0]).join(', ').replace(/_/g, " ")} onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type)) {setSelectDept(!selectDept); setSelectBucket(false)} }}>
+            <div className={`${(!data.branch || !validForCampaignAndBucket.toString().includes(data.type as Type)) && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectDept && data.branch ? "border-blue-500" : "border-slate-300"}`}>
+              <div className="w-full p-2.5 text-nowrap truncate cursor-default capitalize" title={data.departments.map(deptId => Object.entries(deptObject).find(([, val]) => val.toString() === deptId)?.[0]).join(', ').replace(/_/g, " ")} onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type as Type)) {setSelectDept(!selectDept); setSelectBucket(false)} }}>
                 {
-                  data.departments.length < 1 ? "Select Department" : data.departments.map(deptId => Object.entries(deptObject).find(([, val]) => val.toString() === deptId)?.[0]).join(', ').replace(/_/g, " ")
+                  (() => {
+                    const haveCampaign = branchDeptData && branchDeptData?.getBranchDept?.length > 0
+                    const findDept = branchQuery?.getBranches.find( e => e.id === data.branch)
+                    const campaignSelection = haveCampaign ? data.departments.length < 1 ? 'Select Campaign' : data.departments.map(deptId => Object.entries(deptObject).find(([, val]) => val.toString() === deptId)?.[0]).join(', ').replace(/_/g, " ") : data.branch ? `No Campaign on ${findDept?.name}`: "Select Campaign"
+                    return campaignSelection
+                  })()
                 }
               </div>
-              <MdKeyboardArrowDown className="text-lg absolute right-0 top-9" onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type)) {setSelectDept(!selectDept); setSelectBucket(false)}}}/>
+              <MdKeyboardArrowDown className="text-lg absolute right-0 top-9" onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type as Type)) {setSelectDept(!selectDept); setSelectBucket(false)}}}/>
             </div>
             {
-              (selectDept && data.branch) &&
+              ( selectDept && data.branch && branchDeptData && branchDeptData?.getBranchDept?.length > 0) &&
               <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-70 overflow-y-auto border z-40">
                 {
                   branchDeptData?.getBranchDept.map((e)=> 
@@ -372,12 +396,12 @@ const RegisterView = () => {
           <div className="w-full relative" ref={bucketDiv}>
             <p className="w-full text-base font-medium text-slate-500">Bucket</p>
             <div className={`${data.departments.length === 0 && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectBucket && data.departments.length > 0 ? "border-blue-500" : "border-slate-300"}`}>
-              <div className="w-full p-2.5 text-nowrap truncate cursor-default" title={data.buckets.map(bucketId => Object.entries(bucketObject).find(([, val]) => val.toString() === bucketId)?.[0]).join(', ').replace(/_/g, " ")} onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type)) setSelectBucket(!selectBucket)}}>
+              <div className="w-full p-2.5 text-nowrap truncate cursor-default" title={data.buckets.map(bucketId => Object.entries(bucketObject).find(([, val]) => val.toString() === bucketId)?.[0]).join(', ').replace(/_/g, " ")} onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type as Type)) setSelectBucket(prev => !prev)}}>
                 {
                   data.buckets.length < 1 ? "Select Bucket" : data.buckets.map(bucketId => Object.entries(bucketObject).find(([, val]) => val.toString() === bucketId)?.[0]).join(', ').replace(/_/g, " ")
                 }
               </div>
-              <MdKeyboardArrowDown className="text-lg absolute right-0 top-9" onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type)) setSelectBucket(!selectBucket)}}/>
+              <MdKeyboardArrowDown className="text-lg absolute right-0 top-9" onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type as Type)) setSelectBucket(prev => !prev)}}/>
             </div>
             {
               (selectBucket && data.departments.length > 0) &&

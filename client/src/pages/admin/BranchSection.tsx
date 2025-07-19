@@ -57,7 +57,7 @@ const BranchSection = () => {
 
   const [createBranch] = useMutation(CREATEBRANCH,{
     onCompleted: async() => {
-      refetch();
+      await refetch();
       dispatch(setSuccess({
         success: true,
         message: "Branch successfully created"
@@ -80,16 +80,21 @@ const BranchSection = () => {
   })
 
   const [updateBranch] = useMutation(UPDATEBRANCH, {
-    onCompleted: () => {
-      refetch();
-      dispatch(setSuccess({
-        success: true,
-        message: "Branch successfully updated"
-      }))
+    onCompleted: async() => {
+      try {
+        const res = await refetch();
+        if(res.data) {
+          dispatch(setSuccess({
+            success: true,
+            message: "Branch successfully updated"
+          }))
+        }
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
       setName("")
       setIsUpdate(false)
       setBranchToUpdate(null)
-     
     },
     onError: (error) => {
     const errorMessage = error.message;
@@ -106,12 +111,18 @@ const BranchSection = () => {
   })
 
   const [deleteBranch] = useMutation(DELETEBRANCH, {
-    onCompleted: () => {
-      refetch();
-      dispatch(setSuccess({
-        success: true,
-        message: "Branch successfully deleted"
-      }))
+    onCompleted: async() => {
+      try {
+        const res = await refetch();
+        if(res.data) {
+          dispatch(setSuccess({
+            success: true,
+            message: "Branch successfully deleted"
+          }))
+        }
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
       setName("")
     },
     onError: () => {
@@ -119,15 +130,13 @@ const BranchSection = () => {
     }
   })
 
-
   const creatingBranch = useCallback(async()=> {
     await createBranch({variables: { name }});
   },[createBranch, name])
 
   const updatingBranch = useCallback(async()=> {
       await updateBranch({variables: {id: branchToUpdate?.id, name}})
-
-  },[branchToUpdate, name])
+  },[branchToUpdate, name, updateBranch])
 
   const deletingBranch = useCallback(async(branch?:Branch)=> {
     if (!branch) return;
@@ -148,13 +157,13 @@ const BranchSection = () => {
     no: () => {}
   })
 
-  const handleUpdateBranch = (branch:Branch) => {
+  const handleUpdateBranch = useCallback((branch:Branch) => {
     setIsUpdate(true)
     setBranchToUpdate(branch)
     setName(branch.name)
-  }
+  },[setIsUpdate,setBranchToUpdate,setName])
 
-  const handleSubmitForm = (e:React.FormEvent<HTMLFormElement> | null,action: "CREATE" | "UPDATE" | "DELETE" | "LOGOUT") => {
+  const handleSubmitForm = useCallback((e:React.FormEvent<HTMLFormElement> | null,action: "CREATE" | "UPDATE" | "DELETE" | "LOGOUT") => {
     if(e) {
       e.preventDefault()
     }
@@ -181,7 +190,7 @@ const BranchSection = () => {
         })  
       } 
     }
-  }
+  },[setModalProps,setRequired,confirmationFunction,setConfirm,form])
 
   return (
     <div className="relative">

@@ -94,12 +94,12 @@ const BucketSection = () => {
     issabelIp: ""
   })
 
-  const handleSelectDept = (dept:string) => {
+  const handleSelectDept = useCallback((dept:string) => {
     setDeptSelected(dept)
     setBucket("")
     setRequired(false)
     setIsUpdate(false)
-  }
+  },[setIsUpdate,setRequired,setBucket,setDeptSelected])
 
   const {data:bucketData,refetch:bucketRefetch} = useQuery<{findDeptBucket:Bucket[]}>(DEPARTMENT_BUCKET,{
     variables: {dept: deptSelected},
@@ -107,8 +107,15 @@ const BucketSection = () => {
   })
 
   useEffect(()=> {
-    refetch()
-    bucketRefetch()
+    const timer = setTimeout(async()=>{
+      try {
+        await refetch()
+        await bucketRefetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
   },[dept,refetch,bucketRefetch])
 
 
@@ -221,7 +228,7 @@ const BucketSection = () => {
 
   const deletingBucket = useCallback(async(b:Bucket | null)=> {
     if(b) await deleteBucket({variables: { id: b.id } })
-  },[])
+  },[deleteBucket])
 
   const confirmationFunction: Record<BucketOperation, (b:Bucket | null) => Promise<void>> = {
     CREATE: creatingBucket,
@@ -238,7 +245,7 @@ const BucketSection = () => {
 
   const [requiredIps, setRequiredIps] = useState<boolean>(false)
 
-  const handleSubmit = (action: "CREATE" | "UPDATE" | "DELETE",buck: Bucket | null) => {
+  const handleSubmit = useCallback((action: "CREATE" | "UPDATE" | "DELETE",buck: Bucket | null) => {
     if(action !== "DELETE") {
       if(!viciIp && !issabelIp) {
         setRequiredIps(true)
@@ -268,16 +275,16 @@ const BucketSection = () => {
       message: actionExnts[action]?.message ,
       toggle: action
     })
-  }
+  },[setModalProps, confirmationFunction, setConfirm, setRequiredIps, issabelIp, viciIp, setRequired])
 
-  const handleUpdate = (b:Bucket) => {
+  const handleUpdate = useCallback((b:Bucket) => {
     setRequired(false)
     setIsUpdate(true)
     setBucket(b.name)
     setBucketToUpdate(b)
     setIssabelIp(b.issabelIp)
     setViciIp(b.viciIp)
-  }
+  },[setRequired,setIsUpdate,setBucket,setBucketToUpdate,setIssabelIp,setViciIp])
 
   return (
     <div className="relative">

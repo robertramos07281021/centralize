@@ -1,5 +1,5 @@
 import {  RootState, useAppDispatch } from "../redux/store"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {  useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
 import { gql, useMutation } from "@apollo/client";
@@ -193,11 +193,11 @@ const Login = () => {
     }
   })  
 
-  const handleEyeClick =() => {
-    setEye(!eye)
-  }
+  const handleEyeClick = useCallback(() => {
+    setEye(prev => !prev)
+  },[setEye])
   
-  const handleSubmitLogin = async(e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmitLogin = useCallback(async(e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if(!loginForm?.current?.checkValidity()){
       setRequired(true)
@@ -207,7 +207,7 @@ const Login = () => {
       return
     }
     await login({ variables: { username, password } })
-  }
+  },[login,username,password,setRequired,setInvalid,setAlready,setLock,loginForm])
 
   useEffect(()=> {
     if(userLogged._id && userLogged.change_password) {

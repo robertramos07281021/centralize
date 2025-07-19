@@ -85,7 +85,6 @@ const UPDATE_DISPO = gql`
   }
 `
 
-
 const DispositionConfigurationView = () => {
   const dispatch = useAppDispatch()
   const {data:bucketsData} = useQuery<{getAllBucket:Bucket[]}>(GET_ALL_BUCKET)
@@ -205,7 +204,7 @@ const DispositionConfigurationView = () => {
     }
   }
 
-  const onSubmit = (e:React.FormEvent,submitToggle:keyof typeof submitActions) => {
+  const onSubmit = useCallback((e:React.FormEvent,submitToggle:keyof typeof submitActions) => {
     e.preventDefault()
     if(!form.current?.checkValidity() || selectedBuckets.length < 1 || selectedContactMethod.length < 1) {
       setRequired(true)
@@ -218,15 +217,15 @@ const DispositionConfigurationView = () => {
         no: () => { setConfirm(false) }
       }) 
     }
-  }
+  },[form, selectedBuckets, selectedContactMethod, setRequired, setConfirm, setModalProps, submitActions])
 
   const bucketRef = useRef<HTMLDivElement | null>(null)
   const contachMethodRef = useRef<HTMLDivElement | null>(null)
 
-  const handleOnUpdate = (dispo: Dispotype) => {
+  const handleOnUpdate = useCallback((dispo: Dispotype) => {
     setToUpdateDispo(dispo)
     setIsUpdate(true)
-  }
+  },[setToUpdateDispo,setIsUpdate])
 
   useEffect(()=> {
     if(toUpdateDispo) {

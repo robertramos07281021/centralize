@@ -4,6 +4,8 @@ import { Doughnut } from 'react-chartjs-2';
 import { colorDispo } from "../../middleware/exports";
 import {  ChartData, ChartOptions } from "chart.js";
 import Loading from "../Loading";
+import { useAppDispatch } from "../../redux/store";
+import { setServerError } from "../../redux/slices/authSlice";
 
 const GET_DISPOSITION_REPORTS = gql`
   query GetDispositionReports($agent: String, $bucket: String, $disposition: [String], $from: String, $to: String) {
@@ -88,10 +90,22 @@ const ReportsView:React.FC<Props> = ({search}) => {
 
     
   const [newReportsDispo, setNewReportsDispo] = useState<Record<string,number>>({})
-  const {data:reportsData, loading:reportLoading} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: search.searchAgent, bucket: search.searchBucket, disposition: search.selectedDisposition, from: search.dateDistance.from, to: search.dateDistance.to}})
-  const {data:disposition} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
+  const {data:reportsData, loading:reportLoading, refetch} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: search.searchAgent, bucket: search.searchBucket, disposition: search.selectedDisposition, from: search.dateDistance.from, to: search.dateDistance.to}})
+  const {data:disposition, refetch:dispoTypesRefetch} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
+  const dispatch = useAppDispatch()
 
-  
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      try {
+        await dispoTypesRefetch()
+        await refetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
+  },[dispoTypesRefetch, refetch])
+
   useEffect(()=> {
     const reportsDispo:{[key: string]: number} = {};
     if(reportsData) {
@@ -114,7 +128,6 @@ const ReportsView:React.FC<Props> = ({search}) => {
     }
   },[disposition,newReportsDispo])
 
-  
   const dispositionCount = (code:string) =>  {
     const newFilter = dispositionData?.filter((e)=> e.code === code)
     return newFilter[0]?.count

@@ -2,6 +2,8 @@ import { useLocation } from "react-router-dom"
 import UpdateUserForm from "./UpdateUserForm"
 import { gql, useQuery } from "@apollo/client"
 import { useEffect } from "react"
+import { useAppDispatch } from "../../redux/store"
+import { setServerError } from "../../redux/slices/authSlice"
 
 
  const MODIFY_RECORD_QUERY = gql`
@@ -23,10 +25,19 @@ type ModifyRecords = {
 const UserView = () => {
   const {state} = useLocation()
   const {data, refetch} = useQuery<{getModifyReport:ModifyRecords[]}>(MODIFY_RECORD_QUERY,{variables: {id: state?._id}, skip: !state._id})
+  const dispatch = useAppDispatch()
 
   useEffect(()=> {
-    refetch()
+    const timer = setTimeout(async()=> {
+      try {
+        await refetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
   },[state, refetch])
+
   return (
     <>
       <div className="p-5 h-screen flex flex-col overflow-hidden">

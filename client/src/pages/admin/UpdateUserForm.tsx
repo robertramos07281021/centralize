@@ -1,6 +1,6 @@
 
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import { Users } from "../../middleware/types"
 import Confirmation from "../../components/Confirmation"
 import { useLocation, useNavigate } from "react-router-dom"
@@ -431,23 +431,32 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     }
   }
 
-  const handleSubmit = (action: "UPDATE" | "RESET" | "STATUS" | "UNLOCK" | "LOGOUT",status:boolean) => {
+  const handleSubmit = useCallback((action: "UPDATE" | "RESET" | "STATUS" | "UNLOCK" | "LOGOUT",status:boolean) => {
     submitValue[action]?.()
     if(action === "STATUS") {
       setCheck(status)
     }
-  }
-  const handleCheckedDept = (e:React.ChangeEvent<HTMLInputElement>, value: string)=> {
+  },[setCheck, submitValue])
+
+  const handleCheckedDept = useCallback((e:React.ChangeEvent<HTMLInputElement>, value: string)=> {
     const check = e.target.checked ? [...data.departments, dept[value]] : data.departments.filter((d) => d !== dept[value] )
-    setData({...data, departments: check,  buckets: []})
-  }
-  const handleCheckedBucket = (e:React.ChangeEvent<HTMLInputElement>, value: string)=> {
+    setData(prev => ({...prev, departments: check,  buckets: []}))
+  },[data,setData,dept])
+
+  const handleCheckedBucket = useCallback((e:React.ChangeEvent<HTMLInputElement>, value: string)=> {
     const check = e.target.checked ? [...data.buckets, bucketObject[value]] : data.buckets.filter((d) => d !== bucketObject[value])
-    setData({...data, buckets: check})
-  }
+    setData(prev => ({...prev, buckets: check}))
+  },[setData,bucketObject,data])
   
   useEffect(()=> {
-    branchDeptRefetch()
+    const timer = setTimeout(async()=> {
+      try {
+        await branchDeptRefetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
   },[data.branch])
   
   const campaignDiv = useRef<HTMLDivElement | null>(null)

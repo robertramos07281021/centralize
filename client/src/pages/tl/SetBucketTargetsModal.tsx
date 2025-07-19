@@ -83,7 +83,7 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
     } else {
       setRequired(true)
     }
-  },[setBucketTargets, bucket, targets])
+  },[setBucketTargets, bucket, targets,setRequired])
 
   return (
     <div className="absolute top-0 left-0 z-50 bg-white/20 backdrop-blur-[1px] h-full w-full flex items-center justify-center">
