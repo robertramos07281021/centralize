@@ -258,9 +258,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
           }))
         }
       } catch (error) {
-        if(error) {
-          dispatch(setServerError(true))
-        }
+        dispatch(setServerError(true))
       }
     },
     onError: ()=> {
@@ -301,6 +299,10 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
           link.click();
           document.body.removeChild(link);
           setConfirm(false)
+          dispatch(setSuccess({
+            success: true,
+            message: `${name}.csv successfully downloaded`
+          }))
         } catch (err) {
           dispatch(setServerError(true))
         }

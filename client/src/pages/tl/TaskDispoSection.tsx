@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import React, { useEffect, useMemo, useState } from "react"
+import React, { useCallback, useEffect, useMemo, useState } from "react"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../../redux/store"
 import Confirmation from "../../components/Confirmation"
@@ -233,7 +233,7 @@ type Props = {
 
 const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   const dispatch = useAppDispatch()
-  const {data:GroupData} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
+  const {data:GroupData,refetch:groupRefetch} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
   const {selectedGroup, selectedAgent, page, tasker, taskFilter, selectedDisposition, limit} = useSelector((state:RootState)=> state.auth)
 
   const groupDataNewObject:{[key:string]:string} = useMemo(()=> {
@@ -257,14 +257,29 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   },[page])
 
   useEffect(()=> {
-    CADRefetch()
-  },[selectedBucket,,CADRefetch])
+    const timer = setTimeout(async()=> {
+      try {
+        await CADRefetch()
+        await groupRefetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
+  },[selectedBucket,,CADRefetch,groupRefetch])
 
   useEffect(()=> {
-    setRequired(false)
-    CADRefetch()
-    setTaskToAdd([])
-    setHandleCheckAll(false)
+    const timer = setTimeout(async()=> {
+      try {
+        await CADRefetch()
+        setRequired(false)
+        setTaskToAdd([])
+        setHandleCheckAll(false)
+      } catch (error) {
+        dispatch(setServerError(true))  
+      }
+    })
+    return () => clearTimeout(timer)
   },[selectedGroup,CADRefetch,tasker, taskFilter, selectedAgent, selectedDisposition])
 
   const [modalProps, setModalProps] = useState({
@@ -275,23 +290,31 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
   })
 
   const [deleteGroupTask] = useMutation(DELETE_GROUP_TASK, {
-    onCompleted:() => {
-      CADRefetch()
+    onCompleted:async() => {
+      try {
+        const res = await CADRefetch()
+        if(res.data) {
+          dispatch(setSuccess({
+            success:true,
+            message: "Task successfully removed"
+          }))
+        }
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    
       setConfirm(false)
       setTaskToAdd([])
       setHandleCheckAll(false)
       setRequired(false)
-      dispatch(setSuccess({
-        success:true,
-        message: "Task successfully removed"
-      }))
+   
     },
     onError: () => {
       dispatch(setServerError(true))
     }
   })
 
-  const handleClickDeleteGroupTaskButton = ()=> {
+  const handleClickDeleteGroupTaskButton = useCallback(()=> {
     if(taskToAdd.length === 0) {
       setRequired(true)
     } else {
@@ -307,9 +330,9 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
         }
       })
     }
-  }
+  },[setRequired,setConfirm,setModalProps,deleteGroupTask,taskToAdd])
 
-  const handleSelectAllToAdd = (e:React.ChangeEvent<HTMLInputElement>) => {
+  const handleSelectAllToAdd = useCallback((e:React.ChangeEvent<HTMLInputElement>) => {
     const newArray = CustomerAccountsData?.findCustomerAccount.totalCountCustomerAccounts.map(e => e.toString())
     if(e.target.checked){
       setTaskToAdd(newArray ?? [])
@@ -318,12 +341,12 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
       setHandleCheckAll(false)
       setTaskToAdd([])
     }
-  }
+  },[setTaskToAdd,CustomerAccountsData,setTaskToAdd])
 
-  const handleCheckBox= (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCheckBox= useCallback((value:string, e: React.ChangeEvent<HTMLInputElement>) => {
     const check = e.target.checked ? [...taskToAdd, value] : taskToAdd.filter((d) => d !== value )
     setTaskToAdd(check)
-  }
+  },[setTaskToAdd,taskToAdd])
 
   const [addGroupTask] = useMutation(ADD_GROUP_TASK,{
     onCompleted:() => {
@@ -342,7 +365,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
     }
   })
 
-  const handleAddTask = () => {
+  const handleAddTask = useCallback(() => {
     if(taskToAdd.length === 0) {
       setRequired(true)
     } else {
@@ -359,7 +382,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
         }
       })
     }
-  }
+  },[taskToAdd,setModalProps,setConfirm,setRequired])
 
   const pages = CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts ? Math.ceil(CustomerAccountsData?.findCustomerAccount?.totalCountCustomerAccounts.length/limit) : 1
 

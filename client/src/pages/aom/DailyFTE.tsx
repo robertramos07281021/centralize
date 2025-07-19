@@ -49,9 +49,17 @@ const CAMPAIGN_ASSIGNED = gql`
 const DailyFTE = () => {
   const dispatch = useAppDispatch()
   const {data:aomDeptData, error} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
-  const {data:dailyFTEData, error:dailyFTEError} = useQuery<{getDailyFTE:DailyFTE[]}>(DAILY_FTE)
+  const {data:dailyFTEData, error:dailyFTEError, refetch} = useQuery<{getDailyFTE:DailyFTE[]}>(DAILY_FTE)
   
-  const {data:campagnedData, error:campaignAssignedError} = useQuery<{getCampaignAssigned:CampaignAssigned[]}>(CAMPAIGN_ASSIGNED)
+  const {data:campaignedData, error:campaignAssignedError, refetch:campaignedRefetch} = useQuery<{getCampaignAssigned:CampaignAssigned[]}>(CAMPAIGN_ASSIGNED)
+
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      
+
+    })
+    return () => clearTimeout(timer)
+  },[campaignedRefetch,refetch])
 
 
   useEffect(()=> {
@@ -73,7 +81,7 @@ const DailyFTE = () => {
           {
             aomDeptData?.getAomDept.map(e=> {
               const findFTEOnline = dailyFTEData?.getDailyFTE?.find(cf => cf.campaign === e.id)
-              const findFTEAssigned = campagnedData?.getCampaignAssigned.find(ca => ca.campaign === e.id)
+              const findFTEAssigned = campaignedData?.getCampaignAssigned.find(ca => ca.campaign === e.id)
 
               return (
                 

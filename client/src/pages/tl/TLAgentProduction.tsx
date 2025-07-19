@@ -70,10 +70,21 @@ const TL_BUCKET = gql`
 
 
 const TLAgentProduction = () => {
-  const {data:agentDailyProd, error:addError} = useQuery<{agentDispoDaily:AgentDailies[]}>(AGENT_DAILY_PROD)
   const dispatch = useAppDispatch()
+  const {data:agentDailyProd, error:addError, refetch} = useQuery<{agentDispoDaily:AgentDailies[]}>(AGENT_DAILY_PROD)
   const {data:agentBucketData, error:abdError} = useQuery<{findAgents:Agent[]}>(GET_DEPARTMENT_AGENT)
   const {data:tlBucketData, error:tlbdError} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      try {
+        await refetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
+  },[refetch])
 
   useEffect(()=> {
     if(addError || abdError || tlbdError) {

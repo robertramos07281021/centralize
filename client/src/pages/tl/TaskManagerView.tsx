@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { RiArrowDownSFill, RiArrowUpSFill   } from "react-icons/ri";
 import GroupSection from "./GroupSection";
 import TaskDispoSection from "./TaskDispoSection";
@@ -42,15 +42,22 @@ const BUCKETS = gql`
 const TaskManagerView = () => {
   const dispatch = useAppDispatch()
   const {tasker, taskFilter, selectedDisposition} = useSelector((state:RootState)=> state.auth)
-  const {data:DispositionTypes, error:dispoTypeError} = useQuery<{getDispositionTypes:DispositionTypes[]}>(GET_ALL_DISPOSITION_TYPE)
-  const {data:bucketData, error:bucketError} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS)
+  const {data:DispositionTypes, refetch} = useQuery<{getDispositionTypes:DispositionTypes[]}>(GET_ALL_DISPOSITION_TYPE)
+  const {data:bucketData, refetch:tlBucketRefetch} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS)
   const [bucketSelect, setBucketSelect] = useState<keyof typeof bucketObject | "">("")
 
   useEffect(()=> {
-    if(bucketError || dispoTypeError) {
-      dispatch(setServerError(true))
-    }
-  },[dispoTypeError,bucketError,dispatch ])
+    const timer = setTimeout(async()=> {
+      try {
+        await refetch()
+        await tlBucketRefetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
+  },[refetch, tlBucketRefetch])
+
   
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = bucketData?.getTLBucket || []
@@ -62,19 +69,20 @@ const TaskManagerView = () => {
     dispatch(setAgent(""))
   },[tasker,dispatch])
 
-  const handleCheckBox = (value:string, e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleCheckBox = useCallback((value:string, e: React.ChangeEvent<HTMLInputElement>) => {
     const dispositions = selectedDisposition || [];
     if (e.target.checked) {
       dispatch(setSelectedDisposition([...dispositions, value]));
     } else {
       dispatch(setSelectedDisposition(dispositions.filter((d) => d !== value)));
     }
-  }
+  },[selectedDisposition,dispatch])
 
   const [showSelection, setShowSelection] = useState<boolean>(false)
-  const onClick = ()=> {
+
+  const onClick = useCallback(()=> {
     setShowSelection(!showSelection) 
-  }
+  },[setShowSelection,showSelection])
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">

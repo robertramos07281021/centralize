@@ -3,6 +3,8 @@ import gql from 'graphql-tag'
 import {  Chart } from 'react-chartjs-2'
 import { ChartData, ChartDataset, ChartOptions } from 'chart.js'
 import { useEffect } from 'react'
+import { useAppDispatch } from '../../redux/store'
+import { setServerError } from '../../redux/slices/authSlice'
 
 type PTPPerDay = {
   campaign: string
@@ -51,15 +53,23 @@ const oklchColors = [
 ];
 
 const PTPBar = () => {
-  
+  const dispatch = useAppDispatch()
   const {data:ptpPerDay,refetch:ptpPerDayRefetch} = useQuery<{getAOMPTPPerDay:PTPPerDay[]}>(PTP_PER_DAY)
   const {data:aomDeptData, refetch:aomDeptRefetch} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
 
+  
   useEffect(()=> {
-    ptpPerDayRefetch()
-    aomDeptRefetch()
-  },[])
-
+    const timer = setTimeout(async()=> {
+      try {
+        await ptpPerDayRefetch()
+        await aomDeptRefetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
+  },[ptpPerDayRefetch,aomDeptRefetch])
+  
   const fields: {
     label: string;
     key: keyof PTPPerDay;

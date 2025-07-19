@@ -158,7 +158,8 @@ const Login = () => {
         }
       }
     },
-    onError: (error) => {
+    onError: async(error) => {
+      await persistor.purge()
       const errorMessage = ['Invalid','Already','Lock']
       if(!errorMessage.includes(error.message)) {
         dispatch(setServerError(true))

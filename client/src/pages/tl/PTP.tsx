@@ -1,7 +1,9 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { IoMdArrowDown,IoMdArrowUp  } from "react-icons/io";
+import { useAppDispatch } from "../../redux/store";
+import { setServerError } from "../../redux/slices/authSlice";
 
 type PTP = {
   bucket: string
@@ -36,12 +38,25 @@ const TL_BUCKET = gql`
 
 
 const PTP = () => {
-  const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+  const {data:tlBucketData, refetch:deptBucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = tlBucketData?.getDeptBucket || []
     return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
   },[tlBucketData])
-  const {data:ptpData} = useQuery<{getTLPTPTotals:PTP[]}>(PTP_DAILY)
+  const {data:ptpData, refetch} = useQuery<{getTLPTPTotals:PTP[]}>(PTP_DAILY)
+  const dispatch = useAppDispatch()
+
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      try {
+        await refetch()
+        await deptBucketRefetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
+  },[refetch,deptBucketRefetch])
 
   return (
     <div className='border-orange-400 border bg-orange-200 rounded-xl p-2 flex flex-col'>

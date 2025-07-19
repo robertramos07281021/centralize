@@ -123,7 +123,7 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
   if (messageText.includes("NOT READY")) successType = "NOT READY";
 
   return (
-    <div className={`${toastColor[successType].toast} w-96 h-13 rounded-xl border-slate-100 shadow shadow-black/20 border fixed right-5 top-20 z-50 flex items-center px-4 font-medium text-white justify-between`}>
+    <div className={`${toastColor[successType].toast} min-w-96 h-13 rounded-xl border-slate-100 shadow shadow-black/20 border fixed right-5 top-20 z-50 flex items-center px-4 font-medium text-white justify-between gap-10`}>
       <p>
         {successObject?.message}
       </p>

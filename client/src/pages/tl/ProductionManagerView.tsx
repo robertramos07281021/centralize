@@ -4,7 +4,7 @@ import { useQuery } from "@apollo/client"
 import { useEffect, useMemo, useState } from "react"
 import {  useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../redux/store";
-import { setProductionManagerPage } from "../../redux/slices/authSlice";
+import { setProductionManagerPage, setServerError } from "../../redux/slices/authSlice";
 
 import Pagination from "../../components/Pagination";
 import CallfilesViews from "./CallfilesViews";
@@ -51,7 +51,14 @@ const ProductionManagerView = () => {
   },[productionManagerPage])
 
   useEffect(()=>{
-    refetch()
+    const timer = setTimeout(async()=> {
+      try {
+        await refetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
   },[refetch])
 
   return (

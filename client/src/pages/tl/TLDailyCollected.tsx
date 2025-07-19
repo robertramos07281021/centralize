@@ -25,12 +25,18 @@ const DAILY_COLLECTION = gql`
 
 const TLDailyCollected = () => {
   const dispatch = useAppDispatch()
-  const {data:dailyCollected,error:tlDailyCollectedError} = useQuery<{getTLDailyCollected:Collected[]}>(DAILY_COLLECTION)
+  const {data:dailyCollected, refetch } = useQuery<{getTLDailyCollected:Collected[]}>(DAILY_COLLECTION)
+ 
   useEffect(()=> {
-    if(tlDailyCollectedError) {
-      dispatch(setServerError(true))
-    }
-  },[ tlDailyCollectedError, dispatch])
+    const timer = setTimeout(async()=> {
+      try {
+        await refetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
+  },[refetch])
 
   return (
     <div className='border-yellow-400 border bg-yellow-200 rounded-xl p-2 flex flex-col'>

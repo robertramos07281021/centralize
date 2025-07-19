@@ -120,6 +120,7 @@ const AgentView = () => {
 
   const {data: agentProdData, refetch:agentProdDataRefetch} = useQuery<{getAgentProductions:AgentProductions[]}>(AGENT_PRODUCTION)
   const [agentProduction,setAgentProduction] = useState<TLAgent[]>([])
+  
   useSubscription<{somethingOnAgentAccount:{buckets:string[],message: string}}>(SOMETHING_LOCK,{
     onData: ({data}) => {
       if(data) {

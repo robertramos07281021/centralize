@@ -1,6 +1,8 @@
 import { useMutation, useQuery } from '@apollo/client'
 import gql from 'graphql-tag'
 import { useCallback, useEffect, useState } from 'react'
+import { useAppDispatch } from '../../redux/store'
+import { setServerError } from '../../redux/slices/authSlice'
 
 type Props = {
   agentToUpdate: string | null
@@ -37,14 +39,26 @@ const SET_TARGETS = gql`
 
 
 const SetTargetsModal:React.FC<Props> = ({agentToUpdate, cancel, success}) => {
-
-  const {data:agentData} = useQuery<{getUser: {targets: Target}}>(AGENT, {variables:{id: agentToUpdate}})
+  const dispatch = useAppDispatch()
+  const {data:agentData, refetch} = useQuery<{getUser: {targets: Target}}>(AGENT, {variables:{id: agentToUpdate}})
 
   const [targets, setTarget] = useState({
     daily: "0",
     weekly: "0",
     monthly: "0"
   })
+
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      try {
+        await refetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+
+    return () => clearTimeout(timer)
+  },[refetch])
 
   useEffect(()=> {
     if(agentData?.getUser?.targets) {

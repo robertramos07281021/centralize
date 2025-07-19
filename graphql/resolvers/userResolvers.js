@@ -62,16 +62,51 @@ const userResolvers = {
       try {
 
         const searchFilter = {$regex: search, $options: "i"}
+
         const res = await User.aggregate([
+          {
+            $lookup: {
+              from: "departments",
+              localField: "departments", 
+              foreignField: "_id",
+              as: "department"
+            }
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "buckets", 
+              foreignField: "_id",
+              as: "bucket"
+            }
+          },
+          {
+            $lookup: {
+              from: "branches",
+              localField: "branch", 
+              foreignField: "_id",
+              as: "user_branch"
+            }
+          },
+          {
+            $unwind: {path: "$user_branch", preserveNullAndEmptyArrays: true}
+          },
           {
             $match: { 
               $or: [
                 { name:  searchFilter },
                 { username: searchFilter },
                 { type: searchFilter },
-                { branch: searchFilter },
-                { department: searchFilter },
-                { user_id: searchFilter }
+                { "user_branch.name": searchFilter },
+                { department: { $elemMatch: { name: searchFilter } } },
+                { bucket:{ $elemMatch: { name: searchFilter } }},
+                { user_id: searchFilter },
+                ...(search.toLowerCase() === 'active' ? [{ active: true }] : []),
+                ...(search.toLowerCase() === 'inactive' ? [{ active: false }] : []),
+                ...(search.toLowerCase() === 'online' ? [{ isOnline: true }] : []),
+                ...(search.toLowerCase() === 'offline' ? [{ isOnline: false }] : []),
+                ...(search.toLowerCase() === 'islock' ? [{ isLock: true }] : []),
+                ...(search.toLowerCase() === 'unlock' ? [{ isLock: false }] : [])
               ]
             }
           },
@@ -86,12 +121,16 @@ const userResolvers = {
           
           }
         ])
-  
+    
+        const users = res[0].users || []
+        const total = res[0].total[0].totalUser || 0
+        
         return {
-          users: res[0].users ?? [],
-          total: res[0].total.length > 0 ? res[0].total[0].totalUser : 0,
+          users: users,
+          total: total,
         };
       } catch (error) {
+
         throw new CustomError(error.message, 500)
       }
     },

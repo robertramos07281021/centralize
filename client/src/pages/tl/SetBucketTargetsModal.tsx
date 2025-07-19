@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useCallback, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useAppDispatch } from "../../redux/store"
 import { setServerError, setSuccess } from "../../redux/slices/authSlice"
 
@@ -40,10 +40,10 @@ type Success = {
 
 const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
   const dispatch = useAppDispatch()
-  const {data} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS)
+  const {data,refetch:tlBucketRefetch} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS)
   const [bucket, setBucket] = useState<string>("")
   const [setBucketTargets] = useMutation<{setBucketTargets:Success}>(SET_BUCKET_TARGETS,{
-    onCompleted:(res) => {
+    onCompleted:async(res) => {
       dispatch(setSuccess({
         success: res.setBucketTargets.success,
         message: res.setBucketTargets.message
@@ -55,6 +55,19 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
     }
     
   })
+
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      try {
+        await tlBucketRefetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return ()=> clearTimeout(timer)
+  },[tlBucketRefetch])
+
+
   const [required, setRequired] = useState<boolean>(false)
 
   const [targets, setTarget] = useState({

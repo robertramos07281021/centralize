@@ -2,6 +2,8 @@ import {  Chart } from "react-chartjs-2";
 import { gql, useQuery } from "@apollo/client";
 import { ChartData, ChartDataset, ChartOptions } from "chart.js";
 import { useEffect } from "react";
+import { useAppDispatch } from "../../redux/store";
+import { setServerError } from "../../redux/slices/authSlice";
 
 type PaidPerDay = {
   campaign: string
@@ -50,13 +52,21 @@ const oklchColors = [
 ];
 
 const PaidBar = () => {
+  const dispatch = useAppDispatch()
   const {data:paidData,refetch:paidRefetch} = useQuery<{getAOMPaidPerDay:PaidPerDay[]}>(PAID_PER_DAY)
   const {data:aomDeptData,refetch:aomDeptDataRefetch} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
   
   useEffect(()=> {
-    paidRefetch()
-    aomDeptDataRefetch()
-  },[])
+    const timer = setTimeout(async()=> {
+      try {
+        await paidRefetch()
+        await aomDeptDataRefetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
+  },[paidRefetch,paidRefetch])
 
   const fields: {
     label: string;
@@ -81,16 +91,16 @@ const PaidBar = () => {
         return findDept ? findDept[key] : 0
       }),
       ...(type === "line"
-        ? {
-            borderColor: color,
-            borderWidth: 0.8,
-            fill: false,
-            tension: 0.4,
-            yAxisID: "y1",
-          }
-        : {
-            backgroundColor: color,
-          }),
+      ? {
+          borderColor: color,
+          borderWidth: 0.8,
+          fill: false,
+          tension: 0.4,
+          yAxisID: "y1",
+        }
+      : {
+          backgroundColor: color,
+        }),
     }
     return datasets as ChartDataset<'bar' | 'line', number[]>
   })

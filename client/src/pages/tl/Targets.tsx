@@ -3,6 +3,8 @@ import { ChartOptions } from "chart.js";
 import gql from "graphql-tag";
 import { useEffect, useMemo, useState } from "react";
 import { Doughnut } from "react-chartjs-2"
+import { useAppDispatch } from "../../redux/store";
+import { setServerError } from "../../redux/slices/authSlice";
 
 type Target = {
   bucket: string
@@ -35,8 +37,9 @@ const TL_BUCKET = gql`
 `
 
 const Targets = () => {
-  const {data:targetsData} = useQuery<{getTargetPerCampaign:Target[]}>(TARGET_PER_BUCKET)
-  const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+  const {data:targetsData, refetch} = useQuery<{getTargetPerCampaign:Target[]}>(TARGET_PER_BUCKET)
+  const {data:tlBucketData, refetch:deptBucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+  const dispatch = useAppDispatch()
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = tlBucketData?.getDeptBucket || []
@@ -45,6 +48,19 @@ const Targets = () => {
 
   const [width, setWidth] = useState<string>('w-1/1')
   const [height, setHeight] = useState<string>('h-1/1')
+
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      try {
+        await refetch()
+        await deptBucketRefetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
+  },[deptBucketRefetch,refetch])
+
 
   useEffect(()=> {
     if(targetsData) {

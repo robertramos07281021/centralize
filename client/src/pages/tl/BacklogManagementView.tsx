@@ -72,7 +72,7 @@ const BacklogManagementView = () => {
     const dropdownAgent = filteredAgent?.length.valueOf() && searchAgent?.trim() !== "" ? true : false
     setAgentDropdown(dropdownAgent)
     if(dropdownAgent) {
-      setBucketDropdown(!dropdownAgent)
+      setBucketDropdown(prev => !prev)
     }
   },[searchAgent,agentSelector])
 
@@ -84,7 +84,7 @@ const BacklogManagementView = () => {
 
     setBucketDropdown(dropdownBucket)
     if(dropdownBucket) {
-      setAgentDropdown(!dropdownBucket)
+      setAgentDropdown(prev => !prev)
     }
   },[departmentBucket, searchBucket])
 
@@ -93,15 +93,15 @@ const BacklogManagementView = () => {
     setSelectedDisposition(check)
   },[selectedDisposition, setSelectedDisposition])
 
-  const handleAgentDropdown = ()=> {
-    setAgentDropdown(!agentDropdown)
+  const handleAgentDropdown = useCallback(()=> {
+    setAgentDropdown(prev => !prev)
     setBucketDropdown(false)
-  }
+  },[setAgentDropdown,setBucketDropdown,agentDropdown])
 
-  const handleBucketDropdown = ()=> {
-    setBucketDropdown(!bucketDropdown)
+  const handleBucketDropdown = useCallback(()=> {
+    setBucketDropdown(prev => !prev)
     setAgentDropdown(false)
-  }
+  },[setBucketDropdown,setAgentDropdown,bucketDropdown])
 
   const SearchFilter:Search = {
     searchBucket:searchBucket, 

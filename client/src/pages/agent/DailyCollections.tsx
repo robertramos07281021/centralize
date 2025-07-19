@@ -3,6 +3,8 @@ import gql from "graphql-tag"
 import { IoMdArrowDown, IoMdArrowUp  } from "react-icons/io";
 import { HiOutlineMinusSm } from "react-icons/hi";
 import { useEffect } from "react";
+import { useAppDispatch } from "../../redux/store";
+import { setServerError } from "../../redux/slices/authSlice";
 
 
 type DailyCollection = {
@@ -104,12 +106,20 @@ const StatCard = ({ label, current, previous, color, count }: RateProps) => {
 };
 
 export default function DailyCollections() {
+  const dispatch = useAppDispatch()
   const {data,refetch} = useQuery<{getAgentDailyCollection:DailyCollection}>(AGENT_DAILY_COLLECTIONS)
 
   const stats = data?.getAgentDailyCollection;
 
   useEffect(()=> {
-    refetch()
+    const timer = setTimeout(async()=> {
+     try {
+       await refetch()
+     } catch (error) {
+      dispatch(setServerError(true))
+     } 
+    })
+    return () => clearTimeout(timer)
   },[refetch])
 
   return (

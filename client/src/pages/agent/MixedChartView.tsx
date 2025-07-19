@@ -5,7 +5,8 @@ import { useQuery } from '@apollo/client';
 import { useEffect } from 'react';
 import { Chart } from "react-chartjs-2";
 import { useSelector } from "react-redux";
-import { RootState } from "../../redux/store";
+import { RootState, useAppDispatch } from "../../redux/store";
+import { setServerError } from "../../redux/slices/authSlice";
 
 
 type AgentProdPerDay = {
@@ -48,11 +49,21 @@ const AGENT_PER_DAY_PROD = gql`
 
 
 const MixedChartView = () => {
+  const dispatch = useAppDispatch()
   const {data:agentProdPerDayData, refetch:PerDayRefetch} = useQuery<{getAgentProductionPerDay:AgentProdPerDay[]}>(AGENT_PER_DAY_PROD)
   const {userLogged} = useSelector((state:RootState)=> state.auth)
+
   useEffect(()=> {
-  PerDayRefetch()
+    const timer = setTimeout(async()=> {
+      try {
+        await PerDayRefetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
   },[PerDayRefetch])
+
   const dailyTargets = userLogged?.targets?.daily
 
   function getDaysInMonth(): number {
@@ -66,6 +77,10 @@ const MixedChartView = () => {
 
   const daysInMonth = getDaysInMonth();
   const prodData = agentProdPerDayData?.getAgentProductionPerDay || [];
+  const totals = prodData.map(e=> e.total)
+  const rounded = Math.round(Math.max(...totals)/10000)*10000
+  const Max = rounded > dailyTargets ? rounded : dailyTargets
+  
 
   const fields: {
     label: string;
@@ -164,7 +179,7 @@ const MixedChartView = () => {
         type: 'linear',
         position: 'left',
         min: 0,
-        max: dailyTargets + 20000,
+        max: Max + 20000,
         ticks: {
           font: {
             size: 12,
@@ -175,7 +190,7 @@ const MixedChartView = () => {
         type: 'linear',
         position: 'right',
         min: 0,
-        max: dailyTargets + 20000,
+        max: Max + 20000,
         ticks: {
           font: {
             size: 12,

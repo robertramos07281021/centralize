@@ -1,8 +1,9 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useMemo } from "react"
+import { useEffect, useMemo } from "react"
 import { FaCircle } from "react-icons/fa";
-
+import { useAppDispatch } from "../../redux/store";
+import { setServerError } from "../../redux/slices/authSlice";
 
 const AOM_CAMPAIGN_FTE = gql`
   query getAOMCampaignFTE {
@@ -33,7 +34,6 @@ type AOMFTE = {
   users: User[]
 }
 
-
 const GET_ALL_BUCKET = gql`
   query GetAllBucket {
     getAllBucket {
@@ -47,7 +47,6 @@ type Bucket = {
   _id: string
   name: string
 }
-
 
 const ACCOUNT_HELPER = gql`
   query getHelperAgent {
@@ -83,9 +82,22 @@ type Campaign = {
 }
 
 const FTEUserView = () => {
-  const {data:AOMFTEData} = useQuery<{getAOMCampaignFTE:AOMFTE[]}>(AOM_CAMPAIGN_FTE)
+  const dispatch = useAppDispatch()
+  const {data:AOMFTEData, refetch} = useQuery<{getAOMCampaignFTE:AOMFTE[]}>(AOM_CAMPAIGN_FTE)
   const {data:allBucket} = useQuery<{getAllBucket:Bucket[]}>(GET_ALL_BUCKET)
   const {data:aomCampaign} = useQuery<{getAomDept:Campaign[]}>(GET_AOM_CAMPAIGN)
+
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      try {
+        await refetch()
+
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
+  },[refetch])
   
   const campaignObject:{[key:string]:string} = useMemo(()=> {
     const campaign = aomCampaign?.getAomDept || []

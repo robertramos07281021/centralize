@@ -3,6 +3,8 @@ import { ChartOptions } from "chart.js"
 import gql from "graphql-tag"
 import { useEffect, useMemo, useState } from "react"
 import { Bar } from "react-chartjs-2"
+import { setServerError } from "../../redux/slices/authSlice"
+import { useAppDispatch } from "../../redux/store"
 
 type PtpProd = {
   bucket: string
@@ -48,15 +50,29 @@ const oklchColors = [
 
 
 const PTPBarProd = () => {
+  const dispatch = useAppDispatch()
 
-  const {data:tlBucketData} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+  const {data:tlBucketData, refetch:deptBucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = tlBucketData?.getDeptBucket || []
     return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
   },[tlBucketData])
 
-  const {data:ptpData} = useQuery<{getTLPTPToday:PtpProd[]}>(PTP_PROD)
+  const {data:ptpData, refetch} = useQuery<{getTLPTPToday:PtpProd[]}>(PTP_PROD)
+
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      try {
+        await refetch()
+        await deptBucketRefetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return ()=> clearTimeout(timer)
+  },[refetch,deptBucketRefetch])
+
   const [labels, setLabels] = useState<string[]>([])
   const [callsData, setCallsData] = useState<number[]>([])
   const [smsData, setSmsData] = useState<number[]>([])
