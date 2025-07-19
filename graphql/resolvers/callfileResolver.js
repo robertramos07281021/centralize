@@ -559,12 +559,12 @@ const callfileResolver = {
           {
             $match: {
               "callfileBucket.dept": {$in: deptArray},
-              "endo": {$eq: null}
+              active: {$eq: true},
             }
           }
         ])
 
-        const callfile = findCallfile.map(e=> e._id)
+        const callfile = findCallfile.map(e=> new mongoose.Types.ObjectId(e._id))
         
         const positive = ['KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
         const success = ['PTP','PAID','UNEG','FFUP','RPCCB']
@@ -586,6 +586,17 @@ const callfileResolver = {
           },
           {
             $unwind: {path: "$ca_bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "customers",
+              localField: "customer",
+              foreignField: "_id",
+              as: "customer_info"
+            },
+          },
+          {
+            $unwind: {path: "$customer_info",preserveNullAndEmptyArrays: true}
           },
           {
             $lookup: {
@@ -614,6 +625,17 @@ const callfileResolver = {
               _id: {
                 callfile: "$callfile",
                 department: "$ca_bucket.dept"
+              },
+              rpc: {
+                $sum: {
+                  $cond: [
+                    {
+                     $eq: ["$customer_info.isRPC", true]
+                    },
+                    1,
+                    0
+                  ]
+                }
               },
               success: {
                 $sum: {
@@ -661,6 +683,7 @@ const callfileResolver = {
             $project: {
               _id: 0,
               department: "$_id.department",
+              rpc: 1,
               success: 1,
               positive: 1,
               unconnected: 1
@@ -673,7 +696,6 @@ const callfileResolver = {
         ])
         
         return customerAccounts
-
       } catch (error) {
         throw new CustomError(error.message,500)  
       }

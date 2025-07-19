@@ -32,12 +32,11 @@ const AomDashboard = () => {
       <div className="bg-white row-span-2 col-span-3 rounded-xl border border-slate-300 p-2 flex flex-col">
         <CampaignStats/>
       </div>
-      <div className=" row-span-2 bg-white rounded-xl border border-slate-300 p-2">
-        <DailyFTE/>
-      </div>
-      <div className="row-start-3 col-start-4 bg-white col-span-full row-span-2 rounded-xl border border-slate-200 shadow-sm shadow-black/20 p-2">
-        <CallsRatings/>
-      </div>
+    
+      <DailyFTE/>
+
+      <CallsRatings/>
+ 
 
     </div>
   )

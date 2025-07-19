@@ -37,8 +37,9 @@ const callfileTypeDefs = gql`
   }
   type MonthlyDetails {
     department: ID
-    success: Int,
-    positive: Int,
+    success: Int
+    positive: Int
+    rpc: Int
     unconnected: Int
   }
 

@@ -7,6 +7,7 @@ import { setServerError } from '../../redux/slices/authSlice'
 type AomDept = {
   id: string
   name: string
+  branch: string
 }
 
 const AOM_DEPT = gql`
@@ -14,6 +15,7 @@ const AOM_DEPT = gql`
     getAomDept {
       id
       name
+      branch
     }
   }
 `
@@ -48,55 +50,58 @@ const CAMPAIGN_ASSIGNED = gql`
 
 const DailyFTE = () => {
   const dispatch = useAppDispatch()
-  const {data:aomDeptData, error} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
-  const {data:dailyFTEData, error:dailyFTEError, refetch} = useQuery<{getDailyFTE:DailyFTE[]}>(DAILY_FTE)
+  const {data:aomDeptData, refetch:aomDeptRefetch} = useQuery<{getAomDept:AomDept[] }>(AOM_DEPT)
+  const {data:dailyFTEData, refetch} = useQuery<{getDailyFTE:DailyFTE[]}>(DAILY_FTE)
   
-  const {data:campaignedData, error:campaignAssignedError, refetch:campaignedRefetch} = useQuery<{getCampaignAssigned:CampaignAssigned[]}>(CAMPAIGN_ASSIGNED)
+  const {data:campaignedData, refetch:campaignedRefetch} = useQuery<{getCampaignAssigned:CampaignAssigned[]}>(CAMPAIGN_ASSIGNED)
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {
-      
-
+      try {
+        await campaignedRefetch()
+        await refetch()
+        await aomDeptRefetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
     })
     return () => clearTimeout(timer)
-  },[campaignedRefetch,refetch])
+  },[campaignedRefetch,refetch, aomDeptRefetch])
 
 
-  useEffect(()=> {
-    if(error || dailyFTEError || campaignAssignedError) {
-      dispatch(setServerError(true))
-    }
-  },[error, dailyFTEError, campaignAssignedError,dispatch])
+
 
   return (
-    <>
-      
+    <div className=" row-span-2 bg-white h-full rounded-xl overflow-hidden border-slate-300 p-2 flex flex-col">
       <h1 className="font-medium text-slate-500 text-center lg:text-xs 2xl:text-sm">Daily FTE</h1>
       <div className="text-center font-medium text-slate-500 lg:text-xs 2xl:text-sm grid grid-cols-3">
         <div>Campaign</div>
         <div>Assigned</div>
         <div>Online</div>
       </div>
-      <div className="lg:h-65 2xl:h-75 overflow-x-auto lg:text-[0.6em] 2xl:text-xs text-slate-400">
-          {
-            aomDeptData?.getAomDept.map(e=> {
-              const findFTEOnline = dailyFTEData?.getDailyFTE?.find(cf => cf.campaign === e.id)
-              const findFTEAssigned = campaignedData?.getCampaignAssigned.find(ca => ca.campaign === e.id)
+      <div className="h-full overflow-y-auto lg:text-[0.6em] 2xl:text-xs text-slate-400">
+        {
+          aomDeptData?.getAomDept.map(e=> {
+            const findFTEOnline = dailyFTEData?.getDailyFTE?.find(cf => cf.campaign === e.id)
+            const findFTEAssigned = campaignedData?.getCampaignAssigned.find(ca => ca.campaign === e.id)
 
-              return (
-                
-                <div key={e.id} className="grid grid-cols-3 text-center hover:bg-blue-50 cursor-default py-0.5">
-                  <div>{e.name}</div>
-                  <div className="flex justify-center items-center"><span>{findFTEAssigned?.assigned || 0}</span> </div>
-                  <div className="flex justify-center items-center"><span>{findFTEOnline?.online || 0}</span> </div>
-                </div>
-                
-              )
-            })  
-          }
+            return (
+              
+              <div key={e.id} className="grid grid-cols-3 text-center hover:bg-blue-50 cursor-default py-0.5">
+                <div>{e.name} - {e.branch}</div>
+                <div className="flex justify-center items-center"><span>{findFTEAssigned?.assigned || 0}</span> </div>
+                <div className="flex justify-center items-center"><span>{findFTEOnline?.online || 0}</span> </div>
+              </div>
+              
+            )
+          })  
+        }
       </div>
-    </>
+    </div>
   )
 }
 
 export default DailyFTE
+
+
+

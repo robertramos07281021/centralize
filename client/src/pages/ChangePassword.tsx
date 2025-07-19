@@ -2,7 +2,7 @@ import { gql, useMutation, useQuery } from "@apollo/client"
 import { UserInfo } from "../middleware/types"
 import { Navigate, useLocation, useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
-import { RootState, useAppDispatch } from "../redux/store";
+import { persistor, RootState, useAppDispatch } from "../redux/store";
 import { useEffect, useRef, useState } from "react";
 import Loading from "./Loading";
 import {  setServerError, setUserLogged } from "../redux/slices/authSlice";
@@ -54,7 +54,8 @@ const ChangePassword = () => {
   const [notMatch, setNotMatch] = useState<boolean>(false)
 
   const [logout] = useMutation(LOGOUT,{
-    onCompleted: ()=> {
+    onCompleted: async()=> {
+      await persistor.purge()
       dispatch(setUserLogged(
         {
           _id: "",
@@ -82,7 +83,7 @@ const ChangePassword = () => {
 
   const [changePassword, {loading:changePassLoading}] = useMutation<{updatePassword: UserInfo}>(UPDATEPASSWORD, {
     onCompleted: async() => {
-      refetch();
+      await refetch();
       navigate("/")
       await logout()
     },
@@ -97,10 +98,17 @@ const ChangePassword = () => {
       }
     }
   })
-
-
+  
+  
   useEffect(()=> {
-    refetch()
+    const timer = setTimeout(async()=> {
+      try {
+        await refetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
   },[navigate, refetch, data])
 
   const submitForm = async(e: React.FormEvent<HTMLFormElement>) => {
