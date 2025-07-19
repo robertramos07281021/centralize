@@ -129,7 +129,7 @@ const unconnected = rawCounts.map((e, i) => -toPercent(e.unconnected, totals[i])
     data: successful,
     backgroundColor: color[1],
     stack: 'Stack 1',
-    rw: rawCounts.map(e => e.success),
+    raw: rawCounts.map(e => e.success),
   },
   {
     label: 'RPC Rate',
