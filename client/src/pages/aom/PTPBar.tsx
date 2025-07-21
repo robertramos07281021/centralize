@@ -81,7 +81,7 @@ const PTPBar = () => {
     { label: "Email", key: "email", color: oklchColors[2], type: "bar" },
     { label: "Skip", key: "skip", color: oklchColors[3], type: "bar" },
     { label: "Field", key: "field", color: oklchColors[4], type: "bar" },
-    { label: "Total", key: "total", color: "#000", type: "line" },
+    // { label: "Total", key: "total", color: "#000", type: "line" },
   ];
 
   const datasets:ChartDataset<'bar' | 'line',number[]>[] = fields.map(({label, key, color, type})=> {
@@ -92,17 +92,17 @@ const PTPBar = () => {
         const findDept = ptpPerDay?.getAOMPTPPerDay.find(y => y.campaign === e.id)
         return findDept ? findDept[key] : 0
       }),
-      ...(type === "line"
-        ? {
-            borderColor: color,
-            borderWidth: 0.8,
-            fill: false,
-            tension: 0.4,
-            yAxisID: "y1",
-          }
-        : {
-            backgroundColor: color,
-          }),
+      // ...(type === "line"
+      //   ? {
+      //       borderColor: color,
+      //       borderWidth: 0.8,
+      //       fill: false,
+      //       tension: 0.4,
+      //       yAxisID: "y1",
+      //     }
+      ...( {
+          backgroundColor: color,
+        }),
     }
     return datasets as ChartDataset<'bar' | 'line', number[]>
   })
