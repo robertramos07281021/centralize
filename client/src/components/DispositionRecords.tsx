@@ -20,6 +20,7 @@ const AGENTS = gql`
 type Dispotype = {
   id: string
   name: string
+  code: string
 }
 
 const DISPOTYPES = gql`
@@ -27,6 +28,7 @@ const DISPOTYPES = gql`
     getDispositionTypes {
       id
       name
+      code
     }
   }
 `
@@ -65,6 +67,9 @@ const DispositionRecords = () => {
       setLimit(3)
     }
   }
+  const withPayment = ['PTP','UNEG','PAID']
+
+  const filter = dispotypesData?.getDispositionTypes.filter(e=> withPayment.includes(e.code)).map(x=> x.id)
 
   return selectedCustomer._id && selectedCustomer?.dispo_history && (
     <div className="p-5 flex flex-col gap-10">
@@ -75,13 +80,11 @@ const DispositionRecords = () => {
             <div key={gad._id} className={`w-8/10 lg:w-2/7 2xl:text-sm lg:text-xs flex flex-col gap-2 border p-2 rounded-xl border-slate-400 ${gad.existing && "bg-slate-200"}`}>
                <div className=" gap-2 border border-slate-500 rounded-md bg-white p-2 text-center font-medium 2xl:text-base lg;text-sm text-slate-600">
                 {index + 1 === 1 ? "Latest" :  (index + 1 === 2 ? "Previous" : "Past")}
-               
               </div>
               <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white ">
                 <div className="text-gray-800 font-bold p-2 text-end">Agent</div>
                 <div className="p-2 col-span-2 font-medium capitalize text-slate-600 ">{agentObject[gad.user] || "No agent id"}</div>
               </div>
-             
               <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white w-full">
                 <div className="text-gray-800 font-bold p-2 text-end">Date & Time</div>
                 <div className="p-2 col-span-2 text-slate-700  w-full">{date(gad.createdAt)}</div>
@@ -100,7 +103,7 @@ const DispositionRecords = () => {
               </div>
               <div className=" grid grid-cols-3 gap-2">
                 <div className="text-gray-800 font-bold p-2 text-end">Payment</div>
-                <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 capitalize bg-white">{gad.payment}</div>
+                <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 capitalize bg-white">{filter?.includes(gad.disposition) ? gad.payment || "" : ""}</div>
               </div>
               <div className=" grid grid-cols-3 gap-2 ">
                 <div className="text-gray-800 font-bold p-2 text-end">Payment Date</div>

@@ -1,12 +1,11 @@
 import { useQuery } from "@apollo/client";
-import { ChartOptions } from "chart.js";
+import { ChartData, ChartOptions } from "chart.js";
 import gql from "graphql-tag";
+import { useEffect } from "react";
 import { Bar } from "react-chartjs-2"
-import { ChartDataset } from 'chart.js';
+import { useAppDispatch } from "../../redux/store";
+import { setServerError } from "../../redux/slices/authSlice";
 
-interface ExtendedChartDataset extends ChartDataset<'bar', number[]> {
-  raw: number[];
-}
 
 const color = [
   "oklch(63.7% 0.237 25.331)",    
@@ -38,10 +37,26 @@ type Callfile = {
 
 
 const CallsRatings = () => {
+  const dispatch = useAppDispatch()
+  const {data:callfilesData,refetch} = useQuery<{monthlyDetails:Callfile[]}>(CALLFILE) 
 
-  const {data:callfilesData} = useQuery<{monthlyDetails:Callfile[]}>(CALLFILE) 
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      try {
+        await refetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
+  },[])
 
+  const totals = callfilesData?.monthlyDetails.map(e =>
+  e.success + e.positive + e.unconnected
+) ?? []
 
+  const toPercent = (value: number, total: number) =>
+  total ? parseFloat(((value / total) * 100).toFixed(2)) : 0
   
 
   const options: ChartOptions<'bar'> = {
@@ -53,10 +68,21 @@ const CallsRatings = () => {
       datalabels: {
         color: '#000',
         font: {
-          size: 7,
+          size: 10,
           weight: 'bold'
         },
-        formatter: (value: number) => `${value.toFixed(2)}%`
+        formatter: (value: number,context) => {
+          const dataIndex = context.dataIndex;
+          const datasets = context.chart.data.datasets;
+          const total = 
+            (datasets[0].data?.[dataIndex] as number || 0) +
+            (datasets[1].data?.[dataIndex] as number || 0) +
+            Math.abs(datasets[3].data?.[dataIndex] as number || 0);
+
+          const percent = total ? (value / total) * 100 : 0;
+
+          return `${percent.toFixed(2)}%`;
+        }
       },
       tooltip: {
         callbacks: {
@@ -65,8 +91,8 @@ const CallsRatings = () => {
             const index = context.dataIndex
             const label = dataset.label || ''
             const percent = context.raw as number
-            const rawValue = dataset?.raw[index] ?? 'N/A'
-            return `${label}: ${rawValue} (${percent.toFixed(2)}%)`
+            const rawValue = toPercent(dataset?.data[index] as number,totals[index]) ?? 'N/A'
+            return `${label}: ${percent} (${rawValue.toFixed(2)}%)`
           }
         }
       },
@@ -101,40 +127,34 @@ const CallsRatings = () => {
   
 const labels = callfilesData?.monthlyDetails.map(e => e.department) ?? []
 
-const totals = callfilesData?.monthlyDetails.map(e =>
-  e.success + e.positive + e.unconnected + e.rpc
-) ?? []
 
-const toPercent = (value: number, total: number) =>
-  total ? parseFloat(((value / total) * 100).toFixed(2)) : 0
 
 const rawCounts = callfilesData?.monthlyDetails ?? []
 
-const positive = rawCounts.map((e, i) => toPercent(e.positive, totals[i]))
-const successful = rawCounts.map((e, i) => toPercent(e.success, totals[i]))
-const rpc = rawCounts.map((e, i) => toPercent(e.rpc, totals[i]))
-const unconnected = rawCounts.map((e, i) => -toPercent(e.unconnected, totals[i]))
+const positive = rawCounts.map((e) => e.positive)
+const successful = rawCounts.map((e) => e.success)
+const rpc = rawCounts.map((e) => e.rpc)
+const unconnected = rawCounts.map((e) => -e.unconnected)
 
 
-  const datasets: ExtendedChartDataset[] = [
+  const datasets= [
   {
     label: 'Positive Rate',
     data: positive,
     backgroundColor: color[3],
     stack: 'Stack 1',
-    raw: rawCounts.map(e => e.positive),
   },
   {
     label: 'Success Rate',
     data: successful,
     backgroundColor: color[1],
     stack: 'Stack 1',
-    raw: rawCounts.map(e => e.success),
+
   },
   {
     label: 'RPC Rate',
     data: rpc,
-    backgroundColor: color[1],
+    backgroundColor: color[4],
     stack: 'Stack 2',
     raw: rawCounts.map(e => e.rpc),
   },
@@ -143,12 +163,11 @@ const unconnected = rawCounts.map((e, i) => -toPercent(e.unconnected, totals[i])
     data: unconnected,
     backgroundColor: color[0],
     stack: 'Stack 3',
-    raw: rawCounts.map(e => e.unconnected),
   },
 ];
 
 
-  const data = {
+  const data:ChartData<'bar'> = {
     labels,
     datasets
   }

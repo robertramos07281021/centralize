@@ -1775,9 +1775,11 @@ const dispositionResolver = {
 
         const payment = customerAccount.balance - parseFloat(input.amount || 0) === 0 ? "full" : 'partial';
 
+        const withPayment = ['PTP','PAID','UNEG']
+
         const newDisposition = await Disposition.create({
           ...input,
-          payment: payment,
+          payment: withPayment.includes(dispoType.code) ? payment : "",
           amount: parseFloat(input.amount) || 0, 
           user: user._id, 
           ptp: ptp

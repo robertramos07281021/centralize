@@ -1,5 +1,5 @@
 import { useQuery } from "@apollo/client"
-import { ChartOptions } from "chart.js"
+import { ChartData, ChartOptions } from "chart.js"
 import gql from "graphql-tag"
 import { useEffect, useMemo, useState } from "react"
 import { Bar } from "react-chartjs-2"
@@ -146,7 +146,7 @@ const PTPBarProd = () => {
     maintainAspectRatio: false
   }
 
-  const data = {
+  const data:ChartData<'bar'> = {
     labels: labels.map(e=> bucketObject[e]),
     datasets: [
       {
