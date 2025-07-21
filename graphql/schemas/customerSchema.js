@@ -200,6 +200,13 @@ const customerTypeDefs = gql`
     campaign: ID
     collected: Float
     target: Float
+    ptpCount: Int,
+    pkCount: Int,
+    pCount: Int,
+    ptp: Float,
+    pk: Float,
+    paid: Float,
+
   }
   type AomReportsResult {
     campaign: ID

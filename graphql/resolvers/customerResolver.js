@@ -651,14 +651,32 @@ const customerResolver = {
     },
     getMonthlyTarget: async(_,__,{user}) => {
       try {
-        const year = new Date().getFullYear()
-        const month = new Date().getMonth();
-        const firstDay = new Date(year,month, 1)
-        const lastDay = new Date(year,month + 1,0)
-        const aomCampaign = await Department.find({aom: user._id}).lean()
+        const [aomCampaign,dispoType] = await Promise.all([
+          Department.find({aom: user._id}).lean(),
+          DispoType.find().lean()
+        ])
+
+        
         const aomCampaignNameArray = aomCampaign.map(e => e.name)
         const campaignBucket = await Bucket.find({dept: {$in: aomCampaignNameArray}}).lean()
-        const newArrayCampaignBucket = campaignBucket.map(e=> e._id)
+        const newArrayCampaignBucket = campaignBucket.map(e=> new mongoose.Types.ObjectId(e._id))
+        const {_id} = dispoType.find(x => 
+          x.code === 'PAID'
+        )
+     
+        
+        const findActiveCallfile = await Callfile.find({
+          $and: [
+            {
+              bucket: {$in: newArrayCampaignBucket}
+            },
+            {
+              active: {$eq: true}
+            }
+          ]
+        }).lean()
+        
+        const newMapCallfile = findActiveCallfile.map(x=> new mongoose.Types.ObjectId(x._id))
 
         const monthlyTarget = await CustomerAccount.aggregate([
           {
@@ -695,14 +713,134 @@ const customerResolver = {
             $unwind: { path: "$dispoType", preserveNullAndEmptyArrays: true } 
           },
           {
+            $lookup: {
+              from: "dispositions",
+              localField: "history",
+              foreignField: "_id",
+              as: "account_history",
+            }
+          },
+          {
             $match: {
-              "currentDisposition.createdAt" : {$gte: firstDay, $lt: lastDay},
-              bucket: {$in: newArrayCampaignBucket}
+              callfile : {$in: newMapCallfile}
+            }
+          },
+          {
+            $addFields: {
+              historyPTPKept: {
+                $filter: {
+                  input: "$account_history",
+                  as: "h",
+                  cond: {
+                    $and: [
+                      { $eq: ["$$h.disposition", new mongoose.Types.ObjectId(_id)]},
+                      { $eq: ["$$h.ptp", true] }
+                    ]
+                  }
+                }
+              },
+              historyPaidOnly: {
+                $filter: {
+                  input: "$account_history",
+                  as: "h",
+                  cond: {
+                    $and: [
+                      { $eq: ["$$h.disposition", new mongoose.Types.ObjectId(_id)] },
+                      { $eq: ["$$h.ptp", false] }
+                    ]
+                  }
+                }
+              }
+            }
+          },
+          {
+            $addFields: {
+              ptpKeptHistoryCount: { $size: "$historyPTPKept" },
+              ptpKeptAmount: {
+                $sum: {
+                  $map: {
+                    input: "$historyPTPKept",
+                    as: "item",
+                    in: "$$item.amount"
+                  }
+                }
+              },
+              paidHistoryCount: { $size: "$historyPaidOnly" },
+              paidHistoryAmount: {
+                $sum: {
+                  $map: {
+                    input: "$historyPaidOnly",
+                    as: "item",
+                    in: "$$item.amount"
+                  }
+                }
+              }
             }
           },
           {
             $group: {
               _id: "$account_bucket.dept",
+              ptpCount: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$dispoType.code','PTP']
+                    },
+                    1,
+                    0
+                  ]
+                }
+              },
+              pkCount: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $eq: ['$dispoType.code','PAID']
+                        },
+                        {
+                          $eq: ["$currentDisposition.ptp", true]
+                        }
+                      ]
+                    },
+                    1,
+                    0
+                  ]
+                }
+              },
+              pCount: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $eq: ['$dispoType.code','PAID']
+                        },
+                        {
+                          $eq: ["$currentDisposition.ptp", false]
+                        }
+                      ]
+                    },
+                    1,
+                    0
+                  ]
+                }
+              },
+              ptp: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ['$dispoType.code','PTP']
+                    }
+                    ,
+                    "$currentDisposition.amount",
+                    0
+                  ]
+                }
+              },
+              pk: {$sum: "$ptpKeptAmount"},
+              paid: {$sum: "$paidHistoryAmount"},
               collected: {$sum: "$paid_amount"},
               target: {$sum: "$out_standing_details.total_os"},
             }
@@ -711,6 +849,12 @@ const customerResolver = {
             $project: {
               _id: 0,
               campaign: "$_id",
+              pk: 1,
+              paid: 1,
+              ptp: 1,
+              ptpCount: 1,
+              pkCount: 1,
+              pCount: 1,
               collected: 1,
               target: 1
             }

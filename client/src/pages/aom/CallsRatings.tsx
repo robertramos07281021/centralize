@@ -63,7 +63,7 @@ const CallsRatings = () => {
     plugins: {
       title: {
         display: true,
-        text: 'Monthly Summary',
+        text: 'Active Callfile Summary',
       },
       datalabels: {
         color: '#000',
@@ -136,7 +136,6 @@ const successful = rawCounts.map((e) => e.success)
 const rpc = rawCounts.map((e) => e.rpc)
 const unconnected = rawCounts.map((e) => -e.unconnected)
 
-
   const datasets= [
   {
     label: 'Positive Rate',
@@ -173,7 +172,7 @@ const unconnected = rawCounts.map((e) => -e.unconnected)
   }
 
   return (
-    <div className="row-start-3 col-start-4 bg-white col-span-full row-span-2 rounded-xl border border-slate-200 shadow-sm shadow-black/20 p-2">
+    <div className="row-start-3 col-start-3 bg-white col-span-full row-span-2 rounded-xl border border-slate-200 shadow-sm shadow-black/20 p-2">
       <Bar options={options} data={data} />
     </div>
   )
