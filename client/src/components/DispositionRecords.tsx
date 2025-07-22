@@ -52,7 +52,7 @@ const DispositionRecords = () => {
   },[agentData])
 
   const history = selectedCustomer?.dispo_history || []
-  const slicedHistory = history.slice(0,limit)
+
 
   const date = (date:string) => {
     const createdDate = new Date(date).toLocaleDateString()
@@ -67,9 +67,14 @@ const DispositionRecords = () => {
       setLimit(3)
     }
   }
+
+  const dispo_historySorted = history.slice().sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)))  || []
+
   const withPayment = ['PTP','UNEG','PAID']
 
   const filter = dispotypesData?.getDispositionTypes.filter(e=> withPayment.includes(e.code)).map(x=> x.id)
+    const slicedHistory = dispo_historySorted.slice(0,limit)
+
 
   return selectedCustomer._id && selectedCustomer?.dispo_history && (
     <div className="p-5 flex flex-col gap-10">

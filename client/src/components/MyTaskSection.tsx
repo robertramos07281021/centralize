@@ -282,13 +282,14 @@ const MyTaskSection = () => {
   const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const client = useApolloClient()
-  const {data:myTasksData, error} = useQuery<{myTasks:CustomerData[] | []}>(MY_TASKS
-  //   {
-  //   skip: true, 
-  //   context: { queryDeduplication: false }
-  // }
-)
-  console.log(error)
+  const {data:myTasksData} = useQuery<{myTasks:CustomerData[] | []}>(MY_TASKS,    
+    {
+      skip: true, 
+      context: { queryDeduplication: false }
+    }
+  )
+
+
   const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS, {
     skip: true,
     context: { queryDeduplication: false }
