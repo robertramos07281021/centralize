@@ -397,6 +397,7 @@ const customerResolver = {
               collectedAmount: {
                 $sum: "$paid_amount"
               },
+     
               ptpKeptAccount: {
                 $sum: {
                   $cond: [
@@ -448,6 +449,7 @@ const customerResolver = {
             }
           }
         ])
+
 
         const newResult = accounts.map((com)=> {
           const findDept = aomCampaign.find(e => e.name === com.campaign)
@@ -663,7 +665,8 @@ const customerResolver = {
         const {_id} = dispoType.find(x => 
           x.code === 'PAID'
         )
-     
+        const ptp = dispoType.find(x=> x.code === 'PTP')
+
         
         const findActiveCallfile = await Callfile.find({
           $and: [
@@ -676,6 +679,7 @@ const customerResolver = {
           ]
         }).lean()
         
+
         const newMapCallfile = findActiveCallfile.map(x=> new mongoose.Types.ObjectId(x._id))
 
         const monthlyTarget = await CustomerAccount.aggregate([
@@ -750,8 +754,26 @@ const customerResolver = {
                     ]
                   }
                 }
+              },
+              hasPTP: {
+                $anyElementTrue: {
+                  $map: {
+                    input: "$account_history",
+                    as: "h",
+                    in: {
+                      $and: [
+                        {
+                          $eq: ["$$h.ptp", true] 
+                        },
+                        { 
+                          $eq: ["$$h.disposition", new mongoose.Types.ObjectId(ptp._id)] 
+                        }
+                      ],
+                    }
+                  }
+                }
               }
-            }
+            },
           },
           {
             $addFields: {
@@ -843,7 +865,16 @@ const customerResolver = {
               paid: {$sum: "$paidHistoryAmount"},
               collected: {$sum: "$paid_amount"},
               target: {$sum: "$out_standing_details.total_os"},
-            }
+              isPTP: {$sum: {
+                $cond: [
+                  {
+                    $eq: ['$hasPTP', true]
+                  },
+                  1,
+                  0
+                ],
+              }}
+            },
           },
           {
             $project: {
@@ -852,14 +883,18 @@ const customerResolver = {
               pk: 1,
               paid: 1,
               ptp: 1,
+              isPTP: 1,
               ptpCount: 1,
               pkCount: 1,
               pCount: 1,
               collected: 1,
-              target: 1
+              target: 1,
+              isPTP: 1
             }
           }
         ])
+
+        console.log(monthlyTarget)
 
         const newMonthlyTarget = monthlyTarget.map(e=> {
           const campagin = aomCampaign.find(ac => e.campaign === ac.name)
@@ -871,6 +906,7 @@ const customerResolver = {
 
         return newMonthlyTarget
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)             
       }
     }

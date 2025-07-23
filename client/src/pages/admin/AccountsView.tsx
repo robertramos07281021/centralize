@@ -221,8 +221,8 @@ const AccountsView = () => {
         </div>
 
         <div className=" h-full overflow-y-hidden flex flex-col mx-5 mt-2 ">
-          <div className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-11 py-2 font-bold px-2">
-            <div>Name</div>
+          <div className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-12 py-2 font-bold">
+            <div className="col-span-2 px-2">Name</div>
             <div>Username</div>      
             <div>Agent ID</div>      
             <div>Type</div>
@@ -237,8 +237,8 @@ const AccountsView = () => {
           <div className="overflow-y-auto">
             {
               users?.map((user)=> 
-                <div key={user._id} className="grid grid-cols-11 text-xs py-2 hover:bg-blue-50 even:bg-gray-50">
-                  <div className="font-medium px-2 text-gray-900 whitespace-nowrap dark:text-white">
+                <div key={user._id} className="grid grid-cols-12 text-xs py-2 hover:bg-blue-50 even:bg-gray-50 cursor-default items-center">
+                  <div className="font-medium px-2 text-gray-900 whitespace-nowrap dark:text-white truncate col-span-2" title={user.name.toUpperCase()}>
                     {user.name.toUpperCase()}
                   </div>
                   <div>
@@ -253,19 +253,17 @@ const AccountsView = () => {
                   <div >
                     {branchObject[user.branch]}
                   </div>
-                  <div >
+                  <div className="pr-5">
                     {user.departments?.map((e)=> deptObject[e]?.toString()).join(', ')}
                   </div>
-                  <div >
+                  <div className="pr-5">
                     {user.buckets?.map(b => bucketObject[b]?.toString()).join(', ')}
                   </div>
                   <div >
                     <FaCircle className={`${user.active ? "text-green-400" : "text-gray-950"} `} />
                   </div>
                   <div >
-                  
                     <FaCircle className={`${user.isOnline ? "text-green-400" : "text-gray-950"} `} />
-                
                   </div>
                   <div className="text-xl">
                     {

@@ -11,9 +11,6 @@ const dispositionSchema = new Schema(
       ref: "CustomerAccount",
       required: true
     },
-    payment: {
-      type:String,
-    },
     disposition: {
       type:mongoose.Schema.Types.ObjectId,
       ref: "DispoType",
@@ -45,15 +42,27 @@ const dispositionSchema = new Schema(
     },
     contact_method: {
       type: String,
-      enum: ['calls','sms','email','skip','field']
+      enum: ['calls','sms','email','skip','field'],
+    },
+    payment: {
+      type:String,
+      enum: ['partial','full'],
+      default: undefined
     },
     dialer: {
       type: String,
-      enum: ['issabel','vici',"",'inbound']
+      enum: ['issabel','vici','inbound'],
+      default: undefined
     },
-    chat_app: {
+    chatApp: {
       type: String,
-      enum: ['viber','whatsapp',""]
+      enum: ['viber','whatsapp','facebook'],
+      default: undefined
+    },
+    sms: {
+      type: String,
+      enum: ['openvox','dinstar','inbound'],
+      default: undefined
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,

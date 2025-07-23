@@ -13,6 +13,7 @@ const taskResolver = {
     myTasks: async(_,__,{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
+   
         const myTask = await CustomerAccount.aggregate([
         {
           $match:
@@ -27,7 +28,6 @@ const taskResolver = {
           }
         }
         ])
-       
         return myTask
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -105,8 +105,7 @@ const taskResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)  
       }
-    },
-    
+    }, 
   },
   Mutation: {
     selectTask: async(_,{id}, {user, pubsub, PUBSUB_EVENTS})=>{

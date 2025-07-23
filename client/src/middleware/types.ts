@@ -125,6 +125,8 @@ export type CurrentDispo = {
   dialer: string
   createdAt: string
   contact_method: string
+  chatApp: string
+  sms: string
 }
 
 export type Search = {

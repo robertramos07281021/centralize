@@ -25,6 +25,8 @@ const taskTypeDefs = gql`
     dialer: String
     createdAt: DateTime
     contact_method: String
+    chatApp: String
+    sms: String
   }
 
   type Success {

@@ -310,12 +310,11 @@ const Navbar = () => {
         <div className="p-2 bg-blue-500 flex justify-between items-center ">
           <div className="flex text-2xl gap-2 font-medium items-center text-white italic">
             <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
-            Collection System
+            Collections System
             {
               (userLogged.type === "AGENT") && breakValue !== BreakEnum.WELCOME && 
               <IdleAutoLogout/> 
             }
-
           </div>
           <div className="p-1 flex gap-2 text-xs z-50">
             <p className="font-medium text-white italic flex items-center">Hello&nbsp;<span className="uppercase">{userLogged.name}</span></p>
@@ -325,7 +324,6 @@ const Navbar = () => {
                 {
                   accountsNavbar[userLogged.type].map((e,index)=> {
                     const navTo = (userLogged.type === "AGENT" && breakValue !== BreakEnum.PROD) ? '/break-view' : e.link
-
                     return (
                     <Link key={index} to={navTo} className={`${index === 0 && 'rounded-t-lg'} grow px-2 border-b border-slate-200 flex items-center hover:text-white hover:bg-slate-500 duration-200 ease-in-out cursor-pointer py-2`} onClick={()=> setPopUpUser(false) }>
                       {e.name === "Customer Interaction Panel" ? "CIP" : e.name}

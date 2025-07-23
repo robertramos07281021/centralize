@@ -109,6 +109,8 @@ const MY_TASKS = gql`
         dialer
         createdAt
         contact_method
+        chatApp
+        sms
       }
       out_standing_details {
         principal_os
@@ -181,6 +183,8 @@ const GROUP_TASKS =gql`
           dialer
           createdAt
           contact_method
+          chatApp
+          sms
         }
         out_standing_details {
           principal_os
@@ -281,17 +285,10 @@ const DESELECT_TASK = gql`
 const MyTaskSection = () => {
   const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
-  const {data:myTasksData,refetch} = useQuery<{myTasks:CustomerData[] | []}>(MY_TASKS,    
-    {
-      skip: true, 
-    }
-  )
-
-
-  const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS, {
-    skip: true,
-  })
+  const {data:myTasksData, refetch} = useQuery<{myTasks:CustomerData[] | []}>(MY_TASKS)
+  const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
   
+
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
     onData: async({data})=> {
       if(data) {

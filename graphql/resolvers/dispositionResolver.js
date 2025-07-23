@@ -1779,7 +1779,7 @@ const dispositionResolver = {
 
         const newDisposition = await Disposition.create({
           ...input,
-          payment: withPayment.includes(dispoType.code) ? payment : "",
+          payment: withPayment.includes(dispoType.code) ? payment : null,
           amount: parseFloat(input.amount) || 0, 
           user: user._id, 
           ptp: ptp

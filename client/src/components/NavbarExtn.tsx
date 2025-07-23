@@ -49,20 +49,20 @@ const NavbarExtn = () => {
 
 
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_ESCALATING, {
-    onData: ({data})=> {
+    onData: async({data})=> {
       if(data) {
         if(data.data?.somethingChanged.message === "TASK_SELECTION" && data.data?.somethingChanged.members.toString().includes(userLogged._id)) {
-         refetch()
+         await refetch()
         }
       }
     },
   })
   
   useSubscription<{taskChanging:SubSuccess}>(TASK_CHANGING, {
-    onData: ({data})=> {
+    onData: async({data})=> {
       if(data) {
         if(data.data?.taskChanging.message === "TASK_CHANGING" && data.data?.taskChanging.members.toString().includes(userLogged._id)) {
-          refetch()
+          await refetch()
         }
       }
     }

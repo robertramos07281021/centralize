@@ -22,6 +22,9 @@ const dispositionTypeDefs = gql`
     createdAt: DateTime
     created_by: String
     contact_method: String
+    sms: String
+    dialer: String
+    chatApp: String
   }
   
   type Success {
@@ -154,6 +157,7 @@ const dispositionTypeDefs = gql`
   input CreateDispo {
     customer_account:ID!
     disposition: ID!
+    contact_method: ContactMethod!
     amount:String
     payment:String
     payment_date:String
@@ -162,7 +166,7 @@ const dispositionTypeDefs = gql`
     comment:String
     dialer: String
     chatApp: String
-    contact_method: ContactMethod!
+    sms: String
   }
 
   type Query {
@@ -183,7 +187,6 @@ const dispositionTypeDefs = gql`
     getTLDailyCollected: [TLDailyCollected]
     agentDispoDaily: [AgentDispo]
     getTargetPerCampaign: [BucketTargets]
-
   }
 
   type Mutation {

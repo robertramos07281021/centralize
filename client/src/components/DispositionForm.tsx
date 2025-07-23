@@ -8,16 +8,17 @@ import { gql, useMutation, useQuery } from "@apollo/client"
 import { setDeselectCustomer, setServerError, setSuccess } from "../redux/slices/authSlice"
 
 type Data = {
-  amount: string;
-  payment: string;
-  disposition: string;
-  payment_date: string;
-  payment_method: string;
-  ref_no: string;
-  comment: string;
-  contact_method: AccountType;
-  dialer: Dialer;
-  chatApp: SkipCollector;
+  amount: string | null;
+  payment: Payment | null;
+  disposition: string | null;
+  payment_date: string | null;
+  payment_method: PaymentMethod | null;
+  ref_no: string | null;
+  comment: string | null;
+  contact_method: AccountType | null;
+  dialer: Dialer | null;
+  chatApp: SkipCollector | null;
+  sms: SMSCollector | null
 }
 
 type Disposition = {
@@ -82,11 +83,16 @@ type TL = {
   name: string;
 }
 
-enum Dialer  {
+
+enum Payment {
+  FULL = 'full',
+  PARTIAL = 'partial',
+}
+
+enum Dialer {
   VICI = "vici",
   ISSABEL = "issabel",
   INBOUND = 'inbound',
-  NOT = ""
 }
 
 enum AccountType {
@@ -95,14 +101,28 @@ enum AccountType {
   SMS = 'sms',
   FIELD = 'field',
   SKIP = 'skip',
-  NULL = ""
 }
 
 enum SkipCollector {
   VIBER = 'viber',
   WHATSAPP = 'whatsapp',
-  NULL = ""
+  FACEBOOK = 'facebook',
 }
+
+enum SMSCollector {
+  OPENVOX = 'openvox',
+  DINSTAR = 'dinstar',
+  INBOUND = 'inbound'
+}
+
+enum PaymentMethod {
+  BANKTOBANK = 'Bank to Bank Transfer',
+  SEVENELEVEN = '7/11',
+  GCASH_PAYMAYA = 'Gcash / Pay Maya',
+  CASH = 'CASH'
+}
+
+
 
 type Props = {
   updateOf: ()=> void
@@ -123,43 +143,54 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
   const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
   const [selectedDispo, setSelectedDispo] = useState<string>('')
   const dispatch = useAppDispatch()
+  const {data:disposition} = useQuery<{getDispositionTypes:Disposition[]}>(GET_DISPOSITION_TYPES,{skip: !selectedCustomer._id})
+  
+  type DispositionType = {
+  code: string;
+  id: string;
+};
+
+const dispoObject: Record<string, string> = useMemo(() => {
+  const d: DispositionType[] = disposition?.getDispositionTypes || [];
+  return Object.fromEntries(d.map(e => [e.code, e.id]));
+}, [disposition]);
+
   const [data, setData] = useState<Data>({
-    amount: "",
-    payment: "",
-    disposition: "",
-    payment_date: "",
-    payment_method: "",
-    ref_no: "",
-    comment: "",
-    contact_method: AccountType.NULL,
-    dialer: Dialer.NOT,
-    chatApp: SkipCollector.NULL
+    amount: null,
+    payment: null,
+    disposition: null,
+    payment_date: null,
+    payment_method: null,
+    ref_no: null,
+    comment: null,
+    contact_method: null,
+    dialer: null,
+    chatApp: null,
+    sms: null
   })
+
+  const resetForm = () => {
+    setSelectedDispo('');
+    setData({
+      amount: null,
+      payment: null,
+      disposition: null,
+      payment_date: null,
+      payment_method: null,
+      ref_no: null,
+      comment: null,
+      contact_method: null,
+      dialer: null,
+      chatApp: null,
+      sms: null 
+    });
+  };
 
   useEffect(()=> {
     if(!selectedCustomer._id) {
-      setSelectedDispo("")
-      setData({
-        amount: "",
-        payment: "",
-        disposition: "",
-        payment_date: "",
-        payment_method: "",
-        ref_no: "",
-        comment: "",
-        contact_method: AccountType.NULL,
-        dialer: Dialer.NOT,
-        chatApp: SkipCollector.NULL
-      })
+      resetForm()
     }
   },[selectedCustomer])
-
-  const {data:disposition} = useQuery<{getDispositionTypes:Disposition[]}>(GET_DISPOSITION_TYPES,{skip: !selectedCustomer._id})
-
-  const dispoObject:{[key:string]:string} = useMemo(()=> {
-    const d = disposition?.getDispositionTypes || []
-    return Object.fromEntries(d.map(e=> [e.code, e.id]))
-  },[disposition])
 
   const [createDisposition] = useMutation<{createDisposition:Success}>(CREATE_DISPOSITION,{
     onCompleted: (res) => {
@@ -168,63 +199,44 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
         message: res.createDisposition.message
       }))
       setConfirm(false)
-      setSelectedDispo('')
-      setData({
-        amount: "",
-        payment: "",
-        disposition: "",
-        payment_date: "",
-        payment_method: "",
-        ref_no: "",
-        comment: "",
-        contact_method: AccountType.NULL,
-        dialer: Dialer.NOT,
-        chatApp: SkipCollector.NULL
-      })
+      resetForm()
       updateOf()
       dispatch(setDeselectCustomer())
     },
     onError: (error) => {
       console.log(error)
       setConfirm(false)
-      setSelectedDispo('')
-      setData({
-        amount: "",
-        payment: "",
-        disposition: "",
-        payment_date: "",
-        payment_method: "",
-        ref_no: "",
-        comment: "",
-        contact_method: AccountType.NULL,
-        dialer: Dialer.NOT,
-        chatApp: SkipCollector.NULL
-      })
+      resetForm()
       updateOf()
       dispatch(setDeselectCustomer())
-
       dispatch(setServerError(true))
-      
     }
   })
+  const handleDataChange = (key: keyof Data, value: any) => {
+    setData(prev => ({ ...prev, [key]: value }));
+  };
 
-  const handleOnChangeAmount = (e:React.ChangeEvent<HTMLInputElement>) => {
-    let inputValue = e.target.value
-    inputValue = inputValue.replace(/[^0-9.]/g, '');
+  const handleOnChangeAmount = useCallback((e:React.ChangeEvent<HTMLInputElement>) => {
+    let inputValue = e.target.value.replace(/[^0-9.]/g, '');
     const parts = inputValue.split('.');
+
     if (parts.length > 2) {
       inputValue = parts[0] + '.' + parts[1]; 
-    }
-    if (parts.length === 2) {
+    } else if (parts.length === 2) {
       inputValue = parts[0] + '.' + parts[1].slice(0, 2);
     }
+
     if (inputValue.startsWith('00')) {
       inputValue = '0';
     }
-    const amount = parseFloat(inputValue) > selectedCustomer?.balance ? selectedCustomer?.balance.toFixed(2) : inputValue
-    const payment = parseFloat(inputValue) > selectedCustomer?.balance ? "full" : "partial"
-    setData({...data, amount: amount, payment: payment})
-  }
+
+    const numericValue = parseFloat(inputValue);
+    const balance = selectedCustomer?.balance ?? 0;
+    const amount = numericValue > balance ? balance.toFixed(2) : inputValue;
+    const payment = numericValue >= balance ? Payment.FULL : Payment.PARTIAL;
+    handleDataChange('amount',amount)
+    handleDataChange('payment',payment)
+  },[setData,selectedCustomer])
 
   const Form = useRef<HTMLFormElement | null>(null)
   const [required, setRequired] = useState(false)
@@ -245,7 +257,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     setConfirm(false)
   },[])
 
-  const handleSubmitForm = (e:React.FormEvent<HTMLFormElement>) => {
+  const handleSubmitForm = useCallback((e:React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if(!Form.current?.checkValidity()) {
       setRequired(true)
@@ -259,7 +271,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
         no: noCallback
       })
     }
-  }
+  },[setRequired,setConfirm,setModalProps,Form,creatingDispo,noCallback])
 
   const [deselectTask] = useMutation<{deselectTask:Success}>(DESELECT_TASK,{
     onCompleted: ()=> {
@@ -290,7 +302,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     await tlEscalation({variables: {id:caToEscalate, tlUserId: selectedTL}})
   },[caToEscalate, selectedTL])
 
-  const handleSubmitEscalation = ()=> {
+  const handleSubmitEscalation = useCallback(()=> {
     setConfirm(true)
     setModalProps({
       message: "Do you want to transfer this to your team leader?",
@@ -298,15 +310,21 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
       yes: tlEscalationCallback,
       no: noCallback
     })
-  }
+  },[setConfirm, setModalProps,tlEscalationCallback,noCallback])
   const {data:tlData} = useQuery<{getBucketTL:TL[]}>(USER_TL,{skip: !selectedCustomer._id})
+ 
 
+  const tlOptions = useMemo(() => {
+    return tlData?.getBucketTL || [];
+  }, [tlData]);
+  
   const callbackTLEscalation = useCallback(async(id:string)=> {
-     await tlEscalation({variables: {id, tlUserId: tlData?.getBucketTL.flat()}})
-  },[tlData?.getBucketTL, tlEscalation ])
+     await tlEscalation({variables: {id, tlUserId: tlOptions}})
+  },[tlData, tlEscalation ])
 
-  const handleSubmitEscalationToTl = async(id:string) => {
-    if(tlData &&  tlData?.getBucketTL.length > 1) {
+
+  const handleSubmitEscalationToTl = useCallback(async(id:string) => {
+    if(tlOptions.length > 1) {
       setEscalateTo(true)
       setCAToEscalate(id)
     } else {
@@ -318,7 +336,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
         no: noCallback
       })
     }
-  }
+  },[tlOptions,setEscalateTo,setModalProps,callbackTLEscalation,noCallback,setConfirm,setCAToEscalate])
 
   const anabledDispo = ["PAID","PTP","UNEG"]
   const requiredDispo = ["PAID",'PTP']
@@ -363,7 +381,6 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
               </div>
             </div>
           </div>
-
         </div>
       }
 
@@ -379,18 +396,23 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                 <select 
                   name="disposition" 
                   id="disposition" 
-                  value={selectedDispo}
+                  value={selectedDispo ?? ""}
                   required
                   onChange={(e) => {
-                    setData({...data, disposition: dispoObject[e.target.value]}); 
+                    handleDataChange('disposition',dispoObject[e.target.value])
                     setSelectedDispo(e.target.value)}
                   }
                   className={`${required && !data.disposition ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  w-full border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs xl:text-sm p-2 `}>
                   <option value="">Select Disposition</option>
                   {
-                    disposition?.getDispositionTypes.map((dispo)=> (
-                      <option key={dispo.id} value={dispo.code} >{dispo.name} - {dispo.code}</option>
-                    ))
+                    Object.entries(dispoObject).map(([key,value])=> {
+                      const findDispoName = disposition?.getDispositionTypes.find(x=> x.id === value)
+                      return (
+                        <option value={key} key={key}>
+                          {`${findDispoName?.name} - ${key}`}
+                        </option>
+                      )
+                    })
                   }
                 </select>
               </label>
@@ -405,7 +427,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                         name="amount" 
                         id="amount"
                         autoComplete="off"
-                        value={data.amount}
+                        value={data.amount ?? 0}
                         onChange={handleOnChangeAmount}
                         pattern="^\d+(\.\d{1,2})?$"
                         placeholder="Enter amount"
@@ -424,13 +446,18 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       name="payment" 
                       id="payment"
                       required={requiredDispo.includes(selectedDispo)}
-                      value={data.payment}
-                      onChange={(e)=> setData({...data,payment: e.target.value})}
+                      value={data.payment ?? ""}
+                      onChange={(e)=> handleDataChange('payment',e.target.value)}
                       className={`${required && !data.payment ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                       >
-                      <option value="">Select Payment</option>
-                      <option value="partial">Partial</option>
-                      <option value="full">Full payment</option>
+                        <option value="">Select Payment</option>
+                      {
+                        Object.entries(Payment).map(([key,value])=> {
+                          return (
+                            <option value={value} key={key} className="capitalize">{value.charAt(0).toUpperCase() + value.slice(1,value.length)}</option>
+                          )
+                        })
+                      }
                     </select>
                   </label>
                 :
@@ -442,16 +469,18 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                     name="contact_method" 
                     id="contact_method"
                     required
-                    value={data.contact_method as AccountType}
-                    onChange={(e)=> setData({...data, contact_method: e.target.value as AccountType})}
+                    value={data.contact_method ?? ""}
+                     onChange={(e)=> handleDataChange('contact_method',e.target.value)}
                     className={`${required && !data.contact_method ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                   >
-                    <option value={AccountType.NULL}>Select Contact Method</option>
-                    <option value={AccountType.CALLS}>Calls</option>
-                    <option value={AccountType.EMAIL}>Emails</option>
-                    <option value={AccountType.SMS}>Sms</option>
-                    <option value={AccountType.FIELD}>Field</option>
-                    <option value={AccountType.SKIP}>Skip</option>
+                    <option value="">Select Contact Method</option>
+                    {
+                      Object.entries(AccountType).map(([key,value])=> {
+                        return (
+                          <option value={value} key={key} className="capitalize">{value.charAt(0).toUpperCase() + value.slice(1,value.length)}</option>
+                        )
+                      })
+                    }
                   </select>
                 </label>
                 {
@@ -462,18 +491,41 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       name="dialer" 
                       id="dialer"
                       required = {data.contact_method === AccountType.CALLS}
-                      onChange={(e)=> {
-                        if (!Object.values(Dialer).includes(e.target.value as Dialer)) {
-                          dispatch(setServerError(true));
-                        }
-                        setData({...data, dialer: e.target.value as Dialer})
-                      }}
+                      value={data.dialer ?? ""}
+                      onChange={(e)=> handleDataChange('dialer',e.target.value)}
                       className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
-                    >
-                      <option value={Dialer.NOT}>Select Dialer</option>
-                      <option value={Dialer.ISSABEL}>Issabel</option>
-                      <option value={Dialer.VICI}>Vici</option>
-                      <option value={Dialer.INBOUND}>Inbound</option>
+                    > 
+                      <option value="">Select Dialer</option>
+                      {
+                        Object.entries(Dialer).map(([key,value])=> {
+                          return (
+                            <option value={value} key={key} className="capitalize">{value.charAt(0).toUpperCase() + value.slice(1,value.length)}</option>
+                          )
+                        })
+                      }
+                    </select>
+                  </label>
+                }
+                {
+                  data.contact_method === AccountType.SMS &&
+                  <label className="flex flex-col xl:flex-row items-center">
+                    <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4">SMS Collector</p>
+                    <select 
+                      name="sms_collector" 
+                      id="sms_collector"
+                      required = {data.contact_method === AccountType.SMS}
+                      value={data.sms ?? ""}
+                       onChange={(e)=> handleDataChange('sms',e.target.value)}
+                      className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
+                    > 
+                      <option value="">Select SMS Collector</option>
+                      {
+                        Object.entries(SMSCollector).map(([key,value])=> {
+                          return (
+                            <option value={value} key={key} className="capitalize">{value.charAt(0).toUpperCase() + value.slice(1,value.length)}</option>
+                          )
+                        })
+                      }
                     </select>
                   </label>
                 }
@@ -482,20 +534,21 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                   <label className="flex flex-col xl:flex-row items-center">
                     <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4">Chat App</p>
                     <select 
-                      name="dialer" 
-                      id="dialer"
+                      name="chat_app" 
+                      id="chat_app"
+                      value={data.chatApp ?? ""}
                       required = {data.contact_method === AccountType.SKIP}
-                      onChange={(e)=> {
-                        if (!Object.values(SkipCollector).includes(e.target.value as SkipCollector)) {
-                          dispatch(setServerError(true));
-                        }
-                        setData({...data, chatApp: e.target.value as SkipCollector})
-                      }}
-                      className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
+                      onChange={(e)=> handleDataChange('chatApp',e.target.value)}
+                      className={`${required && !data.chatApp ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                     >
-                      <option value={SkipCollector.NULL}>Select Chat App</option>
-                      <option value={SkipCollector.VIBER}>Viber</option>
-                      <option value={SkipCollector.WHATSAPP}>Whatsapp</option>
+                      <option value="">Select Chat App</option>
+                      {
+                        Object.entries(SkipCollector).map(([key,value])=> {
+                          return (
+                            <option value={value} key={key} className="capitalize">{value.charAt(0).toUpperCase() + value.slice(1,value.length)}</option>
+                          )
+                        })
+                      }
                     </select>
                   </label>
                 }
@@ -509,8 +562,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       type="date" 
                       id="payment_date" 
                       name="payment_date"
-                      value={data.payment_date}
-                      onChange={(e)=> setData({...data, payment_date: e.target.value})}
+                      value={data.payment_date ?? ""}
+                      onChange={(e)=> handleDataChange('payment_date',e.target.value)}
                       className={`bg-gray-50 border-gray-500 border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                     />
                 </label>
@@ -524,14 +577,18 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                   <select 
                     name="payment_method" 
                     id="payment_method" 
-                    value={data.payment_method}
-                    onChange={(e)=> setData({...data, payment_method: e.target.value})}
+                    value={data.payment_method ?? ""}
+                    onChange={(e)=> handleDataChange('payment_method',e.target.value)}
                     className={` bg-gray-50  border-gray-500 border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs xl:text-sm w-full p-2`}>
+
                     <option value="">Select Method</option>
-                    <option value="Bank to Bank Transfer">Bank to Bank Transfer</option>
-                    <option value="7/11">7/11</option>
-                    <option value="Gcash/PAY Maya">Gcash/PAY Maya</option>
-                    <option value="CASH">CASH</option>
+                    {
+                      Object.entries(PaymentMethod).map(([key,value])=> {
+                        return (
+                          <option value={value} key={key}>{value}</option>
+                        )
+                      })
+                    }
                   </select>
                 </label>
                 :
@@ -546,9 +603,9 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       name="ref" 
                       id="ref"
                       autoComplete="off"
-                      value={data.ref_no}
+                      value={data.ref_no ?? ""}
                       placeholder="Enter reference no."
-                      onChange={(e)=> setData({...data, ref_no: e.target.value})}
+                      onChange={(e)=> handleDataChange('ref_no',e.target.value)}
                       className={` bg-gray-50 border-gray-500 border rounded-lg text-xs xl:text-sm w-full p-2`}/>
                 </label>
                 :
@@ -560,8 +617,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                   name="comment"
                   id="comment"
                   placeholder="Comment here..."
-                  value={data.comment}
-                  onChange={(e)=> setData({...data, comment: e.target.value})}
+                  value={data.comment ?? ""}
+                  onChange={(e)=> handleDataChange('comment',e.target.value)}
                   className="bg-gray-50 border border-gray-500 text-gray-900 rounded-lg h-24 focus:ring-blue-500 focus:border-blue-500 text-xs xl:text-sm w-full p-2 resize-none"  
                 ></textarea>
 
@@ -574,7 +631,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
               data.disposition &&
               <button 
                 type="submit" 
-                className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 xl:px-5 xl:py-2.5 xl:me-2l xl:mb-2 cursor-pointer xl:text-sm text-xs`}>Submit</button>
+                className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 py-4 lx:px-5 xl:py-2.5 xl:me-2l xl:mb-2 cursor-pointer xl:text-sm text-xs`}>Submit</button>
             }
             {
               data.disposition && userLogged.type === "AGENT" &&

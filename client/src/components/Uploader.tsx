@@ -107,19 +107,19 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
 
           function normalizeContact(contact:string) {
             const cleaned = contact.trim().replace(/-/g, '');
-            if (/^0\d{10}$/.test(cleaned)) return cleaned;
+            if (/^09\d{9}$/.test(cleaned)) return cleaned;
+
             if (/^\+63\d{10}$/.test(cleaned)) {
               return '0' + cleaned.slice(3);
             }
             if (/^63\d{10}$/.test(cleaned)) {
               return '0' + cleaned.slice(2);
             }
-           
             if (/^\+630\d{10}$/.test(cleaned)) {
               return '0' + cleaned.slice(4);
             }
-
-            if (/^\d{10}$/.test(cleaned)) return `0${cleaned}`;
+            
+            if (/^9\d{8}$/.test(cleaned)) return `0${cleaned}`;
 
             return cleaned;
           }

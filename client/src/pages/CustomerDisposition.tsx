@@ -58,6 +58,8 @@ const SEARCH = gql`
         dialer
         createdAt
         contact_method
+        chatApp
+        sms
       }
       out_standing_details {
         principal_os
