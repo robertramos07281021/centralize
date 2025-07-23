@@ -36,6 +36,13 @@ type CustomerUpdateFormProps = {
   cancel: () => void;
 }
 
+enum Gender {
+  FEMALE = 'F',
+  MALE = 'M',
+  OTHERS = 'O',
+  NULL = ""
+}
+
 const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const dispatch = useAppDispatch()
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
@@ -177,10 +184,22 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   
   useEffect(()=> {
     if (selectedCustomer) {
+      const gender = selectedCustomer?.customer_info?.gender ? (selectedCustomer?.customer_info?.gender?.length > 1 ? selectedCustomer.customer_info.gender.charAt(0).toLowerCase() : selectedCustomer.customer_info.gender.toLowerCase()) : ""
+    
       setFormState({
         fullName: selectedCustomer.customer_info.fullName || "",
         dob: selectedCustomer.customer_info.dob || "",
-        gender: selectedCustomer.customer_info.gender || "",
+        gender: (()=> {
+          if(gender === 'f') {
+            return Gender.FEMALE
+          } else if (gender ==='m') {
+            return Gender.MALE
+          } else if (gender === 'o') {
+            return Gender.OTHERS
+          } else {
+            return Gender.NULL
+          }
+        })(),
         isRPC: selectedCustomer.customer_info.isRPC || false,
         mobiles: selectedCustomer.customer_info.contact_no?.length
           ? selectedCustomer.customer_info.contact_no
@@ -194,6 +213,8 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
       });
     }
   },[selectedCustomer])
+
+
 
   return (
     <>
@@ -242,14 +263,15 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
             <select
               id="gender"
               name="gender"
-              value={(formState.gender.toLocaleLowerCase() === "female" || formState.gender.toLocaleLowerCase() === "f")  ? "F" : "M"}
+              value={formState.gender}
               required
               onChange={(e)=> setFormState({...formState, gender: e.target.value})}
               className={`${required && !formState.gender ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
-              <option value="">Choose a gender</option>
-              <option value="M">Male</option>
-              <option value="F">Female</option>
+              <option value={Gender.NULL}>Choose a gender</option>
+              <option value={Gender.MALE}>Male</option>
+              <option value={Gender.FEMALE}>Female</option>
+              <option value={Gender.OTHERS}>Others</option>
             </select>
           </label>  
               
@@ -267,7 +289,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
                     value={m}
                     required
                     onChange={(e)=> handleMobileOnchange(index,e.target.value)}
-                    className={`${required && (!formState.mobiles[index] || !validatePhone(formState.mobiles[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Mobile No."  
+                    className={`${required && (!formState.mobiles[index] || !validatePhone(formState.mobiles[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Mobile No."  
                   />
                   {
                     index === 0 &&
@@ -296,7 +318,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
                   value={email}
                   required
                   onChange={(e)=> handleEmailOnchange(index,e.target.value)}
-                  className={`${required && (!formState.emails[index] || !validateEmail(formState.emails[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+                  className={`${required && (!formState.emails[index] || !validateEmail(formState.emails[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
                   placeholder="Enter Email Address" 
                   />
                   {
@@ -324,7 +346,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
                     value={a}
                     required
                     onChange={(e)=> handleAddressOnchange(index,e.target.value)} 
-                    className={`${required && !formState.addresses[index] ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-96 h-32 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Email Address">
+                    className={`${required && !formState.addresses[index] ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full h-32 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Email Address">
                   </textarea>
                   {
                     index === 0 &&

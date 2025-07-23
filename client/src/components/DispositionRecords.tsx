@@ -104,7 +104,7 @@ const DispositionRecords = () => {
               </div>
               <div className=" grid grid-cols-3 gap-2 ">
                 <div className="text-gray-800 font-bold p-2 text-end">Amount</div>
-                <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 bg-white">{gad.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</div>
+                <div className="col-span-2 border border-slate-500 rounded-lg text-slate-800 p-2 bg-white">{gad.amount !== 0 ? gad.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : ""}</div>
               </div>
               <div className=" grid grid-cols-3 gap-2">
                 <div className="text-gray-800 font-bold p-2 text-end">Payment</div>
@@ -131,7 +131,7 @@ const DispositionRecords = () => {
                 <div className="col-span-2 max-h-30 border border-slate-500 rounded-lg text-slate-800 p-2 capitalize bg-white">{gad.dialer}</div>
               </div>
             </div>
-          ))
+          )) 
         }
       </div>
       {

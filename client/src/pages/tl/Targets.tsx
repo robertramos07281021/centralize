@@ -70,8 +70,11 @@ const Targets = () => {
         setHeight('100%')
       } else if(length < 2 ) {
         setHeight('50%')
-      } else {
+      } else if(length < 7) {
         setHeight('33.33%')
+      } else {
+        setHeight('24.5%')
+
       }
     }
   },[targetsData])

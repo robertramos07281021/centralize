@@ -161,6 +161,7 @@ const dispositionTypeDefs = gql`
     ref_no:String
     comment:String
     dialer: String
+    chatApp: String
     contact_method: ContactMethod!
   }
 

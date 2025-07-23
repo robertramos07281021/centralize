@@ -335,6 +335,8 @@ const CustomerDisposition = () => {
     
   },[selectedCustomer])
 
+
+
   const [updateRPC] = useMutation<{updateRPC:{success: boolean, message: string, customer:CustomerRegistered}}>(UPDATE_RPC,{
     onCompleted: async(res)=> {
       dispatch(setSuccess({
@@ -365,6 +367,8 @@ const CustomerDisposition = () => {
   }
 
   if(loading) return <Loading/>
+
+  const gender = selectedCustomer.customer_info?.gender ? (selectedCustomer.customer_info?.gender.length > 1 ? selectedCustomer.customer_info?.gender.charAt(0).toLowerCase() : selectedCustomer.customer_info?.gender.toLowerCase()) : ""
 
   return userLogged._id ? (
     <div className="h-full w-full overflow-auto"> 
@@ -416,15 +420,23 @@ const CustomerDisposition = () => {
             <FieldDisplay label="Date Of Birth (yyyy-mm-dd)" value={selectedCustomer.customer_info?.dob}/>
             <FieldDisplay label="Gender" 
               value={
-                selectedCustomer.customer_info?.gender === "F" ? "Female"
-                : selectedCustomer.customer_info?.gender === "M" ? "Male"
-                : ""
+                (()=> {
+                  if(gender === 'f') {
+                    return "Female"
+                  } else if (gender ==='m') {
+                    return 'Male'
+                  } else if (gender === 'o') {
+                    return 'Other'
+                  } else {
+                    return ""
+                  }
+                })()
+
               }
             />
             <FieldListDisplay label="Mobile No." values={selectedCustomer?.customer_info?.contact_no} fallbackHeight="h-10"/>
             <FieldListDisplay label="Email" values={selectedCustomer?.customer_info?.emails} fallbackHeight="h-10"/>
             <FieldListDisplay label="Address" values={selectedCustomer?.customer_info?.addresses} fallbackHeight="h-36"/>
-            
             {
               (selectedCustomer._id && selectedCustomer.emergency_contact) && 
               <div className="2xl:w-1/2 w-full lg:w-8/10 mt-1 ">
@@ -435,7 +447,6 @@ const CustomerDisposition = () => {
                 </div>
               </div>
             }
-            
             {
               !isUpdate &&
               <div className="2xl:text-sm lg:text-xs mt-5 flex gap-5">
@@ -480,7 +491,7 @@ const CustomerDisposition = () => {
       <div className="p-5 grid grid-cols-2 gap-5">
         <AccountInfo/>
         {
-          (selectedCustomer.balance > 0 && !selectedCustomer.isRPCToday) &&
+          selectedCustomer.balance > 0 &&
           <DispositionForm updateOf={()=> setIsUpdate(false)}/>
         }
       </div>

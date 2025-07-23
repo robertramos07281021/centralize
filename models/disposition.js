@@ -51,6 +51,10 @@ const dispositionSchema = new Schema(
       type: String,
       enum: ['issabel','vici',"",'inbound']
     },
+    chat_app: {
+      type: String,
+      enum: ['viber','whatsapp',""]
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",

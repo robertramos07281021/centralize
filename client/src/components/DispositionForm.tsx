@@ -15,8 +15,9 @@ type Data = {
   payment_method: string;
   ref_no: string;
   comment: string;
-  contact_method: string;
+  contact_method: AccountType;
   dialer: Dialer;
+  chatApp: SkipCollector;
 }
 
 type Disposition = {
@@ -88,6 +89,21 @@ enum Dialer  {
   NOT = ""
 }
 
+enum AccountType {
+  CALLS = "calls",
+  EMAIL = 'email',
+  SMS = 'sms',
+  FIELD = 'field',
+  SKIP = 'skip',
+  NULL = ""
+}
+
+enum SkipCollector {
+  VIBER = 'viber',
+  WHATSAPP = 'whatsapp',
+  NULL = ""
+}
+
 type Props = {
   updateOf: ()=> void
 }
@@ -115,10 +131,10 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     payment_method: "",
     ref_no: "",
     comment: "",
-    contact_method: "",
-    dialer: Dialer.NOT
+    contact_method: AccountType.NULL,
+    dialer: Dialer.NOT,
+    chatApp: SkipCollector.NULL
   })
-
 
   useEffect(()=> {
     if(!selectedCustomer._id) {
@@ -131,8 +147,9 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
         payment_method: "",
         ref_no: "",
         comment: "",
-        contact_method: "calls",
-        dialer: Dialer.NOT
+        contact_method: AccountType.NULL,
+        dialer: Dialer.NOT,
+        chatApp: SkipCollector.NULL
       })
     }
   },[selectedCustomer])
@@ -143,7 +160,6 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     const d = disposition?.getDispositionTypes || []
     return Object.fromEntries(d.map(e=> [e.code, e.id]))
   },[disposition])
-
 
   const [createDisposition] = useMutation<{createDisposition:Success}>(CREATE_DISPOSITION,{
     onCompleted: (res) => {
@@ -161,13 +177,15 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
         payment_method: "",
         ref_no: "",
         comment: "",
-        contact_method: "calls",
-        dialer: Dialer.NOT
+        contact_method: AccountType.NULL,
+        dialer: Dialer.NOT,
+        chatApp: SkipCollector.NULL
       })
       updateOf()
       dispatch(setDeselectCustomer())
     },
-    onError: () => {
+    onError: (error) => {
+      console.log(error)
       setConfirm(false)
       setSelectedDispo('')
       setData({
@@ -178,8 +196,9 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
         payment_method: "",
         ref_no: "",
         comment: "",
-        contact_method: "calls",
-        dialer: Dialer.NOT
+        contact_method: AccountType.NULL,
+        dialer: Dialer.NOT,
+        chatApp: SkipCollector.NULL
       })
       updateOf()
       dispatch(setDeselectCustomer())
@@ -188,7 +207,6 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
       
     }
   })
-
 
   const handleOnChangeAmount = (e:React.ChangeEvent<HTMLInputElement>) => {
     let inputValue = e.target.value
@@ -304,9 +322,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
 
   const anabledDispo = ["PAID","PTP","UNEG"]
   const requiredDispo = ["PAID",'PTP']
-  const highUser = ['TL','MIS']
 
-  const contactMethod = highUser.includes(userLogged.type) ? ['calls','sms','email','skip','field'] : (userLogged.account_type === 'caller' ? ['calls','sms','email','field'] : [ userLogged.account_type ])
   return  (
     <>
       {
@@ -426,26 +442,26 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                     name="contact_method" 
                     id="contact_method"
                     required
-                    value={data.contact_method}
-                    onChange={(e)=> setData({...data, contact_method: e.target.value})}
+                    value={data.contact_method as AccountType}
+                    onChange={(e)=> setData({...data, contact_method: e.target.value as AccountType})}
                     className={`${required && !data.contact_method ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
-                    >
-                      <option value="">Select Contact Method</option>
-                      {
-                        contactMethod.map((e,index)=> 
-                          <option key={index} value={e}>{e.toUpperCase()}</option>
-                        )
-                      }
+                  >
+                    <option value={AccountType.NULL}>Select Contact Method</option>
+                    <option value={AccountType.CALLS}>Calls</option>
+                    <option value={AccountType.EMAIL}>Emails</option>
+                    <option value={AccountType.SMS}>Sms</option>
+                    <option value={AccountType.FIELD}>Field</option>
+                    <option value={AccountType.SKIP}>Skip</option>
                   </select>
                 </label>
                 {
-                  data.contact_method === "calls" &&
+                  data.contact_method === AccountType.CALLS &&
                   <label className="flex flex-col xl:flex-row items-center">
                     <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4">Dialer</p>
                     <select 
                       name="dialer" 
                       id="dialer"
-                      required = {data.contact_method === 'calls'}
+                      required = {data.contact_method === AccountType.CALLS}
                       onChange={(e)=> {
                         if (!Object.values(Dialer).includes(e.target.value as Dialer)) {
                           dispatch(setServerError(true));
@@ -453,11 +469,33 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                         setData({...data, dialer: e.target.value as Dialer})
                       }}
                       className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
-                      >
-                        <option value={Dialer.NOT}>Select Dialer</option>
-                        <option value={Dialer.ISSABEL}>Issabel</option>
-                        <option value={Dialer.VICI}>Vici</option>
-                        <option value={Dialer.INBOUND}>Inbound</option>
+                    >
+                      <option value={Dialer.NOT}>Select Dialer</option>
+                      <option value={Dialer.ISSABEL}>Issabel</option>
+                      <option value={Dialer.VICI}>Vici</option>
+                      <option value={Dialer.INBOUND}>Inbound</option>
+                    </select>
+                  </label>
+                }
+                {
+                  data.contact_method === AccountType.SKIP &&
+                  <label className="flex flex-col xl:flex-row items-center">
+                    <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4">Chat App</p>
+                    <select 
+                      name="dialer" 
+                      id="dialer"
+                      required = {data.contact_method === AccountType.SKIP}
+                      onChange={(e)=> {
+                        if (!Object.values(SkipCollector).includes(e.target.value as SkipCollector)) {
+                          dispatch(setServerError(true));
+                        }
+                        setData({...data, chatApp: e.target.value as SkipCollector})
+                      }}
+                      className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
+                    >
+                      <option value={SkipCollector.NULL}>Select Chat App</option>
+                      <option value={SkipCollector.VIBER}>Viber</option>
+                      <option value={SkipCollector.WHATSAPP}>Whatsapp</option>
                     </select>
                   </label>
                 }

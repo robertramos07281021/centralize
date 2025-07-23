@@ -1819,13 +1819,12 @@ const dispositionResolver = {
 
        await CustomerAccount.findByIdAndUpdate(customerAccount._id, { $set: updateFields, $push: { history: newDisposition._id } },{new: true});
         
-
         return {
           success: true,
           message: "Disposition successfully created"
         }
       } catch (error) {
-       
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

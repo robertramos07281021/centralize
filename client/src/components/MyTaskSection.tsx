@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useSubscription, useApolloClient } from "@apollo/client"
+import { useMutation, useQuery, useSubscription } from "@apollo/client"
 import gql from "graphql-tag"
 import { useEffect, useState } from "react"
 import { useSelector } from "react-redux"
@@ -281,63 +281,54 @@ const DESELECT_TASK = gql`
 const MyTaskSection = () => {
   const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
-  const client = useApolloClient()
-  const {data:myTasksData} = useQuery<{myTasks:CustomerData[] | []}>(MY_TASKS,    
+  const {data:myTasksData,refetch} = useQuery<{myTasks:CustomerData[] | []}>(MY_TASKS,    
     {
       skip: true, 
-      context: { queryDeduplication: false }
     }
   )
 
 
   const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS, {
     skip: true,
-    context: { queryDeduplication: false }
   })
   
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
-    onData: ({data})=> {
+    onData: async({data})=> {
       if(data) {
         if(data.data?.somethingChanged?.message === "TASK_SELECTION" && data.data?.somethingChanged?.members?.toString().includes(userLogged._id)) {
-          client.refetchQueries({
-            include: ['myTasks']
-          })
+         await refetch()
         }
       }
     }
   });
 
   useSubscription<{taskChanging:SubSuccess}>(TASK_CHANGING,{
-    onData: ({data})=> {
+    onData: async({data})=> {
       if(data) {
         if(data.data?.taskChanging?.message === "TASK_CHANGING" && (data.data?.taskChanging?.members?.toString().includes(userLogged._id)||data.data?.taskChanging?.members?.toString().includes(userLogged.group))) {
-          client.refetchQueries({
-            include: ['myTasks','groupTask']
-          })
+          await refetch()
+          await groupTaskRefetch()
         }
       }
     }
   });
 
   useSubscription<{dispositionUpdated:SubSuccess}>(NEW_DISPO,{
-    onData: ({data})=> {
+    onData: async({data})=> {
       if(data){
          if(data.data?.dispositionUpdated?.message === "NEW_DISPOSITION" && data.data?.dispositionUpdated?.members?.toString().includes(userLogged._id)) {
-          client.refetchQueries({
-            include: ['myTasks','groupTask']
-          })
+          await refetch()
+          await groupTaskRefetch()
         }
       }
     }
   })
 
   useSubscription<{groupChanging:SubSuccess}>(GROUP_CHANGING,{
-    onData: ({data})=> {
+    onData: async({data})=> {
       if(data){
         if(data.data?.groupChanging?.message === "GROUP_CHANGING" &&  data.data?.groupChanging?.members?.toString().includes(userLogged._id)) {
-          client.refetchQueries({
-            include: ['groupTask']
-          })
+           await groupTaskRefetch()
         }
       }
     }
