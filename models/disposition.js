@@ -61,7 +61,7 @@ const dispositionSchema = new Schema(
     },
     sms: {
       type: String,
-      enum: ['openvox','dinstar','inbound'],
+      enum: ['openvox','dinstar','inbound','M360'],
       default: undefined
     },
     user: {

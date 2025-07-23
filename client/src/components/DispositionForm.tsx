@@ -112,7 +112,8 @@ enum SkipCollector {
 enum SMSCollector {
   OPENVOX = 'openvox',
   DINSTAR = 'dinstar',
-  INBOUND = 'inbound'
+  INBOUND = 'inbound',
+  M360 = 'M360'
 }
 
 enum PaymentMethod {
@@ -317,7 +318,7 @@ const dispoObject: Record<string, string> = useMemo(() => {
   const tlOptions = useMemo(() => {
     return tlData?.getBucketTL || [];
   }, [tlData]);
-  
+
   const callbackTLEscalation = useCallback(async(id:string)=> {
      await tlEscalation({variables: {id, tlUserId: tlOptions}})
   },[tlData, tlEscalation ])
