@@ -596,9 +596,11 @@ const userResolvers = {
 
         if(!unlockUser) throw new CustomError('Agent not found',404)
 
+        await ModifyRecord.create({name: "Unlock account", user: unlockUser._id})
+
         return {
           success: true,
-          message: `Successfully unlock ${unlockUser.user_id}`,
+          message: `Successfully unlock ${unlockUser.name.toUpperCase()} account`,
           user: unlockUser
         }
       } catch (error) {
