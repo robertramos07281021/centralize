@@ -15,6 +15,12 @@ type modalProps = {
   state: Users;
 }
 
+type SuccessUpdate = {
+  user: Users,
+  success: boolean
+  message: string
+}
+
 type Bucket = {
   name: string;
   dept: string;
@@ -267,14 +273,13 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
 
 
   // ================ mutations ===================================
-  const [updateUser] = useMutation(UPDATE_USER, {
+  const [updateUser] = useMutation<{updateUser:SuccessUpdate}>(UPDATE_USER, {
     onCompleted: (res) => {
       navigate(location.pathname, { state: { ...res.updateUser.user, newKey: "newKey" } });
       dispatch(setSuccess({
         success: res.updateUser.success,
         message: res.updateUser.message
       }))
-      
       setIsUpdate(false)
     },
     onError: () => {
@@ -282,9 +287,9 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     }
   })
   
-  const [resetPassword] = useMutation(RESET_PASSWORD, {
+  const [resetPassword] = useMutation<{resetPassword:SuccessUpdate}>(RESET_PASSWORD, {
     onCompleted: (res) => {
-      navigate(location.pathname, { state: { ...state, newKey: "newKey" } });
+      navigate(location.pathname, { state: { ...res.resetPassword.user, newKey: "newKey" } });
       dispatch(setSuccess({
         success: res.resetPassword.success,
         message: res.resetPassword.message
@@ -295,7 +300,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     }
   })
 
-  const [updateActiveStatus] = useMutation(STATUS_UPDATE,{
+  const [updateActiveStatus] = useMutation<{updateActiveStatus:SuccessUpdate}>(STATUS_UPDATE,{
     onCompleted: (res) => {
       navigate(location.pathname, { state: { ...res.updateActiveStatus.user, newKey: "newKey" } });
       dispatch(setSuccess({
@@ -309,7 +314,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   })
 
 
-  const [unlockUser] = useMutation(UNLOCK_USER, {
+  const [unlockUser] = useMutation<{unlockUser:SuccessUpdate}>(UNLOCK_USER, {
     onCompleted: (res) => {
       navigate(location.pathname, {state: {...res.unlockUser.user, newKey: 'newKey'}})
       dispatch(setSuccess({
@@ -322,7 +327,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     }
   })
 
-  const [adminLogout] = useMutation(LOGOUT_USER, {
+  const [adminLogout] = useMutation<{adminLogout:SuccessUpdate}>(LOGOUT_USER, {
     onCompleted: (res)=> {
       navigate(location.pathname, {state: {...res.adminLogout.user, newKey: "newKey"}})
       dispatch(setSuccess({
@@ -568,14 +573,14 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
         
           <div className="w-full relative" ref={campaignDiv}>
             <p className="w-full text-base font-medium text-slate-500">Campaign</p>
-            <div className={`${data.departments.length === 0 && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectionDept && data.departments.length > 0 ? "border-blue-500" : "border-slate-300"}`}>
+            <div className={`${data?.departments?.length === 0 && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectionDept && data.departments.length > 0 ? "border-blue-500" : "border-slate-300"}`}>
               <div 
               className="w-full p-2.5 text-nowrap truncate cursor-default" 
-              title={data.departments.map(deptId => Object.entries(dept).find(([, val]) => val.toString() === deptId)?.[0]).join(', ').replace(/_/g, " ")} 
+              title={data?.departments?.map(deptId => Object.entries(dept).find(([, val]) => val.toString() === deptId)?.[0]).join(', ').replace(/_/g, " ")} 
               onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type) && isUpdate) {setSelectionDept(!selectionDept); setSelectionBucket(false)} }}
               >
                 {
-                  data.departments.length < 1 ? "Select Department" : data.departments.map(deptId => Object.entries(dept).find(([, val]) => val.toString() === deptId)?.[0]).join(', ').replace(/_/g, " ")
+                  data?.departments?.length < 1 ? "Select Department" : data?.departments?.map(deptId => Object.entries(dept).find(([, val]) => val.toString() === deptId)?.[0]).join(', ').replace(/_/g, " ")
                 }
               </div>
               <MdKeyboardArrowDown 
@@ -607,8 +612,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
           </div>
           <div className="w-full relative" ref={bucketDiv}>
             <p className="w-full text-base font-medium text-slate-500">Bucket</p>
-            <div className={`${data.departments.length === 0 && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectionBucket && data.departments.length > 0 ? "border-blue-500" : "border-slate-300"}`}>
-              <div className="w-full p-2.5 text-nowrap truncate cursor-default" title={data.buckets.map(bucketId => Object.entries(bucketObject).find(([, val]) => val.toString() === bucketId)?.[0]).join(', ').replace(/_/g, " ")} onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type) && isUpdate) setSelectionBucket(!selectionBucket)}}>
+            <div className={`${data?.departments?.length === 0 && "bg-gray-200"} w-full text-sm border rounded-lg flex justify-between ${selectionBucket && data?.departments?.length > 0 ? "border-blue-500" : "border-slate-300"}`}>
+              <div className="w-full p-2.5 text-nowrap truncate cursor-default" title={data.buckets.map(bucketId => Object.entries(bucketObject).find(([, val]) => val.toString() === bucketId)?.[0]).join(', ').replace(/_/g, " ")} onClick={()=> {if(validForCampaignAndBucket?.toString().includes(data?.type) && isUpdate) setSelectionBucket(!selectionBucket)}}>
                 {
                   data.buckets.length < 1 ? "Select Bucket" : data.buckets.map(bucketId => Object.entries(bucketObject).find(([, val]) => val.toString() === bucketId)?.[0]).join(', ').replace(/_/g, " ")
                 }

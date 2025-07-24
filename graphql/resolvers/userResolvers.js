@@ -521,7 +521,11 @@ const userResolvers = {
          
         await ModifyRecord.create({name: "Reset Password", user: user._id})  
 
-        return {success: true, message: "User password updated", user: user}
+        return {
+          success: true, 
+          message: "User password updated", 
+          user: user
+        }
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
@@ -534,7 +538,11 @@ const userResolvers = {
         
         await ModifyRecord.create({name: "Update User Info", user: updateUser._id})
 
-        return {success: true , message: "User account successfully updated", user: updateUser}
+        return {
+          success: true , 
+          message: "User account successfully updated", 
+          user: updateUser
+        }
 
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -549,7 +557,9 @@ const userResolvers = {
         await ModifyRecord.create({name: `${findUser.active ? "Activation": "Deactivation"}`, user: findUser._id})
         await findUser.save()
         return {
-          success: true, message: "User status successfully updated", user: findUser
+          success: true, 
+          message: "User status successfully updated", 
+          user: findUser
         }
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -582,13 +592,14 @@ const userResolvers = {
         const unlockUser = await User.findByIdAndUpdate( id , { $set: {
           isLock: false,
           attempt_login: 0
-        } } )
+        } },{new: true} )
 
         if(!unlockUser) throw new CustomError('Agent not found',404)
 
         return {
           success: true,
-          message: `Successfully unlock ${unlockUser.user_id}` 
+          message: `Successfully unlock ${unlockUser.user_id}`,
+          user: unlockUser
         }
       } catch (error) {
         throw new CustomError(error.message, 500)        

@@ -23,9 +23,11 @@ type ModifyRecords = {
 }
 
 const UserView = () => {
-  const {state} = useLocation()
-  const {data, refetch} = useQuery<{getModifyReport:ModifyRecords[]}>(MODIFY_RECORD_QUERY,{variables: {id: state?._id}, skip: !state._id})
+  const location = useLocation()
+  const state = location.state
+  const {data, refetch} = useQuery<{getModifyReport:ModifyRecords[]}>(MODIFY_RECORD_QUERY,{variables: {id: state?._id}})
   const dispatch = useAppDispatch()
+
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {
