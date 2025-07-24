@@ -166,6 +166,7 @@ const dispositionTypeDefs = gql`
     comment:String
     dialer: String
     chatApp: String
+    delayed: Boolean
     sms: String
   }
 

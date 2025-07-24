@@ -1537,7 +1537,6 @@ const dispositionResolver = {
         const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
         const newBucket = campaignBucket.map(e=> e._id)
 
-    
         function setGroupForDailyCollection (name,ptp,start,end) {
           const andArray = [
             {
@@ -1749,7 +1748,7 @@ const dispositionResolver = {
         start.setHours(0, 0, 0, 0);
         const end = new Date();  
         end.setHours(23, 59, 59, 999);
-
+        
         const [customerAccount, dispoType, userProdRaw] = await Promise.all([
           CustomerAccount.findById(input.customer_account).populate( 'current_disposition'),
           DispoType.findById(input.disposition).lean(),
@@ -1759,13 +1758,15 @@ const dispositionResolver = {
           }),
         ]);
         
+        const dispoTypeWithAmount = ['PAID','PTP','UNEG']
+
         if (!customerAccount) throw new CustomError("Customer account not found", 404);
         
         if (!dispoType) throw new CustomError("Disposition type not found", 400);
       
         if(!userProdRaw) await Production.create({ user: user._id });
    
-        const isPaymentDisposition = dispoType.code === "PAID"
+        const isPaymentDisposition = dispoTypeWithAmount.includes(dispoType.code)
 
         if (isPaymentDisposition && !input.amount) {
           throw new CustomError("Amount is required", 401);
@@ -1777,7 +1778,7 @@ const dispositionResolver = {
 
         const withPayment = ['PTP','PAID','UNEG']
 
-        const newDisposition = await Disposition.create({
+        const newDisposition = new Disposition({
           ...input,
           payment: withPayment.includes(dispoType.code) ? payment : null,
           amount: parseFloat(input.amount) || 0, 
@@ -1795,10 +1796,6 @@ const dispositionResolver = {
           },
         });
         
-        if(customerAccount?.current_disposition) {
-          await Disposition.findByIdAndUpdate(customerAccount.current_disposition._id, {$set: { existing: false }});
-        }
-
         const updateFields = {
           current_disposition: newDisposition._id,
           assigned: null,
@@ -1817,14 +1814,19 @@ const dispositionResolver = {
           });
         }
 
-       await CustomerAccount.findByIdAndUpdate(customerAccount._id, { $set: updateFields, $push: { history: newDisposition._id } },{new: true});
+        await newDisposition.save()
+
+        if(customerAccount?.current_disposition) {
+          await Disposition.findByIdAndUpdate(customerAccount.current_disposition._id, {$set: { existing: false }});
+        }
+
+        await CustomerAccount.findByIdAndUpdate(customerAccount._id, { $set: updateFields, $push: { history: newDisposition._id } },{new: true});
         
         return {
           success: true,
           message: "Disposition successfully created"
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

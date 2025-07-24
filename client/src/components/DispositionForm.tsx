@@ -17,6 +17,7 @@ type Data = {
   comment: string | null;
   contact_method: AccountType | null;
   dialer: Dialer | null;
+  delayed: boolean
   chatApp: SkipCollector | null;
   sms: SMSCollector | null
 }
@@ -107,6 +108,12 @@ enum SkipCollector {
   VIBER = 'viber',
   WHATSAPP = 'whatsapp',
   FACEBOOK = 'facebook',
+  GOOGLE = 'google',
+  LINKEDIN = 'linkedin',
+  GCASH = 'gcash',
+  YELLOWPAGE = 'yellowpage',
+  BRGY = 'brgy',
+  TELEGRAM = 'telegram'
 }
 
 enum SMSCollector {
@@ -123,7 +130,10 @@ enum PaymentMethod {
   CASH = 'CASH'
 }
 
-
+type DispositionType = {
+  code: string;
+  id: string;
+};
 
 type Props = {
   updateOf: ()=> void
@@ -142,19 +152,22 @@ const IFBANK = ({label}:{label:string})=> {
 
 const DispositionForm:React.FC<Props> = ({updateOf}) => {
   const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
-  const [selectedDispo, setSelectedDispo] = useState<string>('')
   const dispatch = useAppDispatch()
+  const Form = useRef<HTMLFormElement | null>(null)
   const {data:disposition} = useQuery<{getDispositionTypes:Disposition[]}>(GET_DISPOSITION_TYPES,{skip: !selectedCustomer._id})
+  const {data:tlData} = useQuery<{getBucketTL:TL[]}>(USER_TL,{skip: !selectedCustomer._id})
   
-  type DispositionType = {
-  code: string;
-  id: string;
-};
+  const [selectedDispo, setSelectedDispo] = useState<string>('')
+  const [required, setRequired] = useState(false)
+  const [confirm, setConfirm] = useState(false)
+  const [escalateTo, setEscalateTo] = useState<boolean>(false)
+  const [caToEscalate, setCAToEscalate] = useState<string>("")
+  const [selectedTL, setSelectedTL] = useState<string>("")
 
-const dispoObject: Record<string, string> = useMemo(() => {
-  const d: DispositionType[] = disposition?.getDispositionTypes || [];
-  return Object.fromEntries(d.map(e => [e.code, e.id]));
-}, [disposition]);
+  const dispoObject: Record<string, string> = useMemo(() => {
+    const d: DispositionType[] = disposition?.getDispositionTypes || [];
+    return Object.fromEntries(d.map(e => [e.code, e.id]));
+  }, [disposition]);
 
   const [data, setData] = useState<Data>({
     amount: null,
@@ -167,6 +180,7 @@ const dispoObject: Record<string, string> = useMemo(() => {
     contact_method: null,
     dialer: null,
     chatApp: null,
+    delayed: false,
     sms: null
   })
 
@@ -183,6 +197,7 @@ const dispoObject: Record<string, string> = useMemo(() => {
       contact_method: null,
       dialer: null,
       chatApp: null,
+      delayed: false,
       sms: null 
     });
   };
@@ -192,6 +207,20 @@ const dispoObject: Record<string, string> = useMemo(() => {
       resetForm()
     }
   },[selectedCustomer])
+
+
+// mutations ============================================================================
+
+  const [deselectTask] = useMutation<{deselectTask:Success}>(DESELECT_TASK,{
+    onCompleted: ()=> {
+      dispatch(setDeselectCustomer()) 
+      resetForm()
+      updateOf()
+    },
+    onError: ()=> {
+      dispatch(setServerError(true))
+    }
+  })
 
   const [createDisposition] = useMutation<{createDisposition:Success}>(CREATE_DISPOSITION,{
     onCompleted: (res) => {
@@ -204,15 +233,29 @@ const dispoObject: Record<string, string> = useMemo(() => {
       updateOf()
       dispatch(setDeselectCustomer())
     },
-    onError: (error) => {
-      console.log(error)
+    onError: async() => {
+      await deselectTask({variables: {id:selectedCustomer._id}})
       setConfirm(false)
-      resetForm()
-      updateOf()
-      dispatch(setDeselectCustomer())
       dispatch(setServerError(true))
     }
   })
+  
+  const [tlEscalation] = useMutation<{tlEscalation:Success}>(TL_ESCATATION,{
+    onCompleted: async(res)=> {
+      dispatch(setSuccess({
+        success: res.tlEscalation.success,
+        message: res.tlEscalation.message
+      }))
+      await deselectTask({variables: {id:selectedCustomer._id}})
+    },
+    onError: async()=> {
+      await deselectTask({variables: {id:selectedCustomer._id}})
+      dispatch(setServerError(true))
+    }
+  })
+  
+// ======================================================================================
+
   const handleDataChange = (key: keyof Data, value: any) => {
     setData(prev => ({ ...prev, [key]: value }));
   };
@@ -220,7 +263,7 @@ const dispoObject: Record<string, string> = useMemo(() => {
   const handleOnChangeAmount = useCallback((e:React.ChangeEvent<HTMLInputElement>) => {
     let inputValue = e.target.value.replace(/[^0-9.]/g, '');
     const parts = inputValue.split('.');
-
+    
     if (parts.length > 2) {
       inputValue = parts[0] + '.' + parts[1]; 
     } else if (parts.length === 2) {
@@ -237,11 +280,7 @@ const dispoObject: Record<string, string> = useMemo(() => {
     const payment = numericValue >= balance ? Payment.FULL : Payment.PARTIAL;
     handleDataChange('amount',amount)
     handleDataChange('payment',payment)
-  },[setData,selectedCustomer])
-
-  const Form = useRef<HTMLFormElement | null>(null)
-  const [required, setRequired] = useState(false)
-  const [confirm, setConfirm] = useState(false)
+  },[setData, selectedCustomer, handleDataChange ])
 
   const [modalProps, setModalProps] = useState({
     message: "",
@@ -252,52 +291,36 @@ const dispoObject: Record<string, string> = useMemo(() => {
 
   const creatingDispo = useCallback(async()=> {
     await createDisposition({variables: { input: {...data, customer_account: selectedCustomer._id} }})
-  },[data, selectedCustomer, createDisposition])
+  },[ data, selectedCustomer, createDisposition ])
 
   const noCallback = useCallback(()=> {
     setConfirm(false)
-  },[])
+  },[setConfirm])
 
   const handleSubmitForm = useCallback((e:React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     if(!Form.current?.checkValidity()) {
       setRequired(true)
     } else {
+      if(selectedDispo === 'PAID' && data.payment_date ) {
+        const paymentDate = new Date(data.payment_date?.toString()) 
+        paymentDate.setHours(23,59,59,999)
+        const currentDate = new Date().setHours(23,59,59,999)
+
+        if(Number(paymentDate) > Number(currentDate)) {
+          return setRequired(true)
+        }
+      }
       setRequired(false)
       setConfirm(true)
       setModalProps({
-        message: "Do you want to create the disposition?",
+        message: "Do you want to create the disposition? ",
         toggle: "CREATE",
         yes: creatingDispo,
         no: noCallback
       })
     }
-  },[setRequired,setConfirm,setModalProps,Form,creatingDispo,noCallback])
-
-  const [deselectTask] = useMutation<{deselectTask:Success}>(DESELECT_TASK,{
-    onCompleted: ()=> {
-      dispatch(setDeselectCustomer()) 
-    },
-    onError: ()=> {
-      dispatch(setServerError(true))
-    }
-  })
-
-  const [tlEscalation] = useMutation<{tlEscalation:Success}>(TL_ESCATATION,{
-    onCompleted: async(res)=> {
-      dispatch(setSuccess({
-        success: res.tlEscalation.success,
-        message: res.tlEscalation.message
-      }))
-      await deselectTask({variables: {id:selectedCustomer._id}})
-    },
-    onError: ()=> {
-      dispatch(setServerError(true))
-    }
-  })
-  const [escalateTo, setEscalateTo] = useState<boolean>(false)
-  const [caToEscalate, setCAToEscalate] = useState<string>("")
-  const [selectedTL, setSelectedTL] = useState<string>("")
+  },[ setRequired, setConfirm, setModalProps, Form, creatingDispo, noCallback ])
 
   const tlEscalationCallback = useCallback(async()=> {
     await tlEscalation({variables: {id:caToEscalate, tlUserId: selectedTL}})
@@ -312,17 +335,14 @@ const dispoObject: Record<string, string> = useMemo(() => {
       no: noCallback
     })
   },[setConfirm, setModalProps,tlEscalationCallback,noCallback])
-  const {data:tlData} = useQuery<{getBucketTL:TL[]}>(USER_TL,{skip: !selectedCustomer._id})
- 
 
   const tlOptions = useMemo(() => {
     return tlData?.getBucketTL || [];
-  }, [tlData]);
+  },[ tlData ]);
 
   const callbackTLEscalation = useCallback(async(id:string)=> {
      await tlEscalation({variables: {id, tlUserId: tlOptions}})
-  },[tlData, tlEscalation ])
-
+  },[ tlData, tlEscalation ])
 
   const handleSubmitEscalationToTl = useCallback(async(id:string) => {
     if(tlOptions.length > 1) {
@@ -337,10 +357,18 @@ const dispoObject: Record<string, string> = useMemo(() => {
         no: noCallback
       })
     }
-  },[tlOptions,setEscalateTo,setModalProps,callbackTLEscalation,noCallback,setConfirm,setCAToEscalate])
+  },[ tlOptions, setEscalateTo, setModalProps, callbackTLEscalation, noCallback, setConfirm, setCAToEscalate ])
 
   const anabledDispo = ["PAID","PTP","UNEG"]
   const requiredDispo = ["PAID",'PTP']
+
+  const checkIfValid = (value: string):boolean => {
+
+    const newDate = new Date(value).setHours(23,59,59,999)
+    const dateNow = new Date().setHours(23,59,59,999)
+
+    return newDate > dateNow
+  }
 
   return  (
     <>
@@ -390,7 +418,7 @@ const dispoObject: Record<string, string> = useMemo(() => {
         {
           selectedCustomer._id &&
 
-          <div className="flex xl:gap-10 gap-2 justify-center">
+          <div className="flex xl:gap-10 gap-2 justify-center select-none">
             <div className="flex flex-col gap-2 w-full">
               <label className="flex flex-col xl:flex-row items-center">
                 <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4">Disposition</p>
@@ -553,6 +581,18 @@ const dispoObject: Record<string, string> = useMemo(() => {
                     </select>
                   </label>
                 }
+                <div className=" flex justify-end ">
+                  <label className="flex gap-2 items-center">
+                    <input type="checkbox" name="delayed" id="delayed" checked={data.delayed} onChange={(e)=> {
+                      if(e.target.checked) {
+                        setData(prev=> ({...prev, delayed: true}))
+                      } else {  
+                        setData(prev=> ({...prev, delayed: false}))
+                      }
+                    }}/>
+                    <span>Reason For Delayed</span>
+                  </label>
+                </div>
             </div>
             <div className="flex flex-col gap-2 w-full"> 
               {
@@ -563,9 +603,10 @@ const dispoObject: Record<string, string> = useMemo(() => {
                       type="date" 
                       id="payment_date" 
                       name="payment_date"
+                      required={selectedDispo === 'PAID'}
                       value={data.payment_date ?? ""}
                       onChange={(e)=> handleDataChange('payment_date',e.target.value)}
-                      className={`bg-gray-50 border-gray-500 border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
+                      className={`${(required && !data.payment_date) || (required && data.payment_date && checkIfValid(data.payment_date)) ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                     />
                 </label>
                 :
@@ -622,7 +663,6 @@ const dispoObject: Record<string, string> = useMemo(() => {
                   onChange={(e)=> handleDataChange('comment',e.target.value)}
                   className="bg-gray-50 border border-gray-500 text-gray-900 rounded-lg h-24 focus:ring-blue-500 focus:border-blue-500 text-xs xl:text-sm w-full p-2 resize-none"  
                 ></textarea>
-
               </label>
             </div>
           </div>
@@ -632,7 +672,8 @@ const dispoObject: Record<string, string> = useMemo(() => {
               data.disposition &&
               <button 
                 type="submit" 
-                className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 py-4 lx:px-5 xl:py-2.5 xl:me-2l xl:mb-2 cursor-pointer xl:text-sm text-xs`}>Submit</button>
+                className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 py-4 lx:px-5 xl:py-2.5 xl:me-2l xl:mb-2 cursor-pointer xl:text-sm text-xs`}
+              >Submit</button>
             }
             {
               data.disposition && userLogged.type === "AGENT" &&

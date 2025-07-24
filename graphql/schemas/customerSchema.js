@@ -112,6 +112,7 @@ const customerTypeDefs = gql`
     dialer: String
     createdAt: DateTime
     contact_method: String
+    delayed: Boolean
   }
 
   type GroupMember {

@@ -188,7 +188,7 @@ const productionResolver = {
                     {
                       $and: [
                         {
-                          $in: ["$dispotype.code",['PTP','PAID']]
+                          $in: ["$dispotype.code",['PAID']]
                         },
                         {
                           $gte: ['$createdAt',todayStart]
@@ -209,7 +209,7 @@ const productionResolver = {
                     {
                       $and: [
                         {
-                          $in: ["$dispotype.code",['PTP','PAID']]
+                          $in: ["$dispotype.code",['PAID']]
                         },
                         {
                           $gte: ['$createdAt',yesterdayStart]

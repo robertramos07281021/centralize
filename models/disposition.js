@@ -16,6 +16,11 @@ const dispositionSchema = new Schema(
       ref: "DispoType",
       required: true
     },
+    user: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true
+    },
     payment_date: {
       type: String,
     },
@@ -35,6 +40,10 @@ const dispositionSchema = new Schema(
     ptp: {
       type: Boolean,
       default: false
+    },
+    delayed: {
+      type: Boolean,
+      default:false
     },
     bucket: {
       type: mongoose.Schema.Types.ObjectId,
@@ -56,7 +65,7 @@ const dispositionSchema = new Schema(
     },
     chatApp: {
       type: String,
-      enum: ['viber','whatsapp','facebook'],
+      enum: ['viber','whatsapp','facebook','google','linkedin','gcash','yellowpage','brgy','telegram'],
       default: undefined
     },
     sms: {
@@ -64,11 +73,6 @@ const dispositionSchema = new Schema(
       enum: ['openvox','dinstar','inbound','M360'],
       default: undefined
     },
-    user: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User",
-      required: true
-    }
   },
   { timestamps: true }
 );

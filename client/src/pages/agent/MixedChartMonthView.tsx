@@ -51,13 +51,12 @@ const AGENT_PER_MONTH_PROD = gql`
 export default function MixedChartMonthView() {
   const {data:agentProdPerMonthData, refetch:PerMonthRefetch} = useQuery<{getAgentProductionPerMonth:AgentProdPerMonth[]}>(AGENT_PER_MONTH_PROD)
   const {userLogged} = useSelector((state:RootState)=> state.auth)
-  console.log(agentProdPerMonthData)
   const labelsPermonth =  month.map((m)=> {return m.slice(0,3)})
   const totals = agentProdPerMonthData?.getAgentProductionPerMonth.map((e)=> e.total) || []
   const monthlyTarget = userLogged.targets.monthly || 0
   const rounded = Math.round(Math.max(...totals)/10000)*10000
   const Max = rounded > monthlyTarget ? rounded : monthlyTarget
-  
+
   const fields: {
     label: string;
     key: keyof AgentProdPerMonth;

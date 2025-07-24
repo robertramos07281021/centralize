@@ -894,8 +894,6 @@ const customerResolver = {
           }
         ])
 
-        console.log(monthlyTarget)
-
         const newMonthlyTarget = monthlyTarget.map(e=> {
           const campagin = aomCampaign.find(ac => e.campaign === ac.name)
           return {
@@ -906,7 +904,6 @@ const customerResolver = {
 
         return newMonthlyTarget
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)             
       }
     }

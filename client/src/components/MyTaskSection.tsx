@@ -111,6 +111,7 @@ const MY_TASKS = gql`
         contact_method
         chatApp
         sms
+        delayed
       }
       out_standing_details {
         principal_os
@@ -185,6 +186,7 @@ const GROUP_TASKS =gql`
           contact_method
           chatApp
           sms
+          delayed
         }
         out_standing_details {
           principal_os

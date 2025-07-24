@@ -60,6 +60,7 @@ const SEARCH = gql`
         contact_method
         chatApp
         sms
+        delayed
       }
       out_standing_details {
         principal_os

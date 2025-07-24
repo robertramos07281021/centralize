@@ -93,7 +93,7 @@ const DispositionRecords = () => {
 
   const filter = dispotypesData?.getDispositionTypes.filter(e=> withPayment.includes(e.code)).map(x=> x.id)
   const slicedHistory = dispo_historySorted.slice(0,limit)
-  
+
   return selectedCustomer._id && selectedCustomer?.dispo_history && (
     <div className="p-5 flex flex-col gap-10">
       <h1 className="text-center text-xl font-bold text-slate-600">Account History</h1>
@@ -114,7 +114,7 @@ const DispositionRecords = () => {
                 <div className="p-2 col-span-2 text-slate-700  w-full">{date(gad.createdAt)}</div>
               </div>
 
-              <DataDiv label='Disposition' value={dispotypeObject[gad.disposition]}/>
+              <DataDiv label='Disposition' value={`${dispotypeObject[gad.disposition]}${gad.delayed ? " - Delayed" : ""}`}/>
               <DataDiv label='Contact Method' value={gad.contact_method.toUpperCase() as AccountType}/>
               <DataDiv label='Amount' value={gad.amount !== 0 ? gad.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : ""}/>
               <DataDiv label='Payment' value={filter?.includes(gad.disposition) ? gad.payment?.toString() ?? null : null}/>

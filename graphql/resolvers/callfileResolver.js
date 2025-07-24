@@ -6,6 +6,12 @@ import CustomerAccount from "../../models/customerAccount.js"
 import {json2csv } from 'json-2-csv'
 import Department from "../../models/department.js"
 
+const uniqueCodes = [
+  2, 32, 33, 34, 35, 36, 38, 42, 43, 44, 45, 46, 47, 48, 49, 52, 53, 54, 55, 56,
+  62, 63, 64, 65, 68, 72, 74, 75, 77, 78, 82, 83, 84, 85, 86, 87, 88, 8822, 8842
+];
+
+
 const callfileResolver = {
   DateTime,
   Query: {
