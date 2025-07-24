@@ -60,8 +60,8 @@ type Bucket = {
 }
 
 const TL_BUCKET = gql`
-  query GetDeptBucket {
-    getDeptBucket {
+  query getAllBucket {
+    getAllBucket {
       id
       name
     }
@@ -70,30 +70,27 @@ const TL_BUCKET = gql`
 
 
 const TLAgentProduction = () => {
+  
   const dispatch = useAppDispatch()
-  const {data:agentDailyProd, error:addError, refetch} = useQuery<{agentDispoDaily:AgentDailies[]}>(AGENT_DAILY_PROD)
-  const {data:agentBucketData, error:abdError} = useQuery<{findAgents:Agent[]}>(GET_DEPARTMENT_AGENT)
-  const {data:tlBucketData, error:tlbdError} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+  const {data:agentDailyProd, refetch} = useQuery<{agentDispoDaily:AgentDailies[]}>(AGENT_DAILY_PROD)
+  const {data:agentBucketData, refetch:findAgentRefetch} = useQuery<{findAgents:Agent[]}>(GET_DEPARTMENT_AGENT)
+  const {data:tlBucketData, refetch:getDeptBucketRefetch} = useQuery<{getAllBucket:Bucket[]}>(TL_BUCKET)
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       try {
         await refetch()
+        await findAgentRefetch()
+        await getDeptBucketRefetch()
       } catch (error) {
         dispatch(setServerError(true))
       }
     })
     return () => clearTimeout(timer)
-  },[refetch])
-
-  useEffect(()=> {
-    if(addError || abdError || tlbdError) {
-      dispatch(setServerError(true))
-    }
-  },[addError,abdError,tlbdError])
+  },[refetch,findAgentRefetch,getDeptBucketRefetch])
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
-    const tlBuckets = tlBucketData?.getDeptBucket || []
+    const tlBuckets = tlBucketData?.getAllBucket || []
     return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
   },[tlBucketData])
 
@@ -117,8 +114,10 @@ const TLAgentProduction = () => {
             const getDailyProd = agentDailyProd?.agentDispoDaily.find(e=> e.user === agent._id)
             const sumOfDaily = getDailyProd && (getDailyProd?.ac + getDailyProd?.pk + getDailyProd?.ptp)
             const sumOfYesterday = getDailyProd && (getDailyProd.y_ac + getDailyProd.y_pk + getDailyProd.y_ptp)
-            const arrow = sumOfDaily === 0 ? <HiOutlineMinusSm className="text-blue-500"/> : ((((sumOfDaily || 0) - (sumOfYesterday || 0)) > 0) ? <IoMdArrowUp className="text-green-500"/> : (((sumOfYesterday || 0) - (sumOfYesterday || 0)) === 0) ? <HiOutlineMinusSm className="text-blue-500"/> : <IoMdArrowDown className="text-red-500"/>) 
-
+            const arrow = sumOfDaily === 0 ? <HiOutlineMinusSm className="text-blue-500"/> : ((((sumOfDaily || 0) - (sumOfYesterday || 0)) > 0) ? <IoMdArrowUp className="text-green-500"/> : (((sumOfYesterday || 0) - (sumOfYesterday || 0)) === 0) ? <HiOutlineMinusSm className="text-blue-500"/> : <IoMdArrowDown className="text-red-500"/>)
+            if(agent.user_id === '0000') {
+              console.log(agent.buckets)
+            }
             return  (
               <div key={agent._id} className='grid grid-cols-11 bg-white lg:text-[0.6rem] 2xl:text-xs text-slate-500 py-0.5 cursor-default'>
                 <div className='col-span-2 uppercase truncate pr-2' title={agent.name.toUpperCase()}>{agent.name}</div>
