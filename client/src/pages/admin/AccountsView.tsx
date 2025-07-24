@@ -1,5 +1,5 @@
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { Link } from "react-router-dom"
+import { Link, useLocation } from "react-router-dom"
 import { FaCircle } from "react-icons/fa";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { CiSearch } from "react-icons/ci";
@@ -98,6 +98,7 @@ const AccountsView = () => {
   const [search, setSearch] = useState("")
   const dispatch = useAppDispatch()
   const {limit, adminUsersPage} = useSelector((state:RootState)=> state.auth)
+  const location = useLocation()
 
   const {data:getDeptData, refetch:deptRefetch} = useQuery<{getDepts:DeptBranchBucket[]}>(GET_DEPTS)
   const {data:getBranchData, refetch:branchRefetch} = useQuery<{getBranches:DeptBranchBucket[]}>(GET_BRANCHES)
@@ -186,7 +187,7 @@ const AccountsView = () => {
       }
     })
     return () => clearTimeout(timer)
-  },[refetch,deptRefetch,branchRefetch,bucketRefetch])
+  },[refetch,deptRefetch,branchRefetch,bucketRefetch,location.pathname])
 
   return (
     <>
