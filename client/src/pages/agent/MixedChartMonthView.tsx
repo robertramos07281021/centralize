@@ -192,7 +192,7 @@ export default function MixedChartMonthView() {
   },[PerMonthRefetch])
 
   return (
-    <div className="border rounded-lg border-slate-200 col-span-7 row-span-2 p-2 shadow-md shadow-black/20 bg-white">
+    <div className="border rounded-lg col-span-1 border-slate-200 lg:col-span-7 lg:row-span-2 p-2 shadow-md shadow-black/20 bg-white">
       <Chart type="bar" data={dataPerMonth} options={optionPerMonth} plugins={[customGridLinePlugi]}/>
     </div>
   )

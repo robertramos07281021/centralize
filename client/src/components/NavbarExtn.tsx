@@ -69,9 +69,7 @@ const NavbarExtn = () => {
   })
 
   const userType = userLogged?.type as keyof typeof accountsNavbar;
-
   if (!userType || !accountsNavbar[userType]) return null; 
-
   const length = myTask?.myTasks.length || 0
 
   return (
@@ -79,7 +77,7 @@ const NavbarExtn = () => {
       {
         accountsNavbar[userType].map((an,index) => 
         <Link key={index} to={an.link} className="relative">
-          <div className={`${index > 0 && "border-l"} ${location.pathname.includes(an.link) && "bg-slate-200"} text-xs border-slate-300 py-2 w-44 text-center hover:bg-slate-200 hover:text-black/60`}>
+          <div className={`${index > 0 && "border-l"} ${location.pathname.includes(an.link) && "bg-slate-200"} text-xs border-slate-300 py-2  w-35 lg:w-44 text-center hover:bg-slate-200 hover:text-black/60`}>
             {an.name}
           </div>
           { 

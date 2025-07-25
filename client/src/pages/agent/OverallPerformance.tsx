@@ -44,7 +44,7 @@ export default function OverallPerformance () {
   },[TotalDispoRefetch,DispoTypeRefetch])
 
   return (
-    <div className="border rounded-lg border-slate-200 col-span-2 row-span-2 shadow-md shadow-black/20 p-2 bg-white flex flex-col">
+    <div className="border rounded-lg border-slate-200 lg:col-span-2 lg:row-span-2 shadow-md shadow-black/20 p-2 bg-white flex flex-col">
       <h1 className="text-slate-500 font-bold text-[0.8em] py-1">Overall Performance Month of {month[Month]}</h1>
       <div className="grid grid-cols-4 text-xs font-bold px-2 text-gray-500 bg-blue-50 py-2">
         <div className="col-span-2">Name</div>

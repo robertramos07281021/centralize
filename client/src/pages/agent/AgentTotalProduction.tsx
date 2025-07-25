@@ -73,18 +73,18 @@ const Divition = ({label, current, previous, color }: Divition ) => {
 
   return (
     <div className={`rounded-xl border ${colorsObject[color]} p-2 shadow shadow-black/20 flex flex-col`}>
-      <h1 className="lg:text-xs 2xl:text-sm font-bold">
-        {label} <span className="lg:text-[0.7em] 2xl:text-xs"></span>
+      <h1 className="text-xs lg:text-sm font-bold">
+        {label}
       </h1>
        <div className="h-full flex flex-col justify-center">
         <div className="flex justify-between items-center">
-          <h1 className="flex text-sm items-center gap-1">
+          <h1 className="flex text-xs lg:text-sm items-center gap-1">
             <RateIcon rate={rate} />
             <span className="text-xs">{formattedRate}</span>
           </h1>
-          <h1 className="text-lg">{formattedValue}</h1>
+          <h1 className="text-xs lg:text-lg">{formattedValue}</h1>
         </div>
-        <h1 className="text-end text-xs font-bold">Amount</h1>
+        <h1 className="text-end text-[0.6em] lg:text-xs font-bold">Amount</h1>
       </div>
     </div>
   )
@@ -109,31 +109,31 @@ export default function AgentTotalProduction () {
         color="purple"
       />
       <div className={`rounded-xl border p-2 ${colorsObject["teal"]} shadow shadow-black/20 flex flex-col`}>
-        <h1 className="lg:text-xs 2xl:text-sm font-bold flex justify-between">
-          <p className="lg:text-[0.7em] 2xl:text-xs">Collected</p>
-          <p className="lg:text-[0.7em] 2xl:text-xs">Targets</p>
+        <h1 className="text-xs lg:text-sm font-bold flex justify-between">
+          <p className="text-xs lg:text-sm">Collected</p>
+          <p className="text-xs lg:text-sm">Targets</p>
         </h1>
         <div className="h-full flex flex-col justify-center">
      
           <div className="flex justify-end items-center gap-2 text-sm">
-            <p className="text-xs font-medium">(Daily)</p>
-            <div>{userLogged.targets.daily.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
+            <p className="text-[0.7em] lg:text-xs font-medium">(Daily)</p>
+            <div className="text-[0.7em] lg:text-xs">{userLogged.targets.daily.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
           </div>
           <div className="flex justify-between items-center gap-2">
-            <div className="text-xs">{collectionsData?.monthlyWeeklyCollected?.weekly?.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
+            <div className="text-[0.7em] lg:text-xs">{collectionsData?.monthlyWeeklyCollected?.weekly?.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
             <div className="flex jsutify-center items-center text-sm">
-              <p className="text-xs font-medium">(Weekly)</p>
-              <div>{userLogged.targets.weekly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
+              <p className="text-[0.7em] lg:text-xs font-medium">(Weekly)</p>
+              <div className="text-[0.7em] lg:text-xs">{userLogged.targets.weekly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
             </div>
           </div>
           <div className="flex justify-between items-center gap-2">
-            <div className="text-xs">{collectionsData?.monthlyWeeklyCollected?.monthly?.toLocaleString("en-PH", {style: "currency",currency: "PHP",})}</div>
+            <div className="text-[0.7em] lg:text-xs">{collectionsData?.monthlyWeeklyCollected?.monthly?.toLocaleString("en-PH", {style: "currency",currency: "PHP",})}</div>
             <div className="flex jsutify-center items-center text-sm">
-              <p className="text-xs font-medium">(Monthly)</p>
-              <div>{userLogged.targets.monthly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
+              <p className="text-[0.7em] lg:text-xs font-medium">(Monthly)</p>
+              <div className="text-[0.7em] lg:text-xs">{userLogged.targets.monthly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
             </div>
           </div>
-          <h1 className="text-end text-xs font-bold">Amount</h1>
+          <h1 className="text-end text-[0.6em] lg:text-xs font-bold">Amount</h1>
         </div>
       </div>
     </div>

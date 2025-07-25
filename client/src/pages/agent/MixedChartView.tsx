@@ -203,7 +203,7 @@ const MixedChartView = () => {
   }
 
   return (
-    <div className="border flex rounded-lg border-slate-200 col-span-6 row-span-2 p-2 shadow-md shadow-black/20 bg-white">
+    <div className="border flex rounded-lg border-slate-200 lg:col-span-6 lg:row-span-2 p-2 shadow-md shadow-black/20 bg-white">
       <Chart type="bar" data={dataPerDay} options={optionPerDay} plugins={[customGridLinePlugi]}  />
     </div>
   

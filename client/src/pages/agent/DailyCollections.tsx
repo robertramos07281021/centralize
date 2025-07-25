@@ -45,12 +45,12 @@ type RateProps = {
 
 const RateIcon = ({ rate }: { rate: number }) => {
   if (isNaN(rate) || rate === -100 || rate === Infinity) {
-    return <HiOutlineMinusSm className="text-blue-500" />;
+    return <HiOutlineMinusSm className="text-blue-500 text-xs lg:text-base " />;
   }
   return rate > 0 ? (
-    <IoMdArrowUp className="text-green-500" />
+    <IoMdArrowUp className="text-green-500 text-xs lg:text-base "  />
   ) : (
-    <IoMdArrowDown className="text-red-500" />
+    <IoMdArrowDown className="text-red-500 text-xs lg:text-base " />
   );
 };
 
@@ -79,8 +79,8 @@ const StatCard = ({ label, current, previous, color, count }: RateProps) => {
     <div
       className={` rounded-xl border ${colorMap[color]} p-2 shadow shadow-black/20 flex flex-col `}
     >
-      <h1 className="lg:text-xs 2xl:text-sm font-bold">
-        {label} <span className="lg:text-[0.7em] 2xl:text-xs">(Daily)</span>
+      <h1 className="text-xs lg:text-sm font-bold">
+        {label} <span className="text-[0.7em] lg:text-xs">(Daily)</span>
       </h1>
       <div className="h-full flex flex-col justify-center">
         <div className="flex flex-col items-center">
@@ -88,15 +88,13 @@ const StatCard = ({ label, current, previous, color, count }: RateProps) => {
             <div >
               <div className="flex justify-between">
                 <RateIcon rate={rate} />
-                <span className="text-xs">{formattedRate}</span>
-
+                <span className="text-[0.7em] lg:text-xs">{formattedRate}</span>
               </div>
               <div>{count}</div>
             </div>
             <div className="flex flex-col">
-              <h1 className="text-lg">{formattedValue}</h1>
-              <h1 className="text-end text-xs font-bold">Amount</h1>
-
+              <h1 className="text-sm lg:text-lg">{formattedValue}</h1>
+              <h1 className="text-end text-[0.7em] lg:text-xs font-bold">Amount</h1>
             </div>
           </div>
         </div>
