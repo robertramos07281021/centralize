@@ -112,7 +112,7 @@ const Targets = () => {
                   color: 'oklch(0 0 0)',
                   font: {
                     weight: "bold", 
-                    size: 8,
+                    size: 14,
                   } as const,
                   formatter: (value: number) => {
                     const percent = (value/e.target) * 100
@@ -128,7 +128,7 @@ const Targets = () => {
                 title: {
                   display: true,
                    font: {
-                    size: 10,
+                    size: 12,
                     family: 'Arial',
                     weight: 'bold',
                   },
