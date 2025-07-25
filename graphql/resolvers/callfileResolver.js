@@ -199,6 +199,24 @@ const callfileResolver = {
         throw new CustomError(error.message,500)        
       }
     },
+
+    getBucketCallfile: async(_,__,{user})=> {
+      try {
+        const findActiveCallfile = await Callfile.aggregate([
+          {
+            $match: {
+              bucket: {$in: user.buckets.map(x=> new mongoose.Types.ObjectId(x))}
+            }
+          }
+        ])
+
+
+
+      } catch (error) {
+        throw new CustomError(error.message,500)       
+      }
+    },
+
     downloadCallfiles: async(_,{callfile})=> {
       try {
    

@@ -52,9 +52,9 @@ const AuthenticationPass:React.FC<modalComponents> = ({yesMessage, event, no}) =
 
   return (
     <div className="absolute z-50 h-full w-full top-0 bg-white/10 backdrop-blur-[1.5px] flex items-center justify-center">
-      <div className="w-2/8 border h-3/9 rounded border-slate-300 bg-white flex items-center justify-center flex-col gap-7 shadow-md shadow-black/60">
+      <div className="w-3/8 h-4/9 xl:w-2/8  xl:h-3/9 border rounded border-slate-300 bg-white flex items-center justify-center flex-col gap-7 shadow-md shadow-black/60">
         <CgDanger className="text-red-500 text-5xl mb-4" />
-        <h1 className="lg:text-sm 2xl:text-lg font-medium text-gray-500">Enter your password for confirmation!</h1>
+        <h1 className="lg:text-sm 2xl:text-lg font-medium text-gray-500"> Enter your password for confirmation!</h1>
         <label className="flex items-center gap-2 border border-slate-500 rounded-md px-2 py-1 w-6/10">
           <input 
             type={eye ? "text" : "password"} 

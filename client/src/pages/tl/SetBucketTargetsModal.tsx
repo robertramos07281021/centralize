@@ -42,6 +42,7 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
   const dispatch = useAppDispatch()
   const {data,refetch:tlBucketRefetch} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS)
   const [bucket, setBucket] = useState<string>("")
+  const length = data?.getTLBucket.length && data?.getTLBucket.length > 1
   const [setBucketTargets] = useMutation<{setBucketTargets:Success}>(SET_BUCKET_TARGETS,{
     onCompleted:async(res) => {
       dispatch(setSuccess({
@@ -53,9 +54,14 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
     onError: ()=> {
       dispatch(setServerError(true))
     }
-    
   })
 
+
+  useEffect(()=> {
+    if(!length && data) {
+      setBucket(data?.getTLBucket[0].id)
+    }
+  },[length,data])
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       try {
@@ -78,7 +84,7 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
 
   const handleSuccess = useCallback(async()=> {
     if(bucket) {
-      await setBucketTargets({variables: {bucketId: bucket, targets}})
+      await setBucketTargets({variables: {bucketId: length ? bucket : data?.getTLBucket[0].id , targets}})
       setRequired(false)
     } else {
       setRequired(true)
@@ -91,27 +97,30 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
         <h1 className="py-1 text-2xl px-3 bg-orange-500 text-white font-bold ">Set Targets</h1>
         <div className="h-full w-full flex flex-col items-center justify-center gap-5">
 
-          <label className="flex flex-col w-2/3">
-            <p className="text-sm font-bold text-gray-500">Buckets:</p>
-            <select 
-              name="bucket" 
-              id="bucket" 
-              onChange={(e)=> {
-                const selected = data?.getTLBucket.find((y)=> y.name === e.target.value)
-                setBucket(selected?.id || "")
-              }}
-              className={`border ${required && !bucket ? "border-red-500 bg-red-50 text-red-500" : " border-slate-500"} w-full rounded-md  px-2 py-1 text-gray-500 outline-none`}>
-              {
-                data && data?.getTLBucket.length > 1 &&
-                <option value="" >Select Bucket</option>
-              }
-              {
-                data?.getTLBucket.map((e)=> 
-                  <option key={e.id} id={e.name} value={e.name}>{e.name}</option>
-                )
-              }
-            </select>
-          </label>
+          {
+            length &&
+            <label className="flex flex-col w-2/3">
+              <p className="text-sm font-bold text-gray-500">Buckets:</p>
+              <select 
+                name="bucket" 
+                id="bucket" 
+                onChange={(e)=> {
+                  const selected = data?.getTLBucket.find((y)=> y.name === e.target.value)
+                  setBucket(selected?.id || "")
+                }}
+                className={`border ${required && !bucket ? "border-red-500 bg-red-50 text-red-500" : " border-slate-500"} w-full rounded-md  px-2 py-1 text-gray-500 outline-none`}>
+                {
+                  data && data?.getTLBucket.length > 1 &&
+                  <option value="" >Select Bucket</option>
+                }
+                {
+                  data?.getTLBucket.map((e)=> 
+                    <option key={e.id} id={e.name} value={e.name}>{e.name}</option>
+                  )
+                }
+              </select>
+            </label>
+          }
 
           <label className="flex flex-col w-2/3">
             <p className="text-sm font-bold text-gray-500">Daily:</p>

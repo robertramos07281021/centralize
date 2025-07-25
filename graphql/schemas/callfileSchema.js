@@ -48,6 +48,7 @@ const callfileTypeDefs = gql`
     getCallfiles(bucket:ID, limit:Int! , page:Int! ,status: String!):CallFilesResult
     downloadCallfiles(callfile:ID!): String!
     monthlyDetails: [MonthlyDetails]
+    getBucketCallfile:[Callfile]
   }
 
   type Mutation {

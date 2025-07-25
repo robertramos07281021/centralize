@@ -125,11 +125,15 @@ const BacklogManagementView = () => {
       <div className="h-full  flex flex-col justify-center">
         <h1 className="text-lg font-bold text-slate-700 text-center py-2">Select Report</h1>
         <div className="p-5 flex flex-col gap-2 justify-center">
-          <div>
-            <label>
+          
+          <label className="grid grid-cols-4 relative">
+            <div>Callfile</div>
+            <select name="callfile" id="callfile" className="col-span-3 relative border flex items-center border-slate-400 rounded-lg">
+              
 
-            </label>
-          </div>
+            </select>
+          </label>
+          
           <div className="grid grid-cols-4 relative" ref={userRef}>
             <div className="flex items-center lg:text-xs 2xl:text-sm font-medium text-slate-500">Agent </div>
             <div className="col-span-3 relative border flex items-center border-slate-400 rounded-lg">
@@ -196,6 +200,7 @@ const BacklogManagementView = () => {
                   buckets?.map((bucket) => 
                     <div key={bucket.id} className="flex bg-white flex-col font-medium text-slate-600 p-2" onClick={()=> {
                       setSearchBucket(bucket.name); 
+                      setSearchAgent("");
                       setBucketDropdown(false); 
                     }}>
                       <div className=" text-sm">
