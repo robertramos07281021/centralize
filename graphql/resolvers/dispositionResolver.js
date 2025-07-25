@@ -1,4 +1,4 @@
-import mongoose from "mongoose"
+import mongoose, { Types } from "mongoose"
 import { DateTime } from "../../middlewares/dateTime.js"
 import CustomError from "../../middlewares/errors.js"
 import CustomerAccount from "../../models/customerAccount.js"
@@ -9,7 +9,6 @@ import Bucket from "../../models/bucket.js"
 import DispoType from "../../models/dispoType.js"
 import Group from "../../models/group.js"
 import Department from "../../models/department.js"
-import Customer from "../../models/customer.js"
 
 
 const dispositionResolver = {
@@ -117,18 +116,25 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getDispositionReports: async(_,{agent, bucket, disposition, from, to},{user}) => {
+    getDispositionReports: async(_,{reports},{user}) => {
       try {
-        const agentUser = agent && await User.findOne({user_id: agent}).lean()
-        
+        const {agent, bucket, disposition, from, to, callfile} = reports
+        const bucketFilter = mongoose.Types.ObjectId.isValid(bucket) ? {_id: bucket} : {name: bucket}
+        const [
+          agentUser,
+          findDispositions, 
+          findBucket] = await Promise.all([
+          await User.findOne({user_id: agent}).lean(),
+          await DispoType.find({name: {$in: disposition}}).lean(),
+          await Bucket.findOne(bucketFilter).lean()
+        ])
         if (!agentUser && agent) throw new CustomError("Agent not found", 404);
-        
-        const findDispositions = disposition.length > 0 ? await DispoType.find({name: {$in: disposition}}).lean() : [];
+
 
         const dispoTypesIds = disposition.length > 0 ? findDispositions.map((dt)=> new mongoose.Types.ObjectId(dt._id)) : []
-   
-        const findBucket = bucket && await Bucket.findOne({name: bucket}) 
+        
         if (!findBucket && bucket) throw new CustomError("Bucket not found", 404);
+     
         
         const customerAccountIds = findBucket
         ? (await CustomerAccount.find({ bucket: findBucket._id }).lean()).map(ca => ca._id)
@@ -149,6 +155,11 @@ const dispositionResolver = {
         }
 
         if(bucket) query.push({customer_account: {$in: customerAccountIds}})
+          let objectId = null
+
+        if (Types.ObjectId.isValid(callfile)) {
+          objectId = new Types.ObjectId(callfile);
+        } 
 
         const dispositionReport = await Disposition.aggregate([
           {
@@ -184,14 +195,16 @@ const dispositionResolver = {
           },
           {
             $addFields: {
-              bucket: "$ca.bucket"
+              bucket: "$ca.bucket",
+              callfile: "$ca.callfile"
             }
           },
           {
             $match: {
-              bucket: {$in: user.buckets}
+              bucket: {$in: user.buckets},
+              callfile: objectId ? new mongoose.Types.ObjectId(objectId) : null,
+              existing: {$eq: true}
             }
-            
           },  
           {
             $group: {
@@ -211,27 +224,14 @@ const dispositionResolver = {
           }
         ])
 
+    
         return { 
-          agent: agentUser ? {
-            _id: agentUser._id,
-            name: agentUser.name,
-            branch: agentUser.branch,
-            department: agentUser.department,
-            user_id: agentUser.user_id,
-            buckets: agentUser.buckets
-          } : {
-            _id: "",
-            name: "",
-            branch: "",
-            department: "",
-            user_id: "",
-            buckets: []
-          }
-          , 
-          bucket: findBucket && bucket ? findBucket.name : "" ,
+          agent: agent ? agentUser : null, 
+          bucket: bucket ? findBucket.name : "" ,
           disposition: dispositionReport
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -244,8 +244,6 @@ const dispositionResolver = {
       }
     },
 
-
-    
     getDailyFTE: async(_,__,{user}) => {
       try {
         const todayStart = new Date();

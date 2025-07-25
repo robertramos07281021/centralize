@@ -52,7 +52,6 @@ const DataDiv = ({label, value}:{label: string, value: string | number | null | 
   )
 }
 
-
 const DispositionRecords = () => {
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth )
   const [limit, setLimit] = useState(3)

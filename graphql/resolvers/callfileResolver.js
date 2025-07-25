@@ -200,19 +200,23 @@ const callfileResolver = {
       }
     },
 
-    getBucketCallfile: async(_,__,{user})=> {
+    getBucketCallfile: async(_,{bucketId},{user})=> {
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
+
+        const filter = bucketId.length > 0 ? { bucket: { $in: bucketId.map(x=>new mongoose.Types.ObjectId(x))}} : { bucket: {$in: user.buckets.map(x=> new mongoose.Types.ObjectId(x))}}
+        console.log(filter)
         const findActiveCallfile = await Callfile.aggregate([
           {
-            $match: {
-              bucket: {$in: user.buckets.map(x=> new mongoose.Types.ObjectId(x))}
-            }
+            $match: filter
+          },
+          {
+            $sort: {active: -1}
           }
         ])
-
-
-
+        return findActiveCallfile
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message,500)       
       }
     },

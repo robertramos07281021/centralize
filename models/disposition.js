@@ -41,6 +41,9 @@ const dispositionSchema = new Schema(
       type: Boolean,
       default: false
     },
+    RFD: {
+      type: String,
+    },
     delayed: {
       type: Boolean,
       default:false
@@ -48,6 +51,10 @@ const dispositionSchema = new Schema(
     bucket: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Bucket"
+    },
+    callfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Callfile"
     },
     contact_method: {
       type: String,

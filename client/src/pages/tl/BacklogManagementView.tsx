@@ -4,6 +4,8 @@ import {  Users } from "../../middleware/types";
 import {  useCallback, useEffect, useRef, useState } from "react";
 import { FaDownload } from "react-icons/fa6";
 import ReportsView, { Search } from "./ReportsView";
+import { useSelector } from "react-redux";
+import { RootState } from "../../redux/store";
 
 type DispositionType = {
   id: string
@@ -33,6 +35,7 @@ const GET_DEPARTMENT_AGENT = gql`
       _id
       name
       user_id
+      buckets
     }
   }
 `
@@ -47,8 +50,30 @@ const GET_DISPOSITION_TYPES = gql`
   }
 `
 
+const GET_CALLFILES = gql`
+  query GetBucketCallfile($bucketId:[ID]) {
+    getBucketCallfile(bucketId: $bucketId) {
+      _id
+      name
+      active
+      bucket
+    }
+  }
+
+`
+
+
+type Callfile = {
+  _id: string
+  name: string
+  active: boolean
+  bucket: string
+}
+
 const BacklogManagementView = () => {
+  const {userLogged} = useSelector((state:RootState)=> state.auth)
   const {data:agentSelector} = useQuery<{findAgents:Users[]}>(GET_DEPARTMENT_AGENT)
+
   const {data:departmentBucket} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET_QUERY)
   const [buckets, setBuckets] = useState<Bucket[] | null>(null)
   const [searchBucket, setSearchBucket] = useState<string>("")
@@ -64,6 +89,31 @@ const BacklogManagementView = () => {
     from: "",
     to: ""
   })
+  let bucketsOfCallfile = []
+  if(Boolean(searchAgent)) {
+    bucketsOfCallfile.push(...agentSelector?.findAgents?.find(x=> x.user_id === searchAgent)?.buckets ?? [])
+  } else if (Boolean(searchBucket)) {
+    bucketsOfCallfile.push(departmentBucket?.getDeptBucket.find(x=> x.name === searchBucket)?.id)
+  }
+  
+  const [selectedCallfile, setSelectedCallfile] = useState<string>("")
+  const {data:callfilesData, refetch:callfileRefech} = useQuery<{getBucketCallfile:Callfile[]}>(GET_CALLFILES,{variables: {bucketId:bucketsOfCallfile}})
+  
+  const callfile = callfilesData?.getBucketCallfile || [];
+
+  
+  useEffect(()=> {
+    if(callfile) {
+      if(Boolean(searchAgent)) {
+        const ifAgent = agentSelector?.findAgents.find(x=> x.user_id === searchAgent)
+        if(searchAgent) {
+          setSelectedCallfile(callfile.find(x=> x.active && ifAgent?.buckets.includes(x.bucket))?.name ?? "")
+        }
+      } else {
+        setSelectedCallfile(callfile.find(x=> x.active)?.name ?? "")
+      }
+    }
+  },[callfile,searchAgent])
 
   useEffect(()=> {
     const filteredAgent = searchAgent?.trim() != "" ? agentSelector?.findAgents?.filter((e) => e.name.toLowerCase()?.includes(searchAgent?.toLowerCase()) || e.user_id?.includes(searchAgent ? searchAgent: "")) : agentSelector?.findAgents
@@ -86,7 +136,6 @@ const BacklogManagementView = () => {
     const newMapforBucket = departmentBucket?.getDeptBucket.map(e => e.name)
     if(!newMapforBucket?.includes(searchBucket.trim())) {
       setBucketDropdown(dropdownBucket)
-     
     }
     setAgentDropdown(false)
   },[departmentBucket, searchBucket])
@@ -106,11 +155,14 @@ const BacklogManagementView = () => {
     setAgentDropdown(false)
   },[setBucketDropdown,setAgentDropdown,bucketDropdown])
 
+  const yourBucket = userLogged.buckets.length > 1
+
   const SearchFilter:Search = {
-    searchBucket:searchBucket, 
+    searchBucket: yourBucket ? searchBucket : userLogged.buckets[0], 
     searchAgent: searchAgent, 
-    selectedDisposition:selectedDisposition, 
-    dateDistance: dateDistance
+    selectedDisposition: selectedDisposition, 
+    dateDistance: dateDistance,
+    callfile: callfile?.find(x=> x.name === selectedCallfile)?._id || ""
   } 
 
   return (
@@ -126,11 +178,64 @@ const BacklogManagementView = () => {
         <h1 className="text-lg font-bold text-slate-700 text-center py-2">Select Report</h1>
         <div className="p-5 flex flex-col gap-2 justify-center">
           
-          <label className="grid grid-cols-4 relative">
-            <div>Callfile</div>
-            <select name="callfile" id="callfile" className="col-span-3 relative border flex items-center border-slate-400 rounded-lg">
-              
+          {
+            yourBucket && 
+            <div className="grid grid-cols-4 select-none cursor-default" ref={bucketRef}>
+              <div className="flex items-center lg:text-xs 2xl:text-sm font-medium text-slate-500">Bucket </div>
+              <div className="col-span-3 relative border flex items-center border-slate-400 rounded-lg">
+                <input 
+                  type="text"
+                  name="search_bucket"
+                  id="search_bucket"
+                  autoComplete="off"
+                  value={searchBucket} 
+                  onChange={(e)=> {setSearchBucket(e.target.value.toLocaleUpperCase())}}
+                  placeholder="Select Bucket"
+                  className="w-full outline-0 p-2 lg:text-xs 2xl:text-sm uppercase"/>
+                  {
+                    !bucketDropdown ? 
+                    <IoMdArrowDropdown className="lg:text-base 2xl:text-2xl" onClick={handleBucketDropdown}/>
+                      :
+                    <IoMdArrowDropup className="lg:text-base 2xl:text-2xl" onClick={handleBucketDropdown}/>
+                  }
+                  {
+                    bucketDropdown &&
+                  <div className={`${agents?.length === 0 ? "h-10" : "max-h-96"} border w-full absolute top-10  overflow-y-auto bg-white border-slate-500 rounded z-50`}>
+                    {
+                    buckets?.map((bucket) => 
+                      <div key={bucket.id} className="flex bg-white flex-col font-medium text-slate-600 p-2" onClick={async()=> {
+                        setSearchBucket(bucket.name); 
+                        setSearchAgent("");
+                        setBucketDropdown(false); 
+                        await callfileRefech()
+                      }}>
+                        <div className=" text-sm">
+                          {bucket.name.toUpperCase()}
+                        </div>
+                      </div>
+                    )
+                    }
+                  </div>
+                  }
+              </div>
+            </div>
+          }
 
+          <label className="grid grid-cols-4 relative items-center">
+            <div className="lg:text-xs 2xl:text-sm font-medium text-slate-500">Callfile</div>
+            <select name="callfile" id="callfile" className="col-span-3 relative border flex items-center border-slate-400 rounded-lg px-2 py-1.5 lg:text-xs 2xl:text-sm font-medium text-slate-500"
+              value={selectedCallfile}
+              onChange={(e)=> {
+                setSelectedCallfile(e.target.value)
+              }}
+            >
+              {
+                callfile.map((x)=> {
+                  return (
+                    <option key={x._id} value={x.name} className={`${x.active ? "bg-slate-200" : ""}`}>{x.name}</option>
+                  )
+                })
+              }
             </select>
           </label>
           
@@ -145,7 +250,7 @@ const BacklogManagementView = () => {
                 value={searchAgent} 
                 onChange={(e)=> setSearchAgent(e.target.value)}
                 placeholder="Select Agent"
-                className="  w-10/11 outline-0 p-2 lg:text-xs 2xl:text-sm uppercase"/>
+                className="  w-full outline-0 p-2 lg:text-xs 2xl:text-sm uppercase"/>
                 {
                   !agentDropdown ? 
                   <IoMdArrowDropdown className="lg:text-base 2xl:text-2xl" onClick={handleAgentDropdown}/>
@@ -175,44 +280,7 @@ const BacklogManagementView = () => {
                 }
             </div>
           </div>
-          <div className="grid grid-cols-4 " ref={bucketRef}>
-            <div className="flex items-center lg:text-xs 2xl:text-sm font-medium text-slate-500">Bucket </div>
-            <div className="col-span-3 relative border flex items-center border-slate-400 rounded-lg">
-              <input 
-                type="text"
-                name="search_bucket"
-                id="search_bucket"
-                autoComplete="off"
-                value={searchBucket} 
-                onChange={(e)=> {setSearchBucket(e.target.value.toLocaleUpperCase())}}
-                placeholder="Select Bucket"
-                className="w-10/11 outline-0 p-2 lg:text-xs 2xl:text-sm uppercase"/>
-                {
-                  !bucketDropdown ? 
-                  <IoMdArrowDropdown className="lg:text-base 2xl:text-2xl" onClick={handleBucketDropdown}/>
-                    :
-                  <IoMdArrowDropup className="lg:text-base 2xl:text-2xl" onClick={handleBucketDropdown}/>
-                }
-                {
-                  bucketDropdown &&
-                <div className={`${agents?.length === 0 ? "h-10" : "max-h-96"} border w-full absolute top-10  overflow-y-auto bg-white border-slate-500 rounded`}>
-                  {
-                  buckets?.map((bucket) => 
-                    <div key={bucket.id} className="flex bg-white flex-col font-medium text-slate-600 p-2" onClick={()=> {
-                      setSearchBucket(bucket.name); 
-                      setSearchAgent("");
-                      setBucketDropdown(false); 
-                    }}>
-                      <div className=" text-sm">
-                        {bucket.name.toUpperCase()}
-                      </div>
-                    </div>
-                  )
-                  }
-                </div>
-                }
-            </div>
-          </div>
+          
           <div className="flex flex-col">
             <div className="flex justify-center my-2  text-sm font-medium text-slate-500">Disposition</div>
             <div className="flex flex-wrap max-h-50 gap-5 border-slate-400 rounded-lg p-2 justify-center border overflow-y-auto">

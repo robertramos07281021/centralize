@@ -169,11 +169,21 @@ const dispositionTypeDefs = gql`
     delayed: Boolean
     sms: String
   }
+  
+  input SearchDispoReports {
+    agent:String, 
+    bucket:String, 
+    disposition:[String], 
+    from:String, 
+    to:String,
+    callfile: ID!,
+  }
+
 
   type Query {
     getAccountDispositions(id:ID!, limit:Int):[Disposition]
     getAccountDispoCount(id:ID!): Count
-    getDispositionReports(agent:String, bucket:String, disposition:[String], from:String, to:String): Reports
+    getDispositionReports(reports:SearchDispoReports): Reports
     getAllDispositionTypes:[DispoType]
     getDailyFTE:[DailyFTE]
     getAOMPTPPerDay: [AomDailyCollection]

@@ -8,8 +8,8 @@ import { useAppDispatch } from "../../redux/store";
 import { setServerError } from "../../redux/slices/authSlice";
 
 const GET_DISPOSITION_REPORTS = gql`
-  query GetDispositionReports($agent: String, $bucket: String, $disposition: [String], $from: String, $to: String) {
-    getDispositionReports(agent: $agent, bucket: $bucket, disposition: $disposition, from: $from, to: $to) {
+  query GetDispositionReports($reports:SearchDispoReports) {
+    getDispositionReports(reports: $reports) {
       agent {
         _id
         name
@@ -75,6 +75,7 @@ export type Search = {
   searchBucket: string
   selectedDisposition : string[]
   dateDistance: Distance
+  callfile: String
 }
 
 type Props = {
@@ -86,9 +87,20 @@ const ReportsView:React.FC<Props> = ({search}) => {
   const handleChartFullScreen = ()=> {
     setChartFull(!chartFull)
   }
+
   const [dispositionData, setDispositionData] = useState<Dispositions[]>([])
   const [newReportsDispo, setNewReportsDispo] = useState<Record<string,number>>({})
-  const {data:reportsData, loading:reportLoading, refetch} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: search.searchAgent, bucket: search.searchBucket, disposition: search.selectedDisposition, from: search.dateDistance.from, to: search.dateDistance.to}})
+
+  const reports = {
+    agent:search.searchAgent, 
+    bucket:search.searchBucket, 
+    disposition: search.selectedDisposition, 
+    from:search.dateDistance.from, 
+    to:search.dateDistance.to, 
+    callfile:search.callfile
+  }
+
+  const {data:reportsData, loading:reportLoading, refetch} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {reports},fetchPolicy: 'network-only'})
   const {data:disposition, refetch:dispoTypesRefetch} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
   const dispatch = useAppDispatch()
 
@@ -121,7 +133,6 @@ const ReportsView:React.FC<Props> = ({search}) => {
         count: Number(newReportsDispo[e.code]) ? Number(newReportsDispo[e.code]) : 0 ,
         color: colorDispo[e.code] || '#ccc', 
       }));
-
       setDispositionData(updatedData);
     }
   },[disposition,newReportsDispo])
@@ -151,10 +162,13 @@ const ReportsView:React.FC<Props> = ({search}) => {
         color: 'oklch(0 0 0)',
         font: {
           weight: "bold", 
-          size: 8,
+          size: 15,
         },
-        formatter: (value: number) => {
-          return value === 0 ? "" : value
+        formatter: (value: number,context) => {
+          const data = context.dataset.data
+          const total = data.reduce((sum: number, val: any) => sum + val, 0);
+          const percentage = ((value / total) * 100).toFixed(2);
+          return value === 0 ? "" : `${percentage}%`
         }
       },
       legend: {
@@ -167,8 +181,8 @@ const ReportsView:React.FC<Props> = ({search}) => {
             const dataset = context.dataset;
             const total = dataset.data.reduce((sum: number, val: any) => sum + val, 0);
             const currentValue = context.raw as number;
-            const percentage = ((currentValue / total) * 100).toFixed(1);
-            return `Percentage: ${percentage}%`;
+            const percentage = ((currentValue / total) * 100).toFixed(2);
+            return `Value: ${percentage}% - ${currentValue}`;
           }
         }
       }
@@ -182,26 +196,31 @@ const ReportsView:React.FC<Props> = ({search}) => {
   return (
     <div className={`print:hidden col-span-2 flex flex-col ${chartFull ? "fixed top-0 bg-white z-50 items-center justify-center w-full h-full px-10" : "h-5/6"}`}>
       <div className="text-center uppercase font-medium 2xl:text-lg lg:text-base text-slate-500 flex item-center justify-center gap-5 py-5">
-        <div>
-          { reportsData?.getDispositionReports?.bucket &&
-            <span>Bucket: </span>
-          }
-          {reportsData?.getDispositionReports?.bucket ? reportsData?.getDispositionReports?.bucket: "" }
-        </div>
-        <div>
-          {
-            reportsData?.getDispositionReports?.agent.name &&
-            <span>Agent Name: </span>
-          }
-        {reportsData?.getDispositionReports?.agent ? reportsData?.getDispositionReports?.agent.name: "" }</div>
-        {
-          search.dateDistance.from && search.dateDistance.to && search.dateDistance.from !== search.dateDistance.to &&
-        <div>From: {search.dateDistance.from } to {search.dateDistance.to}</div>
-        }
-        {
-          ((search.dateDistance.from && !search.dateDistance.to) || (!search.dateDistance.from && search.dateDistance.to) || ((search.dateDistance.from === search.dateDistance.to) && search.dateDistance.from && search.dateDistance.to))  &&
-          <div>Date: {search.dateDistance.from ? search.dateDistance.from : search.dateDistance.to } </div>
-        }
+      <div>
+        {reportsData?.getDispositionReports?.bucket && (
+          <span>Bucket: {reportsData.getDispositionReports.bucket}</span>
+        )}
+
+        {reportsData?.getDispositionReports?.agent?.name && (
+          <h1 className="flex gap-2">Agent Name: {reportsData.getDispositionReports.agent.name}</h1>
+        )}
+
+        {search.dateDistance.from && search.dateDistance.to && search.dateDistance.from !== search.dateDistance.to && (
+          <div>
+            From: {search.dateDistance.from} to {search.dateDistance.to}
+          </div>
+        )}
+
+        {(
+          (!search.dateDistance.from && search.dateDistance.to) ||
+          (search.dateDistance.from && !search.dateDistance.to) ||
+          (search.dateDistance.from === search.dateDistance.to)
+        ) && (search.dateDistance.from || search.dateDistance.to) && (
+          <div>
+            Date: {search.dateDistance.from || search.dateDistance.to}
+          </div>
+        )}
+      </div>
       </div>
 
       <div className="flex justify-between w-full h-full pr-5">
@@ -219,7 +238,6 @@ const ReportsView:React.FC<Props> = ({search}) => {
               }
               </div>
             )}
-            
           </div>
           <div className="flex justify-center mt-10">
             <button type="button" className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer" 
