@@ -222,11 +222,13 @@ const taskResolver = {
           }
         ])
 
-        await Promise.all(
-          findCustomerAccounts.map((async(e)=> {
-            await CustomerAccount.findByIdAndUpdate(e._id,{$set: {paid_amount: 0, balance: e.paid_amount}}) 
-          }))
-        )
+        console.log(findCustomerAccounts)
+
+        // await Promise.all(
+        //   findCustomerAccounts.map((async(e)=> {
+        //     await CustomerAccount.findByIdAndUpdate(e._id,{$set: {paid_amount: 0, balance: e.paid_amount}}) 
+        //   }))
+        // )
 
       //   await Customer.updateMany(
       //   {
