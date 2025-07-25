@@ -23,8 +23,6 @@ const dispositionResolver = {
       } catch (error) {
        throw new CustomError(error.message, 500)
       }
-      
-      
     },
     getAccountDispositions: async(_,{id, limit}) => {
       try {
@@ -1768,7 +1766,7 @@ const dispositionResolver = {
    
         const isPaymentDisposition = dispoType.code === "PAID"
 
-        if (withPayment && !input.amount) {
+        if (withPayment.includes(dispoType.code) && !input.amount) {
           throw new CustomError("Amount is required", 401);
         }
         
@@ -1827,6 +1825,7 @@ const dispositionResolver = {
           message: "Disposition successfully created"
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }
