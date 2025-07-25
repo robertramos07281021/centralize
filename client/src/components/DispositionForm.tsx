@@ -184,6 +184,14 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     sms: null
   })
 
+  const { contact_method, dialer, chatApp, sms } = data;
+
+  useEffect(() => {
+    if (dialer !== null || chatApp !== null || sms !== null) {
+      setData(prev => ({ ...prev, dialer: null, chatApp: null, sms: null }));
+    }
+  }, [contact_method]);
+
   const resetForm = () => {
     setSelectedDispo('');
     setData({
@@ -257,6 +265,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
 // ======================================================================================
 
   const handleDataChange = (key: keyof Data, value: any) => {
+ 
     setData(prev => ({ ...prev, [key]: value }));
   };
 
@@ -334,7 +343,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
       yes: tlEscalationCallback,
       no: noCallback
     })
-  },[setConfirm, setModalProps,tlEscalationCallback,noCallback])
+  },[setConfirm, setModalProps, tlEscalationCallback, noCallback])
 
   const tlOptions = useMemo(() => {
     return tlData?.getBucketTL || [];

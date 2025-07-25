@@ -1757,8 +1757,8 @@ const dispositionResolver = {
             createdAt: { $gte: start, $lte: end }
           }),
         ]);
-        
-        const dispoTypeWithAmount = ['PAID','PTP','UNEG']
+        const withPayment = ['PTP','PAID','UNEG']
+
 
         if (!customerAccount) throw new CustomError("Customer account not found", 404);
         
@@ -1766,9 +1766,9 @@ const dispositionResolver = {
       
         if(!userProdRaw) await Production.create({ user: user._id });
    
-        const isPaymentDisposition = dispoTypeWithAmount.includes(dispoType.code)
+        const isPaymentDisposition = dispoType.code === "PAID"
 
-        if (isPaymentDisposition && !input.amount) {
+        if (withPayment && !input.amount) {
           throw new CustomError("Amount is required", 401);
         }
         
@@ -1776,7 +1776,7 @@ const dispositionResolver = {
 
         const payment = customerAccount.balance - parseFloat(input.amount || 0) === 0 ? "full" : 'partial';
 
-        const withPayment = ['PTP','PAID','UNEG']
+   
 
         const newDisposition = new Disposition({
           ...input,
@@ -1827,6 +1827,7 @@ const dispositionResolver = {
           message: "Disposition successfully created"
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }
