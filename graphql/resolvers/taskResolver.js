@@ -192,53 +192,81 @@ const taskResolver = {
     },
     updateDatabase: async()=> {
       try {
-        // const findCustomerAccounts = await CustomerAccount.find()
-
-        // await Promise.all(
-        //   findCustomerAccounts.map((async(e)=> {
-        //     await Customer.findByIdAndUpdate(e.customer,{$set: {customer_account: e._id}}) 
-        //   }))
-        // )
-
-        await Customer.updateMany(
-        {
-          contact_no: { $exists: true }
-        },
-        [
+        const findCustomerAccounts = await CustomerAccount.aggregate([
           {
-            $set: {
-              contact_no: {
-                $map: {
-                  input: "$contact_no",
-                  as: "num",
-                  in: {
-                    $let: {
-                      vars: {
-                        cleaned: {
-                          $replaceAll: {
-                            input: "$$num",
-                            find: "-",
-                            replacement: ""
-                          }
-                        }
-                      },
-                      in: {
-                        $cond: [
-                          { $regexMatch: { input: "$$cleaned", regex: /^00/ } },
-                          {
-                            $substr: ["$$cleaned", 1, { $strLenCP: "$$cleaned" }]
-                          },
-                          "$$cleaned"
-                        ]
-                      }
-                    }
-                  }
-                }
-              }
+            $lookup: {
+              from: "dispositions", 
+              localField: "current_disposition", 
+              foreignField: "_id",       
+              as: "currentDispo"         
+            }
+          },
+          {
+            $unwind: {path: "$currentDispo",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes", 
+              localField: "currentDispo.disposition", 
+              foreignField: "_id",       
+              as: "dispotype"         
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              "dispotype.code": {$eq: 'PTP'}
             }
           }
-        ]
-      );
+        ])
+
+        await Promise.all(
+          findCustomerAccounts.map((async(e)=> {
+            await CustomerAccount.findByIdAndUpdate(e._id,{$set: {paid_amount: 0, balance: e.paid_amount}}) 
+          }))
+        )
+
+      //   await Customer.updateMany(
+      //   {
+      //     contact_no: { $exists: true }
+      //   },
+      //   [
+      //     {
+      //       $set: {
+      //         contact_no: {
+      //           $map: {
+      //             input: "$contact_no",
+      //             as: "num",
+      //             in: {
+      //               $let: {
+      //                 vars: {
+      //                   cleaned: {
+      //                     $replaceAll: {
+      //                       input: "$$num",
+      //                       find: "-",
+      //                       replacement: ""
+      //                     }
+      //                   }
+      //                 },
+      //                 in: {
+      //                   $cond: [
+      //                     { $regexMatch: { input: "$$cleaned", regex: /^00/ } },
+      //                     {
+      //                       $substr: ["$$cleaned", 1, { $strLenCP: "$$cleaned" }]
+      //                     },
+      //                     "$$cleaned"
+      //                   ]
+      //                 }
+      //               }
+      //             }
+      //           }
+      //         }
+      //       }
+      //     }
+      //   ]
+      // );
 
         // await Promise.all(
         //   findCustomerAccounts.map(async(e, index)=> {
@@ -349,6 +377,7 @@ const taskResolver = {
           message: "Customers Account Successfully update"
         }
       } catch (error) {
+
         throw new CustomError(error.message, 500)
       }
     }

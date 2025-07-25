@@ -58,7 +58,7 @@ const BacklogManagementView = () => {
   const [agents, setAgents] = useState<Users[] | null>(null)
   const [searchAgent, setSearchAgent] = useState<string>("")  
   const userRef = useRef<HTMLDivElement | null>(null)
-
+  const bucketRef = useRef<HTMLDivElement | null>(null)
   const {data:disposition} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
   const [dateDistance, setDateDistance] = useState({
     from: "",
@@ -70,22 +70,25 @@ const BacklogManagementView = () => {
     setAgents(filteredAgent || null)
 
     const dropdownAgent = filteredAgent?.length.valueOf() && searchAgent?.trim() !== "" ? true : false
-    setAgentDropdown(dropdownAgent)
-    if(dropdownAgent) {
-      setBucketDropdown(prev => !prev)
+    const newMapForAgent = agentSelector?.findAgents.map(e=> e.user_id) || []
+    if(!newMapForAgent.includes(searchAgent.trim())) {
+      setAgentDropdown(dropdownAgent)
+   
     }
+    setBucketDropdown(false)
   },[searchAgent,agentSelector])
 
   useEffect(()=> {
     const filteredBucket = searchBucket.trim() !== "" ? departmentBucket?.getDeptBucket.filter((e)=> e.name.includes(searchBucket)) : departmentBucket?.getDeptBucket
     setBuckets(filteredBucket || null)
 
-    const dropdownBucket = filteredBucket?.length.valueOf() && searchBucket.trim() !== "" ? true : false
-
-    setBucketDropdown(dropdownBucket)
-    if(dropdownBucket) {
-      setAgentDropdown(prev => !prev)
+    const dropdownBucket = (filteredBucket?.length.valueOf() && searchBucket.trim() !== "") ? true : false
+    const newMapforBucket = departmentBucket?.getDeptBucket.map(e => e.name)
+    if(!newMapforBucket?.includes(searchBucket.trim())) {
+      setBucketDropdown(dropdownBucket)
+     
     }
+    setAgentDropdown(false)
   },[departmentBucket, searchBucket])
 
   const handleCheckBox = useCallback((value:string, e: React.ChangeEvent<HTMLInputElement>) => {
@@ -110,13 +113,23 @@ const BacklogManagementView = () => {
     dateDistance: dateDistance
   } 
 
-
-
   return (
-    <div className="grid grid-cols-3 grid-rows-1 h-full items-center" >
+    <div className="grid grid-cols-3 grid-rows-1 h-full items-center" onMouseDown={(e)=> {
+      if(!bucketRef.current?.contains(e.target as Node)) {
+        setBucketDropdown(false)
+      }
+      if(!userRef.current?.contains(e.target as Node)) {
+        setAgentDropdown(false)
+      }
+    }} >
       <div className="h-full  flex flex-col justify-center">
         <h1 className="text-lg font-bold text-slate-700 text-center py-2">Select Report</h1>
         <div className="p-5 flex flex-col gap-2 justify-center">
+          <div>
+            <label>
+
+            </label>
+          </div>
           <div className="grid grid-cols-4 relative" ref={userRef}>
             <div className="flex items-center lg:text-xs 2xl:text-sm font-medium text-slate-500">Agent </div>
             <div className="col-span-3 relative border flex items-center border-slate-400 rounded-lg">
@@ -140,7 +153,11 @@ const BacklogManagementView = () => {
                 <div className={`${agents?.length === 0 ? "h-10" : "max-h-96"} border w-full absolute top-10  overflow-y-auto z-50 border-slate-500 bg-white  rounded`}>
                   {
                   agents?.map((agent) => 
-                    <div key={agent._id} className="flex flex-col font-medium text-slate-600 p-2" onClick={()=> {setSearchAgent(agent.user_id); setAgentDropdown(false)} }>
+                    <div key={agent._id} className="flex flex-col font-medium text-slate-600 p-2" onClick={()=> {
+                        setSearchAgent(agent.user_id); 
+                        setSearchBucket("");
+                        setAgentDropdown(false)}
+                      }>
                       <div className=" text-sm">
                         {agent.name.toUpperCase()}
                       </div>
@@ -154,7 +171,7 @@ const BacklogManagementView = () => {
                 }
             </div>
           </div>
-          <div className="grid grid-cols-4 ">
+          <div className="grid grid-cols-4 " ref={bucketRef}>
             <div className="flex items-center lg:text-xs 2xl:text-sm font-medium text-slate-500">Bucket </div>
             <div className="col-span-3 relative border flex items-center border-slate-400 rounded-lg">
               <input 
@@ -163,7 +180,7 @@ const BacklogManagementView = () => {
                 id="search_bucket"
                 autoComplete="off"
                 value={searchBucket} 
-                onChange={(e)=> setSearchBucket(e.target.value.toLocaleUpperCase())}
+                onChange={(e)=> {setSearchBucket(e.target.value.toLocaleUpperCase())}}
                 placeholder="Select Bucket"
                 className="w-10/11 outline-0 p-2 lg:text-xs 2xl:text-sm uppercase"/>
                 {
@@ -177,7 +194,10 @@ const BacklogManagementView = () => {
                 <div className={`${agents?.length === 0 ? "h-10" : "max-h-96"} border w-full absolute top-10  overflow-y-auto bg-white border-slate-500 rounded`}>
                   {
                   buckets?.map((bucket) => 
-                    <div key={bucket.id} className="flex bg-white flex-col font-medium text-slate-600 p-2" onClick={()=> {setSearchBucket(bucket.name); setBucketDropdown(false)} }>
+                    <div key={bucket.id} className="flex bg-white flex-col font-medium text-slate-600 p-2" onClick={()=> {
+                      setSearchBucket(bucket.name); 
+                      setBucketDropdown(false); 
+                    }}>
                       <div className=" text-sm">
                         {bucket.name.toUpperCase()}
                       </div>

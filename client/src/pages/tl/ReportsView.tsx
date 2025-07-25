@@ -87,8 +87,6 @@ const ReportsView:React.FC<Props> = ({search}) => {
     setChartFull(!chartFull)
   }
   const [dispositionData, setDispositionData] = useState<Dispositions[]>([])
-
-    
   const [newReportsDispo, setNewReportsDispo] = useState<Record<string,number>>({})
   const {data:reportsData, loading:reportLoading, refetch} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {agent: search.searchAgent, bucket: search.searchBucket, disposition: search.selectedDisposition, from: search.dateDistance.from, to: search.dateDistance.to}})
   const {data:disposition, refetch:dispoTypesRefetch} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)

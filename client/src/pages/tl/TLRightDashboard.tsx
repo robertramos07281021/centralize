@@ -9,7 +9,7 @@ import TLDailyCollected from "./TLDailyCollected"
 
 const TLRightDashboard = () => {
   return (
-    <div className={`col-start-4  col-span-full row-span-full grid gap-2 grid-rows-4`}>
+    <div className={`col-start-4  col-span-full row-span-full grid gap-2 grid-rows-4 overflow-hidden`}>
       
       <div className='grid grid-cols-4 gap-2'>
 
