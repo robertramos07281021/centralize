@@ -265,7 +265,6 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
 // ======================================================================================
 
   const handleDataChange = (key: keyof Data, value: any) => {
- 
     setData(prev => ({ ...prev, [key]: value }));
   };
 
@@ -300,7 +299,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
 
   const creatingDispo = useCallback(async()=> {
     await createDisposition({variables: { input: {...data, customer_account: selectedCustomer._id} }})
-  },[ data, selectedCustomer, createDisposition ])
+  },[ data, selectedCustomer._id, createDisposition ])
 
   const noCallback = useCallback(()=> {
     setConfirm(false)

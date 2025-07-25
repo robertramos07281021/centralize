@@ -192,37 +192,37 @@ const taskResolver = {
     },
     updateDatabase: async()=> {
       try {
-        const findCustomerAccounts = await CustomerAccount.aggregate([
-          {
-            $lookup: {
-              from: "dispositions", 
-              localField: "current_disposition", 
-              foreignField: "_id",       
-              as: "currentDispo"         
-            }
-          },
-          {
-            $unwind: {path: "$currentDispo",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "dispotypes", 
-              localField: "currentDispo.disposition", 
-              foreignField: "_id",       
-              as: "dispotype"         
-            }
-          },
-          {
-            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $match: {
-              "dispotype.code": {$eq: 'PTP'}
-            }
-          }
-        ])
+        // const findCustomerAccounts = await CustomerAccount.aggregate([
+        //   {
+        //     $lookup: {
+        //       from: "dispositions", 
+        //       localField: "current_disposition", 
+        //       foreignField: "_id",       
+        //       as: "currentDispo"         
+        //     }
+        //   },
+        //   {
+        //     $unwind: {path: "$currentDispo",preserveNullAndEmptyArrays: true}
+        //   },
+        //   {
+        //     $lookup: {
+        //       from: "dispotypes", 
+        //       localField: "currentDispo.disposition", 
+        //       foreignField: "_id",       
+        //       as: "dispotype"         
+        //     }
+        //   },
+        //   {
+        //     $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+        //   },
+        //   {
+        //     $match: {
+        //       "dispotype.code": {$eq: 'PTP'}
+        //     }
+        //   }
+        // ])
 
-        console.log(findCustomerAccounts)
+    
 
         // await Promise.all(
         //   findCustomerAccounts.map((async(e)=> {

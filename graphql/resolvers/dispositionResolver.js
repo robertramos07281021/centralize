@@ -1757,8 +1757,10 @@ const dispositionResolver = {
         ]);
         const withPayment = ['PTP','PAID','UNEG']
 
-
-        if (!customerAccount) throw new CustomError("Customer account not found", 404);
+        if (!customerAccount) {
+          console.log(input.customer_account)
+          throw new CustomError("Customer account not found", 404);
+        }
         
         if (!dispoType) throw new CustomError("Disposition type not found", 400);
       
@@ -1767,6 +1769,7 @@ const dispositionResolver = {
         const isPaymentDisposition = dispoType.code === "PAID"
 
         if (withPayment.includes(dispoType.code) && !input.amount) {
+          console.log(dispoType.code)
           throw new CustomError("Amount is required", 401);
         }
         
