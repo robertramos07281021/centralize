@@ -222,14 +222,15 @@ const taskResolver = {
         //   }
         // ])
 
+       const dispo = await Disposition.find({delayed: {$exists: true}})
+        
     
-
-        // await Promise.all(
-        //   findCustomerAccounts.map((async(e)=> {
-        //     await CustomerAccount.findByIdAndUpdate(e._id,{$set: {paid_amount: 0, balance: e.paid_amount}}) 
-        //   }))
-        // )
-
+       await Promise.all(
+          dispo.map((async(e)=> {
+            const res = await Disposition.findByIdAndUpdate(e._id,{$unset: {delayed: ""}}) 
+            console.log(res.delayed)
+          }))
+        )
       //   await Customer.updateMany(
       //   {
       //     contact_no: { $exists: true }

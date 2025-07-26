@@ -109,10 +109,10 @@ const customerTypeDefs = gql`
     payment: String
     payment_method: String
     user: ID
+    RFD: String
     dialer: String
     createdAt: DateTime
     contact_method: String
-    delayed: Boolean
   }
 
   type GroupMember {

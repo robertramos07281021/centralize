@@ -46,7 +46,7 @@ const dispositionSchema = new Schema(
     },
     delayed: {
       type: Boolean,
-      default:false
+      default: false
     },
     bucket: {
       type: mongoose.Schema.Types.ObjectId,

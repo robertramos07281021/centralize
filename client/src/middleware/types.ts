@@ -127,7 +127,7 @@ export type CurrentDispo = {
   contact_method: string
   chatApp: string
   sms: string
-  delayed: boolean
+  RFD: String
 }
 
 export type Search = {

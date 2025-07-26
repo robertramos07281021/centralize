@@ -2,6 +2,7 @@ import { useSelector } from "react-redux"
 import { RootState } from "../redux/store"
 import { useQuery, gql } from "@apollo/client"
 import { useMemo, useState } from "react"
+import { CurrentDispo } from "../middleware/types"
 
 type Agent = {
   _id: string
@@ -69,7 +70,7 @@ const DispositionRecords = () => {
     return Object.fromEntries(data.map(e=> [e._id, e.name]))
   },[agentData])
 
-  const history = selectedCustomer?.dispo_history || []
+  const history:CurrentDispo[] = selectedCustomer?.dispo_history || []
 
 
   const date = (date:string) => {
@@ -113,7 +114,7 @@ const DispositionRecords = () => {
                 <div className="p-2 col-span-2 text-slate-700  w-full">{date(gad.createdAt)}</div>
               </div>
 
-              <DataDiv label='Disposition' value={`${dispotypeObject[gad.disposition]}${gad.delayed ? " - Delayed" : ""}`}/>
+              <DataDiv label='Disposition' value={`${dispotypeObject[gad.disposition]}`}/>
               <DataDiv label='Contact Method' value={gad.contact_method.toUpperCase() as AccountType}/>
               <DataDiv label='Amount' value={gad.amount !== 0 ? gad.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : ""}/>
               <DataDiv label='Payment' value={filter?.includes(gad.disposition) ? gad.payment?.toString() ?? null : null}/>
@@ -131,6 +132,11 @@ const DispositionRecords = () => {
                     return <DataDiv label='Chat App' value={gad.chatApp}/>
                   } 
                 })()
+              }
+              {
+                gad.RFD &&
+                <DataDiv label='RFD Reason' value={gad.RFD.toString()}/>
+
               }
             </div>
           )}) 

@@ -17,7 +17,7 @@ type Data = {
   comment: string | null;
   contact_method: AccountType | null;
   dialer: Dialer | null;
-  delayed: boolean
+  RFD: RFD | null
   chatApp: SkipCollector | null;
   sms: SMSCollector | null
 }
@@ -84,6 +84,29 @@ type TL = {
   name: string;
 }
 
+enum RFD {
+  RA = 'Restricted Account',
+  BA = 'Banned Account',
+  DA = 'Deactivated Account',
+  FA = 'Frozen Account',
+  FPU = 'Forgot Password/Username',
+  LAA = 'Lost access on the account',
+  LC = 'Lost cellphone/Change SIM card',
+  FRAUD = 'Fraud/Scam',
+  WFS = 'Waiting for Salary/Funds',
+  LOF = 'Lack of funds',
+  IF = 'Insufficient Funds',
+  FTP = 'Forgot to pay',
+  UNEMPLOYED = 'Unemployed',
+  MER = 'Medical Expenses/Reasons',
+  SE = 'School Expenses',
+  POB = 'Prioritized other bills',
+  CALM = 'Calamity',
+  NRFD = 'No RFD/Unable to obtain RFD',
+  WI = 'Wrong item',
+  DI = 'Defective Item',
+  HACS = 'Have agreement with customer Service'
+}
 
 enum Payment {
   FULL = 'full',
@@ -180,7 +203,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     contact_method: null,
     dialer: null,
     chatApp: null,
-    delayed: false,
+    RFD: null,
     sms: null
   })
 
@@ -205,7 +228,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
       contact_method: null,
       dialer: null,
       chatApp: null,
-      delayed: false,
+      RFD: null,
       sms: null 
     });
   };
@@ -589,7 +612,26 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                     </select>
                   </label>
                 }
-                <div className=" flex justify-end ">
+                <label className="flex flex-col xl:flex-row items-center">
+                    <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4">RFD</p>
+                    <select 
+                      name="sms_collector" 
+                      id="sms_collector"
+                      value={data.RFD ?? ""}
+                      onChange={(e)=> handleDataChange('RFD',e.target.value)}
+                      className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
+                    > 
+                      <option value="">Select RFD Reason</option>
+                      {
+                        Object.entries(RFD).map(([key,value])=> {
+                          return (
+                            <option value={value} key={key} >{value.charAt(0).toUpperCase() + value.slice(1,value.length)}</option>
+                          )
+                        })
+                      }
+                    </select>
+                  </label>
+                {/* <div className=" flex justify-end ">
                   <label className="flex gap-2 items-center">
                     <input type="checkbox" name="delayed" id="delayed" checked={data.delayed} onChange={(e)=> {
                       if(e.target.checked) {
@@ -600,7 +642,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                     }}/>
                     <span>Reason For Delayed</span>
                   </label>
-                </div>
+                </div> */}
             </div>
             <div className="flex flex-col gap-2 w-full"> 
               {

@@ -60,7 +60,7 @@ const SEARCH = gql`
         contact_method
         chatApp
         sms
-        delayed
+        RFD
       }
       out_standing_details {
         principal_os
@@ -198,6 +198,7 @@ const FieldDisplay = memo(({ label, value }:{label:string, value:string | number
 
 const CustomerDisposition = () => {
   const {userLogged, selectedCustomer, breakValue } = useSelector((state:RootState)=> state.auth)
+  
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const [isRPC, setIsRPC] = useState<boolean>(false)
@@ -207,7 +208,7 @@ const CustomerDisposition = () => {
 
   const length = searchData?.search?.length || 0;
   const location = useLocation()
-
+  console.log(selectedCustomer)
   const debouncedSearch = useMemo(() => {
   return debounce(async(val: string) => {
     await refetch({ search: val });

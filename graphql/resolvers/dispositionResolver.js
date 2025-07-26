@@ -201,7 +201,7 @@ const dispositionResolver = {
           },
           {
             $match: {
-              bucket: {$in: user.buckets},
+              bucket: {$in: user.buckets.map(x=> new mongoose.Types.ObjectId(x))},
               callfile: objectId ? new mongoose.Types.ObjectId(objectId) : null,
               existing: {$eq: true}
             }
