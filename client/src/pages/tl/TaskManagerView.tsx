@@ -84,6 +84,11 @@ const TaskManagerView = () => {
     setShowSelection(!showSelection) 
   },[setShowSelection,showSelection])
 
+
+  const [dpd, setDpd] = useState<number | null>(null)
+
+  console.log(dpd)
+
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
 
@@ -187,13 +192,32 @@ const TaskManagerView = () => {
                 )
               }
             </select>
+            <select 
+              className="w-1/10 border border-slate-300 rounded-md font-bold text-slate-500 px-1"
+              name="bucket"
+              id="bucket"
+              value={dpd ?? ""}
+              onChange={(e)=> {
+                 const val = e.target.value;
+                  setDpd(val === "" ? null : Number(val));
+              }}
+            >
+              <option value=''>DPD</option>
+              {
+                (()=> 
+                  Array.from({length: 20}).map((_,index)=> {
+                    return <option value={index + 1} key={index}>{index + 1}</option>
+                  })
+                )()
+              }
+            </select>
           </div>
         </div>
         {
           tasker === "group" ? <GroupSection/> : <AgentSection/>
         }
       </div>
-      <TaskDispoSection selectedBucket={bucketObject[bucketSelect]}/>
+      <TaskDispoSection selectedBucket={bucketObject[bucketSelect] || null} dpd={dpd}/>
     </div>
   )
 }

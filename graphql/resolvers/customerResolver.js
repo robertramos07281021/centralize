@@ -469,9 +469,12 @@ const customerResolver = {
         throw new CustomError(error.message, 500)        
       }
     },
-    findCustomerAccount: async(_,{disposition, groupId ,page, assigned, limit, selectedBucket}, {user}) => {
+    findCustomerAccount: async(_,{query}, {user}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
+
+        const {disposition, groupId ,page, assigned, limit, selectedBucket, dpd} = query
+
         let selected = ''
         if (groupId) {
           const [group, userSelected] = await Promise.all([
@@ -489,6 +492,10 @@ const customerResolver = {
   
         ];
      
+        if(dpd) {
+          search.push({max_dpd: {$eq: dpd}})
+        }
+
         if (disposition && disposition.length > 0) {
           search.push({ "dispoType.name": { $in: disposition } });
         }

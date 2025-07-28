@@ -221,12 +221,21 @@ const customerTypeDefs = gql`
     to:String
   }
 
+  input QueryCustomerAccount {
+    disposition:[String]
+    groupId:ID
+    page:Int
+    assigned:String
+    limit:Int
+    selectedBucket: ID
+    dpd: Int
+  }
 
   type Query {
     findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
     getCustomers(page:Int): getCustomers!
     search(search:String):[Search]
-    findCustomerAccount(disposition:[String],groupId:ID,page:Int, assigned:String, limit:Int,selectedBucket: ID):FindCustomerAccount
+    findCustomerAccount(query:QueryCustomerAccount):FindCustomerAccount
     accountsCount:Int
     getMonthlyTarget:[MonthlyTarget]
     getMonthlyPerformance:[PerformanceStatistic]

@@ -107,87 +107,87 @@ type FindCustomerAccount = {
 }
 
 const FIND_CUSTOMER_ACCOUNTS = gql`
-query findCustomerAccount($page: Int, $disposition: [String], $groupId: ID, $assigned:String,$limit: Int, $selectedBucket: ID) {
-  findCustomerAccount(page: $page, disposition: $disposition, groupId: $groupId, assigned:$assigned, limit:$limit ,selectedBucket:$selectedBucket) {
-    CustomerAccounts {
-      _id
-      case_id
-      account_id
-      endorsement_date
-      credit_customer_id
-      bill_due_day
-      max_dpd
-      balance
-      paid_amount
-      assigned {
-        ... on User {
-          name
-          user_id
-        } 
-        ... on Group {
-          _id
-          name
-          description
-          members {
-            _id
+  query findCustomerAccount($query:QueryCustomerAccount) {
+    findCustomerAccount(query: $query) {
+      CustomerAccounts {
+        _id
+        case_id
+        account_id
+        endorsement_date
+        credit_customer_id
+        bill_due_day
+        max_dpd
+        balance
+        paid_amount
+        assigned {
+          ... on User {
             name
             user_id
+          } 
+          ... on Group {
+            _id
+            name
+            description
+            members {
+              _id
+              name
+              user_id
+            }
           }
         }
+        out_standing_details {
+          principal_os
+          interest_os
+          admin_fee_os
+          txn_fee_os
+          late_charge_os
+          dst_fee_os
+          total_os
+        }
+        grass_details {
+          grass_region
+          vendor_endorsement
+          grass_date
+        }
+        account_bucket {
+          name
+          dept
+        }
+        customer_info {
+          fullName
+          dob
+          gender
+          contact_no
+          emails
+          addresses
+          _id
+        }
+        currentDisposition {
+          _id
+          amount
+          disposition
+          payment_date
+          ref_no
+          existing
+          comment
+          payment
+          payment_method
+          user
+        }
+        dispoType {
+          _id
+          name
+          code
+        }
+        disposition_user {
+          name
+          user_id
+          _id
+        }
       }
-      out_standing_details {
-        principal_os
-        interest_os
-        admin_fee_os
-        txn_fee_os
-        late_charge_os
-        dst_fee_os
-        total_os
-      }
-      grass_details {
-        grass_region
-        vendor_endorsement
-        grass_date
-      }
-      account_bucket {
-        name
-        dept
-      }
-      customer_info {
-        fullName
-        dob
-        gender
-        contact_no
-        emails
-        addresses
-        _id
-      }
-      currentDisposition {
-        _id
-        amount
-        disposition
-        payment_date
-        ref_no
-        existing
-        comment
-        payment
-        payment_method
-        user
-      }
-      dispoType {
-        _id
-        name
-        code
-      }
-      disposition_user {
-        name
-        user_id
-        _id
-      }
+      totalCountCustomerAccounts
     }
-    totalCountCustomerAccounts
   }
-}
 `
 
 const ADD_GROUP_TASK = gql`
@@ -228,27 +228,35 @@ const DELETE_GROUP_TASK = gql`
 `
 
 type Props = {
-  selectedBucket:string
+  selectedBucket:string | null,
+  dpd: number | null
 }
 
-const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
+const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
   const dispatch = useAppDispatch()
   const {data:GroupData,refetch:groupRefetch} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
   const {selectedGroup, selectedAgent, page, tasker, taskFilter, selectedDisposition, limit} = useSelector((state:RootState)=> state.auth)
-
   const groupDataNewObject:{[key:string]:string} = useMemo(()=> {
     const group = GroupData?.findGroup || []
     return Object.fromEntries(group.map(e=> [e.name, e._id]))
   },[GroupData])
   const selected = selectedGroup ? groupDataNewObject[selectedGroup] : selectedAgent
 
-  const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount;}>(FIND_CUSTOMER_ACCOUNTS,{variables: {disposition: selectedDisposition, page:page , groupId: selected, assigned: taskFilter, limit: limit, selectedBucket: selectedBucket}})
+  const query = {
+    disposition: selectedDisposition, 
+    page:page , 
+    groupId: selected, 
+    assigned: taskFilter, 
+    limit: limit, 
+    selectedBucket,
+    dpd
+  }
+
+  const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount}>(FIND_CUSTOMER_ACCOUNTS,{variables: {query: query}})
   const [handleCheckAll, setHandleCheckAll] = useState<boolean>(false)
   const [taskToAdd, setTaskToAdd] = useState<string[]>([])
-
   const [required, setRequired] = useState<boolean>(false)
   const [confirm, setConfirm] = useState<boolean>(false)
-
   const [taskManagerPage, setTaskManagerPage] = useState("1")
 
 
@@ -266,7 +274,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
       }
     })
     return () => clearTimeout(timer)
-  },[selectedBucket,,CADRefetch,groupRefetch])
+  },[selectedBucket,CADRefetch,groupRefetch])
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {
@@ -280,7 +288,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket}) => {
       }
     })
     return () => clearTimeout(timer)
-  },[selectedGroup,CADRefetch,tasker, taskFilter, selectedAgent, selectedDisposition])
+  },[selectedGroup,CADRefetch,tasker, taskFilter, selectedAgent, selectedDisposition,dpd])
 
   const [modalProps, setModalProps] = useState({
     message: "",
