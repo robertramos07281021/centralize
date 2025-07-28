@@ -27,6 +27,9 @@ const callFileSchema = new Schema(
     finished_by: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"
+    },
+    totalAccounts: {
+      type: Number
     }
   },
   { timestamps: true }

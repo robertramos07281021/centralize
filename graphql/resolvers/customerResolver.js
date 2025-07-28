@@ -953,8 +953,8 @@ const customerResolver = {
         const findBucket = await Bucket.findById(bucket)
         if(!findBucket) throw new CustomError('Bucket not found',404)
 
-        const newCallfile = new Callfile({name: callfile, bucket: findBucket._id})
-
+        const newCallfile = new Callfile({name: callfile, bucket: findBucket._id, totalAccounts: input.length || 0})
+        
         await Promise.all(input.map(async (element) => {
           const contact_no = []
           const addresses = []
@@ -996,6 +996,8 @@ const customerResolver = {
             emails,
             contact_no,
           });
+        
+          const paid_amount =  element.total_os - element.balance 
 
           const caResult = await CustomerAccount.create({
             customer: customer._id,
@@ -1006,9 +1008,9 @@ const customerResolver = {
             endorsement_date: element.endorsement_date,
             bill_due_day: element.bill_due_day,
             max_dpd: element.max_dpd || element.dpd,
-            balance: element.total_os,
+            balance : element.balance,
             month_pd: element.mpd,
-            paid_amount: 0,
+            paid_amount,
             account_id: element.account_id ,
             out_standing_details: {
               principal_os: element.principal_os,

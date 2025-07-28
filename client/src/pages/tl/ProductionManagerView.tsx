@@ -62,7 +62,7 @@ const ProductionManagerView = () => {
   },[refetch])
 
   return (
-    <div className="p-2 h-full overflow-y-auto">
+    <div className="p-2 h-full overflow-hidden">
       <div className="h-full flex flex-col ">
         <div className="p-5 flex gap-20 ">
           <div className="w-1/2 flex flex-col gap-2">
@@ -134,21 +134,7 @@ const ProductionManagerView = () => {
           </div>
           
         </div>
-        <div className="sticky w-full top-0 text-gray-500 uppercase font-medium bg-blue-50 lg:text-xs 2xl:text-sm grid grid-cols-14 px-2 py-2">
-          <div className="col-span-2">Name</div>
-          <div>Bucket</div>
-          <div>Date</div>
-          <div>Endo</div>
-          <div>Work Days</div>
-          <div>Accounts</div>
-          <div>Uncontactable</div>
-          <div>Connected</div>
-          <div>Target</div>
-          <div>Collected</div>
-          <div>Status</div>
-          <div>Finished By</div>
-          <div className="text-center">Action</div>
-        </div>
+        
         <CallfilesViews bucket={bucketObject[callfileBucket]} status={status} setTotalPage={(e)=> setTotalPage(e)} setCanUpload={(e)=> setCanUpload(e)} successUpload={successUploading} setUploading={()=> setSuccessUploading(false)}/>
         <Pagination value={page} onChangeValue={(e) => setPage(e)} onKeyDownValue={(e)=> dispatch(setProductionManagerPage(e))} totalPage={totalPage} currentPage={productionManagerPage}/>
       </div> 

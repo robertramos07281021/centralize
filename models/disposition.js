@@ -44,10 +44,6 @@ const dispositionSchema = new Schema(
     RFD: {
       type: String,
     },
-    delayed: {
-      type: Boolean,
-      default: false
-    },
     bucket: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Bucket"

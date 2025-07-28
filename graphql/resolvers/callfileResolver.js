@@ -5,12 +5,7 @@ import Callfile from "../../models/callfile.js"
 import CustomerAccount from "../../models/customerAccount.js"
 import {json2csv } from 'json-2-csv'
 import Department from "../../models/department.js"
-
-const uniqueCodes = [
-  2, 32, 33, 34, 35, 36, 38, 42, 43, 44, 45, 46, 47, 48, 49, 52, 53, 54, 55, 56,
-  62, 63, 64, 65, 68, 72, 74, 75, 77, 78, 82, 83, 84, 85, 86, 87, 88, 8822, 8842
-];
-
+import DispoType from "../../models/dispoType.js"
 
 const callfileResolver = {
   DateTime,
@@ -48,8 +43,9 @@ const callfileResolver = {
 
         const total = result[0].count[0]?.total || 0
         const files = result[0].data || []
-        const connectedDispo = ['FFUP','PAID','PRC','RPCCB','FV','LM','PTP','UNEG','DEC','ITP','RTP']
+        const connectedDispo = ['PTP','FFUP','UNEG','RTP','PAID','DISP','ANSM','UNK','LM','HUP','DEC','BUSY','NOA','NIS','OCA','KOR']
 
+        const paidDispo = await DispoType.findOne({code:"PAID"})
         const customerAccounts = (
           await Promise.all(
             files.map((e) =>
@@ -93,25 +89,32 @@ const callfileResolver = {
                   $unwind: {path: "$customerInfo",preserveNullAndEmptyArrays: true}
                 },
                 {
-                  $addFields: {
-                    hasValidMobile: {
-                      $anyElementTrue: {
-                        $map: {
-                          input: "$customerInfo.contact_no",
-                          as: "num",
-                          in: {
-                            $regexMatch: {
-                              input: { $toString: "$$num" },
-                              regex: "^09\\d{9}$"
-                            }
-                          }
-                        }
-                      }
-                    }
-                  }
+                  $lookup: {
+                    from: "dispositions",
+                    localField: "history",
+                    foreignField: "_id",
+                    as: "histories"
+                  },
                 },
                 {
                   $addFields: {
+                    amount: {
+                      $sum: { 
+                        $map: {
+                          input: {
+                            $filter: {
+                              input: "$histories",
+                              as: "history",
+                              cond: {
+                                $eq: ["$$history.disposition",paidDispo._id]
+                              }
+                            }
+                          },
+                          as: "h",
+                          in: "$$h.amount"
+                        }
+                      }
+                    },
                     hasValidEmail: {
                       $anyElementTrue: {
                         $map: {
@@ -126,7 +129,77 @@ const callfileResolver = {
                           }
                         }
                       }
-                    }
+                    },
+                    hasValidMobile: {
+                      $anyElementTrue: {
+                        $map: {
+                          input: "$customerInfo.contact_no",
+                          as: "num",
+                          in: {
+                            $or: [
+                              {
+                                $regexMatch: {
+                                  input: { $toString: "$$num" },
+                                  regex: "^02\\d{8}$"
+                                }
+                              },
+                              {
+                                $regexMatch: {
+                                  input: { $toString: { $ifNull: ["$emergency_contact.mobile", ""] } },
+                                  regex: "^(08822|08842)\\d{5}$"
+                                }
+                              },
+                              {
+                                $regexMatch: {
+                                  input: { $toString: "$$num" },
+                                  regex: "^(03[2-8]|04[2-9]|05[2-6]|06[2-8]|07[2-8]|08[2-8])\\d{7}$"
+                                }
+                              },
+                              {
+                                $regexMatch: {
+                                  input: { $toString: "$$num" },
+                                  regex: "^09\\d{9}$"
+                                }
+                              }
+                            ]
+                          }
+                        }
+                      }
+                    },
+                    hasValidEmergencyContact: {
+                      $cond: [
+                        {
+                          $or: [
+                            {
+                              $regexMatch: {
+                                input: { $toString: { $ifNull: ["$emergency_contact.mobile", ""] } },
+                                regex: "^02\\d{8}$"
+                              }
+                            },
+                            {
+                              $regexMatch: {
+                                input: { $toString: { $ifNull: ["$emergency_contact.mobile", ""] } },
+                                regex: "^(08822|08842)\\d{5}$"
+                              }
+                            },
+                            {
+                              $regexMatch: {
+                                input: { $toString: { $ifNull: ["$emergency_contact.mobile", ""] } },
+                                regex: "^(03[2-8]|04[2-9]|05[2-6]|06[2-8]|07[2-8]|08[2-8])\\d{7}$"
+                              }
+                            },
+                            {
+                              $regexMatch: {
+                                input: { $toString: { $ifNull: ["$emergency_contact.mobile", ""] } },
+                                regex: "^09\\d{9}$"
+                              }
+                            },
+                          ]
+                        },
+                        true,
+                        false
+                      ]
+                    } 
                   }
                 },
                 {
@@ -146,6 +219,9 @@ const callfileResolver = {
                               {
                                 $eq: ['$hasValidMobile',false] 
                               },
+                              {
+                                $eq: ['$hasValidEmergencyContact',false]
+                              }
                             ]
                           },
                           1,
@@ -167,10 +243,11 @@ const callfileResolver = {
                       }
                     },
                     target: {
-                      $sum: "$out_standing_details.total_os"
+                      $sum: "$balance"
                     },
+                    
                     collected: {
-                      $sum: "$paid_amount"
+                      $sum: "$amount"
                     }
                   }
                 },
@@ -593,9 +670,9 @@ const callfileResolver = {
 
         const callfile = findCallfile.map(e=> new mongoose.Types.ObjectId(e._id))
         
-        const positive = ['KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
-        const success = ['PTP','PAID','UNEG','FFUP','RPCCB']
-        const unsuccess = ['WN','DISP','OCA','NIS','BUSY']
+        const positive = ['PTP','FFUP','UNEG','RTP','PAID','DISP','LM','HUP']
+        const success = ['ANSM','UNK','DEC','BUSY','NOA','NIS','OCA','KOR']
+        const connected = [success,positive].flat()
 
         const customerAccounts = await CustomerAccount.aggregate([
           {
@@ -692,7 +769,7 @@ const callfileResolver = {
                     {
                       $or: [
                         {
-                          $in: ["$dispotype.code", unsuccess]
+                          $not: [{ $in: ["$dispotype.code", connected] }]
                         },
                         { 
                           $not: ["$current_disposition"] 

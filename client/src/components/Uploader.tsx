@@ -24,6 +24,7 @@ type Data = {
   customer_name:string 
   dpd_grp:string
   dst_fee_os:number
+  balance: number
   email:string
   email_2:string
   email_3:string
@@ -82,7 +83,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
         const jsonData:Data[] = utils.sheet_to_json(sheet); 
 
         const dateConverting = jsonData.map((row: Data) => {
-          const {
+          const { 
             interest_os, 
             admin_fee_os, 
             txn_fee_os, 
@@ -102,25 +103,43 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             late_charge_waive_fee_os,
             emergencyContactMobile,
             case_id,
-            platform_user_id
+            platform_user_id,
+            balance
           } = row
 
-          function normalizeContact(contact:string) {
-            const cleaned = contact.trim().replace(/-/g, '');
-            if (/^09\d{9}$/.test(cleaned)) return cleaned;
+          
+          function normalizeContact(contact:number) {
+            const cleaned = contact.toString().trim().replace(/[+\-\s()]/g, '');
+            const metroManila = /^2\d{7,8}$/;
+            const fiveDigitAreaCodes = /^(8822|8842)\d{5}$/;
+            const provincialLandline = /^(3[2-8]|4[2-9]|5[2-6]|6[2-8]|7[2-8]|8[2-8])\d{7}$/;
+            const mobile = /^9\d{9}$/;
+            const mobileWithSTZ = /^630\d{10}$/;
+            const mobileWithST = /^63\d{10}$/;
 
-            if (/^\+63\d{10}$/.test(cleaned)) {
+            if (mobileWithSTZ.test(cleaned)) {
               return '0' + cleaned.slice(3);
             }
-            if (/^63\d{10}$/.test(cleaned)) {
+
+            if (mobileWithST.test(cleaned)) {
               return '0' + cleaned.slice(2);
             }
-            if (/^\+630\d{10}$/.test(cleaned)) {
-              return '0' + cleaned.slice(4);
-            }
-            
-            if (/^9\d{8}$/.test(cleaned)) return `0${cleaned}`;
 
+            if (mobile.test(cleaned)) {
+              return '0' + cleaned;
+            }
+
+            if (metroManila.test(cleaned)) {
+              return '0' + cleaned;
+            }
+
+            if (fiveDigitAreaCodes.test(cleaned)) {
+              return '0' + cleaned;
+            }
+
+            if (provincialLandline.test(cleaned)) {
+              return '0' + cleaned;
+            }
             return cleaned;
           }
 
@@ -132,7 +151,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             }
           };
 
-          const rows:any = {
+          const rows:Data = {
             ...row,
             interest_os: Number(interest_os) || 0,
             admin_fee_os: Number(admin_fee_os) || 0,
@@ -140,8 +159,9 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             late_charge_os: Number(late_charge_os) || 0,
             penalty_interest_os: Number(penalty_interest_os) || 0,
             dst_fee_os: Number(dst_fee_os) || 0,
+            balance: Number(balance) || 0,
             total_os: Number(total_os) || 0,
-            contact: contact ? normalizeContact(contact.toString()) : "",
+            contact: contact ? normalizeContact(Number(contact)).toString().trim() : "",
             max_dpd: Number.isFinite(dpd) ? Math.ceil(dpd) : Math.ceil(max_dpd) || 0,
             mpd: Math.ceil(mpd) || 0,
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
@@ -149,7 +169,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           }
           
           if(emergencyContactMobile) {
-            rows['emergencyContactMobile'] = normalizeContact(emergencyContactMobile)
+            rows['emergencyContactMobile'] = normalizeContact(Number(emergencyContactMobile))
           }
           if(platform_user_id) {
             rows['platform_user_id'] = platform_user_id.toString().trim()
@@ -172,11 +192,11 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           }
 
           if(contact_2) {
-            rows['contact_2'] = normalizeContact(contact_2.toString()).toString().trim()
+            rows['contact_2'] = normalizeContact(Number(contact_2)).toString().trim()
           }
 
           if(contact_3) {
-            rows['contact_3'] = normalizeContact(contact_3.toString()).toString().trim()
+            rows['contact_3'] = normalizeContact(Number(contact_3)).toString().trim()
           }
           return {
           ...rows
@@ -212,7 +232,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       onSuccess()
     },
     onError: (error)=> {
-    
+    console.log(error)
     const errorMessage = error.message;
     if (errorMessage?.includes("Not Included")) {
       dispatch(setSuccess({

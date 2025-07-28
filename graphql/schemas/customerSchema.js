@@ -21,6 +21,7 @@ const customerTypeDefs = gql`
   customer_name: String
   dpd_grp: String
   dst_fee_os: Float
+  balance: Float
   email: String
   email_2: String
   email_3: String

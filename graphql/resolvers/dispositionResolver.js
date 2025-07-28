@@ -130,12 +130,10 @@ const dispositionResolver = {
         ])
         if (!agentUser && agent) throw new CustomError("Agent not found", 404);
 
-
         const dispoTypesIds = disposition.length > 0 ? findDispositions.map((dt)=> new mongoose.Types.ObjectId(dt._id)) : []
         
         if (!findBucket && bucket) throw new CustomError("Bucket not found", 404);
      
-        
         const customerAccountIds = findBucket
         ? (await CustomerAccount.find({ bucket: findBucket._id }).lean()).map(ca => ca._id)
         : [];
@@ -154,8 +152,13 @@ const dispositionResolver = {
           query.push({ createdAt: { $gte: startDate, $lte: endDate } });
         }
 
-        if(bucket) query.push({customer_account: {$in: customerAccountIds}})
-          let objectId = null
+        if(bucket) {
+          query.push({customer_account: {$in: customerAccountIds}}) 
+        } else {
+          query.push({bucket: {$in: user.buckets.map(x=> new mongoose.Types.ObjectId(x))}})
+        }
+
+        let objectId = null
 
         if (Types.ObjectId.isValid(callfile)) {
           objectId = new Types.ObjectId(callfile);
@@ -201,7 +204,6 @@ const dispositionResolver = {
           },
           {
             $match: {
-              bucket: {$in: user.buckets.map(x=> new mongoose.Types.ObjectId(x))},
               callfile: objectId ? new mongoose.Types.ObjectId(objectId) : null,
               existing: {$eq: true}
             }
@@ -1757,6 +1759,8 @@ const dispositionResolver = {
 
         if (!customerAccount) {
           console.log(input.customer_account)
+           console.log(user.name)
+          console.log(user.user_id)
           throw new CustomError("Customer account not found", 404);
         }
         
@@ -1766,8 +1770,10 @@ const dispositionResolver = {
    
         const isPaymentDisposition = dispoType.code === "PAID"
 
-        if (withPayment.includes(dispoType.code) && !input.amount) {
+        if (withPayment.includes(dispoType.code) && !input.amount && input.disposition) {
           console.log(dispoType.code)
+          console.log(user.name)
+          console.log(user.user_id)
           throw new CustomError("Amount is required", 401);
         }
         

@@ -331,9 +331,18 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
 
   if(downloadCallfilesLoading || deleteLoading || finishingLoading || loading) return <Loading/>
 
+  const labels = ['Name','Bucket','Date','Endo','Work Days','Accounts','Unworkable','Connected','Target','Collected','Status','Finished By','Action']
+
   return (
     <>
       <div className=" h-full overflow-y-auto flex flex-col relative">
+        <div className="relative w-full top-0 text-gray-500 uppercase font-medium bg-blue-50 text-[0.6em] lg:text-xs 2xl:text-sm flex  px-2 py-2 flex-nowrap border overflow-auto">
+          {
+            labels.map((x,index )=>
+              <div className="w-60" key={index}>{x}</div>
+            )
+          }
+        </div>
         {
           data?.getCallfiles?.result?.map((res,index) => {
             const date = new Date(res.callfile.createdAt);
