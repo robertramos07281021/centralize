@@ -61,6 +61,12 @@ const ProductionManagerView = () => {
     return () => clearTimeout(timer)
   },[refetch])
 
+  useEffect(()=> {
+    if(bucketData) {
+      setCallfileBucket(bucketData.getTLBucket[0].name)
+    }
+  },[bucketData])
+
   return (
     <div className="p-2 h-full overflow-hidden">
       <div className="h-full flex flex-col ">
@@ -76,7 +82,7 @@ const ProductionManagerView = () => {
                   onChange={(e)=> setCallfileBucket(e.target.value)}
                   value={callfileBucket}
                   className={`${required ? "bg-red-50 border-red-500" : "border-slate-400"} lg:text-[0.6em] 2xl:text-xs w-full p-2  border rounded-lg`}>
-                  <option value="">Select Bucket</option>
+  
                   {
                     bucketData?.getTLBucket.map(e=> 
                       <option key={e.id} value={e.name}>

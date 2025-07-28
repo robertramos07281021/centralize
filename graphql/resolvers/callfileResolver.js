@@ -242,8 +242,12 @@ const callfileResolver = {
                         ]
                       }
                     },
+                    OB: {
+                      $sum:'$out_standing_details.total_os'
+                      
+                    },
                     target: {
-                      $sum: "$balance"
+                      $sum: "$out_standing_details.total_balance"
                     },
                     
                     collected: {
@@ -258,6 +262,7 @@ const callfileResolver = {
                     uncontactable: 1,
                     accounts: 1,
                     connected: 1,
+                    OB: 1,
                     target: 1,
                     collected: 1
                   }

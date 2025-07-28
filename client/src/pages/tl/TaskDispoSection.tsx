@@ -419,7 +419,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
           </div>
         }
 
-        <div className="text-xs text-gray-700 uppercase bg-blue-100 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-5 font-medium mt-2">
+        <div className="text-xs text-gray-700 uppercase bg-blue-100 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-6 font-medium mt-2">
           <div  className="px-6 py-3">
             Customer Name
           </div>
@@ -428,6 +428,9 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
           </div>
           <div  className="px-6 py-3">
             Bucket
+          </div>
+          <div  className="px-6 py-3">
+            DPD
           </div>
           <div  className="px-6 py-3">
             Assigned
@@ -450,7 +453,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
           }
           {
             CustomerAccountsData?.findCustomerAccount?.CustomerAccounts.map((ca)=> ( 
-            <div key={ca._id} className="bg-white border-b border-gray-200 hover:bg-slate-100 grid grid-cols-5 py-2 items-center text-xs">
+            <div key={ca._id} className="bg-white border-b border-gray-200 hover:bg-slate-100 grid grid-cols-6 py-2 items-center text-xs">
               <div className="font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
                   {ca.customer_info.fullName}
               </div>
@@ -459,6 +462,9 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
               </div>
               <div className="px-6 ">
                   {ca.account_bucket.name}
+              </div>
+              <div className="px-6 ">
+                  {ca.max_dpd}
               </div>
               <div className="px-6">
                 {ca.assigned?.name}

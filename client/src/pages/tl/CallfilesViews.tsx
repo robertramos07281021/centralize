@@ -30,6 +30,7 @@ type Result = {
   target: number
   collected: number
   uncontactable: number
+  OB: number
 }
 
 type CallFilesResult = {
@@ -80,6 +81,7 @@ const GET_CALLFILES = gql`
         target
         collected
         uncontactable
+        OB
       }
       count
     }
@@ -331,55 +333,86 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
 
   if(downloadCallfilesLoading || deleteLoading || finishingLoading || loading) return <Loading/>
 
-  const labels = ['Name','Bucket','Date','Endo','Work Days','Accounts','Unworkable','Connected','Target','Collected','Status','Finished By','Action']
+  const labels = ['Name','Bucket','Date','Endo','Work Days','Accounts','Unworkable','Connected','OB','Target','Collected','Status','Finished By','Action']
 
   return (
     <>
-      <div className=" h-full overflow-y-auto flex flex-col relative">
-        <div className="relative w-full top-0 text-gray-500 uppercase font-medium bg-blue-50 text-[0.6em] lg:text-xs 2xl:text-sm flex  px-2 py-2 flex-nowrap border overflow-auto">
-          {
-            labels.map((x,index )=>
-              <div className="w-60" key={index}>{x}</div>
-            )
-          }
-        </div>
-        {
-          data?.getCallfiles?.result?.map((res,index) => {
-            const date = new Date(res.callfile.createdAt);
-            const today = new Date();
-            const findBucket = deptBucket?.getDeptBucket.find(e=> e.id === res.callfile.bucket)
+      <div className=" h-full w-full overflow-y-auto overflow-hidden flex-nowrap overflow-x-auto inline flex-col relative">
+        
+          
+        <table className="w-full table-fixed text-left">
+          <thead >
+            <tr  className="bg-slate-100 text-gray-500">
+              {
+                labels.map((x,index )=>
+                  <th className="py-1" key={index}>{x}</th>
+                )
+              }
+            </tr>
+          </thead>
+          <tbody>
+            {
+              data?.getCallfiles?.result?.map((res,index) => {
+                const date = new Date(res.callfile.createdAt);
+                const today = new Date();
+                const findBucket = deptBucket?.getDeptBucket.find(e=> e.id === res.callfile.bucket)
 
-            const diffTime = today.getTime() - date.getTime();
-            const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-            const checkStatus = res.callfile.active && !res.callfile.endo
-            const status = checkStatus ? "Active" : "Finished"
-            const finishedBy = res.callfile.finished_by ? res.callfile.finished_by.name : "-"
-            return (
-              <div key={index} className="w-full text-gray-500 uppercase font-medium even:bg-slate-100/80 2xl:text-xs lg:text-[0.6em] grid grid-cols-14 px-2 py-2 cursor-default">
-                <div className="truncate pr-2 col-span-2" title={res.callfile.name}>{res.callfile.name}</div>
-                <div>{findBucket?.name}</div>
-                <div>{new Date(res.callfile.createdAt).toLocaleDateString()}</div>
-                <div>{res.callfile.endo ? new Date(res.callfile.endo).toLocaleDateString() : "-" }</div>
-                <div>{diffDays}</div>
-                <div>{res.accounts}</div>
-                <div>{res.uncontactable || 0}</div>
-                <div>{res.connected}</div>
-                <div>{res.target.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
-                <div>{res.collected.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
-                <div>{status}</div>
-                <div className="truncate">{finishedBy}</div>
-                <div className="flex lg:gap-3 2xl:gap-5 justify-center">
-                  {
-                    checkStatus &&
-                    <FaSquareCheck className="hover:scale-110 text-green-500 lg:text-xs 2xl:text-lg cursor-pointer" onClick={()=> onClickIcon(res.callfile._id, "FINISHED", res.callfile.name)}/>
-                  }
-                  <FaTrash className=" text-red-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DELETE", res.callfile.name)}/>
-                  <FaDownload className="text-blue-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DOWNLOAD", res.callfile.name)}/>
-                </div>
-              </div>
-            )
-          })
-        }
+                const diffTime = today.getTime() - date.getTime();
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                const checkStatus = res.callfile.active && !res.callfile.endo
+                const status = checkStatus ? "Active" : "Finished"
+                const finishedBy = res.callfile.finished_by ? res.callfile.finished_by.name : "-"
+                return (
+                  <tr key={index} className="text-xs text-gray-600">
+                    <td className="truncate pr-2 col-span-2" title={res.callfile.name}>{res.callfile.name}</td>
+                    <td>{findBucket?.name}</td>
+                    <td>{new Date(res.callfile.createdAt).toLocaleDateString()}</td>
+                    <td>{res.callfile.endo ? new Date(res.callfile.endo).toLocaleDateString() : "-" }</td>
+                    <td>{diffDays}</td>
+                    <td>{res.accounts}</td>
+                    <td>{res.uncontactable || 0}</td>
+                    <td>{res.connected}</td>
+                    <td>{res.OB.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</td>
+                    <td>{res.target.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</td>
+                    <td>{res.collected.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</td>
+                    <td>{status}</td>
+                    <td className="truncate">{finishedBy}</td>
+                    <td className="flex py-2 lg:gap-3 2xl:gap-5">
+                      {
+                        checkStatus &&
+                        <FaSquareCheck className="hover:scale-110 text-green-500 lg:text-xs 2xl:text-lg cursor-pointer" onClick={()=> onClickIcon(res.callfile._id, "FINISHED", res.callfile.name)}/>
+                      }
+                      <FaTrash className=" text-red-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DELETE", res.callfile.name)}/>
+                      <FaDownload className="text-blue-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DOWNLOAD", res.callfile.name)}/>
+                    </td>
+                  </tr>
+                )
+              })
+            }
+
+          </tbody>
+
+        </table>
+
+
+        {/* <div className="w-full h-full flex flex-col">
+          <div className="flex flex-nowrap gap-5">
+
+          </div>
+          <div className="flex gap-5 w-full">
+          
+            
+
+         
+
+
+
+           
+          </div>
+
+          
+        </div> */}
+
       </div> 
       { confirm &&
         <Confirmation {...modalProps}/>

@@ -174,8 +174,8 @@ enum Code {
   ANSM = 'a',
   BUSY = 'b',
   DEC = 'c',
-  DISP = 'd',
-  FFUP = 'f',
+  DISP = 's',
+  FFUP = 'g',
   HUP = 'h',
   ITP = 'i',
   KOR = 'k',
@@ -327,7 +327,22 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
 // ======================================================================================
 
   const handleDataChange = (key: keyof Data, value: any) => {
-    setData(prev => ({ ...prev, [key]: value }));
+    if(key === 'disposition') {
+      setData(prev => ({ ...prev, [key]: value , 
+      amount: null,
+      payment: null,
+      payment_date: null,
+      payment_method: null,
+      ref_no: null,
+      comment: null,
+      contact_method: null,
+      dialer: null,
+      chatApp: null,
+      RFD: null,
+      sms: null  }));
+    } else {
+      setData(prev => ({...prev, [key]:value}))
+    }
   };
 
   const handleOnChangeAmount = useCallback((e:React.ChangeEvent<HTMLInputElement>) => {
@@ -496,18 +511,17 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                   id="disposition" 
                   value={selectedDispo ?? ""}
                   required
-         
                   onChange={(e) => {
                     handleDataChange('disposition',dispoObject[e.target.value])
                     setSelectedDispo(e.target.value)}
                   }
                   className={`${required && !data.disposition ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  w-full border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs xl:text-sm p-2 `}>
-                  <option value="">Select Disposition</option>
+                  <option value="" aria-keyshortcuts=";">Select Disposition</option>
                   {
                     Object.entries(dispoObject).map(([key,value])=> {
                       const findDispoName = disposition?.getDispositionTypes.find(x=> x.id === value)
                       return (
-                        <option value={key} key={key}>
+                        <option value={key} key={key} accessKey={Code[findDispoName?.code as keyof typeof Code]}>
                           {`${findDispoName?.name} - ${key} - "${dispoKeyCode[key] || ""}"`}
                         </option>
                       )

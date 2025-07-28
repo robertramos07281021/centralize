@@ -99,6 +99,10 @@ const customerAccountSchema = new Schema(
       total_os: {
         type: Number,
         default: 0
+      },
+      total_balance: {
+        type: Number,
+        default: 0
       }
     },
     emergency_contact: {

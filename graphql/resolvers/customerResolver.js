@@ -1028,6 +1028,7 @@ const customerResolver = {
               dst_fee_os: element.dst_fee_os,
               waive_fee_os: element.late_charge_waive_fee_os,
               total_os: element.total_os,
+              total_balance: element.balance
             },
             emergency_contact: {
               name:element.emergencyContactName,

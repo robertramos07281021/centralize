@@ -29,6 +29,7 @@ const callfileTypeDefs = gql`
     connected: Int
     target: Float
     collected: Float
+    OB: Float
   }
 
   type CallFilesResult {

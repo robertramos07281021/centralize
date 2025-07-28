@@ -419,8 +419,8 @@ const GroupSection = () => {
                   }
                 </div>
               </div>
-              <div className="bg-white z-10 lg:w-50 2xl:w-96 absolute border right-0 h-96 top-12 rounded-lg border-slate-300 shadow-lg shadow-black/15 p-2 grid grid-rows-3">
-                <div className="flex flex-col overflow-y-auto">
+              <div className="bg-white z-10 lg:w-50 2xl:w-96 absolute border right-0 h-96 top-12 rounded-lg border-slate-300 shadow-lg shadow-black/15 p-2 flex flex-col">
+                <div className="flex flex-col overflow-y-auto h-1/3">
                   <h1 className="font-bold text-slate-700">Description</h1>
                   <div className="indent-5 mt-2 flex flex-col overflow-y-auto text-justify px-2">
                     {
@@ -429,9 +429,9 @@ const GroupSection = () => {
                   </div>
 
                 </div>
-                <div className=" flex flex-col ">
+                <div className="h-2/3 flex flex-col">
                   <h1 className="font-bold text-slate-700">Member{selectedGroupData?.members && selectedGroupData?.members?.length > 1 ? "s" : ""}</h1>
-                  <div className="h-full flex flex-col overflow-y-auto">
+                  <div className="h- flex flex-col overflow-y-auto">
                     {
                       selectedGroupData?.members.map((m)=> (
                         <div key={m._id} className="grid grid-cols-5 text-center odd:bg-slate-100 py-1">
