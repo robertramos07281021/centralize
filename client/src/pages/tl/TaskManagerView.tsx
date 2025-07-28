@@ -65,6 +65,11 @@ const TaskManagerView = () => {
   },[bucketData])
 
   useEffect(()=> {
+    if(bucketData) {
+      setBucketSelect(bucketData.getTLBucket[0].name)
+    }
+  },[bucketData])
+  useEffect(()=> {
     dispatch(setSelectedGroup(""))
     dispatch(setAgent(""))
   },[tasker,dispatch])
@@ -86,8 +91,6 @@ const TaskManagerView = () => {
 
 
   const [dpd, setDpd] = useState<number | null>(null)
-
-  console.log(dpd)
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
@@ -185,7 +188,7 @@ const TaskManagerView = () => {
               value={bucketSelect}
               onChange={(e)=> setBucketSelect(e.target.value)}
             >
-              <option value="">Select Bucket</option>
+        
               {
                 bucketData?.getTLBucket.map(e=> 
                   <option key={e.id} value={e.name}>{e.name}</option>
