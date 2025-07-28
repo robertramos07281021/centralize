@@ -9,6 +9,7 @@ import Bucket from "../../models/bucket.js"
 import DispoType from "../../models/dispoType.js"
 import Group from "../../models/group.js"
 import Department from "../../models/department.js"
+import Callfile from "../../models/callfile.js"
 
 
 const dispositionResolver = {
@@ -126,22 +127,33 @@ const dispositionResolver = {
           findBucket] = await Promise.all([
           await User.findOne({user_id: agent}).lean(),
           await DispoType.find({name: {$in: disposition}}).lean(),
-          await Bucket.findOne(bucketFilter).lean()
+          await Bucket.findOne(bucketFilter).lean(),
         ])
+
+  
+      
+
         if (!agentUser && agent) throw new CustomError("Agent not found", 404);
+
 
         const dispoTypesIds = disposition.length > 0 ? findDispositions.map((dt)=> new mongoose.Types.ObjectId(dt._id)) : []
         
         if (!findBucket && bucket) throw new CustomError("Bucket not found", 404);
      
+       
         const customerAccountIds = findBucket
         ? (await CustomerAccount.find({ bucket: findBucket._id }).lean()).map(ca => ca._id)
         : [];
      
-        const query = [{}]
+        const query = []
         
-        if(agent) query.push({user: new mongoose.Types.ObjectId(agentUser._id)})
-
+        if(agent) {
+          query.push({user: new mongoose.Types.ObjectId(agentUser._id)})
+        } 
+        if(!bucket) {
+          query.push({})
+        }
+        
         if(disposition.length > 0) query.push({disposition: {$in: dispoTypesIds}})
           
         if (from || to) {
@@ -151,18 +163,17 @@ const dispositionResolver = {
           endDate.setHours(23, 59, 59, 999);
           query.push({ createdAt: { $gte: startDate, $lte: endDate } });
         }
+        const secondQuery = {existing: {$eq: true}}
 
-        if(bucket) {
-          query.push({customer_account: {$in: customerAccountIds}}) 
-        } else {
-          query.push({bucket: {$in: user.buckets.map(x=> new mongoose.Types.ObjectId(x))}})
-        }
-
-        let objectId = null
-
+        if(bucket) query.push({customer_account: {$in: customerAccountIds}})
+        let call = null
         if (Types.ObjectId.isValid(callfile)) {
-          objectId = new Types.ObjectId(callfile);
+          secondQuery['callfile'] = new Types.ObjectId(callfile);
+          call = await Callfile.findById(callfile).lean()
         } 
+
+
+        secondQuery['bucket'] = !findBucket ? {$in: user.buckets.map(x=> new mongoose.Types.ObjectId(x))} : {$eq: findBucket._id}
 
         const dispositionReport = await Disposition.aggregate([
           {
@@ -203,10 +214,7 @@ const dispositionResolver = {
             }
           },
           {
-            $match: {
-              callfile: objectId ? new mongoose.Types.ObjectId(objectId) : null,
-              existing: {$eq: true}
-            }
+            $match: secondQuery
           },  
           {
             $group: {
@@ -226,14 +234,14 @@ const dispositionResolver = {
           }
         ])
 
-    
+      
         return { 
           agent: agent ? agentUser : null, 
           bucket: bucket ? findBucket.name : "" ,
-          disposition: dispositionReport
+          disposition: dispositionReport,
+          callfile: call
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },

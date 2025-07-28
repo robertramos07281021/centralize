@@ -6,7 +6,7 @@ import CustomerAccount from "../../models/customerAccount.js";
 import DispoType from "../../models/dispoType.js";
 import Group from "../../models/group.js";
 import ModifyRecord from "../../models/modifyRecord.js";
-import mongoose, { Mongoose } from "mongoose";
+import mongoose from "mongoose";
 import User from "../../models/user.js";
 import Department from "../../models/department.js";
 import Callfile from "../../models/callfile.js";
@@ -954,7 +954,7 @@ const customerResolver = {
         if(!findBucket) throw new CustomError('Bucket not found',404)
 
         const newCallfile = new Callfile({name: callfile, bucket: findBucket._id, totalAccounts: input.length || 0})
-        
+
         await Promise.all(input.map(async (element) => {
           const contact_no = []
           const addresses = []

@@ -3,7 +3,7 @@ import Confirmation from "./Confirmation"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { setDeselectCustomer, setServerError, setSuccess } from "../redux/slices/authSlice"
+import { setDeselectCustomer, setDispositionKey, setServerError, setSuccess } from "../redux/slices/authSlice"
 
 type Data = {
   amount: string | null;
@@ -194,6 +194,7 @@ enum Code {
 }
 
 const DispositionForm:React.FC<Props> = ({updateOf}) => {
+
   const {selectedCustomer, userLogged, dispositionKey} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const Form = useRef<HTMLFormElement | null>(null)
@@ -242,7 +243,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
   useEffect(()=> {
     if(selectedCustomer._id && dispositionKey){
       setSelectedDispo(codeOfDispo[dispositionKey])
-      setData(prev => ({...prev,disposition: dispoObject[codeOfDispo[dispositionKey]]}))
+      setData(prev => ({...prev, disposition: dispoObject[codeOfDispo[dispositionKey]]}))
     }
   },[dispositionKey, selectedCustomer])
 
@@ -254,6 +255,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
 
   const resetForm = () => {
     setSelectedDispo('');
+    dispatch(setDispositionKey(''))
     setData({
       amount: null,
       payment: null,

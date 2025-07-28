@@ -24,9 +24,20 @@ const GET_DISPOSITION_REPORTS = gql`
         name
         count
       }
+      callfile {
+        _id
+        name
+        totalAccounts
+      }
     }
   }
 `
+
+type Callfile = {
+  _id: string
+  name: string
+  totalAccounts: number
+}
 
 type Dispositions = {
   code: string
@@ -54,6 +65,7 @@ type Reports = {
   agent: Agent
   bucket: string
   disposition: DispositionType[]
+  callfile: Callfile
 }
 
 const GET_DISPOSITION_TYPES = gql`
@@ -78,6 +90,15 @@ export type Search = {
   callfile: String
 }
 
+type SearchFilter = {
+  agent: string
+  bucket: string
+  disposition : string[]
+  from: string
+  to: string
+  callfile: String
+}
+
 type Props = {
   search: Search
 }
@@ -90,17 +111,27 @@ const ReportsView:React.FC<Props> = ({search}) => {
 
   const [dispositionData, setDispositionData] = useState<Dispositions[]>([])
   const [newReportsDispo, setNewReportsDispo] = useState<Record<string,number>>({})
+  const [searchFilter, setSearchFilter] = useState<SearchFilter>()
 
-  const reports = {
-    agent:search.searchAgent, 
-    bucket:search.searchBucket, 
-    disposition: search.selectedDisposition, 
-    from:search.dateDistance.from, 
-    to:search.dateDistance.to, 
-    callfile:search.callfile
-  }
+  useEffect(()=> {
+    setSearchFilter({
+      agent:search.searchAgent, 
+      bucket:search.searchBucket, 
+      disposition: search.selectedDisposition, 
+      from:search.dateDistance.from, 
+      to:search.dateDistance.to, 
+      callfile:search.callfile
+    })
+  },[search])
 
-  const {data:reportsData, loading:reportLoading, refetch} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{variables: {reports},fetchPolicy: 'network-only'})
+
+
+  const {data:reportsData, loading:reportLoading, refetch} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{
+    variables: { reports: searchFilter },
+    fetchPolicy: 'network-only',
+  })
+
+ 
   const {data:disposition, refetch:dispoTypesRefetch} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
   const dispatch = useAppDispatch()
 
@@ -110,6 +141,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
         await dispoTypesRefetch()
         await refetch()
       } catch (error) {
+        console.log(error)
         dispatch(setServerError(true))
       }
     })
@@ -140,12 +172,16 @@ const ReportsView:React.FC<Props> = ({search}) => {
   const dispositionCount = (code:string) =>  {
     const newFilter = dispositionData?.filter((e)=> e.code === code)
     return newFilter[0]?.count
-  }
+  } 
 
-  const dataLabels = dispositionData.map(d=> d.code)
-  const dataCount = dispositionData.map(d => d.count)
-  const dataColor = dispositionData.map(d=> d.color)
+  const dispoData = dispositionData?.map(d => d.count) || []
+  const dispoDataReduced =dispoData && dispoData.length > 0 ? dispoData?.reduce((t:number, v:number)=> t + v) : 0
 
+  const totalAccounts = reportsData && reportsData?.getDispositionReports.callfile.totalAccounts || 0
+  const dataLabels = [...dispositionData.map(d=> d.code),'Unconnected']
+  const dataCount = [...dispositionData.map(d => d.count),totalAccounts - dispoDataReduced]
+  const dataColor = [...dispositionData.map(d=> d.color)]
+ 
   const data:ChartData<'doughnut'> = {
     labels: dataLabels,
     datasets: [{
@@ -164,10 +200,8 @@ const ReportsView:React.FC<Props> = ({search}) => {
           weight: "bold", 
           size: 15,
         },
-        formatter: (value: number,context) => {
-          const data = context.dataset.data
-          const total = data.reduce((sum: number, val: any) => sum + val, 0);
-          const percentage = ((value / total) * 100).toFixed(2);
+        formatter: (value: number) => {
+          const percentage = ((value / totalAccounts) * 100).toFixed(2);
           return value === 0 ? "" : `${percentage}%`
         }
       },
@@ -178,10 +212,8 @@ const ReportsView:React.FC<Props> = ({search}) => {
       tooltip: {
         callbacks: {
           label: function (context) {
-            const dataset = context.dataset;
-            const total = dataset.data.reduce((sum: number, val: any) => sum + val, 0);
             const currentValue = context.raw as number;
-            const percentage = ((currentValue / total) * 100).toFixed(2);
+            const percentage = ((currentValue / totalAccounts || 1) * 100).toFixed(2);
             return `Value: ${percentage}% - ${currentValue}`;
           }
         }

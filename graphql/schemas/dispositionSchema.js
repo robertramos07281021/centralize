@@ -41,16 +41,25 @@ const dispositionTypeDefs = gql`
     buckets: [ID]
   }
 
+
+
   type DispoData {
     code: String
     name: String
     count: Int
   }
+  
 
+  type Callfile {
+    _id: ID
+    name: String
+    totalAccounts: Int
+  }
   type Reports {
     agent: Agent
     bucket: String
     disposition: [DispoData]
+    callfile: Callfile
   }
 
   type AgentDisposition {
@@ -60,7 +69,7 @@ const dispositionTypeDefs = gql`
   }
 
   type Dispo {
-    dispotype: ID,
+    dispotype: ID
     count: Int
   }
 
