@@ -145,14 +145,11 @@ const dispositionResolver = {
         ? (await CustomerAccount.find({ bucket: findBucket._id }).lean()).map(ca => ca._id)
         : [];
      
-        const query = []
+        const query = [{}]
         
         if(agent) {
           query.push({user: new mongoose.Types.ObjectId(agentUser._id)})
         } 
-        if(!bucket) {
-          query.push({})
-        }
         
         if(disposition.length > 0) query.push({disposition: {$in: dispoTypesIds}})
           

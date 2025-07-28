@@ -177,7 +177,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
   const dispoData = dispositionData?.map(d => d.count) || []
   const dispoDataReduced =dispoData && dispoData.length > 0 ? dispoData?.reduce((t:number, v:number)=> t + v) : 0
 
-  const totalAccounts = reportsData && reportsData?.getDispositionReports.callfile.totalAccounts || 0
+  const totalAccounts = reportsData && reportsData?.getDispositionReports?.callfile?.totalAccounts || 0
   const dataLabels = [...dispositionData.map(d=> d.code),'Unconnected']
   const dataCount = [...dispositionData.map(d => d.count),totalAccounts - dispoDataReduced]
   const dataColor = [...dispositionData.map(d=> d.color)]
@@ -213,7 +213,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
         callbacks: {
           label: function (context) {
             const currentValue = context.raw as number;
-            const percentage = ((currentValue / totalAccounts || 1) * 100).toFixed(2);
+            const percentage = ((currentValue / totalAccounts ) * 100).toFixed(2);
             return `Value: ${percentage}% - ${currentValue}`;
           }
         }

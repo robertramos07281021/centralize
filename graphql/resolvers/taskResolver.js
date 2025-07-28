@@ -7,6 +7,7 @@ import Disposition from "../../models/disposition.js"
 import DispoType from "../../models/dispoType.js"
 import Group from "../../models/group.js"
 import User from "../../models/user.js"
+import Callfile from "../../models/callfile.js"
 
 const taskResolver = {
   Query: {
@@ -222,13 +223,13 @@ const taskResolver = {
         //   }
         // ])
 
-       const dispo = await Disposition.find({delayed: {$exists: true}})
+       const findCallfile = await Callfile.find({active: {$eq: true}})
         
     
        await Promise.all(
-          dispo.map((async(e)=> {
-            const res = await Disposition.findByIdAndUpdate(e._id,{$unset: {delayed: ""}}) 
-            console.log(res.delayed)
+          findCallfile.map((async(e)=> {
+            const res = await CustomerAccount.find({callfile: new mongoose.Types.ObjectId(e._id)}) 
+            await Callfile.findByIdAndUpdate(e._id, {$set: {totalAccounts: res.length}})
           }))
         )
       //   await Customer.updateMany(
