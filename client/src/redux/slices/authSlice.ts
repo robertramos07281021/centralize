@@ -64,7 +64,6 @@ type UserState = {
   adminUsersPage: number,
   myToken: string | null
   success: success
-  dispositionKey: string
 }
 
 const initialState:UserState = {
@@ -87,7 +86,6 @@ const initialState:UserState = {
     message: ""
   },
   breakValue: BreakEnum.WELCOME,
-  dispositionKey: '',
   userLogged: {
     _id: "",
     change_password: false,
@@ -267,9 +265,7 @@ const authSlice = createSlice({
     setAdminUsersPage: (state, action:PayloadAction<number>) => {
       state.adminUsersPage = action.payload
     },
-    setDispositionKey: (state,action:PayloadAction<string>) => {
-      state.dispositionKey = action.payload
-    },
+
     setLogout: (state) => {
       state.selectedCustomer = {
         _id: "",
@@ -389,6 +385,5 @@ export const {
   setAdminUsersPage,
   setMyToken,
   setSuccess,
-  setDispositionKey
 } = authSlice.actions;
 export default authSlice.reducer;

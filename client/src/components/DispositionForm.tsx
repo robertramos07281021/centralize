@@ -3,7 +3,7 @@ import Confirmation from "./Confirmation"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { gql, useMutation, useQuery } from "@apollo/client"
-import { setDeselectCustomer, setDispositionKey, setServerError, setSuccess } from "../redux/slices/authSlice"
+import { setDeselectCustomer, setServerError, setSuccess } from "../redux/slices/authSlice"
 
 type Data = {
   amount: string | null;
@@ -195,7 +195,7 @@ enum Code {
 
 const DispositionForm:React.FC<Props> = ({updateOf}) => {
 
-  const {selectedCustomer, userLogged, dispositionKey} = useSelector((state:RootState)=> state.auth)
+  const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const Form = useRef<HTMLFormElement | null>(null)
   const {data:disposition} = useQuery<{getDispositionTypes:Disposition[]}>(GET_DISPOSITION_TYPES,{skip: !selectedCustomer._id})
@@ -218,11 +218,6 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     return Object.fromEntries(d.map(e => [e.code,Code[e.code as keyof typeof Code]]));
   }, [disposition]);
 
-  const codeOfDispo: Record<string, string> = useMemo(() => {
-    const d: DispositionType[] = disposition?.getDispositionTypes || [];
-    return Object.fromEntries(d.map(e => [Code[e.code as keyof typeof Code],e.code]));
-  }, [disposition]);
-
   const [data, setData] = useState<Data>({
     amount: null,
     payment: null,
@@ -240,12 +235,6 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
 
   const { contact_method, dialer, chatApp, sms } = data;
  
-  useEffect(()=> {
-    if(selectedCustomer._id && dispositionKey){
-      setSelectedDispo(codeOfDispo[dispositionKey])
-      setData(prev => ({...prev, disposition: dispoObject[codeOfDispo[dispositionKey]]}))
-    }
-  },[dispositionKey, selectedCustomer])
 
   useEffect(() => {
     if (dialer !== null || chatApp !== null || sms !== null) {
@@ -253,9 +242,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     }
   }, [contact_method]);
 
-  const resetForm = () => {
+  const resetForm = useCallback(() => {
     setSelectedDispo('');
-    dispatch(setDispositionKey(''))
     setData({
       amount: null,
       payment: null,
@@ -270,7 +258,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
       RFD: null,
       sms: null 
     });
-  };
+  },[setData,setSelectedDispo,dispatch]);
 
   useEffect(()=> {
     if(!selectedCustomer._id) {
