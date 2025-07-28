@@ -337,7 +337,7 @@ const CustomerDisposition = () => {
     
   },[selectedCustomer])
 
-
+  console.log(selectedCustomer)
 
   const [updateRPC] = useMutation<{updateRPC:{success: boolean, message: string, customer:CustomerRegistered}}>(UPDATE_RPC,{
     onCompleted: async(res)=> {

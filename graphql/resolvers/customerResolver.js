@@ -72,7 +72,7 @@ const customerResolver = {
         startOfTheDay.setHours(0,0,0,0)
         const endOfTheDay = new Date()
         endOfTheDay.setHours(23,59,59,999)
-        const success = ['PTP','UNEG','FFUP','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP']
+        const success = ['PTP','UNEG','FFUP','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP','PAID']
 
         const accounts = await Customer.aggregate([
           {
@@ -212,6 +212,7 @@ const customerResolver = {
           }
         ])
 
+        console.log(accounts)
         return accounts
       } catch (error) {
         throw new CustomError(error.message, 500)
