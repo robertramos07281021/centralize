@@ -3,8 +3,6 @@ import Confirmation from "./Confirmation"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { gql, useMutation, useQuery } from "@apollo/client"
-
-
 import { setDeselectCustomer, setServerError, setSuccess } from "../redux/slices/authSlice"
 
 type Data = {
@@ -172,9 +170,31 @@ const IFBANK = ({label}:{label:string})=> {
   )
 }
 
+enum Code {
+  ANSM = 'a',
+  BUSY = 'b',
+  DEC = 'c',
+  DISP = 'd',
+  FFUP = 'f',
+  HUP = 'h',
+  ITP = 'i',
+  KOR = 'k',
+  LM = 'l',
+  NIS = 'n',
+  NOA = 'm',
+  OCA = 'o',
+  PAID = 'p',
+  RTP = 'r',
+  PTP = 't',
+  "NO TONE" = 'x',
+  UNEG = 'u',
+  UNK = '/',
+  RPCCB = '.',
+  WN = 'w'
+}
 
 const DispositionForm:React.FC<Props> = ({updateOf}) => {
-  const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
+  const {selectedCustomer, userLogged, dispositionKey} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const Form = useRef<HTMLFormElement | null>(null)
   const {data:disposition} = useQuery<{getDispositionTypes:Disposition[]}>(GET_DISPOSITION_TYPES,{skip: !selectedCustomer._id})
@@ -190,6 +210,16 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
   const dispoObject: Record<string, string> = useMemo(() => {
     const d: DispositionType[] = disposition?.getDispositionTypes || [];
     return Object.fromEntries(d.map(e => [e.code, e.id]));
+  }, [disposition]);
+
+  const dispoKeyCode: Record<string, string> = useMemo(() => {
+    const d: DispositionType[] = disposition?.getDispositionTypes || [];
+    return Object.fromEntries(d.map(e => [e.code,Code[e.code as keyof typeof Code]]));
+  }, [disposition]);
+
+  const codeOfDispo: Record<string, string> = useMemo(() => {
+    const d: DispositionType[] = disposition?.getDispositionTypes || [];
+    return Object.fromEntries(d.map(e => [Code[e.code as keyof typeof Code],e.code]));
   }, [disposition]);
 
   const [data, setData] = useState<Data>({
@@ -208,6 +238,13 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
   })
 
   const { contact_method, dialer, chatApp, sms } = data;
+ 
+  useEffect(()=> {
+    if(selectedCustomer._id && dispositionKey){
+      setSelectedDispo(codeOfDispo[dispositionKey])
+      setData(prev => ({...prev,disposition: dispoObject[codeOfDispo[dispositionKey]]}))
+    }
+  },[dispositionKey, selectedCustomer])
 
   useEffect(() => {
     if (dialer !== null || chatApp !== null || sms !== null) {
@@ -393,13 +430,12 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
   const anabledDispo = ["PAID","PTP","UNEG"]
   const requiredDispo = ["PAID",'PTP']
 
-  const checkIfValid = (value: string):boolean => {
-
+  const checkIfValid = useCallback((value: string):boolean => {
     const newDate = new Date(value).setHours(23,59,59,999)
     const dateNow = new Date().setHours(23,59,59,999)
 
-    return newDate > dateNow
-  }
+    return newDate > dateNow 
+  },[])
 
   return  (
     <>
@@ -444,7 +480,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
         </div>
       }
 
-      <form ref={Form} className="flex flex-col p-4" noValidate onSubmit={handleSubmitForm}>
+      <form ref={Form} className="flex flex-col p-4" noValidate onSubmit={handleSubmitForm}  >
         <h1 className="text-center font-bold text-slate-600 xl:text-base 2xl:text-lg mb-5">Customer Disposition</h1>
         {
           selectedCustomer._id &&
@@ -458,6 +494,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                   id="disposition" 
                   value={selectedDispo ?? ""}
                   required
+         
                   onChange={(e) => {
                     handleDataChange('disposition',dispoObject[e.target.value])
                     setSelectedDispo(e.target.value)}
@@ -469,7 +506,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       const findDispoName = disposition?.getDispositionTypes.find(x=> x.id === value)
                       return (
                         <option value={key} key={key}>
-                          {`${findDispoName?.name} - ${key}`}
+                          {`${findDispoName?.name} - ${key} - "${dispoKeyCode[key] || ""}"`}
                         </option>
                       )
                     })
@@ -631,18 +668,6 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       }
                     </select>
                   </label>
-                {/* <div className=" flex justify-end ">
-                  <label className="flex gap-2 items-center">
-                    <input type="checkbox" name="delayed" id="delayed" checked={data.delayed} onChange={(e)=> {
-                      if(e.target.checked) {
-                        setData(prev=> ({...prev, delayed: true}))
-                      } else {  
-                        setData(prev=> ({...prev, delayed: false}))
-                      }
-                    }}/>
-                    <span>Reason For Delayed</span>
-                  </label>
-                </div> */}
             </div>
             <div className="flex flex-col gap-2 w-full"> 
               {

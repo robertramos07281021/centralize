@@ -7,7 +7,7 @@ import AccountInfo from "../components/AccountInfo"
 import DispositionForm from "../components/DispositionForm"
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { Search, CustomerRegistered } from "../middleware/types"
-import { setDeselectCustomer, setSelectedCustomer, setServerError, setSuccess } from "../redux/slices/authSlice"
+import { setDeselectCustomer, setDispositionKey, setSelectedCustomer, setServerError, setSuccess } from "../redux/slices/authSlice"
 import AgentTimer from "./agent/AgentTimer"
 import DispositionRecords from "../components/DispositionRecords"
 import MyTaskSection from "../components/MyTaskSection"
@@ -198,7 +198,6 @@ const FieldDisplay = memo(({ label, value }:{label:string, value:string | number
 
 const CustomerDisposition = () => {
   const {userLogged, selectedCustomer, breakValue } = useSelector((state:RootState)=> state.auth)
-  
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const [isRPC, setIsRPC] = useState<boolean>(false)
@@ -208,7 +207,6 @@ const CustomerDisposition = () => {
 
   const length = searchData?.search?.length || 0;
   const location = useLocation()
-  console.log(selectedCustomer)
   const debouncedSearch = useMemo(() => {
   return debounce(async(val: string) => {
     await refetch({ search: val });
@@ -375,7 +373,13 @@ const CustomerDisposition = () => {
   const gender = selectedCustomer.customer_info?.gender ? (selectedCustomer.customer_info?.gender.length > 1 ? selectedCustomer.customer_info?.gender.charAt(0).toLowerCase() : selectedCustomer.customer_info?.gender.toLowerCase()) : ""
 
   return userLogged._id ? (
-    <div className="h-full w-full overflow-auto"> 
+    <div className="h-full w-full overflow-auto outline-none" onKeyDown={(e)=> {
+      if(selectedCustomer._id) {
+        dispatch(setDispositionKey(e.key.toLowerCase())) 
+      }
+        }
+      } tabIndex={0}
+    > 
       {
         (isRPCToday || isRPC) &&
         <Confirmation {...modalProps}/>

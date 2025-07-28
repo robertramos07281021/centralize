@@ -373,17 +373,24 @@ const taskResolver = {
         // )
 
 
-
-
         return {
           success: true,
           message: "Customers Account Successfully update"
         }
       } catch (error) {
-
+        
         throw new CustomError(error.message, 500)
       }
-    }
+    },
+    // updateCustomerAccount:(_,{id},{user})=> {
+    //   try {
+    //     cons
+    //   } catch (error) {
+    //     error
+    //     throw new CustomError(error.message, 500)
+    //   }
+    // }
+    
   },
 
 }

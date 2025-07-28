@@ -102,6 +102,7 @@ const taskTypeDefs = gql`
     deselectTask(id:ID!):Success
     tlEscalation(id:ID!,tlUserId:ID!):Success
     updateDatabase:Success
+    # updateCustomerAccount(id:ID):Success
   }
 `
 
