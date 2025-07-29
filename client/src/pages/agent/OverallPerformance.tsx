@@ -1,6 +1,8 @@
 import { gql, useQuery } from "@apollo/client"
 import { useEffect } from "react"
 import { month } from "../../middleware/exports"
+import { useAppDispatch } from "../../redux/store"
+import { setServerError } from "../../redux/slices/authSlice"
 
 type AgentTotalDispo = {
   count: number
@@ -35,12 +37,20 @@ const DISPO_TYPES = gql`
 export default function OverallPerformance () {
   const {data:agentTotalDispoData, refetch:TotalDispoRefetch} = useQuery<{getAgentTotalDispositions:AgentTotalDispo[]}>(AGENT_TOTAL_DISPO)
   const {data:dispotypeData, refetch:DispoTypeRefetch} = useQuery<{getDispositionTypes:DispositionType[]}>(DISPO_TYPES)
-  
+  const dispatch = useAppDispatch()
   const Month = new Date().getMonth() + 1
 
   useEffect(()=> {
-    TotalDispoRefetch()
-    DispoTypeRefetch()
+    const timer = setTimeout(async()=> {
+      try {
+        await TotalDispoRefetch()
+        await DispoTypeRefetch()
+        
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    })
+    return () => clearTimeout(timer)
   },[TotalDispoRefetch,DispoTypeRefetch])
 
   return (

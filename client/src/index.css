@@ -6,7 +6,10 @@
 /* flowbite-react/class-list.json */
 ::-webkit-scrollbar {
   width: 10px;
+  height: 10px;
 }
+
+
 
 /* Track */
 ::-webkit-scrollbar-track {

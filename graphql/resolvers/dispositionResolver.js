@@ -258,10 +258,13 @@ const dispositionResolver = {
 
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
-
+        const type = user.type
         const aomCampaign = await Department.find({aom: user._id}).lean()
-        const aomCampaignNameArray = aomCampaign.map(e => e.name)
-        const campaignBucket = (await Bucket.find({dept: {$in: aomCampaignNameArray}}).lean()).map(e=> e._id)
+        const CampaignNameArray = aomCampaign.map(e => e.name)
+        const aomBuckets = (await Bucket.find({dept: {$in: CampaignNameArray}}).lean()).map(e=> e._id)
+
+        const filter = type === "AOM" ? aomBuckets : user.buckets
+        const campaign = type === 'AOM' ? "$bucket.dept" : "$bucket._id"
 
         const dailyFTE = await Disposition.aggregate([
           {
@@ -289,13 +292,13 @@ const dispositionResolver = {
           {
             $match: {
               createdAt: {$gte:todayStart, $lt: todayEnd },
-              "bucket._id": {$in: campaignBucket}
+              "bucket._id": {$in: filter.map(e=> new mongoose.Types.ObjectId(e))}
             }
           },
           {
             $group: {
               _id: {
-                campaign: "$bucket.dept",
+                campaign: campaign,
                 user: "$user"
               },
             }
@@ -315,7 +318,6 @@ const dispositionResolver = {
           }
         ])
 
-
         const newDailyFTE = dailyFTE.map(e => {
           const newCampaignArray = aomCampaign.find(c=> e.campaign === c.name)
           return {
@@ -323,8 +325,9 @@ const dispositionResolver = {
             campaign: newCampaignArray ? newCampaignArray._id : null,
           }
         })
-        return newDailyFTE
 
+        return type === "AOM" ? newDailyFTE : dailyFTE
+     
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
@@ -1428,6 +1431,7 @@ const dispositionResolver = {
 
         const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
         const newBucket = campaignBucket.map(e=> e._id)
+        
 
         const dailyCollected = await Disposition.aggregate([
           {
@@ -1471,7 +1475,7 @@ const dispositionResolver = {
           },
           {
             $group: {
-              _id: "$bucket.dept",
+              _id: "$bucket._id",
               amount: {
                 $sum: {
                   $cond: [
@@ -1539,6 +1543,26 @@ const dispositionResolver = {
         yesterDayEnd.setHours(23, 59, 59, 999);
         const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
         const newBucket = campaignBucket.map(e=> e._id)
+
+
+        //here na
+        const now = new Date();
+        const currentDay = now.getDay();
+        const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() + diffToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        endOfWeek.setMilliseconds(-1);
+
+    
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
+
 
         function setGroupForDailyCollection (name,ptp,start,end) {
           const andArray = [

@@ -34,12 +34,19 @@ const AGENT_DAILY_PROD = gql`
   }
 `
 
+type Targets = {
+  daily: number
+  weekly: number
+  monthly: number
+}
+
 type Agent = {
   _id: string
   name: string
   user_id: string
   buckets: string[]
   type: string
+  targets: Targets
 }
 
 const GET_DEPARTMENT_AGENT = gql`
@@ -50,6 +57,11 @@ const GET_DEPARTMENT_AGENT = gql`
       user_id
       buckets
       type
+      targets {
+        daily
+        weekly
+        monthly
+      }
     }
   }
 `
@@ -76,6 +88,8 @@ const TLAgentProduction = () => {
   const {data:agentBucketData, refetch:findAgentRefetch} = useQuery<{findAgents:Agent[]}>(GET_DEPARTMENT_AGENT)
   const {data:tlBucketData, refetch:getDeptBucketRefetch} = useQuery<{getAllBucket:Bucket[]}>(TL_BUCKET)
 
+
+  console.log(agentBucketData)
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       try {
@@ -95,42 +109,57 @@ const TLAgentProduction = () => {
   },[tlBucketData])
 
   return (
-    <div className='col-span-3 border border-slate-400 bg-white rounded-xl overflow-auto p-2'>
-      <div className='flex flex-col h-full overflow-y-auto relative'>
-        <div className='sticky top-0 bg-white font-bold text-base text-slate-700'>Agent Production <span className="text-sm font-medium">(Daily)</span></div>
-        <div className='sticky top-6 grid grid-cols-11 bg-white text-sm font-medium text-slate-600'>
-          <div className='col-span-2'>Name</div>
-          <div >Bucket</div>
-          <div>ID</div>
-          <div>RPC</div>
-          <div>Dispo</div>
-          <div>PTP</div>
-          <div>PK</div>
-          <div>PAID</div>
-          <div className="col-span-2 text-end pr-2">Production</div>
-        </div>
-        {
-          agentBucketData?.findAgents.map((agent) => {
-            const getDailyProd = agentDailyProd?.agentDispoDaily.find(e=> e.user === agent._id)
-            const sumOfDaily = getDailyProd && (getDailyProd?.ac + getDailyProd?.pk + getDailyProd?.ptp)
-            const sumOfYesterday = getDailyProd && (getDailyProd.y_ac + getDailyProd.y_pk + getDailyProd.y_ptp)
-            const arrow = sumOfDaily === 0 ? <HiOutlineMinusSm className="text-blue-500"/> : ((((sumOfDaily || 0) - (sumOfYesterday || 0)) > 0) ? <IoMdArrowUp className="text-green-500"/> : (((sumOfYesterday || 0) - (sumOfYesterday || 0)) === 0) ? <HiOutlineMinusSm className="text-blue-500"/> : <IoMdArrowDown className="text-red-500"/>)
-            return  (
-              <div key={agent._id} className='grid grid-cols-11 bg-white lg:text-[0.6rem] 2xl:text-xs text-slate-500 py-0.5 cursor-default'>
-                <div className='col-span-2 uppercase truncate pr-2' title={agent.name.toUpperCase()}>{agent.name}</div>
-                <div className='truncate' title={agent.buckets.map(e=> bucketObject[e]).join(', ')}>{agent.buckets.map(e=> bucketObject[e]).join(', ')}</div>
-                <div className="truncate pr-2">{agent.user_id}</div>
-                <div>{getDailyProd?.rpc || 0}</div>
-                <div>{getDailyProd?.count || 0}</div>
-                <div className="lg:text-[0.75em] 2xl:text-[0.8em]">{getDailyProd?.ptp.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
-                <div className="lg:text-[0.75em] 2xl:text-[0.8em]">{getDailyProd?.pk.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
-                <div className="lg:text-[0.75em] 2xl:text-[0.8em] flex items-center">{getDailyProd?.ac.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
-                <div className="flex col-span-2 items-center lg:text-[0.75em] 2xl:text-[0.8em] justify-end pr-2">{arrow} {sumOfDaily && sumOfDaily > 0 ? sumOfDaily.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : ""}</div>
+    <div className='col-span-6 border border-slate-400 flex flex-col bg-white rounded-xl p-2 overflow-hidden'>
+      <div className=' bg-white font-bold text-base text-slate-700'>Agent Production <span className="text-sm font-medium">(Daily)</span></div>
+      <div className="w-full h-full overflow-auto relative">
+          <div className='sticky w-10/8 top-0 grid grid-cols-14 text-base font-medium text-slate-600 bg-blue-100 py-1 items-center z-50'>
+            <div className='col-span-2 pl-2 sticky left-0 bg-blue-100'>Name</div>
+            <div >Bucket</div>
+            <div>ID</div>
+            <div>RPC</div>
+            <div>Dispo</div>
+            <div>PTP</div>
+            <div>PK</div>
+            <div>PAID</div>
+            <div className="col-span-2">Production</div>
+            <div className="flex flex-col col-span-3">
+              <div className="text-center">Targets</div>
+              <div className="grid grid-cols-3">
+                <div>Daily</div>
+                <div>Weekly</div>
+                <div>Monthly</div>
               </div>
-            )
-          })
-        }
-      </div>
+            </div>
+          </div>
+          {
+            agentBucketData?.findAgents.map((agent, index) => {
+              const getDailyProd = agentDailyProd?.agentDispoDaily.find(e=> e.user === agent._id)
+              const sumOfDaily = getDailyProd && (getDailyProd?.ac + getDailyProd?.pk )
+              const sumOfYesterday = getDailyProd && (getDailyProd.y_ac + getDailyProd.y_pk )
+              const arrow = sumOfDaily === 0 ? <HiOutlineMinusSm className="text-blue-500"/> : ((((sumOfDaily || 0) - (sumOfYesterday || 0)) > 0) ? <IoMdArrowUp className="text-green-500"/> : (((sumOfYesterday || 0) - (sumOfYesterday || 0)) === 0) ? <HiOutlineMinusSm className="text-blue-500"/> : <IoMdArrowDown className="text-red-500"/>)
+              return  (
+                <div key={agent._id} className='grid grid-cols-14 bg-white lg:text-base text-slate-500 py-1 cursor-default odd:bg-slate-100 w-10/8 relative'>
+                  <div className={`col-span-2 uppercase truncate pr-2 pl-2 sticky left-0 ${index % 2 === 0 ?  "bg-white": "bg-slate-100"}`} title={agent.name.toUpperCase()}>{agent.name}</div>
+                  <div className='truncate' title={agent.buckets.map(e=> bucketObject[e]).join(', ')}>{agent.buckets.map(e=> bucketObject[e]).join(', ')}</div>
+                  <div className="truncate pr-2">{agent.user_id}</div>
+                  <div>{getDailyProd?.rpc || 0}</div>
+                  <div>{getDailyProd?.count || 0}</div>
+                  <div>{getDailyProd?.ptp.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
+                  <div>{getDailyProd?.pk.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
+                  <div className="flex items-center">{getDailyProd?.ac.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
+                  <div className="flex col-span-2 items-center pr-2">{arrow} {sumOfDaily && sumOfDaily > 0 ? sumOfDaily.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : ""}</div>
+                  <div className="col-span-3 grid grid-cols-3">
+
+                    <div>{agent.targets?.daily.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
+                    <div>{agent.targets?.weekly.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
+                    <div>{agent.targets?.monthly.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
+                  </div>
+                </div>
+              )
+            })
+          }
+        </div>
+      
     </div>
   )
 }

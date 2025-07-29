@@ -153,23 +153,21 @@ const userResolvers = {
     getCampaignAssigned: async(_,__,{user}) => {
       try {
         const aomCampaign = await Department.find({aom: user._id}).lean()
-        const aomCampaignNameArray = aomCampaign.map(e => e._id)
-  
+        const aomCampaignNameArray = aomCampaign.map(e =>new mongoose.Types.ObjectId(e._id))
+        const type = user.type
+        const filter = type === "AOM" ? {departments: {$in: aomCampaignNameArray}} : {buckets: {$in: user.buckets.map(x => new mongoose.Types.ObjectId(x))}}
+
+        const isAom = type === "AOM" ? "$departments" : "$buckets"
         const assignedUserPerCampagin = await User.aggregate([
-          {
-            $addFields: {
-              firstDept: { $arrayElemAt: ["$departments", 0] }
-            }
-          },
           {
             $match: {
               type: {$eq: "AGENT"},
-              firstDept: {$in: aomCampaignNameArray}
+              ...filter
             }
           },
           {
             $group: {
-              _id: "$firstDept",
+              _id: isAom,
               assigned: {$sum: 1}
             }
           },
@@ -182,7 +180,14 @@ const userResolvers = {
           }
         ])
 
-        return assignedUserPerCampagin
+      
+
+        return assignedUserPerCampagin.map(x=> {
+          return {
+            ...x,
+            campaign: x.campaign[0]
+          }
+        })
       } catch (error) {
         throw new CustomError(error.message, 500)
       }

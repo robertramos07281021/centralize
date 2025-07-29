@@ -91,9 +91,10 @@ const userTypeDefs = gql`
     campaign: ID,
     assigned: Int
   }
+  union FTE = Department | Bucket
 
   type AOM_FTE {
-    department: Department
+    department: Department 
     users: [Users]
   }
 
