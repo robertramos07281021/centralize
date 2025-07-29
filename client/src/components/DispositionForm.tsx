@@ -103,7 +103,8 @@ enum RFD {
   NRFD = 'No RFD/Unable to obtain RFD',
   WI = 'Wrong item',
   DI = 'Defective Item',
-  HACS = 'Have agreement with customer Service'
+  HACS = 'Have agreement with customer Service',
+  OOT = 'Out of town / Out of country'
 }
 
 enum Payment {

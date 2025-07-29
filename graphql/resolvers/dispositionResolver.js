@@ -1707,23 +1707,63 @@ const dispositionResolver = {
     },
     getTargetPerCampaign: async(_,__,{user}) => {
       try {
-        const buckets = (await Bucket.find({_id: {$in: user.buckets}}).lean()).map(e=> e._id)
- 
+        const buckets = (await Bucket.find({_id: {$in: user.buckets}}).lean()).map(e=> new mongoose.Types.ObjectId(e._id))
+        const disposition = await DispoType.findOne({code: 'PAID'}).lean()
         const customerAccount = await CustomerAccount.aggregate([
           {
+            $lookup: {
+              from: "dispositions",
+              localField: "history",
+              foreignField: "_id",
+              as: "account_history",
+            }
+          },
+          {
+            $lookup: {
+              from: "callfiles",
+              localField: "callfile",
+              foreignField: "_id",
+              as: "account_callfile",
+            }
+          },
+          {
+            $unwind: {path: "$account_callfile",preserveNullAndEmptyArrays: true}
+          },
+          {
             $match: {
-              bucket: {$in: buckets}
+              bucket: { $in: buckets },
+              "account_callfile.active": {$eq: true}
+            }
+          },
+          {
+            $addFields: {
+              checkPaid: {
+                $filter: {
+                  input: '$account_history',
+                  as: 'h',
+                  cond: { $eq: ['$$h.disposition', new mongoose.Types.ObjectId(disposition._id)] }
+                }
+              },
+            },
+          },
+          {
+            $addFields: {
+              collectedPaid: {
+                $sum: {
+                  $map: {
+                    input: '$checkPaid',
+                    as: 'paid',
+                    in: '$$paid.amount'
+                  }
+                }
+              }
             }
           },
           {
             $group: {
               _id: "$bucket",
-              collected: {
-                $sum: "$paid_amount"
-              },
-              target: {
-                $sum:  "$out_standing_details.total_os"
-              }
+              collected: { $sum: "$collectedPaid" },
+              target: { $sum:  "$out_standing_details.total_balance" }
             }
           },
           {
@@ -1736,8 +1776,10 @@ const dispositionResolver = {
           }
         ])
 
+      
         return customerAccount
       } catch (error) {
+
         throw new CustomError(error.message, 500)        
       }
     }
@@ -1768,7 +1810,7 @@ const dispositionResolver = {
           console.log(user.user_id)
           throw new CustomError("Customer account not found", 404);
         }
-        
+
         if (!dispoType) throw new CustomError("Disposition type not found", 400);
       
         if(!userProdRaw) await Production.create({ user: user._id });

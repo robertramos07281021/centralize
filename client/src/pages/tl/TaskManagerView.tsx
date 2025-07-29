@@ -195,25 +195,19 @@ const TaskManagerView = () => {
                 )
               }
             </select>
-            <select 
-              className="w-1/10 border border-slate-300 rounded-md font-bold text-slate-500 px-1"
-              name="bucket"
-              id="bucket"
+            <label>
+             <input type="number"
+               className="w-15 h-10 border border-slate-300 rounded-md font-bold text-slate-500 px-1"
+              name="dpd"
+              id="dpd"
+              min={0}
               value={dpd ?? ""}
               onChange={(e)=> {
                  const val = e.target.value;
                   setDpd(val === "" ? null : Number(val));
               }}
-            >
-              <option value=''>DPD</option>
-              {
-                (()=> 
-                  Array.from({length: 20}).map((_,index)=> {
-                    return <option value={index + 1} key={index}>{index + 1}</option>
-                  })
-                )()
-              }
-            </select>
+             />
+            </label>
           </div>
         </div>
         {

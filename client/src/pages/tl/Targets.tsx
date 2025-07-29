@@ -86,7 +86,7 @@ const Targets = () => {
 
         {
           targetsData?.getTargetPerCampaign.map((e,index) => {
-            const curring = e.target - e.collected
+            const curring = (e.target ?? e.collected) - e.collected
             const data = {
               labels: ['Collected', 'Missing Target'],
               datasets: [
@@ -116,9 +116,8 @@ const Targets = () => {
                   } as const,
                   formatter: (value: number) => {
                     const percent = (value/e.target) * 100
-                    
                     return (
-                      percent.toFixed(2) + '%' 
+                    isNaN(percent)  ? "" : (percent.toFixed(2) + '%') 
                   )}
                 },
                 legend: {
@@ -132,7 +131,7 @@ const Targets = () => {
                     family: 'Arial',
                     weight: 'bold',
                   },
-                  text: [bucketObject[e.bucket],`${e.collected.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})} / ${e.target.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}`],
+                  text: [bucketObject[e.bucket],`${e.collected.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})} / ${e.target.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || e.collected.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}`],
                 },
               },
               responsive: true,

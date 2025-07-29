@@ -203,7 +203,10 @@ const CustomerDisposition = () => {
   const [isRPC, setIsRPC] = useState<boolean>(false)
   const [isUpdate, setIsUpdate] = useState<boolean>(false)
   const [search, setSearch] = useState("")
-  const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{variables: {search: search}, skip: search.length === 0,fetchPolicy: 'network-only'})
+  const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{
+    skip: search.length === 0,
+    fetchPolicy: 'network-only'
+  })
 
   const length = searchData?.search?.length || 0;
   const location = useLocation()

@@ -7,6 +7,8 @@ import Confirmation from "../../components/Confirmation"
 import Pagination from "../../components/Pagination"
 import Loading from "../Loading"
 import { setPage, setServerError, setSuccess } from "../../redux/slices/authSlice"
+import {debounce} from 'lodash'
+
 
 type OutStandingDetails = {
   principal_os:number
@@ -227,6 +229,16 @@ const DELETE_GROUP_TASK = gql`
   }
 `
 
+type CADQueryValue = {
+  disposition: string[],
+  page: number,
+  groupId: string,
+  assigned: string,
+  selectedBucket: string | null,
+  dpd: number | null
+  limit: number
+}
+
 type Props = {
   selectedBucket:string | null,
   dpd: number | null
@@ -242,7 +254,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
   },[GroupData])
   const selected = selectedGroup ? groupDataNewObject[selectedGroup] : selectedAgent
 
-  const query = {
+  const query:CADQueryValue = {
     disposition: selectedDisposition, 
     page:page , 
     groupId: selected, 
@@ -253,6 +265,17 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
   }
 
   const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount}>(FIND_CUSTOMER_ACCOUNTS,{variables: {query: query}})
+
+  const debouncedSearch = useMemo(() => {
+    return debounce(async(val: CADQueryValue) => {
+      await CADRefetch({ query: val });
+    }, 300);
+  }, [CADRefetch]);
+
+  useEffect(()=> {
+    debouncedSearch(query)
+  },[selectedDisposition,page,taskFilter,selectedBucket,dpd])
+
   const [handleCheckAll, setHandleCheckAll] = useState<boolean>(false)
   const [taskToAdd, setTaskToAdd] = useState<string[]>([])
   const [required, setRequired] = useState<boolean>(false)

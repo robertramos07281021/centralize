@@ -212,7 +212,6 @@ const customerResolver = {
           }
         ])
 
-        console.log(accounts)
         return accounts
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -745,8 +744,9 @@ const customerResolver = {
                   as: "h",
                   cond: {
                     $and: [
-                      { $eq: ["$$h.disposition", new mongoose.Types.ObjectId(_id)]},
-                      { $eq: ["$$h.ptp", true] }
+                      { $eq: [ "$$h.disposition", new mongoose.Types.ObjectId(_id) ] },
+                      { $eq: [ "$$h.ptp", true ] },
+                      { $eq: [ '$$h.exists',true ] },
                     ]
                   }
                 }
@@ -757,8 +757,8 @@ const customerResolver = {
                   as: "h",
                   cond: {
                     $and: [
-                      { $eq: ["$$h.disposition", new mongoose.Types.ObjectId(_id)] },
-                      { $eq: ["$$h.ptp", false] }
+                      { $eq: [ "$$h.disposition", new mongoose.Types.ObjectId(_id) ] },
+                      { $eq: [ "$$h.ptp", false ] }
                     ]
                   }
                 }
@@ -770,12 +770,8 @@ const customerResolver = {
                     as: "h",
                     in: {
                       $and: [
-                        {
-                          $eq: ["$$h.ptp", true] 
-                        },
-                        { 
-                          $eq: ["$$h.disposition", new mongoose.Types.ObjectId(ptp._id)] 
-                        }
+                        { $eq: [ "$$h.ptp", true ] },
+                        { $eq: [ "$$h.disposition", new mongoose.Types.ObjectId(ptp._id) ] }
                       ],
                     }
                   }
