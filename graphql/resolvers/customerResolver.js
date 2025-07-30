@@ -218,7 +218,6 @@ const customerResolver = {
       }
     },
     getMonthlyPerformance: async(_,__,{user}) => {
-  
       try {
         const year = new Date().getFullYear()
         const month = new Date().getMonth();

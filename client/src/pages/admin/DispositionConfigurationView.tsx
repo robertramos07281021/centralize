@@ -42,7 +42,9 @@ enum Method {
 
 type inpuValueState = {
   name: string
-  code: string
+  code: string,
+  status: number,
+  rank: number
 }
 
 const GET_ALL_DISPO_TYPE = gql`
@@ -53,6 +55,8 @@ const GET_ALL_DISPO_TYPE = gql`
         caller
         field
       }
+      rank
+      status
       id
       name
       buckets
@@ -73,6 +77,8 @@ type Dispotype = {
   code: string
   buckets: string[]
   active: boolean
+  status: number
+  rank: number
   contact_methods: CA
 }
 
@@ -117,7 +123,9 @@ const DispositionConfigurationView = () => {
   const [required, setRequired] = useState<boolean>(false)
   const [inputValue, setInputValue] = useState<inpuValueState>({
     name: "",
-    code: ""
+    code: "",
+    status: 1,
+    rank: 0,
   })
 
   const [isUpdate, setIsUpdate] = useState<boolean>(false)
@@ -133,7 +141,9 @@ const DispositionConfigurationView = () => {
       }))
       setInputValue({
         name: "",
-        code: ""
+        code: "",
+        status: 1,
+        rank: 0,
       })
       setConfirm(false)
       setSelectedBuckets([])
@@ -153,7 +163,9 @@ const DispositionConfigurationView = () => {
       })),
       setInputValue({
         name: "",
-        code: ""
+        code: "",
+        status: 1,
+        rank: 0,
       })
       setIsUpdate(false)
       setConfirm(false)
@@ -230,7 +242,7 @@ const DispositionConfigurationView = () => {
   useEffect(()=> {
     if(toUpdateDispo) {
       const selectedCA = []
-      setInputValue({code: toUpdateDispo.code, name: toUpdateDispo.name})
+      setInputValue({code: toUpdateDispo.code, name: toUpdateDispo.name, status: toUpdateDispo.status, rank: toUpdateDispo.rank ?? 0})
       setSelectedBuckets(toUpdateDispo.buckets)
       if(toUpdateDispo.contact_methods?.caller) {
         selectedCA.push(Method.caller)
@@ -243,7 +255,7 @@ const DispositionConfigurationView = () => {
       } 
       setSelectedContactMethod(selectedCA)
     } else {
-      setInputValue({name: "", code: ""})
+      setInputValue({name: "", code: "", status: 1, rank: 0})
       setSelectedBuckets([])
       setSelectedContactMethod([])
     }
@@ -257,6 +269,7 @@ const DispositionConfigurationView = () => {
       setSelectedBuckets([])
     }
   },[setSelectedBuckets, bucketsData])
+
 
   return (
     <>
@@ -293,9 +306,10 @@ const DispositionConfigurationView = () => {
                   required
                   id="name" 
                   value={inputValue.name}
-                  onChange={(e)=> setInputValue({...inputValue, name: e.target.value})}
+                  onChange={(e)=> setInputValue(prev=> ({...prev, name: e.target.value}))}
                   className={`${required && !inputValue.name ? "border-red-500 bg-red-50": "border-slate-500"} border px-2 py-2 rounded-md text-sm outline-none`}/>
               </label>
+       
               <label className="flex flex-col">
                 <span className="font-medium text-gray-500">Code</span>
                 <input 
@@ -305,10 +319,55 @@ const DispositionConfigurationView = () => {
                   id="code" 
                   required
                   value={inputValue.code}
-                  onChange={(e)=> setInputValue({...inputValue, code: e.target.value})}
+                  onChange={(e)=> setInputValue(prev=> ({...prev, code: e.target.value}))}
                   className={`${required && !inputValue.code ? "border-red-500 bg-red-50": "border-slate-500"} border px-2 py-2 rounded-md text-sm outline-none`}/>
               </label>
-              <div className="flex flex-col relative" ref={bucketRef}>
+
+              <div className="flex gap-5">
+                <fieldset className="border border-slate-500 text-gray-500 rounded-xl p-2 flex gap-2 w-full">
+                  <legend className="px-1">Status</legend>
+                  <label className="flex items-center gap-2">
+                    <input 
+                    type="radio" 
+                    name="status" 
+                    checked={inputValue.status === 1} 
+                    value={1}
+                    onChange={(e)=> setInputValue(prev => ({...prev,status: Number(e.target.value)}))} />
+                    <p>Positive</p>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input 
+                      type="radio" 
+                      name="status" 
+                      checked={inputValue.status === 0} 
+                      value={0} id="status" 
+                      onChange={(e)=> setInputValue(prev => ({...prev,status: Number(e.target.value)}))}/>
+                    <p>Negative</p>
+                  </label>
+                </fieldset>
+
+
+                <label className="w-full">
+                  <p>Rank</p>
+                  <select name="rank" id="rank" className="border w-full p-2 rounded-md border-slate-500 text-gray-500"
+                    value={inputValue.rank ?? ""}
+                    onChange={(e)=> setInputValue(prev=> ({...prev, rank: Number(e.target.value)}))}
+                  > 
+                    <option value="">0</option>
+                    {
+                      Array.from({length: 20}).map((_,index)=> {
+                        return <option value={index + 1} key={index}>{index + 1}</option>
+                      })
+                    }
+
+                  </select>
+
+
+                </label>
+
+              </div>
+
+              <div className="flex flex-col relative cursor-default" ref={bucketRef}>
                 <span className="font-medium text-gray-500">Buckets</span>
                 <div className={`${required && selectedBuckets.length < 1 ?  "bg-red-50 border-red-500":"border-slate-500"} border py-0.5  rounded-md items-center pl-2.5 flex justify-between`}
                   onClick={()=> setSelectingBuckets(!selectingBuckets)}
@@ -359,7 +418,7 @@ const DispositionConfigurationView = () => {
                   </div>
                 }
               </div>
-              <div className="flex flex-col relative" ref={contachMethodRef}>
+              <div className="flex flex-col relative cursor-default" ref={contachMethodRef}>
                 <span className="font-medium text-gray-500">Contact Method</span>
                 <div className={`${required && selectedContactMethod.length < 1 ?  "bg-red-50 border-red-500": "border-slate-500"} border py-0.5  rounded-md items-center pl-2.5 flex justify-between`}
                   onClick={()=> setSelectingContactMethod(!selectingContactMethod)}
@@ -432,14 +491,16 @@ const DispositionConfigurationView = () => {
               onChange={(e)=> setSearch(e.target.value)}
               value={search}
               />
-              <div className="grid grid-cols-5 bg-slate-100 px-2 py-1 font-medium text-gray-600 w-full mt-2">
-                <div>Name</div>
+              <div className="grid grid-cols-8 bg-slate-100 px-2 py-1 font-medium text-gray-600 w-full mt-2">
+                <div className="col-span-2">Name</div>
                 <div>Code</div>
+                <div>Rank</div>
+                <div>Status</div>
                 <div>Buckets</div>
                 <div>Contact Method</div>
                 <div>Action</div>
               </div>
-            <div className="w-full h-full overflow-y-auto rounded-md p-2">
+            <div className="w-full h-full overflow-y-auto rounded-md p-2 cursor-default select-none">
               {
                 dispoData.map((dispo)=> {
                   const dispoCA = []
@@ -454,11 +515,13 @@ const DispositionConfigurationView = () => {
                   }
 
                   return (
-                    <div key={dispo.id}className="grid grid-cols-5 text-sm py-1 hover:bg-blue-50 even:bg-slate-50 text-gray-600">
-                      <div>{dispo.name}</div>
+                    <div key={dispo.id}className="grid grid-cols-8 text-sm py-1 hover:bg-blue-50 even:bg-slate-50 text-gray-600 items-center">
+                      <div className="nowrap truncate col-span-2">{dispo.name}</div>
                       <div>{dispo.code}</div>
-                      <div className="truncate">{dispo.buckets.map((e)=> bucketObject[e]).join(', ')}</div>
-                      <div className="truncate capitalize">{dispoCA?.join(', ')}</div>
+                      <div>{dispo.rank}</div>
+                      <div>{dispo.status === 1 ? "Positive" : "Negative"}</div>
+                      <div className="truncate" title={dispo.buckets.map((e)=> bucketObject[e]).join(', ')}>{dispo.buckets.map((e)=> bucketObject[e]).join(', ')}</div>
+                      <div className="truncate capitalize" title={dispoCA?.join(', ')}>{dispoCA?.join(', ')}</div>
 
                       <div className="flex gap-5">
                         <FaEdit className="text-xl text-orange-500 cursor-pointer" onClick={()=> (handleOnUpdate(dispo))}/>

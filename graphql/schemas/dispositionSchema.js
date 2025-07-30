@@ -181,7 +181,6 @@ const dispositionTypeDefs = gql`
   
   input SearchDispoReports {
     agent:String, 
-    bucket:String, 
     disposition:[String], 
     from:String, 
     to:String,

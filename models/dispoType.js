@@ -23,6 +23,14 @@ const dispositionTypeSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Bucket" 
     }],
+    rank: {
+      type: Number,
+      default: 0,
+    },
+    status: {
+      type: Number,
+      default: 0
+    },
     contact_methods: {
       skipper : {
         type: Boolean,

@@ -675,7 +675,7 @@ const callfileResolver = {
 
         const callfile = findCallfile.map(e=> new mongoose.Types.ObjectId(e._id))
         
-        const positive = ['PTP','FFUP','UNEG','RTP','PAID','DISP','LM','HUP']
+        const positive = ['PTP','FFUP','UNEG','RTP','PAID','DISP','LM','HUP',"ITP","FV","WN",'RPCCB']
         const success = ['ANSM','UNK','DEC','BUSY','NOA','NIS','OCA','KOR']
         const connected = [success,positive].flat()
 

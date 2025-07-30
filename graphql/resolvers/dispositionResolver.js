@@ -117,108 +117,184 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getDispositionReports: async(_,{reports},{user}) => {
+    getDispositionReports: async(_,{reports}) => {
       try {
-        const {agent, bucket, disposition, from, to, callfile} = reports
-        const bucketFilter = mongoose.Types.ObjectId.isValid(bucket) ? {_id: bucket} : {name: bucket}
+        const {agent , disposition, from, to, callfile } = reports
+
         const [
           agentUser,
-          findDispositions, 
-          findBucket] = await Promise.all([
+          findDispositions] = await Promise.all([
           await User.findOne({user_id: agent}).lean(),
           await DispoType.find({name: {$in: disposition}}).lean(),
-          await Bucket.findOne(bucketFilter).lean(),
         ])
-
-  
-      
 
         if (!agentUser && agent) throw new CustomError("Agent not found", 404);
 
-
+        
         const dispoTypesIds = disposition.length > 0 ? findDispositions.map((dt)=> new mongoose.Types.ObjectId(dt._id)) : []
         
-        if (!findBucket && bucket) throw new CustomError("Bucket not found", 404);
-     
-       
-        const customerAccountIds = findBucket
-        ? (await CustomerAccount.find({ bucket: findBucket._id }).lean()).map(ca => ca._id)
-        : [];
-     
-        const query = [{}]
+        const query = {}
         
         if(agent) {
-          query.push({user: new mongoose.Types.ObjectId(agentUser._id)})
+          query['user'] = new mongoose.Types.ObjectId(agentUser._id)
         } 
         
-        if(disposition.length > 0) query.push({disposition: {$in: dispoTypesIds}})
+        if(disposition.length > 0) query['disposition'] = {$in: dispoTypesIds}
           
         if (from || to) {
           const startDate = from ? new Date(from) : new Date();
           const endDate = to ? new Date(to) : new Date();
           startDate.setHours(0, 0, 0, 0);
           endDate.setHours(23, 59, 59, 999);
-          query.push({ createdAt: { $gte: startDate, $lte: endDate } });
+          query['createdAt'] = { createdAt: { $gte: startDate, $lte: endDate } }
         }
-        const secondQuery = {existing: {$eq: true}}
 
-        if(bucket) query.push({customer_account: {$in: customerAccountIds}})
         let call = null
         if (Types.ObjectId.isValid(callfile)) {
-          secondQuery['callfile'] = new Types.ObjectId(callfile);
-          call = await Callfile.findById(callfile).lean()
+          query['callfile'] = new Types.ObjectId(callfile);
+          call = await Callfile.findById(callfile).lean().populate('bucket')
         } 
-
-
-        secondQuery['bucket'] = !findBucket ? {$in: user.buckets.map(x=> new mongoose.Types.ObjectId(x))} : {$eq: findBucket._id}
-
-        const dispositionReport = await Disposition.aggregate([
+     
+        const dispositionReport = await CustomerAccount.aggregate([
+          { $match: query },
           {
             $match: {
-              $and: query
-            },
+              $expr: {$gt: [{$size: "$history"},0]}
+            }
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "history",
+              foreignField: "_id",
+              as: "histories"
+            }
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "current_disposition",
+              foreignField: "_id",
+              as: "cd"
+            }
+          },
+          {
+            $unwind: { path: "$ca_disposition", preserveNullAndEmptyArrays: true } 
           },
           {
             $lookup: {
               from: "dispotypes",
-              localField: "disposition",
+              localField: "cd.disposition",
               foreignField: "_id",
-              as: "ca_disposition",
-              pipeline: [
-                { $project: { name: 1, code: 1 } }
-              ]
+              as: "dispotype"
             }
           },
           {
-            $unwind: {path: "$ca_disposition",preserveNullAndEmptyArrays: true}
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
           },
+
           {
             $lookup: {
-              from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
-              as: "ca",
-            
+              from: "dispotypes",
+              let: {
+                dispoIds: {
+                  $map: {
+                    input: "$histories",
+                    as: "h",
+                    in: "$$h.disposition"
+                  }
+                }
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $in: ["$_id", "$$dispoIds"]
+                    }
+                  }
+                },
+                { $project: { name: 1, code: 1, rank: 1 } }
+              ],
+              as: "dispotypesData"
             }
           },
           {
-            $unwind: {path: "$ca",preserveNullAndEmptyArrays: true}
+            $set: {
+              mainDispotype: {
+                $let: {
+                  vars: {
+                    ranked: {
+                      $filter: {
+                        input: "$dispotypesData",
+                        as: "d",
+                        cond: { $gt: ["$$d.rank", 0] }
+                      }
+                    },
+                    all: "$dispotypesData"
+                  },
+                  in: {
+                    $cond: [
+                      { $gt: [{ $size: "$$ranked" }, 0] },
+                      {
+                        $let: {
+                          vars: {
+                            best: {
+                              $reduce: {
+                                input: "$$ranked",
+                                initialValue: null,
+                                in: {
+                                  $cond: [
+                                    {
+                                      $lt: [
+                                        "$$this.rank",
+                                        { $ifNull: ["$$value.rank", Infinity] }
+                                      ]
+                                    },
+                                    "$$this",
+                                    "$$value"
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          in: "$$best"
+                        }
+                      },
+                      { $first: "$$all" }
+                    ]
+                  }
+                }
+              }
+            }
           },
           {
             $addFields: {
-              bucket: "$ca.bucket",
-              callfile: "$ca.callfile"
+              checkRanking: {
+                $filter: {
+                  input: '$dispotypesData',
+                  as: 'dd',
+                  cond: {$gt: ['$$dd.rank',0]}
+                }
+              },
             }
           },
           {
-            $match: secondQuery
-          },  
+            $addFields: {
+              existingDispo: {
+                $cond: [
+                  { $expr: {$gt: [{$size: "$checkRanking"},0]}},
+                  '$mainDispotype',
+                  '$dispotype'
+                ]
+              }
+            }
+          },
           {
             $group: {
-              _id:"$ca_disposition._id",
-              name: { $first: "$ca_disposition.name" },
-              code: { $first: "$ca_disposition.code" },
-              count: {$sum: 1}
+              _id: '$existingDispo._id',
+              name: {$first: '$existingDispo.name'},
+              code: {$first: '$existingDispo.code'},
+              count : {$sum: 1},
             }
           },
           {
@@ -230,11 +306,10 @@ const dispositionResolver = {
             }
           }
         ])
-
-      
+        
         return { 
           agent: agent ? agentUser : null, 
-          bucket: bucket ? findBucket.name : "" ,
+          bucket: call?.bucket?.name ?? "" ,
           disposition: dispositionReport,
           callfile: call
         }
@@ -1852,14 +1927,13 @@ const dispositionResolver = {
 
         const payment = customerAccount.balance - parseFloat(input.amount || 0) === 0 ? "full" : 'partial';
 
-   
-
         const newDisposition = new Disposition({
           ...input,
           payment: withPayment.includes(dispoType.code) ? payment : null,
           amount: parseFloat(input.amount) || 0, 
           user: user._id, 
-          ptp: ptp
+          ptp: ptp,
+          callfile: customerAccount.callfile
         })
 
         const group = customerAccount.assigned ? await Group.findById(customerAccount.assigned).lean() : null

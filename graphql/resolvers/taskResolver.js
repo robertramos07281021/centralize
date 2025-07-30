@@ -223,13 +223,11 @@ const taskResolver = {
         //   }
         // ])
 
-       const findCallfile = await Callfile.find({active: {$eq: true}})
-        
+        const findCallfile = await Disposition.find().populate('customer_account')
     
-       await Promise.all(
+        await Promise.all(
           findCallfile.map((async(e)=> {
-            const res = await CustomerAccount.find({callfile: new mongoose.Types.ObjectId(e._id)}) 
-            await Callfile.findByIdAndUpdate(e._id, {$set: {totalAccounts: res.length}})
+            await Disposition.findByIdAndUpdate(e._id, {$set: {callfile: e.customer_account.callfile}})
           }))
         )
       //   await Customer.updateMany(
@@ -379,7 +377,7 @@ const taskResolver = {
           message: "Customers Account Successfully update"
         }
       } catch (error) {
-        
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },

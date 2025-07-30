@@ -12,6 +12,8 @@ const dispositionTypeTypeDefs = gql`
     name: String
     code: String
     buckets: [ID]
+    rank: Int
+    status: Int
     active: Boolean
     contact_methods: CA
   }
@@ -31,6 +33,8 @@ const dispositionTypeTypeDefs = gql`
     name: String!
     code: String!
     buckets: [ID]
+    rank: Int
+    status: Int
     contact_method: [Method]
   }
 

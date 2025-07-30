@@ -91,7 +91,6 @@ export type Search = {
 
 type SearchFilter = {
   agent: string
-  bucket: string
   disposition : string[]
   from: string
   to: string
@@ -115,7 +114,6 @@ const ReportsView:React.FC<Props> = ({search}) => {
   useEffect(()=> {
     setSearchFilter({
       agent:search.searchAgent, 
-      bucket:search.searchBucket, 
       disposition: search.selectedDisposition, 
       from:search.dateDistance.from, 
       to:search.dateDistance.to, 
@@ -123,17 +121,13 @@ const ReportsView:React.FC<Props> = ({search}) => {
     })
   },[search])
 
-
-
   const {data:reportsData, loading:reportLoading, refetch} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{
     variables: { reports: searchFilter },
     fetchPolicy: 'network-only',
   })
-
- 
   const {data:disposition, refetch:dispoTypesRefetch} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
   const dispatch = useAppDispatch()
-
+  console.log(reportsData)
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       try {
