@@ -344,10 +344,13 @@ const userResolvers = {
     }
   },
   Mutation: {
-    createUser: async (_,{ name, username, branch, departments, type, user_id,buckets, account_type }, {user}) => {
+    createUser: async (_,{createInput }, {user}) => {
       try {
+        
         if(!user) throw new CustomError("Unauthorized",401)
         
+        const { name, username, branch, departments, type, user_id,buckets, account_type, callfile_id} = createInput
+
         if(type === "AGENT") {
           await Promise.all(
             departments.map(async (deptId) => {
@@ -379,6 +382,7 @@ const userResolvers = {
           branch: branch || null, 
           departments, 
           type ,
+          callfile_id,
           user_id, 
           account_type,
           buckets
@@ -535,10 +539,14 @@ const userResolvers = {
         throw new CustomError(error.message, 500)
       }
     },
-    updateUser: async(_,{ id, name, type, branch, departments, buckets, account_type },{user}) => {
+    updateUser: async(_,{updateInput},{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-        const updateUser = await User.findByIdAndUpdate(id,{$set: {name, type, branch, departments, buckets, account_type}},{new: true})
+
+        const { id , ...others } = updateInput
+
+        const updateUser = await User.findByIdAndUpdate(id, { $set: {...others} },{ new: true })
+
         if(!updateUser) throw new CustomError("User not found",404)
         
         await ModifyRecord.create({name: "Update User Info", user: updateUser._id})

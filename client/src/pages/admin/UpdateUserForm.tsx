@@ -89,6 +89,7 @@ const RESET_PASSWORD = gql`
         change_password
         buckets
         isLock
+        callfile_id
         account_type
         active
         _id
@@ -99,8 +100,8 @@ const RESET_PASSWORD = gql`
 `
 
 const UPDATE_USER = gql`
-  mutation updateUser( $name:String!, $type: String!, $branch:ID!, $departments: [ID], $buckets:[ID], $id: ID!, $account_type: String) {
-    updateUser( name:$name, type:$type, branch:$branch, departments:$departments, buckets:$buckets, id:$id, account_type:$account_type){
+  mutation updateUser( $updateInput:UpdateAccount) {
+    updateUser( updateInput:$updateInput){
       success
       message
       user {
@@ -113,6 +114,7 @@ const UPDATE_USER = gql`
         active
         account_type
         isLock
+        callfile_id
         change_password
         buckets
         _id
@@ -137,6 +139,7 @@ const STATUS_UPDATE = gql`
         active
         account_type
         isLock
+        callfile_id
         change_password
         buckets
         _id
@@ -161,6 +164,7 @@ const UNLOCK_USER = gql`
         change_password
         buckets
         isOnline
+        callfile_id
         active
         isLock
         createdAt
@@ -188,6 +192,7 @@ const LOGOUT_USER = gql`
         buckets
         isOnline
         active
+        callfile_id
         isLock
         createdAt
         user_id
@@ -197,6 +202,19 @@ const LOGOUT_USER = gql`
     }
   }
 `
+type UserType = "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" ;
+
+type Data = {
+  username: string;
+  type: UserType;
+  name: string;
+  branch: string;
+  departments: string[];
+  buckets: string[];
+  account_type: string
+  callfile_id: string
+  user_id: string
+}
 
 const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   const location = useLocation()
@@ -210,7 +228,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   const [confirm, setConfirm] = useState(false)
   const [selectionDept, setSelectionDept] = useState<boolean>(false)
   const [selectionBucket,setSelectionBucket] = useState<boolean>(false)
-  type UserType = "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" ;
+
 
   const isValidUserType = (value: string): value is UserType => {
     return ["AGENT", "ADMIN", "AOM", "TL", "CEO", "OPERATION"].includes(value);
@@ -220,24 +238,35 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   
   const [check, setCheck] = useState<boolean>(state?.active)
 
-  const [data, setData] = useState<{
-    username: string;
-    type: UserType;
-    name: string;
-    branch: string;
-    departments: string[];
-    buckets: string[];
-    account_type: string
-  }>({
+  const [data, setData] = useState<Data>({
+    
     username: state?.username,
-    type: safeType,
-    name: state?.name,
-    branch: state?.branch,
-    departments: state?.departments,
-    buckets: state?.buckets || [],
-    account_type: state?.account_type
+    type:   "AGENT" as "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION"  ,
+    name: "",
+    branch: "",
+    departments: [],
+    buckets: [],
+    callfile_id: "",
+    account_type: "",
+    user_id: "",
   })
   
+  useEffect(()=> {
+    if(state) {
+      setData({
+        username: state?.username,
+        type: safeType,
+        name: state?.name,
+        branch: state?.branch,
+        departments: state?.departments || [],
+        buckets: state?.buckets || [],
+        callfile_id: state?.callfile_id || "",
+        account_type: state?.account_type,
+        user_id: state?.user_id || ""
+      })
+    }
+  },[state])
+
 
   const branchObject:{[key:string]:string} = useMemo(()=> {
     const branchArray = branchesData?.getBranches || []
@@ -359,7 +388,9 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       branch: state?.branch,
       departments: state?.departments,
       buckets: state?.buckets,
-      account_type: state.account_type
+      account_type: state.account_type,
+      callfile_id: state.callfile_id,
+      user_id: state.user_id
     })
   }
 
@@ -379,7 +410,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       setModalProps({
         no:()=> setConfirm(false),
         yes:async() => { 
-          await updateUser({variables: {...data, id: state._id}})
+          const {username, ...others} = data
+          await updateUser({variables: {updateInput: { ...others, id: state._id}}})
           setConfirm(false)
         },
         message: "Are you sure you want to update this user?",
@@ -493,7 +525,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               disabled={!isUpdate}
               onChange={(e) => {
                 const newType = e.target.value as UserType;
-                setData({ ...data, type: newType });
+                setData(prev=>({ ...prev, type: newType }));
               }}
               className={`bg-slate-50 border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
               >
@@ -514,7 +546,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               type="text" 
               name="username" 
               id="username" 
-              autoComplete="username"
+              autoComplete="off"
               value={data?.username}
               disabled
               className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
@@ -527,12 +559,39 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               type="text" 
               id="name" 
               name="name" 
-              autoComplete="name"
+              autoComplete="off"
               value={data?.name}
-              onChange={(e)=> setData({...data, name: e.target.value})}
+              onChange={(e)=> setData(prev=> ({...prev, name: e.target.value}))}
               disabled={!isUpdate}
               className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
               />
+          </label>
+
+          <label className="w-full">
+            <p className=" text-base font-medium text-slate-500">SIP ID</p>
+            <input 
+              type="text" 
+              id="sip_id" 
+              name="sip_id" 
+              autoComplete="off"
+              value={data?.user_id}
+              onChange={(e)=> setData(prev=> ({...prev, user_id: e.target.value}))}
+              disabled={!isUpdate}
+              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
+              />
+          </label>
+          <label className="w-full">
+            <p className=" text-base font-medium text-slate-500">Callfile ID</p>
+            <input 
+              type="text" 
+              id="callfile_id" 
+              name="callfile_id" 
+              autoComplete="off"
+              value={data?.callfile_id}
+              onChange={(e)=> setData(prev=> ({...prev, callfile_id: e.target.value}))}
+              disabled={!isUpdate}
+              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
+            />
           </label>
     
           <label className="w-full">
@@ -541,7 +600,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               id="branch"
               name="branch"
               value={data.account_type || ""}
-              onChange={(e)=> setData({...data, account_type: e.target.value})}
+              onChange={(e)=> setData(prev=> ({...prev, account_type: e.target.value}))}
               disabled={!isUpdate}
               className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
@@ -558,7 +617,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               id="branch"
               name="branch"
               value={branchObject[data.branch]}
-              onChange={(e)=> {setData({...data, branch: objectBranch[e.target.value], departments: [], buckets: []})}}
+              onChange={(e)=> {setData(prev=> ({...prev, branch: objectBranch[e.target.value], departments: [], buckets: []}))}}
               disabled={!isUpdate}
               className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
@@ -590,7 +649,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             </div>
             {
               (selectionDept && data.branch ) &&
-              <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-70 overflow-y-auto border z-40">
+              <div className="w-full absolute left-0 bottom-11 bg-white border-slate-300 p-1.5 max-h-70 overflow-y-auto border z-40">
                 {
                   branchDeptData?.getBranchDept.map((e)=> {
                     return e.name !== "ADMIN" &&(
@@ -622,7 +681,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             </div>
             {
               (selectionBucket && data.departments.length > 0) &&
-              <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-50 overflow-y-auto border z-40">
+              <div className="w-full absolute left-0 bottom-11 bg-white border-slate-300 p-1.5 max-h-50 overflow-y-auto border z-40">
                 {
                   deptBucket?.getBuckets.map((e,index)=> 
                     <div key={index} className="py-0.5">

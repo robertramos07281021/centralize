@@ -88,8 +88,6 @@ const TLAgentProduction = () => {
   const {data:agentBucketData, refetch:findAgentRefetch} = useQuery<{findAgents:Agent[]}>(GET_DEPARTMENT_AGENT)
   const {data:tlBucketData, refetch:getDeptBucketRefetch} = useQuery<{getAllBucket:Bucket[]}>(TL_BUCKET)
 
-
-  console.log(agentBucketData)
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       try {
@@ -112,7 +110,7 @@ const TLAgentProduction = () => {
     <div className='col-span-6 border border-slate-400 flex flex-col bg-white rounded-xl p-2 overflow-hidden'>
       <div className=' bg-white font-bold text-base text-slate-700'>Agent Production <span className="text-sm font-medium">(Daily)</span></div>
       <div className="w-full h-full overflow-auto relative">
-          <div className='sticky w-10/8 top-0 grid grid-cols-14 text-base font-medium text-slate-600 bg-blue-100 py-1 items-center z-50'>
+          <div className='sticky w-10/8 top-0 grid grid-cols-14 text-base font-medium text-slate-600 bg-blue-100 py-1 items-center z-30'>
             <div className='col-span-2 pl-2 sticky left-0 bg-blue-100'>Name</div>
             <div >Bucket</div>
             <div>ID</div>

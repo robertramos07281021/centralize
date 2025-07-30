@@ -5,7 +5,8 @@ export type UserInfo = {
   username: string;
   name: string;
   change_password: boolean
-  departments: string[]
+  departments: string[],
+  callfile_id: string
   buckets: string[]
   user_id:string
 };
@@ -32,6 +33,7 @@ export type Users = {
   change_password: boolean
   departments: string[]
   buckets: string[]
+  callfile_id: string
   isOnline: boolean
   isLock: boolean
   active: boolean

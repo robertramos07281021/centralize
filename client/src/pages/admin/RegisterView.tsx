@@ -51,12 +51,13 @@ type Data = {
   user_id: string,
   buckets: string[],
   account_type: AccountType | null
+  callfile_id: string
 }
 
 
 const CREATE_ACCOUNT = gql`
-  mutation createUser($name: String!, $username: String!, $type: String!, $departments: [ID], $branch: ID!, $user_id: String, $buckets:[ID], $account_type: String) {
-    createUser(name: $name, username: $username, type: $type, departments: $departments, branch: $branch, user_id: $user_id, buckets:$buckets, account_type:$account_type) {
+  mutation createUser($createInput:CreatingAccount) {
+    createUser(createInput:$createInput) {
       success
       message
     }
@@ -108,6 +109,7 @@ const RegisterView = () => {
     departments: [],
     user_id: "",
     buckets: [],
+    callfile_id: "",
     account_type: null
   })
   const dispatch = useAppDispatch()
@@ -133,18 +135,24 @@ const RegisterView = () => {
     return Object.fromEntries(dbd.flatMap(e=> e.buckets.map(y=> [y.name, y.id])))
   },[getDeptBucketData])
 
+
+  const reset = useCallback(()=> {
+    setData({
+      type: null,
+      name: "",
+      username: "",
+      branch: "",
+      departments: [],
+      user_id: "",
+      buckets: [],
+      callfile_id: "",
+      account_type: null 
+    })
+  },[setData])
+
   const [createUser] = useMutation(CREATE_ACCOUNT, {
     onCompleted: () => {
-      setData({
-        type: null,
-        name: "",
-        username: "",
-        branch: "",
-        departments: [],
-        user_id: "",
-        buckets: [],
-        account_type: null
-      })
+      reset()
       dispatch(setSuccess({
         success: true,
         message: "Account created"
@@ -154,20 +162,11 @@ const RegisterView = () => {
     onError: (error) => {
       const errorMessage = error?.message;
       if (errorMessage?.includes("E11000")) {
+        reset()
         dispatch(setSuccess({
           success: true,
           message: "Username already exists",
         }))
-        setData({
-          type: null,
-          name: "",
-          username: "",
-          branch: "",
-          departments: [],
-          user_id: "",
-          buckets: [],
-          account_type: null
-        });
       } else {
         dispatch(setServerError(true))
       }
@@ -191,7 +190,7 @@ const RegisterView = () => {
     data.name && data.username;
 
   const handleCreateUser = useCallback(async () => {
-    await createUser({ variables: { ...data } });
+    await createUser({ variables: { createInput: data } });
   },[data, createUser]);
 
   const submitForm = useCallback(() => {
@@ -215,12 +214,12 @@ const RegisterView = () => {
 
   const handleCheckedDept = useCallback((e:React.ChangeEvent<HTMLInputElement>,value:string) => {
     const check = e.target.checked ? [...data.departments, deptObject[value]] : data.departments.filter((d) => d !== deptObject[value] )
-    setData({...data, departments: check})
+    setData(prev=> ({...prev, departments: check}))
   },[data,deptObject])
 
   const handleCheckedBucket = useCallback((e:React.ChangeEvent<HTMLInputElement>,value:string) => {
     const check = e.target.checked ? [...data.buckets, bucketObject[value]] : data.buckets.filter((d) => d !== bucketObject[value] )
-    setData({...data, buckets: check})
+    setData(prev => ({...prev, buckets: check}))
   },[data, bucketObject, setData])
 
 
@@ -234,6 +233,7 @@ const RegisterView = () => {
         department: [],
         buckets: [],
         user_id: "",
+        callfile_id: "",
         account_type: null
       }));
     }
@@ -288,7 +288,7 @@ const RegisterView = () => {
               name="name" 
               autoComplete="off"
               value={data.name}
-              onChange={(e)=> setData({...data, name: e.target.value})}
+              onChange={(e)=> setData(prev => ({...prev, name: e.target.value}))}
               disabled={!data.type}
               className={`${!data.type ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
               />
@@ -302,11 +302,12 @@ const RegisterView = () => {
               id="username" 
               autoComplete="off"
               value={data.username}
-              onChange={(e)=> setData({...data,username: e.target.value})}
+              onChange={(e)=> setData(prev => ({...prev, username: e.target.value}))}
               disabled={!data.type}
               className={`${!data.type ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
               />
           </label>
+
           <label className="w-full">
             <p className="w-full text-base font-medium text-slate-500">SIP Id</p>
             <input 
@@ -315,9 +316,23 @@ const RegisterView = () => {
               id="id_number" 
               autoComplete="off"
               value={data.user_id}
-              onChange={(e)=> setData({...data,user_id: e.target.value})}
+              onChange={(e)=> setData(prev => ({...prev,user_id: e.target.value}))}
               disabled={!data.type || !validForCampaignAndBucket.toString().includes(data.type)  }
               className={`${!data.type || !validForCampaignAndBucket.toString().includes(data.type)  ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
+              />
+          </label>
+
+          <label className="w-full">
+            <p className="w-full text-base font-medium text-slate-500">Callfile ID</p>
+            <input 
+              type="text" 
+              name="callfile_id" 
+              id="callfile_id" 
+              autoComplete="off"
+              value={data.callfile_id}
+              onChange={(e)=> setData(prev=> ({...prev, callfile_id: e.target.value}))}
+              disabled={!data.type || !validForCampaignAndBucket.toString().includes(data.type)  }
+              className={`${!data.type || !validForCampaignAndBucket.toString().includes(data.type) ? "bg-gray-200" : "bg-gray-50"} bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
               />
           </label>
 
@@ -329,7 +344,7 @@ const RegisterView = () => {
               disabled={!data.type}
               onChange={(e)=> {
                 const value = e.target.value === "" ? null : e.target.value as AccountType
-                setData({...data, account_type: value})}}
+                setData(prev => ({...prev, account_type: value}))}}
               className={`${!data.type ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
               <option value="">Choose a account type</option>
@@ -345,7 +360,7 @@ const RegisterView = () => {
               id="branch"
               name="branch"
               value={data.branch ? Object.keys(branchObject).find((key) => branchObject[key] === data.branch) : ""}
-              onChange={(e)=> setData({...data, branch: branchObject[e.target.value]})}
+              onChange={(e)=> setData(prev => ({...prev, branch: branchObject[e.target.value]}))}
               disabled={!data.type || !validForCampaignAndBucket.toString().includes(data.type)}
               className={`${!data.type|| !validForCampaignAndBucket.toString().includes(data.type) ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >

@@ -67,6 +67,9 @@ const userSchema = new Schema(
       type: Number,
       default: 0
     },
+    callfile_id: {
+      type: String,
+    },
     targets: {
       daily: {
         type: Number,

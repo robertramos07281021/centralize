@@ -48,6 +48,7 @@ const userTypeDefs = gql`
     buckets: [ID]
     isOnline: Boolean
     active: Boolean
+    callfile_id: String
     isLock: Boolean
     createdAt: DateTime
     user_id: String
@@ -82,6 +83,7 @@ const userTypeDefs = gql`
     isLock: Boolean
     account_type: String
     attempt_login: Int
+    callfile_id: String
     targets: Target
     buckets: [Bucket]
     departments: [Department] 
@@ -112,27 +114,33 @@ const userTypeDefs = gql`
     getBucketTL:[Users]
   }
 
-  type Mutation {
-    createUser( 
-      name: String!, 
-      username: String!, 
-      type: String!, 
-      departments: [ID], 
-      branch: ID, 
-      user_id: String, 
-      buckets:[ID] 
-      account_type: String
-    ): Success
+  input CreatingAccount {
+    name: String!, 
+    username: String!, 
+    type: String!, 
+    departments: [ID], 
+    branch: ID, 
+    user_id: String, 
+    buckets:[ID] 
+    account_type: String 
+    callfile_id: String
+  }
+  input UpdateAccount {
+    name:String!, 
+    type:String!, 
+    departments:[ID], 
+    branch:ID, 
+    buckets:[ID], 
+    user_id: String,
+    callfile_id: String,
+    account_type: String
+    id:ID!
+  }
 
-    updateUser(
-      name:String!, 
-      type:String!, 
-      departments:[ID], 
-      branch:ID, 
-      buckets:[ID], 
-      account_type: String
-      id:ID!
-    ): Success
+  type Mutation {
+    createUser(createInput:CreatingAccount): Success
+
+    updateUser(updateInput:UpdateAccount): Success
 
     updatePassword(password:String!, confirmPass:String!) : Users
     resetPassword(id:ID!): Success
