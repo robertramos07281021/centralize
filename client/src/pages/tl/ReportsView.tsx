@@ -1,7 +1,6 @@
 import { gql, useQuery } from "@apollo/client"
 import { useEffect, useState } from "react"
 import { Doughnut } from 'react-chartjs-2';
-import { color } from "../../middleware/exports";
 import {  ChartData, ChartOptions } from "chart.js";
 import Loading from "../Loading";
 import { useAppDispatch } from "../../redux/store";
@@ -164,7 +163,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
       const updatedData = disposition.getDispositionTypes.map((e) => ({
         code: e.code,
         count: Number(newReportsDispo[e.code]) ? Number(newReportsDispo[e.code]) : 0 ,
-        color: positive.includes(e.code) ? color[13] : color[0], 
+        color: positive.includes(e.code) ? `oklch(62.7% 0.194 149.214)` : `oklch(63.7% 0.237 25.331)`, 
       }));
       setDispositionData(updatedData);
     }
@@ -264,7 +263,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
               {
                 dispositionCount(d.code) !== 0 &&
                 <div className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 py-0.5 hover:scale-105 cursor-default hover:font-bold">
-                  <div style={{backgroundColor: `${positive.includes(d.code) ? color[13] : color[0]}`}} className="px-2">{d.code} </div>
+                  <div style={{backgroundColor: `${positive.includes(d.code) ? `oklch(62.7% 0.194 149.214)` : `oklch(63.7% 0.237 25.331)`}`}} className="px-2">{d.code} </div>
                   <div>{d.name}</div>
                   <div className="text-center">{dispositionCount(d.code)}</div>
                 </div>
