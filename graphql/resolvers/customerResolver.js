@@ -478,17 +478,17 @@ const customerResolver = {
         if (groupId) {
           const [group, userSelected] = await Promise.all([
             Group.findById(groupId).lean(),
-            User.findById(groupId).lean(),
+            User.findById(groupId).lean()
           ]);
+     
           selected = group?._id || userSelected?._id || null;
         }
-    
-        const bucket = selectedBucket ? { $eq: new mongoose.Types.ObjectId(selectedBucket) } : { $in: user.buckets.map(e=> new mongoose.Types.ObjectId(e)) }
+        const activeCallfile = await Callfile.findOne({bucket: new mongoose.Types.ObjectId(selectedBucket),active: {$eq: true}})
+  
         
         const search = [
-          { "bucket": bucket },
-          { "dispoType.code" : { $nin: ["PAID","DNC"] } },
-  
+          { "existingDispo.code" : { $ne: 'DNC' } },
+          {balance: {$ne: 0}}
         ];
      
         if(dpd) {
@@ -496,7 +496,7 @@ const customerResolver = {
         }
 
         if (disposition && disposition.length > 0) {
-          search.push({ "dispoType.name": { $in: disposition } });
+          search.push({ "existingDispo.code": { $in: disposition } });
         }
         
         if (assigned === "assigned") {
@@ -511,6 +511,16 @@ const customerResolver = {
   
         const accounts = await CustomerAccount.aggregate([
           {
+            $match: {
+              callfile: activeCallfile._id
+            }
+          },
+          {
+            $match: {
+              $expr: {$gt: [{$size: "$history"},0]}
+            }
+          },
+          {
             $lookup: {
               from: "customers",
               localField: "customer",
@@ -520,28 +530,6 @@ const customerResolver = {
           },
           { 
             $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
-          },
-          {
-            $lookup: {
-              from: "callfiles",
-              localField: "callfile",
-              foreignField: "_id",
-              as: "ca_callfile",
-            },
-          },
-          { 
-            $unwind: { path: "$ca_callfile", preserveNullAndEmptyArrays: true } 
-          },
-          {
-            $addFields: {
-              active: "$ca_callfile.active",
-            } 
-          },
-          {
-            $match: {
-              active: { $eq: true },
-              'ca_callfile.endo':  { $exists: false } ,
-            }
           },
           {
             $lookup: {
@@ -559,48 +547,130 @@ const customerResolver = {
               from: "dispositions",
               localField: "current_disposition",
               foreignField: "_id",
-              as: "currentDisposition",
+              as: "cd"
             }
           },
-          { 
-            $unwind: { path: "$currentDisposition", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$ca_disposition", preserveNullAndEmptyArrays: true } 
           },
           {
             $lookup: {
               from: "dispotypes",
-              localField: "currentDisposition.disposition",
+              localField: "cd.disposition",
               foreignField: "_id",
-              as: "dispoType",
+              as: "dispotype"
             }
           },
-          { 
-            $unwind: { path: "$dispoType", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
           },
           {
             $lookup: {
-              from: "users",
-              localField: "currentDisposition.user",
+              from: "dispositions",
+              localField: "history",
               foreignField: "_id",
-              as: "disposition_user",
+              as: "histories"
             }
           },
-          { 
-            $unwind: { path: "$disposition_user", preserveNullAndEmptyArrays: true } 
+          {
+            $lookup: {
+              from: "dispotypes",
+              let: {
+                dispoIds: {
+                  $map: {
+                    input: { $ifNull: ["$histories", []] },
+                    as: "h",
+                    in: "$$h.disposition"
+                  }
+                }
+              },
+              pipeline: [
+                {
+                  $match: {
+                    $expr: {
+                      $in: ["$_id", "$$dispoIds"]
+                    }
+                  }
+                },
+                { $project: { name: 1, code: 1, rank: 1 , status: 1} }
+              ],
+              as: "dispotypesData"
+            }
+          },
+          {
+            $set: {
+              mainDispotype: {
+                $let: {
+                  vars: {
+                    ranked: {
+                      $filter: {
+                        input: "$dispotypesData",
+                        as: "d",
+                        cond: { $gt: ["$$d.rank", 0] }
+                      }
+                    },
+                    all: "$dispotypesData"
+                  },
+                  in: {
+                    $cond: [
+                      { $gt: [{ $size: "$$ranked" }, 0] },
+                      {
+                        $let: {
+                          vars: {
+                            best: {
+                              $reduce: {
+                                input: "$$ranked",
+                                initialValue: null,
+                                in: {
+                                  $cond: [
+                                    {
+                                      $lt: [
+                                        "$$this.rank",
+                                        { $ifNull: ["$$value.rank", Infinity] }
+                                      ]
+                                    },
+                                    "$$this",
+                                    "$$value"
+                                  ]
+                                }
+                              }
+                            }
+                          },
+                          in: "$$best"
+                        }
+                      },
+                      { $first: "$$all" }
+                    ]
+                  }
+                }
+              }
+            }
           },
           {
             $addFields: {
-              paymentDate: {
+              checkRanking: {
+                $filter: {
+                  input: '$dispotypesData',
+                  as: 'dd',
+                  cond: {$gt: ['$$dd.rank',0]}
+                }
+              },
+            }
+          },
+          {
+            $addFields: {
+              existingDispo: {
                 $cond: [
                   {
-                    $and: [
-                      { $ne: ["$currentDisposition.payment_date", null] },
-                      { $ne: ["$currentDisposition.payment_date", ""] },
-                      {
-                        $in: [{ $type: "$currentDisposition.payment_date" }, ["string", "date"]]
-                      }
+                    $expr: {$gt: [{$size: "$history"},0]}
+                  },
+                  {
+                    $cond: [
+                      { $expr: { $gt: [ {$size: "$checkRanking"}, 0 ] } },
+                      '$mainDispotype',
+                      '$dispotype'
                     ]
                   },
-                  { $toDate: "$currentDisposition.payment_date" },
                   null
                 ]
               }
@@ -609,6 +679,17 @@ const customerResolver = {
           {
             $match: {
               $and: search
+            }
+          },
+          {
+            $project: {
+              _id: "$_id",
+              customer_info: "$customer_info",
+              dispoType: "$existingDispo",
+              account_bucket: "$account_bucket",
+              max_dpd:  "$max_dpd",
+              assigned: "$assigned",
+              balance: '$balance'
             }
           },
           {
@@ -635,14 +716,15 @@ const customerResolver = {
           },
         ])
 
-      
+
         const allAccounts = accounts[0]?.AllCustomerAccounts[0]?.ids || [];
 
         return {
           CustomerAccounts: accounts[0]?.FindCustomerAccount || [],
-          totalCountCustomerAccounts: allAccounts,
+          totalCountCustomerAccounts: allAccounts ,
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },

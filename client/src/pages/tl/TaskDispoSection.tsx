@@ -9,23 +9,6 @@ import Loading from "../Loading"
 import { setPage, setServerError, setSuccess } from "../../redux/slices/authSlice"
 import {debounce} from 'lodash'
 
-
-type OutStandingDetails = {
-  principal_os:number
-  interest_os: number
-  admin_fee_os: number
-  txn_fee_os: number
-  late_charge_os: number
-  dst_fee_os: number
-  total_os: number
-}
-
-type GrassDetails = {
-  grass_region: string
-  vendor_endorsement: string
-  grass_date: string
-}
-
 type AccountBucket = {
   name: string
   dept:string 
@@ -41,29 +24,11 @@ type CustomerInfo = {
   _id: string
 }
 
-type CurrentDisposition = {
-  _id: string
-  amount: number
-  disposition: string
-  payment_date: string
-  ref_no: string
-  existing: string
-  comment: string
-  payment: string
-  payment_method: string
-  user: string
-}
 
 type DispoType = {
   _id: string
   name: string
   code: string
-}
-
-type Disposition_user = {
-  _id: string
-  name: string
-  user_id: string
 }
 
 
@@ -85,22 +50,11 @@ type Assigned = Group | User
 
 type CustomerAccounts = {
     _id: string
-    case_id: string
-    account_id: string
-    endorsement_date:string
-    credit_customer_id:string
-    bill_due_day:number
     max_dpd: number
-    balance: number
-    paid_amount:number
     assigned: Assigned
-    out_standing_details :OutStandingDetails
-    grass_details: GrassDetails
     account_bucket: AccountBucket
     customer_info: CustomerInfo
-    currentDisposition: CurrentDisposition
     dispoType: DispoType
-    disposition_user : Disposition_user
 }
 
 type FindCustomerAccount = {
@@ -113,14 +67,7 @@ const FIND_CUSTOMER_ACCOUNTS = gql`
     findCustomerAccount(query: $query) {
       CustomerAccounts {
         _id
-        case_id
-        account_id
-        endorsement_date
-        credit_customer_id
-        bill_due_day
         max_dpd
-        balance
-        paid_amount
         assigned {
           ... on User {
             name
@@ -137,20 +84,6 @@ const FIND_CUSTOMER_ACCOUNTS = gql`
             }
           }
         }
-        out_standing_details {
-          principal_os
-          interest_os
-          admin_fee_os
-          txn_fee_os
-          late_charge_os
-          dst_fee_os
-          total_os
-        }
-        grass_details {
-          grass_region
-          vendor_endorsement
-          grass_date
-        }
         account_bucket {
           name
           dept
@@ -164,28 +97,12 @@ const FIND_CUSTOMER_ACCOUNTS = gql`
           addresses
           _id
         }
-        currentDisposition {
-          _id
-          amount
-          disposition
-          payment_date
-          ref_no
-          existing
-          comment
-          payment
-          payment_method
-          user
-        }
         dispoType {
           _id
           name
           code
         }
-        disposition_user {
-          name
-          user_id
-          _id
-        }
+
       }
       totalCountCustomerAccounts
     }
@@ -264,7 +181,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
     dpd
   }
 
-  const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount}>(FIND_CUSTOMER_ACCOUNTS,{variables: {query: query}})
+  const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount}>(FIND_CUSTOMER_ACCOUNTS,{variables: {query: query},skip: !query.selectedBucket})
 
   const debouncedSearch = useMemo(() => {
     return debounce(async(val: CADQueryValue) => {
@@ -273,7 +190,9 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
   }, [CADRefetch]);
 
   useEffect(()=> {
-    debouncedSearch(query)
+    if(selectedBucket){
+      debouncedSearch(query)
+    }
   },[selectedDisposition,page,taskFilter,selectedBucket,dpd])
 
   const [handleCheckAll, setHandleCheckAll] = useState<boolean>(false)
@@ -282,36 +201,44 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
   const [confirm, setConfirm] = useState<boolean>(false)
   const [taskManagerPage, setTaskManagerPage] = useState("1")
 
-
-  useEffect(()=> {
-    setTaskManagerPage(page.toString())
-  },[page])
-
   useEffect(()=> {
     const timer = setTimeout(async()=> {
-      try {
-        await CADRefetch()
-        await groupRefetch()
-      } catch (error) {
-        dispatch(setServerError(true))
+      if(selectedBucket){
+        try {
+          await CADRefetch()
+          await groupRefetch()
+        } catch (error) {
+          dispatch(setServerError(true))
+        }
       }
     })
     return () => clearTimeout(timer)
   },[selectedBucket,CADRefetch,groupRefetch])
 
   useEffect(()=> {
+    setTaskManagerPage(page.toString())
+  },[page])
+
+
+
+  useEffect(()=> {
     const timer = setTimeout(async()=> {
-      try {
-        await CADRefetch()
-        setRequired(false)
-        setTaskToAdd([])
-        setHandleCheckAll(false)
-      } catch (error) {
-        dispatch(setServerError(true))  
+      if(selectedBucket) {
+        try {
+          await CADRefetch()
+          setRequired(false)
+          setTaskToAdd([])
+          setHandleCheckAll(false)
+          setTaskManagerPage("1")
+          dispatch(setPage(1))
+        } catch (error) {
+          dispatch(setServerError(true))
+        }
       }
     })
+
     return () => clearTimeout(timer)
-  },[selectedGroup,CADRefetch,tasker, taskFilter, selectedAgent, selectedDisposition,dpd])
+  },[selectedGroup ,tasker, taskFilter, selectedAgent, selectedDisposition,selectedBucket, dpd,CADRefetch])
 
   const [modalProps, setModalProps] = useState({
     message: "",
@@ -420,7 +347,6 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
   const valuePage = parseInt(taskManagerPage) > pages ? pages.toString() : taskManagerPage 
 
   if(loading) return (<Loading/>)
-
   return (
     <>
       <div className="h-full w-full flex flex-col p-2 overflow-hidden">
@@ -481,7 +407,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
                   {ca.customer_info.fullName}
               </div>
               <div className="px-6">
-                  {ca.currentDisposition ? (ca.dispoType.code === "PAID" ? `${ca.dispoType.code} (Partial)` : ca.dispoType.code) : "New Endorsed"}
+                  {ca.dispoType ? (ca.dispoType.code === "PAID" ? `${ca.dispoType.code} (Partial)` : ca.dispoType.code) : "New Endorsed"}
               </div>
               <div className="px-6 ">
                   {ca.account_bucket.name}
