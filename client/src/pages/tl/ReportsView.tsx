@@ -1,5 +1,5 @@
 import { gql, useQuery } from "@apollo/client"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { Doughnut } from 'react-chartjs-2';
 import {  ChartData, ChartOptions } from "chart.js";
 import Loading from "../Loading";
@@ -127,20 +127,18 @@ const ReportsView:React.FC<Props> = ({search}) => {
   })
   const {data:disposition, refetch:dispoTypesRefetch} = useQuery<{getDispositionTypes:DispositionType[]}>(GET_DISPOSITION_TYPES)
   const dispatch = useAppDispatch()
-  console.log(reportsData)
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       try {
         await dispoTypesRefetch()
         await refetch()
       } catch (error) {
-        console.log(error)
         dispatch(setServerError(true))
       }
     })
     return () => clearTimeout(timer)
   },[dispoTypesRefetch, refetch])
-
+  
   useEffect(()=> {
     const reportsDispo:{[key: string]: number} = {};
     if(reportsData) {
@@ -163,10 +161,16 @@ const ReportsView:React.FC<Props> = ({search}) => {
     }
   },[disposition,newReportsDispo])
 
-  const dispositionCount = (code:string) =>  {
+  const dispositionCount = useCallback((code:string) =>  {
     const newFilter = dispositionData?.filter((e)=> e.code === code)
     return newFilter[0]?.count
-  } 
+  },[dispositionData])
+
+  const percentageOfDispo = useCallback((code:string)=> {
+    const newFilter = dispositionData.filter(e=> e.code === code)
+    return (newFilter[0].count / totalAccounts) * 100 
+  },[dispositionData])
+
 
   const dispoData = dispositionData?.map(d => d.count) || []
   const dispoDataReduced =dispoData && dispoData.length > 0 ? dispoData?.reduce((t:number, v:number)=> t + v) : 0
@@ -192,7 +196,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
         color: 'oklch(0 0 0)',
         font: {
           weight: "bold", 
-          size: 15,
+          size: 14,
         },
         formatter: (value: number) => {
           const percentage = ((value / totalAccounts) * 100).toFixed(2);
@@ -216,6 +220,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
     responsive: true,
     maintainAspectRatio: false,
   };
+  console.log(reportsData)
 
   if(reportLoading) return <Loading/>
 
@@ -252,18 +257,31 @@ const ReportsView:React.FC<Props> = ({search}) => {
       <div className="flex justify-between w-full h-full pr-5">
         <div className="w-full flex justify-center item-center flex-col ">
           <div  className="flex flex-col justify-center min-h-5/6">
-            {disposition?.getDispositionTypes.map((d)=> 
+            {/* {disposition?.getDispositionTypes.map((d)=> 
               <div key={d.id}>
               {
                 dispositionCount(d.code) !== 0 &&
                 <div className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 py-0.5 hover:scale-105 cursor-default hover:font-bold">
                   <div style={{backgroundColor: `${positive.includes(d.code) ? `oklch(62.7% 0.194 149.214)` : `oklch(63.7% 0.237 25.331)`}`}} className="px-2">{d.code} </div>
                   <div>{d.name}</div>
-                  <div className="text-center">{dispositionCount(d.code)}</div>
+                  <div className="text-center">{dispositionCount(d.code)} - {percentageOfDispo(d.code).toFixed(2)}%</div>
                 </div>
               }
               </div>
-            )}
+            )} */}
+
+            {
+              reportsData?.getDispositionReports.disposition.map(dd=> {
+                const findDispotype = disposition?.getDispositionTypes.find(x=> x.code === dd.code)
+                return (
+                  <div className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 py-0.5 hover:scale-105 cursor-default hover:font-bold">
+                  <div style={{backgroundColor: `${positive.includes(dd?.code) ? `oklch(62.7% 0.194 149.214)` : `oklch(63.7% 0.237 25.331)`}`}} className="px-2">{dd.code} </div>
+                  <div>{findDispotype?.name}</div>
+                  <div className="text-center">{dispositionCount(dd.code)} - {percentageOfDispo(dd.code).toFixed(2)}%</div>
+                </div>
+                )
+              })
+            }
           </div>
           <div className="flex justify-center mt-10">
             <button type="button" className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 cursor-pointer" 

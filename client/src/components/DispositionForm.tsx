@@ -385,6 +385,11 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
           return setRequired(true)
         }
       }
+
+      if(Number(data.amount) === 0 && anabledDispo.includes(selectedDispo)) {
+        return setRequired(true)
+      }
+
       setRequired(false)
       setConfirm(true)
       setModalProps({
@@ -522,7 +527,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                 anabledDispo.includes(selectedDispo) ? 
                 <label className="flex flex-col xl:flex-row items-center">
                   <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-2/6 leading-4">Amount</p>
-                    <div className={`flex border items-center rounded-lg w-full ${required && !data.amount ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} `}>
+                    <div className={`flex border items-center rounded-lg w-full ${(required && (!data.amount || data.amount === "0")) ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} `}>
                       <p className="px-2">&#x20B1;</p>
                       <input 
                         type="text" 
@@ -661,7 +666,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       id="sms_collector"
                       value={data.RFD ?? ""}
                       onChange={(e)=> handleDataChange('RFD',e.target.value)}
-                      className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
+                      className={` bg-gray-50  border-gray-500  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                     > 
                       <option value="">Select RFD Reason</option>
                       {

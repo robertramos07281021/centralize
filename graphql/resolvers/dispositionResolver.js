@@ -213,7 +213,7 @@ const dispositionResolver = {
                     }
                   }
                 },
-                { $project: { name: 1, code: 1, rank: 1 } }
+                { $project: { name: 1, code: 1, rank: 1 , status: 1} }
               ],
               as: "dispotypesData"
             }
@@ -294,6 +294,7 @@ const dispositionResolver = {
               _id: '$existingDispo._id',
               name: {$first: '$existingDispo.name'},
               code: {$first: '$existingDispo.code'},
+              status: {$first: '$existingDispo.status'},
               count : {$sum: 1},
             }
           },
@@ -302,11 +303,19 @@ const dispositionResolver = {
               name: 1,
               code: 1,
               count: 1,
+              status: 1,
               _id: "$_id"
             }
-          }
+          },
+          {
+            $sort: { 
+              status: -1,
+              count: -1
+            }
+          },
+   
         ])
-        
+        console.log(dispositionReport)
         return { 
           agent: agent ? agentUser : null, 
           bucket: call?.bucket?.name ?? "" ,
