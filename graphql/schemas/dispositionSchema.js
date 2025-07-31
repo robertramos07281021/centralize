@@ -44,6 +44,7 @@ const dispositionTypeDefs = gql`
 
 
   type DispoData {
+    _id: String
     code: String
     name: String
     count: Int

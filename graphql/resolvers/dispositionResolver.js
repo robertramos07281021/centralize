@@ -315,7 +315,7 @@ const dispositionResolver = {
           },
    
         ])
-
+        
         return { 
           agent: agent ? agentUser : null, 
           bucket: call?.bucket?.name ?? "" ,

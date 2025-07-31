@@ -19,6 +19,7 @@ const GET_DISPOSITION_REPORTS = gql`
       }
       bucket
       disposition {
+        _id
         code
         name
         count
@@ -45,7 +46,7 @@ type Dispositions = {
 }
 
 type DispositionType = {
-  id: string
+  _id: string
   name: string
   code: string
   count: string
@@ -170,18 +171,16 @@ const ReportsView:React.FC<Props> = ({search}) => {
     const newFilter = dispositionData.filter(e=> e.code === code)
     return (newFilter[0].count / totalAccounts) * 100 
   },[dispositionData])
+  const dispoData = reportsData?.getDispositionReports?.disposition || []
+  const totalPositiveCalls = (dispoData && dispoData.length > 0) ? dispoData.map(x=> x.count)?.reduce((t,v)=>  t + v) : 0
 
-
-  const dispoData = dispositionData?.map(d => d.count) || []
-  const dispoDataReduced =dispoData && dispoData.length > 0 ? dispoData?.reduce((t:number, v:number)=> t + v) : 0
-
-  const filteredPositive = dispositionData.filter(x=> positive.includes(x.code)).map(y=> y.count).reduce((v,t) => v + t)
-  const filteredNegative = dispositionData.filter(x=> !positive.includes(x.code)).map(y=> y.count).reduce((v,t) => v + t)
+  const filteredPositive = (dispoData && dispoData?.length > 0) ? dispoData?.filter(x=> positive.includes(x.code))?.map(y=> y.count).reduce((t,v)=> t + v) : [0,0,0]
+  const filteredNegative = (dispoData && dispoData?.length > 0) ? dispoData?.filter(x=> !positive.includes(x.code))?.map(y=> y.count).reduce((t,v)=> t + v) : [0,0,0]
 
 
   const totalAccounts = reportsData && reportsData?.getDispositionReports?.callfile?.totalAccounts || 0
   const dataLabels = ['Negative Calls','Positive Calls','Unconnected Calls']
-  const dataCount = [filteredNegative,filteredPositive,totalAccounts - dispoDataReduced]
+  const dataCount = [isNaN(Number(filteredNegative)) ? 0: Number(filteredNegative) , isNaN(Number(filteredPositive)) ? 0 :Number(filteredPositive) , Number(totalAccounts - Number(totalPositiveCalls))] 
   const dataColor = [ `oklch(63.7% 0.237 25.331)`,`oklch(62.7% 0.194 149.214)`, `oklch(44.6% 0.043 257.281)`,]
  
   const data:ChartData<'doughnut'> = {
@@ -259,8 +258,9 @@ const ReportsView:React.FC<Props> = ({search}) => {
             {
               reportsData?.getDispositionReports.disposition.map(dd=> {
                 const findDispotype = disposition?.getDispositionTypes.find(x=> x.code === dd.code)
+         
                 return (
-                  <div className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 py-0.5 hover:scale-105 cursor-default hover:font-bold">
+                  <div key={dd._id} className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 py-0.5 hover:scale-105 cursor-default hover:font-bold">
                   <div style={{backgroundColor: `${positive.includes(dd?.code) ? `oklch(62.7% 0.194 149.214)` : `oklch(63.7% 0.237 25.331)`}`}} className="px-2">{dd.code} </div>
                   <div>{findDispotype?.name}</div>
                   <div className="text-center">{dispositionCount(dd.code)} - {percentageOfDispo(dd.code).toFixed(2)}%</div>
