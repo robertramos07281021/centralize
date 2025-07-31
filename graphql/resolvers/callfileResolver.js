@@ -15,13 +15,12 @@ const callfileResolver = {
         if(!user) throw new CustomError("Unauthorized",401)
 
         const active = (status !== "all" || !status) ? status === "active" : {$ne: null}
-        const resBucket = bucket ? {$eq: new mongoose.Types.ObjectId(bucket)} : {$in: user.buckets.map(e=> new mongoose.Types.ObjectId(e))}
         const skip = (page - 1) * limit;
 
         const result = await Callfile.aggregate([
           {
             $match: {
-              bucket: resBucket,
+              bucket: {$eq: new mongoose.Types.ObjectId(bucket)},
               active: active
             }
           },
@@ -46,6 +45,7 @@ const callfileResolver = {
         const connectedDispo = ['PTP','FFUP','UNEG','RTP','PAID','DISP','ANSM','UNK','LM','HUP','DEC','BUSY','NOA','NIS','OCA','KOR']
 
         const paidDispo = await DispoType.findOne({code:"PAID"})
+
         const customerAccounts = (
           await Promise.all(
             files.map((e) =>

@@ -202,18 +202,18 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
   const {data:disposition} = useQuery<{getDispositionTypes:Disposition[]}>(GET_DISPOSITION_TYPES,{skip: !selectedCustomer._id})
   const {data:tlData} = useQuery<{getBucketTL:TL[]}>(USER_TL,{skip: !selectedCustomer._id})
   
-  const [selectedDispo, setSelectedDispo] = useState<string>('')
   const [required, setRequired] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const [escalateTo, setEscalateTo] = useState<boolean>(false)
   const [caToEscalate, setCAToEscalate] = useState<string>("")
   const [selectedTL, setSelectedTL] = useState<string>("")
-
+  
   const dispoObject: Record<string, string> = useMemo(() => {
     const d: DispositionType[] = disposition?.getDispositionTypes || [];
     return Object.fromEntries(d.map(e => [e.code, e.id]));
   }, [disposition]);
-
+  
+  
   const dispoKeyCode: Record<string, string> = useMemo(() => {
     const d: DispositionType[] = disposition?.getDispositionTypes || [];
     return Object.fromEntries(d.map(e => [e.code,Code[e.code as keyof typeof Code]]));
@@ -233,6 +233,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     RFD: null,
     sms: null
   })
+  const selectedDispo = disposition?.getDispositionTypes?.find(x => x.id === data.disposition)?.code ?? ""
 
   const { contact_method, dialer, chatApp, sms } = data;
  
@@ -242,9 +243,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
       setData(prev => ({ ...prev, dialer: null, chatApp: null, sms: null }));
     }
   }, [contact_method]);
-
   const resetForm = useCallback(() => {
-    setSelectedDispo('');
     setData({
       amount: null,
       payment: null,
@@ -259,7 +258,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
       RFD: null,
       sms: null 
     });
-  },[setData,setSelectedDispo,dispatch]);
+  },[setData,dispatch]);
 
   useEffect(()=> {
     if(!selectedCustomer._id) {
@@ -447,7 +446,9 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
 
     return newDate > dateNow 
   },[]) 
-  
+
+
+
 
   return  (
     <>
@@ -504,12 +505,9 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                 <select 
                   name="disposition" 
                   id="disposition" 
-                  value={selectedDispo ?? ""}
+                  value={disposition?.getDispositionTypes.find(x => x.id === data.disposition)?.code ?? ""}
                   required
-                  onChange={(e) => {
-                    handleDataChange('disposition',dispoObject[e.target.value])
-                    setSelectedDispo(e.target.value)}
-                  }
+                  onChange={(e) => { handleDataChange('disposition',dispoObject[e.target.value]) } }
                   className={`${required && !data.disposition ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  w-full border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs xl:text-sm p-2 `}>
                   <option value="" aria-keyshortcuts=";">Select Disposition</option>
                   {

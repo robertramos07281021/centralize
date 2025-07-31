@@ -391,28 +391,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
             }
 
           </tbody>
-
         </table>
-
-
-        {/* <div className="w-full h-full flex flex-col">
-          <div className="flex flex-nowrap gap-5">
-
-          </div>
-          <div className="flex gap-5 w-full">
-          
-            
-
-         
-
-
-
-           
-          </div>
-
-          
-        </div> */}
-
       </div> 
       { confirm &&
         <Confirmation {...modalProps}/>
