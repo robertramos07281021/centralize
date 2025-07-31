@@ -207,10 +207,6 @@ const ReportsView:React.FC<Props> = ({search}) => {
           return value === 0 ? "" : `${percentage}%`
         },
       },
-      // legend: {
-      //   position: 'bottom',
-      //   display: false
-      // },
       tooltip: {
         callbacks: {
           label: function (context) {
