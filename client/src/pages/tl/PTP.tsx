@@ -71,8 +71,11 @@ const PTP = () => {
             return tpt.amount > 0 && (
               <div key={index} className='grid grid-cols-3 lg:text-[0.6em] 2xl:text-xs text-orange-500'>
                 <div className="font-bold">{bucketObject[tpt.bucket]}</div>
-                <div className="font-medium flex justify-between px-2 items-center "><div>{tpt.count}</div> {arrow}</div>
-                <div className="font-medium ">{tpt.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
+                <div className="font-medium text-center">{tpt.count}</div>
+                <div className="font-medium flex justify-end items-center gap-2">
+                  <p>{arrow}</p>
+                  <p>{tpt.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</p>
+                </div>
               </div>
             )
           })

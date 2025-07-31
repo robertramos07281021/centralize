@@ -315,7 +315,7 @@ const dispositionResolver = {
           },
    
         ])
-        
+
         return { 
           agent: agent ? agentUser : null, 
           bucket: call?.bucket?.name ?? "" ,
@@ -1903,12 +1903,12 @@ const dispositionResolver = {
         end.setHours(23, 59, 59, 999);
         
         const [customerAccount, dispoType, userProdRaw] = await Promise.all([
-          CustomerAccount.findById(input.customer_account).populate( 'current_disposition'),
+          CustomerAccount.findById(input.customer_account).lean().populate( 'current_disposition'),
           DispoType.findById(input.disposition).lean(),
           Production.findOne({
             user: user._id,
             createdAt: { $gte: start, $lte: end }
-          }),
+          }).lean(),
         ]);
         const withPayment = ['PTP','PAID','UNEG']
 

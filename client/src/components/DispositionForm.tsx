@@ -364,8 +364,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
   })
 
   const creatingDispo = useCallback(async()=> {
-    await createDisposition({variables: { input: {...data, customer_account: selectedCustomer._id} }})
-  },[ data, selectedCustomer._id, createDisposition ])
+    await createDisposition({variables: { input: {...data, customer_account: selectedCustomer?._id} }})
+  },[ data, selectedCustomer, createDisposition ])
 
   const noCallback = useCallback(()=> {
     setConfirm(false)
@@ -446,7 +446,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     const dateNow = new Date().setHours(23,59,59,999)
 
     return newDate > dateNow 
-  },[])
+  },[]) 
+  
 
   return  (
     <>

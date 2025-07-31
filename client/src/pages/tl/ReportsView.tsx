@@ -201,6 +201,18 @@ const ReportsView:React.FC<Props> = ({search}) => {
         formatter: (value: number) => {
           const percentage = ((value / totalAccounts) * 100).toFixed(2);
           return value === 0 ? "" : `${percentage}%`
+        },
+        anchor: (context) => {
+          const index = context.dataIndex;
+          if (index % 3 === 0) return 'end';     
+          if (index % 3 === 1) return 'start';   
+          return 'center';                      
+        },
+        align: (context) => {
+          const index = context.dataIndex;
+          if (index % 3 === 0) return 'bottom';
+          if (index % 3 === 1) return 'top';
+          return 'center';
         }
       },
       legend: {
