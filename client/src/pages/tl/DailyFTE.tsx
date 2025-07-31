@@ -68,7 +68,7 @@ const DailyFTE = () => {
                 <div className="pl-2">{x.name}</div>
                 <div>{findCampaignAssignedData.assigned}</div>
                 <div>{findData?.online}</div>
-                <div>{FTEPercent.toFixed(2)}%</div>
+                <div>{isNaN(FTEPercent) ? 0 : FTEPercent.toFixed(2)}%</div>
               </div>
             )
           } )
