@@ -516,11 +516,6 @@ const customerResolver = {
             }
           },
           {
-            $match: {
-              $expr: {$gt: [{$size: "$history"},0]}
-            }
-          },
-          {
             $lookup: {
               from: "customers",
               localField: "customer",
@@ -724,7 +719,6 @@ const customerResolver = {
           totalCountCustomerAccounts: allAccounts ,
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
