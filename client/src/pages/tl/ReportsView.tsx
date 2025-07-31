@@ -175,10 +175,14 @@ const ReportsView:React.FC<Props> = ({search}) => {
   const dispoData = dispositionData?.map(d => d.count) || []
   const dispoDataReduced =dispoData && dispoData.length > 0 ? dispoData?.reduce((t:number, v:number)=> t + v) : 0
 
+  const filteredPositive = dispositionData.filter(x=> positive.includes(x.code)).map(y=> y.count).reduce((v,t) => v + t)
+  const filteredNegative = dispositionData.filter(x=> !positive.includes(x.code)).map(y=> y.count).reduce((v,t) => v + t)
+
+
   const totalAccounts = reportsData && reportsData?.getDispositionReports?.callfile?.totalAccounts || 0
-  const dataLabels = [...dispositionData.map(d=> d.code),'Unconnected']
-  const dataCount = [...dispositionData.map(d => d.count),totalAccounts - dispoDataReduced]
-  const dataColor = dispositionData.map(d=> d.color)
+  const dataLabels = ['Negative Calls','Positive Calls','Unconnected Calls']
+  const dataCount = [filteredNegative,filteredPositive,totalAccounts - dispoDataReduced]
+  const dataColor = [ `oklch(63.7% 0.237 25.331)`,`oklch(62.7% 0.194 149.214)`, `oklch(44.6% 0.043 257.281)`,]
  
   const data:ChartData<'doughnut'> = {
     labels: dataLabels,
@@ -202,23 +206,11 @@ const ReportsView:React.FC<Props> = ({search}) => {
           const percentage = ((value / totalAccounts) * 100).toFixed(2);
           return value === 0 ? "" : `${percentage}%`
         },
-        anchor: (context) => {
-          const index = context.dataIndex;
-          if (index % 3 === 0) return 'end';     
-          if (index % 3 === 1) return 'start';   
-          return 'center';                      
-        },
-        align: (context) => {
-          const index = context.dataIndex;
-          if (index % 3 === 0) return 'bottom';
-          if (index % 3 === 1) return 'top';
-          return 'center';
-        }
       },
-      legend: {
-        position: 'bottom',
-        display: false
-      },
+      // legend: {
+      //   position: 'bottom',
+      //   display: false
+      // },
       tooltip: {
         callbacks: {
           label: function (context) {
