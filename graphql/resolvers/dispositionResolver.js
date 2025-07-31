@@ -315,7 +315,7 @@ const dispositionResolver = {
           },
    
         ])
-        console.log(dispositionReport)
+        
         return { 
           agent: agent ? agentUser : null, 
           bucket: call?.bucket?.name ?? "" ,

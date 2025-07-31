@@ -148,7 +148,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
       setNewReportsDispo(reportsDispo)
     }
   },[reportsData])
-  const positive = ['PTP','FFUP','UNEG','RTP','PAID','DISP','LM','HUP']
+  const positive = ['PTP','FFUP','UNEG','RTP','PAID','DISP','LM','HUP','WN']
 
   useEffect(()=> {
     if (disposition?.getDispositionTypes) {

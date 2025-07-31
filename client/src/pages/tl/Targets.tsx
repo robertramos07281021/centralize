@@ -74,7 +74,6 @@ const Targets = () => {
         setHeight('33.33%')
       } else {
         setHeight('24.5%')
-
       }
     }
   },[targetsData])
@@ -94,12 +93,12 @@ const Targets = () => {
                   label: 'Amount',
                   data: [e.collected,curring],
                   backgroundColor: [
-                    'rgba(255, 99, 132, 1)',
                     'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
                   ],
                   borderColor: [
-                    'rgba(255, 99, 132, 1)',
                     'rgba(54, 162, 235, 1)',
+                    'rgba(255, 99, 132, 1)',
                   ],
                   borderWidth: 1,
                 },
