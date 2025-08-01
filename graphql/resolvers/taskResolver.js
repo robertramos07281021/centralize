@@ -223,12 +223,18 @@ const taskResolver = {
         //   }
         // ])
 
-        const findCallfile = await Callfile.find({})
-        
+        const findCallfile = await Callfile.find({totalPrincipal: {$exists: false}})
+
+  
+        if(findCallfile.length < 1) throw new CustomError('Callfile not found',404) 
+
         await Promise.all(
           findCallfile.map((async(e)=> {
-            const res = (await CustomerAccount.find({callfile: e._id})).map(x=> x.out_standing_details.total_os).reduce((t,v) => t + v)
-            await Callfile.findByIdAndUpdate(e._id,{$set: {totalPrincipal: res}})
+            if(e._id) {
+              const res = (await CustomerAccount.find({callfile: e._id})).map(x=> x.out_standing_details.total_os) || []
+              const newRes = res.reduce((t,v)=> t+v)
+              await Callfile.findByIdAndUpdate(e._id,{$set: {totalPrincipal: newRes}})
+            }
           }))
         )
       //   await Customer.updateMany(

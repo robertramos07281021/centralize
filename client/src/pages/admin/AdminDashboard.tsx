@@ -27,6 +27,9 @@ const AdminDashboard = () => {
         success: result.success,
         message: result.message
       }))
+    },
+    onError: (error)=> {
+      console.log(error.message)
     }
   })
 
