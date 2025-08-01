@@ -119,7 +119,7 @@ export type CurrentDispo = {
   disposition: string
   payment_date: string
   ref_no: string
-  existing: string
+  existing: boolean
   comment: string
   payment: String
   payment_method: string

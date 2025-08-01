@@ -10,8 +10,6 @@ import DispoType from "../../models/dispoType.js"
 import Group from "../../models/group.js"
 import Department from "../../models/department.js"
 import Callfile from "../../models/callfile.js"
-import Customer from "../../models/customer.js"
-
 
 const dispositionResolver = {
   DateTime,
@@ -155,81 +153,12 @@ const dispositionResolver = {
           query['callfile'] = new Types.ObjectId(callfile);
           call = await Callfile.findById(callfile).lean().populate('bucket')
         } 
-        
-        const forRFD = await CustomerAccount.aggregate([
-          {
-            $match: query
-          },
-          {
-            $match: {
-              $expr: {$gt: [{$size: "$history"},0]}
-            }
-          },
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "history",
-              foreignField: "_id",
-              as: "histories"
-            }
-          },
-          {
-            $addFields: {
-              accountRFD: {
-                $filter: {
-                  input: "$histories",
-                  as: "h",
-                  cond: {
-                    $and: [
-                      { $ne: ["$$h.RFD",null]},
-                    ]
-                  },
-                }
-              }
-            }
-          },
-          {
-            $addFields: {
-              firstRFD: { $first: "$accountRFD.RFD" }
-            }
-          },
-          {
-            $addFields: {
-              firstRFD: {
-                $let: {
-                  vars: { first: { $first: "$accountRFD" } },
-                  in: "$$first.RFD"
-                }
-              }
-            }
-          },
-          {
-            $group: {
-              _id: "$firstRFD",
-              count: {$sum : 1}
-            }
-          },
-          {
-            $project: {
-              _id: "$_id",
-              count: 1
-            }
-          }
-        ])  
- 
+    
         const dispositionReport = await CustomerAccount.aggregate([
           { $match: query },
           {
             $match: {
               $expr: {$gt: [{$size: "$history"},0]}
-            }
-          },
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "history",
-              foreignField: "_id",
-              as: "histories"
             }
           },
           {
@@ -244,6 +173,11 @@ const dispositionResolver = {
             $unwind: { path: "$cd", preserveNullAndEmptyArrays: true } 
           },
           {
+            $match: {
+              'cd.contact_method': {$eq: 'calls'}
+            }
+          },
+          {
             $lookup: {
               from: "dispotypes",
               localField: "cd.disposition",
@@ -255,139 +189,65 @@ const dispositionResolver = {
             $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
           },
           {
-            $lookup: {
-              from: "dispotypes",
-              let: {
-                dispoIds: {
-                  $map: {
-                    input: "$histories",
-                    as: "h",
-                    in: "$$h.disposition"
-                  }
-                }
-              },
-              pipeline: [
+            $facet: {
+              dispoCounts: [
                 {
-                  $match: {
-                    $expr: {
-                      $in: ["$_id", "$$dispoIds"]
-                    }
+                  $group: {
+                    _id: '$dispotype._id',
+                    name: {$first: "$dispotype.name" },
+                    code: {$first: "$dispotype.code"},
+                    status: {$first:"$dispotype.status"},
+                    amount: {$sum: "$out_standing_details.total_balance"},
+                    count: {$sum: 1}
                   }
                 },
-                { $project: { name: 1, code: 1, rank: 1 , status: 1} }
-              ],
-              as: "dispotypesData"
-            }
-          },
-          {
-            $set: {
-              mainDispotype: {
-                $let: {
-                  vars: {
-                    ranked: {
-                      $filter: {
-                        input: "$dispotypesData",
-                        as: "d",
-                        cond: { $gt: ["$$d.rank", 0] }
-                      }
-                    },
-                    all: "$dispotypesData"
-                  },
-                  in: {
-                    $cond: [
-                      { $gt: [{ $size: "$$ranked" }, 0] },
-                      {
-                        $let: {
-                          vars: {
-                            best: {
-                              $reduce: {
-                                input: "$$ranked",
-                                initialValue: null,
-                                in: {
-                                  $cond: [
-                                    {
-                                      $lt: [
-                                        "$$this.rank",
-                                        { $ifNull: ["$$value.rank", Infinity] }
-                                      ]
-                                    },
-                                    "$$this",
-                                    "$$value"
-                                  ]
-                                }
-                              }
-                            }
-                          },
-                          in: "$$best"
-                        }
-                      },
-                      { $first: "$$all" }
-                    ]
+                {
+                  $project: {
+                    _id: "$_id",
+                    name: 1,
+                    code: 1,
+                    status: 1,
+                    count: 1,
+                    amount: 1,
+                  }
+                },
+                {
+                  $sort: {
+                    status: 1,
+                    count: -1
                   }
                 }
-              }
-            }
-          },
-          {
-            $addFields: {
-              checkRanking: {
-                $filter: {
-                  input: '$dispotypesData',
-                  as: 'dd',
-                  cond: {$gt: ['$$dd.rank',0]}
+              ],
+              RFDCounts: [
+                {
+                  $group: {
+                    _id: "$cd.RFD",
+                    count: { $sum: 1}
+                  }
+                },
+                {
+                  $project: {
+                    _id: "$_id",
+                    count: {$sum: 1}
+                  }
                 }
-              },
+              ]
             }
-          },
-          {
-            $addFields: {
-              existingDispo: {
-                $cond: [
-                  { $expr: {$gt: [{$size: "$checkRanking"},0]}},
-                  '$mainDispotype',
-                  '$dispotype'
-                ]
-              }
-            }
-          },
-          {
-            $group: {
-              _id: '$existingDispo._id',
-              name: {$first: '$existingDispo.name'},
-              code: {$first: '$existingDispo.code'},
-              status: {$first: '$existingDispo.status'},
-              amount: {$sum: "$out_standing_details.total_balance"},
-              count : {$sum: 1},
-            }
-          },
-          {
-            $project: {
-              name: 1,
-              code: 1,
-              count: 1,
-              amount: 1,
-              status: 1,
-              _id: "$_id"
-            }
-          },
-          {
-            $sort: { 
-              status: -1,
-              count: -1
-            }
-          },
+          }
         ])
 
+        const dispo = dispositionReport[0].dispoCounts
+        const RFDS = dispositionReport[0].RFDCounts
 
-        
         return { 
           agent: agent ? agentUser : null, 
           bucket: call?.bucket?.name ?? "" ,
-          disposition: dispositionReport,
+          disposition: dispo,
           callfile: call,
-          RFD: forRFD
+          RFD: RFDS
         }
       } catch (error) {
+
         throw new CustomError(error.message, 500)
       }
     },
@@ -1968,7 +1828,7 @@ const dispositionResolver = {
         end.setHours(23, 59, 59, 999);
         
         const [customerAccount, dispoType, userProdRaw] = await Promise.all([
-          CustomerAccount.findById(input.customer_account).lean().populate( 'current_disposition'),
+          CustomerAccount.findById(input.customer_account).populate( 'current_disposition'),
           DispoType.findById(input.disposition).lean(),
           Production.findOne({
             user: user._id,
@@ -1978,9 +1838,6 @@ const dispositionResolver = {
         const withPayment = ['PTP','PAID','UNEG']
 
         if (!customerAccount) {
-          console.log(input.customer_account)
-           console.log(user.name)
-          console.log(user.user_id)
           throw new CustomError("Customer account not found", 404);
         }
 
@@ -1991,9 +1848,6 @@ const dispositionResolver = {
         const isPaymentDisposition = dispoType.code === "PAID"
 
         if (withPayment.includes(dispoType.code) && !input.amount && input.disposition) {
-          console.log(dispoType.code)
-          console.log(user.name)
-          console.log(user.user_id)
           throw new CustomError("Amount is required", 401);
         }
         
@@ -2021,12 +1875,26 @@ const dispositionResolver = {
         });
         
         const updateFields = {
-          current_disposition: newDisposition._id,
           assigned: null,
           assigned_date: null,
           on_hands: false,
-        };
+        };  
+
+        const currentDispotype = await DispoType.findById(customerAccount?.current_disposition?.disposition)
        
+        if(!currentDispotype) {
+          updateFields['current_disposition'] = newDisposition._id
+          newDisposition.existing = true
+        } else if (currentDispotype && dispoType.rank > 0) {
+          updateFields['current_disposition'] = newDisposition._id
+          await Disposition.findByIdAndUpdate(customerAccount?.current_disposition, {$set: { existing: false }});
+          newDisposition.existing = true
+        } else if (currentDispotype.rank === 0 && dispoType.rank === 0) {
+          updateFields['current_disposition'] = newDisposition._id
+          newDisposition.existing = true
+          await Disposition.findByIdAndUpdate(customerAccount?.current_disposition, {$set: { existing: false }});
+        }
+
         if (isPaymentDisposition && input.amount) {
           const paid = customerAccount.paid_amount || 0;
           const totalOS = customerAccount.out_standing_details?.total_os || 0;
@@ -2040,10 +1908,6 @@ const dispositionResolver = {
 
         await newDisposition.save()
 
-        if(customerAccount?.current_disposition) {
-          await Disposition.findByIdAndUpdate(customerAccount.current_disposition._id, {$set: { existing: false }});
-        }
-
         await CustomerAccount.findByIdAndUpdate(customerAccount._id, { $set: updateFields, $push: { history: newDisposition._id } },{new: true});
         
         return {
@@ -2051,7 +1915,6 @@ const dispositionResolver = {
           message: "Disposition successfully created"
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

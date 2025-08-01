@@ -72,7 +72,6 @@ const DispositionRecords = () => {
 
   const history:CurrentDispo[] = selectedCustomer?.dispo_history || []
 
-
   const date = (date:string) => {
     const createdDate = new Date(date).toLocaleDateString()
     const time = new Date(date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })

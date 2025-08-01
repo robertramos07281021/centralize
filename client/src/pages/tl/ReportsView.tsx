@@ -151,7 +151,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
     return () => clearTimeout(timer)
   },[dispoTypesRefetch, refetch])
   
-  console.log(reportsData)
+ 
   useEffect(()=> {
     const reportsDispo:{[key: string]: number} = {};
     if(reportsData) {
@@ -396,7 +396,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
                 <th className="border border-black bg-green-600 text-white">Total</th>
                 <td className="border border-black">{filteredNegative}</td>
                 <td className="border border-black">100%</td>
-                <td className="border border-black">{negativeCalls?.map(x=> x.amount).reduce((t,v)=> t + v ).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) ?? 0}</td>
+                <td className="border border-black">{negativeCalls.length ? negativeCalls?.map(x=> x.amount)?.reduce((t,v)=> t + v ).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) : 0}</td>
                 <td className="border border-black">100%</td>
               </tr>
             </tbody>

@@ -66,6 +66,10 @@ const customerAccountSchema = new Schema(
       type: Boolean,
       default: false
     },
+    connected_on: {
+      type: String,
+      enum: ['calls','sms','email','skip','field'],
+    },
     //object
     out_standing_details: {
       principal_os: {

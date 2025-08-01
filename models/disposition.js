@@ -35,7 +35,7 @@ const dispositionSchema = new Schema(
     },
     existing: {
       type: Boolean,
-      default: true
+      default: false
     },
     ptp: {
       type: Boolean,

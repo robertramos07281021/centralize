@@ -213,7 +213,7 @@ const CustomerDisposition = () => {
   const debouncedSearch = useMemo(() => {
   return debounce(async(val: string) => {
     await refetch({ search: val });
-  }, 300);
+  });
 }, [refetch]);
 
   const handleSearchChange = useMemo(() => 

@@ -202,6 +202,11 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
   const {data:disposition} = useQuery<{getDispositionTypes:Disposition[]}>(GET_DISPOSITION_TYPES,{skip: !selectedCustomer._id})
   const {data:tlData} = useQuery<{getBucketTL:TL[]}>(USER_TL,{skip: !selectedCustomer._id})
   
+  const existingDispo = selectedCustomer.dispo_history.find(x=> x.existing === true)
+  const neverChangeContactMethod = ['PTP','UNEG','PAID','DEC','RTP','ITP']
+  const dispoNeverChangeContactMethod  = disposition?.getDispositionTypes.filter(x=> neverChangeContactMethod.includes(x.code)).map(x=> x.id)
+  const checkIfChangeContactMethod = dispoNeverChangeContactMethod?.includes(existingDispo?.disposition ?? "")
+
   const [required, setRequired] = useState(false)
   const [confirm, setConfirm] = useState(false)
   const [escalateTo, setEscalateTo] = useState<boolean>(false)
@@ -229,20 +234,26 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     comment: null,
     contact_method: null,
     dialer: null,
-    chatApp: null,
+    chatApp:  null ,
     RFD: null,
     sms: null
   })
+  
+  useEffect(()=> {
+    if(!checkIfChangeContactMethod && !existingDispo ) return;
+    setData(prev => ({ ...prev, contact_method: existingDispo?.contact_method as AccountType}));
+  },[checkIfChangeContactMethod, existingDispo])
+
+
   const selectedDispo = disposition?.getDispositionTypes?.find(x => x.id === data.disposition)?.code ?? ""
 
   const { contact_method, dialer, chatApp, sms } = data;
- 
-
   useEffect(() => {
     if (dialer !== null || chatApp !== null || sms !== null) {
       setData(prev => ({ ...prev, dialer: null, chatApp: null, sms: null }));
     }
   }, [contact_method]);
+  
   const resetForm = useCallback(() => {
     setData({
       amount: null,
@@ -323,7 +334,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
       payment_method: null,
       ref_no: null,
       comment: null,
-      contact_method: null,
+      contact_method: checkIfChangeContactMethod && existingDispo ? existingDispo?.contact_method as AccountType : null,
       dialer: null,
       chatApp: null,
       RFD: null,
@@ -447,9 +458,6 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     return newDate > dateNow 
   },[]) 
 
-
-
-
   return  (
     <>
       {
@@ -497,7 +505,6 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
         <h1 className="text-center font-bold text-slate-600 xl:text-base 2xl:text-lg mb-5">Customer Disposition</h1>
         {
           selectedCustomer._id &&
-
           <div className="flex xl:gap-10 gap-2 justify-center select-none">
             <div className="flex flex-col gap-2 w-full">
               <label className="flex flex-col xl:flex-row items-center">
@@ -575,8 +582,9 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                     name="contact_method" 
                     id="contact_method"
                     required
+                    
                     value={data.contact_method ?? ""}
-                     onChange={(e)=> handleDataChange('contact_method',e.target.value)}
+                    onChange={(e)=> handleDataChange('contact_method', checkIfChangeContactMethod ? existingDispo?.contact_method : e.target.value)}
                     className={`${required && !data.contact_method ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                   >
                     <option value="">Select Contact Method</option>
@@ -597,8 +605,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       name="dialer" 
                       id="dialer"
                       required = {data.contact_method === AccountType.CALLS}
-                      value={data.dialer ?? ""}
-                      onChange={(e)=> handleDataChange('dialer',e.target.value)}
+                      value={ data.dialer ?? ""}
+                      onChange={(e)=> handleDataChange('dialer',checkIfChangeContactMethod ? existingDispo?.dialer : e.target.value)}
                       className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                     > 
                       <option value="">Select Dialer</option>
@@ -620,8 +628,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       name="sms_collector" 
                       id="sms_collector"
                       required = {data.contact_method === AccountType.SMS}
-                      value={data.sms ?? ""}
-                       onChange={(e)=> handleDataChange('sms',e.target.value)}
+                      value={ data.sms ?? ""}
+                       onChange={(e)=> handleDataChange('sms', checkIfChangeContactMethod ? existingDispo?.sms : e.target.value)}
                       className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                     > 
                       <option value="">Select SMS Collector</option>
@@ -644,7 +652,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       id="chat_app"
                       value={data.chatApp ?? ""}
                       required = {data.contact_method === AccountType.SKIP}
-                      onChange={(e)=> handleDataChange('chatApp',e.target.value)}
+                      onChange={(e)=> handleDataChange('chatApp',checkIfChangeContactMethod ? existingDispo?.chatApp : e.target.value)}
                       className={`${required && !data.chatApp ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                     >
                       <option value="">Select Chat App</option>
