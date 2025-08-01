@@ -166,7 +166,7 @@ const BacklogManagementView = () => {
   } 
 
   return (
-    <div className="grid grid-cols-3 grid-rows-1 h-full items-center" onMouseDown={(e)=> {
+    <div className="grid grid-cols-3 grid-rows-1 h-full items-center overflow-hidden" onMouseDown={(e)=> {
       if(!bucketRef.current?.contains(e.target as Node)) {
         setBucketDropdown(false)
       }

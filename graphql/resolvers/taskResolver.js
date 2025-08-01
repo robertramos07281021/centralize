@@ -223,11 +223,12 @@ const taskResolver = {
         //   }
         // ])
 
-        const findCallfile = await Disposition.find().populate('customer_account')
-    
+        const findCallfile = await Callfile.find({})
+        
         await Promise.all(
           findCallfile.map((async(e)=> {
-            await Disposition.findByIdAndUpdate(e._id, {$set: {callfile: e.customer_account.callfile}})
+            const res = (await CustomerAccount.find({callfile: e._id})).map(x=> x.out_standing_details.total_os).reduce((t,v) => t + v)
+            await Callfile.findByIdAndUpdate(e._id,{$set: {totalPrincipal: res}})
           }))
         )
       //   await Customer.updateMany(

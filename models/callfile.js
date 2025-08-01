@@ -30,6 +30,9 @@ const callFileSchema = new Schema(
     },
     totalAccounts: {
       type: Number
+    },
+    totalPrincipal: {
+      type: Number
     }
   },
   { timestamps: true }

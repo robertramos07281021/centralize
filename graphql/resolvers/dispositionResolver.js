@@ -10,6 +10,7 @@ import DispoType from "../../models/dispoType.js"
 import Group from "../../models/group.js"
 import Department from "../../models/department.js"
 import Callfile from "../../models/callfile.js"
+import Customer from "../../models/customer.js"
 
 
 const dispositionResolver = {
@@ -154,7 +155,68 @@ const dispositionResolver = {
           query['callfile'] = new Types.ObjectId(callfile);
           call = await Callfile.findById(callfile).lean().populate('bucket')
         } 
-     
+        
+        const forRFD = await CustomerAccount.aggregate([
+          {
+            $match: query
+          },
+          {
+            $match: {
+              $expr: {$gt: [{$size: "$history"},0]}
+            }
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "history",
+              foreignField: "_id",
+              as: "histories"
+            }
+          },
+          {
+            $addFields: {
+              accountRFD: {
+                $filter: {
+                  input: "$histories",
+                  as: "h",
+                  cond: {
+                    $and: [
+                      { $ne: ["$$h.RFD",null]},
+                    ]
+                  },
+                }
+              }
+            }
+          },
+          {
+            $addFields: {
+              firstRFD: { $first: "$accountRFD.RFD" }
+            }
+          },
+          {
+            $addFields: {
+              firstRFD: {
+                $let: {
+                  vars: { first: { $first: "$accountRFD" } },
+                  in: "$$first.RFD"
+                }
+              }
+            }
+          },
+          {
+            $group: {
+              _id: "$firstRFD",
+              count: {$sum : 1}
+            }
+          },
+          {
+            $project: {
+              _id: "$_id",
+              count: 1
+            }
+          }
+        ])  
+ 
         const dispositionReport = await CustomerAccount.aggregate([
           { $match: query },
           {
@@ -179,7 +241,7 @@ const dispositionResolver = {
             }
           },
           {
-            $unwind: { path: "$ca_disposition", preserveNullAndEmptyArrays: true } 
+            $unwind: { path: "$cd", preserveNullAndEmptyArrays: true } 
           },
           {
             $lookup: {
@@ -192,7 +254,6 @@ const dispositionResolver = {
           {
             $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
           },
-
           {
             $lookup: {
               from: "dispotypes",
@@ -295,6 +356,7 @@ const dispositionResolver = {
               name: {$first: '$existingDispo.name'},
               code: {$first: '$existingDispo.code'},
               status: {$first: '$existingDispo.status'},
+              amount: {$sum: "$out_standing_details.total_balance"},
               count : {$sum: 1},
             }
           },
@@ -303,6 +365,7 @@ const dispositionResolver = {
               name: 1,
               code: 1,
               count: 1,
+              amount: 1,
               status: 1,
               _id: "$_id"
             }
@@ -313,14 +376,16 @@ const dispositionResolver = {
               count: -1
             }
           },
-   
         ])
+
+
         
         return { 
           agent: agent ? agentUser : null, 
           bucket: call?.bucket?.name ?? "" ,
           disposition: dispositionReport,
-          callfile: call
+          callfile: call,
+          RFD: forRFD
         }
       } catch (error) {
         throw new CustomError(error.message, 500)
