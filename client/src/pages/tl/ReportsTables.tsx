@@ -36,7 +36,7 @@ const ReportsTables:React.FC<ComponentProp> = ({totalAccounts, dispo,secondTitle
           <tr className="border-black border">
             <th className={`w-1/3 py-0.5 ${colorObject[color as keyof typeof colorObject]} border-black border`} rowSpan={2}>{firstTitle}</th>
             <td className={`w-50 py-0.5 ${colorObject[color as keyof typeof colorObject]} border-black border font-medium`}>Response Count</td>
-            <td className={`w-50 border-black border ${colorObject[color as keyof typeof colorObject]} font-medium`}>Total Accounts</td>
+            <td className={`w-50 border-black border ${colorObject[color as keyof typeof colorObject]} font-medium`}>Not Responded</td>
           </tr>
           <tr className="border-black border">
             <td className="py-0.5 border text-slate-900 font-medium">{totalCount}</td>
