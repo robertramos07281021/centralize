@@ -23,7 +23,7 @@ type ComponentsProps = {
 const CallReportTables:React.FC<ComponentsProps> = ({totalAccounts, reportsData, callfile}) => {
 
 
-    const positive = ['PTP','FFUP','UNEG','RTP','PAID','DISP','LM','HUP','WN']
+  const positive = ['PTP','FFUP','UNEG','RTP','PAID','DISP','LM','HUP','WN']
   
   const positiveCalls = reportsData && reportsData.length > 0 ? reportsData?.filter(x=> positive.includes(x.code)) : []
   const negativeCalls = reportsData && reportsData?.length > 0 ? reportsData?.filter(x=> !positive.includes(x.code)) : []
@@ -43,11 +43,11 @@ const CallReportTables:React.FC<ComponentsProps> = ({totalAccounts, reportsData,
           </tr>
           <tr className="border-black border">
             <th className="w-1/2 py-0.5 bg-blue-600 text-white border-black border">Total Principal</th>
-            <td className="w-1/2 text-center font-medium text-slate-900">{callfile.totalPrincipal.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) ?? (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'})}</td>
+            <td className="w-1/2 text-center font-medium text-slate-900">{callfile?.totalPrincipal?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) ?? (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'})}</td>
           </tr>
           <tr className="border-black border">
             <th className="w-1/2 py-0.5 bg-blue-600 text-white border-black border">Contactable Rate</th>
-            <td className="w-1/2 text-center font-medium text-slate-900">{(Number(filteredPositive) / Number(callfile.totalAccounts) * 100).toFixed(2)}%</td>
+            <td className="w-1/2 text-center font-medium text-slate-900">{(Number(filteredPositive) / Number(totalAccounts) * 100).toFixed(2)}%</td>
           </tr>
         </tbody>
       </table>
