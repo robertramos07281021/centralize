@@ -173,11 +173,6 @@ const dispositionResolver = {
             $unwind: { path: "$cd", preserveNullAndEmptyArrays: true } 
           },
           {
-            $match: {
-              'cd.contact_method': {$eq: 'calls'}
-            }
-          },
-          {
             $lookup: {
               from: "dispotypes",
               localField: "cd.disposition",
@@ -190,31 +185,51 @@ const dispositionResolver = {
           },
           {
             $facet: {
-              dispoCounts: [
+              toolsDispoCount: [
                 {
                   $group: {
-                    _id: '$dispotype._id',
-                    name: {$first: "$dispotype.name" },
-                    code: {$first: "$dispotype.code"},
-                    status: {$first:"$dispotype.status"},
-                    amount: {$sum: "$out_standing_details.total_balance"},
-                    count: {$sum: 1}
-                  }
-                },
-                {
-                  $project: {
-                    _id: "$_id",
-                    name: 1,
-                    code: 1,
-                    status: 1,
-                    count: 1,
-                    amount: 1,
+                    _id: {
+                      callMethod: '$cd.contact_method',
+                      dispoId: '$dispotype._id'
+                    },
+                    name: { $first: "$dispotype.name" },
+                    code: { $first: "$dispotype.code" },
+                    status: { $first: "$dispotype.status" },
+                    amount: { $sum: "$out_standing_details.total_balance" },
+                    count: { $sum: 1 }
                   }
                 },
                 {
                   $sort: {
                     status: 1,
                     count: -1
+                  }
+                },
+                {
+                  $group: {
+                    _id: '$_id.callMethod',
+                    dispositions: {
+                      $push: {
+                        _id: '$_id.dispoId',
+                        name: '$name',
+                        code: '$code',
+                        status: '$status',
+                        amount: '$amount',
+                        count: '$count'
+                      }
+                    }
+                  }
+                },
+                {
+                  $project: {
+                    _id: 0,
+                    call_method: '$_id',
+                    dispositions: 1
+                  }
+                },
+                {
+                  $sort: {
+                    call_method: 1
                   }
                 }
               ],
@@ -236,15 +251,14 @@ const dispositionResolver = {
           }
         ])
 
-        const dispo = dispositionReport[0].dispoCounts
+        const toolsDispoCount = dispositionReport[0].toolsDispoCount
         const RFDS = dispositionReport[0].RFDCounts
-
         return { 
           agent: agent ? agentUser : null, 
           bucket: call?.bucket?.name ?? "" ,
-          disposition: dispo,
           callfile: call,
-          RFD: RFDS
+          RFD: RFDS,
+          toolsDispoCount: toolsDispoCount,
         }
       } catch (error) {
 

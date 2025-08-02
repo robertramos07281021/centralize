@@ -63,10 +63,16 @@ const dispositionTypeDefs = gql`
     _id: String
     count: Int
   }
+
+  type Tools {
+    dispositions: [DispoData]
+    call_method: String
+  }
+
   type Reports {
     agent: Agent
     bucket: String
-    disposition: [DispoData]
+    toolsDispoCount: [Tools]
     callfile: Callfile
     RFD: [RFD]
   }
