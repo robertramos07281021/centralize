@@ -986,6 +986,74 @@ const customerResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)             
       }
+    },
+    customerOtherAccounts: async(_,{caId})=> {
+  
+      try {
+        console.log(caId)
+        // if(!caId) return null
+
+        const findCustomerAccount = await CustomerAccount.aggregate([
+          {
+            $match: {
+              _id: new mongoose.Types.ObjectId(caId)
+            }
+          },
+          {
+            $lookup: {
+              from: "customers",
+              localField: "customer",
+              foreignField: "_id",
+              as: "ac",
+            }
+          },
+          { 
+            $unwind: { path: "$ac", preserveNullAndEmptyArrays: true } 
+          },
+
+        ])
+
+        const {callfile, ac, _id } = findCustomerAccount[0]
+
+        const otherCustomer = await CustomerAccount.aggregate([
+          {
+            $match: {
+              callfile: callfile,
+              _id: {$ne: _id}
+            }
+          },
+          {
+            $lookup: {
+              from: "customers",
+              localField: "customer",
+              foreignField: "_id",
+              as: "customer_info",
+            }
+          },
+          { 
+            $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $match: {
+              "customer_info.platform_customer_id": {$eq: ac.platform_customer_id}
+            }
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "history",
+              foreignField: "_id",
+              as: "dispo_history",
+            }
+          }
+        ])
+
+        return otherCustomer
+
+      } catch (error) {
+        console.log(error)
+        throw new CustomError(error.message, 500)
+      }
     }
   },
   CustomerAccount: {
@@ -1033,7 +1101,10 @@ const customerResolver = {
         const findBucket = await Bucket.findById(bucket)
         if(!findBucket) throw new CustomError('Bucket not found',404)
 
-        const newCallfile = new Callfile({name: callfile, bucket: findBucket._id, totalAccounts: input.length || 0})
+        const callfilePrincipal = input.map(x=> x.principal_os).reduce((t,v)=> t+v)
+        const callfileOB = input.map(x=> x.total_os).reduce((t,v)=> t+v)
+
+        const newCallfile = new Callfile({name: callfile, bucket: findBucket._id, totalAccounts: input.length || 0,totalPrincipal: callfilePrincipal || 0,totalOB: callfileOB})
 
         await Promise.all(input.map(async (element) => {
           const contact_no = []

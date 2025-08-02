@@ -12,6 +12,7 @@ type Callfile = {
   name: string
   totalAccounts: number
   totalPrincipal: number
+  totalOB: number
 }
 
 type ComponentsProps = {

@@ -30,6 +30,7 @@ type Result = {
   target: number
   collected: number
   uncontactable: number
+  principal: number
   OB: number
 }
 
@@ -81,6 +82,7 @@ const GET_CALLFILES = gql`
         target
         collected
         uncontactable
+        principal
         OB
       }
       count
@@ -333,7 +335,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
 
   if(downloadCallfilesLoading || deleteLoading || finishingLoading || loading) return <Loading/>
 
-  const labels = ['Name','Bucket','Date','Endo','Work Days','Accounts','Unworkable','Connected','OB','Target','Collected','Status','Finished By','Action']
+  const labels = ['Name','Bucket','Date','Endo','Work Days','Accounts','Unworkable','Connected','OB','Principal','Target','Collected','Status','Finished By','Action']
 
   return (
     <>
@@ -373,6 +375,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
                     <td>{res.uncontactable || 0}</td>
                     <td>{res.connected}</td>
                     <td>{res.OB.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</td>
+                    <td>{res.principal.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</td>
                     <td>{res.target.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</td>
                     <td>{res.collected.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</td>
                     <td>{status}</td>

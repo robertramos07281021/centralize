@@ -208,8 +208,8 @@ const customerTypeDefs = gql`
     ptp: Float,
     pk: Float,
     paid: Float,
-
   }
+
   type AomReportsResult {
     campaign: ID
   }
@@ -239,6 +239,7 @@ const customerTypeDefs = gql`
     accountsCount:Int
     getMonthlyTarget:[MonthlyTarget]
     getMonthlyPerformance:[PerformanceStatistic]
+    customerOtherAccounts(caId:ID):[Search]
     # getAomReports(input:AomReport):[]
   }
 

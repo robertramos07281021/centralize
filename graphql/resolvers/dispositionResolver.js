@@ -195,7 +195,7 @@ const dispositionResolver = {
                     name: { $first: "$dispotype.name" },
                     code: { $first: "$dispotype.code" },
                     status: { $first: "$dispotype.status" },
-                    amount: { $sum: "$out_standing_details.total_balance" },
+                    amount: { $sum: "$out_standing_details.principal_os" },
                     count: { $sum: 1 }
                   }
                 },

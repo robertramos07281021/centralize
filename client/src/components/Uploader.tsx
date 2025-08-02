@@ -107,8 +107,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             balance
           } = row
 
-          
-          function normalizeContact(contact:number) {
+          function normalizeContact(contact:string) {
             const cleaned = contact.toString().trim().replace(/[+\-\s()]/g, '');
             const metroManila = /^2\d{7,8}$/;
             const fiveDigitAreaCodes = /^(8822|8842)\d{5}$/;
@@ -151,6 +150,8 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             }
           };
 
+      
+
           const rows:Data = {
             ...row,
             interest_os: Number(interest_os) || 0,
@@ -161,7 +162,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             dst_fee_os: Number(dst_fee_os) || 0,
             balance: Number(balance) || 0,
             total_os: Number(total_os) || 0,
-            contact: contact ? normalizeContact(Number(contact)).toString().trim() : "",
+            contact: contact ? normalizeContact(contact).toString().trim() : "",
             max_dpd: Number.isFinite(dpd) ? Math.ceil(dpd) : Math.ceil(max_dpd) || 0,
             mpd: Math.ceil(mpd) || 0,
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
@@ -169,7 +170,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           }
           
           if(emergencyContactMobile) {
-            rows['emergencyContactMobile'] = normalizeContact(Number(emergencyContactMobile))
+            rows['emergencyContactMobile'] = normalizeContact(emergencyContactMobile)
           }
           if(platform_user_id) {
             rows['platform_user_id'] = platform_user_id.toString().trim()
@@ -192,11 +193,11 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           }
 
           if(contact_2) {
-            rows['contact_2'] = normalizeContact(Number(contact_2)).toString().trim()
+            rows['contact_2'] = normalizeContact(contact_2).toString().trim()
           }
 
           if(contact_3) {
-            rows['contact_3'] = normalizeContact(Number(contact_3)).toString().trim()
+            rows['contact_3'] = normalizeContact(contact_3).toString().trim()
           }
           return {
           ...rows
@@ -211,6 +212,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     }
   }, []);
 
+    console.log(excelData)
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [], 

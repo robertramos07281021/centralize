@@ -33,6 +33,9 @@ const callFileSchema = new Schema(
     },
     totalPrincipal: {
       type: Number
+    },
+    totalOB: {
+      type: Number
     }
   },
   { timestamps: true }
@@ -42,7 +45,7 @@ callFileSchema.post('findOneAndDelete',async(data) => {
   try {
     if(data) {
       const accounts = await CustomerAccount.find({callfile: data._id})
-      const customerIds = accounts.map(acc => acc.customer);
+      const customerIds = accounts.map(acc => new mongoose.Types.ObjectId(acc.customer));
       await Customer.deleteMany({ _id: { $in: customerIds } });
       await CustomerAccount.deleteMany({ callfile: data._id });
     }

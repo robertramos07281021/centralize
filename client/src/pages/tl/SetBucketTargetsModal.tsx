@@ -96,7 +96,6 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
       <div className="w-2/8 h-1/2 border border-slate-300 rounded-xl overflow-hidden bg-white flex flex-col  shadow-md shadow-black/20">
         <h1 className="py-1 text-2xl px-3 bg-orange-500 text-white font-bold ">Set Targets</h1>
         <div className="h-full w-full flex flex-col items-center justify-center gap-5">
-
           {
             length &&
             <label className="flex flex-col w-2/3">
@@ -121,7 +120,6 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
               </select>
             </label>
           }
-
           <label className="flex flex-col w-2/3">
             <p className="text-sm font-bold text-gray-500">Daily:</p>
             <input type="text" 

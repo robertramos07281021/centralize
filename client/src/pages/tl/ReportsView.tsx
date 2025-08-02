@@ -24,6 +24,7 @@ const GET_DISPOSITION_REPORTS = gql`
         totalAccounts
         totalPrincipal
         name
+        totalOB
       }
       toolsDispoCount {
         call_method
@@ -44,6 +45,7 @@ type Callfile = {
   name: string
   totalAccounts: number
   totalPrincipal: number
+  totalOB: number
 }
 
 type RFD = {
@@ -130,7 +132,7 @@ const ReportsView:React.FC<Props> = ({search}) => {
   const emailMethod = reportsData?.getDispositionReports?.toolsDispoCount?.find(x=> x.call_method === 'email')?.dispositions || []
   const skipMethod = reportsData?.getDispositionReports?.toolsDispoCount?.find(x=> x.call_method === 'skip')?.dispositions || []
   const totalAccounts = reportsData && reportsData?.getDispositionReports?.callfile?.totalAccounts || 0
-  const callfile = reportsData?.getDispositionReports?.callfile || {_id: "", name: "", totalAccounts: 0, totalPrincipal: 0}
+  const callfile = reportsData?.getDispositionReports?.callfile || {_id: "", name: "", totalAccounts: 0, totalPrincipal: 0, totalOB: 0}
   const RFD = reportsData?.getDispositionReports?.RFD || []
 
   if(reportLoading) return <Loading/>
@@ -182,8 +184,6 @@ const ReportsView:React.FC<Props> = ({search}) => {
             skipMethod.length > 0 &&
             <ReportsTables totalAccounts={totalAccounts} dispo={skipMethod} firstTitle="Skip Status" secondTitle="Skip Response" color="cyan"/>
           }
-
-          
 
           <RFDReportTables RFD={RFD}/>
           

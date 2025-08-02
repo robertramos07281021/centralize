@@ -28,6 +28,7 @@ const callfileTypeDefs = gql`
     accounts: Int
     connected: Int
     target: Float
+    principal: Float
     collected: Float
     OB: Float
   }

@@ -121,13 +121,10 @@ const UPDATE_RPC = gql`
       success
     }
   }
-
 `
 
   const SearchResult = memo(({ data, search, onClick }: { data: Search[], search: string, onClick: (c: Search) => void }) => 
   {
-
-    
     return (
     <>
       {data.slice(0, 50).map((customer) => (
@@ -136,15 +133,19 @@ const UPDATE_RPC = gql`
       className="flex flex-col text-sm cursor-pointer hover:bg-slate-100 py-0.5"
       onClick={() => onClick(customer)}
       >
-        <div
-          className="px-2 font-medium text-slate-600 uppercase"
-          dangerouslySetInnerHTML={{
-            __html: customer.customer_info.fullName.replace(
-              new RegExp(search, "gi"),
-              (match) => `<mark>${match}</mark>`
-            ),
-          }}
-        />
+        <div>
+
+          <div
+            className="px-2 font-medium text-slate-600 uppercase block"
+            dangerouslySetInnerHTML={{
+              __html: customer.customer_info.fullName.replace(
+                new RegExp(search, "gi"),
+                (match) => `<mark>${match}</mark> - <span>`
+              ),
+            }}
+          />
+          <p className="px-2 text-slate-500 text-xs font-bold">Balance: {customer.balance.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</p>
+        </div>
         <div className="text-slate-500 text-xs px-2">
           <span>{customer.customer_info.dob}, </span>
           {customer.customer_info.contact_no.map((num, i) => <span key={i}>{num}, </span>)}
@@ -337,9 +338,8 @@ const CustomerDisposition = () => {
     } else {
       setIsRPCToday(false)
     }
-    
   },[selectedCustomer])
-
+  
   const [updateRPC] = useMutation<{updateRPC:{success: boolean, message: string, customer:CustomerRegistered}}>(UPDATE_RPC,{
     onCompleted: async(res)=> {
       dispatch(setSuccess({
@@ -437,7 +437,6 @@ const CustomerDisposition = () => {
                     return ""
                   }
                 })()
-
               }
             />
             <FieldListDisplay label="Mobile No." values={selectedCustomer?.customer_info?.contact_no} fallbackHeight="h-10"/>

@@ -57,6 +57,7 @@ const dispositionTypeDefs = gql`
     name: String
     totalPrincipal:Float
     totalAccounts: Int
+    totalOB: Float
   }
 
   type RFD {
