@@ -990,8 +990,8 @@ const customerResolver = {
     customerOtherAccounts: async(_,{caId})=> {
   
       try {
-        console.log(caId)
-        // if(!caId) return null
+     
+        if(!caId) return null
 
         const findCustomerAccount = await CustomerAccount.aggregate([
           {
@@ -1010,7 +1010,6 @@ const customerResolver = {
           { 
             $unwind: { path: "$ac", preserveNullAndEmptyArrays: true } 
           },
-
         ])
 
         const {callfile, ac, _id } = findCustomerAccount[0]
@@ -1034,6 +1033,17 @@ const customerResolver = {
             $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
           },
           {
+            $lookup: {
+              from: "buckets",
+              localField: "bucket",
+              foreignField: "_id",
+              as: "account_bucket",
+            },
+          },
+          { 
+            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          },
+          {
             $match: {
               "customer_info.platform_customer_id": {$eq: ac.platform_customer_id}
             }
@@ -1051,7 +1061,6 @@ const customerResolver = {
         return otherCustomer
 
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

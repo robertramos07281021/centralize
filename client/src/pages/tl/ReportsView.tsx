@@ -5,6 +5,7 @@ import CallDoughnut from "./CallDoughnut";
 import CallReportTables from "./CallReportTables";
 import RFDReportTables from "./RFDReportTables";
 import ReportsTables from "./ReportsTables";
+import { useLocation } from "react-router-dom";
 
 const GET_DISPOSITION_REPORTS = gql`
   query GetDispositionReports($reports:SearchDispoReports) {
@@ -109,7 +110,7 @@ type Props = {
 }
 
 const ReportsView:React.FC<Props> = ({search}) => {
-
+  const location = useLocation()
   const [searchFilter, setSearchFilter] = useState<SearchFilter>()
 
   useEffect(()=> {
@@ -122,9 +123,12 @@ const ReportsView:React.FC<Props> = ({search}) => {
     })
   },[search])
 
+  const isReporting = location.pathname !== '/tl-reports'
+
   const {data:reportsData, loading:reportLoading} = useQuery<{getDispositionReports:Reports}>(GET_DISPOSITION_REPORTS,{
     variables: { reports: searchFilter },
     fetchPolicy: 'network-only',
+    skip: isReporting
   })
 
   const callMethod = reportsData?.getDispositionReports?.toolsDispoCount?.find(x=> x.call_method === 'calls')?.dispositions || []
@@ -184,8 +188,10 @@ const ReportsView:React.FC<Props> = ({search}) => {
             skipMethod.length > 0 &&
             <ReportsTables totalAccounts={totalAccounts} dispo={skipMethod} firstTitle="Skip Status" secondTitle="Skip Response" color="cyan"/>
           }
-
-          <RFDReportTables RFD={RFD}/>
+          {
+            RFD.length > 0 &&
+            <RFDReportTables RFD={RFD}/>
+          }
           
         </div>
       </div>

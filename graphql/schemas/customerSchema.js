@@ -73,6 +73,7 @@ const customerTypeDefs = gql`
     dst_fee_os: Float
     total_os: Float
     waive_fee_os: Float
+    late_charge_waive_fee_os: Float
   }
 
   type grassDetails {

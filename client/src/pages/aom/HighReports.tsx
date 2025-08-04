@@ -3,8 +3,9 @@ import { ChartOptions } from "chart.js"
 import { useEffect, useMemo, useState } from "react"
 import { Doughnut } from "react-chartjs-2"
 import ReportsView from "./ReportsView"
-import { useAppDispatch } from "../../redux/store"
+import { RootState, useAppDispatch } from "../../redux/store"
 import { setServerError } from "../../redux/slices/authSlice"
+import { useSelector } from "react-redux"
 
 // type DispoType = {
 //   id:string
@@ -94,12 +95,14 @@ const MONTHLY_PERFORMANCE = gql`
 
 const HighReports:React.FC<modalProps> = ({setCampaign, reportsVariables, setReportVariables}) => {
   const dispatch = useAppDispatch()
-  const {data:aomDeptData, error:aomDeptError} = useQuery<{getAomDept:AomDept[]}>(GET_AOM_DEPT)
+  const {userLogged} = useSelector((state:RootState)=> state.auth)
+
+  const {data:aomDeptData, error:aomDeptError} = useQuery<{getAomDept:AomDept[]}>(GET_AOM_DEPT,{skip: userLogged.type !== "AOM"})
   // const {data:dispoTypes} = useQuery<{getDispositionTypes:DispoType[]}>(GET_DISPOSITION_TYPES) 
-  const {data:monthlyPerformance, error:monthlyPerError} = useQuery<{getMonthlyPerformance: PerformanceStatistic[]}>(MONTHLY_PERFORMANCE)
+  const {data:monthlyPerformance, error:monthlyPerError} = useQuery<{getMonthlyPerformance: PerformanceStatistic[]}>(MONTHLY_PERFORMANCE,{skip: userLogged.type !== "AOM"})
   const [searchAnimation, setSearchAnimation] = useState<boolean>(false)
   const [animation, setAnimation] = useState(false)
-
+  
   useEffect(()=> {
     if(aomDeptError || monthlyPerError){
       dispatch(setServerError(true))

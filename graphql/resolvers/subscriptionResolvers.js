@@ -1,4 +1,4 @@
-// import { PUBSUB_EVENTS } from "../../middlewares/pubsubEvents.js"
+
 
 const subscriptionsResolver = {
   Subscription: {
@@ -39,7 +39,7 @@ const subscriptionsResolver = {
     },
     updateOnCallfiles: {
       subscribe:(_, __, { pubsub, PUBSUB_EVENTS }) =>  {
-        return pubsub.asyncIterableIterator([PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE])
+        return pubsub.asyncIterableIterator([PUBSUB_EVENTS.FINISHED_CALLFILE])
       }
     },
     taskChanging: {

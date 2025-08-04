@@ -4,6 +4,7 @@ import gql from "graphql-tag"
 import { useQuery } from "@apollo/client"
 import { Search } from "../middleware/types"
 import { useState } from "react"
+import OtherAccountsViews from "./OtherAccountsViews"
 
 
 
@@ -52,6 +53,7 @@ const OTHER_ACCOUNTS = gql`
         dst_fee_os
         waive_fee_os
         total_os
+        late_charge_waive_fee_os
       }
       grass_details {
         grass_region
@@ -102,93 +104,23 @@ const FieldsDiv = ({label, value, endorsementDate}:{label:string, value:string |
   )
 }
 
-
-
-
-
 const AccountInfo = () => {
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const [showAccounts, setShowAccounts] = useState<boolean>(false)
   const {data} = useQuery<{customerOtherAccounts:Search[]}>(OTHER_ACCOUNTS,{variables: {caId: selectedCustomer?._id}, skip: selectedCustomer._id === ""})
   
   return (
-
     <>
-    {
-      showAccounts &&
-      <div className="w-full h-full z-50 absolute top-0 left-0 bg-black/50 backdrop-blur-[2px] flex items-center justify-center" >
-          <div className={`w-1/3 bg-white h-3/5 border border-slate-500 rounded-lg flex`}>
-          <div>
-            <div>
-              <h1>Case ID: </h1>
-              <p></p>
-            </div>
-            <div>
-              <h1>Credit ID: </h1>
-              <p></p>
-            </div>
-            <div>
-              <h1>Account ID: </h1>
-              <p></p>
-            </div>
-            <div>
-              <h1>DPD: </h1>
-              <p></p>
-            </div>
-            <div>
-              <h1>MPD: </h1>
-              <p></p>
-            </div>
-            <div>
-              <h1>Endorsement Date: </h1>
-              <p></p>
-            </div>
-            <div>
-              <h1>Bill Due Date: </h1>
-              <p></p>
-            </div>
-          </div>
-          <div>
-            <div>
-              <h1>Princial OS: </h1>
-              <p></p>
-            </div>
-            <div>
-              <h1>Interest OS: </h1>
-              <p></p>
-            </div>
-            <div>
-              <h1>Admin Fee OS: </h1>
-              <p></p>
-            </div>
-            <div>
-              <h1>Late Charge OS: </h1>
-              <p></p>
-            </div>
-            <div>
-              <h1>DST Fee OS: </h1>
-              <p></p>
-            </div>
-            <div>
-              <h1>Txn Fee OS: </h1>
-              <p></p>
-            </div>
-            <div>
-              <h1>Late Charge Waive Fee OS: </h1>
-              <p></p>
-            </div>
-          </div>
-        </div>
-      </div>
-    }
-    
+      {
+        showAccounts &&
+        <OtherAccountsViews others={data?.customerOtherAccounts || []} close={()=> setShowAccounts(false)}/>
+      }
       <div className="p-4 flex flex-col">
         { data && data?.customerOtherAccounts?.length > 0 &&
           <div className="flex justify-end">
-            <button className=" px-2 py-1.5 rounded-md bg-green-400 text-slate-800 font-medium" onClick={()=> setShowAccounts(true)}>Other Accounts</button>
+            <button className=" px-2 py-1.5 rounded-md bg-green-400 text-slate-800 font-medium cursor-pointer hover:bg-green-600 hover:text-white" onClick={()=> setShowAccounts(true)}>Other Accounts</button>
           </div>
         }
-        
         <h1 className="text-center font-bold text-slate-600 xl:text-base 2xl:text-lg mb-5">Account Information</h1>
         <div className="flex xl:gap-10 gap-2 justify-center ">
           <div className="flex flex-col gap-2  w-full">
@@ -231,7 +163,27 @@ const AccountInfo = () => {
             </div>
           </div>
         </div>
+        {
+          data && data?.customerOtherAccounts?.length > 0 && 
+          (()=> {
+            const sumofOtherOB = data?.customerOtherAccounts.map(x=> x.out_standing_details.total_os).reduce((t,v)=> t+v) + selectedCustomer.out_standing_details.total_os
 
+            const sumofOtherPrincipal = data.customerOtherAccounts.map(x=> x.out_standing_details.principal_os).reduce((t,v)=> t+v) + selectedCustomer.out_standing_details.principal_os
+
+            return (
+              <div className="mt-5 flex justify-center gap-5 text-slate-500">
+                <div>
+                  <h1 className="font-medium 2xl:text-lg lg:text-base">Customer Total OB</h1>
+                  <div className="min-w-45 p-2 border border-slate-500 rounded-md">{sumofOtherOB.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</div>
+                </div>
+                <div>
+                  <h1 className="font-medium 2xl:text-lg lg:text-base">Customer Total Principal</h1>
+                  <div className="min-w-45 p-2 border border-slate-500 rounded-md">{sumofOtherPrincipal.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</div>
+                </div>
+              </div>
+            )
+          })()
+        }
       </div>
     </>
   )

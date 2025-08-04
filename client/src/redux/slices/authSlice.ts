@@ -127,6 +127,7 @@ const initialState:UserState = {
       mobile: ""
     },
     out_standing_details: {
+      late_charge_waive_fee_os: 0,
       principal_os: 0,
       interest_os: 0,
       admin_fee_os: 0,
@@ -230,7 +231,8 @@ const authSlice = createSlice({
           late_charge_os: 0,
           dst_fee_os: 0,
           total_os: 0,
-          waive_fee_os: 0
+          waive_fee_os: 0,
+          late_charge_waive_fee_os: 0
         },
         grass_details: {
           grass_region: "",
@@ -292,7 +294,8 @@ const authSlice = createSlice({
           late_charge_os: 0,
           dst_fee_os: 0,
           total_os: 0,
-          waive_fee_os: 0
+          waive_fee_os: 0,
+          late_charge_waive_fee_os: 0
         },
         grass_details: {
           grass_region: "",

@@ -84,6 +84,7 @@ type outStandingDetails = {
   dst_fee_os: number
   total_os: number
   waive_fee_os: number
+  late_charge_waive_fee_os: number
 }
 
 type grassDetails = {

@@ -849,10 +849,10 @@ const callfileResolver = {
 
         if(!finishedCallfile) throw new CustomError("Callfile not found",404) 
 
-        await pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
+        await pubsub.publish(PUBSUB_EVENTS.FINISHED_CALLFILE, {
           updateOnCallfiles: {
             bucket: finishedCallfile.bucket ,
-            message: PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE
+            message: PUBSUB_EVENTS.FINISHED_CALLFILE
           },
         });
 

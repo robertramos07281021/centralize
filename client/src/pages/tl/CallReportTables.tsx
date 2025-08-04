@@ -23,16 +23,17 @@ type ComponentsProps = {
 
 const CallReportTables:React.FC<ComponentsProps> = ({totalAccounts, reportsData, callfile}) => {
 
-
+  const allAccountsReportDataCount = reportsData.map(x=> x.count).reduce((t,v) => t + v)
+  const allAccountsReportDataAmount = reportsData.map(x=> x.amount).reduce((t,v) => t + v)
+  
   const positive = ['PTP','FFUP','UNEG','RTP','PAID','DISP','LM','HUP','WN']
   
   const positiveCalls = reportsData && reportsData.length > 0 ? reportsData?.filter(x=> positive.includes(x.code)) : []
   const negativeCalls = reportsData && reportsData?.length > 0 ? reportsData?.filter(x=> !positive.includes(x.code)) : []
-
-
+  const negativeTotalPrincipal = callfile.totalPrincipal - positiveCalls.map(x=> x.amount).reduce((t,v) => t + v) 
   const filteredPositive = positiveCalls.length > 0 ? positiveCalls?.map(y=> y.count)?.reduce((t,v)=> t + v) : []
-  const filteredNegative = negativeCalls.length > 0 ? negativeCalls?.map(y=> y.count)?.reduce((t,v)=> t + v) : []
 
+  const totalNegativeCount = totalAccounts - Number(filteredPositive)
 
   return (
     <>
@@ -124,10 +125,8 @@ const CallReportTables:React.FC<ComponentsProps> = ({totalAccounts, reportsData,
           </tr>    
             {
             negativeCalls?.map((x,index) => {
-              const reducerNegativeCallsAmount = negativeCalls.length > 0 ? negativeCalls.map(x=> x.amount).reduce((t,v)=> t + v) : 0
-              const reducerNegativeCallsCount = negativeCalls.length > 0 ? negativeCalls.map(y=> y.count).reduce((t,v)=> t + v) : 0
-              const principalPercent = (x.amount / reducerNegativeCallsAmount) * 100
-              const countPersent = (Number(x.count) / Number(reducerNegativeCallsCount)) * 100
+              const principalPercent = (x.amount / negativeTotalPrincipal) * 100
+              const countPersent = (Number(x.count) / Number(totalNegativeCount)) * 100
               return (
                 <tr key={index}>
                   <td className="border border-black">{x.name}</td>
@@ -139,11 +138,18 @@ const CallReportTables:React.FC<ComponentsProps> = ({totalAccounts, reportsData,
               )
             })
           }
+          <tr>
+            <td className="border border-black">NO DISPOSITION</td>
+            <td className="border border-black">{totalAccounts - Number(allAccountsReportDataCount)}</td>
+            <td className="border border-black">{(((totalAccounts - Number(allAccountsReportDataCount)) / totalNegativeCount) * 100).toFixed(2) }%</td>
+            <td className="border border-black">{((callfile.totalPrincipal - Number(allAccountsReportDataAmount))).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) }</td>
+            <td className="border border-black">{(((callfile.totalPrincipal - Number(allAccountsReportDataAmount)) / negativeTotalPrincipal) * 100).toFixed(2)}%</td>
+          </tr>
           <tr className="font-medium">
             <th className="border border-black bg-green-600 text-white">Total</th>
-            <td className="border border-black">{filteredNegative}</td>
+            <td className="border border-black">{totalNegativeCount}</td>
             <td className="border border-black">100%</td>
-            <td className="border border-black">{negativeCalls.length ? negativeCalls?.map(x=> x.amount)?.reduce((t,v)=> t + v ).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) : 0}</td>
+            <td className="border border-black">{negativeTotalPrincipal.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) || 0}</td>
             <td className="border border-black">100%</td>
           </tr>
         </tbody>

@@ -36,7 +36,7 @@ const ProductionManagerView = () => {
   const [callfileBucket, setCallfileBucket] = useState<string>("")
   const [required, setRequired] = useState(false)
   const [page, setPage] = useState<string>("1")
-  const [status, setStatus] = useState<Status>(Status.all)
+  const [status, setStatus] = useState<Status>(Status.active)
   const [totalPage, setTotalPage] = useState<number>(1)
   const [canUpload, setCanUpload] = useState<boolean>(false)
   const [successUploading, setSuccessUploading] = useState<boolean>(false)
@@ -135,10 +135,9 @@ const ProductionManagerView = () => {
           <div className="w-1/2 flex flex-col gap-2">
             <h1 className="lg:text-sm 2xl:text-sm font-medium text-gray-600 text-center">{ canUpload && "Uploader"}</h1>
             <div className=" h-full flex items-end">
-              <Uploader width="w-full" bucket={bucketObject[callfileBucket]} bucketRequired={(e:boolean)=> setRequired(e)} onSuccess={()=> setCallfileBucket("")} canUpload={canUpload} successUpload={()=> setSuccessUploading(true)}/>
+              <Uploader width="w-full" bucket={bucketObject[callfileBucket]} bucketRequired={(e:boolean)=> setRequired(e)} onSuccess={()=> setCallfileBucket(bucketData &&  bucketData?.getTLBucket?.length > 0 ?  bucketData?.getTLBucket[0].name.toUpperCase() : "")} canUpload={canUpload} successUpload={()=> setSuccessUploading(true)}/>
             </div>
           </div>
-          
         </div>
         
         <CallfilesViews bucket={bucketObject[callfileBucket]} status={status} setTotalPage={(e)=> setTotalPage(e)} setCanUpload={(e)=> setCanUpload(e)} successUpload={successUploading} setUploading={()=> setSuccessUploading(false)}/>

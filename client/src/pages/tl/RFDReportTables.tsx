@@ -38,7 +38,7 @@ const RFDReportTables:React.FC<ComponentProp> = ({RFD}) => {
           }
           <tr className="font-medium">
             <td className="border border-black bg-green-600 text-white">Total</td>
-            <td className="border border-black">{RFD?.filter(x=> x._id !== null)?.map(x=> x.count)?.reduce((t,v)=> t + v)}</td>
+            <td className="border border-black">{RFD.length > 0 ?  RFD?.filter(x=> x._id !== null)?.map(x=> x.count)?.reduce((t,v)=> t + v) : 0}</td>
             <td className="border border-black">100%</td>
           </tr>
       </tbody>

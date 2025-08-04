@@ -8,6 +8,7 @@ import React, { useEffect, useState } from "react";
 import Confirmation from "../../components/Confirmation";
 import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import Loading from "../Loading";
+import { useLocation } from "react-router-dom";
 
 type Finished = {
   name: string
@@ -113,6 +114,7 @@ const UPDATE_ON_CALLFILES = gql`
     }
   }
 `
+
 const NEW_UPLOADED_CALLFILE = gql`
   subscription newCallfile {
     newCallfile {
@@ -146,6 +148,10 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   const {limit, productionManagerPage,userLogged } = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const client = useApolloClient()
+  const location = useLocation()
+
+  const isProductionManager = location.pathname !== '/tl-production-manager'
+
   const {data, refetch,loading} = useQuery<{getCallfiles:CallFilesResult}>(GET_CALLFILES,{
     variables: {
       bucket,
@@ -153,14 +159,13 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       limit,
       page: productionManagerPage
     },
-    notifyOnNetworkStatusChange: true,
-    context: { queryDeduplication: false }
+    skip: isProductionManager,
   })
 
   const {data:deptBucket} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
 
   useEffect(()=> {
-    if(bucket?.length > 0) {
+    if(bucket) {
       const timer = setTimeout(async()=> {
         try {
           await refetch()
@@ -182,8 +187,8 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
               success: true,
               message: "File successfully uploaded"
             }))
+            setUploading()
           }
-          setUploading()
         } catch (error) {
           dispatch(setServerError(true)) 
         }
@@ -191,6 +196,15 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       return () => clearTimeout(timer)
     }
   },[successUpload])
+
+  useEffect(()=> {
+    if(status) {
+      const timer = setTimeout(async()=> {
+        await refetch()
+      })
+      return () => clearTimeout(timer)
+    }
+  },[status])
 
   const [downloadCallfiles, {loading:downloadCallfilesLoading}] = useLazyQuery(GET_CSV_FILES)
 
@@ -209,7 +223,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   useSubscription<{updateOnCallfiles:SubSuccess}>(UPDATE_ON_CALLFILES,{
     onData: ({data})=> {
       if(data){
-        if(data.data?.updateOnCallfiles?.message === "SOMETHING_NEW_ON_CALLFILE" && userLogged.buckets.toString().includes(data.data?.updateOnCallfiles?.bucket)) {
+        if(data.data?.updateOnCallfiles?.message === "FINISHED_CALLFILE" && userLogged.buckets.toString().includes(data.data?.updateOnCallfiles?.bucket)) {
           client.refetchQueries({
             include: ['getCallfiles']
           })

@@ -118,8 +118,10 @@ const dispositionResolver = {
     },
     getDispositionReports: async(_,{reports}) => {
       try {
-        const {agent , disposition, from, to, callfile } = reports
 
+        
+        const {agent , disposition, from, to, callfile } = reports
+console.log(agent)
         const [
           agentUser,
           findDispositions] = await Promise.all([
@@ -132,7 +134,7 @@ const dispositionResolver = {
         
         const dispoTypesIds = disposition.length > 0 ? findDispositions.map((dt)=> new mongoose.Types.ObjectId(dt._id)) : []
         
-        const query = {}
+        const query = {current_disposition: {$exists: true}}
         
         if(agent) {
           query['user'] = new mongoose.Types.ObjectId(agentUser._id)
@@ -153,12 +155,12 @@ const dispositionResolver = {
           query['callfile'] = new Types.ObjectId(callfile);
           call = await Callfile.findById(callfile).lean().populate('bucket')
         } 
-    
-        const dispositionReport = await CustomerAccount.aggregate([
-          { $match: query },
+        
+        const checking = await CustomerAccount.aggregate([
           {
             $match: {
-              $expr: {$gt: [{$size: "$history"},0]}
+              callfile: {$eq: new mongoose.Types.ObjectId('688acb79f6fc373dae5da16e')},
+              current_disposition: {$exists: true}
             }
           },
           {
@@ -183,6 +185,105 @@ const dispositionResolver = {
           {
             $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
           },
+         {
+            $group: {
+              _id: {
+                callMethod: '$cd.contact_method',
+                dispoId: '$dispotype._id'
+              },
+              name: { $first: "$dispotype.name" },
+              code: { $first: "$dispotype.code" },
+              status: { $first: "$dispotype.status" },
+              amount: { $sum: "$out_standing_details.principal_os" },
+              count: { $sum: 1 }
+            }
+          },
+               {
+                  $sort: {
+                    status: 1,
+                    count: -1
+                  }
+                },
+                              {
+                  $group: {
+                    _id: '$_id.callMethod',
+                    dispositions: {
+                      $push: {
+                        _id: '$_id.dispoId',
+                        name: '$name',
+                        code: '$code',
+                        status: '$status',
+                        amount: '$amount',
+                        count: '$count'
+                      }
+                    }
+                  }
+                },
+        ])
+
+     
+        console.log(checking)
+      
+        const dispositionReport = await CustomerAccount.aggregate([
+          { $match: query },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "current_disposition",
+              foreignField: "_id",
+              as: "cd"
+            }
+          },
+          {
+            $unwind: { path: "$cd", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "cd.disposition",
+              foreignField: "_id",
+              as: "dispotype"
+            }
+          },
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+          },
+          // {
+          //   $group: {
+          //     _id: {
+          //       callMethod: '$cd.contact_method',
+          //       dispoId: '$dispotype._id'
+          //     },
+          //     name: { $first: "$dispotype.name" },
+          //     code: { $first: "$dispotype.code" },
+          //     status: { $first: "$dispotype.status" },
+          //     amount: { $sum: "$out_standing_details.principal_os" },
+          //     count: { $sum: 1 }
+          //   }
+          // },
+              //  {
+              //     $sort: {
+              //       status: 1,
+              //       count: -1
+              //     }
+              //   },
+                //               {
+                //   $group: {
+                //     _id: '$_id.callMethod',
+                //     dispositions: {
+                //       $push: {
+                //         _id: '$_id.dispoId',
+                //         name: '$name',
+                //         code: '$code',
+                //         status: '$status',
+                //         amount: '$amount',
+                //         count: '$count'
+                //       }
+                //     }
+                //   }
+                // },
+
+
           {
             $facet: {
               toolsDispoCount: [
@@ -199,12 +300,12 @@ const dispositionResolver = {
                     count: { $sum: 1 }
                   }
                 },
-                {
-                  $sort: {
-                    status: 1,
-                    count: -1
-                  }
-                },
+                // {
+                //   $sort: {
+                //     status: 1,
+                //     count: -1
+                //   }
+                // },
                 {
                   $group: {
                     _id: '$_id.callMethod',
@@ -250,9 +351,11 @@ const dispositionResolver = {
             }
           }
         ])
+        // console.log(dispositionReport[0].toolsDispoCount)
 
         const toolsDispoCount = dispositionReport[0].toolsDispoCount
         const RFDS = dispositionReport[0].RFDCounts
+
         return { 
           agent: agent ? agentUser : null, 
           bucket: call?.bucket?.name ?? "" ,
@@ -261,7 +364,6 @@ const dispositionResolver = {
           toolsDispoCount: toolsDispoCount,
         }
       } catch (error) {
-
         throw new CustomError(error.message, 500)
       }
     },

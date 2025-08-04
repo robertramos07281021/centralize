@@ -162,6 +162,7 @@ const userResolvers = {
           {
             $match: {
               type: {$eq: "AGENT"},
+              active: true,
               ...filter
             }
           },

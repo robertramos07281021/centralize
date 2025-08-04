@@ -25,6 +25,7 @@ const DESELECT_TASK = gql`
     }
   }
 `
+ 
 
 const SEARCH = gql`
   query Search($search: String) {
@@ -144,12 +145,12 @@ const UPDATE_RPC = gql`
               ),
             }}
           />
-          <p className="px-2 text-slate-500 text-xs font-bold">Balance: {customer.balance.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</p>
+          <p className="px-2 text-slate-500 text-xs font-bold">Balance: {customer.balance.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })} - {customer.max_dpd}(DPD)</p>
         </div>
         <div className="text-slate-500 text-xs px-2">
           <span>{customer.customer_info.dob}, </span>
-          {customer.customer_info.contact_no.map((num, i) => <span key={i}>{num}, </span>)}
-          <span>{customer.customer_info.addresses}, </span>
+          <span>{customer.customer_info.contact_no.join(', ')}, </span>
+          <span>{customer.customer_info.addresses.join(', ')}, </span>
           <span>{customer.credit_customer_id}</span>
         </div>
       </div>
@@ -376,7 +377,6 @@ const CustomerDisposition = () => {
   return userLogged._id ? (
     <div className="h-full w-full overflow-auto outline-none" 
  
-     
     > 
       {
         (isRPCToday || isRPC) &&
@@ -397,7 +397,7 @@ const CustomerDisposition = () => {
             <div className={`flex w-full ${selectedCustomer.customer_info.isRPC ? "justify-start": "justify-end"} `}>
               {
                 selectedCustomer._id && !selectedCustomer.customer_info.isRPC &&
-                <button className={` px-10 py-1.5 rounded text-white font-bold bg-orange-400 hover:bg-orange-600 ${isUpdate ? "absolute top-5 right-5" : ""} `}onClick={handleClickRPC}>RPC</button>
+                <button className={` px-10 py-1.5 rounded text-white font-bold bg-orange-400 hover:bg-orange-600 cursor-pointer ${isUpdate ? "absolute top-5 right-5" : ""} `}onClick={handleClickRPC}>RPC</button>
               }
               {
                 selectedCustomer._id && selectedCustomer?.customer_info?.isRPC &&

@@ -1,6 +1,8 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
 import {  useMemo } from "react"
+import { useSelector } from "react-redux"
+import { RootState } from "../../redux/store"
 
 type Variables = {
   campaign: string
@@ -30,7 +32,8 @@ const GET_AOM_DEPT = gql`
 `
 
 const ReportsView:React.FC<modalProps> = ({variables}) => {
-  const {data:aomDeptData} = useQuery<{getAomDept:AomDept[]}>(GET_AOM_DEPT)
+  const {userLogged} = useSelector((state:RootState)=> state.auth)
+  const {data:aomDeptData} = useQuery<{getAomDept:AomDept[]}>(GET_AOM_DEPT,{skip: userLogged.type !== 'AOM'})
   const deptId = useMemo(()=> {
     const add = aomDeptData?.getAomDept || []
     return Object.fromEntries(add.map(e=> [e.id,e.name]))
