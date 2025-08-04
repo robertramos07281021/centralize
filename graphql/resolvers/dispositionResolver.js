@@ -239,6 +239,17 @@ console.log(agent)
           },
           {
             $lookup: {
+              from: "customers",
+              localField: "customer",
+              foreignField: "_id",
+              as: "account_customer"
+            }
+          },
+          {
+            $unwind: { path: "$cd", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $lookup: {
               from: "dispotypes",
               localField: "cd.disposition",
               foreignField: "_id",
@@ -282,8 +293,6 @@ console.log(agent)
                 //     }
                 //   }
                 // },
-
-
           {
             $facet: {
               toolsDispoCount: [
@@ -293,6 +302,7 @@ console.log(agent)
                       callMethod: '$cd.contact_method',
                       dispoId: '$dispotype._id'
                     },
+                    customer: {$first: '$account_customer.fullName'},
                     name: { $first: "$dispotype.name" },
                     code: { $first: "$dispotype.code" },
                     status: { $first: "$dispotype.status" },
@@ -312,6 +322,7 @@ console.log(agent)
                     dispositions: {
                       $push: {
                         _id: '$_id.dispoId',
+                        customer: "$customer",
                         name: '$name',
                         code: '$code',
                         status: '$status',
@@ -351,7 +362,7 @@ console.log(agent)
             }
           }
         ])
-        // console.log(dispositionReport[0].toolsDispoCount)
+        console.log(dispositionReport[0].toolsDispoCount[0].dispositions)
 
         const toolsDispoCount = dispositionReport[0].toolsDispoCount
         const RFDS = dispositionReport[0].RFDCounts
