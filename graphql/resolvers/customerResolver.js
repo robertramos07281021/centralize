@@ -11,6 +11,7 @@ import User from "../../models/user.js";
 import Department from "../../models/department.js";
 import Callfile from "../../models/callfile.js";
 import Disposition from "../../models/disposition.js";
+import Production from "../../models/production.js";
 
 const customerResolver = {
   DateTime,
@@ -1110,6 +1111,7 @@ const customerResolver = {
         const findBucket = await Bucket.findById(bucket)
         if(!findBucket) throw new CustomError('Bucket not found',404)
 
+        
         const callfilePrincipal = input.map(x=> x.principal_os).reduce((t,v)=> t+v)
         const callfileOB = input.map(x=> x.total_os).reduce((t,v)=> t+v)
 
@@ -1157,9 +1159,18 @@ const customerResolver = {
             contact_no,
           });
         
-          const paid_amount =  element.total_os - element.balance 
+          const paid_amount = element.total_os - element.balance 
+          const findAgent = User.findOne({callfile_id: {$eq: element.collectorID}})._id || null
+          if(findAgent) {
+            const findAgentProduction = Production.findOne({user: findAgent}).lean()
+            if(!findAgentProduction) {
+              Production.create({user:findAgent})
+            } else {
+              Production.findByIdAndUpdate(findAgentProduction._id,{$set: {assignedAccount: findAgentProduction.assignedAccount + 1 }})
+            }
+          }
 
-          const caResult = await CustomerAccount.create({
+          const caResult = CustomerAccount.create({
             customer: customer._id,
             bucket: findBucket._id,
             case_id: element.case_id,
@@ -1171,6 +1182,7 @@ const customerResolver = {
             balance : element.balance,
             month_pd: element.mpd,
             paid_amount,
+            assigned: findAgent,
             account_id: element.account_id ,
             out_standing_details: {
               principal_os: element.principal_os,
@@ -1195,12 +1207,13 @@ const customerResolver = {
           });
           
           customer.customer_account = caResult._id
-          await customer.save()
+          customer.save()
+
         }));
 
-        await newCallfile.save()
+        newCallfile.save()
 
-        await pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
+        pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
           newCallfile: {
             bucket: bucket,
             message: PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE

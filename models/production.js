@@ -17,6 +17,9 @@ const productionSchema = new Schema(
       },
       end: {
         type: String
+      },
+      assignedAccount: {
+        type: Number
       }
     }],
     user: {

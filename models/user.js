@@ -61,7 +61,11 @@ const userSchema = new Schema(
     },
     active: {
       type: Boolean,
-      default:true 
+      default: true 
+    },
+    reliver: {
+      type: Boolean,
+      default: false
     },
     attempt_login: {
       type: Number,

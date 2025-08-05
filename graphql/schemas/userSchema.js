@@ -81,7 +81,9 @@ const userTypeDefs = gql`
     type: String
     isOnline: Boolean
     isLock: Boolean
+    active: Boolean
     account_type: String
+    callfile_id: String
     attempt_login: Int
     callfile_id: String
     targets: Target

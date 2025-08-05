@@ -38,6 +38,7 @@ type Data = {
   scenario:string
   tagging:string 
   total_os:number
+  collectorID: string
   txn_fee_os:number
   late_charge_waive_fee_os: number
   vendor_endorsement:string
@@ -55,6 +56,7 @@ const CREATE_CUSTOMER = gql `mutation
     }
   }
 `
+
 type modalProps = {
   width: string
   bucket: string
@@ -79,9 +81,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
         const workbook = read(binaryString, { type: "binary" });
         const sheetName = workbook.SheetNames[0]; 
         const sheet = workbook.Sheets[sheetName];
-  
         const jsonData:Data[] = utils.sheet_to_json(sheet); 
-
         const dateConverting = jsonData.map((row: Data) => {
           const { 
             interest_os, 

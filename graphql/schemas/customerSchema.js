@@ -35,6 +35,7 @@ const customerTypeDefs = gql`
   principal_os: Float
   total_os: Float
   txn_fee_os: Float
+  collectorID: String
   emergencyContactName: String
   emergencyContactMobile: String
   dpd: Int

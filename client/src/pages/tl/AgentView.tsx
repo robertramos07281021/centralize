@@ -22,7 +22,9 @@ const TL_AGENT = gql`
       type
       isOnline
       isLock
+      active
       attempt_login
+      callfile_id
       buckets {
         name
       }
@@ -60,7 +62,9 @@ type TLAgent = {
   type: string
   isOnline: boolean
   isLock: boolean
+  active: boolean
   attempt_login: number
+  callfile_id: string
   buckets: Bucket[]
   departments: Department[]
   targets?: Target
@@ -120,7 +124,7 @@ const AgentView = () => {
 
   const {data: agentProdData, refetch:agentProdDataRefetch} = useQuery<{getAgentProductions:AgentProductions[]}>(AGENT_PRODUCTION)
   const [agentProduction,setAgentProduction] = useState<TLAgent[]>([])
-  
+
   useSubscription<{somethingOnAgentAccount:{buckets:string[],message: string}}>(SOMETHING_LOCK,{
     onData: ({data}) => {
       if(data) {
@@ -199,7 +203,7 @@ const AgentView = () => {
     }
   }
 
-  const onClickAction = (userId:string | null,lock: boolean,  eventMethod:keyof typeof ButtonType, attempt: number) => {
+  const onClickAction = useCallback((userId:string | null,lock: boolean,  eventMethod:keyof typeof ButtonType, attempt: number) => {
     const message = eventMethod.toLowerCase()
     if((lock && eventMethod === ButtonType.UNLOCK && attempt === 0) || eventMethod === ButtonType.SET || eventMethod === ButtonType.SET_TARGETS) {
       setIsAuthorize(true)
@@ -209,7 +213,7 @@ const AgentView = () => {
         no: ()=> {setIsAuthorize(false)}
       })
     } 
-  }
+  },[,setAuthentication,setIsAuthorize])
 
   return (
     <>
@@ -246,9 +250,10 @@ const AgentView = () => {
         </div>
 
         <div className="h-full overflow-hidden m-5 lg:text-xs 2xl:text-sm">
-          <div className="grid grid-cols-10 font-medium text-slate-500 bg-slate-100 ">
+          <div className="grid grid-cols-11 font-medium text-slate-500 bg-slate-100 ">
             <div className="px-2 py-1 flex items-center">Name</div>
             <div className="py-1 truncate flex items-center">Agent ID</div>
+            <div className="py-1 truncate flex items-center">Callfile ID</div>
             <div className="py-1 truncate flex items-center">Bucket</div>
             <div className="py-1 truncate flex items-center">Campaign</div>
             <div className="py-1 truncate flex items-center">Online</div>
@@ -269,10 +274,11 @@ const AgentView = () => {
               agentProduction.map((e) => {
                 const findAgentProd = agentProdData?.getAgentProductions.find(y=> y.user === e._id)
                 const findExsitingStatus = findAgentProd?.prod_history.find(x=> x.existing === true)
-                return e.type === "AGENT" && (
-                  <div key={e._id} className="px-2 py-1 grid grid-cols-10 lg:text-xs 2xl:text-sm text-gray-500 font-normal even:bg-slate-50 hover:bg-blue-50 last:pb-4">
+                return e.type === "AGENT" && e.active && (
+                  <div key={e._id} className="px-2 py-1 grid grid-cols-11 lg:text-xs 2xl:text-sm text-gray-500 font-normal even:bg-slate-50 hover:bg-blue-50 last:pb-4">
                     <div className="flex items-center capitalize truncate">{e.name}</div>
                     <div className="flex items-center">{e.user_id}</div>
+                    <div className="flex items-center">{e.callfile_id}</div>
                     <div className="flex items-center truncate">{e.buckets.map(e=> e.name).join(', ')}</div>
                     <div className="flex items-center truncate">{e.departments.map(e=> e.name).join(', ')}</div>
                     <div className=" flex items-center"> 
