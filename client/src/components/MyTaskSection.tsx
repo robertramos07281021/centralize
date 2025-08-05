@@ -16,6 +16,8 @@ type outStandingDetails = {
   dst_fee_os: number
   total_os: number
   waive_fee_os: number
+  late_charge_waive_fee_os:number
+  
 }
 
 type grassDetails = {
@@ -122,6 +124,7 @@ const MY_TASKS = gql`
         dst_fee_os
         total_os
         waive_fee_os
+        late_charge_waive_fee_os
       }
       grass_details {
         grass_region
@@ -197,6 +200,7 @@ const GROUP_TASKS =gql`
           dst_fee_os
           total_os
           waive_fee_os
+          late_charge_waive_fee_os
         }
         grass_details {
           grass_region
