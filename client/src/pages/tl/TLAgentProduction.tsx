@@ -117,8 +117,8 @@ const TLAgentProduction = () => {
             <div>RPC</div>
             <div>Dispo</div>
             <div>PTP</div>
-            <div>PK</div>
-            <div>PAID</div>
+            <div>K</div>
+            <div>AMOUNT COLLECTED</div>
             <div className="col-span-2">Production</div>
             <div className="flex flex-col col-span-3">
               <div className="text-center">Targets</div>
