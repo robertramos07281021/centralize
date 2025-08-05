@@ -67,6 +67,7 @@ const FIND_QUERY = gql`
         account_type
         change_password
         active
+        callfile_id
         isOnline
         buckets
         createdAt
@@ -87,6 +88,7 @@ type Users = {
   buckets: string[]
   isOnline: boolean
   isLock: boolean
+  callfile_id: string
   active: boolean
   account_type: string
   createdAt: string
@@ -162,7 +164,6 @@ const AccountsView = () => {
       no: () => {setConfirm(false)}
     })
   },[setConfirm,setModalProps])
-
 
   useEffect(()=> {
     setPage(adminUsersPage.toString())

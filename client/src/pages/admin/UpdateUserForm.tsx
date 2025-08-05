@@ -250,6 +250,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     account_type: "",
     user_id: "",
   })
+
   
   useEffect(()=> {
     if(state) {
