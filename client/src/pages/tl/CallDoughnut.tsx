@@ -60,7 +60,7 @@ const CallDoughnut:React.FC<ComponentsProps> = ({totalAccounts,dispoData}) => {
     }
   },[disposition,newReportsDispo])
 
-  const positive = ['PTP','FFUP','UNEG','RTP','PAID','DISP','LM','HUP','WN']
+  const positive = ['PTP','FFUP','UNEG','RTP','PAID','DISP','LM','HUP','WN','RPCCB']
   const [dispositionData, setDispositionData] = useState<Dispositions[]>([])
 
   const positiveCalls = dispoData && dispoData.length > 0 ? dispoData?.filter(x=> positive.includes(x.code)) : []

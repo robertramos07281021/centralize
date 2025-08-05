@@ -24,6 +24,7 @@ type Disposition = {
   id: string;
   name: string;
   code: string;
+  active: boolean;
 }
 
 const GET_DISPOSITION_TYPES = gql`
@@ -32,6 +33,7 @@ const GET_DISPOSITION_TYPES = gql`
       id
       name
       code
+      active
     }
   }
 `
@@ -520,7 +522,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                   {
                     Object.entries(dispoObject).map(([key,value])=> {
                       const findDispoName = disposition?.getDispositionTypes.find(x=> x.id === value)
-                      return (
+                      console.log(findDispoName)
+                      return findDispoName?.active && (
                         <option value={key} key={key} accessKey={Code[findDispoName?.code as keyof typeof Code]}>
                           {`${findDispoName?.name} - ${key} - "${dispoKeyCode[key] || ""}"`}
                         </option>

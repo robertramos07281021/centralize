@@ -197,7 +197,7 @@ const dispositionResolver = {
                 },
                 {
                   $sort: {
-                    status: 1,
+                    "_id:status": 1,
                     count: -1
                   }
                 },
