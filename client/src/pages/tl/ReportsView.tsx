@@ -34,7 +34,6 @@ const GET_DISPOSITION_REPORTS = gql`
           count
           amount
           code
-          _id
         }
       }
     }
@@ -56,7 +55,6 @@ type RFD = {
 
 
 type DispositionType = {
-  _id: string
   name: string
   code: string
   count: string

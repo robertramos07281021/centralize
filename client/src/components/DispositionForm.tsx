@@ -359,7 +359,6 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     if (inputValue.startsWith('00')) {
       inputValue = '0';
     }
-
     const numericValue = parseFloat(inputValue);
     const balance = selectedCustomer?.balance ?? 0;
     const amount = numericValue > balance ? balance.toFixed(2) : inputValue;
@@ -522,7 +521,6 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                   {
                     Object.entries(dispoObject).map(([key,value])=> {
                       const findDispoName = disposition?.getDispositionTypes.find(x=> x.id === value)
-                      console.log(findDispoName)
                       return findDispoName?.active && (
                         <option value={key} key={key} accessKey={Code[findDispoName?.code as keyof typeof Code]}>
                           {`${findDispoName?.name} - ${key} - "${dispoKeyCode[key] || ""}"`}
@@ -563,7 +561,12 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       id="payment"
                       required={requiredDispo.includes(selectedDispo)}
                       value={data.payment ?? ""}
-                      onChange={(e)=> handleDataChange('payment',e.target.value)}
+                      onChange={(e)=> {
+                        if(e.target.value === Payment.FULL) {
+                          setData(prev=> ({...prev, amount: selectedCustomer.balance.toFixed(2)}))
+                        }
+                        handleDataChange('payment',e.target.value)
+                      }}
                       className={`${required && !data.payment ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                       >
                         <option value="">Select Payment</option>
@@ -584,17 +587,17 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                   <select 
                     name="contact_method" 
                     id="contact_method"
-                    required
-                    
+                    required  
+             
                     value={data.contact_method ?? ""}
                     onChange={(e)=> handleDataChange('contact_method', checkIfChangeContactMethod ? existingDispo?.contact_method : e.target.value)}
                     className={`${required && !data.contact_method ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                   >
                     <option value="">Select Contact Method</option>
                     {
-                      Object.entries(AccountType).map(([key,value])=> {
+                      Object.entries(AccountType).map(([key,value],index)=> {
                         return (
-                          <option value={value} key={key} className="capitalize">{value.charAt(0).toUpperCase() + value.slice(1,value.length)}</option>
+                          <option value={value} key={key} className="capitalize" accessKey={(index+1).toString()}>{value.charAt(0).toUpperCase() + value.slice(1,value.length)} - {index + 1}</option>
                         )
                       })
                     }

@@ -279,8 +279,8 @@ const AgentView = () => {
                     <div className="flex items-center capitalize truncate">{e.name}</div>
                     <div className="flex items-center">{e.user_id}</div>
                     <div className="flex items-center">{e.callfile_id}</div>
-                    <div className="flex items-center truncate">{e.buckets.map(e=> e.name).join(', ')}</div>
-                    <div className="flex items-center truncate">{e.departments.map(e=> e.name).join(', ')}</div>
+                    <div className="flex items-center truncate pr-2">{e.buckets.map(e=> e.name).join(', ')}</div>
+                    <div className="flex items-center truncate pr-2">{e.departments.map(e=> e.name).join(', ')}</div>
                     <div className=" flex items-center"> 
                       <GoDotFill className={`${e.isOnline ? "text-green-400" : "text-slate-600"} text-2xl`} />
                     </div>
@@ -305,7 +305,6 @@ const AgentView = () => {
                         <div>
                           {e.targets?.monthly.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'})}
                         </div>
-
                       </div>
                     </div>
                     <div className="pl-2 flex gap-5">

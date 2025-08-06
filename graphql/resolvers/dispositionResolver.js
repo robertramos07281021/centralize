@@ -118,9 +118,9 @@ const dispositionResolver = {
     },
     getDispositionReports: async(_,{reports}) => {
       try {
-   
-        
+
         const {agent , disposition, from, to, callfile } = reports
+      
         const [
           agentUser,
           findDispositions] = await Promise.all([
@@ -179,7 +179,6 @@ const dispositionResolver = {
           {
             $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
           },
-          
           {
             $facet: {
               toolsDispoCount: [
@@ -197,7 +196,7 @@ const dispositionResolver = {
                 },
                 {
                   $sort: {
-                    "_id:status": 1,
+                    "_id.status": 1,
                     count: -1
                   }
                 },
@@ -258,7 +257,6 @@ const dispositionResolver = {
           toolsDispoCount: toolsDispoCount || 0,
         }
       } catch (error) {
-
         throw new CustomError(error.message, 500)
       }
     },
@@ -1752,7 +1750,8 @@ const dispositionResolver = {
     getTargetPerCampaign: async(_,__,{user}) => {
       try {
         const buckets = (await Bucket.find({_id: {$in: user.buckets}}).lean()).map(e=> new mongoose.Types.ObjectId(e._id))
-        const disposition = await DispoType.findOne({code: 'PAID'}).lean()
+        const callfiles = (await Callfile.find({bucket: {$in: user.buckets}, active: {$eq: true}})).map(e=> new mongoose.Types.ObjectId(e._id) )
+
         const customerAccount = await CustomerAccount.aggregate([
           {
             $lookup: {
@@ -1776,38 +1775,28 @@ const dispositionResolver = {
           {
             $match: {
               bucket: { $in: buckets },
-              "account_callfile.active": {$eq: true}
+              callfile: { $in: callfiles }
             }
           },
           {
             $addFields: {
-              checkPaid: {
-                $filter: {
-                  input: '$account_history',
-                  as: 'h',
-                  cond: { $eq: ['$$h.disposition', new mongoose.Types.ObjectId(disposition._id)] }
+              collectedPrincipal: {
+                $sum: {
+                  $cond: [
+                    { $eq: ['$balance',0] },
+                    "$out_standing_details.principal_os",
+                    0
+                  ]
                 }
               },
             },
           },
-          {
-            $addFields: {
-              collectedPaid: {
-                $sum: {
-                  $map: {
-                    input: '$checkPaid',
-                    as: 'paid',
-                    in: '$$paid.amount'
-                  }
-                }
-              }
-            }
-          },
+        
           {
             $group: {
               _id: "$bucket",
-              collected: { $sum: "$collectedPaid" },
-              target: { $sum:  "$out_standing_details.total_balance" }
+              collected: { $sum: "$collectedPrincipal" },
+              target: { $sum:  "$out_standing_details.principal_os" }
             }
           },
           {

@@ -88,6 +88,10 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
     "NOT READY": {
       toast: "bg-red-400",
       close: "text-red-400"
+    },
+    'NO ACTIVE CALLFILE': {
+      toast: "bg-red-400",
+      close: "text-red-400"
     }
 
 
@@ -121,6 +125,7 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
   if (messageText.includes("NOT INCLUDED")) successType = "NOT INCLUDED";
   if (messageText.includes("NOT FOUND")) successType = "NOT FOUND";
   if (messageText.includes("NOT READY")) successType = "NOT READY";
+  if (messageText.includes("NO ACTIVE CALLFILE")) successType = "NO ACTIVE CALLFILE";
 
   return (
     <div className={`${toastColor[successType].toast} min-w-96 h-13 rounded-xl border-slate-100 shadow shadow-black/20 border fixed right-5 top-20 z-50 flex items-center px-4 font-medium text-white justify-between gap-10`}>

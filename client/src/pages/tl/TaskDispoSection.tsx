@@ -183,6 +183,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
 
   const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount}>(FIND_CUSTOMER_ACCOUNTS,{variables: {query: query},skip: !query.selectedBucket})
 
+  
   const debouncedSearch = useMemo(() => {
     return debounce(async(val: CADQueryValue) => {
       await CADRefetch({ query: val });
@@ -195,6 +196,16 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
     }
   },[selectedDisposition,page,taskFilter,selectedBucket,dpd])
 
+  useEffect(()=> {
+    if(!CustomerAccountsData) {
+      dispatch(setSuccess({
+        message: "No Active Callfile",
+        success: true
+      }))
+    }
+  },[])
+
+
   const [handleCheckAll, setHandleCheckAll] = useState<boolean>(false)
   const [taskToAdd, setTaskToAdd] = useState<string[]>([])
   const [required, setRequired] = useState<boolean>(false)
@@ -204,12 +215,8 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       if(selectedBucket){
-        try {
-          await CADRefetch()
-          await groupRefetch()
-        } catch (error) {
-          dispatch(setServerError(true))
-        }
+        await CADRefetch()
+        await groupRefetch()
       }
     })
     return () => clearTimeout(timer)
@@ -219,21 +226,17 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
     setTaskManagerPage(page.toString())
   },[page])
 
-
-
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       if(selectedBucket) {
-        try {
-          await CADRefetch()
-          setRequired(false)
-          setTaskToAdd([])
-          setHandleCheckAll(false)
-          setTaskManagerPage("1")
-          dispatch(setPage(1))
-        } catch (error) {
-          dispatch(setServerError(true))
-        }
+     
+        await CADRefetch()
+        setRequired(false)
+        setTaskToAdd([])
+        setHandleCheckAll(false)
+        setTaskManagerPage("1")
+        dispatch(setPage(1))
+      
       }
     })
 

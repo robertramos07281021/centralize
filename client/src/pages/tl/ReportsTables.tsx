@@ -1,7 +1,6 @@
 import React from "react"
 
 type DispositionType = {
-  _id: string
   name: string
   code: string
   count: string
@@ -59,9 +58,9 @@ const ReportsTables:React.FC<ComponentProp> = ({totalAccounts, dispo,secondTitle
             <th className="border border-black">Principal Percentage</th>
           </tr>
           {
-            sortedDispo.map(x=> {
+            sortedDispo.map((x, index)=> {
               const totalAmount = x.amount / sortedDispo.map(x=> x.amount).reduce((t,v)=> t + v) * 100
-              return <tr key={x._id} className="text-center"> 
+              return <tr key={index} className="text-center"> 
                 <td className="border border-black">{x.name}</td>
                 <td className="border border-black">{x.count}</td>
                 <td className="border border-black">{(Number(x.count)/Number(totalCount) * 100).toFixed(2)}%</td>

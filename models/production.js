@@ -18,10 +18,10 @@ const productionSchema = new Schema(
       end: {
         type: String
       },
-      assignedAccount: {
-        type: Number
-      }
     }],
+    assignedAccount: {
+      type: Number
+    },
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User"

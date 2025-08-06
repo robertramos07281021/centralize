@@ -22,7 +22,6 @@ type Dispositions = {
 }
 
 type DispositionType = {
-  _id: string
   name: string
   code: string
   count: string
@@ -127,10 +126,10 @@ const CallDoughnut:React.FC<ComponentsProps> = ({totalAccounts,dispoData}) => {
       <div className="w-full flex justify-center item-center flex-col ">
         <div  className="flex flex-col justify-center min-h-5/6">
           {
-            dispoData.map(dd=> {
+            dispoData.map((dd,index)=> {
               const findDispotype = disposition?.getDispositionTypes.find(x=> x.code === dd.code)
               return (
-                <div key={dd._id} className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 py-0.5 hover:scale-105 cursor-default hover:font-bold">
+                <div key={index} className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 py-0.5 hover:scale-105 cursor-default hover:font-bold">
                 <div style={{backgroundColor: `${positive.includes(dd?.code) ? `oklch(62.7% 0.194 149.214)` : `oklch(63.7% 0.237 25.331)`}`}} className="px-2">{dd.code} </div>
                 <div>{findDispotype?.name}</div>
                 <div className="text-center">{dispositionCount(dd.code)} - {percentageOfDispo(dd.code).toFixed(2)}%</div>

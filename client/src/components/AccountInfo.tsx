@@ -98,8 +98,8 @@ const FieldsDiv = ({label, value, endorsementDate}:{label:string, value:string |
 
   return (
     <div className="flex flex-col items-center xl:flex-row w-full ">
-      <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-5/10 leading-4">{label} :</p>
-      <div className={`${newValue || null  ?  "p-2": "p-4"} xl:ml-2 text-xs xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
+      <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-5/10 leading-4 select-none">{label} :</p>
+      <div className={`${newValue || null  ?  "p-2": "p-4"} select-none xl:ml-2 text-xs xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
     </div>
   )
 }

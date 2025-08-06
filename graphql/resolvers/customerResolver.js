@@ -476,6 +476,7 @@ const customerResolver = {
 
         const {disposition, groupId ,page, assigned, limit, selectedBucket, dpd} = query
 
+    
         let selected = ''
         if (groupId) {
           const [group, userSelected] = await Promise.all([
@@ -484,10 +485,11 @@ const customerResolver = {
           ]);
      
           selected = group?._id || userSelected?._id || null;
-        }
+        } 
         const activeCallfile = await Callfile.findOne({bucket: new mongoose.Types.ObjectId(selectedBucket),active: {$eq: true}})
-  
         
+        if(!activeCallfile) return null
+
         const search = [
           { "existingDispo.code" : { $ne: 'DNC' } },
           {balance: {$ne: 0}}
@@ -514,7 +516,7 @@ const customerResolver = {
         const accounts = await CustomerAccount.aggregate([
           {
             $match: {
-              callfile: activeCallfile._id
+              callfile: activeCallfile?._id
             }
           },
           {
@@ -1111,7 +1113,6 @@ const customerResolver = {
         const findBucket = await Bucket.findById(bucket)
         if(!findBucket) throw new CustomError('Bucket not found',404)
 
-        
         const callfilePrincipal = input.map(x=> x.principal_os).reduce((t,v)=> t+v)
         const callfileOB = input.map(x=> x.total_os).reduce((t,v)=> t+v)
 
@@ -1158,15 +1159,15 @@ const customerResolver = {
             emails,
             contact_no,
           });
-        
+          
           const paid_amount = element.total_os - element.balance 
-          const findAgent = User.findOne({callfile_id: {$eq: element.collectorID}})._id || null
+          const findAgent = await User.findOne({callfile_id: {$eq: element.collectorID}})
           if(findAgent) {
-            const findAgentProduction = Production.findOne({user: findAgent}).lean()
+            const findAgentProduction = await Production.findOne({user: findAgent._id}).lean()
             if(!findAgentProduction) {
-              Production.create({user:findAgent})
+              await Production.create({user:findAgent, assignedAccount: 1})
             } else {
-              Production.findByIdAndUpdate(findAgentProduction._id,{$set: {assignedAccount: findAgentProduction.assignedAccount + 1 }})
+              await Production.findByIdAndUpdate(findAgentProduction._id,{$inc: {assignedAccount: 1 }})
             }
           }
 
@@ -1182,7 +1183,8 @@ const customerResolver = {
             balance : element.balance,
             month_pd: element.mpd,
             paid_amount,
-            assigned: findAgent,
+
+            assigned: findAgent ? findAgent._id : null,
             account_id: element.account_id ,
             out_standing_details: {
               principal_os: element.principal_os,
@@ -1207,11 +1209,11 @@ const customerResolver = {
           });
           
           customer.customer_account = caResult._id
-          customer.save()
+          await customer.save()
 
         }));
 
-        newCallfile.save()
+        await newCallfile.save()
 
         pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
           newCallfile: {

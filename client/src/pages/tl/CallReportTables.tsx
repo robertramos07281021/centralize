@@ -1,6 +1,5 @@
 
 type DispositionType = {
-  _id: string
   name: string
   code: string
   count: string
