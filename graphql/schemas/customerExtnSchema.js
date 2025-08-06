@@ -4,7 +4,6 @@ import gql from "graphql-tag";
 const CustomerExtnTypeDefs = gql`
   scalar DateTime
 
-
   type DispoType {
     name: String
     code: String
@@ -19,7 +18,8 @@ const CustomerExtnTypeDefs = gql`
 
   type AccountHistory {
     _id: ID
-    bucket: ID
+    account_bucket: Bucket
+    account_callfile: Callfile
     case_id: String
     endorsement_date: String
     max_dpd: Int

@@ -86,11 +86,16 @@ const ACCOUNT_HISTORIES = gql`
     findAccountHistories(id: $id) {
       _id
       balance
-      bucket
+      account_bucket {
+        name
+      }
       case_id
       endorsement_date
       max_dpd
       dpd
+      account_callfile {
+        name
+      }
       out_standing_details {
         principal_os
         total_os
@@ -134,12 +139,20 @@ type Dispotype = {
   name: string
 }
 
+type Callfile = {
+  name: string
+}
+
+type Bucket = {
+  name: string
+}
 type AccountHistory = {
   _id: string
   balance: number
-  bucket: string
+  account_bucket: Bucket
   case_id: string
   dpd: number
+  account_callfile: Callfile
   endorsement_date: string
   max_dpd: number
   out_standing_details: OSD
@@ -179,8 +192,6 @@ const AccountInfo = () => {
   const [showAccountHistory, setShowAccountHistory] = useState<boolean>(false)
   const {data:accountHistory} = useQuery<{findAccountHistories:AccountHistory[]}>(ACCOUNT_HISTORIES,{variables: {id: selectedCustomer._id},skip: selectedCustomer._id === "" })
 
-
-
   return (
     <>
       {
@@ -189,9 +200,8 @@ const AccountInfo = () => {
       }
       {
         showAccountHistory &&
-        <AccountHistoriesView close={()=>setShowAccountHistory(false) }/>
+        <AccountHistoriesView histories={accountHistory?.findAccountHistories || []} close={()=>setShowAccountHistory(false) }/>
       }
-
 
       <div className="p-4 flex flex-col">
         { data && data?.customerOtherAccounts?.length > 0 &&

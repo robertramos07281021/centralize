@@ -33,6 +33,17 @@ const CustomerExtnResolver = {
           },
           {
             $lookup: {
+              from: "buckets",
+              localField: "bucket",
+              foreignField: "_id",
+              as: "account_bucket"
+            },
+          },
+          {
+            $unwind: {path: "$account_bucket",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
               from: "dispotypes",
               localField: "cd.disposition",
               foreignField: "_id",
@@ -41,6 +52,17 @@ const CustomerExtnResolver = {
           },
           {
             $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "callfiles",
+              localField: "callfile",
+              foreignField: "_id",
+              as: "account_callfile"
+            },
+          },
+          {
+            $unwind: {path: "$account_callfile",preserveNullAndEmptyArrays: true}
           },
           {
             $sort: {
