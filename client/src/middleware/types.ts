@@ -63,6 +63,7 @@ export type CustomerData = {
   interest_os:number
   late_charge_os:number
   max_dpd:number
+  dpd: number
   penalty_interest_os:number 
   principal_os:number
   scenario:string
@@ -141,6 +142,7 @@ export type Search = {
   credit_customer_id: string
   bill_due_day: number
   max_dpd: number
+  dpd: number
   balance: number
   paid_amount: number
   month_pd: number

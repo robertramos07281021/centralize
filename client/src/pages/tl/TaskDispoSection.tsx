@@ -8,6 +8,7 @@ import Pagination from "../../components/Pagination"
 import Loading from "../Loading"
 import { setPage, setServerError, setSuccess } from "../../redux/slices/authSlice"
 import {debounce} from 'lodash'
+import { useLocation } from "react-router-dom"
 
 type AccountBucket = {
   name: string
@@ -163,14 +164,16 @@ type Props = {
 
 const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
   const dispatch = useAppDispatch()
-  const {data:GroupData,refetch:groupRefetch} = useQuery<{findGroup:Group[]}>(DEPT_GROUP)
+  const location = useLocation()
+  const isTaskManager = location.pathname !== '/tl-task-manager'
+  const {data:GroupData,refetch:groupRefetch} = useQuery<{findGroup:Group[]}>(DEPT_GROUP,{skip:isTaskManager})
   const {selectedGroup, selectedAgent, page, tasker, taskFilter, selectedDisposition, limit} = useSelector((state:RootState)=> state.auth)
   const groupDataNewObject:{[key:string]:string} = useMemo(()=> {
     const group = GroupData?.findGroup || []
     return Object.fromEntries(group.map(e=> [e.name, e._id]))
   },[GroupData])
   const selected = selectedGroup ? groupDataNewObject[selectedGroup] : selectedAgent
-
+  
   const query:CADQueryValue = {
     disposition: selectedDisposition, 
     page:page , 
@@ -180,10 +183,13 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
     selectedBucket,
     dpd
   }
-
-  const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount}>(FIND_CUSTOMER_ACCOUNTS,{variables: {query: query},skip: !query.selectedBucket})
-
   
+  
+
+  const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount}>(FIND_CUSTOMER_ACCOUNTS,{variables: {query: query},skip:isTaskManager })
+
+
+
   const debouncedSearch = useMemo(() => {
     return debounce(async(val: CADQueryValue) => {
       await CADRefetch({ query: val });
@@ -195,16 +201,6 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
       debouncedSearch(query)
     }
   },[selectedDisposition,page,taskFilter,selectedBucket,dpd])
-
-  useEffect(()=> {
-    if(!CustomerAccountsData) {
-      dispatch(setSuccess({
-        message: "No Active Callfile",
-        success: true
-      }))
-    }
-  },[])
-
 
   const [handleCheckAll, setHandleCheckAll] = useState<boolean>(false)
   const [taskToAdd, setTaskToAdd] = useState<string[]>([])
@@ -418,7 +414,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
               <div className="px-6 ">
                   {ca.max_dpd}
               </div>
-              <div className="px-6">
+              <div className="px-6 capitalize">
                 {ca.assigned?.name}
               </div>
               <div className="px-6 flex items-center justify-end">

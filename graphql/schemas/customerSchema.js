@@ -148,6 +148,7 @@ const customerTypeDefs = gql`
     bill_due_day: Int
     max_dpd: Int
     balance: Float
+    dpd: Int
     paid_amount: Float
     out_standing_details: outStandingDetails
     grass_details: grassDetails
@@ -179,6 +180,7 @@ const customerTypeDefs = gql`
     max_dpd: Int
     balance: Float
     month_pd: Int
+    dpd: Int
     paid_amount: Float
     out_standing_details: outStandingDetails
     grass_details: grassDetails

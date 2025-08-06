@@ -43,6 +43,10 @@ const customerAccountSchema = new Schema(
       type: Number,
       default: 0
     },
+    dpd: {
+      type: Number,
+      defailt: 0
+    },
     max_dpd: {
       type: Number,
       default: 0

@@ -60,6 +60,7 @@ type CustomerData = {
   credit_customer_id: string
   bill_due_day: number
   max_dpd: number
+  dpd: number
   balance: number
   paid_amount: number
   month_pd: number
@@ -89,6 +90,7 @@ const MY_TASKS = gql`
       credit_customer_id
       bill_due_day
       max_dpd
+      dpd
       balance
       paid_amount
       assigned_date
@@ -165,6 +167,7 @@ const GROUP_TASKS =gql`
         credit_customer_id
         bill_due_day
         max_dpd
+        dpd
         balance
         paid_amount
         assigned_date

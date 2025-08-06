@@ -81,6 +81,7 @@ const taskTypeDefs = gql`
     credit_customer_id: String
     bill_due_day: Int
     max_dpd: Int
+    dpd: Int
     balance: Float
     paid_amount: Float
     month_pd: Int

@@ -201,6 +201,7 @@ const customerResolver = {
               credit_customer_id: "$ca.credit_customer_id",
               bill_due_day: "$ca.bill_due_day",
               max_dpd: "$ca.max_dpd",
+              dpd: "$ca.dpd",
               month_pd: "$ca.month_pd",
               balance: "$ca.balance",
               paid_amount: "$ca.paid_amount",
@@ -476,7 +477,6 @@ const customerResolver = {
 
         const {disposition, groupId ,page, assigned, limit, selectedBucket, dpd} = query
 
-    
         let selected = ''
         if (groupId) {
           const [group, userSelected] = await Promise.all([
@@ -500,7 +500,7 @@ const customerResolver = {
         }
 
         if (disposition && disposition.length > 0) {
-          search.push({ "existingDispo.code": { $in: disposition } });
+          search.push({ "dispotype.code": { $in: disposition } });
         }
         
         if (assigned === "assigned") {
@@ -512,7 +512,7 @@ const customerResolver = {
         } else {
           search.push({ assigned: null });
         }
-  
+
         const accounts = await CustomerAccount.aggregate([
           {
             $match: {
@@ -563,118 +563,7 @@ const customerResolver = {
           {
             $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
           },
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "history",
-              foreignField: "_id",
-              as: "histories"
-            }
-          },
-          {
-            $lookup: {
-              from: "dispotypes",
-              let: {
-                dispoIds: {
-                  $map: {
-                    input: { $ifNull: ["$histories", []] },
-                    as: "h",
-                    in: "$$h.disposition"
-                  }
-                }
-              },
-              pipeline: [
-                {
-                  $match: {
-                    $expr: {
-                      $in: ["$_id", "$$dispoIds"]
-                    }
-                  }
-                },
-                { $project: { name: 1, code: 1, rank: 1 , status: 1} }
-              ],
-              as: "dispotypesData"
-            }
-          },
-          {
-            $set: {
-              mainDispotype: {
-                $let: {
-                  vars: {
-                    ranked: {
-                      $filter: {
-                        input: "$dispotypesData",
-                        as: "d",
-                        cond: { $gt: ["$$d.rank", 0] }
-                      }
-                    },
-                    all: "$dispotypesData"
-                  },
-                  in: {
-                    $cond: [
-                      { $gt: [{ $size: "$$ranked" }, 0] },
-                      {
-                        $let: {
-                          vars: {
-                            best: {
-                              $reduce: {
-                                input: "$$ranked",
-                                initialValue: null,
-                                in: {
-                                  $cond: [
-                                    {
-                                      $lt: [
-                                        "$$this.rank",
-                                        { $ifNull: ["$$value.rank", Infinity] }
-                                      ]
-                                    },
-                                    "$$this",
-                                    "$$value"
-                                  ]
-                                }
-                              }
-                            }
-                          },
-                          in: "$$best"
-                        }
-                      },
-                      { $first: "$$all" }
-                    ]
-                  }
-                }
-              }
-            }
-          },
-          {
-            $addFields: {
-              checkRanking: {
-                $filter: {
-                  input: '$dispotypesData',
-                  as: 'dd',
-                  cond: {$gt: ['$$dd.rank',0]}
-                }
-              },
-            }
-          },
-          {
-            $addFields: {
-              existingDispo: {
-                $cond: [
-                  {
-                    $expr: {$gt: [{$size: "$history"},0]}
-                  },
-                  {
-                    $cond: [
-                      { $expr: { $gt: [ {$size: "$checkRanking"}, 0 ] } },
-                      '$mainDispotype',
-                      '$dispotype'
-                    ]
-                  },
-                  null
-                ]
-              }
-            }
-          },
+
           {
             $match: {
               $and: search
@@ -684,11 +573,10 @@ const customerResolver = {
             $project: {
               _id: "$_id",
               customer_info: "$customer_info",
-              dispoType: "$existingDispo",
+              dispoType: "$dispotype",
               account_bucket: "$account_bucket",
               max_dpd:  "$max_dpd",
               assigned: "$assigned",
-              balance: '$balance'
             }
           },
           {
@@ -1171,7 +1059,7 @@ const customerResolver = {
             }
           }
 
-          const caResult = CustomerAccount.create({
+          const caResult = await CustomerAccount.create({
             customer: customer._id,
             bucket: findBucket._id,
             case_id: element.case_id,
@@ -1179,7 +1067,8 @@ const customerResolver = {
             credit_customer_id: element.credit_user_id ,
             endorsement_date: element.endorsement_date,
             bill_due_day: element.bill_due_day,
-            max_dpd: element.max_dpd || element.dpd,
+            max_dpd: element.max_dpd,
+            dpd: element.dpd,
             balance : element.balance,
             month_pd: element.mpd,
             paid_amount,
@@ -1227,6 +1116,7 @@ const customerResolver = {
           message: "Callfile successfully created"
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },

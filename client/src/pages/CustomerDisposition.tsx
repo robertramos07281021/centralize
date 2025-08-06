@@ -408,6 +408,7 @@ const CustomerDisposition = () => {
               !selectedCustomer._id &&
               <div className="relative 2xl:w-1/2 w-full lg:w-8/10 flex justify-center">
                 <input 
+                  accessKey="z"
                   type="text"
                   name="search" 
                   autoComplete="off"

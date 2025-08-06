@@ -47,6 +47,8 @@ import subscriptionTypeDefs from "./graphql/schemas/subcriptionSchema.js";
 import MongoStore from "connect-mongo";
 import CustomError from "./middlewares/errors.js";
 import path from "path";
+import CustomerExtnResolver from "./graphql/resolvers/customerExtnResolver.js";
+import CustomerExtnTypeDefs from "./graphql/schemas/customerExtnSchema.js";
 
 const connectedUsers = new Map();
 
@@ -98,9 +100,9 @@ app.use((req, res, next) => {
 });
 
 
-const resolvers = mergeResolvers([ subscriptionResolvers, userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver,callfileResolver, recordingsResolver ]);
+const resolvers = mergeResolvers([ subscriptionResolvers, userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver,callfileResolver, recordingsResolver, CustomerExtnResolver ]);
 
-const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs, productionTypeDefs, callfileTypeDefs, recordingTypeDefs, subscriptionTypeDefs]);
+const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs, productionTypeDefs, callfileTypeDefs, recordingTypeDefs, subscriptionTypeDefs, CustomerExtnTypeDefs]);
 
 const httpServer = createServer(app);
 

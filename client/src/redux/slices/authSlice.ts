@@ -122,6 +122,7 @@ const initialState:UserState = {
     isRPCToday: false,
     dispo_history: [],
     month_pd: 0,
+    dpd: 0,
     emergency_contact: {
       name: "",
       mobile: ""
@@ -219,6 +220,7 @@ const authSlice = createSlice({
         isRPCToday: false,
         dispo_history: [],
         month_pd: 0,
+        dpd: 0,
         emergency_contact: {
           name: "",
           mobile: ""
@@ -277,6 +279,7 @@ const authSlice = createSlice({
         credit_customer_id: "",
         bill_due_day: 0,
         max_dpd: 0,
+        dpd: 0,
         month_pd: 0,
         balance: 0,
         paid_amount: 0,

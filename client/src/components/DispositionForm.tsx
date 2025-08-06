@@ -124,8 +124,8 @@ enum AccountType {
   CALLS = "calls",
   EMAIL = 'email',
   SMS = 'sms',
-  FIELD = 'field',
   SKIP = 'skip',
+  FIELD = 'field',
 }
 
 enum SkipCollector {
@@ -152,6 +152,12 @@ enum PaymentMethod {
   SEVENELEVEN = '7/11',
   GCASH_PAYMAYA = 'Gcash / Pay Maya',
   CASH = 'CASH'
+}
+
+enum DialerCode {
+  vici = '[',
+  issabel = "]",
+  inbound = ";"
 }
 
 type DispositionType = {
@@ -561,6 +567,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       id="payment"
                       required={requiredDispo.includes(selectedDispo)}
                       value={data.payment ?? ""}
+                  
                       onChange={(e)=> {
                         if(e.target.value === Payment.FULL) {
                           setData(prev=> ({...prev, amount: selectedCustomer.balance.toFixed(2)}))
@@ -569,11 +576,11 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       }}
                       className={`${required && !data.payment ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
                       >
-                        <option value="">Select Payment</option>
+                        <option value="" accessKey="8">Select Payment</option>
                       {
-                        Object.entries(Payment).map(([key,value])=> {
+                        Object.entries(Payment).map(([key,value],index)=> {
                           return (
-                            <option value={value} key={key} className="capitalize">{value.charAt(0).toUpperCase() + value.slice(1,value.length)}</option>
+                            <option value={value} key={key} className="capitalize" accessKey={index > 0 ? '0' : '9'}>{value.charAt(0).toUpperCase() + value.slice(1,value.length)}</option>
                           )
                         })
                       }
@@ -587,8 +594,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                   <select 
                     name="contact_method" 
                     id="contact_method"
-                    required  
-             
+                    required
                     value={data.contact_method ?? ""}
                     onChange={(e)=> handleDataChange('contact_method', checkIfChangeContactMethod ? existingDispo?.contact_method : e.target.value)}
                     className={`${required && !data.contact_method ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs xl:text-sm w-full`}
@@ -619,7 +625,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       {
                         Object.entries(Dialer).map(([key,value])=> {
                           return (
-                            <option value={value} key={key} className="capitalize">{value.charAt(0).toUpperCase() + value.slice(1,value.length)}</option>
+                            <option value={value} key={key} className="capitalize" accessKey={DialerCode[value]}>{value.charAt(0).toUpperCase() + value.slice(1,value.length)}</option>
                           )
                         })
                       }
@@ -769,6 +775,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
             {
               data.disposition &&
               <button 
+              accessKey="q"
                 type="submit" 
                 className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 py-4 lx:px-5 xl:py-2.5 xl:me-2l xl:mb-2 cursor-pointer xl:text-sm text-xs`}
               >Submit</button>

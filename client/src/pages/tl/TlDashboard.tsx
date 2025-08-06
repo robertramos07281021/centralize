@@ -33,7 +33,7 @@ const TlDashboard  = () => {
 
       <div className='col-span-full grid grid-cols-8 row-span-6 gap-2'>
         <TLAgentProduction/>
-        <Targets/>
+        {/* <Targets/> */}
       </div>
     </div>
   )

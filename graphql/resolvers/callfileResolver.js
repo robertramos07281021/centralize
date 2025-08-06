@@ -308,11 +308,15 @@ const callfileResolver = {
 
     downloadCallfiles: async(_,{callfile})=> {
       try {
-   
+        
+        const findCallfile = await Callfile.findById(callfile).lean()
+
+        if(!findCallfile) return null
+
         const customers = await CustomerAccount.aggregate([
           {
             $match: {
-              callfile:  new mongoose.Types.ObjectId(callfile)
+              callfile:  new mongoose.Types.ObjectId(findCallfile._id)
             }
           },
           {
@@ -507,6 +511,8 @@ const callfileResolver = {
               account_bucket: "$accountBucket",
               email2:  "$email2",
               email3:  "$email3",
+              max_dpd: "$max_dpd",
+              dpd: "$dpd",
               gender:  "$customer_info.gender",
               address1:  "$address1",
               address2:  "$address2",
@@ -522,7 +528,7 @@ const callfileResolver = {
               amount: "$currentDispo.amount",
               balance:  "$balance",
               dialer: "$currentDispo.dialer",
-              platform_user_id: "$platform_customer_id",
+              platform_user_id: "$customer_info.platform_customer_id",
               emergencyContactName: "$emergency_contact.name",
               emergencyContactMobile: "$emergency_contact.mobile",
               payment:  {
@@ -615,6 +621,8 @@ const callfileResolver = {
             'contact3',
             'isRPC',
             'platform_user_id',
+            'dpd',
+            'max_dpd',
             "fullname",
             'email1',
             'email2',
@@ -645,7 +653,6 @@ const callfileResolver = {
           ],
           emptyFieldValue: ""
         })
-  
   
         return csv
       } catch (error) {
