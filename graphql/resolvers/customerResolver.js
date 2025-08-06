@@ -1215,7 +1215,7 @@ const customerResolver = {
 
         await newCallfile.save()
 
-        pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
+        await pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
           newCallfile: {
             bucket: bucket,
             message: PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE
