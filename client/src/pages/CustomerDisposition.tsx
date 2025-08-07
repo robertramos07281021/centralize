@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from "react"
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import CustomerUpdateForm from "../components/CustomerUpdateForm"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
@@ -126,16 +126,48 @@ const UPDATE_RPC = gql`
 
   const SearchResult = memo(({ data, search, onClick }: { data: Search[], search: string, onClick: (c: Search) => void }) => 
   {
+
+    const [selectedIndex, setSelectedIndex] = useState(0)
+    const refs = useRef<(HTMLDivElement | null)[]>([]);
+    useEffect(() => {
+      const handleKeyDown = (e: KeyboardEvent) => {
+        if (e.key === 'ArrowDown') {
+          setSelectedIndex(prev => (prev + 1 < data.length ? prev + 1 : prev));
+        } else if (e.key === 'ArrowUp') {
+          setSelectedIndex(prev => (prev - 1 >= 0 ? prev - 1 : prev));
+        } else if (e.key === 'Enter') {
+          if (data[selectedIndex]) {
+            onClick(data[selectedIndex]);
+          }
+        }
+    };
+      document.addEventListener('keydown', handleKeyDown);
+      return () => document.removeEventListener('keydown', handleKeyDown);
+    }, [data, onClick]);
+
+    useEffect(()=> {
+      if(!data) {
+        setSelectedIndex(0)
+      }
+    },[search,data])
+
+    useEffect(() => {
+      const selectedRef = refs.current[selectedIndex];
+      if (selectedRef) {
+        selectedRef.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }
+    }, [selectedIndex]);
+
     return (
     <>
-      {data.slice(0, 50).map((customer) => (
+      {data.slice(0, 50).map((customer, index) => (
       <div
       key={customer._id}
-      className="flex flex-col text-sm cursor-pointer hover:bg-slate-100 py-0.5"
+      ref={el => {refs.current[index] = el}} 
+      className={`flex flex-col text-sm cursor-pointer hover:bg-slate-100 py-0.5 ${Number(index) === Number(selectedIndex) ? "bg-slate-300": ""} `}
       onClick={() => onClick(customer)}
       >
         <div>
-
           <div
             className="px-2 font-medium text-slate-600 uppercase block"
             dangerouslySetInnerHTML={{
@@ -212,15 +244,16 @@ const CustomerDisposition = () => {
 
   const length = searchData?.search?.length || 0;
   const location = useLocation()
+
   const debouncedSearch = useMemo(() => {
-  return debounce(async(val: string) => {
-    await refetch({ search: val });
-  });
-}, [refetch]);
+    return debounce(async(val: string) => {
+      await refetch({ search: val });
+    });
+  }, [refetch]);
 
   const handleSearchChange = useMemo(() => 
-  debounce((val: string) => setSearch(val), 300)
-, []);
+    debounce((val: string) => setSearch(val))
+  , []);
 
   useEffect(() => {
     if (search) debouncedSearch(search);
@@ -370,129 +403,128 @@ const CustomerDisposition = () => {
     })
   }
 
+
   if(loading) return <Loading/>
 
   const gender = selectedCustomer.customer_info?.gender ? (selectedCustomer.customer_info?.gender.length > 1 ? selectedCustomer.customer_info?.gender.charAt(0).toLowerCase() : selectedCustomer.customer_info?.gender.toLowerCase()) : ""
 
   return userLogged._id ? (
-    <div className="h-full w-full overflow-auto outline-none" 
- 
-    > 
+    <div className="h-full w-full overflow-auto outline-none"> 
       {
         (isRPCToday || isRPC) &&
         <Confirmation {...modalProps}/>
       }
       <div>
         <div className="p-5">
-        {
-          userLogged.type === "AGENT" &&
-          <AgentTimer/>
-        }
+          {
+            userLogged.type === "AGENT" &&
+            <AgentTimer/>
+          }
         <MyTaskSection/>
         </div>
-      <div className="w-full grid grid-cols-2 gap-5 px-5 pb-5">
-        <div className="flex flex-col items-center"> 
-          <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Information</h1>
-          <div className="border flex flex-col rounded-xl border-slate-400 w-full h-full items-center justify-center p-5 gap-1.5 relative">
-            <div className={`flex w-full ${selectedCustomer.customer_info.isRPC ? "justify-start": "justify-end"} `}>
-              {
-                selectedCustomer._id && !selectedCustomer.customer_info.isRPC &&
-                <button className={` px-10 py-1.5 rounded text-white font-bold bg-orange-400 hover:bg-orange-600 cursor-pointer ${isUpdate ? "absolute top-5 right-5" : ""} `}onClick={handleClickRPC}>RPC</button>
-              }
-              {
-                selectedCustomer._id && selectedCustomer?.customer_info?.isRPC &&
-                <IoRibbon className=" text-5xl text-blue-500"/>
-              }
-            </div>
-            {
-              !selectedCustomer._id &&
-              <div className="relative 2xl:w-1/2 w-full lg:w-8/10 flex justify-center">
-                <input 
-                  accessKey="z"
-                  type="text"
-                  name="search" 
-                  autoComplete="off"
-                  value={search}
-                  onChange={(e)=> handleSearchChange(e.target.value)}
-                  id="search"
-                  placeholder="Search" 
-                  className=" w-full p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
-                />
-                <div className={`${length > 0 && search ? "" : "hidden"} absolute max-h-96 border border-slate-400 w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-md top-10`}>
-                  <SearchResult data={searchData?.search || []} search={search} onClick={onClickSearch}/>
-                </div>
-              </div>
-            }
-            <FieldDisplay label="Full Name" value={selectedCustomer.customer_info?.fullName}/>
-            <FieldDisplay label="Date Of Birth (yyyy-mm-dd)" value={selectedCustomer.customer_info?.dob}/>
-            <FieldDisplay label="Gender" 
-              value={
-                (()=> {
-                  if(gender === 'f') {
-                    return "Female"
-                  } else if (gender ==='m') {
-                    return 'Male'
-                  } else if (gender === 'o') {
-                    return 'Other'
-                  } else {
-                    return ""
-                  }
-                })()
-              }
-            />
-            <FieldListDisplay label="Mobile No." values={selectedCustomer?.customer_info?.contact_no} fallbackHeight="h-10"/>
-            <FieldListDisplay label="Email" values={selectedCustomer?.customer_info?.emails} fallbackHeight="h-10"/>
-            <FieldListDisplay label="Address" values={selectedCustomer?.customer_info?.addresses} fallbackHeight="h-36"/>
-            {
-              (selectedCustomer._id && selectedCustomer.emergency_contact) && 
-              <div className="2xl:w-1/2 w-full lg:w-8/10 mt-1 ">
-                <p className="font-bold text-slate-500 uppercase lg:text-sm text-[0.9rem]">Emergency Contact Person :</p>
-                <div className="flex gap-2 flex-col lg:flex-row">
-                  <FieldDisplay label="Name" value={selectedCustomer.emergency_contact.name}/>
-                  <FieldDisplay label="Contact" value={selectedCustomer.emergency_contact.mobile}/>
-                </div>
-              </div>
-            }
-            {
-              !isUpdate &&
-              <div className="2xl:text-sm lg:text-xs mt-5 flex gap-5">
-                { selectedCustomer._id &&
-                  <>
-                    {
-                      selectedCustomer.balance != 0 &&
-                      <button 
-                        type="button" 
-                        onClick={()=> setIsUpdate(true)}
-                        className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}>
-                        Update
-                      </button>
-                    }
-                    <button 
-                      type="button" 
-                      onClick={clearSelectedCustomer}
-                      className={`bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}>
-                      Cancel
-                    </button>
-                  </>
-                  
+        <div className="w-full grid grid-cols-2 gap-5 px-5 pb-5">
+          <div className="flex flex-col items-center"> 
+            <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Information</h1>
+            <div className="border flex flex-col rounded-xl border-slate-400 w-full h-full items-center justify-center p-5 gap-1.5 relative">
+              <div className={`flex w-full ${selectedCustomer.customer_info.isRPC ? "justify-start": "justify-end"} `}>
+                {
+                  selectedCustomer._id && !selectedCustomer.customer_info.isRPC &&
+                  <button className={` px-10 py-1.5 rounded text-white font-bold bg-orange-400 hover:bg-orange-600 cursor-pointer ${isUpdate ? "absolute top-5 right-5" : ""} `}onClick={handleClickRPC}>RPC</button>
+                }
+                {
+                  selectedCustomer._id && selectedCustomer?.customer_info?.isRPC &&
+                  <IoRibbon className=" text-5xl text-blue-500"/>
                 }
               </div>
-            }
+              {
+                !selectedCustomer._id &&
+                <div className="relative 2xl:w-1/2 w-full lg:w-8/10 flex justify-center">
+                  <input 
+                    accessKey="z"
+                    type="text"
+                    name="search" 
+                    autoComplete="off"
+                    value={search}
+                    onChange={(e)=> handleSearchChange(e.target.value)}
+                    id="search"
+                    placeholder="Search" 
+                    className=" w-full p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
+                  />
+                  <div className={`${length > 0 && search ? "" : "hidden"} absolute max-h-96 border border-slate-400 w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-md top-10`}>
+                    <SearchResult data={searchData?.search || []} search={search} onClick={onClickSearch}/>
+                  </div>
+                </div>
+              }
+              <FieldDisplay label="Full Name" value={selectedCustomer.customer_info?.fullName}/>
+              <FieldDisplay label="Date Of Birth (yyyy-mm-dd)" value={selectedCustomer.customer_info?.dob}/>
+              <FieldDisplay label="Gender" 
+                value={
+                  (()=> {
+                    if(gender === 'f') {
+                      return "Female"
+                    } else if (gender ==='m') {
+                      return 'Male'
+                    } else if (gender === 'o') {
+                      return 'Other'
+                    } else {
+                      return ""
+                    }
+                  })()
+                }
+              />
+              <FieldListDisplay label="Mobile No." values={selectedCustomer?.customer_info?.contact_no} fallbackHeight="h-10"/>
+              <FieldListDisplay label="Email" values={selectedCustomer?.customer_info?.emails} fallbackHeight="h-10"/>
+              <FieldListDisplay label="Address" values={selectedCustomer?.customer_info?.addresses} fallbackHeight="h-36"/>
+              {
+                (selectedCustomer._id && selectedCustomer.emergency_contact) && 
+                <div className="2xl:w-1/2 w-full lg:w-8/10 mt-1 ">
+                  <p className="font-bold text-slate-500 uppercase lg:text-sm text-[0.9rem]">Emergency Contact Person :</p>
+                  <div className="flex gap-2 flex-col lg:flex-row">
+                    <FieldDisplay label="Name" value={selectedCustomer.emergency_contact.name}/>
+                    <FieldDisplay label="Contact" value={selectedCustomer.emergency_contact.mobile}/>
+                  </div>
+                </div>
+              }
+              {
+                !isUpdate &&
+                <div className="2xl:text-sm lg:text-xs mt-5 flex gap-5">
+                  { selectedCustomer._id &&
+                    <>
+                      {
+                        selectedCustomer.balance != 0 &&
+                        <button 
+                          type="button" 
+                          onClick={()=> setIsUpdate(true)}
+                          className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}>
+                          Update
+                        </button>
+                      }
+                      <button 
+                        type="button" 
+                        onClick={clearSelectedCustomer}
+                        className={`bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}>
+                        Cancel
+                      </button>
+                    </>
+                    
+                  }
+                </div>
+              }
+            </div>
+          </div>
+          <div className="flex flex-col items-center">
+            <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Update Information</h1>
+            <div className={`border w-full flex justify-center h-full border-slate-400 rounded-xl relative ${!isUpdate && "flex items-center justify-center"}`}>
+              {
+                isUpdate ?
+                <CustomerUpdateForm cancel={()=> setIsUpdate(false)} /> :
+                <p className="w- 2xl:text-2xl font-light text-slate-500">
+                  For Updating Customer Info Only
+                </p>
+              }
+          </div>
           </div>
         </div>
-        <div className="flex flex-col items-center">
-          <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Update Information</h1>
-          <div className={`border w-full flex justify-center h-full border-slate-400 rounded-xl relative ${!isUpdate && "flex items-center justify-center"}`}>
-            {
-              isUpdate ?
-              <CustomerUpdateForm cancel={()=> setIsUpdate(false)} /> :
-              <p className="w- 2xl:text-2xl font-light text-slate-500">
-                For Updating Customer Info Only
-              </p>
-            }
-        </div>
-        </div>
-      </div>
       </div>
       <div className="p-5 grid grid-cols-2 gap-5">
         <AccountInfo/>

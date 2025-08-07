@@ -3,7 +3,7 @@ import { RootState } from "../redux/store"
 import gql from "graphql-tag"
 import { useQuery } from "@apollo/client"
 import { CurrentDispo, Search } from "../middleware/types"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import OtherAccountsViews from "./OtherAccountsViews"
 import { useLocation } from "react-router-dom"
 import AccountHistoriesView from "./AccountHistoriesView"
@@ -100,6 +100,11 @@ const ACCOUNT_HISTORIES = gql`
         principal_os
         total_os
       }
+      user {
+        _id
+        name
+        user_id
+      }
       paid_amount
       dispotype {
         _id
@@ -146,6 +151,12 @@ type Callfile = {
 type Bucket = {
   name: string
 }
+
+type User = {
+  _id: string
+  name: string
+  user_id: string
+}
 type AccountHistory = {
   _id: string
   balance: number
@@ -158,6 +169,7 @@ type AccountHistory = {
   out_standing_details: OSD
   cd: CurrentDispo
   dispotype: Dispotype
+  user: User
 }
 
 
@@ -190,7 +202,16 @@ const AccountInfo = () => {
   const [showAccounts, setShowAccounts] = useState<boolean>(false)
   const {data} = useQuery<{customerOtherAccounts:Search[]}>(OTHER_ACCOUNTS,{variables: {caId: selectedCustomer?._id}, skip: selectedCustomer._id === "" || isTLCIP})
   const [showAccountHistory, setShowAccountHistory] = useState<boolean>(false)
-  const {data:accountHistory} = useQuery<{findAccountHistories:AccountHistory[]}>(ACCOUNT_HISTORIES,{variables: {id: selectedCustomer._id},skip: selectedCustomer._id === "" })
+  const {data:accountHistory, refetch} = useQuery<{findAccountHistories:AccountHistory[]}>(ACCOUNT_HISTORIES,{variables: {id: selectedCustomer._id},skip: selectedCustomer._id === "" })
+
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      if(selectedCustomer._id) {
+        await refetch()
+      }
+    })
+    return ()=> clearTimeout(timer)
+  },[selectedCustomer._id])
 
   return (
     <>
@@ -212,7 +233,7 @@ const AccountInfo = () => {
         {
           accountHistory && accountHistory?.findAccountHistories.length > 0 &&
           <div className="flex justify-end">
-            <button className=" px-2 py-1.5 rounded-md bg-cyan-400 text-slate-800 font-medium cursor-pointer hover:bg-cyan-600 hover:text-white" onClick={()=> setShowAccountHistory(true)}>Account History</button>
+            <button className=" px-2 py-1.5 rounded-md bg-cyan-400 text-slate-800 font-medium cursor-pointer hover:bg-cyan-600 hover:text-white" onClick={()=> setShowAccountHistory(true)}>Past Callfile History</button>
           </div>
         }
 

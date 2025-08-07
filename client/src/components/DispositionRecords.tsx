@@ -55,7 +55,7 @@ const DataDiv = ({label, value}:{label: string, value: string | number | null | 
 
 const DispositionRecords = () => {
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth )
-  const [limit, setLimit] = useState(3)
+  const [limit, setLimit] = useState(2)
 
   const {data:agentData} = useQuery<{findAgents:Agent[]}>(AGENTS)
   const {data:dispotypesData} = useQuery<{getDispositionTypes:Dispotype[]}>(DISPOTYPES)
@@ -79,14 +79,24 @@ const DispositionRecords = () => {
   }
   
   const handleLoadMore = () => {
-    if(limit === 3) {
+    if(limit === 2) {
       setLimit(history.length)
     } else {
-      setLimit(3)
+      setLimit(2)
     }
   }
 
-  const dispo_historySorted = history.slice().sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)))  || []
+
+
+
+  const findExisting = history.find(x=> x.existing === true) ?? null
+  const notExisting = history.filter(x => x.existing === false) ?? []
+
+  const checkingOnly = history?.slice().sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)))  || []
+
+  const dispo_historySorted = notExisting?.slice().sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)))  || []
+
+  const checkIfExistingIsLatest = checkingOnly[0]._id === findExisting?._id
 
   const withPayment = ['PTP','UNEG','PAID']
 
@@ -98,11 +108,56 @@ const DispositionRecords = () => {
       <h1 className="text-center text-xl font-bold text-slate-600">Account History</h1>
       <div className={`flex flex-wrap gap-10 justify-center`}>
         {
+          findExisting &&
+          <div className={`w-8/10 lg:w-2/7 2xl:text-sm lg:text-xs flex flex-col gap-2 border p-2 rounded-xl border-slate-400 ${findExisting.existing && "bg-slate-200"}`}>
+              <div className=" gap-2 border border-slate-500 rounded-md bg-white p-2 text-center font-medium 2xl:text-base lg;text-sm text-slate-600">
+              Existing Status
+              {
+                checkIfExistingIsLatest &&
+                <span> - Latest</span>
+              }
+            </div>
+            <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white ">
+              <div className="text-gray-800 font-bold p-2 text-end">Agent</div>
+              <div className="p-2 col-span-2 font-medium capitalize text-slate-600 ">{agentObject[findExisting.user] || "No agent id"}</div>
+            </div>
+            <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white w-full">
+              <div className="text-gray-800 font-bold p-2 text-end">Date & Time</div>
+              <div className="p-2 col-span-2 text-slate-700  w-full">{date(findExisting.createdAt)}</div>
+            </div>
+
+            <DataDiv label='Disposition' value={`${dispotypeObject[findExisting.disposition]}`}/>
+            <DataDiv label='Contact Method' value={findExisting.contact_method.toUpperCase() as AccountType}/>
+            <DataDiv label='Amount' value={findExisting.amount !== 0 ? findExisting.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : ""}/>
+            <DataDiv label='Payment' value={filter?.includes(findExisting.disposition) ? findExisting.payment?.toString() ?? null : null}/>
+            <DataDiv label='Payment Date' value={findExisting.payment_date}/>
+            <DataDiv label='Payment Method' value={findExisting.payment_method}/>
+            <DataDiv label='Reference No.' value={findExisting.ref_no}/>
+            <DataDiv label='Comment' value={findExisting.comment}/>
+            {
+              (()=> {
+                if(findExisting.contact_method === AccountType.CALLS) {
+                  return <DataDiv label='Dialer' value={findExisting.dialer}/>
+                } else if(findExisting.contact_method === AccountType.SMS) {
+                  return <DataDiv label='SMS Collector' value={findExisting.sms}/>
+                } else if(findExisting.contact_method === AccountType.SKIP) {
+                  return <DataDiv label='Chat App' value={findExisting.chatApp}/>
+                } 
+              })()
+            }
+            {
+              findExisting.RFD &&
+              <DataDiv label='RFD Reason' value={findExisting.RFD.toString()}/>
+
+            }
+          </div>
+        }
+        {
           slicedHistory.map((gad,index) => { 
             return(
             <div key={gad._id} className={`w-8/10 lg:w-2/7 2xl:text-sm lg:text-xs flex flex-col gap-2 border p-2 rounded-xl border-slate-400 ${gad.existing && "bg-slate-200"}`}>
                <div className=" gap-2 border border-slate-500 rounded-md bg-white p-2 text-center font-medium 2xl:text-base lg;text-sm text-slate-600">
-                {index + 1 === 1 ? "Latest" :  (index + 1 === 2 ? "Previous" : "Past")}
+                {index + 1 === 1 ?  (!checkIfExistingIsLatest ? "Latest" : "Previous")  :  (index + 1 === 2  ?   (!checkIfExistingIsLatest ? "Previous" : "Past") : "Past")}
               </div>
               <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white ">
                 <div className="text-gray-800 font-bold p-2 text-end">Agent</div>

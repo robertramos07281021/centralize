@@ -65,6 +65,17 @@ const CustomerExtnResolver = {
             $unwind: {path: "$account_callfile",preserveNullAndEmptyArrays: true}
           },
           {
+            $lookup: {
+              from: "users",
+              localField: "cd.user",
+              foreignField: "_id",
+              as: "user"
+            },
+          },
+          {
+            $unwind: {path: "$user",preserveNullAndEmptyArrays: true}
+          },
+          {
             $sort: {
               createdAt: 1
             }

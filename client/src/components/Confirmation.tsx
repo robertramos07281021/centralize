@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 
 const color = {
   CREATE: {
@@ -74,8 +75,21 @@ type modalProps = {
 const noButtonHide = ['IDLE','RPCTODAY']
 
 const Confirmation:React.FC<modalProps> = ({yes, no, message, toggle}) => {
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        no();
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
+
   return (
-    <div tabIndex={0} className="fixed w-screen h-screen bg-black/20 top-0 left-0 z-50 backdrop-blur-[1.5px] flex items-center justify-center">
+    <div tabIndex={0} 
+    onKeyDown={(e)=> e} 
+    className="fixed w-screen h-screen bg-black/20 top-0 left-0 z-50 backdrop-blur-[1.5px] flex items-center justify-center">
     <div className="w-96 h-72 bg-white rounded-lg overflow-hidden flex flex-col shadow-xl shadow-black/60">
       <div className={`${color[toggle]?.title} p-2 text-2xl text-white font-medium`}>Confirmation</div>
       <div className="h-full flex flex-col items-center justify-center gap-10">
@@ -83,6 +97,7 @@ const Confirmation:React.FC<modalProps> = ({yes, no, message, toggle}) => {
         <div className="flex gap-10">
         <button 
           type="button" 
+          accessKey="w"
           className={`${color[toggle]?.button} text-white focus:ring-4  font-medium rounded-lg text-lg w-24 py-2.5 cursor-pointer`} onClick={yes}>{noButtonHide.includes(toggle) ? "OK":"Yes"}</button>
         {
           !noButtonHide.includes(toggle)  &&

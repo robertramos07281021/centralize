@@ -70,6 +70,7 @@ const customerAccountSchema = new Schema(
       type: Boolean,
       default: false
     },
+    
     //object
     out_standing_details: {
       principal_os: {

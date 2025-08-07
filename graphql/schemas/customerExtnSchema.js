@@ -29,6 +29,7 @@ const CustomerExtnTypeDefs = gql`
     out_standing_details: outStandingDetails
     cd: CurrentDispo
     dispotype: DispoType
+    user: User
   }
 
   type Query {

@@ -73,27 +73,33 @@ const NavbarExtn = () => {
   const length = myTask?.myTasks.length || 0
 
   return (
-    <div className="border-y border-slate-300 flex items-center justify-center text-base font-medium text-slate-500 bg-white print:hidden">
-      {
-        accountsNavbar[userType].map((an,index) => 
-        <Link key={index} to={an.link} className="relative">
-          <div className={`${index > 0 && "border-l"} ${location.pathname.includes(an.link) && "bg-slate-200"} text-xs border-slate-300 py-2  w-35 lg:w-44 text-center hover:bg-slate-200 hover:text-black/60`}>
-            {an.name}
-          </div>
-          { 
-            (an.name.includes('Panel') && length > 0) &&
-            <>
-              <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center text-white rounded-full bg-red-500 -top-3 border-white border-2 -right-1 z-50">
-                {length}
-              </div>
-              <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center rounded-full bg-red-500 -top-3 -right-1 z-40 animate-ping">
-              </div>
-            </>
-          }
-        </Link>
-        )
-      }
-    </div>
+
+    <>
+
+
+      <div className="border-y border-slate-300 flex items-center justify-center text-base font-medium text-slate-500 bg-white print:hidden">
+        {
+          accountsNavbar[userType].map((an,index) => 
+          <Link key={index} to={an.link} className="relative">
+            <div className={`${index > 0 && "border-l"} ${location.pathname.includes(an.link) && "bg-slate-200"} text-xs border-slate-300 py-2  w-35 lg:w-44 text-center hover:bg-slate-200 hover:text-black/60`}>
+              {an.name}
+            </div>
+            { 
+              (an.name.includes('Panel') && length > 0) &&
+              <>
+                <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center text-white rounded-full bg-red-500 -top-3 border-white border-2 -right-1 z-50">
+                  {length}
+                </div>
+                <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center rounded-full bg-red-500 -top-3 -right-1 z-40 animate-ping">
+                </div>
+              </>
+            }
+          </Link>
+          )
+        }
+      </div>
+    
+    </>
   )
 }
 
