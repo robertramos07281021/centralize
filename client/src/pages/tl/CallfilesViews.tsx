@@ -211,7 +211,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   useSubscription<{newCallfile:SubSuccess}>(NEW_UPLOADED_CALLFILE,{
     onData: ({data})=> {
       if(data){
-        if(data.data?.newCallfile?.message === "SOMETHING_NEW_ON_CALLFILE" && userLogged.buckets.toString().includes(data.data?.newCallfile?.bucket)) {
+        if(data.data?.newCallfile?.message === "SOMETHING_NEW_ON_CALLFILE" && userLogged?.buckets.toString().includes(data.data?.newCallfile?.bucket)) {
           client.refetchQueries({
             include: ['getCallfiles']
           })
@@ -223,7 +223,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   useSubscription<{updateOnCallfiles:SubSuccess}>(UPDATE_ON_CALLFILES,{
     onData: ({data})=> {
       if(data){
-        if(data.data?.updateOnCallfiles?.message === "FINISHED_CALLFILE" && userLogged.buckets.toString().includes(data.data?.updateOnCallfiles?.bucket)) {
+        if(data.data?.updateOnCallfiles?.message === "FINISHED_CALLFILE" && userLogged?.buckets.toString().includes(data.data?.updateOnCallfiles?.bucket)) {
           client.refetchQueries({
             include: ['getCallfiles']
           })

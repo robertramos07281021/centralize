@@ -988,9 +988,13 @@ const customerResolver = {
 
   Assigned: {
     __resolveType(obj) {
-      if (obj.members) return 'Group';
-      if (obj.user_id) return 'User';
-      return null;
+      if('members' in obj) {
+        return 'Group'
+      } else if ('username'in obj){
+        return 'User'
+      } else {
+        return null
+      }
     }
   },
   
