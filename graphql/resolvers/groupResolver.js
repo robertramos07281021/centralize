@@ -126,9 +126,9 @@ const groupResolver = {
         const findGroup = await Group.findById(groupId)
         const user = await User.findById(groupId)
         const id = findGroup ? findGroup._id : user._id
+        const CheckAssgined = findGroup ? "Group" : "User"
 
-
-        await CustomerAccount.updateMany({_id: {$in: task}}, {$set: {assigned: id, assigned_date: new Date() }})
+        await CustomerAccount.updateMany({_id: {$in: task}}, {$set: { assigned: id, assigned_date: new Date(), assignedModel: CheckAssgined }})
 
         await pubsub.publish(PUBSUB_EVENTS.TASK_CHANGING, {
           taskChanging: {

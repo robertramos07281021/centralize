@@ -210,7 +210,7 @@ const Login = () => {
   },[login,username,password,setRequired,setInvalid,setAlready,setLock,loginForm])
 
   useEffect(()=> {
-    if(userLogged._id && userLogged.change_password) {
+    if(userLogged && userLogged.change_password) {
       const userType = userLogged.type as keyof typeof userRoutes;
       if(userRoutes[userType]) navigate(userRoutes[userType])
     }
@@ -220,7 +220,7 @@ const Login = () => {
     if(userLogged?._id && !userLogged.change_password) {
       const timer = setTimeout(async() =>  {
         await logout()
-        if(selectedCustomer._id) {
+        if(selectedCustomer) {
           await deselectTask({variables: {id: selectedCustomer._id}})
         }
       })

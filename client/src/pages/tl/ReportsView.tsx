@@ -89,7 +89,7 @@ type Distance = {
 
 export type Search = {
   searchAgent: string
-  searchBucket: string
+  searchBucket: string | null
   selectedDisposition : string[]
   dateDistance: Distance
   callfile: String

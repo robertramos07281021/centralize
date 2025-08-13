@@ -8,7 +8,7 @@ import { RootState } from "../redux/store"
 
 export const AgentRoute = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
-  return (userLogged?._id && userLogged.type === "AGENT" && userLogged.change_password) ?  (
+  return (userLogged && userLogged.type === "AGENT" && userLogged.change_password) ?  (
     <Wrapper>
       <Navbar/>
       <Outlet/>

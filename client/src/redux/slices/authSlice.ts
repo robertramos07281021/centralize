@@ -46,10 +46,10 @@ export type Targets = {
 
 type UserState = {
   serverError: boolean
-  userLogged: User
+  userLogged: User | null
   search: search
   page: number
-  selectedCustomer:Search
+  selectedCustomer:Search | null
   selectedGroup: string
   selectedAgent: string
   tasker: Tasker
@@ -86,78 +86,14 @@ const initialState:UserState = {
     message: ""
   },
   breakValue: BreakEnum.WELCOME,
-  userLogged: {
-    _id: "",
-    change_password: false,
-    name: "",
-    type: "",
-    username: "",
-    branch:"",
-    departments: [],
-    buckets: [],
-    account_type: "",
-    group: "",
-    targets: {
-      daily: 0,
-      monthly: 0,
-      weekly: 0
-    }
-  },
+  userLogged: null,
   search: {
     fullName: "",
     contact_no: "",
     dob: "",
     email: ""
   },
-  selectedCustomer: {
-    _id: "",
-    case_id: "",
-    account_id: "",
-    endorsement_date: "",
-    credit_customer_id: "",
-    bill_due_day: 0,
-    max_dpd: 0,
-    balance: 0,
-    paid_amount: 0,
-    isRPCToday: false,
-    dispo_history: [],
-    month_pd: 0,
-    dpd: 0,
-    emergency_contact: {
-      name: "",
-      mobile: ""
-    },
-    out_standing_details: {
-      late_charge_waive_fee_os: 0,
-      principal_os: 0,
-      interest_os: 0,
-      admin_fee_os: 0,
-      txn_fee_os: 0,
-      late_charge_os: 0,
-      dst_fee_os: 0,
-      waive_fee_os: 0,
-      total_os: 0
-    },
-    grass_details: {
-      grass_region: "",
-      vendor_endorsement: "",
-      grass_date: ""
-    },
-    account_bucket: {
-      name: "",
-      dept: ""
-    },
-    customer_info: {
-      fullName:"",
-      dob:"",
-      gender:"",
-      contact_no:[],
-      emails:[],
-      addresses:[],
-      _id:"",
-      isRPC: false
-    }
-  }
+  selectedCustomer: null
 };
 
 const authSlice = createSlice({
@@ -207,55 +143,7 @@ const authSlice = createSlice({
       state.myToken = action.payload
     },
     setDeselectCustomer: (state) => {
-      state.selectedCustomer = {
-        _id: "",
-        case_id: "",
-        account_id: "",
-        endorsement_date: "",
-        credit_customer_id: "",
-        bill_due_day: 0,
-        max_dpd: 0,
-        balance: 0,
-        paid_amount: 0,
-        isRPCToday: false,
-        dispo_history: [],
-        month_pd: 0,
-        dpd: 0,
-        emergency_contact: {
-          name: "",
-          mobile: ""
-        },
-        out_standing_details: {
-          principal_os: 0,
-          interest_os: 0,
-          admin_fee_os: 0,
-          txn_fee_os: 0,
-          late_charge_os: 0,
-          dst_fee_os: 0,
-          total_os: 0,
-          waive_fee_os: 0,
-          late_charge_waive_fee_os: 0
-        },
-        grass_details: {
-          grass_region: "",
-          vendor_endorsement: "",
-          grass_date: ""
-        },
-        account_bucket: {
-          name: "",
-          dept: ""
-        },
-        customer_info: {
-          fullName:"",
-          dob:"",
-          gender:"",
-          contact_no:[],
-          emails:[],
-          addresses:[],
-          _id:"",
-          isRPC: false
-        }
-      }
+      state.selectedCustomer = null
     },
     increamentBreakTimer: (state) => {
       state.breakTimer ++;
@@ -271,72 +159,8 @@ const authSlice = createSlice({
     },
 
     setLogout: (state) => {
-      state.selectedCustomer = {
-        _id: "",
-        case_id: "",
-        account_id: "",
-        endorsement_date: "",
-        credit_customer_id: "",
-        bill_due_day: 0,
-        max_dpd: 0,
-        dpd: 0,
-        month_pd: 0,
-        balance: 0,
-        paid_amount: 0,
-        isRPCToday: false,
-        dispo_history: [],
-        emergency_contact: {
-          name: "",
-          mobile: ""
-        },
-        out_standing_details: {
-          principal_os: 0,
-          interest_os: 0,
-          admin_fee_os: 0,
-          txn_fee_os: 0,
-          late_charge_os: 0,
-          dst_fee_os: 0,
-          total_os: 0,
-          waive_fee_os: 0,
-          late_charge_waive_fee_os: 0
-        },
-        grass_details: {
-          grass_region: "",
-          vendor_endorsement: "",
-          grass_date: ""
-        },
-        account_bucket: {
-          name: "",
-          dept: ""
-        },
-        customer_info: {
-          fullName:"",
-          dob:"",
-          gender:"",
-          contact_no:[],
-          emails:[],
-          addresses:[],
-          _id:"",
-          isRPC: false
-        }
-      }
-      state.userLogged= {
-        _id: "",
-        change_password: false,
-        name: "",
-        type: "",
-        username: "",
-        branch:"",
-        departments: [],
-        buckets: [],
-        account_type: "",
-        group: "",
-        targets: {
-          daily: 0,
-          monthly: 0,
-          weekly: 0
-        }
-      }
+      state.selectedCustomer = null
+      state.userLogged = null
       state.search= {
         fullName: "",
         contact_no: "",

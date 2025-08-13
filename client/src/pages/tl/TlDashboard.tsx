@@ -14,7 +14,7 @@ import DailyFTE from './DailyFTE';
 const TlDashboard  = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
 
-  if(userLogged.type === "MIS") return <Navigate to="/mis-dashboard"/>
+  if(userLogged?.type === "MIS") return <Navigate to="/mis-dashboard"/>
   
   return (
     <div className="h-full overflow-hidden p-2 grid grid-rows-8 grid-cols-8 bg-slate-600/10 gap-2">

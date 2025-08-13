@@ -184,7 +184,6 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
     dpd
   }
   
-  
 
   const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount}>(FIND_CUSTOMER_ACCOUNTS,{variables: {query: query},skip:isTaskManager })
 
@@ -306,8 +305,8 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
   },[setTaskToAdd,taskToAdd])
 
   const [addGroupTask] = useMutation(ADD_GROUP_TASK,{
-    onCompleted:() => {
-      CADRefetch()
+    onCompleted:async() => {
+      await CADRefetch()
       setConfirm(false)
       setRequired(false)
       setTaskToAdd([])
@@ -317,7 +316,8 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
         message: "Task successfully added"
       }))
     },
-    onError: () => {
+    onError: (error) => {
+      console.log(error)
       dispatch(setServerError(true))
     }
   })

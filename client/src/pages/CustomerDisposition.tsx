@@ -2,14 +2,13 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react"
 import CustomerUpdateForm from "../components/CustomerUpdateForm"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
-import { Navigate, useLocation, useNavigate } from "react-router-dom"
-import AccountInfo from "../components/AccountInfo"
+import { Navigate, useNavigate } from "react-router-dom"
+import AccountInfo, { ChildHandle } from "../components/AccountInfo"
 import DispositionForm from "../components/DispositionForm"
 import { gql, useMutation, useQuery } from "@apollo/client"
 import { Search, CustomerRegistered } from "../middleware/types"
 import { setDeselectCustomer, setSelectedCustomer, setServerError, setSuccess } from "../redux/slices/authSlice"
 import AgentTimer from "./agent/AgentTimer"
-import DispositionRecords from "../components/DispositionRecords"
 import MyTaskSection from "../components/MyTaskSection"
 import { BreakEnum } from "../middleware/exports"
 import Loading from "./Loading"
@@ -234,6 +233,7 @@ const CustomerDisposition = () => {
   const {userLogged, selectedCustomer, breakValue } = useSelector((state:RootState)=> state.auth)
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
+
   const [isRPC, setIsRPC] = useState<boolean>(false)
   const [isUpdate, setIsUpdate] = useState<boolean>(false)
   const [search, setSearch] = useState("")
@@ -243,7 +243,6 @@ const CustomerDisposition = () => {
   })
 
   const length = searchData?.search?.length || 0;
-  const location = useLocation()
 
   const debouncedSearch = useMemo(() => {
     return debounce(async(val: string) => {
@@ -291,59 +290,22 @@ const CustomerDisposition = () => {
     }
   })
 
-  useEffect(()=> {
-    if(location.pathname) {
-      const id = selectedCustomer._id;
-      if(!id) return
-  
-      const timer = setTimeout(async()=> {
-        await deselectTask({ variables: { id } })
-      })
-      return ()=> clearTimeout(timer)
-    }
-  },[deselectTask,location])
-
   const clearSelectedCustomer = useCallback(async() => {
-    await deselectTask({variables: {id: selectedCustomer._id}}) 
+    await deselectTask({variables: {id: selectedCustomer?._id}}) 
   },[selectedCustomer,deselectTask])
   
   useEffect(()=> {
-    if(selectedCustomer._id) {
+    if(selectedCustomer) {
       setSearch("")
     }
-  },[selectedCustomer._id])
+  },[selectedCustomer])
+
 
   useEffect(()=> {
-    if(breakValue !== BreakEnum.PROD && userLogged.type === "AGENT") {
+    if(breakValue !== BreakEnum.PROD && userLogged?.type === "AGENT") {
       navigate('/break-view')
     }
   },[breakValue,navigate])
-
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (!selectedCustomer?._id) return;
-      const body = JSON.stringify({
-        query:`
-          mutation deselectTask($id: ID!) {
-            deselectTask(id: $id) {
-              message
-              success
-            }
-          }
-        `,
-        variables: { id: selectedCustomer._id }
-      });
-      const blob = new Blob([body], { type: 'application/json' });
-      navigator.sendBeacon('/graphql', blob);
-    };
-
-    window.addEventListener('beforeunload', handleBeforeUnload);
-
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload);
-    };
-
-  }, [selectedCustomer]);
 
   const [modalProps, setModalProps] = useState({
     message: "",
@@ -355,7 +317,7 @@ const CustomerDisposition = () => {
   const [isRPCToday, setIsRPCToday] = useState<boolean>(false)
 
   useEffect(()=> {
-    if(selectedCustomer._id) {
+    if(selectedCustomer) {
       if(selectedCustomer.isRPCToday) {
         setIsRPCToday(selectedCustomer.isRPCToday)
         setModalProps({
@@ -376,17 +338,19 @@ const CustomerDisposition = () => {
   
   const [updateRPC] = useMutation<{updateRPC:{success: boolean, message: string, customer:CustomerRegistered}}>(UPDATE_RPC,{
     onCompleted: async(res)=> {
-      dispatch(setSuccess({
-        success: res.updateRPC.success,
-        message: res.updateRPC.message
-      }))
-      dispatch(setSelectedCustomer({...selectedCustomer, customer_info: res.updateRPC.customer}))
-      setIsRPC(false)
+      if(selectedCustomer) {
+        dispatch(setSuccess({
+          success: res.updateRPC.success,
+          message: res.updateRPC.message
+        }))
+        dispatch(setSelectedCustomer({...selectedCustomer, customer_info: res.updateRPC.customer}))
+        setIsRPC(false)
+      }
     }
   })
 
   const callbackUpdateRPC = useCallback(async()=> {
-    await updateRPC({variables: {id:selectedCustomer.customer_info._id}})
+    await updateRPC({variables: {id:selectedCustomer?.customer_info._id}})
   },[updateRPC, selectedCustomer])
 
   const callbackNo = useCallback(()=> {
@@ -403,13 +367,21 @@ const CustomerDisposition = () => {
     })
   }
 
-
+  const childrenDivRef = useRef<ChildHandle>(null);
+ 
   if(loading) return <Loading/>
 
-  const gender = selectedCustomer.customer_info?.gender ? (selectedCustomer.customer_info?.gender.length > 1 ? selectedCustomer.customer_info?.gender.charAt(0).toLowerCase() : selectedCustomer.customer_info?.gender.toLowerCase()) : ""
+  const gender = selectedCustomer?.customer_info?.gender ? (selectedCustomer.customer_info?.gender.length > 1 ? selectedCustomer.customer_info?.gender.charAt(0).toLowerCase() : selectedCustomer.customer_info?.gender.toLowerCase()) : ""
 
-  return userLogged._id ? (
-    <div className="h-full w-full overflow-auto outline-none"> 
+  return userLogged ? (
+    <div 
+      className="h-full w-full overflow-auto outline-none" 
+      onMouseDown={(e)=> {
+        if(!childrenDivRef.current?.divElement?.contains(e.target as Node)) {
+          childrenDivRef?.current?.showButtonToFalse()
+        }
+      }}
+      >
       {
         (isRPCToday || isRPC) &&
         <Confirmation {...modalProps}/>
@@ -426,18 +398,18 @@ const CustomerDisposition = () => {
           <div className="flex flex-col items-center"> 
             <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Information</h1>
             <div className="border flex flex-col rounded-xl border-slate-400 w-full h-full items-center justify-center p-5 gap-1.5 relative">
-              <div className={`flex w-full ${selectedCustomer.customer_info.isRPC ? "justify-start": "justify-end"} `}>
+              <div className={`flex w-full ${selectedCustomer?.customer_info.isRPC ? "justify-start": "justify-end"} `}>
                 {
-                  selectedCustomer._id && !selectedCustomer.customer_info.isRPC &&
-                  <button className={` px-10 py-1.5 rounded text-white font-bold bg-orange-400 hover:bg-orange-600 cursor-pointer ${isUpdate ? "absolute top-5 right-5" : ""} `}onClick={handleClickRPC}>RPC</button>
+                  selectedCustomer?._id && !selectedCustomer.customer_info.isRPC &&
+                  <button className={` px-10 py-1.5 rounded text-white font-bold bg-orange-400 hover:bg-orange-600 cursor-pointer ${isUpdate ? " 2xl:absolute top-5 right-5" : ""} `}onClick={handleClickRPC}>RPC</button>
                 }
                 {
-                  selectedCustomer._id && selectedCustomer?.customer_info?.isRPC &&
+                  selectedCustomer?._id && selectedCustomer?.customer_info?.isRPC &&
                   <IoRibbon className=" text-5xl text-blue-500"/>
                 }
               </div>
               {
-                !selectedCustomer._id &&
+                !selectedCustomer?._id &&
                 <div className="relative 2xl:w-1/2 w-full lg:w-8/10 flex justify-center">
                   <input 
                     accessKey="z"
@@ -455,8 +427,8 @@ const CustomerDisposition = () => {
                   </div>
                 </div>
               }
-              <FieldDisplay label="Full Name" value={selectedCustomer.customer_info?.fullName}/>
-              <FieldDisplay label="Date Of Birth (yyyy-mm-dd)" value={selectedCustomer.customer_info?.dob}/>
+              <FieldDisplay label="Full Name" value={selectedCustomer?.customer_info?.fullName}/>
+              <FieldDisplay label="Date Of Birth (yyyy-mm-dd)" value={selectedCustomer?.customer_info?.dob}/>
               <FieldDisplay label="Gender" 
                 value={
                   (()=> {
@@ -476,7 +448,7 @@ const CustomerDisposition = () => {
               <FieldListDisplay label="Email" values={selectedCustomer?.customer_info?.emails} fallbackHeight="h-10"/>
               <FieldListDisplay label="Address" values={selectedCustomer?.customer_info?.addresses} fallbackHeight="h-36"/>
               {
-                (selectedCustomer._id && selectedCustomer.emergency_contact) && 
+                (selectedCustomer && selectedCustomer.emergency_contact) && 
                 <div className="2xl:w-1/2 w-full lg:w-8/10 mt-1 ">
                   <p className="font-bold text-slate-500 uppercase lg:text-sm text-[0.9rem]">Emergency Contact Person :</p>
                   <div className="flex gap-2 flex-col lg:flex-row">
@@ -488,7 +460,7 @@ const CustomerDisposition = () => {
               {
                 !isUpdate &&
                 <div className="2xl:text-sm lg:text-xs mt-5 flex gap-5">
-                  { selectedCustomer._id &&
+                  { selectedCustomer &&
                     <>
                       {
                         selectedCustomer.balance != 0 &&
@@ -518,7 +490,7 @@ const CustomerDisposition = () => {
               {
                 isUpdate ?
                 <CustomerUpdateForm cancel={()=> setIsUpdate(false)} /> :
-                <p className="w- 2xl:text-2xl font-light text-slate-500">
+                <p className="w- 2xl:text-2xl font-light text-slate-500 select-none">
                   For Updating Customer Info Only
                 </p>
               }
@@ -527,16 +499,12 @@ const CustomerDisposition = () => {
         </div>
       </div>
       <div className="p-5 grid grid-cols-2 gap-5">
-        <AccountInfo/>
+        <AccountInfo ref={childrenDivRef}/>
         {
-          selectedCustomer.balance > 0 &&
+          selectedCustomer && selectedCustomer.balance > 0 &&
           <DispositionForm updateOf={()=> setIsUpdate(false)}/>
         }
       </div>
-      {
-        selectedCustomer.dispo_history.length > 0 &&
-        <DispositionRecords/>
-      }
     </div>
   ) : (<Navigate to="/"/>)
 }

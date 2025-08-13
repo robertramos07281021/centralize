@@ -29,13 +29,20 @@ const callFileSchema = new Schema(
       ref: "User"
     },
     totalAccounts: {
-      type: Number
+      type: Number,
+      default: 0
     },
     totalPrincipal: {
-      type: Number
+      type: Number,
+      default: 0
     },
     totalOB: {
-      type: Number
+      type: Number,
+      default: 0
+    },
+    target: {
+      type: Number,
+      default: 0
     }
   },
   { timestamps: true }

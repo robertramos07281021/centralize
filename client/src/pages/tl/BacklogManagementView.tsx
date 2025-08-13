@@ -155,10 +155,10 @@ const BacklogManagementView = () => {
     setAgentDropdown(false)
   },[setBucketDropdown,setAgentDropdown,bucketDropdown])
 
-  const yourBucket = userLogged.buckets.length > 1
+  const yourBucket = Boolean(userLogged && userLogged?.buckets.length > 1)
 
   const SearchFilter:Search = {
-    searchBucket: yourBucket ? searchBucket : userLogged.buckets[0], 
+    searchBucket: yourBucket ? searchBucket : (userLogged?.buckets[0] || null), 
     searchAgent: searchAgent, 
     selectedDisposition: selectedDisposition, 
     dateDistance: dateDistance,

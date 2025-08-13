@@ -39,9 +39,8 @@ const customerAccountSchema = new Schema(
     endorsement_date: {
       type: String,
     }, 
-    bill_due_day: {
-      type: Number,
-      default: 0
+    bill_due_date: {
+      type: String
     },
     dpd: {
       type: Number,

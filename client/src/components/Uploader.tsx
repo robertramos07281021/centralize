@@ -11,7 +11,7 @@ type Data = {
   address_2: string
   address_3: string
   admin_fee_os: number
-  bill_due_day:number 
+  bill_due_date:string 
   birthday:string 
   endorsement_date: number
   grass_date: number 
@@ -19,7 +19,7 @@ type Data = {
   contact: string
   contact_2: string
   contact_3: string
-  platform_user_id:string | number
+  platform_user_id:string
   credit_user_id:string
   customer_name:string 
   dpd_grp:string
@@ -90,7 +90,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             late_charge_os, 
             penalty_interest_os, 
             dst_fee_os, total_os, 
-            bill_due_day, 
+            bill_due_date, 
             contact_2, 
             contact_3, 
             contact, 
@@ -141,7 +141,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             }
             return cleaned;
           }
-
           
           const safeDate = (date: any) => {
             try {
@@ -165,7 +164,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             max_dpd: Number.isFinite(dpd) ? Math.ceil(dpd) : Math.ceil(max_dpd) || 0,
             mpd: Math.ceil(mpd) || 0,
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
-            bill_due_day: Number(bill_due_day) || 0,
           }
           
           if(emergencyContactMobile) {
@@ -181,6 +179,10 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
 
           if(grass_date) {
             rows['grass_date'] = safeDate(grass_date)
+          }
+
+          if(bill_due_date) {
+            rows['bill_due_date'] = safeDate(bill_due_date)
           }
 
           if(endorsement_date) {
@@ -224,6 +226,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     },
   });
   
+  console.log(excelData)
   const [createCustomer,{loading}] = useMutation(CREATE_CUSTOMER, {
     onCompleted:() => {
       successUpload()

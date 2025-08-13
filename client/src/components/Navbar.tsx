@@ -135,7 +135,7 @@ const Navbar = () => {
   useSubscription<{agentLocked:AgentLock}>(LOCK_AGENT, {
     onData: ({data}) => {
       if(data) {
-        if(data.data?.agentLocked.message === "AGENT_LOCK" && data.data?.agentLocked.agentId === userLogged._id ){
+        if(data.data?.agentLocked.message === "AGENT_LOCK" && data.data?.agentLocked.agentId === userLogged?._id ){
           setTimeout(()=> {
             client.refetchQueries({
               include: ['getMe']
@@ -145,7 +145,7 @@ const Navbar = () => {
       }
     }
   })
-
+  
   useEffect(()=> {
     dispatch(setSuccess({success: false, message: ""}))
   },[location.pathname])
@@ -176,14 +176,12 @@ const Navbar = () => {
       no:()=> setConfirmation(false),
       yes: async() => {
         await logout();
-        if(selectedCustomer._id) {
-          await deselectTask({variables: {id:selectedCustomer._id}});
-        }
+        await deselectTask({variables: {id:selectedCustomer?._id}});
       },
       message: "Are you sure you want to logout?",
       toggle: "LOGOUT"
     })
-  },[selectedCustomer,setConfirmation, deselectTask, dispatch, logout, setServerError,setModalProps])
+  },[selectedCustomer,setConfirmation, deselectTask, dispatch, logout,setModalProps])
 
   const [logoutToPersist, {loading:logoutToPEristsLoading}] = useMutation<{logoutToPersist: {success: boolean, message: string}}>(LOGOUT_USING_PERSIST,{
     onCompleted: async()=> {
@@ -206,10 +204,10 @@ const Navbar = () => {
   })
 
   const forceLogout = useCallback(async()=> {
-    if (selectedCustomer._id) {
-      await deselectTask({ variables: { id: selectedCustomer._id, user_id: userLogged._id } });
-    }
-    await logoutToPersist({ variables: { id: userLogged._id } });
+
+    await deselectTask({ variables: { id: selectedCustomer?._id, user_id: userLogged?._id } });
+    
+    await logoutToPersist({ variables: { id: userLogged?._id } });
   },[deselectTask, logoutToPersist, selectedCustomer, userLogged])
 
   useEffect(()=> {
@@ -237,7 +235,8 @@ const Navbar = () => {
 
 
   useEffect(()=> {
-    if(breakValue !== BreakEnum.PROD && userLogged.type === "AGENT") {
+ 
+    if(breakValue !== BreakEnum.PROD && userLogged?.type === "AGENT") {
       navigate('/break-view')
     }
   },[breakValue, navigate])
@@ -272,6 +271,7 @@ const Navbar = () => {
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {
+      if(!userLogged) return
       if(data) {
         dispatch(setUserLogged({...userLogged, targets: data.getMe.targets || {daily: 0, weekly: 0, monthly: 0}}))
         if(!data.getMe.isOnline) {
@@ -296,7 +296,7 @@ const Navbar = () => {
 
   if(loading || logoutToPEristsLoading) return <Loading/>
 
-  return (
+  return userLogged && (
     <>
       {
         serverError &&
@@ -312,18 +312,18 @@ const Navbar = () => {
             <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
             Collections System
             {
-              (userLogged.type === "AGENT") && breakValue !== BreakEnum.WELCOME && 
+              (userLogged?.type === "AGENT") && breakValue !== BreakEnum.WELCOME && 
               <IdleAutoLogout/> 
             }
           </div>
           <div className="p-1 flex gap-2 text-xs z-50">
-            <p className="font-medium text-white italic flex items-center">Hello&nbsp;<span className="uppercase">{userLogged.name}</span></p>
+            <p className="font-medium text-white italic flex items-center">Hello&nbsp;<span className="uppercase">{userLogged?.name}</span></p>
             <BsFillPersonVcardFill className="text-4xl cursor-pointer " onClick={()=> {setPopUpUser(!poPupUser); setPopUpBreak(false)}}/>
             { poPupUser &&
               <div ref={modalRef} className="w-40 h-auto border border-slate-200 shadow-xl shadow-black/8 rounded-xl top-13 end-5 bg-white absolute flex flex-col p-2 text-slate-500 font-medium">
                 {
-                  accountsNavbar[userLogged.type].map((e,index)=> {
-                    const navTo = (userLogged.type === "AGENT" && breakValue !== BreakEnum.PROD) ? '/break-view' : e.link
+                  accountsNavbar[userLogged?.type].map((e,index)=> {
+                    const navTo = (userLogged?.type === "AGENT" && breakValue !== BreakEnum.PROD) ? '/break-view' : e.link
                     return (
                     <Link key={index} to={navTo} className={`${index === 0 && 'rounded-t-lg'} grow px-2 border-b border-slate-200 flex items-center hover:text-white hover:bg-slate-500 duration-200 ease-in-out cursor-pointer py-2`} onClick={()=> setPopUpUser(false) }>
                       {e.name === "Customer Interaction Panel" ? "CIP" : e.name}
@@ -333,7 +333,7 @@ const Navbar = () => {
                   )
                 }
                 {
-                  userLogged.type === "AGENT" && breakValue !== BreakEnum.WELCOME &&
+                  userLogged?.type === "AGENT" && breakValue !== BreakEnum.WELCOME &&
                   <div className="grow border-b border-slate-200 flex items-center cursor-pointer relative ">
                     <h1 className="p-2 h-full w-full hover:bg-slate-500 hover:text-white   duration-200 ease-in-out" onClick={()=> setPopUpBreak(!popUpBreak)}>Breaks</h1>
                     {
@@ -362,7 +362,7 @@ const Navbar = () => {
           </div>
         </div>
         {
-          ((breakValue === BreakEnum.PROD && userLogged.type === 'AGENT') || (userLogged.type !== 'AGENT')) &&
+          ((breakValue === BreakEnum.PROD && userLogged?.type === 'AGENT') || (userLogged?.type !== 'AGENT')) &&
           <NavbarExtn/>
         }
       </div>

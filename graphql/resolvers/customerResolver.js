@@ -1072,7 +1072,7 @@ const customerResolver = {
             balance : element.balance,
             month_pd: element.mpd,
             paid_amount,
-
+            bill_due_date: element.bill_due_date,
             assigned: findAgent ? findAgent._id : null,
             account_id: element.account_id ,
             out_standing_details: {

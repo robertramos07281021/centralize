@@ -7,7 +7,7 @@ import { RootState } from "../redux/store"
 
 export const AdminRoute = () => {
   const {userLogged} = useSelector((state:RootState) => state.auth)
-  return userLogged._id && userLogged.type === "ADMIN" ? (
+  return userLogged && userLogged.type === "ADMIN" ? (
     <Wrapper>
       <Navbar/>
       <Outlet/>

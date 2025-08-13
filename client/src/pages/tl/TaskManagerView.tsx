@@ -94,7 +94,6 @@ const TaskManagerView = () => {
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
-
       <div className="flex gap-10 p-5 items-start">
         <div className=" flex gap-5 lg:text-[0.6em] 2xl:text-xs w-full flex-col">
           <div className="flex gap-5">

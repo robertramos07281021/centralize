@@ -8,7 +8,7 @@ const customerTypeDefs = gql`
   address_2: String
   address_3: String
   admin_fee_os: Float
-  bill_due_day: Float 
+  bill_due_date: String 
   birthday: String
   endorsement_date: String
   grass_date: String
@@ -145,7 +145,7 @@ const customerTypeDefs = gql`
     account_id: String
     endorsement_date: String
     credit_customer_id: String
-    bill_due_day: Int
+    bill_due_date: String
     max_dpd: Int
     balance: Float
     dpd: Int
@@ -176,7 +176,7 @@ const customerTypeDefs = gql`
     account_id: String
     endorsement_date: String
     credit_customer_id: String
-    bill_due_day: Int
+    bill_due_date: String
     max_dpd: Int
     balance: Float
     month_pd: Int

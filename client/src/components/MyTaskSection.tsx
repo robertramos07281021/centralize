@@ -58,7 +58,7 @@ type CustomerData = {
   account_id: string
   endorsement_date: string
   credit_customer_id: string
-  bill_due_day: number
+  bill_due_date: string
   max_dpd: number
   dpd: number
   balance: number
@@ -88,7 +88,7 @@ const MY_TASKS = gql`
       account_id
       endorsement_date
       credit_customer_id
-      bill_due_day
+      bill_due_date
       max_dpd
       dpd
       balance
@@ -165,7 +165,7 @@ const GROUP_TASKS =gql`
         account_id
         endorsement_date
         credit_customer_id
-        bill_due_day
+        bill_due_date
         max_dpd
         dpd
         balance
@@ -296,10 +296,20 @@ const MyTaskSection = () => {
   const dispatch = useAppDispatch()
   const {data:myTasksData, refetch} = useQuery<{myTasks:CustomerData[] | []}>(MY_TASKS)
   const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
-  
+  console.log(myTasksData)
+  console.log(groupTaskData)
+
+  useEffect(()=> {
+    const timer = setTimeout(async()=> {
+      await refetch()
+      await groupTaskRefetch()
+    },300)
+    return () => clearTimeout(timer)
+  },[])
 
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
     onData: async({data})=> {
+      if(!userLogged) return
       if(data) {
         if(data.data?.somethingChanged?.message === "TASK_SELECTION" && data.data?.somethingChanged?.members?.toString().includes(userLogged._id)) {
          await refetch()
@@ -310,6 +320,7 @@ const MyTaskSection = () => {
 
   useSubscription<{taskChanging:SubSuccess}>(TASK_CHANGING,{
     onData: async({data})=> {
+      if(!userLogged) return
       if(data) {
         if(data.data?.taskChanging?.message === "TASK_CHANGING" && (data.data?.taskChanging?.members?.toString().includes(userLogged._id)||data.data?.taskChanging?.members?.toString().includes(userLogged.group))) {
           await refetch()
@@ -321,8 +332,9 @@ const MyTaskSection = () => {
 
   useSubscription<{dispositionUpdated:SubSuccess}>(NEW_DISPO,{
     onData: async({data})=> {
+      if(!userLogged) return
       if(data){
-         if(data.data?.dispositionUpdated?.message === "NEW_DISPOSITION" && data.data?.dispositionUpdated?.members?.toString().includes(userLogged._id)) {
+          if(data.data?.dispositionUpdated?.message === "NEW_DISPOSITION" && data.data?.dispositionUpdated?.members?.toString().includes(userLogged?._id)) {
           await refetch()
           await groupTaskRefetch()
         }
@@ -332,8 +344,9 @@ const MyTaskSection = () => {
 
   useSubscription<{groupChanging:SubSuccess}>(GROUP_CHANGING,{
     onData: async({data})=> {
+      if(!userLogged) return
       if(data){
-        if(data.data?.groupChanging?.message === "GROUP_CHANGING" &&  data.data?.groupChanging?.members?.toString().includes(userLogged._id)) {
+        if(data.data?.groupChanging?.message === "GROUP_CHANGING" &&  data.data?.groupChanging?.members?.toString().includes(userLogged?._id)) {
            await groupTaskRefetch()
         }
       }
@@ -344,14 +357,14 @@ const MyTaskSection = () => {
   const [data, setData] = useState<CustomerData[] | null>([])
   const [selection, setSelection] = useState<string>("")
 
-  const groupLength = groupTaskData?.groupTask.task.filter(e=> userLogged.buckets.toString().includes(e.account_bucket._id)).length || null
-  const taskLength = myTasksData?.myTasks.filter(e=> userLogged.buckets.toString().includes(e.account_bucket._id)).length
+  const groupLength = groupTaskData?.groupTask.task.filter(e=> userLogged?.buckets.toString().includes(e.account_bucket._id)).length || null
+  const taskLength = myTasksData?.myTasks.filter(e=> userLogged?.buckets.toString().includes(e.account_bucket._id)).length
 
   useEffect(()=> {
     if(selection.trim()==="my_task") {
-      setData(myTasksData?.myTasks ? myTasksData?.myTasks.filter(e=> userLogged.buckets.toString().includes(e.account_bucket._id)) : null )
+      setData(myTasksData?.myTasks ? myTasksData?.myTasks.filter(e=> userLogged?.buckets.toString().includes(e.account_bucket._id)) : null )
     } else {
-      setData(groupTaskData?.groupTask?.task ? groupTaskData?.groupTask.task.filter(e=> userLogged.buckets.toString().includes(e.account_bucket._id)) : null)
+      setData(groupTaskData?.groupTask?.task ? groupTaskData?.groupTask.task.filter(e=> userLogged?.buckets.toString().includes(e.account_bucket._id)) : null)
     }
   },[selection,myTasksData,groupTaskData,userLogged])
 
@@ -364,7 +377,7 @@ const MyTaskSection = () => {
 
   useEffect(()=> {
     setSelection("")
-  },[selectedCustomer._id])
+  },[selectedCustomer])
 
   const handleClickMyTask = () => {
     if(selection && selection.trim() !== "group_task"){
@@ -385,8 +398,8 @@ const MyTaskSection = () => {
   })
   
   const handleClickSelect = async(data:CustomerData) => {
-    if(selectedCustomer._id) {
-      await deselectTask({variables: {id: selectedCustomer._id }})  
+    if(selectedCustomer) {
+      await deselectTask({variables: {id: selectedCustomer?._id }})  
     }
     const res = await selectTask({variables: {id: data._id}})
     if(res.data.selectTask.success) {

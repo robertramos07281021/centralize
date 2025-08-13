@@ -33,7 +33,7 @@ const GET_AOM_DEPT = gql`
 
 const ReportsView:React.FC<modalProps> = ({variables}) => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
-  const {data:aomDeptData} = useQuery<{getAomDept:AomDept[]}>(GET_AOM_DEPT,{skip: userLogged.type !== 'AOM'})
+  const {data:aomDeptData} = useQuery<{getAomDept:AomDept[]}>(GET_AOM_DEPT,{skip: userLogged?.type !== 'AOM'})
   const deptId = useMemo(()=> {
     const add = aomDeptData?.getAomDept || []
     return Object.fromEntries(add.map(e=> [e.id,e.name]))

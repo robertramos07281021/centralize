@@ -79,7 +79,7 @@ const taskTypeDefs = gql`
     account_id: String
     endorsement_date: String
     credit_customer_id: String
-    bill_due_day: Int
+    bill_due_date: String
     max_dpd: Int
     dpd: Int
     balance: Float

@@ -143,6 +143,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   const [required, setRequired] = useState(false)
   const [updateCustomer] = useMutation<{updateCustomer:UpdatedCustomer}>(UPDATE_CUSTOMER, {
     onCompleted: async(res) => {
+      if(!selectedCustomer) return
       const result = res.updateCustomer
       dispatch(setSelectedCustomer({ ...selectedCustomer, customer_info: result.customer }));
       dispatch(setSuccess({
@@ -157,7 +158,7 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   })
 
   const handleConfirmYes = useCallback(async () => {
-    await updateCustomer({ variables: { ...formState, id: selectedCustomer.customer_info._id } });
+    await updateCustomer({ variables: { ...formState, id: selectedCustomer?.customer_info._id } });
     setConfirm(false);
   }, [formState, selectedCustomer, updateCustomer]);
 

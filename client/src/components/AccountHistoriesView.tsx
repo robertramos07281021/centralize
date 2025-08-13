@@ -1,6 +1,8 @@
 import { IoMdCloseCircleOutline } from "react-icons/io";
 import { CurrentDispo } from "../middleware/types";
 import { useEffect, useState } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
 
 type OSD = {
   principal_os: number
@@ -49,6 +51,7 @@ type ComponentProps = {
 }
 
 
+
 const FieldsComponents = ({label, value}: {label:string, value: string | number | null | undefined}) => {
   let newValue = null
   if(typeof value  === 'number') {
@@ -68,7 +71,8 @@ const FieldsComponents = ({label, value}: {label:string, value: string | number 
 const AccountHistoriesView:React.FC<ComponentProps> = ({histories,close}) => {
   const [showMore,setShowMore] = useState<boolean>(false)
   const [selectedHistory, setSelectedHistory] = useState<AccountHistory | null>(null)
-  
+  const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
+
   const date = (date:string) => {
     const createdDate = new Date(date).toLocaleDateString()
     const time = new Date(date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })
@@ -83,11 +87,9 @@ const AccountHistoriesView:React.FC<ComponentProps> = ({histories,close}) => {
         close()
       } 
     };
-
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [setShowMore, close, showMore]);
-
 
 
   return (
@@ -156,46 +158,77 @@ const AccountHistoriesView:React.FC<ComponentProps> = ({histories,close}) => {
           </div>
         </div>
       }
-      <div className="w-full h-full z-40 gap-5 absolute px-10 top-0 left-0 bg-black/50 backdrop-blur-[2px] p-10 overflow-hidden flex flex-col">
-        
-          <IoMdCloseCircleOutline className="text-5xl  absolute top-4 right-5 hover:scale-110 cursor-pointer hover:text-black text-white" onClick={close}/>
-          <h1 className="text-3xl font-bold text-white">Past Callfile History</h1>
-          <div className="flex h-full overflow-x-auto flex-wrap gap-5">
-            {
-              histories.map(x=> {
-                return (
-                <div key={x._id} className="w-2/8 border basis-3/10 flex flex-col p-5 h-2/6 bg-white rounded-md border-slate-500 ">
-                  <div className="flex flex-col justify-between h-full">
-                    <div className="flex flex-col">
-                      <h1 className="text-2xl font-medium text-gray-600">{x.account_callfile.name}</h1>
-                      <h1 className="text-lg text-gray-600 font-medium">{x.account_bucket.name}</h1>
-                    </div>
-                    <div className="flex flex-col">
-                      <div className="flex justify-between text-gray-700 items-end">
-                        <div className="font-medium">Balance :</div>
-                        <div className="text-2xl font-medium ">{x.balance.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</div>
-                      </div>
-                      <div className="flex justify-between text-gray-700 items-end">
-                        <div className="font-medium">Status :</div>
-                        <div className="text-2xl font-medium ">{x.dispotype.name}</div>
-                      </div>
-                
-                      <div className="flex justify-between text-gray-700 items-end">
-                        <div className="font-medium">Time Stamp :</div>
-                        <div className="text-2xl font-medium ">{new Date(x.cd.createdAt).toLocaleTimeString("en-US", { month: 'short', day: '2-digit', year: 'numeric', hour: "2-digit", minute: "2-digit", hour12: true })}</div>
-                      </div>
-                    
-                      <button className="mt-4 cursor-pointer w-1/3 bg-orange-500 text-white hover:bg-orange-600 py-1.5 rounded-md " onClick={()=> {setShowMore(true); setSelectedHistory(x)}}>
-                        Show more...
-                      </button>
-                    </div>
-                  </div>
-                </div>
-                )
-              })
-            }
-          
+
+      <div className="w-full h-full z-40 gap-5 absolute px-10 top-0 left-0 bg-black/50 backdrop-blur-[2px] p-10">
+        <div className="w-full h-full border rounded-md border-slate-500 bg-white p-5 flex flex-col">
+          <div className="flex justify-between items-start">
+            <h1 className="2xl:text-5xl font-medium text-gray-600 pb-5">Past Callfile History - {selectedCustomer?.customer_info.fullName}</h1>
+            <IoMdCloseCircleOutline className="text-5xl m-3 absolute top-10 right-10 hover:scale-110 cursor-pointer hover:text-gray-400" onClick={close}/>
           </div>
+          <div className="h-full overflow-y-auto">
+            <table className="w-full table-auto">
+              <thead className="sticky top-0">
+                <tr className=" text-gray-600 text-lg text-left select-none bg-blue-100">
+                  <th className="pl-5">Callfile</th>
+                  <th className="pl-5">Case ID / PN / Account ID</th>
+                  <th className="pl-5 py-2 ">Principal</th>
+                  <th className="pl-5 py-2 ">OB</th>
+                  <th className="pl-5 py-2 ">Balance</th>
+                  <th className="pl-5 py-2 ">Status</th>
+                  <th className="pl-5 py-2 ">Concat Method</th>
+                  <th className="pl-5 py-2 ">Communication App</th>
+                  <th className="pl-5 py-2 ">User</th>
+                  <th className="pl-5 py-2 ">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  histories?.map(oa => {
+                    const daysExisting = oa.max_dpd - oa.dpd
+                    const date = new Date()
+                    const newDate = new Date(date)
+                    newDate.setDate(Number(newDate.getDate()) + Number(daysExisting))
+                  
+                    return (
+                      <tr key={oa._id} className="text-gray-600 text-left select-none even:bg-gray-50  text-sm">
+                        <td className="pl-5">{oa.account_callfile.name}</td>
+                        <td className="pl-5">{oa.case_id}</td>
+                        <td className="pl-5">{oa.out_standing_details.principal_os.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</td>
+                        <td className="pl-5">{oa.out_standing_details.total_os.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</td>
+                        <td className="pl-5">{oa.balance.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</td>
+                        <td className="pl-5 py-1.5">{oa.dispotype.name}</td>
+                        <td className="pl-5 py-1.5">{oa.cd.contact_method}</td>
+                        {
+                          oa.cd.contact_method === 'calls' && 
+                          <td className="pl-5 py-1.5">{oa.cd.dialer}</td>
+                        }
+                        {
+                          oa.cd.contact_method === 'sms' && 
+                          <td className="pl-5 py-1.5">{oa.cd.sms}</td>
+                        }
+                        {
+                          oa.cd.contact_method === 'email' || oa.cd.contact_method === 'field' && 
+                          <td className="pl-5 py-1.5">-</td>
+                        }
+                        {
+                          oa.cd.contact_method === 'skip' && 
+                          <td className="pl-5 py-1.5">{oa.cd.chatApp}</td>
+                        }
+                        <td className="capitalize">{oa.user.name}</td>
+                        <td className="py-1.5">
+                          <button className="px-7 py-2 text-sm lg:text-base font-medium bg-orange-500 text-white rounded-md hover:bg-orange-700 cursor-pointer" onClick={()=> {setShowMore(true); setSelectedHistory(oa)}}>
+                          View
+                        </button>
+                        </td>
+                      </tr>
+
+                    )
+                  })
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
       </div>
     
     </>

@@ -133,14 +133,14 @@ const ChangePassword = () => {
     OPERATION: "/operation-dashboard",
     MIS: "/mis-dashboard"
   }
-  const userType = userLogged.type as keyof typeof userRoutes ?? "ADMIN";
+  const userType = userLogged?.type as keyof typeof userRoutes ?? "ADMIN";
   const navigator = location.state !== null ? userRoutes[userType] : "/"
 
  if(loading || changePassLoading) return (
     <Loading/>
   )
 
-  return (!userLogged.change_password && userLogged._id) ? (
+  return (userLogged && !userLogged.change_password) ? (
     <div className="h-screen w-screen flex flex-col">
       <div>
         <img src="/bernalesLogo.png" alt="Bernales Logo" className="w-56" />

@@ -1,11 +1,11 @@
-import { useApolloClient, useMutation, useQuery, useSubscription } from "@apollo/client"
+import { useMutation, useQuery, useSubscription } from "@apollo/client"
 import gql from "graphql-tag"
 import { useCallback, useEffect, useState } from "react"
 import { GoDotFill } from "react-icons/go";
 import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { MdRecordVoiceOver } from "react-icons/md";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import { BsFillUnlockFill, BsFillLockFill, BsFillKeyFill } from "react-icons/bs";
 import AuthenticationPass from "../../components/AuthenticationPass";
 import { RootState } from "../../redux/store";
@@ -118,20 +118,19 @@ const SOMETHING_LOCK = gql`
 
 const AgentView = () => {
   const {userLogged} = useSelector((state:RootState) => state.auth)
-  const client = useApolloClient()
   const dispatch = useDispatch()
-  const {data:tlAgentData, refetch} = useQuery<{findDeptAgents:TLAgent[]}>(TL_AGENT)
-
-  const {data: agentProdData, refetch:agentProdDataRefetch} = useQuery<{getAgentProductions:AgentProductions[]}>(AGENT_PRODUCTION)
+  const location = useLocation()
+  const isAgentProd = location.pathname !== '/agent-production'
+  const {data:tlAgentData, refetch} = useQuery<{findDeptAgents:TLAgent[]}>(TL_AGENT,{skip: isAgentProd})
+  const {data: agentProdData, refetch:agentProdDataRefetch} = useQuery<{getAgentProductions:AgentProductions[]}>(AGENT_PRODUCTION, {skip: isAgentProd})
   const [agentProduction,setAgentProduction] = useState<TLAgent[]>([])
 
   useSubscription<{somethingOnAgentAccount:{buckets:string[],message: string}}>(SOMETHING_LOCK,{
-    onData: ({data}) => {
+    onData: async({data}) => {
       if(data) {
-        if(data.data?.somethingOnAgentAccount.message === "SOMETHING_ON_AGENT_ACCOUNT" && data.data?.somethingOnAgentAccount.buckets.some(bucket =>  userLogged.buckets.includes(bucket))) {
-          client.refetchQueries({
-            include: ['findDeptAgents','getAgentProductions']
-          })
+        if(data.data?.somethingOnAgentAccount.message === "SOMETHING_ON_AGENT_ACCOUNT" && data.data?.somethingOnAgentAccount.buckets.some(bucket =>  userLogged?.buckets.includes(bucket))) {
+         await refetch()
+         await agentProdDataRefetch()
         }
       }
     }
@@ -153,15 +152,14 @@ const AgentView = () => {
   },[search,tlAgentData])
   
   const [unlockUser] = useMutation<{unlockUser:{success: boolean,message: string}}>(UNLOCK_USER, {
-    onCompleted: (res) => {
+    onCompleted: async(res) => {
       setIsAuthorize(false)
       dispatch(setSuccess({
         success: res.unlockUser.success,
         message: res.unlockUser.message 
       }))
-      client.refetchQueries({
-        include: ['findDeptAgents','getAgentProductions']
-      })
+      await refetch()
+      await agentProdDataRefetch()
     },
     onError: () => {
       dispatch(setServerError(true))

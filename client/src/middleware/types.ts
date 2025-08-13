@@ -45,7 +45,7 @@ export type Users = {
 export type CustomerData = {
   address: string
   admin_fee_os: number
-  bill_due_day:number 
+  bill_due_date:string 
   birthday:string 
   endorsement_date:string 
   grass_date:string 
@@ -140,7 +140,7 @@ export type Search = {
   account_id: string
   endorsement_date: string
   credit_customer_id: string
-  bill_due_day: number
+  bill_due_date: string
   max_dpd: number
   dpd: number
   balance: number

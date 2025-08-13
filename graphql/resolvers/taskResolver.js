@@ -42,7 +42,6 @@ const taskResolver = {
           _id: null,
           task: []
         }
-
         const customerAccounts = await CustomerAccount.aggregate(
           {
             $match: {
@@ -143,7 +142,6 @@ const taskResolver = {
     },
     deselectTask: async(_,{id},{PUBSUB_EVENTS, pubsub}) => {
       try {
-        
         const ca = await CustomerAccount.findByIdAndUpdate(id,{$set: {on_hands: false}},{new: true})
         if(!ca) throw new CustomError("Customer account not found", 404) 
       

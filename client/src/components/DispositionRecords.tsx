@@ -1,8 +1,10 @@
 import { useSelector } from "react-redux"
 import { RootState } from "../redux/store"
 import { useQuery, gql } from "@apollo/client"
-import { useMemo, useState } from "react"
+import { useEffect, useMemo } from "react"
 import { CurrentDispo } from "../middleware/types"
+import { IoMdCloseCircleOutline } from "react-icons/io";
+
 
 type Agent = {
   _id: string
@@ -34,28 +36,14 @@ const DISPOTYPES = gql`
   }
 `
 
-enum AccountType {
-  CALLS = "calls",
-  EMAIL = 'email',
-  SMS = 'sms',
-  FIELD = 'field',
-  SKIP = 'skip',
+
+type ComponentProps = {
+  close: ()=> void
+
 }
 
-
-
-const DataDiv = ({label, value}:{label: string, value: string | number | null | undefined | []}) => {
-  return (
-    <div className=" grid grid-cols-3 gap-2 ">
-      <div className="text-gray-800 font-bold p-2 text-end">{label}</div>
-      <div className="col-span-2 border max-h-30 border-slate-500 rounded-lg text-slate-800 p-2 capitalize bg-white font-bold">{value}</div>
-    </div>
-  )
-}
-
-const DispositionRecords = () => {
+const DispositionRecords:React.FC<ComponentProps> = ({close}) => {
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth )
-  const [limit, setLimit] = useState(2)
 
   const {data:agentData} = useQuery<{findAgents:Agent[]}>(AGENTS)
   const {data:dispotypesData} = useQuery<{getDispositionTypes:Dispotype[]}>(DISPOTYPES)
@@ -77,133 +65,138 @@ const DispositionRecords = () => {
     const time = new Date(date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })
     return `${createdDate} - ${time}`
   }
-  
-  const handleLoadMore = () => {
-    if(limit === 2) {
-      setLimit(history.length)
-    } else {
-      setLimit(2)
-    }
-  }
-
-
-
-
-  const findExisting = history.find(x=> x.existing === true) ?? null
-  const notExisting = history.filter(x => x.existing === false) ?? []
-
+  const findExisting = history.find(x=> x.existing === true) || null
+  const notExisting = history.filter(x => x.existing === false) || null
   const checkingOnly = history?.slice().sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)))  || []
-
   const dispo_historySorted = notExisting?.slice().sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)))  || []
+  const checkIfExistingIsLatest = findExisting ? (checkingOnly[0]._id === findExisting?._id) : null 
 
-  const checkIfExistingIsLatest = checkingOnly[0]._id === findExisting?._id
 
-  const withPayment = ['PTP','UNEG','PAID']
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        close()
+      } 
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [close]);
 
-  const filter = dispotypesData?.getDispositionTypes.filter(e=> withPayment.includes(e.code)).map(x=> x.id)
-  const slicedHistory = dispo_historySorted.slice(0,limit)
 
-  return selectedCustomer._id && selectedCustomer?.dispo_history && (
-    <div className="p-5 flex flex-col gap-10">
-      <h1 className="text-center text-xl font-bold text-slate-600">Account History</h1>
-      <div className={`flex flex-wrap gap-10 justify-center`}>
-        {
-          findExisting &&
-          <div className={`w-8/10 lg:w-2/7 2xl:text-sm lg:text-xs flex flex-col gap-2 border p-2 rounded-xl border-slate-400 ${findExisting.existing && "bg-slate-200"}`}>
-              <div className=" gap-2 border border-slate-500 rounded-md bg-white p-2 text-center font-medium 2xl:text-base lg;text-sm text-slate-600">
-              Existing Status
-              {
-                checkIfExistingIsLatest &&
-                <span> - Latest</span>
-              }
-            </div>
-            <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white ">
-              <div className="text-gray-800 font-bold p-2 text-end">Agent</div>
-              <div className="p-2 col-span-2 font-medium capitalize text-slate-600 ">{agentObject[findExisting.user] || "No agent id"}</div>
-            </div>
-            <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white w-full">
-              <div className="text-gray-800 font-bold p-2 text-end">Date & Time</div>
-              <div className="p-2 col-span-2 text-slate-700  w-full">{date(findExisting.createdAt)}</div>
-            </div>
 
-            <DataDiv label='Disposition' value={`${dispotypeObject[findExisting.disposition]}`}/>
-            <DataDiv label='Contact Method' value={findExisting.contact_method.toUpperCase() as AccountType}/>
-            <DataDiv label='Amount' value={findExisting.amount !== 0 ? findExisting.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : ""}/>
-            <DataDiv label='Payment' value={filter?.includes(findExisting.disposition) ? findExisting.payment?.toString() ?? null : null}/>
-            <DataDiv label='Payment Date' value={findExisting.payment_date}/>
-            <DataDiv label='Payment Method' value={findExisting.payment_method}/>
-            <DataDiv label='Reference No.' value={findExisting.ref_no}/>
-            <DataDiv label='Comment' value={findExisting.comment}/>
-            {
-              (()=> {
-                if(findExisting.contact_method === AccountType.CALLS) {
-                  return <DataDiv label='Dialer' value={findExisting.dialer}/>
-                } else if(findExisting.contact_method === AccountType.SMS) {
-                  return <DataDiv label='SMS Collector' value={findExisting.sms}/>
-                } else if(findExisting.contact_method === AccountType.SKIP) {
-                  return <DataDiv label='Chat App' value={findExisting.chatApp}/>
-                } 
-              })()
-            }
-            {
-              findExisting.RFD &&
-              <DataDiv label='RFD Reason' value={findExisting.RFD.toString()}/>
-
-            }
-          </div>
-        }
-        {
-          slicedHistory.map((gad,index) => { 
-            return(
-            <div key={gad._id} className={`w-8/10 lg:w-2/7 2xl:text-sm lg:text-xs flex flex-col gap-2 border p-2 rounded-xl border-slate-400 ${gad.existing && "bg-slate-200"}`}>
-               <div className=" gap-2 border border-slate-500 rounded-md bg-white p-2 text-center font-medium 2xl:text-base lg;text-sm text-slate-600">
-                {index + 1 === 1 ?  (!checkIfExistingIsLatest ? "Latest" : "Previous")  :  (index + 1 === 2  ?   (!checkIfExistingIsLatest ? "Previous" : "Past") : "Past")}
-              </div>
-              <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white ">
-                <div className="text-gray-800 font-bold p-2 text-end">Agent</div>
-                <div className="p-2 col-span-2 font-medium capitalize text-slate-600 ">{agentObject[gad.user] || "No agent id"}</div>
-              </div>
-              <div className="grid grid-cols-3 gap-2 border border-slate-500 rounded-md bg-white w-full">
-                <div className="text-gray-800 font-bold p-2 text-end">Date & Time</div>
-                <div className="p-2 col-span-2 text-slate-700  w-full">{date(gad.createdAt)}</div>
-              </div>
-
-              <DataDiv label='Disposition' value={`${dispotypeObject[gad.disposition]}`}/>
-              <DataDiv label='Contact Method' value={gad.contact_method.toUpperCase() as AccountType}/>
-              <DataDiv label='Amount' value={gad.amount !== 0 ? gad.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : ""}/>
-              <DataDiv label='Payment' value={filter?.includes(gad.disposition) ? gad.payment?.toString() ?? null : null}/>
-              <DataDiv label='Payment Date' value={gad.payment_date}/>
-              <DataDiv label='Payment Method' value={gad.payment_method}/>
-              <DataDiv label='Reference No.' value={gad.ref_no}/>
-              <DataDiv label='Comment' value={gad.comment}/>
-              {
-                (()=> {
-                  if(gad.contact_method === AccountType.CALLS) {
-                    return <DataDiv label='Dialer' value={gad.dialer}/>
-                  } else if(gad.contact_method === AccountType.SMS) {
-                    return <DataDiv label='SMS Collector' value={gad.sms}/>
-                  } else if(gad.contact_method === AccountType.SKIP) {
-                    return <DataDiv label='Chat App' value={gad.chatApp}/>
-                  } 
-                })()
-              }
-              {
-                gad.RFD &&
-                <DataDiv label='RFD Reason' value={gad.RFD.toString()}/>
-
-              }
-            </div>
-          )}) 
-        }
-      </div>
-      {
-        history.length > 3 &&
-        <div className="flex justify-center">
-          <button type="submit" className={`bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-500 font-medium rounded-lg thandleLoadMoreext-sm w-30 py-2 me-2 mb-2  cursor-pointer flex justify-center`} onClick={handleLoadMore}>
-            {limit === 3 ? "Load more..." : "Hide" }
-          </button>
+  return (
+    <div className="w-full h-full z-40 gap-5 absolute px-10 top-0 left-0 bg-black/50 backdrop-blur-[2px] p-10 overflow-hidden">
+      <div className="w-full h-full border rounded-md border-slate-500 bg-white p-5 flex flex-col">
+        <div className="flex justify-between items-start">
+          <h1 className="lg:text-lg 2xl:text-5xl font-medium text-gray-600 pb-5">Account History - {selectedCustomer?.case_id}</h1>
+          <IoMdCloseCircleOutline className="lg:text-4xl 2xl:text-5xl m-3 absolute top-10 right-10 hover:scale-110 cursor-pointer hover:text-gray-400" onClick={close}/>
         </div>
-      }
+        <div className="h-full overflow-y-auto">
+          <table className="w-full table-auto">
+              <thead className="sticky top-0">
+                <tr className=" text-gray-600 lg:text-sm 2xl:text-lg text-left select-none bg-blue-100">
+                  <th className="pl-5">Status</th>
+                  <th className="lg:pl-2 2xl:pl-5">User</th>
+                  <th className="lg:pl-2 2xl:pl-5">Date</th>
+                  <th className="lg:pl-2 2xl:pl-5 py-2 ">Disposition</th>
+                  <th className="lg:pl-2 2xl:pl-5 py-2 text-nowrap">CM</th>
+                  <th className="lg:pl-2 2xl:pl-5 py-2 ">Amount</th>
+                  <th className="lg:pl-2 2xl:pl-5 py-2 text-nowrap">Ref No.</th>
+                  <th className="lg:pl-2 2xl:pl-5 py-2 ">Payment</th>
+                  <th className="lg:pl-2 2xl:pl-5 py-2 text-nowrap">Payment Date</th>
+                  <th className="lg:pl-2 2xl:pl-5 py-2 text-nowrap">Comm App</th>
+                  <th className="lg:pl-2 2xl:pl-5 py-2 ">Comments</th>
+                  <th className="lg:pl-2 2xl:pl-5 py-2 ">RFD</th>
+                </tr>
+              </thead>
+              <tbody>
+                {
+                  findExisting &&
+                  <tr>
+                    <td className="py-1.5 px-5 text-blue-500 font-medium " colSpan={9} >Exsiting Disposition</td>
+                  </tr>
+                }
+           
+                {
+                  findExisting &&
+                  <tr  className="text-gray-600 text-left select-none bg-slate-100 lg:text-xs 2xl:text-sm">
+                      <td className="pl-5 capitalize text-nowrap">Current  {checkIfExistingIsLatest && <span> - Latest</span>}</td>
+                      <td className="lg:pl-2 2xl:pl-5 capitalize text-nowrap truncate pr-1">{agentObject[findExisting.user]}</td>
+                      <td className="lg:pl-2 2xl:pl-5 text-nowrap truncate">{date(findExisting.createdAt)}</td>
+                      <td className="lg:pl-2 2xl:pl-5 text-nowrap truncate pr-1">{dispotypeObject[findExisting.disposition]}</td>
+                      <td className="lg:pl-2 2xl:pl-5">{findExisting.contact_method}</td>
+                      <td className="lg:pl-2 2xl:pl-5">{findExisting.amount> 0 ? findExisting.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : null}</td>
+                      <td className="lg:pl-2 2xl:pl-5 py-1.5 text-nowrap truncate">{findExisting.ref_no}</td>
+                      <td className="lg:pl-2 2xl:pl-5 py-1.5">{findExisting.payment}</td>
+                      <td className="lg:pl-2 2xl:pl-5 py-1.5">{findExisting.payment_date}</td>
+                      {
+                        findExisting.contact_method === 'calls' && 
+                        <td className="lg:pl-2 2xl:pl-5 py-1.5">{findExisting.dialer}</td>
+                      }
+                      {
+                        findExisting.contact_method === 'sms' && 
+                        <td className="lg:pl-2 2xl:pl-5 py-1.5">{findExisting.sms}</td>
+                      }
+                      {
+                        findExisting.contact_method === 'email' || findExisting.contact_method === 'field' && 
+                        <td className="lg:pl-2 2xl:pl-5 py-1.5">-</td>
+                      }
+                      {
+                        findExisting.contact_method === 'skip' && 
+                        <td className="lg:pl-2 2xl:pl-5 py-1.5">{findExisting.chatApp}</td>
+                      }
+                      <td className="truncate lg:pl-2 2xl:pl-5 py-1.5 max-w-30" title={findExisting.comment ? findExisting.comment.toString() : ''}>{findExisting.comment}</td>
+                      <td className="truncate lg:pl-2 2xl:pl-5 py-1.5 max-w-30 pr-2" title={findExisting.RFD ? findExisting.RFD.toString() : ''}>{findExisting.RFD}</td>
+                    </tr>
+                }
+               
+                {
+                  notExisting.length > 0 &&
+                  <tr>
+                    <td className="py-1.5 px-5 text-slate-600 font-medium " colSpan={9} >History</td>
+                  </tr>
+                }
+                {
+                  dispo_historySorted?.map((ne, index) => {
+                    return (
+                      <tr key={ne._id} className="text-gray-600 text-left select-none even:bg-gray-50  lg:text-xs 2xl:text-sm">
+                        <td className="pl-5"> {index + 1 === 1 ?  (!checkIfExistingIsLatest ? "Latest" : "Previous")  :  (index + 1 === 2  ?   (!checkIfExistingIsLatest ? "Previous" : "Past") : "Past")}</td>
+                        <td className="lg:pl-2 2xl:pl-5 capitalize">{agentObject[ne.user]}</td>
+                        <td className="lg:pl-2 2xl:pl-5">{date(ne.createdAt)}</td>
+                        <td className="lg:pl-2 2xl:pl-5 text-nowrap truncate pr-1">{dispotypeObject[ne.disposition]}</td>
+                        <td className="lg:pl-2 2xl:pl-5">{ne.contact_method}</td>
+                        <td className="lg:pl-2 2xl:pl-5">{ne.amount> 0 ? ne.amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' }) : null}</td>
+                        <td className="lg:pl-2 2xl:pl-5 py-1.5 text-nowrap truncate">{ne.ref_no}</td>
+                        <td className="lg:pl-2 2xl:pl-5 py-1.5">{ne.payment}</td>
+                        <td className="lg:pl-2 2xl:pl-5 py-1.5">{ne.payment_date}</td>
+                        {
+                          ne.contact_method === 'calls' && 
+                          <td className="lg:pl-2 2xl:pl-5 py-1.5">{ne.dialer}</td>
+                        }
+                        {
+                          ne.contact_method === 'sms' && 
+                          <td className="lg:pl-2 2xl:pl-5 py-1.5">{ne.sms}</td>
+                        }
+                        {
+                          ne.contact_method === 'email' || ne.contact_method === 'field' && 
+                          <td className="lg:pl-2 2xl:pl-5 py-1.5">-</td>
+                        }
+                        {
+                          ne.contact_method === 'skip' && 
+                          <td className="lg:pl-2 2xl:pl-5 py-1.5">{ne.chatApp}</td>
+                        }
+                        <td className="truncate lg:pl-2 2xl:pl-5 py-1.5 max-w-30 pr-2" title={ne.comment ? ne.comment.toString() : ''}>{ne.comment}</td>
+                        <td className="truncate lg:pl-2 2xl:pl-5 py-1.5 max-w-30 pr-2" title={ne.RFD ? ne.RFD.toString() : ''}>{ne.RFD}</td>
+                      </tr>
+
+                    )
+                  })
+                }
+              </tbody>
+            </table>
+        </div>
+      </div>
+      
     </div>
   )
 }

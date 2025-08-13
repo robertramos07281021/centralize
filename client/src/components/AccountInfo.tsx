@@ -3,11 +3,12 @@ import { RootState } from "../redux/store"
 import gql from "graphql-tag"
 import { useQuery } from "@apollo/client"
 import { CurrentDispo, Search } from "../middleware/types"
-import { useEffect, useState } from "react"
+import { forwardRef, useEffect, useImperativeHandle, useRef, useState } from "react"
 import OtherAccountsViews from "./OtherAccountsViews"
 import { useLocation } from "react-router-dom"
 import AccountHistoriesView from "./AccountHistoriesView"
-
+import { BsExclamationSquareFill } from "react-icons/bs";
+import DispositionRecords from "./DispositionRecords"
 
 
 const OTHER_ACCOUNTS = gql`
@@ -18,7 +19,7 @@ const OTHER_ACCOUNTS = gql`
       account_id
       endorsement_date
       credit_customer_id
-      bill_due_day
+      bill_due_date
       max_dpd
       balance
       paid_amount
@@ -188,32 +189,50 @@ const FieldsDiv = ({label, value, endorsementDate}:{label:string, value:string |
   }
 
   return (
-    <div className="flex flex-col items-center xl:flex-row w-full ">
-      <p className="text-gray-800 font-bold text-start w-full  xl:text-sm text-xs xl:w-5/10 leading-4 select-none">{label} :</p>
-      <div className={`${newValue || null  ?  "p-2": "p-4.5"} select-none xl:ml-2 text-xs xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
+    <div className="flex flex-col items-center 2xl:flex-row w-full ">
+      <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-5/10 leading-4 select-none">{label} :</p>
+      <div className={`${newValue || null  ?  "p-2": "p-4.5"} select-none 2xl:ml-2 text-xs 2xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
     </div>
   )
 }
 
-const AccountInfo = () => {
+export type ChildHandle = {
+  showButtonToFalse: () => void
+  divElement: HTMLDivElement | null
+}
+
+const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
   const location = useLocation()
   const isTLCIP = location.pathname === 'tl-cip'
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const [showAccounts, setShowAccounts] = useState<boolean>(false)
-  const {data} = useQuery<{customerOtherAccounts:Search[]}>(OTHER_ACCOUNTS,{variables: {caId: selectedCustomer?._id}, skip: selectedCustomer._id === "" || isTLCIP})
+  const {data} = useQuery<{customerOtherAccounts:Search[]}>(OTHER_ACCOUNTS,{variables: {caId: selectedCustomer?._id}, skip: !selectedCustomer || isTLCIP})
   const [showAccountHistory, setShowAccountHistory] = useState<boolean>(false)
-  const {data:accountHistory, refetch} = useQuery<{findAccountHistories:AccountHistory[]}>(ACCOUNT_HISTORIES,{variables: {id: selectedCustomer._id},skip: selectedCustomer._id === "" })
+  const {data:accountHistory, refetch} = useQuery<{findAccountHistories:AccountHistory[]}>(ACCOUNT_HISTORIES,{variables: {id: selectedCustomer?._id},skip: !selectedCustomer })
+  const [showButton, setShowButton] = useState<boolean>(false)
+  const divRef = useRef<HTMLDivElement | null>(null);
+  const [showDispoHistory, setShowDispoHistory] = useState<boolean>(false)
+
+  useImperativeHandle(ref, ()=> ({
+    showButtonToFalse: () => {
+      setShowButton(false)
+    },
+    divElement: divRef.current
+  }))
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {
-      if(selectedCustomer._id) {
+      if(selectedCustomer) {
         await refetch()
       }
     })
     return ()=> clearTimeout(timer)
-  },[selectedCustomer._id])
+  },[selectedCustomer])
 
-  return (
+  const sumOf = (selectedCustomer && data && accountHistory) ? data?.customerOtherAccounts?.length + accountHistory.findAccountHistories.length + selectedCustomer.dispo_history.length : 0
+
+
+  return selectedCustomer &&  (
     <>
       {
         showAccounts &&
@@ -221,33 +240,69 @@ const AccountInfo = () => {
       }
       {
         showAccountHistory &&
-        <AccountHistoriesView histories={accountHistory?.findAccountHistories || []} close={()=>setShowAccountHistory(false) }/>
+        <AccountHistoriesView histories={accountHistory?.findAccountHistories || []} close={()=> setShowAccountHistory(false) }/>
       }
-
-      <div className="p-4 flex flex-col">
-        { data && data?.customerOtherAccounts?.length > 0 &&
-          <div className="flex justify-end">
-            <button className=" px-2 py-1.5 rounded-md bg-green-400 text-slate-800 font-medium cursor-pointer hover:bg-green-600 hover:text-white" onClick={()=> setShowAccounts(true)}>Other Accounts</button>
+      {
+        showDispoHistory &&
+        <DispositionRecords close={()=> setShowDispoHistory(false) }/>
+      }
+      
+        <div className="fixed top-30 gap-2 left-5">
+          <div className="relative">
+            {
+              selectedCustomer &&
+              <BsExclamationSquareFill className={`text-4xl text-blue-500 cursor-pointer`} onClick={()=> setShowButton(prev => !prev)}/>
+            }
+            {
+              !showButton &&
+              <div className={`absolute -top-2 -right-2 w-5 h-5  flex items-center justify-center text-white rounded-full ${sumOf > 0 ? "bg-red-500" : "bg-green-500"}`}>
+              {sumOf}
+            </div>}
+            {
+              showButton &&
+                <div className="border mt-1 flex flex-col gap-5 p-5 rounded-md border-slate-400 bg-white shadow z-50" ref={divRef}>
+                  <button className={` px-2 py-1.5 rounded-md relative bg-blue-400 text-slate-800 font-medium cursor-pointer hover:bg-blue-600 hover:text-white `} onClick={()=> setShowDispoHistory(true)}>
+                    <span>
+                      Account History
+                    </span>
+                    <div className="absolute -top-2 -right-2 rounded-full w-5 h-5 bg-red-500 text-white flex items-center justify-center ">
+                      {selectedCustomer && selectedCustomer.dispo_history.length > 0 ? selectedCustomer.dispo_history.length : 0}
+                    </div>
+                  </button>
+                  <button className={`px-2 py-1.5 relative rounded-md bg-green-400 text-slate-800 font-medium hover:text-white hover:bg-green-600 cursor-pointer`} onClick={()=>  setShowAccounts(true)}>
+                    <span>
+                      Other Accounts
+                    </span>
+                    <div className="absolute -top-2 -right-2 rounded-full w-5 h-5 bg-red-500 text-white flex items-center justify-center ">
+                      { data && data?.customerOtherAccounts?.length > 0 ? data?.customerOtherAccounts?.length : 0}
+                    </div>
+                  </button>
+                  <button className={` px-2 py-1.5 rounded-md relative bg-yellow-400 text-slate-800 font-medium cursor-pointer hover:bg-yellow-600 hover:text-white `} onClick={()=> setShowAccountHistory(true)}>
+                    <span>
+                      Past Callfile History
+                    </span>
+                    <div className="absolute -top-2 -right-2 rounded-full w-5 h-5 bg-red-500 text-white flex items-center justify-center ">
+                      {accountHistory && accountHistory.findAccountHistories.length > 0 ? accountHistory.findAccountHistories.length : 0}
+                    </div>
+                  </button>
+                </div>
+              }
           </div>
-        }
-        {
-          accountHistory && accountHistory?.findAccountHistories.length > 0 &&
-          <div className="flex justify-end">
-            <button className=" px-2 py-1.5 rounded-md bg-cyan-400 text-slate-800 font-medium cursor-pointer hover:bg-cyan-600 hover:text-white" onClick={()=> setShowAccountHistory(true)}>Past Callfile History</button>
-          </div>
-        }
+        </div>
 
+
+      <div className="p-4 flex flex-col gap-5">
         <h1 className="text-center font-bold text-slate-600 xl:text-base 2xl:text-lg mb-5">Account Information</h1>
         <div className="flex xl:gap-10 gap-2 justify-center ">
           <div className="flex flex-col gap-2  w-full">
-            <FieldsDiv label="Bucket" value={ selectedCustomer.account_bucket?.name } endorsementDate={null}/>
-            <FieldsDiv label="Case ID" value={ selectedCustomer.case_id } endorsementDate={null}/>
+            <FieldsDiv label="Bucket" value={ selectedCustomer?.account_bucket?.name } endorsementDate={null}/>
+            <FieldsDiv label="Case ID / PN / Account ID" value={ selectedCustomer?.case_id } endorsementDate={null}/>
             <FieldsDiv label="Principal OS" value= { selectedCustomer?.out_standing_details.principal_os || 0 } endorsementDate={null}/>
           </div>
           <div className="flex flex-col gap-2  w-full">
-            <FieldsDiv label="DPD" value={ selectedCustomer.dpd } endorsementDate={null}/>
-            <FieldsDiv label="Max DPD" value={ selectedCustomer.max_dpd } endorsementDate={null}/>
-            <FieldsDiv label="DPD Due Date" value={ selectedCustomer.max_dpd } endorsementDate={ selectedCustomer.endorsement_date }/>
+            <FieldsDiv label="DPD" value={ selectedCustomer?.dpd } endorsementDate={null}/>
+            <FieldsDiv label="Max DPD" value={ selectedCustomer?.max_dpd } endorsementDate={null}/>
+            <FieldsDiv label="DPD Due Date" value={ selectedCustomer?.max_dpd } endorsementDate={ selectedCustomer?.endorsement_date }/>
           </div>
         </div>
         <div className="flex flex-col xl:flex-row items-center justify-center xl:gap-5 gap-2 mt-5 text-slate-500 font-medium">
@@ -294,6 +349,6 @@ const AccountInfo = () => {
       </div>
     </>
   )
-}
+});
 
 export default AccountInfo
