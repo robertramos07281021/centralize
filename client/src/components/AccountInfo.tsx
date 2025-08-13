@@ -255,17 +255,17 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
             }
             {
               !showButton &&
-              <div className={`absolute -top-2 -right-2 w-5 h-5  flex items-center justify-center text-white rounded-full ${sumOf > 0 ? "bg-red-500" : "bg-green-500"}`}>
+              <div className={`absolute -top-5.5 -right-4 min-w-5 min-h-5 text-xs px-2 flex items-center justify-center text-white rounded-full ${sumOf > 0 ? "bg-red-500" : "bg-green-500"}`}>
               {sumOf}
             </div>}
             {
               showButton &&
-                <div className="border mt-1 flex flex-col gap-5 p-5 rounded-md border-slate-400 bg-white shadow z-50" ref={divRef}>
+                <div className="border mt-1 flex flex-col gap-8 p-8 rounded-md border-slate-400 bg-white shadow z-50" ref={divRef}>
                   <button className={` px-2 py-1.5 rounded-md relative bg-blue-400 text-slate-800 font-medium cursor-pointer hover:bg-blue-600 hover:text-white `} onClick={()=> setShowDispoHistory(true)}>
                     <span>
                       Account History
                     </span>
-                    <div className="absolute -top-2 -right-2 rounded-full w-5 h-5 bg-red-500 text-white flex items-center justify-center ">
+                    <div className="absolute -top-5.5 -right-4 rounded-full min-w-5 min-h-5 text-xs px-2 bg-red-500 text-white flex items-center justify-center ">
                       {selectedCustomer && selectedCustomer.dispo_history.length > 0 ? selectedCustomer.dispo_history.length : 0}
                     </div>
                   </button>
@@ -273,7 +273,7 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
                     <span>
                       Other Accounts
                     </span>
-                    <div className="absolute -top-2 -right-2 rounded-full w-5 h-5 bg-red-500 text-white flex items-center justify-center ">
+                    <div className="absolute -top-5.5 -right-4 rounded-full min-w-5 min-h-5 text-xs px-2 bg-red-500 text-white flex items-center justify-center ">
                       { data && data?.customerOtherAccounts?.length > 0 ? data?.customerOtherAccounts?.length : 0}
                     </div>
                   </button>
@@ -281,7 +281,7 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
                     <span>
                       Past Callfile History
                     </span>
-                    <div className="absolute -top-2 -right-2 rounded-full w-5 h-5 bg-red-500 text-white flex items-center justify-center ">
+                    <div className="absolute -top-5.5 -right-4 rounded-full min-w-5 min-h-5 text-xs px-2 bg-red-500 text-white flex items-center justify-center ">
                       {accountHistory && accountHistory.findAccountHistories.length > 0 ? accountHistory.findAccountHistories.length : 0}
                     </div>
                   </button>

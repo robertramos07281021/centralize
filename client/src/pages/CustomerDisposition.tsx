@@ -34,7 +34,7 @@ const SEARCH = gql`
       account_id
       endorsement_date
       credit_customer_id
-      bill_due_day
+      bill_due_date
       max_dpd
       balance
       paid_amount

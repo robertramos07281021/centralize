@@ -49,7 +49,6 @@ const userSchema = new Schema(
     }],
     user_id: {
       type: String,
-      unique: true
     },
     new_account: {
       type: Boolean,
