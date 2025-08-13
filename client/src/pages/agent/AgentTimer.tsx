@@ -22,7 +22,7 @@ const AgentTimer = () => {
   const [time, setTime] = useState(new Date());
 
   useEffect(() => {
-    if(userLogged.type === "AGENT") {
+    if(userLogged?.type === "AGENT") {
       const timer = setInterval(() => {
         setTime(new Date());
       }, 1000);

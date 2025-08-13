@@ -117,20 +117,20 @@ export default function AgentTotalProduction () {
      
           <div className="flex justify-end items-center gap-2 text-sm">
             <p className="text-[0.7em] lg:text-xs font-medium">(Daily)</p>
-            <div className="text-[0.7em] lg:text-xs">{userLogged.targets.daily.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
+            <div className="text-[0.7em] lg:text-xs">{userLogged?.targets.daily.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
           </div>
           <div className="flex justify-between items-center gap-2">
             <div className="text-[0.7em] lg:text-xs">{collectionsData?.monthlyWeeklyCollected?.weekly?.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
             <div className="flex jsutify-center items-center text-sm">
               <p className="text-[0.7em] lg:text-xs font-medium">(Weekly)</p>
-              <div className="text-[0.7em] lg:text-xs">{userLogged.targets.weekly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
+              <div className="text-[0.7em] lg:text-xs">{userLogged?.targets.weekly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
             </div>
           </div>
           <div className="flex justify-between items-center gap-2">
             <div className="text-[0.7em] lg:text-xs">{collectionsData?.monthlyWeeklyCollected?.monthly?.toLocaleString("en-PH", {style: "currency",currency: "PHP",})}</div>
             <div className="flex jsutify-center items-center text-sm">
               <p className="text-[0.7em] lg:text-xs font-medium">(Monthly)</p>
-              <div className="text-[0.7em] lg:text-xs">{userLogged.targets.monthly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
+              <div className="text-[0.7em] lg:text-xs">{userLogged?.targets.monthly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
             </div>
           </div>
           <h1 className="text-end text-[0.6em] lg:text-xs font-bold">Amount</h1>

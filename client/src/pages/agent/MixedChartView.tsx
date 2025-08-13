@@ -64,7 +64,7 @@ const MixedChartView = () => {
     return () => clearTimeout(timer)
   },[PerDayRefetch])
 
-  const dailyTargets = userLogged?.targets?.daily
+  const dailyTargets = userLogged?.targets?.daily || 0
 
   function getDaysInMonth(): number {
     const currentMonth = new Date().getMonth();

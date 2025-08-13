@@ -125,8 +125,8 @@ const BreakView = () => {
     return () => clearInterval(timer)
   },[dispatch])
   
-  if(breakValue === BreakEnum.PROD || userLogged.type !== "AGENT") {
-    return <Navigate to={accountsNavbar[userLogged.type][0].link}/>
+  if((breakValue === BreakEnum.PROD || userLogged?.type !== "AGENT") && userLogged) {
+    return <Navigate to={accountsNavbar[userLogged?.type][0]?.link}/>
   }
 
   const onClickStart = async() => {
@@ -196,7 +196,7 @@ const BreakView = () => {
           <div className="flex flex-col gap-20 items-center">
             <div className="text-center text-shadow-2xs text-shadow-black">
               <h1 className="text-5xl font-medium text-blue-700">Shine bright today,</h1>
-              <h1 className="capitalize text-5xl font-bold text-blue-700">{userLogged.name}!</h1>
+              <h1 className="capitalize text-5xl font-bold text-blue-700">{userLogged?.name}!</h1>
               <h1 className="text-2xl font-medium text-blue-500">Let's hit those goals!</h1>
             </div>
             <div className=" flex flex-col items-center">
