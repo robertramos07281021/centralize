@@ -141,7 +141,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             }
             return cleaned;
           }
-          
+
           const safeDate = (date: any) => {
             try {
               return date ? SSF.format("yyyy-mm-dd", date) : undefined;
@@ -226,7 +226,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     },
   });
   
-  console.log(excelData)
   const [createCustomer,{loading}] = useMutation(CREATE_CUSTOMER, {
     onCompleted:() => {
       successUpload()

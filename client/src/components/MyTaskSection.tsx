@@ -296,8 +296,6 @@ const MyTaskSection = () => {
   const dispatch = useAppDispatch()
   const {data:myTasksData, refetch} = useQuery<{myTasks:CustomerData[] | []}>(MY_TASKS)
   const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
-  console.log(myTasksData)
-  console.log(groupTaskData)
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {

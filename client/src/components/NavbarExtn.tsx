@@ -83,6 +83,7 @@ const NavbarExtn = () => {
 
   const [deselectTask] = useMutation<{deselectTask:{message: string, success: boolean}}>(DESELECT_TASK,{
     onCompleted: ()=> {
+
       dispatch(setDeselectCustomer()) 
     },
     onError: ()=> {
@@ -91,8 +92,7 @@ const NavbarExtn = () => {
   })
 
   useEffect(()=> {
-    if(!selectedCustomer) return
-    if(location.pathname) {
+    if(location.pathname && selectedCustomer) {
       const id = selectedCustomer?._id;
       const timer = setTimeout(async()=> {
         await deselectTask({ variables: { id: id } })
