@@ -36,6 +36,7 @@ const SEARCH = gql`
       credit_customer_id
       bill_due_date
       max_dpd
+      dpd
       balance
       paid_amount
       isRPCToday
@@ -238,7 +239,7 @@ const CustomerDisposition = () => {
   const [isUpdate, setIsUpdate] = useState<boolean>(false)
   const [search, setSearch] = useState("")
   const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{
-    skip: search.length === 0,
+    skip: search === "",
     fetchPolicy: 'network-only'
   })
 

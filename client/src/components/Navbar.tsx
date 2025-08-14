@@ -127,6 +127,7 @@ const Navbar = () => {
       dispatch(setDeselectCustomer())
     },
     onError: () => {
+
       dispatch(setServerError(true))
     }
   })
@@ -145,7 +146,7 @@ const Navbar = () => {
       }
     }
   })
-  
+
   useEffect(()=> {
     dispatch(setSuccess({success: false, message: ""}))
   },[location.pathname])
@@ -176,7 +177,9 @@ const Navbar = () => {
       no:()=> setConfirmation(false),
       yes: async() => {
         await logout();
-        await deselectTask({variables: {id:selectedCustomer?._id}});
+        if(selectedCustomer) {
+          await deselectTask({variables: {id:selectedCustomer?._id}});
+        }
       },
       message: "Are you sure you want to logout?",
       toggle: "LOGOUT"
@@ -204,10 +207,10 @@ const Navbar = () => {
   })
 
   const forceLogout = useCallback(async()=> {
-
-    await deselectTask({ variables: { id: selectedCustomer?._id, user_id: userLogged?._id } });
-    
     await logoutToPersist({ variables: { id: userLogged?._id } });
+    if(selectedCustomer) {
+      await deselectTask({ variables: { id: selectedCustomer?._id, user_id: userLogged?._id } });
+    }
   },[deselectTask, logoutToPersist, selectedCustomer, userLogged])
 
   useEffect(()=> {
@@ -271,10 +274,9 @@ const Navbar = () => {
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {
-      if(!userLogged) return
-      if(data) {
+      if(data && userLogged) {
         dispatch(setUserLogged({...userLogged, targets: data.getMe.targets || {daily: 0, weekly: 0, monthly: 0}}))
-        if(!data.getMe.isOnline) {
+        if(!data.getMe.isOnline && userLogged) {
           setConfirmation(true)
           setModalProps({
             no: ()=> {

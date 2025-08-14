@@ -273,13 +273,13 @@ const AgentView = () => {
                 const findAgentProd = agentProdData?.getAgentProductions.find(y=> y.user === e._id)
                 const findExsitingStatus = findAgentProd?.prod_history.find(x=> x.existing === true)
                 return e.type === "AGENT" && e.active && (
-                  <div key={e._id} className="px-2 py-1 grid grid-cols-11 lg:text-xs 2xl:text-sm text-gray-500 font-normal even:bg-slate-50 hover:bg-blue-50 last:pb-4">
-                    <div className="flex items-center capitalize truncate">{e.name}</div>
-                    <div className="flex items-center">{e.user_id}</div>
-                    <div className="flex items-center">{e.callfile_id}</div>
-                    <div className="flex items-center truncate pr-2">{e.buckets.map(e=> e.name).join(', ')}</div>
-                    <div className="flex items-center truncate pr-2">{e.departments.map(e=> e.name).join(', ')}</div>
-                    <div className=" flex items-center"> 
+                  <div key={e._id} className="cursor-default px-2 py-1 grid grid-cols-11 lg:text-xs 2xl:text-sm text-gray-500 font-normal even:bg-slate-50 hover:bg-blue-50 last:pb-4">
+                    <div className="capitalize truncate">{e.name}</div>
+                    <div >{e.user_id}</div>
+                    <div >{e.callfile_id}</div>
+                    <div className=" truncate pr-6" title={e.buckets.map(e=> e.name).join(', ')}>{e.buckets.map(e=> e.name).join(', ')}</div>
+                    <div className=" truncate pr-2">{e.departments.map(e=> e.name).join(', ')}</div>
+                    <div > 
                       <GoDotFill className={`${e.isOnline ? "text-green-400" : "text-slate-600"} text-2xl`} />
                     </div>
                     <div className=" flex items-center"> 

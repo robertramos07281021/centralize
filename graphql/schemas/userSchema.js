@@ -85,7 +85,6 @@ const userTypeDefs = gql`
     account_type: String
     callfile_id: String
     attempt_login: Int
-
     targets: Target
     buckets: [Bucket]
     departments: [Department] 

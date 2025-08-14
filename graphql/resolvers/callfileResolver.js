@@ -246,9 +246,6 @@ const callfileResolver = {
                       $sum:'$out_standing_details.total_os'
                       
                     },
-                    target: {
-                      $sum: "$out_standing_details.principal_os"
-                    },
                     principal: {
                       $sum: "$out_standing_details.principal_os"
                     },
@@ -267,7 +264,6 @@ const callfileResolver = {
                     connected: 1,
                     principal: 1,
                     OB: 1,
-                    target: 1,
                     collected: 1
                   }
                 }
@@ -275,12 +271,21 @@ const callfileResolver = {
             )
           )
         ).flat()
+      
+        const newCustomerAccounts = customerAccounts.map(x=> {
+          const match = files.find(y => y._id.toString() === x.callfile.toString())
+          return {
+            ...x,
+            target: match.target ?? 0
+          }
+        })
 
         return {
-          result: customerAccounts,
+          result: newCustomerAccounts,
           count: total | 0
         }
 
+      
       } catch (error) {
         throw new CustomError(error.message,500)        
       }
@@ -874,8 +879,10 @@ const callfileResolver = {
         throw new CustomError(error.message,500)        
       }
     },
-    deleteCallfile: async(_,{callfile},{pubsub, PUBSUB_EVENTS}) => {
+    deleteCallfile: async(_,{callfile},{user, pubsub, PUBSUB_EVENTS}) => {
       try {
+        if(!user) throw new CustomError('Unauthorized',401)
+
         const deleteCallfile = await Callfile.findByIdAndDelete(callfile)
 
         if(!deleteCallfile) throw CustomError("Callfile not found",404) 
@@ -894,7 +901,21 @@ const callfileResolver = {
       } catch (error) {
         throw new CustomError(error.message,500)   
       }
-    } 
+    }, 
+    setCallfileTarget: async(_,{callfile,target},{user}) => {
+      try {
+        if(!user) throw new CustomError('Unauthorized',401)
+        const setCallfile = await Callfile.findByIdAndUpdate(callfile,{$set: {target: target}})
+        if(!setCallfile) throw new CustomError('Callfile not found',404)
+        
+        return {
+          message: "Successfully set callfile target",
+          success: true
+        }
+      } catch (error) {
+        throw new CustomError(error.message,500)  
+      }
+    }
   },
 }
 

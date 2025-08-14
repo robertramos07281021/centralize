@@ -85,7 +85,19 @@ const userSchema = new Schema(
       monthly: {
         type: Number,
         default: 0
-      }
+      },
+      daily_variance: {
+        type: Number,
+        default: 0
+      },
+      weekly_variance: {
+        type: Number,
+        default: 0
+      },
+      monthly_variance: {
+        type: Number,
+        default: 0
+      },
     },
     isLock: {
       type: Boolean,

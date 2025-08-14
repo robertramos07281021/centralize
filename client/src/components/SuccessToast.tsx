@@ -92,9 +92,11 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
     'NO ACTIVE CALLFILE': {
       toast: "bg-red-400",
       close: "text-red-400"
+    },
+    "SET": {
+      toast: "bg-orange-400",
+      close: "text-orange-400"
     }
-
-
   } as const;
   useEffect(()=> {
     const timer = setTimeout(()=> {
@@ -126,6 +128,7 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
   if (messageText.includes("NOT FOUND")) successType = "NOT FOUND";
   if (messageText.includes("NOT READY")) successType = "NOT READY";
   if (messageText.includes("NO ACTIVE CALLFILE")) successType = "NO ACTIVE CALLFILE";
+  if (messageText.includes("SET")) successType = "SET";
 
   return (
     <div className={`${toastColor[successType].toast} min-w-96 h-13 rounded-xl border-slate-100 shadow shadow-black/20 border fixed right-5 top-20 z-50 flex items-center px-4 font-medium text-white justify-between gap-10`}>

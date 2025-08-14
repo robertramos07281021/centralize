@@ -40,6 +40,14 @@ const callFileSchema = new Schema(
       type: Number,
       default: 0
     },
+    variance: {
+      type: Number,
+      default: 0
+    },
+    isVarianceTake: {
+      type: Boolean,
+      default: true
+    },
     target: {
       type: Number,
       default: 0

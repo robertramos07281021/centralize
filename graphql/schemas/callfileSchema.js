@@ -20,6 +20,8 @@ const callfileTypeDefs = gql`
     active: Boolean
     endo: String
     finished_by: User
+    totalPrincipal: Float
+    target: Float
   }
 
   type Result {
@@ -54,6 +56,7 @@ const callfileTypeDefs = gql`
   }
 
   type Mutation {
+    setCallfileTarget(callfile:ID!,target:Float!):Success
     finishedCallfile(callfile:ID!):Success
     deleteCallfile(callfile:ID!):Success
   }

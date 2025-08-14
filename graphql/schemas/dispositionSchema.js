@@ -176,6 +176,7 @@ const dispositionTypeDefs = gql`
   type BucketTargets {
     bucket: ID
     collected: Float
+    totalPrincipal: Float
     target: Float
   }
 
@@ -221,7 +222,7 @@ const dispositionTypeDefs = gql`
     getTLPaidTotals: [TLTotal],
     getTLDailyCollected: [TLDailyCollected]
     agentDispoDaily: [AgentDispo]
-    getTargetPerCampaign: [BucketTargets]
+    getTargetPerCampaign(id:ID): [BucketTargets]
   }
 
   type Mutation {

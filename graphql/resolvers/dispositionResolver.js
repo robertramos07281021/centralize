@@ -1747,11 +1747,12 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getTargetPerCampaign: async(_,__,{user}) => {
+    getTargetPerCampaign: async(_,{id},{user}) => {
       try {
-        const buckets = (await Bucket.find({_id: {$in: user.buckets}}).lean()).map(e=> new mongoose.Types.ObjectId(e._id))
-        const callfiles = (await Callfile.find({bucket: {$in: user.buckets}, active: {$eq: true}})).map(e=> new mongoose.Types.ObjectId(e._id) )
+        const buckets = await Bucket.findById(id)
+        const callfiles = await Callfile.findOne({bucket:buckets._id, active: {$eq: true}})
 
+        if(!callfiles) return null
         const customerAccount = await CustomerAccount.aggregate([
           {
             $lookup: {
@@ -1774,8 +1775,7 @@ const dispositionResolver = {
           },
           {
             $match: {
-              bucket: { $in: buckets },
-              callfile: { $in: callfiles }
+              callfile: callfiles._id
             }
           },
           {
@@ -1796,7 +1796,6 @@ const dispositionResolver = {
             $group: {
               _id: "$bucket",
               collected: { $sum: "$collectedPrincipal" },
-              target: { $sum:  "$out_standing_details.principal_os" }
             }
           },
           {
@@ -1804,15 +1803,20 @@ const dispositionResolver = {
               _id: 0,
               bucket: "$_id",
               collected: 1,
-              target: 1
             }
           }
         ])
 
-      
-        return customerAccount
+        const newCustomerAccount = customerAccount.map(x=> {
+          return {
+            ...x,
+            totalPrincipal: callfiles.totalPrincipal,
+            target: callfiles.target
+          }
+        })
+  
+        return newCustomerAccount
       } catch (error) {
-
         throw new CustomError(error.message, 500)        
       }
     }
@@ -1910,6 +1914,14 @@ const dispositionResolver = {
 
         await CustomerAccount.findByIdAndUpdate(customerAccount._id, { $set: updateFields, $push: { history: newDisposition._id } },{new: true});
         
+        // const findUser = await User.findById(user._id)
+        // if(!findUser.reliver) {
+        //   if(dispoType.code === 'PAID') {
+        //     const amount = parseFloat(input.amount)
+        //     await User.findByIdAndUpdate(findUser._id,{$inc: {targets: {daily_variance: -amount, weekly_varinace: -amount, monthly_variance: -amount}}})
+        //   }
+        // }
+
         return {
           success: true,
           message: "Disposition successfully created"

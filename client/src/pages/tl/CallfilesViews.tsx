@@ -1,14 +1,15 @@
-import { useApolloClient, useMutation, useQuery, useSubscription, useLazyQuery } from "@apollo/client";
+import {  useMutation, useQuery, useSubscription, useLazyQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { FaTrash } from "react-icons/fa";
 import { FaSquareCheck, FaDownload} from "react-icons/fa6";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../redux/store";
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import Confirmation from "../../components/Confirmation";
 import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import Loading from "../Loading";
 import { useLocation } from "react-router-dom";
+import { IoSettingsSharp } from "react-icons/io5";
 
 type Finished = {
   name: string
@@ -22,6 +23,8 @@ type Callfile = {
   active: boolean
   endo: string
   finished_by: Finished
+  totalPrincipal: number
+  target: number
 }
 
 type Result = {
@@ -74,6 +77,8 @@ const GET_CALLFILES = gql`
           createdAt
           active
           endo
+          totalPrincipal
+          target
           finished_by {
             name
           }
@@ -144,13 +149,23 @@ const TL_BUCKET = gql`
     }
   }
 `
+
+const SET_CALLFILE_TARGET = gql`
+  mutation setCallfileTarget($callfile: ID!, $target: Float!) {
+    setCallfileTarget(callfile: $callfile, target: $target) {
+      success
+      message
+    }
+  }
+`
 const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpload, successUpload, setUploading}) => {
   const {limit, productionManagerPage,userLogged } = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
-  const client = useApolloClient()
   const location = useLocation()
-
+  const [modalTarget, setModalTarget] = useState<boolean>(false)
+  const [callfileTarget,setTarget] = useState<number>(0)
   const isProductionManager = location.pathname !== '/tl-production-manager'
+  const [callfileId, setCallfileId] = useState<Callfile | null>(null)
 
   const {data, refetch,loading} = useQuery<{getCallfiles:CallFilesResult}>(GET_CALLFILES,{
     variables: {
@@ -209,24 +224,20 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   const [downloadCallfiles, {loading:downloadCallfilesLoading}] = useLazyQuery(GET_CSV_FILES)
 
   useSubscription<{newCallfile:SubSuccess}>(NEW_UPLOADED_CALLFILE,{
-    onData: ({data})=> {
+    onData: async({data})=> {
       if(data){
         if(data.data?.newCallfile?.message === "SOMETHING_NEW_ON_CALLFILE" && userLogged?.buckets.toString().includes(data.data?.newCallfile?.bucket)) {
-          client.refetchQueries({
-            include: ['getCallfiles']
-          })
+          await refetch()
         }
       }
     }
   })
 
   useSubscription<{updateOnCallfiles:SubSuccess}>(UPDATE_ON_CALLFILES,{
-    onData: ({data})=> {
+    onData: async({data})=> {
       if(data){
         if(data.data?.updateOnCallfiles?.message === "FINISHED_CALLFILE" && userLogged?.buckets.toString().includes(data.data?.updateOnCallfiles?.bucket)) {
-          client.refetchQueries({
-            include: ['getCallfiles']
-          })
+          await refetch()
         }
       }
     }
@@ -236,7 +247,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "FINISHED" as "FINISHED" | "DELETE" | "DOWNLOAD",
+    toggle: "FINISHED" as "FINISHED" | "DELETE" | "DOWNLOAD" | "SET",
     yes: () => {},
     no: () => {}
   })
@@ -270,6 +281,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       try {
         const res = await refetch()
         if(res.data) {
+          
           dispatch(setSuccess({
             success: data.deleteCallfile.success,
             message: data.deleteCallfile.message
@@ -284,13 +296,43 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       dispatch(setServerError(true))
     }
   })
+
+  const [setCallfileTarget] = useMutation<{setCallfileTarget:Success}>(SET_CALLFILE_TARGET,{
+    onCompleted: async(data) => {
+      try {
+        setConfirm(false)
+        setModalTarget(false)
+        const res = await refetch()
+        if(res.data) {
+          dispatch(setSuccess({
+            success: data.setCallfileTarget.success,
+            message: data.setCallfileTarget.message
+          }))
+          setTarget(0)
+        }
+      } catch (error) {
+        dispatch(setServerError(true))
+        setTarget(0)
+      }
+    },
+    onError: ()=> {
+      setConfirm(false)
+      setModalTarget(false)
+      setTarget(0)
+      dispatch(setServerError(true))
+    } 
+  })
+
+
+
  
-  const onClickIcon = (id:string, action: "FINISHED" | "DELETE" | "DOWNLOAD",name: string) => {
+  const onClickIcon = (id:string, action: "FINISHED" | "DELETE" | "DOWNLOAD" | "SET",name: string) => {
     setConfirm(true)
     const modalTxt = {
       FINISHED: `Are you sure this ${name.toUpperCase()} callfile are finished?`,
       DELETE: `Are you sure you want to delete ${name.toUpperCase()} callfile?`,
-      DOWNLOAD: `Are you sure you want to download ${name.toUpperCase()} callfile`
+      DOWNLOAD: `Are you sure you want to download ${name.toUpperCase()} callfile?`,
+      SET: `Are you sure you want to set the target ${name.toLocaleLowerCase()} callfile?`
     }
 
     const fn = {
@@ -324,6 +366,9 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
         } catch (err) {
           dispatch(setServerError(true))
         }
+      },
+      SET: async()=> {
+        await setCallfileTarget({variables: {callfile: id, target: callfileTarget}})
       }
     }
 
@@ -336,6 +381,28 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       }
     })
   }
+
+
+  const handleOnChangeAmount = useCallback((e:React.ChangeEvent<HTMLInputElement>) => {
+    let inputValue = e.target.value.replace(/[^0-9.]/g, '');
+    const parts = inputValue.split('.');
+    
+    if (parts.length > 2) {
+      inputValue = parts[0] + '.' + parts[1]; 
+    } else if (parts.length === 2) {
+      inputValue = parts[0] + '.' + parts[1].slice(0, 2);
+    }
+
+    if (inputValue.startsWith('00')) {
+      inputValue = '0';
+    }
+    if(Number(inputValue) > Number(callfileId?.totalPrincipal) ) {
+      setTarget(Number(callfileId?.totalPrincipal))
+    } else {
+      setTarget(Number(inputValue))
+    }
+  },[setTarget, callfileId])
+
 
   useEffect(()=> {
     if(data) {
@@ -354,8 +421,6 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   return (
     <>
       <div className=" h-full w-full overflow-y-auto overflow-hidden flex-nowrap overflow-x-auto inline flex-col relative">
-        
-          
         <table className="w-full table-fixed text-left">
           <thead >
             <tr  className="bg-slate-100 text-gray-500">
@@ -394,13 +459,16 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
                     <td>{res.collected.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</td>
                     <td>{status}</td>
                     <td className="truncate">{finishedBy}</td>
-                    <td className="flex py-2 lg:gap-3 2xl:gap-5">
+                    <td className="flex py-2 lg:gap-3 2xl:gap-3">
                       {
                         checkStatus &&
-                        <FaSquareCheck className="hover:scale-110 text-green-500 lg:text-xs 2xl:text-lg cursor-pointer" onClick={()=> onClickIcon(res.callfile._id, "FINISHED", res.callfile.name)}/>
+                        <>
+                          <FaSquareCheck className="hover:scale-110 text-green-500 lg:text-xs 2xl:text-lg cursor-pointer" onClick={()=> onClickIcon(res.callfile._id, "FINISHED", res.callfile.name)} title="Finish"/>
+                          <IoSettingsSharp className="text-orange-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" title="Set Target" onClick={()=> {setModalTarget(true); setCallfileId(res.callfile)}}/>
+                        </>
                       }
-                      <FaTrash className=" text-red-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DELETE", res.callfile.name)}/>
-                      <FaDownload className="text-blue-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DOWNLOAD", res.callfile.name)}/>
+                      <FaTrash className=" text-red-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DELETE", res.callfile.name)} title="Delete"/>
+                      <FaDownload className="text-blue-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DOWNLOAD", res.callfile.name)} title='Download' />
                     </td>
                   </tr>
                 )
@@ -412,6 +480,32 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       </div> 
       { confirm &&
         <Confirmation {...modalProps}/>
+      }
+      {
+        modalTarget && callfileId && 
+        <div className="absolute top-0 left-0 bg-black/20 backdrop-blur-xs w-full h-full z-40 flex items-center justify-center">
+          <div className="w-2/8 border h-2/5 rounded-md flex flex-col overflow-hidden border-slate-500">
+            <h1 className="p-2 text-2xl bg-orange-500 text-white font-medium">
+              Set Target
+            </h1>
+            <div className="w-full h-full bg-white flex items-center justify-center flex-col gap-8">
+              <label className="flex gap-2 flex-col">
+                <p className="2xl:text-2xl lg:text-lg">Enter Callfile Target:</p>
+                <input 
+                  type="text"
+                  className="text-base border w-full px-2 py-1.5 rounded outline-0"
+                  value={callfileTarget}
+                  onChange={handleOnChangeAmount}
+                  />
+              </label>
+              <div className="flex gap-5">
+                <button className="w-30 bg-orange-500 py-2 rounded text-white hover:bg-orange-700 cursor-pointer" onClick={() => onClickIcon(callfileId._id,'SET',callfileId.name)}>Submit</button>
+                <button className="w-30 bg-slate-500 py-2 rounded text-white hover:bg-slate-700 cursor-pointer" onClick={()=> {setModalTarget(false); setCallfileId(null); setTarget(0)}}>Cancel</button>
+
+              </div>
+            </div>
+          </div>
+        </div>
       }
     </>
   )

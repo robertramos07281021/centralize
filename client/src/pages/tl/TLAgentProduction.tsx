@@ -79,9 +79,12 @@ const TL_BUCKET = gql`
     }
   }
 `
+type ComponentProp = {
+  bucket: string | null | undefined
+}
 
-
-const TLAgentProduction = () => {
+const TLAgentProduction:React.FC<ComponentProp> = ({bucket}) => {
+ 
 
   const dispatch = useAppDispatch()
   const {data:agentDailyProd, refetch} = useQuery<{agentDispoDaily:AgentDailies[]}>(AGENT_DAILY_PROD)

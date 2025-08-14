@@ -135,7 +135,7 @@ const userResolvers = {
     findDeptAgents: async(_,__,{user})=> {
       try {
         if (!user) throw new CustomError("Not authenticated",401);
-        const agent = await User.find({$and: [{departments: {$in: user.departments}},{type: {$eq: "AGENT"}}]})
+        const agent = await User.find({$and: [{buckets: {$in: user.buckets}},{type: {$eq: "AGENT"}}]})
         return agent
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -543,13 +543,27 @@ const userResolvers = {
     updateUser: async(_,{updateInput},{user}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-
         const { id , ...others } = updateInput
+        const findUser = await User.findById(id)
+        if(!findUser) throw new CustomError("User not found",404)
+
+        if(!findUser.buckets.includes(others.buckets) && !findUser.reliver) {
+          await User.findByIdAndUpdate(id, {
+            $set: { 
+              targets: { 
+                daily_target: 0, 
+                weekly_target: 0, 
+                monthly_target: 0,  
+                daily_variance: 0,
+                weekly_variance: 0,
+                montlhy_variance: 0
+              }
+            }
+          })
+        }
 
         const updateUser = await User.findByIdAndUpdate(id, { $set: {...others} },{ new: true })
 
-        if(!updateUser) throw new CustomError("User not found",404)
-        
         await ModifyRecord.create({name: "Update User Info", user: updateUser._id})
 
         return {

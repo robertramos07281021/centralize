@@ -104,7 +104,8 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             emergencyContactMobile,
             case_id,
             platform_user_id,
-            balance
+            balance,
+            principal_os
           } = row
 
           function normalizeContact(contact:string) {
@@ -152,13 +153,14 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
 
           const rows:Data = {
             ...row,
+            principal_os: Number(principal_os) || Number(total_os),
             interest_os: Number(interest_os) || 0,
             admin_fee_os: Number(admin_fee_os) || 0,
             txn_fee_os: Number(txn_fee_os) || 0,
             late_charge_os: Number(late_charge_os) || 0,
             penalty_interest_os: Number(penalty_interest_os) || 0,
             dst_fee_os: Number(dst_fee_os) || 0,
-            balance: Number(balance) || 0,
+            balance: Number(balance) || Number(total_os),
             total_os: Number(total_os) || 0,
             contact: contact ? normalizeContact(contact).toString().trim() : "",
             max_dpd: Number.isFinite(dpd) ? Math.ceil(dpd) : Math.ceil(max_dpd) || 0,

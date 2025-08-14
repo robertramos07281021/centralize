@@ -60,6 +60,10 @@ const color = {
   SELECT: {
     title: "bg-orange-500",
     button: "bg-orange-500 hover:bg-orange-600 focus:ring-orange-300"
+  },
+  SET: {
+    title: "bg-orange-500",
+    button: "bg-orange-500 hover:bg-orange-600 focus:ring-orange-300"
   }
 }
 

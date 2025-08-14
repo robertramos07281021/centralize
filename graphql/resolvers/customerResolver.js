@@ -68,6 +68,7 @@ const customerResolver = {
     search: async(_,{search},{user}) => {
       
       try {
+        if(!search) return null
         const regexSearch = { $regex: search, $options: "i" };
         const startOfTheDay = new Date()
         startOfTheDay.setHours(0,0,0,0)
@@ -217,6 +218,7 @@ const customerResolver = {
 
         return accounts
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
