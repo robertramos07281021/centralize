@@ -1,6 +1,6 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useEffect } from "react"
+import { useEffect, useMemo } from "react"
 import { color, month } from "../../middleware/exports"
 import { ChartData, ChartDataset, ChartOptions, Plugin } from "chart.js"
 import { Chart } from "react-chartjs-2"
@@ -10,17 +10,12 @@ import { setServerError } from "../../redux/slices/authSlice"
 
 
 type AgentProdPerMonth = {
-    skip: number
-    sms: number
-    email: number
-    calls: number
-    field: number
     total: number
     month: number
     ptp: number
     ptp_kept: number
     paid: number
-
+    variance: number
 }
 const AGENT_PER_MONTH_PROD = gql`
   query getAgentProductionPerMonth {
@@ -39,13 +34,6 @@ const AGENT_PER_MONTH_PROD = gql`
   }
 `
 
-// const oklchColors = [
-//   'oklch(60% 0.15 216)',
-//   'oklch(60% 0.15 288)',
-//   'oklch(60% 0.15 0)',
-//   'oklch(60% 0.15 144)',
-//   'oklch(60% 0.15 72)',
-// ];
 
 
 export default function MixedChartMonthView() {
@@ -63,22 +51,31 @@ export default function MixedChartMonthView() {
     color: string;
     type: "bar" | "line";
   }[]= [
-    // { label: "Calls", key: "calls", color: oklchColors[0], type: "bar" },
-    // { label: "SMS", key: "sms", color: oklchColors[1], type: "bar" },
-    // { label: "Email", key: "email", color: oklchColors[2], type: "bar" },
-    // { label: "Skip", key: "skip", color: oklchColors[3], type: "bar" },
-    // { label: "Field", key: "field", color: oklchColors[4], type: "bar" },
     { label: "PTP", key: "ptp", color: color[2], type: "bar" },
     { label: "PTP Kept", key: "ptp_kept", color: color[7], type: "bar" },
     { label: "Paid Collected", key: "paid", color: color[15], type: "bar" },
-    { label: "Total", key: "total", color: "#000", type: "line" },
+    { label: "Collected", key: "total", color: "#000", type: "line" },
+    { label: "Variance", key: "variance", color: "red", type: "line" },
   ];
+
+  const newProdData = useMemo(()=> {
+    return agentProdPerMonthData?.getAgentProductionPerMonth.map(x=> {
+      const theVariance = monthlyTarget - x.total
+
+      return {
+        ...x,
+        variance: theVariance
+      }
+    })
+  },[agentProdPerMonthData,monthlyTarget])
+
+  const prodData = newProdData || []
 
   const datasets:ChartDataset<'bar' | 'line', number[]>[] = fields.map(({ label, key, color, type }) => ({
     type,
     label,
     data: Array.from({ length: 12 }, (_, i) => {
-      const entry:{[key:string]:number} = agentProdPerMonthData?.getAgentProductionPerMonth.find(e => e.month -1 === i ) || {};
+      const entry:{[key:string]:number} = prodData.find(e => e.month -1 === i ) || {};
       return entry[key] || 0;
     }),
     ...(type === "line"
@@ -123,7 +120,7 @@ export default function MixedChartMonthView() {
   const optionPerMonth:ChartOptions<'bar'| 'line'> = { 
     plugins: {
       datalabels:{
-        display:false
+        display:false,
       },
       legend: {
         display: true,
@@ -189,7 +186,7 @@ export default function MixedChartMonthView() {
       }
     })
     return () => clearTimeout(timer)
-  },[PerMonthRefetch])
+  },[])
 
   return (
     <div className="border rounded-lg col-span-1 border-slate-200 lg:col-span-7 lg:row-span-2 p-2 shadow-md shadow-black/20 bg-white">

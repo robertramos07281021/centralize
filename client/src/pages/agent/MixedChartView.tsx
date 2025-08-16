@@ -2,7 +2,7 @@ import { color, date, month } from "../../middleware/exports"
 import { ChartData, ChartDataset, ChartOptions, Plugin } from "chart.js"
 import gql from 'graphql-tag';
 import { useQuery } from '@apollo/client';
-import { useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { Chart } from "react-chartjs-2";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../redux/store";
@@ -10,26 +10,17 @@ import { setServerError } from "../../redux/slices/authSlice";
 
 
 type AgentProdPerDay = {
-  skip: number
-  sms: number
-  email: number
-  calls: number
-  field: number
   total: number
   date: number
   ptp: number
   ptp_kept: number
   paid: number
+  variance: number
 }
 
 const AGENT_PER_DAY_PROD = gql`
   query getAgentProductionPerDay {
     getAgentProductionPerDay {
-      skip
-      sms
-      email
-      calls
-      field
       total
       date
       ptp
@@ -39,20 +30,10 @@ const AGENT_PER_DAY_PROD = gql`
   }
 `
 
-// const oklchColors = [
-//   'oklch(60% 0.15 216)',
-//   'oklch(60% 0.15 288)',
-//   'oklch(60% 0.15 0)',
-//   'oklch(60% 0.15 144)',
-//   'oklch(60% 0.15 72)',
-// ];
-
-
 const MixedChartView = () => {
   const dispatch = useAppDispatch()
   const {data:agentProdPerDayData, refetch:PerDayRefetch} = useQuery<{getAgentProductionPerDay:AgentProdPerDay[]}>(AGENT_PER_DAY_PROD)
   const {userLogged} = useSelector((state:RootState)=> state.auth)
-
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       try {
@@ -62,7 +43,7 @@ const MixedChartView = () => {
       }
     })
     return () => clearTimeout(timer)
-  },[PerDayRefetch])
+  },[])
 
   const dailyTargets = userLogged?.targets?.daily || 0
 
@@ -75,28 +56,33 @@ const MixedChartView = () => {
     return Array.from({ length: getDaysInMonth() }, (_, i) => i + 1);
   }
 
+  const newProdData = useMemo(()=> {
+    return agentProdPerDayData?.getAgentProductionPerDay.map(x=> {
+      const theVariance = dailyTargets - (x.total)
+      return {
+        ...x,
+        variance: theVariance
+      }
+    })
+  },[agentProdPerDayData, dailyTargets])
+
   const daysInMonth = getDaysInMonth();
-  const prodData = agentProdPerDayData?.getAgentProductionPerDay || [];
+  const prodData = newProdData || [];
   const totals = prodData.map(e=> e.total)
   const rounded = Math.round(Math.max(...totals)/10000)*10000
   const Max = rounded > dailyTargets ? rounded : dailyTargets
   
-
   const fields: {
     label: string;
     key: keyof AgentProdPerDay;
     color: string;
     type: "bar" | "line";
   }[]= [
-    // { label: "Calls", key: "calls", color: oklchColors[0], type: "bar" },
-    // { label: "SMS", key: "sms", color: oklchColors[1], type: "bar" },
-    // { label: "Email", key: "email", color: oklchColors[2], type: "bar" },
-    // { label: "Skip", key: "skip", color: oklchColors[3], type: "bar" },
-    // { label: "Field", key: "field", color: oklchColors[4], type: "bar" },
     { label: "PTP", key: "ptp", color: color[2], type: "bar" },
     { label: "PTP Kept", key: "ptp_kept", color: color[7], type: "bar" },
     { label: "Paid Collected", key: "paid", color: color[15], type: "bar" },
-    { label: "Total", key: "total", color: "#000", type: "line" },
+    { label: "Collected", key: "total", color: "#000", type: "line" },
+    { label: "Variance", key: "variance", color: "red", type: "line" },
   ];
 
   const datasets:ChartDataset<'bar' | 'line', number[]>[] = fields.map(({ label, key, color, type }) => ({

@@ -9,6 +9,10 @@ const bucketSchema = new Schema(
       required: true,
       uppercase: true
     },
+    principal: {
+      type: Boolean,
+      default: false
+    },
     dept: {
       type: String,
       required: true,

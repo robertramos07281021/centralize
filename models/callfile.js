@@ -51,6 +51,28 @@ const callFileSchema = new Schema(
     target: {
       type: Number,
       default: 0
+    },
+    penetration_details: {
+      calls: {
+        vici: {
+          total: {
+            type: Number,
+            default: 0
+          },
+        },
+        issable: {
+          total: {
+            type: Number,
+            default: 0
+          }
+        },
+        inbound: {
+          total: {
+            type: Number,
+            default: 0
+          }
+        },
+      }
     }
   },
   { timestamps: true }

@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react"
 import {  useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
 import { gql, useMutation } from "@apollo/client";
-import {  setBreakValue, setDeselectCustomer, setMyToken, setServerError, setStart, setUserLogged } from "../redux/slices/authSlice";
+import {  setBreakValue, setDeselectCustomer, setLogout, setMyToken, setServerError, setStart, setUserLogged } from "../redux/slices/authSlice";
 import Loading from "./Loading";
 import { useSelector } from "react-redux";
 import { BreakEnum } from "../middleware/exports";
@@ -24,6 +24,7 @@ const LOGIN = gql `
         branch
         departments
         buckets
+        isOnline
         account_type
         group
         targets {
@@ -72,6 +73,7 @@ type User = {
   account_type: string
   group: string
   targets: Targets
+  isOnline: boolean
 }
 
 type Login = {
@@ -116,23 +118,7 @@ const Login = () => {
 
   const [logout] = useMutation(LOGOUT,{
     onCompleted: async()=> {
-      dispatch(setUserLogged({
-        _id: "",
-        change_password: false,
-        name: "",
-        type: "",
-        username: "",
-        branch: "",
-        departments: [],
-        buckets: [],
-        account_type: "",
-        group: "",
-        targets: {
-          daily: 0,
-          monthly: 0,
-          weekly: 0
-        }
-      }))
+      dispatch(setLogout())
       await persistor.purge()
     }, 
     onError: ()=> {
@@ -217,7 +203,7 @@ const Login = () => {
   },[userLogged,userRoutes,navigate])
 
   useEffect(()=> {
-    if(userLogged?._id && !userLogged.change_password) {
+    if(userLogged && !userLogged.change_password) {
       const timer = setTimeout(async() =>  {
         await logout()
         if(selectedCustomer) {

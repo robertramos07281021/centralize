@@ -82,7 +82,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
         const sheetName = workbook.SheetNames[0]; 
         const sheet = workbook.Sheets[sheetName];
         const jsonData:Data[] = utils.sheet_to_json(sheet); 
-        const dateConverting = jsonData.map((row: Data) => {
+        const dateConverting = jsonData.map((row) => {
           const { 
             interest_os, 
             admin_fee_os, 
@@ -97,9 +97,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             endorsement_date, 
             birthday,
             grass_date,
-            dpd,
-            mpd,
-            max_dpd,
             late_charge_waive_fee_os,
             emergencyContactMobile,
             case_id,
@@ -109,7 +106,9 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           } = row
 
           function normalizeContact(contact:string) {
-            const cleaned = contact.toString().trim().replace(/[+\-\s()]/g, '');
+
+            if(isNaN(Number(contact))) return ""
+            const cleaned = contact.toString().trim().replace(/[+\-\s()]/g, '').replace(/^0/, '');
             const metroManila = /^2\d{7,8}$/;
             const fiveDigitAreaCodes = /^(8822|8842)\d{5}$/;
             const provincialLandline = /^(3[2-8]|4[2-9]|5[2-6]|6[2-8]|7[2-8]|8[2-8])\d{7}$/;
@@ -140,10 +139,11 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             if (provincialLandline.test(cleaned)) {
               return '0' + cleaned;
             }
+            
             return cleaned;
           }
 
-          const safeDate = (date: any) => {
+          const safeDate = (date: string) => {
             try {
               return date ? SSF.format("yyyy-mm-dd", date) : undefined;
             } catch {
@@ -151,7 +151,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             }
           };
 
-          const rows:Data = {
+          const rows = {
             ...row,
             principal_os: Number(principal_os) || Number(total_os),
             interest_os: Number(interest_os) || 0,
@@ -161,10 +161,8 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             penalty_interest_os: Number(penalty_interest_os) || 0,
             dst_fee_os: Number(dst_fee_os) || 0,
             balance: Number(balance) || Number(total_os),
-            total_os: Number(total_os) || 0,
+            total_os: Number(total_os),
             contact: contact ? normalizeContact(contact).toString().trim() : "",
-            max_dpd: Number.isFinite(dpd) ? Math.ceil(dpd) : Math.ceil(max_dpd) || 0,
-            mpd: Math.ceil(mpd) || 0,
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
           }
           
@@ -180,7 +178,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           }
 
           if(grass_date) {
-            rows['grass_date'] = safeDate(grass_date)
+            rows['grass_date'] = safeDate(grass_date.toString())
           }
 
           if(bill_due_date) {
@@ -188,7 +186,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           }
 
           if(endorsement_date) {
-            rows['endorsement_date'] = safeDate(endorsement_date)
+            rows['endorsement_date'] = safeDate(endorsement_date.toString())
           }
 
           if(birthday) {

@@ -47,33 +47,14 @@ const productionResolver = {
               _id: {
                 day: { $dayOfMonth: "$createdAt" }
               },
-              calls: {
-                $sum: {
-                  $cond: [{$eq: ["$contact_method","calls"]} ,"$amount",0]
-                }
-              },
-              sms: {
-                $sum: {
-                  $cond: [{$eq: ["$contact_method","sms"]} ,"$amount",0]
-                }
-              },
-              email: {
-                $sum: {
-                  $cond: [{$eq: ["$contact_method","email"]} ,"$amount",0]
-                }
-              },
-              skip: {
-                $sum: {
-                  $cond: [{$eq: ["$contact_method","skip"]} ,"$amount",0]
-                }
-              },
-              field: {
-                $sum: {
-                  $cond: [{$eq: ["$contact_method","field"]} ,"$amount",0]
-                }
-              },
               total: {
-                $sum: "$amount"
+                $sum: {
+                  $cond: [
+                    {$eq: ['$dispotype.code','PAID']},
+                    "$amount",
+                    0
+                  ]
+                }
               },
               ptp_kept: {
                 $sum: {
@@ -127,11 +108,6 @@ const productionResolver = {
           {
             $project: {
               date: "$_id.day",
-              calls: 1,
-              skip: 1,
-              email: 1,
-              sms: 1,
-              field: 1,
               total: 1,
               paid: 1,
               ptp: 1,
@@ -269,33 +245,15 @@ const productionResolver = {
               _id: {
                 month: { $month: "$createdAt" }
               },
-              calls: {
-                $sum: {
-                  $cond: [{$eq: ["$contact_method","calls"]} ,"$amount",0]
-                }
-              },
-              sms: {
-                $sum: {
-                  $cond: [{$eq: ["$contact_method","sms"]} ,"$amount",0]
-                }
-              },
-              email: {
-                $sum: {
-                  $cond: [{$eq: ["$contact_method","email"]} ,"$amount",0]
-                }
-              },
-              skip: {
-                $sum: {
-                  $cond: [{$eq: ["$contact_method","skip"]} ,"$amount",0]
-                }
-              },
-              field: {
-                $sum: {
-                  $cond: [{$eq: ["$contact_method","field"]} ,"$amount",0]
-                }
-              },
               total: {
-                $sum: "$amount"
+                $sum: {
+                  $cond: [
+                    {$eq: ["$dispotype.code","PAID"]}
+                    ,
+                    "$amount",
+                    0
+                  ]
+                }
               },
               ptp_kept: {
                 $sum: {
@@ -349,11 +307,6 @@ const productionResolver = {
           {
             $project: {
               month: "$_id.month",
-              calls: 1,
-              skip: 1,
-              email: 1,
-              sms: 1,
-              field: 1,
               total: 1,
               paid: 1,
               ptp: 1,
@@ -412,8 +365,7 @@ const productionResolver = {
             }
           }
 
-        ])  
-
+        ])
         return res
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -875,7 +827,7 @@ const productionResolver = {
         const endOfWeek = new Date(startOfWeek);
         endOfWeek.setDate(startOfWeek.getDate() + 7);
         endOfWeek.setMilliseconds(-1);
-
+  
     
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
@@ -901,7 +853,7 @@ const productionResolver = {
           },
           {
             $match: {
-              "dispotype.code": {$in: ['PTP','PAID']}
+              "dispotype.code": {$eq: 'PAID'}
             }
           },
           {

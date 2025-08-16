@@ -73,16 +73,14 @@ const Targets:React.FC<ComponentProps> = ({bucket}) => {
 
         {
           selectedBucket?.map((e,index) => {
-            const variance = e.target - e.collected
-            const performance = (e.collected / e.target) * 100  
-
-            const principal = e.totalPrincipal - e.target
+            const variance = e.target - e.collected  
+            const callfileVariance = (e.collected/e.totalPrincipal) * 100
             const data = {
               labels: ['Collected', 'Target Variance','Endorsement Variance'],
               datasets: [
                 {
                   label: 'Amount',
-                  data: [e.collected,variance,principal],
+                  data: [e.collected,variance],
                   backgroundColor: [
                     'oklch(54.6% 0.245 262.881)',
                     'oklch(70.5% 0.213 47.604)',
@@ -107,7 +105,7 @@ const Targets:React.FC<ComponentProps> = ({bucket}) => {
                     size: 14,
                   } as const,
                   formatter: (value: number) => {
-                    const percent = (value/e.totalPrincipal) * 100
+                    const percent = (value/e.target) * 100
                     return (
                       (isNaN(percent) || value < 1)  ?  "" : (percent.toFixed(2) + '%') 
                     )
@@ -126,10 +124,9 @@ const Targets:React.FC<ComponentProps> = ({bucket}) => {
                   },
                   text: [
                     `${bucketObject[e.bucket]}`,
-                    `${e.collected.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})} / ${e.totalPrincipal.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || e.collected.toLocaleString('en-PH',{style: 'currency',currency: 'PHP',})}`,
+                    `${e.collected.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})} / ${e.totalPrincipal.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || e.collected.toLocaleString('en-PH',{style: 'currency',currency: 'PHP',})} - ${callfileVariance.toFixed(2)}%`,
                     `Target - ${e.target.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}    Variance - ${variance.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}`
                   ],
-           
                 },
                 tooltip: {
                   callbacks: {
@@ -147,7 +144,7 @@ const Targets:React.FC<ComponentProps> = ({bucket}) => {
 
             return (
               <div key={index} className={`flex justify-center w-full h-full py-2 px-5 relative`} >
-                <GoDotFill className={`absolute top-0 left-0 text-5xl ${isNaN(performance) ? "" : performance >= 50 ? "text-green-500" : "text-red-500"} `}/>
+                <GoDotFill className={`absolute top-0 left-0 text-5xl ${isNaN(callfileVariance) ? "" : callfileVariance >= 50 ? "text-green-500" : "text-red-500"} `}/>
                 <Doughnut data={data} options={options} />
               </div>
             )

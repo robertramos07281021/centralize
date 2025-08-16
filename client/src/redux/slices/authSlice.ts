@@ -14,6 +14,7 @@ type User = {
   account_type: string
   group: string
   targets: Targets
+  isOnline: boolean
 }
 
 type search = {
@@ -103,13 +104,13 @@ const authSlice = createSlice({
     setServerError: (state, action: PayloadAction<boolean>) => {
       state.serverError = action.payload
     },
-    setUserLogged: (state, action: PayloadAction<User>) => {
+    setUserLogged: (state, action: PayloadAction<User | null>) => {
       state.userLogged = action.payload
     },
     setSearch: (state, action:PayloadAction<search>) => {
       state.search = action.payload
     },
-    setSelectedCustomer: (state, action:PayloadAction<Search>) => {
+    setSelectedCustomer: (state, action:PayloadAction<Search | null>) => {
       state.selectedCustomer = action.payload
     },
     setSelectedGroup: (state, action:PayloadAction<string>)=> {

@@ -221,22 +221,46 @@ const taskResolver = {
         //   }
         // ])
 
-        const findCallfile = await Callfile.find({totalOB: {$exists: false}})
+        // const FindDispoNoCallfile = await Disposition.aggregate([
+        //   {
+        //     $match: {
+        //       callfile: {$exists: false}
+        //     }
+        //   },
+        //   {
+        //     $lookup: {
+        //       from: "customeraccounts", 
+        //       localField: "customer_account", 
+        //       foreignField: "_id",       
+        //       as: "customerAccounts"         
+        //     }
+        //   },
+        //   {
+        //     $unwind: {path: "$customerAccounts",preserveNullAndEmptyArrays: true}
+        //   },
+        // ])
+
+
+        // await Promise.all(
+        //   FindDispoNoCallfile.map(async(e)=> {
+        //     await Disposition.findByIdAndDelete(e._id)
+        //   })
+        // )
 
   
-        if(findCallfile.length < 1) throw new CustomError('Callfile not found',404) 
+        // if(findCallfile.length < 1) throw new CustomError('Callfile not found',404) 
 
-        await Promise.all(
-          findCallfile.map((async(e)=> {
-            if(e._id) {
-              const resPrincipal = (await CustomerAccount.find({callfile: e._id})).map(x=> x.out_standing_details.principal_os) || []
-              const resOB = (await CustomerAccount.find({callfile: e._id})).map(x=> x.out_standing_details.total_os) || []
-              const totalPrincipal = resPrincipal.reduce((t,v)=> t + v )
-              const totalOB = resOB.reduce((t,v)=> t + v )
-              await Callfile.findByIdAndUpdate(e._id,{$set: {totalPrincipal: totalPrincipal, totalOB: totalOB }})
-            }
-          }))
-        )
+        // await Promise.all(
+        //   findCallfile.map((async(e)=> {
+        //     if(e._id) {
+        //       const resPrincipal = (await CustomerAccount.find({callfile: e._id})).map(x=> x.out_standing_details.principal_os) || []
+        //       const resOB = (await CustomerAccount.find({callfile: e._id})).map(x=> x.out_standing_details.total_os) || []
+        //       const totalPrincipal = resPrincipal.reduce((t,v)=> t + v )
+        //       const totalOB = resOB.reduce((t,v)=> t + v )
+        //       await Callfile.findByIdAndUpdate(e._id,{$set: {totalPrincipal: totalPrincipal, totalOB: totalOB }})
+        //     }
+        //   }))
+        // )
       //   await Customer.updateMany(
       //   {
       //     contact_no: { $exists: true }

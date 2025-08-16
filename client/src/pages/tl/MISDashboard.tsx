@@ -6,7 +6,7 @@ import { Navigate } from "react-router-dom"
 const MISDashboard = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
 
-  if(userLogged.type === "TL") return <Navigate to="/tl-dashboard"/>
+  if(userLogged?.type === "TL") return <Navigate to="/tl-dashboard"/>
 
   return (
     <div>MISDashboard</div>

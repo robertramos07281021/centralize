@@ -1752,6 +1752,8 @@ const dispositionResolver = {
         const buckets = await Bucket.findById(id)
         const callfiles = await Callfile.findOne({bucket:buckets._id, active: {$eq: true}})
 
+        const paidDispo = await DispoType.findOne({code:"PAID"})      
+
         if(!callfiles) return null
         const customerAccount = await CustomerAccount.aggregate([
           {
@@ -1775,7 +1777,8 @@ const dispositionResolver = {
           },
           {
             $match: {
-              callfile: callfiles._id
+              callfile: callfiles._id,
+              current_disposition: {$exists: true}
             }
           },
           {
@@ -1791,11 +1794,39 @@ const dispositionResolver = {
               },
             },
           },
-        
+          {
+            $addFields: {
+              collectedPaid: {
+                $sum: { 
+                  $map: {
+                    input: {
+                      $filter: {
+                        input: "$account_history",
+                        as: "history",
+                        cond: {
+                          $eq: ["$$history.disposition",paidDispo._id]
+                        }
+                      }
+                    },
+                    as: "h",
+                    in: "$$h.amount"
+                  }
+                }
+              },
+            },
+          },
           {
             $group: {
               _id: "$bucket",
-              collected: { $sum: "$collectedPrincipal" },
+              collected: {
+                $first: {
+                  $cond: [
+                    {$eq: [buckets.principal, true]},
+                    "$collectedPrincipal",
+                    "$collectedPaid",
+                  ]
+                }
+              },
             }
           },
           {
@@ -1815,7 +1846,7 @@ const dispositionResolver = {
           }
         })
   
-        return newCustomerAccount
+        return newCustomerAccount || null
       } catch (error) {
         throw new CustomError(error.message, 500)        
       }

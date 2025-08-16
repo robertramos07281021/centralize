@@ -64,7 +64,7 @@ const Paid = () => {
   return (
     <div className='border-blue-400 border bg-blue-200 rounded-xl p-2 flex flex-col'>
       <div className='lg:text-base 2xl:text-lg font-black text-blue-500'>
-        <h1>Amount Collected </h1>
+        <h1>Paid Collected </h1>
         <p className="text-xs font-medium">(Daily per Bucket)</p>
       </div>
       <div className='h-full w-full flex flex-col justify-center '>

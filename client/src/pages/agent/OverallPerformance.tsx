@@ -38,7 +38,7 @@ export default function OverallPerformance () {
   const {data:agentTotalDispoData, refetch:TotalDispoRefetch} = useQuery<{getAgentTotalDispositions:AgentTotalDispo[]}>(AGENT_TOTAL_DISPO)
   const {data:dispotypeData, refetch:DispoTypeRefetch} = useQuery<{getDispositionTypes:DispositionType[]}>(DISPO_TYPES)
   const dispatch = useAppDispatch()
-  const Month = new Date().getMonth() + 1
+  const Month = new Date().getMonth()
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {

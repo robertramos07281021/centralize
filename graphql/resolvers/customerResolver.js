@@ -66,9 +66,8 @@ const customerResolver = {
       }
     },
     search: async(_,{search},{user}) => {
-      
       try {
-        if(!search) return null
+        if(!search) {return []}
         const regexSearch = { $regex: search, $options: "i" };
         const startOfTheDay = new Date()
         startOfTheDay.setHours(0,0,0,0)
@@ -218,7 +217,6 @@ const customerResolver = {
 
         return accounts
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -1011,6 +1009,7 @@ const customerResolver = {
         const callfileOB = input.map(x=> x.total_os).reduce((t,v)=> t+v)
 
         const newCallfile = new Callfile({name: callfile, bucket: findBucket._id, totalAccounts: input.length || 0,totalPrincipal: callfilePrincipal || 0,totalOB: callfileOB})
+        
 
         await Promise.all(input.map(async (element) => {
           const contact_no = []
@@ -1129,9 +1128,11 @@ const customerResolver = {
     updateCustomer: async(_,{fullName, dob, gender, addresses, mobiles, emails, id, isRPC},{user}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
+        const filtersEmail = emails.filter(x=> x.trim() !== "")
+        const filtersMobile = mobiles.filter(x=> x.trim() !== "")
         const customer = await Customer.findByIdAndUpdate(id,{
           $set: {
-            fullName, dob, gender, addresses, emails, contact_no: mobiles, isRPC
+            fullName, dob, gender, addresses, emails: filtersEmail.length > 0 ? filtersEmail : [], contact_no: filtersMobile.length > 0 ? filtersMobile : [], isRPC
           },
           $push: {
             updatedBy: user._id

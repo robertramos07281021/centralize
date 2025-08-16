@@ -24,7 +24,6 @@ const DESELECT_TASK = gql`
     }
   }
 `
- 
 
 const SEARCH = gql`
   query Search($search: String) {
@@ -237,35 +236,34 @@ const CustomerDisposition = () => {
 
   const [isRPC, setIsRPC] = useState<boolean>(false)
   const [isUpdate, setIsUpdate] = useState<boolean>(false)
-  const [search, setSearch] = useState("")
-  const {data:searchData ,refetch} = useQuery<{search:Search[]}>(SEARCH,{
-    skip: search === "",
-    fetchPolicy: 'network-only'
-  })
+  const [search, setSearch] = useState<string>("")
+  const [isSearch, setIsSearch] = useState<boolean>(true)
+  const { data: searchData, refetch } = useQuery<{ search: Search[] }>(SEARCH, {
+    skip: isSearch,
+    fetchPolicy: "network-only",
+  });
 
   const length = searchData?.search?.length || 0;
 
   const debouncedSearch = useMemo(() => {
     return debounce(async(val: string) => {
-      await refetch({ search: val });
-    });
+      if(val && val.trim() !== "") {
+        await refetch({ search: val });
+      }
+    },500);
   }, [refetch]);
 
-  const handleSearchChange = useMemo(() => 
-    debounce((val: string) => setSearch(val))
-  , []);
-
-  useEffect(() => {
-    if (search) debouncedSearch(search);
-  }, [search, debouncedSearch]);
-
+  const handleSearchChange = (val: string) => {
+    setIsSearch(false)
+    setSearch(val);
+    debouncedSearch(val);
+  };
 
   useEffect(() => {
     return () => {
-      handleSearchChange.cancel();
       debouncedSearch.cancel();
     }
-  }, [handleSearchChange,debouncedSearch]);
+  }, [debouncedSearch]);
 
   const [selectTask] = useMutation(SELECT_TASK,{
     onCompleted: ()=> {
@@ -293,14 +291,9 @@ const CustomerDisposition = () => {
 
   const clearSelectedCustomer = useCallback(async() => {
     await deselectTask({variables: {id: selectedCustomer?._id}}) 
+    setSearch("")
   },[selectedCustomer,deselectTask])
   
-  useEffect(()=> {
-    if(selectedCustomer) {
-      setSearch("")
-    }
-  },[selectedCustomer])
-
 
   useEffect(()=> {
     if(breakValue !== BreakEnum.PROD && userLogged?.type === "AGENT") {

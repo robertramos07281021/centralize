@@ -56,25 +56,7 @@ const ChangePassword = () => {
   const [logout] = useMutation(LOGOUT,{
     onCompleted: async()=> {
       await persistor.purge()
-      dispatch(setUserLogged(
-        {
-          _id: "",
-          change_password: false,
-          name: "",
-          type: "",
-          username: "",
-          branch: "",
-          departments: [],
-          buckets: [],
-          account_type: "",
-          group: "",
-          targets: {
-            daily: 0,
-            monthly: 0,
-            weekly: 0
-          }
-        }
-      ))
+      dispatch(setUserLogged(null))
     },
     onError: () => {
       dispatch(setServerError(true))

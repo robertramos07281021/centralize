@@ -265,7 +265,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
               id="gender"
               name="gender"
               value={formState.gender}
-              required
               onChange={(e)=> setFormState({...formState, gender: e.target.value})}
               className={`${required && !formState.gender ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
@@ -288,7 +287,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
                     name={`contact_${index}`}
                     pattern="^09\d{9}$"
                     value={m}
-                    required
                     onChange={(e)=> handleMobileOnchange(index,e.target.value)}
                     className={`${required && (!formState.mobiles[index] || !validatePhone(formState.mobiles[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Mobile No."  
                   />
@@ -317,7 +315,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
                   id={`email_${index}`}   
                   name={`email_${index}`}
                   value={email}
-                  required
                   onChange={(e)=> handleEmailOnchange(index,e.target.value)}
                   className={`${required && (!formState.emails[index] || !validateEmail(formState.emails[index])) ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300" }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
                   placeholder="Enter Email Address" 
@@ -345,7 +342,6 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
                     id={`address_${index}`}   
                     name={`address_${index}`}
                     value={a}
-                    required
                     onChange={(e)=> handleAddressOnchange(index,e.target.value)} 
                     className={`${required && !formState.addresses[index] ? "bg-red-100 border-red-300" : "bg-gray-50 border-gray-300"} border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full h-32 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none dark:focus:ring-blue-500 dark:focus:border-blue-500`} placeholder="Enter Email Address">
                   </textarea>

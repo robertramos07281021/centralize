@@ -97,9 +97,9 @@ const HighReports:React.FC<modalProps> = ({setCampaign, reportsVariables, setRep
   const dispatch = useAppDispatch()
   const {userLogged} = useSelector((state:RootState)=> state.auth)
 
-  const {data:aomDeptData, error:aomDeptError} = useQuery<{getAomDept:AomDept[]}>(GET_AOM_DEPT,{skip: userLogged.type !== "AOM"})
+  const {data:aomDeptData, error:aomDeptError} = useQuery<{getAomDept:AomDept[]}>(GET_AOM_DEPT,{skip: userLogged?.type !== "AOM"})
   // const {data:dispoTypes} = useQuery<{getDispositionTypes:DispoType[]}>(GET_DISPOSITION_TYPES) 
-  const {data:monthlyPerformance, error:monthlyPerError} = useQuery<{getMonthlyPerformance: PerformanceStatistic[]}>(MONTHLY_PERFORMANCE,{skip: userLogged.type !== "AOM"})
+  const {data:monthlyPerformance, error:monthlyPerError} = useQuery<{getMonthlyPerformance: PerformanceStatistic[]}>(MONTHLY_PERFORMANCE,{skip: userLogged?.type !== "AOM"})
   const [searchAnimation, setSearchAnimation] = useState<boolean>(false)
   const [animation, setAnimation] = useState(false)
   

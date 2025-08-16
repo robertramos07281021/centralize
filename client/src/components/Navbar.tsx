@@ -1,4 +1,4 @@
-import { gql, useApolloClient, useMutation, useQuery, useSubscription } from "@apollo/client"
+import { gql, useMutation, useQuery, useSubscription } from "@apollo/client"
 import { BsFillPersonVcardFill } from "react-icons/bs";
 import { IoMdLogOut } from "react-icons/io";
 import {  useCallback, useEffect, useRef, useState } from "react";
@@ -119,15 +119,13 @@ const Navbar = () => {
   const location = useLocation()
   const {userLogged,selectedCustomer,breakValue, serverError, success} = useSelector((state:RootState)=> state.auth)
   const modalRef = useRef<HTMLDivElement>(null)
-  const {error, data} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
+  const {error, data, refetch} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
   const [poPupUser, setPopUpUser] = useState<boolean>(false) 
-  const client = useApolloClient()
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: ()=> {
       dispatch(setDeselectCustomer())
     },
     onError: () => {
-
       dispatch(setServerError(true))
     }
   })
@@ -137,10 +135,8 @@ const Navbar = () => {
     onData: ({data}) => {
       if(data) {
         if(data.data?.agentLocked.message === "AGENT_LOCK" && data.data?.agentLocked.agentId === userLogged?._id ){
-          setTimeout(()=> {
-            client.refetchQueries({
-              include: ['getMe']
-            })
+          setTimeout(async()=> {
+            await refetch()
           },50)
         }
       }
@@ -215,7 +211,7 @@ const Navbar = () => {
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {
-      if (error instanceof Error) {
+      if (error) {
         if(error?.message === "Not authenticated" || error?.message === "Unauthorized") {
           setConfirmation(true)
           setModalProps({
@@ -275,8 +271,8 @@ const Navbar = () => {
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       if(data && userLogged) {
-        dispatch(setUserLogged({...userLogged, targets: data.getMe.targets || {daily: 0, weekly: 0, monthly: 0}}))
-        if(!data.getMe.isOnline && userLogged) {
+        dispatch(setUserLogged({...userLogged,isOnline: data?.getMe?.isOnline, targets: data?.getMe?.targets || {daily: 0, weekly: 0, monthly: 0}}))
+        if(!userLogged?.isOnline) {
           setConfirmation(true)
           setModalProps({
             no: ()=> {
@@ -287,7 +283,7 @@ const Navbar = () => {
               setConfirmation(false);
               forceLogout()
             },
-            message: "You have been force to logout!",
+            message: "You have been force to logout!2",
             toggle: "IDLE"
           })
         }
@@ -297,7 +293,6 @@ const Navbar = () => {
   },[data])
 
   if(loading || logoutToPEristsLoading) return <Loading/>
-
   return userLogged && (
     <>
       {
@@ -314,7 +309,7 @@ const Navbar = () => {
             <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
             Collections System
             {
-              (userLogged?.type === "AGENT") && breakValue !== BreakEnum.WELCOME && 
+              (userLogged?.type === "AGENT") && breakValue !== BreakEnum.WELCOME && !selectedCustomer && 
               <IdleAutoLogout/> 
             }
           </div>

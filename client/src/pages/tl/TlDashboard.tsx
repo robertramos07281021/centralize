@@ -11,6 +11,7 @@ import gql from 'graphql-tag';
 import { useQuery } from '@apollo/client';
 import { useSelector } from 'react-redux';
 import { RootState } from '../../redux/store';
+import VarianceView from './VarianceView';
 
 const DEPT_BUCKET = gql`
   query getDeptBucket {
@@ -19,14 +20,12 @@ const DEPT_BUCKET = gql`
       name
     }
   }
-
-
 `
+
 type Bucket = {
   id: string
   name: string
 }
-
 
 const TlDashboard  = () => {
 
@@ -49,7 +48,6 @@ const TlDashboard  = () => {
         setShowSelector(false)
       }
     }}>
-
       <div className='grid grid-cols-6 gap-2 col-span-8 row-span-2'>
         <DailyFTE/>
         <PTP/>
@@ -59,6 +57,7 @@ const TlDashboard  = () => {
       </div>
 
       <div className='col-span-full grid grid-cols-8 row-span-6 gap-2'>
+        <VarianceView/>
         <TLAgentProduction bucket={selectedBucket}/>
         <Targets bucket={selectedBucket}/>
       </div>

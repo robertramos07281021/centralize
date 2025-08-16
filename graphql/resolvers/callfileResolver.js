@@ -462,10 +462,32 @@ const callfileResolver = {
                     input: "$customer_info.contact_no",
                     as: "num",
                     in: {
-                      $regexMatch: {
-                        input: { $toString: "$$num" },
-                        regex: "^09\\d{9}$"
-                      }
+                      $or: [
+                        {
+                          $regexMatch: {
+                            input: { $toString: "$$num" },
+                            regex: "^02\\d{8}$"
+                          }
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $toString: { $ifNull: ["$emergency_contact.mobile", ""] } },
+                            regex: "^(08822|08842)\\d{5}$"
+                          }
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $toString: "$$num" },
+                            regex: "^(03[2-8]|04[2-9]|05[2-6]|06[2-8]|07[2-8]|08[2-8])\\d{7}$"
+                          }
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $toString: "$$num" },
+                            regex: "^09\\d{9}$"
+                          }
+                        }
+                      ]
                     }
                   }
                 }
@@ -510,9 +532,9 @@ const callfileResolver = {
               contact3: "$contact3",
               isRPC:  "$customer_info.isRPC",
               fullname:"$customer_info.fullName",
-              email1:   {
-                  $ifNull: ["$email", ""]
-                },
+              email1: {
+                $ifNull: ["$email", ""]
+              },
               account_bucket: "$accountBucket",
               email2:  "$email2",
               email3:  "$email3",
