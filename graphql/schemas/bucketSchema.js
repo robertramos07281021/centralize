@@ -43,8 +43,7 @@ const bucketTypeDefs = gql`
     findDeptBucket(dept:ID):[Bucket]
     findAomBucket:[AomDept]
     getTLBucket:[Bucket]
-    
-  }
+  } 
 
   type Mutation {
     createBucket(name:String!, dept: String!, viciIp: String, issabelIp: String): Success

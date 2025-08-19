@@ -119,8 +119,7 @@ const bucketResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
-    }
-    
+    },
   },
   Mutation: {
     createBucket: async(_,{ name, dept, viciIp, issabelIp },{ user }) => {

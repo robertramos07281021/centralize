@@ -83,7 +83,6 @@ const NavbarExtn = () => {
 
   const [deselectTask] = useMutation<{deselectTask:{message: string, success: boolean}}>(DESELECT_TASK,{
     onCompleted: ()=> {
-
       dispatch(setDeselectCustomer()) 
     },
     onError: ()=> {

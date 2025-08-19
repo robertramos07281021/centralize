@@ -1,5 +1,5 @@
 import gql from "graphql-tag"
-import { IntervalsTypes } from "./TlDashboard"
+import { Bucket, IntervalsTypes } from "./TlDashboard"
 import { useQuery } from "@apollo/client"
 import { useEffect } from "react"
 import { useAppDispatch } from "../../redux/store"
@@ -62,30 +62,27 @@ const AGENT_DAILY_PROD = gql`
 
 
 type ComponentProp = {
-  bucket: string | null | undefined
+  bucket: Bucket | null | undefined
   interval: IntervalsTypes 
 }
 
 const AgentProductionMonitoringTable:React.FC<ComponentProp> = ({bucket, interval}) => {
   const {data:agentBucketData, refetch:findAgentRefetch} = useQuery<{findAgents:Agent[]}>(GET_DEPARTMENT_AGENT)
   const dispatch = useAppDispatch()
-  const {data:agentDailyProd, refetch} = useQuery<{agentDispoDaily:AgentDailies[]}>(AGENT_DAILY_PROD)
+  const {data:agentDailyProd, refetch} = useQuery<{agentDispoDaily:AgentDailies[]}>(AGENT_DAILY_PROD, {variables: {bucket:bucket?.id, interval:interval},skip:!bucket})
   useEffect(()=> {
     const refetching = async() => {
       try {
         await findAgentRefetch()
-        await refetch({bucket:bucket, interval:interval})
+        await refetch()
       } catch (error) {
- 
         dispatch(setServerError(true))
       }
     }
     refetching()
   },[bucket, interval])
 
-  const bucketAgents = bucket ? agentBucketData?.findAgents.filter(x=> x.buckets.includes(bucket) && x.type === "AGENT") : []
-
-
+  const bucketAgents = bucket ? agentBucketData?.findAgents.filter(x=> x.buckets.includes(bucket.id) && x.type === "AGENT") : []
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
@@ -107,7 +104,7 @@ const AgentProductionMonitoringTable:React.FC<ComponentProp> = ({bucket, interva
           <tbody>
             {
               bucketAgents?.map((x)=> {
-                const findAgent = agentDailyProd?.agentDispoDaily.find(agent => agent.user === x._id)
+                const findAgent = agentDailyProd?.agentDispoDaily ? agentDailyProd?.agentDispoDaily.find(agent => agent.user === x._id) : null
                 const collectionPercent = findAgent ? ((findAgent?.kept + findAgent?.collected) / x.targets[interval]) * 100 : null
                 const theVariance = findAgent ? x.targets[interval] - (findAgent?.kept + findAgent?.collected) : null
                 return (

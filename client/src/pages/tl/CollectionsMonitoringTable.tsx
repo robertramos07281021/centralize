@@ -1,5 +1,5 @@
 import gql from "graphql-tag"
-import { IntervalsTypes } from "./TlDashboard"
+import { Bucket, IntervalsTypes } from "./TlDashboard"
 import { useQuery } from "@apollo/client"
 import { useEffect } from "react"
 import { useAppDispatch } from "../../redux/store"
@@ -19,15 +19,13 @@ type CollectionMonitoringData = {
 }
 
 type ComponentProp = {
-  bucket: string | null | undefined
+  bucket: Bucket | null | undefined
   interval: IntervalsTypes 
 }
 
 const CollectionsMonitoringTable:React.FC<ComponentProp> = ({bucket, interval}) => {
   const dispatch = useAppDispatch()
-
-  const {data, refetch} = useQuery<{getCollectionMonitoring:CollectionMonitoringData}>(COLLECTION_MONITORING,{variables: {bucket: bucket, interval: interval}})
-
+  const {data, refetch} = useQuery<{getCollectionMonitoring:CollectionMonitoringData}>(COLLECTION_MONITORING,{variables: {bucket: bucket?.id, interval: interval}, skip:!bucket?.id})
   useEffect(()=> {
     const refetching = async() => {
       try {
@@ -36,11 +34,15 @@ const CollectionsMonitoringTable:React.FC<ComponentProp> = ({bucket, interval}) 
         dispatch(setServerError(true))
       }
     }
-    refetching()
-  },[bucket,interval])
+    if(bucket?.id) {
+      refetching()
+    }
+  },[bucket?.id,interval])
 
-  const theVariance = data ? data?.getCollectionMonitoring?.target - data?.getCollectionMonitoring?.collected : 0
-  const collectionPercent = data ? (data?.getCollectionMonitoring.collected / data?.getCollectionMonitoring.target) * 100 : 0
+  const newData = data?.getCollectionMonitoring ? data?.getCollectionMonitoring : null
+
+  const theVariance = newData ? newData?.target - newData?.collected : 0
+  const collectionPercent = newData ? (newData.collected / newData.target) * 100 : 0
 
   return (
     <div>
@@ -56,8 +58,8 @@ const CollectionsMonitoringTable:React.FC<ComponentProp> = ({bucket, interval}) 
         </thead>
         <tbody> 
           <tr>
-            <td className="py-1.5">{data?.getCollectionMonitoring?.target.toLocaleString('en-PH',{style: 'currency',currency: "PHP"}) || (0).toLocaleString('en-PH',{style: 'currency',currency: "PHP"})}</td>
-            <td>{data?.getCollectionMonitoring.collected.toLocaleString('en-PH',{style: 'currency',currency: "PHP"}) || (0).toLocaleString('en-PH',{style: 'currency',currency: "PHP"})}</td>
+            <td className="py-1.5">{newData ? newData?.target.toLocaleString('en-PH',{style: 'currency',currency: "PHP"}) : (0).toLocaleString('en-PH',{style: 'currency',currency: "PHP"})}</td>
+            <td>{newData ? newData.collected.toLocaleString('en-PH',{style: 'currency',currency: "PHP"}) : (0).toLocaleString('en-PH',{style: 'currency',currency: "PHP"})}</td>
             <td>{theVariance.toLocaleString('en-PH',{style: 'currency',currency: "PHP"})}</td>
             <td>{collectionPercent.toFixed(2)}%</td>
           </tr>

@@ -3,6 +3,7 @@ import gql from "graphql-tag"
 import { useEffect } from "react"
 import { useAppDispatch } from "../../redux/store"
 import { setServerError } from "../../redux/slices/authSlice"
+import { Bucket } from "./TlDashboard"
 
 
 type DailyFTEType = {
@@ -35,7 +36,7 @@ const CAMPAIGN_ASSIGNED = gql`
 `
 
 type ComponentProp = {
-  bucket: string | null | undefined
+  bucket: Bucket | null | undefined
 }
 
 const DailyFTE:React.FC<ComponentProp> = ({bucket}) => {
@@ -55,8 +56,8 @@ const DailyFTE:React.FC<ComponentProp> = ({bucket}) => {
     fetchData()
   },[])
 
-  const findCampaignAssignedData = campaignAssignedData?.getCampaignAssigned.find(y => y.campaign === bucket)
-  const findData = data?.getDailyFTE.find(b => b.campaign === bucket)
+  const findCampaignAssignedData = campaignAssignedData?.getCampaignAssigned.find(y => y.campaign === bucket?.id)
+  const findData = data?.getDailyFTE.find(b => b.campaign === bucket?.id)
   const FTEPercent = (Number(findData?.online) / Number(findCampaignAssignedData?.assigned)) * 100
   return (  
     <div className=' col-span-2 rounded-xl grid grid-cols-3 gap-2' >

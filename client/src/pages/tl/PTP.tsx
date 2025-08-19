@@ -3,7 +3,7 @@ import gql from "graphql-tag"
 import { useEffect } from "react"
 import { useAppDispatch } from "../../redux/store";
 import { setServerError } from "../../redux/slices/authSlice";
-import { IntervalsTypes } from "./TlDashboard";
+import { Bucket, IntervalsTypes } from "./TlDashboard";
 
 type PTPType = {
   count: number
@@ -20,13 +20,13 @@ const PTP_DAILY = gql`
 `
 
 type ComponentProp = {
-  bucket: string | null | undefined
+  bucket: Bucket | null | undefined
   interval: IntervalsTypes 
 }
 
 
 const PTP:React.FC<ComponentProp> = ({bucket, interval}) => {
-  const {data:ptpData, refetch} = useQuery<{getTLPTPTotals:PTPType}>(PTP_DAILY,{variables: {input: {bucket: bucket, interval }}})
+  const {data:ptpData, refetch} = useQuery<{getTLPTPTotals:PTPType}>(PTP_DAILY,{variables: {input: {bucket: bucket?.id, interval },skip: !bucket?.id}})
   const dispatch = useAppDispatch()
 
   useEffect(()=> {
@@ -37,8 +37,10 @@ const PTP:React.FC<ComponentProp> = ({bucket, interval}) => {
         dispatch(setServerError(true))
       }
     }
-    timer()
-  },[bucket, interval])
+    if(bucket?.id) {
+      timer()
+    }
+  },[bucket?.id, interval])
 
   const paidSelected = ptpData?.getTLPTPTotals || null
   

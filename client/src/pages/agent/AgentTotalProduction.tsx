@@ -132,10 +132,9 @@ const Divition = ({label, current, previous, color, target }: Divition ) => {
 export default function AgentTotalProduction () {
   const {data,refetch} = useQuery<{agentProduction:Production}>(AGENT_PRODUCTION)
   const {userLogged} = useSelector((state:RootState)=> state.auth)
-  const prod = data?.agentProduction;
+  const prod = data?.agentProduction || null;
   const {data:collectionsData} = useQuery<{monthlyWeeklyCollected:{monthly: number, weekly: number}}>(WEEKLY_AND_MONTLY_COLLECTION)
   const dispatch = useAppDispatch()
-  console.log(data)
   useEffect(()=> {
     const refetching = async() => {
       try {

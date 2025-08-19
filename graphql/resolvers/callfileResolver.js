@@ -854,6 +854,7 @@ const callfileResolver = {
       try {
         const selectedBucket = await Bucket.findById(bucket).lean()
         const callfile = await Callfile.findOne({bucket: selectedBucket._id, active: true})
+        if(!callfile) return null
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -1014,8 +1015,10 @@ const callfileResolver = {
     },
     getCollectionMonitoring: async(_,{bucket,interval})=> {
       try {
+
         const selectedBucket = await Bucket.findById(bucket).lean()
         const callfile = await Callfile.findOne({bucket: selectedBucket._id, active: true})
+        if(!callfile) return null
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -1083,6 +1086,7 @@ const callfileResolver = {
         newDataCollected['collected'] = findCustomerCallfile[0]?.collected || 0
         return newDataCollected
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message,500)
       }
     }

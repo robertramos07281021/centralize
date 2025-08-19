@@ -285,13 +285,7 @@ const productionResolver = {
           }
         ])
 
-
-        return {
-          dtcCurrent: dtc[0].dtcCurrent,
-          dtcPrevious: dtc[0].dtcPrevious,
-          ytCurrent: 0,
-          ytPrevious: 0
-        }
+        return dtc[0]
       } catch (error) {
         throw new CustomError(error.message, 500)   
       } 

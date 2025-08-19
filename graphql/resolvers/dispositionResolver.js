@@ -1112,6 +1112,7 @@ const dispositionResolver = {
       try {
         const selectedBucket = await Bucket.findById(input.bucket).lean()
         const callfile = await Callfile.findOne({bucket:selectedBucket._id, active: true })
+        if(!callfile) return null
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -1222,6 +1223,7 @@ const dispositionResolver = {
       try {
         const selectedBucket = await Bucket.findById(input.bucket).lean()
         const callfile = await Callfile.findOne({bucket:selectedBucket._id, active: true })
+        if(!callfile) return null
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -1330,6 +1332,9 @@ const dispositionResolver = {
       try {
         const selectedBucket = await Bucket.findById(input.bucket).lean()
         const callfile = await Callfile.findOne({bucket:selectedBucket._id, active: true })
+
+        if(!callfile) return null
+
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -1440,6 +1445,7 @@ const dispositionResolver = {
       try {
         const selectedBucket = await Bucket.findById(input.bucket).lean()
         const callfile = await Callfile.findOne({bucket:selectedBucket._id, active: true })
+        if(!callfile) return null
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -1543,6 +1549,7 @@ const dispositionResolver = {
       try {
         const selectedBucket = await Bucket.findById(bucket).lean()
         const callfile = await Callfile.findOne({bucket:selectedBucket._id, active: true })
+        if(!callfile) return null
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 

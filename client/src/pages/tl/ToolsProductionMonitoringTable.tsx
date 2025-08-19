@@ -1,5 +1,5 @@
 import gql from "graphql-tag"
-import { IntervalsTypes } from "./TlDashboard"
+import { Bucket, IntervalsTypes } from "./TlDashboard"
 import { useQuery } from "@apollo/client"
 import { useEffect } from "react"
 import { useAppDispatch } from "../../redux/store"
@@ -31,26 +31,27 @@ const TOOLS_PRODUCTION = gql`
 
 
 type ComponentProp = {
-  bucket: string | null | undefined
+  bucket: Bucket | null | undefined
   interval: IntervalsTypes 
 }
 
 const ToolsProductionMonitoringTable:React.FC<ComponentProp> = ({bucket, interval}) => {
   const dispatch = useAppDispatch()
 
-  const {data,refetch} = useQuery<{getToolsProduction:ToolsProduction[]}>(TOOLS_PRODUCTION,{variables: {bucket: bucket, interval: interval}})
+  const {data,refetch} = useQuery<{getToolsProduction:ToolsProduction[]}>(TOOLS_PRODUCTION,{variables: {bucket: bucket?.id, interval: interval},skip:!bucket?.id})
   const toolsData = data?.getToolsProduction || []
 
   useEffect(()=> {
     const refetching = async() => {
       try {
-        await refetch({bucket:bucket, interval:interval})
+        await refetch()
       } catch (error) {
         dispatch(setServerError(true))
       }
     }
-
-    refetching()
+    if(bucket?.id) {
+      refetching()
+    }
   },[bucket, interval])
 
   const tools = ['calls','sms','email','skip','field']

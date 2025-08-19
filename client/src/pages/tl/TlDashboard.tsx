@@ -5,12 +5,13 @@ import TLDailyCollected from './TLDailyCollected';
 import TLAgentProduction from './TLAgentProduction';
 import Targets from './Targets';
 import DailyFTE from './DailyFTE';
-import { useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import gql from 'graphql-tag';
 import { useQuery } from '@apollo/client';
 import { useSelector } from 'react-redux';
-import { RootState } from '../../redux/store';
+import { RootState, useAppDispatch } from '../../redux/store';
 import { BsFilterCircleFill ,BsFillPlusCircleFill  } from "react-icons/bs";
+import { setServerError } from '../../redux/slices/authSlice';
 
 
 const DEPT_BUCKET = gql`
@@ -23,7 +24,7 @@ const DEPT_BUCKET = gql`
   }
 `
 
-type Bucket = {
+export type Bucket = {
   id: string
   name: string
   principal: boolean
@@ -39,8 +40,8 @@ const TlDashboard  = () => {
 
   const [showSelector, setShowSelector] = useState<boolean>(false)
   const [showIntervals,setShowIntervals] = useState<boolean>(false)
-
-  const {data} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET)
+  const dispatch = useAppDispatch()
+  const {data,refetch} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET)
   const {userLogged} = useSelector((state:RootState)=> state.auth)
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
@@ -54,7 +55,25 @@ const TlDashboard  = () => {
   const bucketSelectorRef = useRef<HTMLDivElement | null>(null)
   const intervalSelectorRef = useRef<HTMLDivElement | null>(null)
 
-  const findBucket = data?.getDeptBucket.find(x=> x.id === selectedBucket)
+  const findBucket = data?.getDeptBucket.find(x=> x.id === selectedBucket) || null
+
+  useEffect(()=> {
+    const refetching = async() => {
+      try {
+        await  refetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    }
+    refetching()
+  },[])
+
+
+  useEffect(()=> {
+    if(findBucket && findBucket.principal ) {
+      setSelectedIntervals(IntervalsTypes.MONTHLY)
+    }
+  },[findBucket])
 
   return (
     <div className="h-full overflow-hidden p-2 grid grid-rows-13 grid-cols-8 bg-slate-600/10 gap-2 relative" onMouseDown={(e)=> {
@@ -67,16 +86,16 @@ const TlDashboard  = () => {
 
     }}>
       <div className='grid grid-cols-6 gap-2 col-span-8 row-span-2'>
-        <DailyFTE bucket={selectedBucket}/>
-        <PTP bucket={selectedBucket} interval={selectedIntervals}/>
-        <PTPKeptTl bucket={selectedBucket} interval={selectedIntervals}/>
-        <Paid bucket={selectedBucket} interval={selectedIntervals}/>
-        <TLDailyCollected bucket={selectedBucket} interval={selectedIntervals}/>
+        <DailyFTE bucket={findBucket}/>
+        <PTP bucket={findBucket} interval={selectedIntervals}/>
+        <PTPKeptTl bucket={findBucket} interval={selectedIntervals}/>
+        <Paid bucket={findBucket} interval={selectedIntervals}/>
+        <TLDailyCollected bucket={findBucket} interval={selectedIntervals}/>
       </div>
 
       <div className='col-span-full grid grid-cols-8 row-span-11 gap-2'>
-        <TLAgentProduction bucket={selectedBucket} interval={selectedIntervals}/>
-        <Targets bucket={selectedBucket} interval={selectedIntervals}/>
+        <TLAgentProduction bucket={findBucket} interval={selectedIntervals}/>
+        <Targets bucket={findBucket} interval={selectedIntervals}/>
       </div>
       {
         showSelector &&

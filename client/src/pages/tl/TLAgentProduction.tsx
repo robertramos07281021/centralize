@@ -3,17 +3,13 @@ import gql from "graphql-tag"
 import { useEffect, useMemo } from "react"
 import { useAppDispatch } from "../../redux/store";
 import { setServerError } from "../../redux/slices/authSlice";
-import { IntervalsTypes } from "./TlDashboard";
+import { Bucket, IntervalsTypes } from "./TlDashboard";
 import CollectionsMonitoringTable from "./CollectionsMonitoringTable";
 import ToolsProductionMonitoringTable from "./ToolsProductionMonitoringTable";
 import AgentProductionMonitoringTable from "./AgentProductionMonitoringTable";
 
 
 
-type Bucket = {
-  id:string
-  name: string
-}
 
 const TL_BUCKET = gql`
   query getAllBucket {
@@ -24,7 +20,7 @@ const TL_BUCKET = gql`
   }
 `
 type ComponentProp = {
-  bucket: string | null | undefined
+  bucket: Bucket | null | undefined
   interval: IntervalsTypes 
 }
 
@@ -41,7 +37,9 @@ const TLAgentProduction:React.FC<ComponentProp> = ({bucket,interval}) => {
         dispatch(setServerError(true))
       }
     }
-    timer()
+    if(bucket?.id) {
+      timer()
+    }
   },[bucket,interval])
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
@@ -53,7 +51,11 @@ const TLAgentProduction:React.FC<ComponentProp> = ({bucket,interval}) => {
     <div className='col-span-6 border border-slate-400 flex flex-col bg-white rounded-xl p-2 overflow-hidden'>
       <div className=' bg-white  text-slate-700 flex items-end gap-2 justify-between'>
         <h1 className="font-bold text-3xl">
-          {bucketObject[bucket as keyof typeof bucketObject]} - <span className="uppercase">{interval}</span>
+          {bucketObject[bucket?.id as keyof typeof bucketObject]}
+          {
+            !bucket?.principal &&
+            <span className="uppercase"> - {interval}</span>
+          }
         </h1>
       </div>
       <CollectionsMonitoringTable bucket={bucket} interval={interval}/> 

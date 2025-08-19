@@ -2,7 +2,7 @@ import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
 import { useEffect } from "react"
 import { useAppDispatch } from "../../redux/store";
-import { IntervalsTypes } from "./TlDashboard";
+import { Bucket, IntervalsTypes } from "./TlDashboard";
 import { setServerError } from "../../redux/slices/authSlice";
 
 type PTPKept = {
@@ -21,13 +21,13 @@ const PTP_KEPT_TOTAL = gql`
 
 
 type ComponentProp = {
-  bucket: string | null | undefined
+  bucket: Bucket | null | undefined
   interval: IntervalsTypes
 }
 
 const PTPKeptTl:React.FC<ComponentProp> = ({bucket, interval}) => {
   const dispatch = useAppDispatch()
-  const {data:ptpKetpData, refetch} = useQuery<{getTLPTPKeptTotals:PTPKept}>(PTP_KEPT_TOTAL,{variables: {input: {bucket: bucket, interval: interval}}})
+  const {data:ptpKetpData, refetch} = useQuery<{getTLPTPKeptTotals:PTPKept}>(PTP_KEPT_TOTAL,{variables: {input: {bucket: bucket?.id, interval: interval},skip: !bucket?.id}})
 
   useEffect(()=> {
     const timer = async () => {
@@ -37,7 +37,9 @@ const PTPKeptTl:React.FC<ComponentProp> = ({bucket, interval}) => {
         dispatch(setServerError(true))
       }
     }  
-    timer()
+    if(bucket?.id) {
+      timer()
+    }
   },[bucket, interval])
 
   const paidSelected = ptpKetpData?.getTLPTPKeptTotals || null

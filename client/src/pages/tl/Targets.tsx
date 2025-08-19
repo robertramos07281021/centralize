@@ -6,6 +6,7 @@ import { Doughnut } from "react-chartjs-2"
 import { useAppDispatch } from "../../redux/store";
 import { setServerError } from "../../redux/slices/authSlice";
 import { GoDotFill } from "react-icons/go";
+import { Bucket } from "./TlDashboard";
 
 
 type Target = {
@@ -24,11 +25,6 @@ const TARGET_PER_BUCKET = gql`
   }
 `
 
-type Bucket = {
-  id:string
-  name: string
-}
-
 const TL_BUCKET = gql`
   query GetDeptBucket {
     getDeptBucket {
@@ -39,12 +35,12 @@ const TL_BUCKET = gql`
 `
 
 type ComponentProps = {
-  bucket: string | null | undefined
+  bucket: Bucket | null | undefined
   interval: string
 }
 
 const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
-  const {data:targetsData,error, refetch} = useQuery<{getTargetPerCampaign:Target}>(TARGET_PER_BUCKET,{variables: {bucket: bucket, interval}})
+  const {data:targetsData, refetch} = useQuery<{getTargetPerCampaign:Target}>(TARGET_PER_BUCKET,{variables: {bucket: bucket?.id, interval},skip: !bucket?.id})
   const {data:tlBucketData, refetch:deptBucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
   const dispatch = useAppDispatch()
 
@@ -52,8 +48,6 @@ const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
     const tlBuckets = tlBucketData?.getDeptBucket || []
     return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
   },[tlBucketData])
-
-  console.log(error)
   const newTargetdata = targetsData?.getTargetPerCampaign || null
 
   useEffect(()=> {
@@ -65,7 +59,9 @@ const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
         dispatch(setServerError(true))
       }
     }
-    timer()
+    if(bucket?.id) {
+      timer()
+    }
   },[bucket, interval])
 
   const variance = newTargetdata ? newTargetdata.target - newTargetdata.collected : 0
@@ -119,9 +115,9 @@ const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
           weight: 'bold',
         },
         text: [
-          `${bucketObject[bucket as keyof typeof bucketObject]} - ${interval.toUpperCase()}`,
-          `${newTargetdata ? newTargetdata?.collected?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : 0 } / ${newTargetdata?.totalPrincipal?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || newTargetdata?.collected?.toLocaleString('en-PH',{style: 'currency',currency: 'PHP',})} - ${callfileVariance?.toFixed(2)}%`,
-          `Target - ${newTargetdata?.target?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}    Variance - ${variance?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}`
+          `${bucketObject[bucket?.id as keyof typeof bucketObject]} ${!bucket?.principal ? ` - ${interval.toUpperCase()}` : "" } `,
+          `${newTargetdata ? newTargetdata?.collected?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : 0 } / ${newTargetdata ? newTargetdata?.totalPrincipal?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || newTargetdata?.collected?.toLocaleString('en-PH',{style: 'currency',currency: 'PHP',}) : 0} - ${callfileVariance?.toFixed(2)}%`,
+          `Target - ${newTargetdata ? newTargetdata?.target?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : 0}    Variance - ${variance?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}`
         ],
       },
       tooltip: {
