@@ -50,7 +50,28 @@ const productionResolver = {
               total: {
                 $sum: {
                   $cond: [
-                    {$eq: ['$dispotype.code','PAID']},
+                    { 
+                      $or: [
+                        { 
+                          $and: [
+                            { $eq: ['$dispotype.code','PAID'] },
+                            { $eq: ['$ptp', false] },
+                            {
+                              $eq: [
+                                { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
+                                { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                              ]
+                            }
+                          ] 
+                        },
+                        { 
+                          $and: [
+                            { $eq: ['$dispotye.code', 'PAID'] },
+                            { $eq: ['$ptp', true] }
+                          ]
+                        }
+                      ] 
+                    },
                     "$amount",
                     0
                   ]
@@ -84,6 +105,12 @@ const productionResolver = {
                         },
                         {
                           $eq: ['$dispotype.code','PAID']
+                        },
+                        {
+                          $eq: [
+                            { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
+                            { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                          ]
                         }
                       ]
                     },
@@ -137,6 +164,7 @@ const productionResolver = {
         yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
         yesterDayEnd.setHours(23, 59, 59, 999);
 
+   
         const dtc = await Disposition.aggregate([
           {
             $match: {
@@ -156,6 +184,11 @@ const productionResolver = {
             $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
           },
           {
+            $match: {
+              'dispotype.code' : {$eq: 'PAID'}
+            }
+          },
+          {
             $group: {
               _id: null,
               dtcCurrent: {
@@ -164,7 +197,28 @@ const productionResolver = {
                     {
                       $and: [
                         {
-                          $in: ["$dispotype.code",['PAID']]
+                          $or: [
+                            {
+                              $and :[
+                                {
+                                  $eq: ["$ptp",false]
+                                },
+                                {
+                                  $eq: [
+                                    { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
+                                    { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                                  ]
+                                },
+                              ]
+                            },
+                            {
+                              $and: [
+                                {
+                                  $eq: ["$ptp",true]
+                                },
+                              ]
+                            }
+                          ]
                         },
                         {
                           $gte: ['$createdAt',todayStart]
@@ -185,7 +239,34 @@ const productionResolver = {
                     {
                       $and: [
                         {
-                          $in: ["$dispotype.code",['PAID']]
+                          $or: [
+                            {
+                              $and :[
+                                {
+                                  $eq: ["$dispotype.code",'PAID']
+                                },
+                                {
+                                  $eq: ["$ptp",false]
+                                },
+                                {
+                                  $eq: [
+                                    { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
+                                    { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                                  ]
+                                },
+                              ]
+                            },
+                            {
+                              $and: [
+                                {
+                                  $eq: ["$dispotype.code",'PAID']
+                                },
+                                {
+                                  $eq: ["$ptp",true]
+                                },
+                              ]
+                            }
+                          ]
                         },
                         {
                           $gte: ['$createdAt',yesterdayStart]
@@ -202,11 +283,12 @@ const productionResolver = {
               }
             }
           }
-        ]).then(res => res[0] || { dtcCurrent: 0, dtcPrevious: 0 });
+        ])
+
 
         return {
-          dtcCurrent: dtc.dtcCurrent,
-          dtcPrevious: dtc.dtcPrevious,
+          dtcCurrent: dtc[0].dtcCurrent,
+          dtcPrevious: dtc[0].dtcPrevious,
           ytCurrent: 0,
           ytPrevious: 0
         }
@@ -215,12 +297,14 @@ const productionResolver = {
       } 
     },
     getAgentProductionPerMonth: async(_,__,{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-      const year = new Date().getFullYear()
-      const firstMonth = new Date(year, 0, 1)
-      const lastMonth = new Date(year, 11, 31, 23, 59, 59, 999)
 
+      
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
+  
+        const year = new Date().getFullYear()
+        const firstMonth = new Date(year, 0, 1)
+        const lastMonth = new Date(year, 11, 31, 23, 59, 59, 999)
         const res = await Disposition.aggregate([
           {
             $lookup: {
@@ -248,8 +332,28 @@ const productionResolver = {
               total: {
                 $sum: {
                   $cond: [
-                    {$eq: ["$dispotype.code","PAID"]}
-                    ,
+                    { 
+                      $or: [
+                        { 
+                          $and: [
+                            { $eq: ['$dispotype.code','PAID'] },
+                            { $eq: ['$ptp', false] },
+                            {
+                              $eq: [
+                                { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
+                                { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                              ]
+                            }
+                          ] 
+                        },
+                        { 
+                          $and: [
+                            { $eq: ['$dispotype.code', 'PAID'] },
+                            { $eq: ['$ptp', true] }
+                          ]
+                        }
+                      ] 
+                    },
                     "$amount",
                     0
                   ]
@@ -276,13 +380,19 @@ const productionResolver = {
               paid: {
                 $sum: {
                   $cond: [
-                     {
+                    {
                       $and: [
                         {
                           $eq: ['$ptp',false]
                         },
                         {
                           $eq: ['$dispotype.code','PAID']
+                        },
+                        {
+                          $eq: [
+                            { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
+                            { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                          ]
                         }
                       ]
                     },
@@ -410,6 +520,7 @@ const productionResolver = {
             $project: {
               amount: 1,
               createdAt: 1,
+              payment_date: 1,
               ptp: 1,
               code: "$dispotype.code",
               isToday: {
@@ -493,7 +604,17 @@ const productionResolver = {
                 $sum: {
                   $cond: [
                     { 
-                      $and: ["$isToday", { $eq: ["$code", "PAID"] }, { $eq: ['$ptp', false] }] 
+                      $and: [
+                        "$isToday", 
+                        { $eq: ["$code", "PAID"] },
+                        { $eq: ['$ptp', false] },
+                        {
+                          $eq: [
+                            { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
+                            { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                          ]
+                        }
+                      ] 
                     }, 
                     "$amount",
                     0
@@ -504,7 +625,17 @@ const productionResolver = {
                 $sum: {
                   $cond: [
                     { 
-                      $and: ["$isYesterday", { $eq: ["$code", "PAID"] }, { $eq: ['$ptp', false] }] 
+                      $and: [
+                        "$isYesterday", 
+                        { $eq: ["$code", "PAID"] },
+                        { $eq: ['$ptp', false] },
+                        {
+                          $eq: [
+                            { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
+                            { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                          ]
+                        }  
+                      ] 
                     }, 
                     "$amount",
                     0
@@ -515,7 +646,17 @@ const productionResolver = {
                 $sum: {
                   $cond: [
                     { 
-                      $and: ["$isToday", { $eq: ["$code", "PAID"] }, { $eq: ['$ptp', false] }] 
+                      $and: [
+                        "$isToday",
+                        { $eq: ["$code", "PAID"] },
+                        { $eq: ['$ptp', false] },
+                        {
+                          $eq: [
+                            { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
+                            { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                          ]
+                        }  
+                      ] 
                     }, 
                     1,
                     0
@@ -539,7 +680,6 @@ const productionResolver = {
             }
           }
         ])
-
         return agentCollection[0]
       } catch (error) {
         throw new CustomError(error.message, 500)        
@@ -865,6 +1005,22 @@ const productionResolver = {
                     {
                       $and: [
                         {
+                          $or: [
+                            {
+                              $and: [
+                                { $eq: ['$ptp', false] },
+                                {
+                                  $eq: [
+                                    { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
+                                    { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                                  ]
+                                }
+                              ]
+                            },
+                            { $eq: ['$ptp', true] }
+                          ]
+                        },
+                        {
                           $gte: ['$createdAt',startOfMonth]
                         },
                         {
@@ -882,6 +1038,22 @@ const productionResolver = {
                   $cond: [
                     {
                       $and: [
+                        {
+                          $or: [
+                            {
+                              $and: [
+                                { $eq: ['$ptp', false] },
+                                {
+                                  $eq: [
+                                    { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
+                                    { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                                  ]
+                                }
+                              ]
+                            },
+                            { $eq: ['$ptp', true] }
+                          ]
+                        },
                         {
                           $gte: ['$createdAt',startOfWeek]
                         },

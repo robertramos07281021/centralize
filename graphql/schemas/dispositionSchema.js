@@ -149,32 +149,19 @@ const dispositionTypeDefs = gql`
   }
 
   type TLTotal {
-    bucket: ID
     count: Int
     amount: Float
-    yesterday: Float
-  }
-
-  type TLDailyCollected {
-    bucket: ID
-    amount: Float
-    yesterday: Float
   }
 
   type AgentDispo {
     user: ID
-    count: Int
+    RPC: Int
     ptp: Float
-    pk: Float
-    ac: Float
-    rpc: Int
-    y_pk: Float
-    y_ptp: Float
-    y_ac: Float
+    kept: Float
+    collected: Float
   }
 
   type BucketTargets {
-    bucket: ID
     collected: Float
     totalPrincipal: Float
     target: Float
@@ -204,6 +191,10 @@ const dispositionTypeDefs = gql`
     callfile: ID!,
   }
 
+  input Input {
+    bucket: ID!,
+    interval: String!
+  }
 
   type Query {
     getAccountDispositions(id:ID!, limit:Int):[Disposition]
@@ -217,12 +208,12 @@ const dispositionTypeDefs = gql`
     getTLPaidToday:[TLDashboardProd]
     getTLPTPKeptToday: [TLDashboardProd]
     getTLPTPToday: [TLDashboardProd]
-    getTLPTPTotals: [TLTotal]
-    getTLPTPKeptTotals: [TLTotal]
-    getTLPaidTotals: [TLTotal],
-    getTLDailyCollected: [TLDailyCollected]
-    agentDispoDaily: [AgentDispo]
-    getTargetPerCampaign(id:ID): [BucketTargets]
+    getTLPTPTotals(input: Input): TLTotal
+    getTLPTPKeptTotals(input: Input): TLTotal
+    getTLPaidTotals(input: Input): TLTotal,
+    getTLDailyCollected(input: Input): TLTotal
+    agentDispoDaily(bucket:ID!, interval: String!): [AgentDispo]
+    getTargetPerCampaign(bucket:ID!,interval: String!): BucketTargets
   }
 
   type Mutation {

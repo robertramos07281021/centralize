@@ -1,78 +1,53 @@
 import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { useEffect } from "react";
-import { IoMdArrowDown,IoMdArrowUp  } from "react-icons/io";
 import { useAppDispatch } from "../../redux/store";
 import { setServerError } from "../../redux/slices/authSlice";
+import { IntervalsTypes } from "./TlDashboard";
 
 type Collected = {
-  bucket: string
   amount: number
-  yesterday: number
 }
-
 
 const DAILY_COLLECTION = gql`
-  query getTLDailyCollected {
-    getTLDailyCollected {
-      bucket
+  query getTLDailyCollected($input:Input) {
+    getTLDailyCollected(input:$input) {
       amount
-      yesterday
     }
   }
 `
-  type Bucket = {
-  _id: string
-  name: string
+
+type ComponentProp = {
+  bucket: string | null | undefined
+  interval: IntervalsTypes
 }
-const ALL_BUCKETS = gql`
-  query GetAllBucket {
-    getAllBucket {
-      _id
-      name
-    }
-  }
-`
 
-
-const TLDailyCollected = () => {
+const TLDailyCollected:React.FC<ComponentProp> = ({bucket,interval}) => {
   const dispatch = useAppDispatch()
-  const {data:dailyCollected, refetch } = useQuery<{getTLDailyCollected:Collected[]}>(DAILY_COLLECTION)
-  const {data:allBucket, refetch:bucketsRefetch} = useQuery<{getAllBucket:Bucket[]}>(ALL_BUCKETS)
- 
+  const {data:dailyCollected, refetch } = useQuery<{getTLDailyCollected:Collected}>(DAILY_COLLECTION,{variables: {input: {bucket:bucket, interval: interval}}})
+
   useEffect(()=> {
-    const timer = setTimeout(async()=> {
+    const timer = async()=> {
       try {
         await refetch()
-        await bucketsRefetch()
       } catch (error) {
         dispatch(setServerError(true))
       }
-    })
-    return () => clearTimeout(timer)
-  },[refetch])
+    } 
+    timer()
+  },[bucket,interval])
+
+  const paidSelected = dailyCollected?.getTLDailyCollected || null
 
   return (
-    <div className='border-yellow-400 border bg-yellow-200 rounded-xl p-2 flex flex-col'>
-      <div className='lg:text-base 2xl:text-lg font-black text-yellow-500'>
-        <h1>Daily Collected </h1>
-        <p className="text-xs font-medium">(Daily per Bucket)</p>
+    <div className='border-yellow-400 border bg-yellow-200 rounded-xl p-2 text-yellow-500 flex flex-col'>
+      <div className='lg:text-base 2xl:text-lg font-black '>
+        <h1>Daily Collected <span className="text-xs font-medium capitalize">{`(${interval})`}</span> </h1>
       </div>
-      <div className='h-full w-full flex flex-col justify-center '>
-        {
-          dailyCollected?.getTLDailyCollected.map((daily,index) => {
-            const findBucket = allBucket?.getAllBucket.find(x=> x._id === daily.bucket)
-            const arrow = daily.amount - daily.yesterday > 0 ? <IoMdArrowUp className="text-green-500"/> : <IoMdArrowDown className="text-red-500"/>
-            return daily.amount > 0 && (
-              <div key={index} className='flex justify-between lg:text-[0.6em] 2xl:text-xs text-yellow-500'>
-                <div className="font-bold">{findBucket?.name}</div>
-                <div className="font-medium col-span-2 flex items-center gap-2 ">{arrow} {daily.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</div>
-              </div>
-            )
-          })
-        }
-      
-      </div>  
+      <div className='h-full w-full flex font-medium justify-end gap-2 items-center  text-lg  2xl:text-3xl'>
+        <p>{paidSelected ? paidSelected?.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}): (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</p>
+     
+      </div>
     </div>
   )
 }

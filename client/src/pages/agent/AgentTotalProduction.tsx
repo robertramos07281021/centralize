@@ -4,7 +4,8 @@ import gql from "graphql-tag";
 import { useQuery } from "@apollo/client";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
-import { RootState } from "../../redux/store";
+import { RootState, useAppDispatch } from "../../redux/store";
+import { setServerError } from "../../redux/slices/authSlice";
 
 const AGENT_PRODUCTION = gql`
   query agentProduction {
@@ -133,10 +134,18 @@ export default function AgentTotalProduction () {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
   const prod = data?.agentProduction;
   const {data:collectionsData} = useQuery<{monthlyWeeklyCollected:{monthly: number, weekly: number}}>(WEEKLY_AND_MONTLY_COLLECTION)
-
+  const dispatch = useAppDispatch()
+  console.log(data)
   useEffect(()=> {
-    refetch()
-  },[refetch])
+    const refetching = async() => {
+      try {
+        await refetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
+    }
+    refetching()
+  },[])
 
   return (
     <div className="grid grid-cols-3  gap-2">
@@ -161,34 +170,6 @@ export default function AgentTotalProduction () {
         target={userLogged?.targets.monthly || 0}
         color="purple"
       />
-      {/* <div className={`rounded-xl border col-span-2 p-2 ${colorsObject["teal"]} shadow shadow-black/20 flex flex-col`}>
-        <h1 className="text-xs lg:text-sm font-bold flex justify-between">
-          <p className="text-xs lg:text-sm">Collected</p>
-          <p className="text-xs lg:text-sm">Targets</p>
-        </h1>
-        <div className="h-full flex flex-col justify-center">
-     
-          <div className="flex justify-end items-center gap-2 text-sm">
-            <p className="text-[0.7em] lg:text-xs font-medium">(Daily)</p>
-            <div className="text-[0.7em] lg:text-xs">{userLogged?.targets.daily.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
-          </div>
-          <div className="flex justify-between items-center gap-2">
-            <div className="text-[0.7em] lg:text-xs">{collectionsData?.monthlyWeeklyCollected?.weekly?.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
-            <div className="flex jsutify-center items-center text-sm">
-              <p className="text-[0.7em] lg:text-xs font-medium">(Weekly)</p>
-              <div className="text-[0.7em] lg:text-xs">{userLogged?.targets.weekly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
-            </div>
-          </div>
-          <div className="flex justify-between items-center gap-2">
-            <div className="text-[0.7em] lg:text-xs">{collectionsData?.monthlyWeeklyCollected?.monthly?.toLocaleString("en-PH", {style: "currency",currency: "PHP",})}</div>
-            <div className="flex jsutify-center items-center text-sm">
-              <p className="text-[0.7em] lg:text-xs font-medium">(Monthly)</p>
-              <div className="text-[0.7em] lg:text-xs">{userLogged?.targets.monthly.toLocaleString("en-PH", {style: "currency",currency: "PHP",}) || "-"}</div>
-            </div>
-          </div>
-          <h1 className="text-end text-[0.6em] lg:text-xs font-bold">Amount</h1>
-        </div>
-      </div> */}
     </div>
   )
 }

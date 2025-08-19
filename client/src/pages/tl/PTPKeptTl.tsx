@@ -1,86 +1,58 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
-import { useEffect, useMemo } from "react"
-import { IoMdArrowDown,IoMdArrowUp  } from "react-icons/io";
+import { useEffect } from "react"
 import { useAppDispatch } from "../../redux/store";
+import { IntervalsTypes } from "./TlDashboard";
 import { setServerError } from "../../redux/slices/authSlice";
 
 type PTPKept = {
-  bucket: string
   count: number
   amount: number
-  yesterday: number
 }
 
 const PTP_KEPT_TOTAL = gql`
-  query GetTLPTPKeptTotals {
-    getTLPTPKeptTotals {
-      bucket
+  query getTLPTPKeptTotals($input: Input) {
+    getTLPTPKeptTotals(input:$input) {
       count
       amount
-      yesterday
     }
   }
 `
 
-type Bucket = {
-  id:string
-  name: string
+
+type ComponentProp = {
+  bucket: string | null | undefined
+  interval: IntervalsTypes
 }
 
-const TL_BUCKET = gql`
-  query GetDeptBucket {
-    getDeptBucket {
-      id
-      name
-    }
-  }
-`
-
-const PTPKeptTl = () => {
+const PTPKeptTl:React.FC<ComponentProp> = ({bucket, interval}) => {
   const dispatch = useAppDispatch()
-  const {data:tlBucketData, refetch:deptBucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
-  const bucketObject:{[key:string]:string} = useMemo(()=> {
-    const tlBuckets = tlBucketData?.getDeptBucket || []
-    return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
-  },[tlBucketData])
-  const {data:ptpKetpData, refetch} = useQuery<{getTLPTPKeptTotals:PTPKept[]}>(PTP_KEPT_TOTAL)
+  const {data:ptpKetpData, refetch} = useQuery<{getTLPTPKeptTotals:PTPKept}>(PTP_KEPT_TOTAL,{variables: {input: {bucket: bucket, interval: interval}}})
+
   useEffect(()=> {
-    const timer = setTimeout(async()=> {
+    const timer = async () => {
       try {
         await refetch()
-        await deptBucketRefetch()
       } catch (error) {
         dispatch(setServerError(true))
       }
-    })  
-    return () => clearTimeout(timer)
-  },[refetch, deptBucketRefetch])
+    }  
+    timer()
+  },[bucket, interval])
+
+  const paidSelected = ptpKetpData?.getTLPTPKeptTotals || null
 
   return (
-    <div className='border-green-400 border bg-green-200 rounded-xl p-2 flex flex-col'>
-      <div className='lg:text-base 2xl:text-lg font-black text-green-500'>
-        <h1>PTP Kept </h1>
-        <p className="text-xs font-medium">(Daily per Bucket)</p>
+    <div className='border-green-400 border bg-green-200 text-green-500 rounded-xl p-2 flex flex-col'>
+      <div className='lg:text-base 2xl:text-lg font-black '>
+        <h1>PTP Kept <span className="text-xs font-medium capitalize">{`(${interval})`}</span> </h1>
       </div>
-      <div className='h-full w-full flex flex-col justify-center '>
-        {
-          ptpKetpData?.getTLPTPKeptTotals.map((tpt,index) => {
-            const arrow = tpt.amount - tpt.yesterday > 0 ? <IoMdArrowUp className="text-green-500"/> : <IoMdArrowDown className="text-red-500"/>
-                    
-            return tpt.amount > 0 && (
-              <div key={index} className='grid grid-cols-3 lg:text-[0.6em] 2xl:text-xs text-green-500'>
-                <div className="font-bold">{bucketObject[tpt.bucket]}</div>
-                <div className="font-medium text-center ">{tpt.count}</div>
-                <div className="font-medium flex justify-end items-center gap-2 ">
-                  <p>{arrow}</p>
-                  <p>{tpt.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'})}</p>
-                </div>
-              </div>
-            )
-          }) 
-        }
-      </div>  
+      <div className='h-full w-full flex justify-between items-center  text-lg  2xl:text-3xl'>
+        <div className="font-bold text-center ">{paidSelected ? paidSelected?.count : 0}</div>
+        <div className="font-medium flex justify-end items-center gap-2">
+          <p>{paidSelected ? paidSelected?.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</p>
+        </div>
+      </div>
     </div>
   )
 }

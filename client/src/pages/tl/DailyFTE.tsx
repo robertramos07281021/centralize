@@ -1,8 +1,11 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
+import { useEffect } from "react"
+import { useAppDispatch } from "../../redux/store"
+import { setServerError } from "../../redux/slices/authSlice"
 
 
-type DailyFTE = {
+type DailyFTEType = {
   campaign: string
   online:number
 }
@@ -31,48 +34,43 @@ const CAMPAIGN_ASSIGNED = gql`
   }
 `
 
-type Bucket = {
-  _id: string
-  name: string
+type ComponentProp = {
+  bucket: string | null | undefined
 }
-const ALL_BUCKETS = gql`
-  query GetAllBucket {
-    getAllBucket {
-      _id
-      name
+
+const DailyFTE:React.FC<ComponentProp> = ({bucket}) => {
+  const {data, refetch} = useQuery<{getDailyFTE:DailyFTEType[]}>(DAILY_FTE)
+  const {data:campaignAssignedData, refetch:campaignAssignedRefetch} = useQuery<{getCampaignAssigned:CampaignAssigned[]}>(CAMPAIGN_ASSIGNED)
+  const dispatch = useAppDispatch()
+
+  useEffect(()=> {
+    const fetchData = async () => {
+      try {
+        await refetch()
+        await campaignAssignedRefetch()
+      } catch (error) {
+        dispatch(setServerError(true))
+      }
     }
-  }
-`
+    fetchData()
+  },[])
 
-const DailyFTE = () => {
-  const {data} = useQuery<{getDailyFTE:DailyFTE[]}>(DAILY_FTE)
-  const {data:campaignAssignedData} = useQuery<{getCampaignAssigned:CampaignAssigned[]}>(CAMPAIGN_ASSIGNED)
-  const {data:allBucket} = useQuery<{getAllBucket:Bucket[]}>(ALL_BUCKETS)
-
-  return (
-    <div className='border col-span-2 rounded-xl flex flex-col bg-white border-slate-400 p-2 overflow-hidden ' >
-      <div className="w-full grid grid-cols-4 font-medium text-gray-500 bg-blue-100">
-        <div className="pl-2">Buckets</div>
-        <div>Assigned</div>
-        <div>Present</div>
-        <div>FTE %</div>
+  const findCampaignAssignedData = campaignAssignedData?.getCampaignAssigned.find(y => y.campaign === bucket)
+  const findData = data?.getDailyFTE.find(b => b.campaign === bucket)
+  const FTEPercent = (Number(findData?.online) / Number(findCampaignAssignedData?.assigned)) * 100
+  return (  
+    <div className=' col-span-2 rounded-xl grid grid-cols-3 gap-2' >
+      <div className="border border-slate-400 rounded-xl p-2 bg-white flex flex-col justify-between">
+        <h1 className="text-sm 2xl:text-lg font-medium text-gray-600">Assigned</h1>
+        <p className="text-3xl 2xl:text-5xl text-end font-bold text-gray-600">{findCampaignAssignedData?.assigned}</p>
       </div>
-      <div className="w-full flex flex-col h-full overflow-y-auto">
-        {
-          allBucket?.getAllBucket.map((x)=> {
-            const findCampaignAssignedData = campaignAssignedData?.getCampaignAssigned.find(y => y.campaign === x._id)
-            const findData = data?.getDailyFTE.find(b => b.campaign === x._id)
-            const FTEPercent = (Number(findData?.online) / Number(findCampaignAssignedData?.assigned)) * 100
-            return findCampaignAssignedData && (
-              <div key={x._id} className="w-full grid grid-cols-4 font-base text-sm text-gray-500 py-0.5 even:bg-slate-100">
-                <div className="pl-2">{x.name}</div>
-                <div>{findCampaignAssignedData.assigned}</div>
-                <div>{findData?.online}</div>
-                <div>{isNaN(FTEPercent) ? 0 : FTEPercent.toFixed(2)}%</div>
-              </div>
-            )
-          } )
-        }
+      <div className="border border-slate-400 rounded-xl p-2 bg-white flex flex-col justify-between">
+        <h1 className="text-sm 2xl:text-lg font-medium text-gray-600">Present Today</h1>
+        <p className="text-3xl 2xl:text-5xl text-end font-bold text-gray-600">{findData?.online}</p>
+      </div>
+      <div className="border border-slate-400 rounded-xl p-2 bg-white flex flex-col justify-between">
+        <h1 className="text-sm 2xl:text-lg font-medium text-gray-600">FTE Daily % </h1>
+        <p className="text-3xl 2xl:text-5xl text-end font-bold text-gray-600">{isNaN(FTEPercent) ? 0 :FTEPercent.toFixed(2)}%</p>
       </div>
     </div>
   )

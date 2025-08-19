@@ -6,6 +6,8 @@ import CustomerAccount from "../../models/customerAccount.js"
 import {json2csv } from 'json-2-csv'
 import Department from "../../models/department.js"
 import DispoType from "../../models/dispoType.js"
+import Bucket from "../../models/bucket.js"
+import Disposition from "../../models/disposition.js"
 
 const callfileResolver = {
   DateTime,
@@ -302,7 +304,7 @@ const callfileResolver = {
             $match: filter
           },
           {
-            $sort: {active: -1}
+            $sort: { active: -1 }
           }
         ])
         return findActiveCallfile
@@ -313,7 +315,6 @@ const callfileResolver = {
 
     downloadCallfiles: async(_,{callfile})=> {
       try {
-        
         const findCallfile = await Callfile.findById(callfile).lean()
 
         if(!findCallfile) return null
@@ -847,6 +848,242 @@ const callfileResolver = {
         return customerAccounts
       } catch (error) {
         throw new CustomError(error.message,500)  
+      }
+    },
+    getToolsProduction: async(_,{bucket, interval}) => {
+      try {
+        const selectedBucket = await Bucket.findById(bucket).lean()
+        const callfile = await Callfile.findOne({bucket: selectedBucket._id, active: true})
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const now = new Date();
+        const currentDay = now.getDay();
+        const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() + diffToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        endOfWeek.setMilliseconds(-1);
+
+    
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
+
+        let selectedInterval = {}
+        if(interval === "daily") {
+          selectedInterval['$gt'] = todayStart
+          selectedInterval['$lte'] = todayEnd
+        } else if (interval === "weekly") {
+          selectedInterval['$gt'] = startOfWeek
+          selectedInterval['$lte'] = endOfWeek
+        } else if (interval === "monthly") {
+          selectedInterval['$gt'] = startOfMonth
+          selectedInterval['$lte'] = endOfMonth
+        }
+        
+        const dispotypesFilter = (await DispoType.find({code: {$in: ['PTP','PAID']}})).map(e=> new mongoose.Types.ObjectId(e._id))
+
+        const findCustomersCallfile = await Disposition.aggregate([
+          {
+            $match: {
+              callfile: callfile._id,
+              disposition: {$in: dispotypesFilter},
+              createdAt: selectedInterval
+            },
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype"
+            },
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "ca"
+            },
+          },
+          {
+            $unwind: {path: "$ca",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "customers",
+              localField: "ca.customer",
+              foreignField: "_id",
+              as: "customer"
+            },
+          },
+          {
+            $unwind: {path: "$customer",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $group: {
+              _id: {
+                contact_method: '$contact_method'
+              },
+              rpc: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $eq: ['$customer.isRPC', true] },
+
+                      ]
+                    },
+                    1,
+                    0
+                  ]
+                }
+              },
+              ptp: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $eq: ['$dispotype.code', 'PTP']}
+                      ]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              kept: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+
+                        { $eq: ['$dispotype.code', 'PAID']},
+                        { $eq: ['$ptp', true]}
+                      ]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              paid: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $eq: ['$dispotype.code', 'PAID']},
+                        { $eq: ['$ptp', false]}
+                      ]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              contact_method: "$_id.contact_method",
+              rpc: 1,
+              ptp: 1,
+              kept: 1,
+              paid: 1,
+            }
+          }
+        ])
+        
+        return findCustomersCallfile || null
+      } catch (error) {
+        throw new CustomError(error.message,500)
+      }
+    },
+    getCollectionMonitoring: async(_,{bucket,interval})=> {
+      try {
+        const selectedBucket = await Bucket.findById(bucket).lean()
+        const callfile = await Callfile.findOne({bucket: selectedBucket._id, active: true})
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const now = new Date();
+        const currentDay = now.getDay();
+        const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() + diffToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        endOfWeek.setMilliseconds(-1);
+
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
+
+        let selectedInterval = {}
+        let newDataCollected = {}
+        if(interval === "daily") {
+          selectedInterval['$gt'] = todayStart
+          selectedInterval['$lte'] = todayEnd
+          newDataCollected['target'] = (Number(callfile.target) / 4) / 6
+        } else if (interval === "weekly") {
+          selectedInterval['$gt'] = startOfWeek
+          selectedInterval['$lte'] = endOfWeek
+          newDataCollected['target'] = Number(callfile.target) / 4
+        } else if (interval === "monthly") {
+          selectedInterval['$gt'] = startOfMonth
+          selectedInterval['$lte'] = endOfMonth
+          newDataCollected['target'] = Number(callfile.target)
+        }
+
+        const dispotypesFilter = await DispoType.findOne({code: {$eq: "PAID"}})
+
+        const findCustomerCallfile = await Disposition.aggregate([
+          {
+            $match: {
+              createdAt: selectedInterval,
+              callfile: callfile._id,
+              disposition: dispotypesFilter._id
+            }
+          },
+          {
+            $group: {
+              _id: "$callfile",
+              collected: {
+                $sum: "$amount"
+              }
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              collected: 1
+            }
+          }
+        ])
+
+        newDataCollected['collected'] = findCustomerCallfile[0]?.collected || 0
+        return newDataCollected
+      } catch (error) {
+        throw new CustomError(error.message,500)
       }
     }
   },

@@ -1126,18 +1126,36 @@ const customerResolver = {
       }
     },
     updateCustomer: async(_,{fullName, dob, gender, addresses, mobiles, emails, id, isRPC},{user}) => {
+
       try {
+
         if(!user) throw new CustomError("Unauthorized",401)
         const filtersEmail = emails.filter(x=> x.trim() !== "")
         const filtersMobile = mobiles.filter(x=> x.trim() !== "")
-        const customer = await Customer.findByIdAndUpdate(id,{
-          $set: {
-            fullName, dob, gender, addresses, emails: filtersEmail.length > 0 ? filtersEmail : [], contact_no: filtersMobile.length > 0 ? filtersMobile : [], isRPC
-          },
+        const findCustomer = await Customer.findById(id)
+        const ToUpdate = {
+          fullName, 
+          dob, 
+          gender, 
+          addresses, 
+          emails: filtersEmail.length > 0 ? filtersEmail : [], contact_no: filtersMobile.length > 0 ? filtersMobile : [], 
+          isRPC
+        }
+
+        if( findCustomer.isRPC !== isRPC && isRPC === true ) {
+          ToUpdate['RPC_date'] = new Date()
+        }
+
+        const customer = await Customer.findByIdAndUpdate(findCustomer._id,{
+          $set:ToUpdate,
           $push: {
-            updatedBy: user._id
+            updatedBy: {
+              user: user._id,
+              updatedType: 'Update Customer Info'
+            }
           }
-        }, {new: true}) 
+        }, {new: true})
+
         if(!customer) throw new CustomError("Customer not found",404)
         return {success: true, message: "Customer successfully updated", customer }
       } catch (error) {
@@ -1149,10 +1167,14 @@ const customerResolver = {
         if(!user) throw new CustomError("Unauthorized",401)
         const customer = await Customer.findByIdAndUpdate(id, {
           $set: {
-            isRPC: true
+            isRPC: true,
+            RPC_date: new Date()
           },
           $push: {
-            updatedBy: user._id
+            updatedBy: {
+              user: user._id,
+              updatedType: 'Update RPC'
+            }
           }
         },{new: true})
         if(!customer)throw new CustomError("Customer not found",404)

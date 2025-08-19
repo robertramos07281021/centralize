@@ -144,7 +144,7 @@ const userResolvers = {
     findAgents: async(_,__,{user}) => {
       if (!user) throw new CustomError("Not authenticated",401);
       try {
-        const agents = await User.find({departments: {$in: user.departments}})
+        const agents = await User.find({departments: {$in: user.departments}, active: true})
         return agents
       } catch (error) {
         throw new CustomError(error.message, 500) 

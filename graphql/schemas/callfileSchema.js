@@ -48,11 +48,27 @@ const callfileTypeDefs = gql`
   }
 
 
+
+  type ToolsProduction {
+    contact_method: String
+    rpc: Int
+    ptp: Float
+    kept: Float
+    paid: Float
+  }
+
+  type Collection {
+    target: Float
+    collected: Float
+  }
+
   type Query {
     getCallfiles(bucket:ID, limit:Int! , page:Int! ,status: String!):CallFilesResult
     downloadCallfiles(callfile:ID!): String!
     monthlyDetails: [MonthlyDetails]
     getBucketCallfile(bucketId:[ID]):[Callfile]
+    getToolsProduction(bucket:ID!,interval:String!):[ToolsProduction]
+    getCollectionMonitoring(bucket:ID!, interval:String!):Collection
   }
 
   type Mutation {

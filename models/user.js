@@ -73,6 +73,10 @@ const userSchema = new Schema(
     callfile_id: {
       type: String,
     },
+    new_agent: {
+      type: Boolean,
+      default: true
+    },
     targets: {
       daily: {
         type: Number,

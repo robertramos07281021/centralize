@@ -109,6 +109,10 @@ const customerAccountSchema = new Schema(
         default: 0
       }
     },
+    isPTP: {
+      type: Boolean,
+      defualt: false
+    },
     emergency_contact: {
       name: {
         type: String,

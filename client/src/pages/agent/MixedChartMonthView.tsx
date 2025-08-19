@@ -20,11 +20,6 @@ type AgentProdPerMonth = {
 const AGENT_PER_MONTH_PROD = gql`
   query getAgentProductionPerMonth {
     getAgentProductionPerMonth {
-      skip
-      sms
-      email
-      calls
-      field
       total
       month
       ptp

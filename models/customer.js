@@ -23,13 +23,21 @@ const customerSchema = new Schema(
       ref: "CustomerAccount"
     },
     updatedBy: [{
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "User"
+      user: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User"
+      },
+      updatedType: {
+        type: String,
+      }
     }],
     isRPC: {
       type: Boolean,
       default: false
-    }
+    },
+    RPC_date: {
+      type: Date
+    },
   },
   { timestamps: true }
 );

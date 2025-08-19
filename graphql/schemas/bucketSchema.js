@@ -9,6 +9,7 @@ const bucketTypeDefs = gql`
     dept: String
     viciIp: String
     issabelIp: String
+    principal: Boolean
   }
   
   type Success {

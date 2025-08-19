@@ -1108,23 +1108,47 @@ const dispositionResolver = {
         throw new CustomError(error.message, 500)
       }
     },
-    getTLPTPTotals: async(_,__,{user})=> {
+    getTLPTPTotals: async(_,{input})=> {
       try {
+        const selectedBucket = await Bucket.findById(input.bucket).lean()
+        const callfile = await Callfile.findOne({bucket:selectedBucket._id, active: true })
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
 
-        const yesterdayStart = new Date();
-        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-        yesterdayStart.setHours(0, 0, 0, 0);
-        const yesterDayEnd = new Date();
-        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
-        yesterDayEnd.setHours(23, 59, 59, 999);
+        const now = new Date();
+        const currentDay = now.getDay();
+        const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
 
-        const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
-        const newBucket = campaignBucket.map(e=> e._id)
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() + diffToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        endOfWeek.setMilliseconds(-1);
+
+    
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
+
+        let selectedInterval = {}
+        if(input.interval === "daily") {
+          selectedInterval['$gt'] = todayStart
+          selectedInterval['$lte'] = todayEnd
+          
+        } else if (input.interval === "weekly") {
+          selectedInterval['$gt'] = startOfWeek
+          selectedInterval['$lte'] = endOfWeek
+          
+        } else if (input.interval === "monthly") {
+          selectedInterval['$gt'] = startOfMonth
+          selectedInterval['$lte'] = endOfMonth
+        }
+
 
         const PTP = await Disposition.aggregate([
           {
@@ -1162,77 +1186,78 @@ const dispositionResolver = {
           },
           {
             $match: {
-              createdAt: {$gte:yesterdayStart, $lt:todayEnd},
+              createdAt: selectedInterval,
               "dispotype.code" : "PTP",
               ptp : true,
-              "bucket._id" : {$in: newBucket}
+              callfile: {$eq: callfile._id}
             }
           },
           {
             $group: {
-              _id: "$bucket._id",
+              _id:0,
               count: {
-                $sum: {
-                  $cond: [{
-                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]}]
-                  },1,0]
-                }
+                $sum: 1,
               },
               amount: {
-                $sum: {
-                  $cond: [{
-                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]}]
-                  },"$amount",0]
-                }
-              },
-              yesterday: {
-                 $sum: {
-                  $cond: [{
-                    $and: [{$gte: ["$createdAt",yesterdayStart]},{$lt: ['$createdAt',yesterDayEnd]}]
-                  },"$amount",0]
-                }
+                $sum: '$amount'
               }
             }
           },
           {
             $project: {
               _id: 0,
-              bucket: "$_id",
               count: 1,
-              amount: 1,
-              yesterday: 1
-            }
-          },
-          {
-            $sort: {
-              bucket: 1
+              amount: 1
             }
           }
         ])
-        
-        return PTP
+
+        return PTP[0]
       } catch (error) {
 
         throw new CustomError(error.message, 500)
       }
     },
-    getTLPTPKeptTotals: async(_,__,{user}) => {
+    getTLPTPKeptTotals: async(_,{input}) => {
       try {
+        const selectedBucket = await Bucket.findById(input.bucket).lean()
+        const callfile = await Callfile.findOne({bucket:selectedBucket._id, active: true })
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
 
-        const yesterdayStart = new Date();
-        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-        yesterdayStart.setHours(0, 0, 0, 0);
-        const yesterDayEnd = new Date();
-        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
-        yesterDayEnd.setHours(23, 59, 59, 999);
+        const now = new Date();
+        const currentDay = now.getDay();
+        const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
 
-        const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
-        const newBucket = campaignBucket.map(e=> e._id)
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() + diffToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        endOfWeek.setMilliseconds(-1);
+
+    
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
+
+        let selectedInterval = {}
+        if(input.interval === "daily") {
+          selectedInterval['$gt'] = todayStart
+          selectedInterval['$lte'] = todayEnd
+          
+        } else if (input.interval === "weekly") {
+          selectedInterval['$gt'] = startOfWeek
+          selectedInterval['$lte'] = endOfWeek
+          
+        } else if (input.interval === "monthly") {
+          selectedInterval['$gt'] = startOfMonth
+          selectedInterval['$lte'] = endOfMonth
+        }
 
 
         const PTPKept = await Disposition.aggregate([
@@ -1271,76 +1296,76 @@ const dispositionResolver = {
           },
           {
             $match: {
-              createdAt: {$gte:yesterdayStart, $lt:todayEnd},
+              createdAt: selectedInterval,
               "dispotype.code" : "PAID",
               ptp : true,
-              "bucket._id" : {$in: newBucket}
+              callfile: callfile._id
             }
           },
           {
             $group: {
-              _id: "$bucket._id",
+              _id:0,
               count: {
-                $sum: {
-                  $cond: [{
-                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]}]
-                  },1,0]
-                }
+                $sum: 1,
               },
               amount: {
-                $sum: {
-                  $cond: [{
-                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]}]
-                  },"$amount",0]
-                }
-              },
-              yesterday: {
-                 $sum: {
-                  $cond: [{
-                    $and: [{$gte: ["$createdAt",yesterdayStart]},{$lt: ['$createdAt',yesterDayEnd]}]
-                  },"$amount",0]
-                }
+                $sum: '$amount'
               }
             }
           },
           {
             $project: {
               _id: 0,
-              bucket: "$_id",
               count: 1,
-              amount: 1,
-              yesterday: 1
-            }
-          },
-          {
-            $sort: {
-              bucket: 1
+              amount: 1
             }
           }
         ])
-        
-        return PTPKept
+        return PTPKept[0]
       } catch (error) {
         throw new CustomError(error.message, 500)        
       }
     },
-    getTLPaidTotals: async(_,__,{user})=> {
+    getTLPaidTotals: async(_,{input})=> {
       try {
+        const selectedBucket = await Bucket.findById(input.bucket).lean()
+        const callfile = await Callfile.findOne({bucket:selectedBucket._id, active: true })
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
 
-        const yesterdayStart = new Date();
-        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-        yesterdayStart.setHours(0, 0, 0, 0);
-        const yesterDayEnd = new Date();
-        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
-        yesterDayEnd.setHours(23, 59, 59, 999);
+        const now = new Date();
+        const currentDay = now.getDay();
+        const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
 
-        const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
-        const newBucket = campaignBucket.map(e=> e._id)
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() + diffToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        endOfWeek.setMilliseconds(-1);
+
+    
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
+
+        let selectedInterval = {}
+        if(input.interval === "daily") {
+          selectedInterval['$gt'] = todayStart
+          selectedInterval['$lte'] = todayEnd
+          
+        } else if (input.interval === "weekly") {
+          selectedInterval['$gt'] = startOfWeek
+          selectedInterval['$lte'] = endOfWeek
+          
+        } else if (input.interval === "monthly") {
+          selectedInterval['$gt'] = startOfMonth
+          selectedInterval['$lte'] = endOfMonth
+        }
 
         const paid = await Disposition.aggregate([
           {
@@ -1378,77 +1403,79 @@ const dispositionResolver = {
           },
           {
             $match: {
-              createdAt: {$gte:yesterdayStart, $lt:todayEnd},
+              createdAt:selectedInterval,
               "dispotype.code" : "PAID",
               ptp : false,
-              "bucket._id" : {$in: newBucket}
+              callfile: {$eq: callfile._id}
             }
           },
           {
             $group: {
-              _id: "$bucket._id",
+              _id:0,
               count: {
-                $sum: {
-                  $cond: [{
-                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]}]
-                  },1,0]
-                }
+                $sum: 1,
               },
               amount: {
-                $sum: {
-                  $cond: [{
-                    $and: [{$gte: ["$createdAt",todayStart]},{$lt: ['$createdAt',todayEnd]}]
-                  },"$amount",0]
-                }
-              },
-              yesterday: {
-                 $sum: {
-                  $cond: [{
-                    $and: [{$gte: ["$createdAt",yesterdayStart]},{$lt: ['$createdAt',yesterDayEnd]}]
-                  },"$amount",0]
-                }
+                $sum: '$amount'
               }
             }
           },
           {
             $project: {
               _id: 0,
-              bucket: "$_id",
               count: 1,
               amount: 1,
-              yesterday: 1
             }
           },
-          {
-            $sort: {
-              bucket: 1
-            }
-          }
+
         ])
 
 
-        return paid
+        return paid[0]
       } catch (error) {
         throw new CustomError(error.message, 500)        
       }
     },
-    getTLDailyCollected: async(_,__,{user}) => {
+    getTLDailyCollected: async(_,{input}) => {
       try {
+        const selectedBucket = await Bucket.findById(input.bucket).lean()
+        const callfile = await Callfile.findOne({bucket:selectedBucket._id, active: true })
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
 
-        const yesterdayStart = new Date();
-        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-        yesterdayStart.setHours(0, 0, 0, 0);
-        const yesterDayEnd = new Date();
-        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
-        yesterDayEnd.setHours(23, 59, 59, 999);
+        const now = new Date();
+        const currentDay = now.getDay();
+        const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
 
-        const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
-        const newBucket = campaignBucket.map(e=> e._id)
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() + diffToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        endOfWeek.setMilliseconds(-1);
+
+    
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
+
+        let selectedInterval = {}
+        if(input.interval === "daily") {
+          selectedInterval['$gt'] = todayStart
+          selectedInterval['$lte'] = todayEnd
+          
+        } else if (input.interval === "weekly") {
+          selectedInterval['$gt'] = startOfWeek
+          selectedInterval['$lte'] = endOfWeek
+          
+        } else if (input.interval === "monthly") {
+          selectedInterval['$gt'] = startOfMonth
+          selectedInterval['$lte'] = endOfMonth
+        }
         
 
         const dailyCollected = await Disposition.aggregate([
@@ -1487,83 +1514,41 @@ const dispositionResolver = {
           },
           {
             $match: {
-              createdAt: {$gte:yesterdayStart, $lt:todayEnd},
-              "bucket._id" : {$in: newBucket}
+              createdAt: selectedInterval,
+              "dispotype.code": {$eq: 'PAID'},
+              callfile: {$eq: callfile._id}
             }
           },
           {
             $group: {
-              _id: "$bucket._id",
+              _id:0,
               amount: {
-                $sum: {
-                  $cond: [
-                    {
-                     $and: [
-                        {
-                          $gte: ["$createdAt",todayStart]
-                        },
-                        {
-                          $lt: ['$createdAt',todayEnd]
-                        },
-                        {
-                          $eq: ['$dispotype.code',"PAID"]
-                        }
-                      ]
-                    },
-                    "$amount",
-                    0
-                  ]
-                }
-              },
-              yesterday: {
-                 $sum: {
-                  $cond: [{
-                    $and: [{$gte: ["$createdAt",yesterdayStart]},{$lt: ['$createdAt',yesterDayEnd]},{$eq: ['$dispotype.code',"PAID"]}]
-                  },"$amount",0]
-                }
+                $sum: '$amount'
               }
             }
           },
           {
             $project: {
               _id: 0,
-              bucket: "$_id",
               amount: 1,
-              count: 1,
-              yesterday: 1
             }
           },
-          {
-            $sort: {
-              bucket: 1
-            }
-          }
         ])
-
-        return dailyCollected
+        return dailyCollected[0]
       } catch (error) {
         throw new CustomError(error.message, 500) 
       }
     },
-    agentDispoDaily: async(_,__,{user})=> {
+    agentDispoDaily: async(_,{bucket, interval})=> {
       try {
+        const selectedBucket = await Bucket.findById(bucket).lean()
+        const callfile = await Callfile.findOne({bucket:selectedBucket._id, active: true })
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
 
-        const yesterdayStart = new Date();
-        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-        yesterdayStart.setHours(0, 0, 0, 0);
-        const yesterDayEnd = new Date();
-        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1 )
-        yesterDayEnd.setHours(23, 59, 59, 999);
-        const campaignBucket = await Bucket.find({_id: {$in: user.buckets}}).lean()
-        const newBucket = campaignBucket.map(e=> e._id)
-
-
-        //here na
         const now = new Date();
         const currentDay = now.getDay();
         const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
@@ -1581,44 +1566,20 @@ const dispositionResolver = {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         endOfMonth.setMilliseconds(-1);
 
-
-        function setGroupForDailyCollection (name,ptp,start,end) {
-          const andArray = [
-            {
-              $gte: ['$createdAt',start]
-            },
-            {
-              $lt: ['$createdAt',end]
-            },
-          ]
-
-          if(name === 'PTP') {
-            andArray.push({ $eq: ['$dispotype.code','PTP'] }) 
-          }
-
-          if(name === 'PAID' && ptp === true) {
-            andArray.push({$eq: ['$dispotype.code','PAID']}) 
-            andArray.push({$eq: ['$ptp', ptp]} )
-          }
+        let selectedInterval = {}
+        if(interval === "daily") {
+          selectedInterval['$gt'] = todayStart
+          selectedInterval['$lte'] = todayEnd
           
-          if(name === 'PAID' && ptp === false) {
-            andArray.push({ $eq: ['$dispotype.code','PAID']}) 
-            andArray.push({$eq: ['$ptp', ptp]} )
-          }
-
-          return {
-            $sum: {
-              $cond: [
-                {
-                  $and: andArray
-                },
-                "$amount",
-                0
-              ]
-            } 
-          }
+        } else if (interval === "weekly") {
+          selectedInterval['$gt'] = startOfWeek
+          selectedInterval['$lte'] = endOfWeek
+          
+        } else if (interval === "monthly") {
+          selectedInterval['$gt'] = startOfMonth
+          selectedInterval['$lte'] = endOfMonth
         }
-
+        
         const agentDispoDaily = await Disposition.aggregate([
           {
             $lookup: {
@@ -1644,17 +1605,6 @@ const dispositionResolver = {
           },
           {
             $lookup: {
-              from: "buckets",
-              localField: "customerAccount.bucket",
-              foreignField: "_id",
-              as: "bucket",
-            }
-          },
-          {
-            $unwind: {path: "$bucket",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
               from: "dispotypes",
               localField: "disposition",
               foreignField: "_id",
@@ -1666,187 +1616,246 @@ const dispositionResolver = {
           },
           {
             $match: {
-              createdAt: {$gte:yesterdayStart, $lt:todayEnd},
-              "bucket._id" : {$in: newBucket}
+              createdAt: selectedInterval,
+              callfile : {$eq: callfile._id},
             }
           },
           {
             $group: {
               _id: "$user",
-              ptp: setGroupForDailyCollection('PTP',true,todayStart,todayEnd),
-              pk: setGroupForDailyCollection('PAID',true,todayStart,todayEnd),
-              ac: setGroupForDailyCollection('PAID',false,todayStart,todayEnd),
-              y_ptp: setGroupForDailyCollection('PTP',true, yesterdayStart, yesterDayEnd),
-              y_pk: setGroupForDailyCollection('PAID',true, yesterdayStart, yesterDayEnd),
-              y_ac: setGroupForDailyCollection('PAID',false, yesterdayStart, yesterDayEnd),
-              rpc: {
+              RPC: {
+                $sum: {
+                  $cond: [
+                    {$eq: ['$customer.isRPC', true]},
+                    1,
+                    0
+                  ]
+                }
+              },
+              ptp: {
+                $sum: {
+                  $cond: [
+                    { $eq: ['$dispotype.code','PTP'] },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              kept: {
                 $sum: {
                   $cond: [
                     {
                       $and: [
+                        { $eq: ['$dispotype.code','PAID'] },
+                        { $eq: ["$ptp", true] }
+                      ]
+                    },
+                    "$amount",
+                    0
+                  ]
+                }
+              },
+              collected: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $eq: ['$dispotype.code','PAID'] },
+                        { $eq: ["$ptp", false] },
                         {
-                          $eq: ['$customer.isRPC', true]
-                        },
-                        {
-                          $gte: ["$createdAt",todayStart]
-                        },
-                        {
-                          $lt: ["$createdAt",todayEnd]
+                          $eq: [
+                            { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
+                            { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
+                          ]
                         }
                       ]
                     },
-                    1,
+                    "$amount",
                     0
                   ]
                 }
               },
-              count: {
-                $sum: {
-                  $cond: [
-                    {
-                      $and: [
-                        {
-                          $gte: ["$createdAt",todayStart]
-                        },
-                        {
-                          $lt: ['$createdAt',todayEnd]
-                        },
-                      ]
-                    },
-                    1,
-                    0
-                  ]
-                }
-              },
-
             }
           },
           {
             $project: {
               _id: 0,
               user: "$_id",
-              pk: 1,
+              RPC: 1,
               ptp: 1,
-              rpc: 1,
-              ac: 1,
-              y_ac: 1,
-              y_ptp: 1,
-              y_pk: 1,
-              count: 1,
-            }
-          },
-          {
-            $sort: {
-              user: 1
+              kept: 1,
+              collected: 1
             }
           }
         ])
-
         return agentDispoDaily
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
-    getTargetPerCampaign: async(_,{id},{user}) => {
+    getTargetPerCampaign: async(_,{bucket, interval}) => {
       try {
-        const buckets = await Bucket.findById(id)
-        const callfiles = await Callfile.findOne({bucket:buckets._id, active: {$eq: true}})
+        const buckets = await Bucket.findById(bucket)
+        const callfile = await Callfile.findOne({bucket:buckets._id, active: {$eq: true}})  
 
-        const paidDispo = await DispoType.findOne({code:"PAID"})      
+        if(!callfile) return null
 
-        if(!callfiles) return null
-        const customerAccount = await CustomerAccount.aggregate([
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "history",
-              foreignField: "_id",
-              as: "account_history",
-            }
-          },
-          {
-            $lookup: {
-              from: "callfiles",
-              localField: "callfile",
-              foreignField: "_id",
-              as: "account_callfile",
-            }
-          },
-          {
-            $unwind: {path: "$account_callfile",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $match: {
-              callfile: callfiles._id,
-              current_disposition: {$exists: true}
-            }
-          },
-          {
-            $addFields: {
-              collectedPrincipal: {
-                $sum: {
-                  $cond: [
-                    { $eq: ['$balance',0] },
-                    "$out_standing_details.principal_os",
-                    0
-                  ]
-                }
-              },
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const now = new Date();
+        const currentDay = now.getDay();
+        const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() + diffToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        endOfWeek.setMilliseconds(-1);
+
+    
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
+        
+        let selectedInterval = {}
+        let newDataCollected = {}
+        if(interval === "daily") {
+          selectedInterval['$gt'] = todayStart
+          selectedInterval['$lte'] = todayEnd
+          newDataCollected['target'] = (Number(callfile.target) / 4) / 6
+        } else if (interval === "weekly") {
+          selectedInterval['$gt'] = startOfWeek
+          selectedInterval['$lte'] = endOfWeek
+          newDataCollected['target'] = Number(callfile.target) / 4
+        } else if (interval === "monthly") {
+          selectedInterval['$gt'] = startOfMonth
+          selectedInterval['$lte'] = endOfMonth
+          newDataCollected['target'] = Number(callfile.target)
+        }
+
+        let result = {}
+
+        if(buckets.principal) {
+          const customerAccount = await CustomerAccount.aggregate([
+            {
+              $lookup: {
+                from: "dispositions",
+                localField: "history",
+                foreignField: "_id",
+                as: "account_history",
+              }
             },
-          },
-          {
-            $addFields: {
-              collectedPaid: {
-                $sum: { 
-                  $map: {
-                    input: {
-                      $filter: {
-                        input: "$account_history",
-                        as: "history",
-                        cond: {
-                          $eq: ["$$history.disposition",paidDispo._id]
-                        }
-                      }
-                    },
-                    as: "h",
-                    in: "$$h.amount"
+            {
+              $lookup: {
+                from: "callfiles",
+                localField: "callfile",
+                foreignField: "_id",
+                as: "account_callfile",
+              }
+            },
+            {
+              $unwind: {path: "$account_callfile",preserveNullAndEmptyArrays: true}
+            },
+            {
+              $lookup: {
+                from: "buckets",
+                localField: "bucket",
+                foreignField: "_id",
+                as: "account_bucket",
+              }
+            },
+            {
+              $unwind: {path: "$account_bucket",preserveNullAndEmptyArrays: true}
+            },
+            {
+              $match: {
+                callfile: {$eq: callfile._id},
+                current_disposition: { $exists: true }
+              }
+            },
+            {
+              $group: {
+                _id: "$callfile",
+               collected: {
+                  $sum: {
+                    $cond: [
+                      { $eq: ['$balance',0] },
+                      "$out_standing_details.principal_os",
+                      0
+                    ]
                   }
-                }
-              },
+                },
+              }
             },
-          },
-          {
-            $group: {
-              _id: "$bucket",
-              collected: {
-                $first: {
-                  $cond: [
-                    {$eq: [buckets.principal, true]},
-                    "$collectedPrincipal",
-                    "$collectedPaid",
-                  ]
-                }
-              },
+            {
+              $project: {
+                _id: 0,
+                collected: 1,
+              }
             }
-          },
-          {
-            $project: {
-              _id: 0,
-              bucket: "$_id",
-              collected: 1,
+          ])
+          result = customerAccount.map(x=> {
+            return {
+              ...x,
+              totalPrincipal: callfile.totalPrincipal,
+              target: callfile.target
             }
-          }
-        ])
+          })
+        } else {
 
-        const newCustomerAccount = customerAccount.map(x=> {
-          return {
-            ...x,
-            totalPrincipal: callfiles.totalPrincipal,
-            target: callfiles.target
+          const findDisposition = await Disposition.aggregate([
+            {
+              $match: {
+                callfile: {$eq: callfile._id},
+                createdAt: selectedInterval
+              }
+            },
+            {
+              $lookup: {
+                from: "dispotypes",
+                localField: "disposition",
+                foreignField: "_id",
+                as: "dispotype",
+              }
+            },
+            {
+              $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+            },
+            {
+              $match: {
+                "dispotype.code": {$eq: 'PAID'}
+              }
+            },
+            {
+              $group :{
+                _id: "$callfile",
+                collected: {
+                  $sum: "$amount"
+                }
+              }
+            },
+            {
+              $project: {
+                _id: 0,
+                collected: 1
+              }
+            }
+          ])
+          result = {
+            collected: findDisposition[0]?.collected ? findDisposition[0]?.collected : 0,
+            target: newDataCollected.target,
+            totalPrincipal: newDataCollected.target
           }
-        })
-  
-        return newCustomerAccount || null
+        }
+
+        return result
       } catch (error) {
         throw new CustomError(error.message, 500)        
       }
@@ -1913,10 +1922,11 @@ const dispositionResolver = {
           assigned: null,
           assigned_date: null,
           on_hands: false,
-        };  
+          isPTP: ptp
+        }; 
 
         const currentDispotype = await DispoType.findById(customerAccount?.current_disposition?.disposition)
-       
+
         if(!currentDispotype) {
           updateFields['current_disposition'] = newDisposition._id
           newDisposition.existing = true
