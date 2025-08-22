@@ -19,7 +19,7 @@ const bucketResolver = {
               _id: "$dept",
               buckets: {
                 $push: {
-                  id: "$_id",
+                  _id: "$_id",
                   name: "$name",
                   dept: "$dept"
                 }
@@ -95,7 +95,7 @@ const bucketResolver = {
               _id: "$dept",
               buckets: {
                 $push: {
-                  id: "$_id",
+                  _id: "$_id",
                   name: "$name"
                 }
               }

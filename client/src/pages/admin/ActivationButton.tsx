@@ -26,7 +26,8 @@ const ActivationButton:React.FC<ButtonProps> = ({id, active, refetch}) => {
       refetch()
       dispatch(setSuccess({
         success:res.activateDeactivateDispotype.success,
-        message:res.activateDeactivateDispotype.message
+        message:res.activateDeactivateDispotype.message,
+        isMessage: false
       }))
     },
     onError: ()=> {

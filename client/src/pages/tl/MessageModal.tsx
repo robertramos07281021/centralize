@@ -49,7 +49,7 @@ const MessageModal=forwardRef<MessageChildren, ComponentProp> (
   const [message, setMessage] = useState<string>('')
 
   const sendMessage = useCallback(async()=>{ 
-    await messageBucket({variables: {id: bucket?.id, message: message}})
+    await messageBucket({variables: {id: bucket?._id, message: message}})
   },[messageBucket,message,bucket])
 
   const messageRef = useRef<HTMLDivElement | null>(null)

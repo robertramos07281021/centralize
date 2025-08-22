@@ -15,7 +15,6 @@ import ServerError from "../pages/ServerError";
 import SuccessToast from "./SuccessToast";
 import { persistor } from "../redux/store";
 
-
 type Targets = {
   daily: number,
   weekly: number,
@@ -119,7 +118,7 @@ const Navbar = () => {
   const location = useLocation()
   const {userLogged,selectedCustomer,breakValue, serverError, success} = useSelector((state:RootState)=> state.auth)
   const modalRef = useRef<HTMLDivElement>(null)
-  const {error, data, refetch} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 10000})
+  const {error, data, refetch} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 5000})
   const [poPupUser, setPopUpUser] = useState<boolean>(false) 
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: ()=> {
@@ -234,13 +233,11 @@ const Navbar = () => {
 
 
   useEffect(()=> {
- 
     if(breakValue !== BreakEnum.PROD && userLogged?.type === "AGENT") {
       navigate('/break-view')
     }
   },[breakValue, navigate])
 
-  
   const onClickBreakSelection = async(value:string,e:React.ChangeEvent<HTMLInputElement>)=> {
     if(e.target.checked) {
       setPopUpBreak(false)
@@ -266,14 +263,14 @@ const Navbar = () => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [poPupUser]);
-
-
-
+  
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       if(data && userLogged) {
+        console.log(data)
         dispatch(setUserLogged({...userLogged,isOnline: data?.getMe?.isOnline, targets: data?.getMe?.targets || {daily: 0, weekly: 0, monthly: 0}}))
         if(!userLogged?.isOnline) {
+          console.log(userLogged.isOnline)
           setConfirmation(true)
           setModalProps({
             no: ()=> {
@@ -284,7 +281,7 @@ const Navbar = () => {
               setConfirmation(false);
               forceLogout()
             },
-            message: "You have been force to logout!2",
+            message: "You have been force to logout!",
             toggle: "IDLE"
           })
         }
@@ -294,6 +291,7 @@ const Navbar = () => {
   },[data])
 
   if(loading || logoutToPEristsLoading) return <Loading/>
+
   return userLogged && (
     <>
       {

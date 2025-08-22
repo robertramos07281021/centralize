@@ -13,7 +13,7 @@ import { FaUserGear } from "react-icons/fa6";
 import Confirmation from "../../components/Confirmation";
 
 type DeptBranchBucket = {
-  id: string
+  _id: string
   name: string
 }
 
@@ -36,7 +36,7 @@ const GET_BRANCHES = gql`
 const GET_ALL_BUCKET = gql`
   query getAllBucket {
     getAllBucket {
-      id
+      _id
       name
     }
   }
@@ -109,17 +109,17 @@ const AccountsView = () => {
 
   const deptObject:{[key:string]:string} = useMemo(()=> {
     const deptData = getDeptData?.getDepts || []
-    return Object.fromEntries(deptData.map((db)=> [db.id, db.name]))
+    return Object.fromEntries(deptData.map((db)=> [db._id, db.name]))
   },[getDeptData])
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const allBucketData = getAllBucketsData?.getAllBucket || []
-    return Object.fromEntries(allBucketData.map((adb)=> [adb.id, adb.name]))
+    return Object.fromEntries(allBucketData.map((adb)=> [adb._id, adb.name]))
   },[getAllBucketsData])
 
   const branchObject:{[key:string]:string} = useMemo(()=> {
     const branchData = getBranchData?.getBranches || []
-    return Object.fromEntries(branchData.map((bd)=> [bd.id, bd.name]))
+    return Object.fromEntries(branchData.map((bd)=> [bd._id, bd.name]))
   },[getBranchData])
   
   const {data:searchData, refetch } = useQuery<{findUsers:{users:Users[],total:number}}>(FIND_QUERY,{variables: { search, page: adminUsersPage, limit}})
@@ -142,7 +142,8 @@ const AccountsView = () => {
       if(res.data) {
         dispatch(setSuccess({
           success: result.deleteUser.success,
-          message: result.deleteUser.message
+          message: result.deleteUser.message,
+          isMessage: false
         }))
       }
  

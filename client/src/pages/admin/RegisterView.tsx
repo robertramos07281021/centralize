@@ -17,7 +17,7 @@ type Branch = {
 }
 
 type Bucket = {
-  id:string
+  _id:string
   name: string
 }
 
@@ -88,7 +88,7 @@ const GET_DEPT_BUCKET = gql`
     getBuckets(dept: $dept) {
       dept
       buckets {
-        id
+        _id
         name
       }
     }
@@ -132,7 +132,7 @@ const RegisterView = () => {
     
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const dbd = getDeptBucketData?.getBuckets || []
-    return Object.fromEntries(dbd.flatMap(e=> e.buckets.map(y=> [y.name, y.id])))
+    return Object.fromEntries(dbd.flatMap(e=> e.buckets.map(y=> [y.name, y._id])))
   },[getDeptBucketData])
 
 
@@ -155,7 +155,8 @@ const RegisterView = () => {
       reset()
       dispatch(setSuccess({
         success: true,
-        message: "Account created"
+        message: "Account created",
+        isMessage: false
       }))
       setConfirm(false)
     },
@@ -166,6 +167,7 @@ const RegisterView = () => {
         dispatch(setSuccess({
           success: true,
           message: "Username already exists",
+          isMessage: false
         }))
       } else {
         dispatch(setServerError(true))
@@ -428,14 +430,14 @@ const RegisterView = () => {
                       <div className="uppercase text-sm">{e.dept}</div>
                       {
                         e.buckets.map(e => 
-                        <label key={e.id} className="flex gap-2 text-xs">
+                        <label key={e._id} className="flex gap-2 text-xs">
                           <input 
                           type="checkbox"
                           name={e.name} 
                           id={e.name} 
                           value={e.name}
                           onChange={(e)=> handleCheckedBucket(e, e.target.value)} 
-                          checked={data.buckets.toString().includes(e.id)} />
+                          checked={data.buckets.toString().includes(e._id)} />
                           <span className="uppercase">{e.name.replace(/_/g," ")}</span>
                         </label>
                         )

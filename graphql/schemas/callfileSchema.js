@@ -2,7 +2,7 @@ import { gql } from "graphql-tag";
 
 const callfileTypeDefs = gql`
   scalar DateTime
-  
+
   type User {
     name: String
   }
@@ -41,8 +41,6 @@ const callfileTypeDefs = gql`
     rpc: Int
     unconnected: Int
   }
-
-
 
   type ToolsProduction {
     contact_method: String

@@ -25,14 +25,14 @@ const GET_ALL_DISPOSITION_TYPE = gql`
 }
 `
 type Bucket = {
-  id: string
+  _id: string
   name: string
 }
 
 const BUCKETS = gql`
   query GetTLBucket {
     getTLBucket {
-      id
+      _id
       name
     }
   }
@@ -61,7 +61,7 @@ const TaskManagerView = () => {
   
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = bucketData?.getTLBucket || []
-    return Object.fromEntries(tlBuckets.map(e=> [e.name, e.id]))
+    return Object.fromEntries(tlBuckets.map(e=> [e.name, e._id]))
   },[bucketData])
 
   useEffect(()=> {
@@ -190,7 +190,7 @@ const TaskManagerView = () => {
         
               {
                 bucketData?.getTLBucket.map(e=> 
-                  <option key={e.id} value={e.name}>{e.name}</option>
+                  <option key={e._id} value={e.name}>{e.name}</option>
                 )
               }
             </select>

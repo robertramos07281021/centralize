@@ -24,7 +24,7 @@ type SuccessUpdate = {
 type Bucket = {
   name: string;
   dept: string;
-  id: string;
+  _id: string;
 }
 
 type Branch = {
@@ -49,7 +49,7 @@ const DEPT_BUCKET_QUERY = gql`
     getBuckets(dept: $dept) {
       dept
       buckets {
-        id
+        _id
         name
       }
     }
@@ -298,7 +298,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const bucketArray = deptBucket?.getBuckets || []
-    return Object.fromEntries(bucketArray.flatMap((ba)=> ba.buckets.map(e => [e.name, e.id])))
+    return Object.fromEntries(bucketArray.flatMap((ba)=> ba.buckets.map(e => [e.name, e._id])))
   },[deptBucket])
 
 
@@ -308,7 +308,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       navigate(location.pathname, { state: { ...res.updateUser.user, newKey: "newKey" } });
       dispatch(setSuccess({
         success: res.updateUser.success,
-        message: res.updateUser.message
+        message: res.updateUser.message,
+        isMessage: false
       }))
       setIsUpdate(false)
     },
@@ -322,7 +323,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       navigate(location.pathname, { state: { ...res.resetPassword.user, newKey: "newKey" } });
       dispatch(setSuccess({
         success: res.resetPassword.success,
-        message: res.resetPassword.message
+        message: res.resetPassword.message,
+        isMessage: false
       }))
     },
     onError:() => {
@@ -335,7 +337,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       navigate(location.pathname, { state: { ...res.updateActiveStatus.user, newKey: "newKey" } });
       dispatch(setSuccess({
         success: res.updateActiveStatus.success,
-        message: res.updateActiveStatus.message
+        message: res.updateActiveStatus.message,
+        isMessage: false
       }))
     },
     onError:  ()=> {
@@ -349,7 +352,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       navigate(location.pathname, {state: {...res.unlockUser.user, newKey: 'newKey'}})
       dispatch(setSuccess({
         success: res.unlockUser.success,
-        message: res.unlockUser.message
+        message: res.unlockUser.message,
+        isMessage: false
       }))
     },
     onError:() => {
@@ -362,7 +366,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       navigate(location.pathname, {state: {...res.adminLogout.user, newKey: "newKey"}})
       dispatch(setSuccess({
         success: res.adminLogout.success,
-        message: res.adminLogout.message
+        message: res.adminLogout.message,
+        isMessage: false
       }))
     },
     onError:() => {
@@ -689,14 +694,14 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
                       <div className="uppercase text-sm">{e.dept}</div>
                       {
                         e.buckets.map(e => 
-                        <label key={e.id} className="flex gap-2 text-xs">
+                        <label key={e._id} className="flex gap-2 text-xs">
                           <input 
                           type="checkbox"
                           name={e.name} 
                           id={e.name} 
                           value={e.name}
                           onChange={(e)=> handleCheckedBucket(e, e.target.value)} 
-                          checked={data.buckets.toString().includes(e.id)} />
+                          checked={data.buckets.toString().includes(e._id)} />
                           <span className="uppercase">{e.name.replace(/_/g," ")}</span>
                         </label>
                         )

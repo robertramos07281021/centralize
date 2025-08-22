@@ -28,7 +28,7 @@ const TARGET_PER_BUCKET = gql`
 const TL_BUCKET = gql`
   query GetDeptBucket {
     getDeptBucket {
-      id
+      _id
       name
     }
   }
@@ -40,13 +40,13 @@ type ComponentProps = {
 }
 
 const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
-  const {data:targetsData, refetch} = useQuery<{getTargetPerCampaign:Target}>(TARGET_PER_BUCKET,{variables: {bucket: bucket?.id, interval},skip: !bucket?.id})
+  const {data:targetsData, refetch} = useQuery<{getTargetPerCampaign:Target}>(TARGET_PER_BUCKET,{variables: {bucket: bucket?._id, interval},skip: !bucket?._id})
   const {data:tlBucketData, refetch:deptBucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
   const dispatch = useAppDispatch()
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = tlBucketData?.getDeptBucket || []
-    return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
+    return Object.fromEntries(tlBuckets.map(e=> [e._id, e.name]))
   },[tlBucketData])
   const newTargetdata = targetsData?.getTargetPerCampaign || null
 
@@ -59,7 +59,7 @@ const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
         dispatch(setServerError(true))
       }
     }
-    if(bucket?.id) {
+    if(bucket?._id) {
       timer()
     }
   },[bucket, interval])
@@ -115,7 +115,7 @@ const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
           weight: 'bold',
         },
         text: [
-          `${bucketObject[bucket?.id as keyof typeof bucketObject]} ${!bucket?.principal ? ` - ${interval.toUpperCase()}` : "" } `,
+          `${bucketObject[bucket?._id as keyof typeof bucketObject]} ${!bucket?.principal ? ` - ${interval.toUpperCase()}` : "" } `,
           `${newTargetdata ? newTargetdata?.collected?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : 0 } / ${newTargetdata ? newTargetdata?.totalPrincipal?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || newTargetdata?.collected?.toLocaleString('en-PH',{style: 'currency',currency: 'PHP',}) : 0} - ${callfileVariance?.toFixed(2)}%`,
           `Target - ${newTargetdata ? newTargetdata?.target?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : 0}    Variance - ${variance?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}`
         ],

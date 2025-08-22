@@ -25,7 +25,7 @@ type ComponentProp = {
 }
 
 const Paid:React.FC<ComponentProp> = ({bucket,interval}) => {
-  const {data:paidData, refetch} = useQuery<{getTLPaidTotals:PaidType}>(PAID_DAILY,{variables: {input: {bucket: bucket?.id, interval: interval},skip: !bucket?.id}})
+  const {data:paidData, refetch} = useQuery<{getTLPaidTotals:PaidType}>(PAID_DAILY,{variables: {input: {bucket: bucket?._id, interval: interval},skip: !bucket?._id}})
   const dispatch = useAppDispatch()
 
   useEffect(()=> {
@@ -37,10 +37,10 @@ const Paid:React.FC<ComponentProp> = ({bucket,interval}) => {
         dispatch(setServerError(true))
       }
     }
-    if(bucket?.id) {
+    if(bucket?._id) {
       timer()
     }
-  },[bucket?.id,interval])
+  },[bucket?._id,interval])
   const paidSelected = paidData?.getTLPaidTotals || null
 
   return (

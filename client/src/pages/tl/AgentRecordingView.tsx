@@ -178,7 +178,8 @@ const AgentRecordingView = () => {
           URL.revokeObjectURL(link.href);
           dispatch(setSuccess({
             success: res.findRecordings.success,
-            message: res.findRecordings.message
+            message: res.findRecordings.message,
+            isMessage: false
           }))
           await deleteRecordings({ variables: { filename: link.download } });
         } catch (error) {
@@ -187,7 +188,8 @@ const AgentRecordingView = () => {
       } else {
         dispatch(setSuccess({
           success: res.findRecordings.success,
-          message: res.findRecordings.message
+          message: res.findRecordings.message,
+          isMessage: false
         }))
       }
     },
@@ -300,52 +302,36 @@ const AgentRecordingView = () => {
           onClick={onClickSearch}
           >Search</button>
       </div>
-      <div className="h-full overflow-hidden w-full px-10 pt-3">
-
-        <div className="grid grid-cols-12 2xl:text-base lg:text-sm text-gray-600 font-medium bg-slate-100 py-1">
-          <div className="pl-5 col-span-2">Name</div>
-          <div className="col-span-2">Contact No</div>
-          <div >Dialer</div>
-          <div>Amount</div>
-          <div>Payment Date</div>
-          <div>Referrence No.</div>
-          <div>Comment</div>
-          <div>Disposition Date</div>
-          <div>Disposition</div>
-          <div>Action</div>
-        </div>
-        <div className="flex flex-col h-full overflow-y-auto">
-          {
-            recordings?.getAgentDispositionRecords.dispositions.map(e=> {
-              return (
-                <div key={e._id} className="grid grid-cols-12 lg:text-[0.6em] 2xl:text-xs py-1 items-center text-gray-600 even:bg-slate-50 hover:bg-blue-50">
-                  <div className="pl-2 text-wrap truncate cursor-default col-span-2">{e.customer_name}</div>
-                  <div className="cursor-default truncate text-nowrap col-span-2">{e.contact_no.join(', ')}</div>
-                  <div className="cursor-default truncate text-nowrap capitalize">{e.dialer}</div>
-                  <div className="cursor-default">{e.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'})}</div>
-                  <div className="cursor-default">{e.payment_date ? new Date(e.payment_date).toLocaleDateString() : "-"}</div>
-                  <div className="relative">
-                    <p className="truncate peer cursor-default">
-                      {e.ref_no || "-"}
-                    </p>
-                    {
-                      e.ref_no.length > 0 &&
-                      <p className="hidden peer-hover:block border-slate-500 shadow shadow-black/80 absolute bg-white w-60 text-center min-h-20 border p-2 font-medium text-gray-800 z-50">{e.ref_no}
-                      </p>
-                    }
-                  </div>
-                  <div className="relative">
-                    <p className="peer truncate cursor-default pr-2">
-                      {e.comment || "-"}
-                    </p>
-                    {
-                      e.comment.length > 0 &&
-                      <p className="hidden peer-hover:block border-slate-500 shadow shadow-black/80 absolute bg-white w-60 text-center min-h-20 border p-2 font-medium text-gray-800 z-50">{e.comment}
-                      </p>
-                    }
-                  </div>
-                  <div>{new Date(e.createdAt).toLocaleDateString()}</div>
-                  <div>{e.dispotype}</div>
+      <div className="h-full overflow-auto w-full px-10 mt-3">
+        <table className="w-full table-fixed">
+          <thead className="lg:text-sm 2xl:text-lg sticky top-0 bg-blue-100 text-gray-600">
+            <tr className="text-left">
+              <th className="pl-5 py-1.5 col-span-2 w-55">Name</th>
+              <th >Contact No</th>
+              <th >Dialer</th>
+              <th>Amount</th>
+              <th className="text-nowrap">Payment Date</th>
+              <th>Ref No.</th>
+              <th>Comment</th>
+              <th className="text-nowrap">Dispo Date</th>
+              <th>Disposition</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            {
+              recordings?.getAgentDispositionRecords.dispositions.map(e=> 
+                <tr key={e._id} className="lg:text-xs 2xl:text-sm cursor-default">
+                  <td  className="pl-5 py-1.5 w-55 truncate">{e.customer_name}</td>
+                  <td className="truncate pr-2" title={e.contact_no.join(', ')}>{e.contact_no.join(', ')}</td>
+                  <td>{e.dialer}</td>
+                  <td>{e.amount ? e.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) : "-"}</td>
+                  <td>{e.payment_date ? new Date(e.payment_date).toLocaleDateString() : "-"}</td>
+                  <td title={e.ref_no}>{e.ref_no || "-"}</td>
+                  <td className="truncate" title={e.comment}>{e.comment || "-"}</td>
+                  <td>{new Date(e.createdAt).toLocaleDateString()}</td>
+                  <td>{e.dispotype}</td>
+                  <td>
                   {
                     (isLoading === e._id && loading) ?
                     <div className="cursor-progress">
@@ -357,17 +343,18 @@ const AgentRecordingView = () => {
                       <div className="absolute text-nowrap bg-white z-50 left-5 top-0 ml-2 peer-hover:block hidden border px-1">Download Recordings</div>
                     </div> 
                   }
-                </div>
-              ) 
-            })
-          }
-        </div>
+                  </td>
+                </tr>
+
+              )
+            }
+          </tbody>
+        </table>
       </div>
       <div className="text-end">
         <Pagination value={page} onChangeValue={(e) => setPage(e)} onKeyDownValue={(e)=> dispatch(setAgentRecordingPage(e))} totalPage={totalPage} currentPage={agentRecordingPage}/>
       </div>
     </div>
- 
   )
 }
 

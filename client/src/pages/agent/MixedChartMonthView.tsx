@@ -8,7 +8,6 @@ import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../../redux/store"
 import { setServerError } from "../../redux/slices/authSlice"
 
-
 type AgentProdPerMonth = {
     total: number
     month: number
@@ -28,8 +27,6 @@ const AGENT_PER_MONTH_PROD = gql`
     }
   }
 `
-
-
 
 export default function MixedChartMonthView() {
   const {data:agentProdPerMonthData, refetch:PerMonthRefetch} = useQuery<{getAgentProductionPerMonth:AgentProdPerMonth[]}>(AGENT_PER_MONTH_PROD)

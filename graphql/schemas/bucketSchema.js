@@ -4,7 +4,7 @@ const bucketTypeDefs = gql`
 
 
   type Bucket {
-    id:ID
+    _id:ID
     name: String
     dept: String
     viciIp: String

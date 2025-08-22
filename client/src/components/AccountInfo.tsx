@@ -193,7 +193,7 @@ const FieldsDiv = ({label, value, endorsementDate}:{label:string, value:string |
   return (
     <div className="flex flex-col items-center 2xl:flex-row w-full ">
       <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-5/10 leading-4 select-none">{label} :</p>
-      <div className={`${newValue || null  ? "p-2": "p-4.5"} select-none 2xl:ml-2 text-xs 2xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
+      <div className={`${newValue || null  ? "p-2": "p-4"} select-none 2xl:ml-2 text-xs 2xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
     </div>
   )
 }
@@ -276,38 +276,38 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
         <UpdatedAccountHistory close={()=> setShowUpdateOnCA(false)}/>
       }
       
-        <div className="fixed top-30 gap-2 left-5">
-          <div className="relative">
-            {
-              selectedCustomer &&
-              <BsExclamationSquareFill className={`text-4xl text-blue-500 cursor-pointer`} onClick={()=> setShowButton(prev => !prev)}/>
+      <div className="fixed top-30 gap-2 left-5 z-30">
+        <div className="relative ">
+          {
+            selectedCustomer &&
+            <BsExclamationSquareFill className={`text-4xl text-blue-500 cursor-pointer`} onClick={()=> setShowButton(prev => !prev)}/>
+          }
+          {
+            !showButton &&
+            <div className={`absolute -top-5.5 -right-4 min-w-5 min-h-5 text-xs px-2 flex items-center justify-center text-white rounded ${sumOf > 0 && !isNaN(sumOf)  ? "bg-red-500" : "bg-green-500"}`}>
+            {isNaN(sumOf) ? 0 : sumOf}
+          </div>}
+          {
+            showButton &&
+              <div className="border mt-1 flex flex-col gap-8 p-8 rounded-md border-slate-400 bg-white shadow  " ref={divRef}>
+                <Buttons label="Account History" onClick={()=> setShowDispoHistory(true)} length={selectedCustomer && selectedCustomer.dispo_history.length > 0 ? selectedCustomer.dispo_history.length : 0} color="blue"/>
+                <Buttons label="Other Accounts" onClick={()=> setShowAccounts(true)} length={ data && data?.customerOtherAccounts?.length > 0 ? data?.customerOtherAccounts?.length : 0} color="green"/>
+                <Buttons label="Past Callfile History" onClick={()=> setShowAccountHistory(true)} length={accountHistory && accountHistory.findAccountHistories.length > 0 ? accountHistory.findAccountHistories.length : 0} color="yellow"/>
+                {
+                  selectedCustomer.account_bucket.can_update_ca && 
+                  <Buttons label="Update Account History" onClick={()=> setShowUpdateOnCA(true)} length= {UpdateAccountHistory && UpdateAccountHistory.length > 0 ? UpdateAccountHistory.length : 0} color="cyan"/>
+                }
+              </div>
             }
-            {
-              !showButton &&
-              <div className={`absolute -top-5.5 -right-4 min-w-5 min-h-5 text-xs px-2 flex items-center justify-center text-white rounded ${sumOf > 0 || !isNaN(sumOf)  ? "bg-red-500" : "bg-green-500"}`}>
-              {isNaN(sumOf) ? 0 : sumOf}
-            </div>}
-            {
-              showButton &&
-                <div className="border mt-1 flex flex-col gap-8 p-8 rounded-md border-slate-400 bg-white shadow z-50" ref={divRef}>
-                  <Buttons label="Account History" onClick={()=> setShowDispoHistory(true)} length={selectedCustomer && selectedCustomer.dispo_history.length > 0 ? selectedCustomer.dispo_history.length : 0} color="blue"/>
-                  <Buttons label="Other Accounts" onClick={()=> setShowAccounts(true)} length={ data && data?.customerOtherAccounts?.length > 0 ? data?.customerOtherAccounts?.length : 0} color="green"/>
-                  <Buttons label="Past Callfile History" onClick={()=> setShowAccountHistory(true)} length={accountHistory && accountHistory.findAccountHistories.length > 0 ? accountHistory.findAccountHistories.length : 0} color="yellow"/>
-                  {
-                    selectedCustomer.account_bucket.can_update_ca && 
-                    <Buttons label="Update Account History" onClick={()=> setShowUpdateOnCA(true)} length= {UpdateAccountHistory && UpdateAccountHistory.length > 0 ? UpdateAccountHistory.length : 0} color="cyan"/>
-                  }
-                </div>
-              }
-          </div>
         </div>
+      </div>
       <div className="p-4 flex flex-col gap-5 relative">
         {
           userLogged?.type !== "AGENT" && !updateCustomerAccounts && Math.ceil(selectedCustomer.balance) > 0 && selectedCustomer.account_bucket.can_update_ca && 
           <button className="absolute right-5 py-2.5 top-0 hover:bg-orange-600 bg-orange-400 font-medium rounded-lg text-sm cursor-pointer px-5 text-white" onClick={()=> setUpdateCustomerAccounts(prev => !prev)}>Update</button>
         }
         <h1 className="text-center font-bold text-slate-600 xl:text-base 2xl:text-lg mb-5">Account Information</h1>
-        <div className="flex xl:gap-10 gap-2 justify-center ">
+        <div className="flex xl:gap-10 gap-2 justify-center">
           <div className="flex flex-col gap-2  w-full">
             <FieldsDiv label="Bucket" value={ selectedCustomer?.account_bucket?.name } endorsementDate={null}/>
             <FieldsDiv label="Case ID / PN / Account ID" value={ selectedCustomer?.case_id } endorsementDate={null}/>

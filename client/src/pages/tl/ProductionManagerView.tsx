@@ -10,14 +10,14 @@ import Pagination from "../../components/Pagination";
 import CallfilesViews from "./CallfilesViews";
 
 type Bucket = {
-  id: string
+  _id: string
   name: string
 }
 
 const BUCKETS = gql`
   query GetTLBucket {
     getTLBucket {
-      id
+      _id
       name
     }
   }
@@ -43,7 +43,7 @@ const ProductionManagerView = () => {
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = bucketData?.getTLBucket || []
-    return Object.fromEntries(tlBuckets.map(e=> [e.name, e.id]))
+    return Object.fromEntries(tlBuckets.map(e=> [e.name, e._id]))
   },[bucketData])
 
   useEffect(()=> {
@@ -85,7 +85,7 @@ const ProductionManagerView = () => {
   
                   {
                     bucketData?.getTLBucket.map(e=> 
-                      <option key={e.id} value={e.name}>
+                      <option key={e._id} value={e.name}>
                         {
                           e.name.toUpperCase()
                         }

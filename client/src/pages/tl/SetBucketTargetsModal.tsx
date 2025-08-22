@@ -47,7 +47,8 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
     onCompleted:async(res) => {
       dispatch(setSuccess({
         success: res.setBucketTargets.success,
-        message: res.setBucketTargets.message
+        message: res.setBucketTargets.message,
+        isMessage: false
       }))
       refetch()
     },

@@ -25,18 +25,20 @@ type ComponentProp = {
 const UpdatedAccountHistory:React.FC<ComponentProp> = ({close}) => {
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const {data} = useQuery<{findAgents:DeptUser[]}>(DEPT_USER,{skip: !selectedCustomer})
-  const history =selectedCustomer ? [...selectedCustomer?.account_update_history].sort((a,b) => new Date(b.updated_date).getTime() - new Date(a.updated_date).getTime()) : []
-  
+  const history = Array.isArray(selectedCustomer?.account_update_history)
+ ? [...selectedCustomer?.account_update_history].sort((a,b) => new Date(b.updated_date).getTime() - new Date(a.updated_date).getTime()) : []
+
   const userObject = useMemo(()=> {
     const newData = data?.findAgents || []
     return Object.fromEntries(newData.map(e=> [e._id, e.name]))
   },[data])
 
+
   return (
     <div className="w-full h-full z-40 gap-5 absolute px-10 top-0 left-0 bg-black/50 backdrop-blur-[2px] p-10">
       <div className="w-full h-full border rounded-md border-slate-500 bg-white p-5 flex flex-col">
         <div className="flex justify-between items-start">
-          <h1 className="2xl:text-5xl font-medium text-gray-600 pb-5">Updated Account History - {selectedCustomer?.customer_info.fullName}</h1>
+          <h1 className="2xl:text-5xl font-medium text-gray-600 pb-5">Updated Account History - {selectedCustomer?.customer_info?.fullName}</h1>
           <IoMdCloseCircleOutline className="text-5xl m-3 absolute top-10 right-10 hover:scale-110 cursor-pointer hover:text-gray-400" onClick={close}/>
         </div>
         <div className="h-full overflow-y-auto">
@@ -52,8 +54,7 @@ const UpdatedAccountHistory:React.FC<ComponentProp> = ({close}) => {
               </thead>
               <tbody>
                 {
-                  history.map((x,index) => {
-                    console.log(new Date(x.updated_date).getTime())
+                  history.length > 0 ? history?.map((x,index) => {
                   return (
                     <tr key={index} className="text-slate-600">
                       <td className="pl-5 py-1.5">{x.principal_os ?  x.principal_os?.toLocaleString('en-PH',{style: "currency",currency: 'PHP'}) : (0).toLocaleString('en-PH',{style: "currency",currency: 'PHP'})}</td>
@@ -63,7 +64,7 @@ const UpdatedAccountHistory:React.FC<ComponentProp> = ({close}) => {
                       <td>{new Date(x.updated_date)?.toLocaleDateString()} - {new Date(x.updated_date).toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true })}</td>
                     </tr>
                   )
-                  })
+                  }) : null
                 }
               </tbody>
             </table>

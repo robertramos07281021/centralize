@@ -26,7 +26,7 @@ type ComponentProp = {
 
 
 const PTP:React.FC<ComponentProp> = ({bucket, interval}) => {
-  const {data:ptpData, refetch} = useQuery<{getTLPTPTotals:PTPType}>(PTP_DAILY,{variables: {input: {bucket: bucket?.id, interval },skip: !bucket?.id}})
+  const {data:ptpData, refetch} = useQuery<{getTLPTPTotals:PTPType}>(PTP_DAILY,{variables: {input: {bucket: bucket?._id, interval },skip: !bucket?._id}})
   const dispatch = useAppDispatch()
 
   useEffect(()=> {
@@ -37,10 +37,10 @@ const PTP:React.FC<ComponentProp> = ({bucket, interval}) => {
         dispatch(setServerError(true))
       }
     }
-    if(bucket?.id) {
+    if(bucket?._id) {
       timer()
     }
-  },[bucket?.id, interval])
+  },[bucket?._id, interval])
 
   const paidSelected = ptpData?.getTLPTPTotals || null
   

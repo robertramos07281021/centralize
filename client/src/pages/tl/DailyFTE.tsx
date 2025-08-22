@@ -56,8 +56,8 @@ const DailyFTE:React.FC<ComponentProp> = ({bucket}) => {
     fetchData()
   },[])
 
-  const findCampaignAssignedData = campaignAssignedData?.getCampaignAssigned.find(y => y.campaign === bucket?.id)
-  const findData = data?.getDailyFTE.find(b => b.campaign === bucket?.id)
+  const findCampaignAssignedData = campaignAssignedData?.getCampaignAssigned.find(y => y.campaign === bucket?._id)
+  const findData = data?.getDailyFTE.find(b => b.campaign === bucket?._id)
   const FTEPercent = (Number(findData?.online) / Number(findCampaignAssignedData?.assigned)) * 100
   return (  
     <div className=' col-span-2 rounded-xl grid grid-cols-3 gap-2' >

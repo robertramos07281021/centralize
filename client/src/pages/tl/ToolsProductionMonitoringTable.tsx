@@ -38,7 +38,7 @@ type ComponentProp = {
 const ToolsProductionMonitoringTable:React.FC<ComponentProp> = ({bucket, interval}) => {
   const dispatch = useAppDispatch()
 
-  const {data,refetch} = useQuery<{getToolsProduction:ToolsProduction[]}>(TOOLS_PRODUCTION,{variables: {bucket: bucket?.id, interval: interval},skip:!bucket?.id})
+  const {data,refetch} = useQuery<{getToolsProduction:ToolsProduction[]}>(TOOLS_PRODUCTION,{variables: {bucket: bucket?._id, interval: interval},skip:!bucket?._id})
   const toolsData = data?.getToolsProduction || []
 
   useEffect(()=> {
@@ -49,7 +49,7 @@ const ToolsProductionMonitoringTable:React.FC<ComponentProp> = ({bucket, interva
         dispatch(setServerError(true))
       }
     }
-    if(bucket?.id) {
+    if(bucket?._id) {
       refetching()
     }
   },[bucket, interval])

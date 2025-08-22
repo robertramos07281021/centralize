@@ -79,7 +79,6 @@ const UpdateCustomerAccount:React.FC<CustomerProps> = ({cancel}) => {
   const dispatch = useAppDispatch()
   const [updateCustomerAccount] = useMutation<{updateCustomerAccount:UpdatedCusterAccount}>(UPDATE_ACCOUNT_INFO, {
     onCompleted: (data)=> {
-      console.log(data.updateCustomerAccount.customerAccount.account_update_history)
       dispatch(setSuccess({
         success: data.updateCustomerAccount.success,
         message: data.updateCustomerAccount.message,
@@ -142,9 +141,9 @@ const UpdateCustomerAccount:React.FC<CustomerProps> = ({cancel}) => {
 
   return (
     <>
-      <fieldset className="flex flex-col gap-5 border w-full border-slate-500 rounded-xl p-2">
+      <fieldset className="flex flex-col gap-5 border w-full border-slate-500 rounded-xl p-2 bg-white">
         <legend className="p-2 text-xl font-medium text-gray-600">For Update</legend>
-        <div className="flex gap-10 items-center justify-center">
+        <div className="flex lg:gap-4 2xl:gap-10 items-center 2xl:text-base text-xs lg:text-sm flex-col 2xl:flex-row justify-center">
           <label>
             <p className="font-medium text-gray-600">Outstanding Balance :</p>
             <input type="text" id="total_os" name="total_os" value={formData.total_os || ""} className="border rounded-lg p-2 border-slate-400" onChange={(e) => handleOnChangeAmount(e,"total_os")}/>

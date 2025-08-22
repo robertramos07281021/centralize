@@ -20,7 +20,7 @@ const Pagination:React.FC<modalProps> = ({value, onChangeValue, onKeyDownValue, 
         <MdOutlineKeyboardArrowLeft className={`text-lg ${currentPage === 1 ? "text-slate-300" : "text-slate-500"} `} onClick={()=> {
           if(currentPage > 1){onKeyDownValue(currentPage - 1)}
         }}/>
-        <span>Page</span>
+        <p>Page</p>
         <input 
           type="text" 
           name="page" 

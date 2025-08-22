@@ -25,7 +25,8 @@ const AdminDashboard = () => {
       const result = res.updateDatabase
       dispatch(setSuccess({
         success: result.success,
-        message: result.message
+        message: result.message,
+        isMessage: false
       }))
     },
     onError: (error)=> {

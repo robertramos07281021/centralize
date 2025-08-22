@@ -96,11 +96,11 @@ const dispositionTypeDefs = gql`
     count: Int
   }
 
-  type Buckets { 
-    bucket: String
-    totalAmount: Float
-    dispositions: [DispoReport]
-  }
+  # type Buckets { 
+  #   bucket: String
+  #   totalAmount: Float
+  #   dispositions: [DispoReport]
+  # }
 
  
   type BucketAomDashobard {

@@ -125,7 +125,8 @@ const DepartmentSection = () => {
         if(res.data || resDept.data) {
           dispatch(setSuccess({
             success: true,
-            message: "Department successfully created"
+            message: "Department successfully created",
+            isMessage: false
           }))
         }
         
@@ -141,7 +142,8 @@ const DepartmentSection = () => {
       if (errorMessage?.includes("Duplicate")) {
         dispatch(setSuccess({
           success: true,
-          message: "Department already exists"
+          message: "Department already exists",
+          isMessage: false
         }))
         setName("")
         setBranch("")
@@ -160,7 +162,8 @@ const DepartmentSection = () => {
       refetchDept();
       dispatch(setSuccess({
         success: true,
-        message: "Department successfully updated"
+        message: "Department successfully updated",
+        isMessage: false
       }))
       setName("")
       setBranch("")
@@ -181,7 +184,8 @@ const DepartmentSection = () => {
       if (errorMessage?.includes("Duplicate")) {
         dispatch(setSuccess({
           success: true,
-          message: "Department already exists"
+          message: "Department already exists",
+          isMessage: false
         }))
         setConfirm(false)
         setName("")
@@ -205,7 +209,8 @@ const DepartmentSection = () => {
       }
       dispatch(setSuccess({
         success: true,
-        message: "Department successfully deleted"
+        message: "Department successfully deleted",
+        isMessage: false
       }))
     },
     onError: ()=> {

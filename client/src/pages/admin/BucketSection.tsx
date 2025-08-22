@@ -10,7 +10,7 @@ import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 type Bucket = {
   name: string
   dept: string
-  id: string
+  _id: string
   viciIp: string
   issabelIp: string
 }
@@ -28,7 +28,7 @@ const DEPARTMENT_QUERY = gql`
 const DEPARTMENT_BUCKET = gql`
   query findDeptBucket($dept:ID) {
     findDeptBucket(dept: $dept) {
-      id
+      _id
       name
       dept
       issabelIp
@@ -87,7 +87,7 @@ const BucketSection = () => {
   const [required,setRequired] = useState<boolean>(false)
   const [isUpdate, setIsUpdate] = useState<boolean>(false)
   const [bucketToUpdate, setBucketToUpdate] = useState<Bucket>({
-    id: "",
+    _id: "",
     name: "",
     dept: "",
     viciIp: "",
@@ -127,7 +127,8 @@ const BucketSection = () => {
       bucketRefetch();
       dispatch(setSuccess({
         success: res.createBucket.success,
-        message: res.createBucket.message
+        message: res.createBucket.message,
+        isMessage: false
       }))
       setBucket("")
       setViciIp("")
@@ -138,7 +139,8 @@ const BucketSection = () => {
       if (errorMessage?.includes("Duplicate")) {
         setSuccess({
           success: true,
-          message: "Bucket already exists"
+          message: "Bucket already exists",
+          isMessage: false
         })
         setBucket("")
       } else {
@@ -153,12 +155,13 @@ const BucketSection = () => {
       bucketRefetch();
       dispatch(setSuccess({
         success: res.updateBucket.success,
-        message: res.updateBucket.message
+        message: res.updateBucket.message,
+        isMessage: false
       }))
       setBucket("")
       setIsUpdate(false)
       setBucketToUpdate({
-        id: "",
+        _id: "",
         name: "",
         dept: "",
         viciIp: "",
@@ -172,7 +175,8 @@ const BucketSection = () => {
       if (errorMessage?.includes("Duplicate")) {
         dispatch(setSuccess({
           success: true,
-          message: "Bucket already exists"
+          message: "Bucket already exists",
+          isMessage: false
         }))
         setConfirm(false)
       } else {
@@ -187,10 +191,11 @@ const BucketSection = () => {
       bucketRefetch();
       dispatch(setSuccess({
         success: res.deleteBucket.success,
-        message: res.deleteBucket.message
+        message: res.deleteBucket.message,
+        isMessage: false
       }))
       setBucketToUpdate({
-        id: "",
+        _id: "",
         name: "",
         dept: "",
         viciIp: "",
@@ -218,7 +223,7 @@ const BucketSection = () => {
     if(b) {
       const input = {
         name: bucket,
-        id: b.id,
+        id: b._id,
         viciIp,
         issabelIp
       }
@@ -227,7 +232,7 @@ const BucketSection = () => {
   },[bucket, viciIp, issabelIp, updateBucket])
 
   const deletingBucket = useCallback(async(b:Bucket | null)=> {
-    if(b) await deleteBucket({variables: { id: b.id } })
+    if(b) await deleteBucket({variables: { id: b._id } })
   },[deleteBucket])
 
   const confirmationFunction: Record<BucketOperation, (b:Bucket | null) => Promise<void>> = {
@@ -324,7 +329,7 @@ const BucketSection = () => {
               </div>
             {
               bucketData?.findDeptBucket.map((b) => 
-                <div key={b.id}
+                <div key={b._id}
                   className="text-sm uppercase font-medium text-slate-500 p-2 border-b border-slate-300 last:border-b-0 hover:bg-slate-100 cursor-pointer grid grid-cols-4"
                 >
                   <div className="uppercase">
@@ -382,7 +387,7 @@ const BucketSection = () => {
                     <button type="button" className={`bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`} onClick={()=>handleSubmit("UPDATE", bucketToUpdate)}>Update</button>
                     <button type="button" className={`bg-slate-500 hover:bg-slate-600 focus:outline-none text-white focus:ring-4 focus:ring-slate-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`} onClick={()=> {
                       setBucketToUpdate({
-                        id: "",
+                        _id: "",
                         name: "",
                         dept: "",
                         viciIp: "",

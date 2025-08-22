@@ -221,7 +221,6 @@ const AccountHistoriesView:React.FC<ComponentProps> = ({histories,close}) => {
                         </button>
                         </td>
                       </tr>
-
                     )
                   })
                 }

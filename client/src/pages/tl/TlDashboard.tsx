@@ -18,7 +18,7 @@ import MessageModal, { MessageChildren } from './MessageModal';
 const DEPT_BUCKET = gql`
   query getDeptBucket {
     getDeptBucket {
-      id
+      _id
       name
       principal
     }
@@ -26,7 +26,7 @@ const DEPT_BUCKET = gql`
 `
 
 export type Bucket = {
-  id: string
+  _id: string
   name: string
   principal: boolean
 }
@@ -47,7 +47,7 @@ const TlDashboard  = () => {
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const bucketData = data?.getDeptBucket || []
-    return Object.fromEntries(bucketData.map(bd=> [bd.id, bd.name]))
+    return Object.fromEntries(bucketData.map(bd=> [bd._id, bd.name]))
   },[data])
   
   const [selectedBucket, setSelectedBucket] = useState<string | null | undefined>(userLogged?.buckets[0])
@@ -57,7 +57,7 @@ const TlDashboard  = () => {
   const bucketSelectorRef = useRef<HTMLDivElement | null>(null)
   const intervalSelectorRef = useRef<HTMLDivElement | null>(null)
 
-  const findBucket = data?.getDeptBucket.find(x=> x.id === selectedBucket) || null
+  const findBucket = data?.getDeptBucket.find(x=> x._id === selectedBucket) || null
 
   useEffect(()=> {
     const refetching = async() => {

@@ -69,7 +69,7 @@ type ComponentProp = {
 const AgentProductionMonitoringTable:React.FC<ComponentProp> = ({bucket, interval}) => {
   const {data:agentBucketData, refetch:findAgentRefetch} = useQuery<{findAgents:Agent[]}>(GET_DEPARTMENT_AGENT)
   const dispatch = useAppDispatch()
-  const {data:agentDailyProd, refetch} = useQuery<{agentDispoDaily:AgentDailies[]}>(AGENT_DAILY_PROD, {variables: {bucket:bucket?.id, interval:interval},skip:!bucket})
+  const {data:agentDailyProd, refetch} = useQuery<{agentDispoDaily:AgentDailies[]}>(AGENT_DAILY_PROD, {variables: {bucket:bucket?._id, interval:interval},skip:!bucket})
   useEffect(()=> {
     const refetching = async() => {
       try {
@@ -82,7 +82,7 @@ const AgentProductionMonitoringTable:React.FC<ComponentProp> = ({bucket, interva
     refetching()
   },[bucket, interval])
 
-  const bucketAgents = bucket ? agentBucketData?.findAgents.filter(x=> x.buckets.includes(bucket.id) && x.type === "AGENT") : []
+  const bucketAgents = bucket ? agentBucketData?.findAgents.filter(x=> x.buckets.includes(bucket._id) && x.type === "AGENT") : []
 
   return (
     <div className="h-full flex flex-col lg:text-xs 2xl:text-base overflow-hidden">

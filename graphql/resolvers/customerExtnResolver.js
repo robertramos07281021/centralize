@@ -112,9 +112,17 @@ const CustomerExtnResolver = {
 
         if(input.balance && input.balance > 0 ){
            forHistory['balance'] = Number(input.balance)
+        } 
+
+        const findCustomerAccountExistingCallfile = await CustomerAccount.findById(input.id)
+
+        const existingOnCallfile = {
+          principal_os: findCustomerAccountExistingCallfile.out_standing_details.principal_os,
+          total_os: findCustomerAccountExistingCallfile.out_standing_details.principal_os,
+          balance: findCustomerAccountExistingCallfile.balance,
         }
-        
-        const updateCustomerAccount = await CustomerAccount.findByIdAndUpdate(input.id, {$set: forUpdate, $push: {account_update_history: forHistory}},{new: true})
+
+        const updateCustomerAccount = await CustomerAccount.findByIdAndUpdate(input.id, {$set: forUpdate, $push: {account_update_history: forHistory}, from_existing: existingOnCallfile},{new: true})
 
         if(!updateCustomerAccount) throw new CustomError('Account not found',404)
 

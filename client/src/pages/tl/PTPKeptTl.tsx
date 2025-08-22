@@ -27,7 +27,7 @@ type ComponentProp = {
 
 const PTPKeptTl:React.FC<ComponentProp> = ({bucket, interval}) => {
   const dispatch = useAppDispatch()
-  const {data:ptpKetpData, refetch} = useQuery<{getTLPTPKeptTotals:PTPKept}>(PTP_KEPT_TOTAL,{variables: {input: {bucket: bucket?.id, interval: interval},skip: !bucket?.id}})
+  const {data:ptpKetpData, refetch} = useQuery<{getTLPTPKeptTotals:PTPKept}>(PTP_KEPT_TOTAL,{variables: {input: {bucket: bucket?._id, interval: interval},skip: !bucket?._id}})
 
   useEffect(()=> {
     const timer = async () => {
@@ -37,7 +37,7 @@ const PTPKeptTl:React.FC<ComponentProp> = ({bucket, interval}) => {
         dispatch(setServerError(true))
       }
     }  
-    if(bucket?.id) {
+    if(bucket?._id) {
       timer()
     }
   },[bucket, interval])

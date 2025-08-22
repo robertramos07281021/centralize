@@ -20,14 +20,14 @@ const GET_AOM_DEPT = gql`
 `
 
 type DeptBucket = {
-  id: string
+  _id: string
   name: string
 }
 
 const GET_DEPT_BUCKET = gql`
   query findDeptBucket($dept: ID) {
     findDeptBucket(dept: $dept) {
-      id
+      _id
       name
     }
   }
@@ -56,7 +56,7 @@ const Reports = () => {
     if(deptBucketData) {
       const newObject:{[key:string]:string} = {}
       deptBucketData.findDeptBucket.map(e=> {
-        newObject[e.name] = e.id
+        newObject[e.name] = e._id
       })
       setBucketObject(newObject)
     }
@@ -110,7 +110,7 @@ const Reports = () => {
               <option value="">Select Bucket</option>
               {
                 deptBucketData?.findDeptBucket?.map((db)=> 
-                  <option key={db.id} value={db.name} className="uppercase">{db.name}</option>
+                  <option key={db._id} value={db.name} className="uppercase">{db.name}</option>
                 )
               }
             </select>

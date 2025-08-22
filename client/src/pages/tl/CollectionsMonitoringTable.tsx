@@ -25,7 +25,7 @@ type ComponentProp = {
 
 const CollectionsMonitoringTable:React.FC<ComponentProp> = ({bucket, interval}) => {
   const dispatch = useAppDispatch()
-  const {data, refetch} = useQuery<{getCollectionMonitoring:CollectionMonitoringData}>(COLLECTION_MONITORING,{variables: {bucket: bucket?.id, interval: interval}, skip:!bucket?.id})
+  const {data, refetch} = useQuery<{getCollectionMonitoring:CollectionMonitoringData}>(COLLECTION_MONITORING,{variables: {bucket: bucket?._id, interval: interval}, skip:!bucket?._id})
   useEffect(()=> {
     const refetching = async() => {
       try {
@@ -34,10 +34,10 @@ const CollectionsMonitoringTable:React.FC<ComponentProp> = ({bucket, interval}) 
         dispatch(setServerError(true))
       }
     }
-    if(bucket?.id) {
+    if(bucket?._id) {
       refetching()
     }
-  },[bucket?.id,interval])
+  },[bucket?._id,interval])
 
   const newData = data?.getCollectionMonitoring ? data?.getCollectionMonitoring : null
 

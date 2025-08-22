@@ -60,7 +60,8 @@ const BranchSection = () => {
       await refetch();
       dispatch(setSuccess({
         success: true,
-        message: "Branch successfully created"
+        message: "Branch successfully created",
+        isMessage: false
       }))
       setName("")
     },
@@ -69,7 +70,8 @@ const BranchSection = () => {
       if (errorMessage?.includes("E11000")) {
         dispatch(setSuccess({
           success: true,
-          message: "Branch already exists"
+          message: "Branch already exists",
+          isMessage: false
         }))
         setName("")
         setConfirm(false)
@@ -86,7 +88,8 @@ const BranchSection = () => {
         if(res.data) {
           dispatch(setSuccess({
             success: true,
-            message: "Branch successfully updated"
+            message: "Branch successfully updated",
+            isMessage: false
           }))
         }
       } catch (error) {
@@ -101,7 +104,8 @@ const BranchSection = () => {
       if (errorMessage?.includes("E11000")) {
         dispatch(setSuccess({
           success: true,
-          message: "Branch already exists"
+          message: "Branch already exists",
+          isMessage:false
         }))
         setConfirm(false)
       } else {
@@ -117,7 +121,8 @@ const BranchSection = () => {
         if(res.data) {
           dispatch(setSuccess({
             success: true,
-            message: "Branch successfully deleted"
+            message: "Branch successfully deleted",
+            isMessage:false
           }))
         }
       } catch (error) {

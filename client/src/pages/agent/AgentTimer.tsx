@@ -5,14 +5,14 @@ import gql from "graphql-tag";
 import { useQuery } from "@apollo/client";
 
 type Bucket = {
-  id:string
+  _id:string
   name:string
 }
 
 const GET_AGENT_BUCKET = gql`
   query getDeptBucket {
     getDeptBucket {
-      id
+      _id
       name
     }
   }
@@ -39,7 +39,7 @@ const AgentTimer = () => {
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const db = agentBucketData?.getDeptBucket || []
-    return Object.fromEntries(db.map(e=> [e.id, e.name]))
+    return Object.fromEntries(db.map(e=> [e._id, e.name]))
   },[agentBucketData])
 
 

@@ -137,7 +137,8 @@ const DispositionConfigurationView = () => {
       refetch()
       dispatch(setSuccess({
         success: res.createDispositionType.success,
-        message: res.createDispositionType.message
+        message: res.createDispositionType.message,
+        isMessage: false
       }))
       setInputValue({
         name: "",
@@ -159,7 +160,8 @@ const DispositionConfigurationView = () => {
       refetch()
       dispatch(setSuccess({
         success: res.updateDispositionType.success,
-        message: res.updateDispositionType.message
+        message: res.updateDispositionType.message,
+        isMessage: false
       })),
       setInputValue({
         name: "",
