@@ -62,8 +62,8 @@ const ToolsProductionMonitoringTable:React.FC<ComponentProp> = ({bucket, interva
   const totalPaid = toolsData.length > 0 ? toolsData.map(rpc => rpc.paid).reduce((t,v)=> t + v) : 0
 
   return (
-    <div className="w-full h-full flex flex-col">
-      <h1 className="font-medium text-lg text-gray-800 bg-blue-200 px-2 py-1.5 text-center mt-2">Tools Production Monitoring</h1>
+    <div className="w-full h-full flex lg:text-xs 2xl:text-base flex-col">
+      <h1 className="font-medium lg:text-sm 2xl:text-lg text-gray-800 bg-blue-200 px-2 py-1.5 text-center mt-2">Tools Production Monitoring</h1>
       <table className="w-full h-full text-gray-600 table-fixed">
         <thead className="bg-slate-200 sticky top-0 left-0 border-4 border-white">
           <tr className="border-t border-white">

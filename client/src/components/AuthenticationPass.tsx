@@ -37,7 +37,8 @@ const AuthenticationPass:React.FC<modalComponents> = ({yesMessage, event, no}) =
       if(data.message === "Invalid") {
         dispatch(setSuccess({
           success: true,
-          message: "Password is incorrect"
+          message: "Password is incorrect",
+          isMessage: false
         }))
         no()
       } else {

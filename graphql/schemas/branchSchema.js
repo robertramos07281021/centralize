@@ -7,8 +7,8 @@ const branchTypeDefs = gql`
   }
   
   type Success {
-    success: Boolean!
-    message: String!
+    success: Boolean
+    message: String
   }
   
   type Query {

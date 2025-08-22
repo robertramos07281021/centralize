@@ -85,8 +85,8 @@ const AgentProductionMonitoringTable:React.FC<ComponentProp> = ({bucket, interva
   const bucketAgents = bucket ? agentBucketData?.findAgents.filter(x=> x.buckets.includes(bucket.id) && x.type === "AGENT") : []
 
   return (
-    <div className="h-full flex flex-col overflow-hidden">
-      <h1 className="font-medium text-lg text-gray-800 bg-blue-200 px-2 py-1.5 text-center">Agent Production Monitoring</h1>
+    <div className="h-full flex flex-col lg:text-xs 2xl:text-base overflow-hidden">
+      <h1 className="font-medium lg:text-sm 2xl:text-lg text-gray-800 bg-blue-200 px-2 py-1.5 text-center">Agent Production Monitoring</h1>
       <div className="w-full h-full overflow-auto">
         <table className="w-full text-gray-600 table-fixed">
           <thead className="bg-slate-200 sticky top-0 left-0 border-4 border-white">
@@ -109,7 +109,7 @@ const AgentProductionMonitoringTable:React.FC<ComponentProp> = ({bucket, interva
                 const theVariance = findAgent ? x.targets[interval] - (findAgent?.kept + findAgent?.collected) : null
                 return (
                   <tr className="text-center text-gray-600" key={x._id}>
-                    <th className="py-2 text-sm text-left pl-2 capitalize">{x.name}</th>
+                    <th className="py-2 lg:text-xs 2xl:text-sm text-left pl-2 capitalize text-nowrap">{x.name}</th>
                     <td>{findAgent?.RPC || '-'}</td>
                     <td>{findAgent?.ptp.toLocaleString('en-PH',{style: 'currency', currency: "PHP"}) || '-'}</td>
                     <td>{findAgent?.kept.toLocaleString('en-PH',{style: 'currency', currency: "PHP"}) || '-'}</td>

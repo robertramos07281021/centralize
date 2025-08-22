@@ -144,7 +144,7 @@ const Navbar = () => {
   })
 
   useEffect(()=> {
-    dispatch(setSuccess({success: false, message: ""}))
+    dispatch(setSuccess({success: false, message: "", isMessage:false}))
   },[location.pathname])
 
   const [logout, {loading}] = useMutation(LOGOUT,{
@@ -268,6 +268,7 @@ const Navbar = () => {
   }, [poPupUser]);
 
 
+
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       if(data && userLogged) {
@@ -301,7 +302,7 @@ const Navbar = () => {
       }
       {
         success.success &&
-        <SuccessToast successObject={success || null} close={()=> dispatch(setSuccess({success:false, message:""}))}/>
+        <SuccessToast successObject={success || null} close={()=> dispatch(setSuccess({success:false, message:"",isMessage: false}))}/>
       }
       <div className="sticky top-0 z-40 print:hidden">
         <div className="p-2 bg-blue-500 flex justify-between items-center ">

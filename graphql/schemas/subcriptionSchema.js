@@ -27,6 +27,11 @@ const subscriptionTypeDefs = gql`
     message: String
   }
 
+  type MessageBucket {
+    bucket: ID,
+    message: String
+  }
+
   type Subscription {
     ping: String!,
     somethingOnAgentAccount: SubscriptionSuccess
@@ -37,6 +42,7 @@ const subscriptionTypeDefs = gql`
     taskChanging: SubsribeSuccess
     newCallfile: BucketSubscribeSuccess,
     updateOnCallfiles: UpdateCAllfile
+    newBucketMessage:MessageBucket
   }
 
 `

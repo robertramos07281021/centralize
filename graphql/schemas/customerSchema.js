@@ -60,8 +60,6 @@ const customerTypeDefs = gql`
   }
 
   type Success {
-    success: Boolean!
-    message: String!
     customer: CustomerInfo
   }
   
@@ -152,7 +150,7 @@ const customerTypeDefs = gql`
     paid_amount: Float
     out_standing_details: outStandingDetails
     grass_details: grassDetails
-    account_bucket: AccountBucket
+    account_bucket: Bucket
     customer_info: CustomerInfo
     currentDisposition:CurrentDispo 
     dispoType: DispoType
@@ -170,6 +168,7 @@ const customerTypeDefs = gql`
     mobile: String
   }
 
+
   type Search {
     _id: ID
     case_id: String
@@ -181,14 +180,18 @@ const customerTypeDefs = gql`
     balance: Float
     month_pd: Int
     dpd: Int
+    assigned: ID
+    assigned_date: String
     paid_amount: Float
     out_standing_details: outStandingDetails
+    account_update_history: [AccountUpdateHistory]
     grass_details: grassDetails
-    account_bucket: AccountBucket
+    account_bucket: Bucket
     customer_info: CustomerInfo
     isRPCToday: Boolean
     emergency_contact: EmergencyContact
     dispo_history:[CurrentDispo]
+    current_disposition: CurrentDispo
   }
 
   type PerformanceStatistic {

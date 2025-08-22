@@ -4,8 +4,6 @@ const userTypeDefs = gql`
   scalar DateTime
 
   type Success {
-    success: Boolean!
-    message: String!
     user: Users
   }
 

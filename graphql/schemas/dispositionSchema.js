@@ -27,10 +27,6 @@ const dispositionTypeDefs = gql`
     chatApp: String
   }
   
-  type Success {
-    success: Boolean!
-    message: String!
-  }
 
   type Agent {
     _id: ID

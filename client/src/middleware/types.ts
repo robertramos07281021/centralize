@@ -88,15 +88,19 @@ type outStandingDetails = {
   late_charge_waive_fee_os: number
 }
 
+
 type grassDetails = {
   grass_region: string
   vendor_endorsement: string
   grass_date: string
 }
 
+
 type  AccountBucket = {
   name: string
   dept: string
+  _id:string
+  can_update_ca: boolean
 }
 
 type EmergencyContact = {
@@ -134,6 +138,14 @@ export type CurrentDispo = {
   RFD: String
 }
 
+export type AccountUpdateHistory = {
+  principal_os: number,
+  total_os: number,
+  balance: number,
+  updated_date: string,
+  updated_by: string
+}
+
 export type Search = {
   _id: string
   case_id: string
@@ -146,6 +158,9 @@ export type Search = {
   balance: number
   paid_amount: number
   month_pd: number
+  assigned: string
+  assigned_date: string
+  account_update_history: AccountUpdateHistory[]
   out_standing_details: outStandingDetails
   grass_details: grassDetails
   account_bucket: AccountBucket
@@ -153,4 +168,5 @@ export type Search = {
   isRPCToday: boolean
   emergency_contact: EmergencyContact
   dispo_history: CurrentDispo[]
+  current_disposition: CurrentDispo
 }

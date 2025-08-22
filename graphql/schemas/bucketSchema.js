@@ -10,12 +10,10 @@ const bucketTypeDefs = gql`
     viciIp: String
     issabelIp: String
     principal: Boolean
+    message: String
+    can_update_ca: Boolean
   }
   
-  type Success {
-    success: Boolean!
-    message: String!
-  }
   
   type GetBuckets {
     dept: String
@@ -43,12 +41,14 @@ const bucketTypeDefs = gql`
     findDeptBucket(dept:ID):[Bucket]
     findAomBucket:[AomDept]
     getTLBucket:[Bucket]
+    selectedBucket(id:ID):Bucket
   } 
 
   type Mutation {
     createBucket(name:String!, dept: String!, viciIp: String, issabelIp: String): Success
     updateBucket(input:UpdateBucket): Success
     deleteBucket(id:ID!): Success
+    messageBucket(id:ID!,message:String):Success
   }
 `
 

@@ -9,6 +9,8 @@ import { useLocation } from "react-router-dom"
 import AccountHistoriesView from "./AccountHistoriesView"
 import { BsExclamationSquareFill } from "react-icons/bs";
 import DispositionRecords from "./DispositionRecords"
+import UpdateCustomerAccount from "./UpdateCustomerAccount"
+import UpdatedAccountHistory from "./UpdatedAccountHistory"
 
 
 const OTHER_ACCOUNTS = gql`
@@ -191,8 +193,29 @@ const FieldsDiv = ({label, value, endorsementDate}:{label:string, value:string |
   return (
     <div className="flex flex-col items-center 2xl:flex-row w-full ">
       <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-5/10 leading-4 select-none">{label} :</p>
-      <div className={`${newValue || null  ?  "p-2": "p-4.5"} select-none 2xl:ml-2 text-xs 2xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
+      <div className={`${newValue || null  ? "p-2": "p-4.5"} select-none 2xl:ml-2 text-xs 2xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
     </div>
+  )
+}
+const colorObject:{[key:string]:string} = {
+  blue: 'bg-blue-400 hover:bg-blue-600',
+  green: 'bg-green-400 hover:bg-green-600',
+  yellow: 'bg-yellow-400 hover:bg-yellow-600',
+  cyan: 'bg-cyan-400 hover:bg-cyan-600',
+}
+
+
+const Buttons = ({label, onClick, length, color}:{label:string, onClick: ()=> void, length: number, color:keyof typeof colorObject}) => {
+
+  return (
+     <button className={` px-2 py-1.5 rounded-md relative bg-blue-400 ${colorObject[color]} text-slate-800 font-medium cursor-pointer  hover:text-white`} onClick={onClick}>
+      <span>
+        {label}
+      </span>
+      <div className={`absolute -top-5.5 -right-4 rounded min-w-5 min-h-5 text-xs px-2 ${length > 0 && !isNaN(length) ?  'bg-red-500' : 'bg-green-500'} text-white flex items-center justify-center `}>
+        {length}
+      </div>
+    </button>
   )
 }
 
@@ -204,7 +227,7 @@ export type ChildHandle = {
 const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
   const location = useLocation()
   const isTLCIP = location.pathname === 'tl-cip'
-  const {selectedCustomer} = useSelector((state:RootState)=> state.auth)
+  const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
   const [showAccounts, setShowAccounts] = useState<boolean>(false)
   const {data} = useQuery<{customerOtherAccounts:Search[]}>(OTHER_ACCOUNTS,{variables: {caId: selectedCustomer?._id}, skip: !selectedCustomer || isTLCIP})
   const [showAccountHistory, setShowAccountHistory] = useState<boolean>(false)
@@ -212,6 +235,9 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
   const [showButton, setShowButton] = useState<boolean>(false)
   const divRef = useRef<HTMLDivElement | null>(null);
   const [showDispoHistory, setShowDispoHistory] = useState<boolean>(false)
+  const [updateCustomerAccounts, setUpdateCustomerAccounts] = useState<boolean>(false)
+  const UpdateAccountHistory = selectedCustomer?.account_update_history
+  const [showUpdateOnCA, setShowUpdateOnCA] = useState<boolean>(false)
 
   useImperativeHandle(ref, ()=> ({
     showButtonToFalse: () => {
@@ -229,8 +255,7 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
     return ()=> clearTimeout(timer)
   },[selectedCustomer])
 
-  const sumOf = (selectedCustomer && data && accountHistory) ? data?.customerOtherAccounts?.length + accountHistory.findAccountHistories.length + selectedCustomer.dispo_history.length : 0
-
+  const sumOf = (selectedCustomer && data && accountHistory) ? data?.customerOtherAccounts?.length + accountHistory?.findAccountHistories?.length + selectedCustomer?.dispo_history?.length + selectedCustomer?.account_update_history?.length : 0
 
   return selectedCustomer &&  (
     <>
@@ -244,7 +269,11 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
       }
       {
         showDispoHistory &&
-        <DispositionRecords close={()=> setShowDispoHistory(false) }/>
+        <DispositionRecords close={()=> setShowDispoHistory(false)}/>
+      }
+      { 
+        showUpdateOnCA && 
+        <UpdatedAccountHistory close={()=> setShowUpdateOnCA(false)}/>
       }
       
         <div className="fixed top-30 gap-2 left-5">
@@ -255,43 +284,28 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
             }
             {
               !showButton &&
-              <div className={`absolute -top-5.5 -right-4 min-w-5 min-h-5 text-xs px-2 flex items-center justify-center text-white rounded-full ${sumOf > 0 ? "bg-red-500" : "bg-green-500"}`}>
-              {sumOf}
+              <div className={`absolute -top-5.5 -right-4 min-w-5 min-h-5 text-xs px-2 flex items-center justify-center text-white rounded ${sumOf > 0 || !isNaN(sumOf)  ? "bg-red-500" : "bg-green-500"}`}>
+              {isNaN(sumOf) ? 0 : sumOf}
             </div>}
             {
               showButton &&
                 <div className="border mt-1 flex flex-col gap-8 p-8 rounded-md border-slate-400 bg-white shadow z-50" ref={divRef}>
-                  <button className={` px-2 py-1.5 rounded-md relative bg-blue-400 text-slate-800 font-medium cursor-pointer hover:bg-blue-600 hover:text-white `} onClick={()=> setShowDispoHistory(true)}>
-                    <span>
-                      Account History
-                    </span>
-                    <div className="absolute -top-5.5 -right-4 rounded-full min-w-5 min-h-5 text-xs px-2 bg-red-500 text-white flex items-center justify-center ">
-                      {selectedCustomer && selectedCustomer.dispo_history.length > 0 ? selectedCustomer.dispo_history.length : 0}
-                    </div>
-                  </button>
-                  <button className={`px-2 py-1.5 relative rounded-md bg-green-400 text-slate-800 font-medium hover:text-white hover:bg-green-600 cursor-pointer`} onClick={()=>  setShowAccounts(true)}>
-                    <span>
-                      Other Accounts
-                    </span>
-                    <div className="absolute -top-5.5 -right-4 rounded-full min-w-5 min-h-5 text-xs px-2 bg-red-500 text-white flex items-center justify-center ">
-                      { data && data?.customerOtherAccounts?.length > 0 ? data?.customerOtherAccounts?.length : 0}
-                    </div>
-                  </button>
-                  <button className={` px-2 py-1.5 rounded-md relative bg-yellow-400 text-slate-800 font-medium cursor-pointer hover:bg-yellow-600 hover:text-white `} onClick={()=> setShowAccountHistory(true)}>
-                    <span>
-                      Past Callfile History
-                    </span>
-                    <div className="absolute -top-5.5 -right-4 rounded-full min-w-5 min-h-5 text-xs px-2 bg-red-500 text-white flex items-center justify-center ">
-                      {accountHistory && accountHistory.findAccountHistories.length > 0 ? accountHistory.findAccountHistories.length : 0}
-                    </div>
-                  </button>
+                  <Buttons label="Account History" onClick={()=> setShowDispoHistory(true)} length={selectedCustomer && selectedCustomer.dispo_history.length > 0 ? selectedCustomer.dispo_history.length : 0} color="blue"/>
+                  <Buttons label="Other Accounts" onClick={()=> setShowAccounts(true)} length={ data && data?.customerOtherAccounts?.length > 0 ? data?.customerOtherAccounts?.length : 0} color="green"/>
+                  <Buttons label="Past Callfile History" onClick={()=> setShowAccountHistory(true)} length={accountHistory && accountHistory.findAccountHistories.length > 0 ? accountHistory.findAccountHistories.length : 0} color="yellow"/>
+                  {
+                    selectedCustomer.account_bucket.can_update_ca && 
+                    <Buttons label="Update Account History" onClick={()=> setShowUpdateOnCA(true)} length= {UpdateAccountHistory && UpdateAccountHistory.length > 0 ? UpdateAccountHistory.length : 0} color="cyan"/>
+                  }
                 </div>
               }
           </div>
         </div>
-
-
-      <div className="p-4 flex flex-col gap-5">
+      <div className="p-4 flex flex-col gap-5 relative">
+        {
+          userLogged?.type !== "AGENT" && !updateCustomerAccounts && Math.ceil(selectedCustomer.balance) > 0 && selectedCustomer.account_bucket.can_update_ca && 
+          <button className="absolute right-5 py-2.5 top-0 hover:bg-orange-600 bg-orange-400 font-medium rounded-lg text-sm cursor-pointer px-5 text-white" onClick={()=> setUpdateCustomerAccounts(prev => !prev)}>Update</button>
+        }
         <h1 className="text-center font-bold text-slate-600 xl:text-base 2xl:text-lg mb-5">Account Information</h1>
         <div className="flex xl:gap-10 gap-2 justify-center ">
           <div className="flex flex-col gap-2  w-full">
@@ -305,26 +319,30 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
             <FieldsDiv label="DPD Due Date" value={ selectedCustomer?.max_dpd } endorsementDate={ selectedCustomer?.endorsement_date }/>
           </div>
         </div>
-        <div className="flex flex-col xl:flex-row items-center justify-center xl:gap-5 gap-2 mt-5 text-slate-500 font-medium">
-          <div>
-            <p className="font-medium 2xl:text-lg lg:text-base ">Outstanding Balance</p>
-            <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
-              {selectedCustomer?.out_standing_details.total_os.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+        {
+          !updateCustomerAccounts ?
+          <div className="flex flex-col xl:flex-row items-center justify-center xl:gap-5 gap-2 mt-5 text-slate-500 font-medium">
+            <div>
+              <p className="font-medium 2xl:text-lg lg:text-base ">Outstanding Balance</p>
+              <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
+                {selectedCustomer?.out_standing_details.total_os.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+              </div>
             </div>
-          </div>
-          <div>
-            <p className="font-medium 2xl:text-base lg:text-md ">Balance</p>
-            <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
-              {selectedCustomer?.balance.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+            <div>
+              <p className="font-medium 2xl:text-base lg:text-md ">Balance</p>
+              <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
+                {selectedCustomer?.balance.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+              </div>
             </div>
-          </div>
-          <div>
-            <p className="font-medium 2xl:text-lg lg:text-base ">Total Paid</p>
-            <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
-              {selectedCustomer?.paid_amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+            <div>
+              <p className="font-medium 2xl:text-lg lg:text-base ">Total Paid</p>
+              <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
+                {selectedCustomer?.paid_amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+              </div>
             </div>
-          </div>
-        </div>
+          </div> : 
+          <UpdateCustomerAccount cancel={()=> setUpdateCustomerAccounts(prev => !prev)}/>
+        }
         {
           data && data?.customerOtherAccounts?.length > 0 && 
           (()=> {

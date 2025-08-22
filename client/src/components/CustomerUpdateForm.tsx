@@ -148,7 +148,8 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
       dispatch(setSelectedCustomer({ ...selectedCustomer, customer_info: result.customer }));
       dispatch(setSuccess({
         success: result.success,
-        message: result.message
+        message: result.message,
+        isMessage: false
       }))
       cancel();
     },

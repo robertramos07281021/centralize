@@ -87,8 +87,51 @@ const CustomerExtnResolver = {
         throw new CustomError(error.message, 500)
       }
     }
+  },
+  Mutation: {
+    updateCustomerAccount: async(_,{input},{user})=> {
+      try {
+      if(!user) throw new CustomError("Unauthorized",401)
+        const forUpdate = {}
+        if(input.total_os && input.total_os > 0) {forUpdate['out_standing_details.total_os'] = Number(input.total_os)}
+        if(input.principal_os && input.principal_os > 0) {forUpdate['out_standing_details.principal_os'] = Number(input.principal_os)}
+        if(input.balance && input.balance > 0 ) {forUpdate['balance'] = Number(input.balance)}
+      
+        const forHistory = {
+          updated_date:new Date(),
+          updated_by: user._id
+        }
+
+        if(input.total_os && input.total_os > 0) {
+           forHistory['total_os'] = Number(input.total_os)
+        }
+
+        if(input.principal_os && input.principal_os > 0) {
+          forHistory['principal_os'] = Number(input.principal_os)
+        }
+
+        if(input.balance && input.balance > 0 ){
+           forHistory['balance'] = Number(input.balance)
+        }
+        
+        const updateCustomerAccount = await CustomerAccount.findByIdAndUpdate(input.id, {$set: forUpdate, $push: {account_update_history: forHistory}},{new: true})
+
+        if(!updateCustomerAccount) throw new CustomError('Account not found',404)
+
+        return {
+          success: true,
+          message: "Successfully Updated Customer Account",
+          customerAccount: {
+            balance: updateCustomerAccount.balance,
+            out_standing_details: updateCustomerAccount.out_standing_details,
+            account_update_history: updateCustomerAccount.account_update_history
+          }
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    }
   }
-  
 
 }
 

@@ -120,6 +120,14 @@ const bucketResolver = {
         throw new CustomError(error.message, 500)
       }
     },
+    selectedBucket: async(_,{id})=> {
+      try {
+        const findBucket = await Bucket.findById(id)
+        return findBucket
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
+    }
   },
   Mutation: {
     createBucket: async(_,{ name, dept, viciIp, issabelIp },{ user }) => {
@@ -171,6 +179,27 @@ const bucketResolver = {
         return {message: "Bucket successfully deleted",success: true}
       } catch (error) {
         throw new CustomError(error.message, 500)
+      }
+    },
+    messageBucket: async(_,{id,message},{pubsub, PUBSUB_EVENTS}) => {
+      try {
+        const findBucket = await Bucket.findByIdAndUpdate(id, {$set: {message: message}})
+
+        if(!findBucket) return new CustomError('Bucket not found', 404)
+
+        await pubsub.publish(PUBSUB_EVENTS.NEW_BUCKET_MESSAGE, {
+          newBucketMessage: {
+            bucket: findBucket._id,
+            message: PUBSUB_EVENTS.NEW_BUCKET_MESSAGE
+          },
+        });
+        
+        return {
+          success: true,
+          message: "Message successfully send"
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500) 
       }
     }
   }

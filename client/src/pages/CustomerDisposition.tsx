@@ -40,6 +40,8 @@ const SEARCH = gql`
       paid_amount
       isRPCToday
       month_pd
+      assigned 
+      assigned_date
       emergency_contact {
         name
         mobile
@@ -62,6 +64,13 @@ const SEARCH = gql`
         sms
         RFD
       }
+      account_update_history {
+        principal_os
+        total_os
+        balance
+        updated_date
+        updated_by
+      }
       out_standing_details {
         principal_os
         interest_os
@@ -80,6 +89,8 @@ const SEARCH = gql`
       account_bucket {
         name
         dept
+        _id
+        can_update_ca
       }
       customer_info {
         fullName
@@ -90,6 +101,24 @@ const SEARCH = gql`
         addresses
         _id
         isRPC
+      }
+      current_disposition {
+        _id
+        amount
+        disposition
+        payment_date
+        ref_no
+        existing
+        comment
+        payment
+        payment_method
+        user
+        RFD
+        dialer
+        createdAt
+        contact_method
+        chatApp
+        sms
       }
     }
   }
@@ -335,7 +364,8 @@ const CustomerDisposition = () => {
       if(selectedCustomer) {
         dispatch(setSuccess({
           success: res.updateRPC.success,
-          message: res.updateRPC.message
+          message: res.updateRPC.message,
+          isMessage: false
         }))
         dispatch(setSelectedCustomer({...selectedCustomer, customer_info: res.updateRPC.customer}))
         setIsRPC(false)

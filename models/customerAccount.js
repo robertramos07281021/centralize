@@ -69,7 +69,37 @@ const customerAccountSchema = new Schema(
       type: Boolean,
       default: false
     },
-    
+    account_update_history: [
+      {
+        principal_os: {
+          type: Number
+        },
+        total_os: {
+          type: Number
+        },
+        balance: {
+          type: Number
+        },
+        updated_date: {
+          type: Date
+        },
+        updated_by: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User"
+        }
+      }
+    ],
+    from_existing: {
+      principal_os: {
+        type: Number
+      },
+      total_os: {
+        type: Number
+      },
+      balance: {
+        type: Number
+      },
+    },
     //object
     out_standing_details: {
       principal_os: {

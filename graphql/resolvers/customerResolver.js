@@ -199,14 +199,16 @@ const customerResolver = {
               account_id: "$ca.account_id",
               endorsement_date: "$ca.endorsement_date",
               credit_customer_id: "$ca.credit_customer_id",
-              bill_due_day: "$ca.bill_due_day",
+              bill_due_date: "$bill_due_date",
               max_dpd: "$ca.max_dpd",
               dpd: "$ca.dpd",
+              account_update_history: '$ca.account_update_history',
               month_pd: "$ca.month_pd",
               balance: "$ca.balance",
               paid_amount: "$ca.paid_amount",
               isRPCToday: "$isRPCToday",
               dispo_history: "$dispo_history",
+              current_disposition: "$cd",
               out_standing_details: "$ca.out_standing_details",
               grass_details: "$ca.grass_details",
               account_bucket: "$account_bucket",
@@ -1054,17 +1056,18 @@ const customerResolver = {
           });
           
           const paid_amount = element.total_os - element.balance 
-          const findAgent = await User.findOne({callfile_id: {$eq: element.collectorID}})
-          if(findAgent) {
-            const findAgentProduction = await Production.findOne({user: findAgent._id}).lean()
+          let agent = null
+          if(element.collectorID) {
+            agent = await User.findOne({callfile_id: {$eq: element.collectorID}})
+            const findAgentProduction = await Production.findOne({user: agent._id}).lean()
             if(!findAgentProduction) {
               await Production.create({user:findAgent, assignedAccount: 1})
             } else {
               await Production.findByIdAndUpdate(findAgentProduction._id,{$inc: {assignedAccount: 1 }})
             }
           }
-
-          const caResult = await CustomerAccount.create({
+          
+          const createCA = {
             customer: customer._id,
             bucket: findBucket._id,
             case_id: element.case_id,
@@ -1078,7 +1081,6 @@ const customerResolver = {
             month_pd: element.mpd,
             paid_amount,
             bill_due_date: element.bill_due_date,
-            assigned: findAgent ? findAgent._id : null,
             account_id: element.account_id ,
             out_standing_details: {
               principal_os: element.principal_os,
@@ -1100,11 +1102,15 @@ const customerResolver = {
               vendor_endorsement: element.vendor_endorsement,
               grass_date: element.grass_date,
             }
-          });
-          
+          }
+          if(agent) {
+            createCA['assigned'] = agent._id
+            createCA['assignedModel'] = 'User'
+            createCA['assigned_date'] = new Date()
+          }
+          const caResult = await CustomerAccount.create(createCA);
           customer.customer_account = caResult._id
           await customer.save()
-
         }));
 
         await newCallfile.save()
@@ -1121,7 +1127,6 @@ const customerResolver = {
           message: "Callfile successfully created"
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },

@@ -17,11 +17,6 @@ const dispositionTypeTypeDefs = gql`
     active: Boolean
     contact_methods: CA
   }
-
-  type Success {
-    success: Boolean
-    message: String
-  }
   
   enum Method {
     skipper

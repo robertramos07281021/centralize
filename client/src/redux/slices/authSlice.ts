@@ -34,9 +34,10 @@ export enum TaskFilter {
   unassigned = "unassigned"
 }
 
-type success = {
+type Success = {
   success: boolean,
   message: string
+  isMessage: boolean
 }
 
 export type Targets = {
@@ -50,7 +51,7 @@ type UserState = {
   userLogged: User | null
   search: search
   page: number
-  selectedCustomer:Search | null
+  selectedCustomer: Search | null
   selectedGroup: string
   selectedAgent: string
   tasker: Tasker
@@ -64,7 +65,7 @@ type UserState = {
   agentRecordingPage: number
   adminUsersPage: number,
   myToken: string | null
-  success: success
+  success: Success
 }
 
 const initialState:UserState = {
@@ -84,7 +85,8 @@ const initialState:UserState = {
   adminUsersPage: 1,
   success: {
     success: false,
-    message: ""
+    message: "",
+    isMessage: false
   },
   breakValue: BreakEnum.WELCOME,
   userLogged: null,
@@ -184,10 +186,11 @@ const authSlice = createSlice({
       state.myToken = null
       state.success = {
         success: false,
-        message: ""
+        message: "",
+        isMessage: false
       }
     },
-    setSuccess: (state, action:PayloadAction<success>) => {
+    setSuccess: (state, action:PayloadAction<Success>) => {
       state.success = action.payload
     } 
   },

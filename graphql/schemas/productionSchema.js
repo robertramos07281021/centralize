@@ -37,8 +37,6 @@ const productionTypeDefs = gql`
   }
 
   type Success {
-    success: Boolean
-    message: String
     start: DateTime
   }
 

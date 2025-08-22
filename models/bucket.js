@@ -24,6 +24,13 @@ const bucketSchema = new Schema(
     issabelIp: {
       type: String,
     },
+    message: {
+      type:String
+    },
+    can_update_ca: {
+      type: Boolean,
+      default: false
+    },
     target_details: {
       default_target_daily: {
         type: Number,

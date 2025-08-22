@@ -171,7 +171,8 @@ const GroupSection = () => {
       deptGroupDataRefetch()
       dispatch(setSuccess({
         success: result.createGroup.success,
-        message: result.createGroup.message
+        message: result.createGroup.message,
+        isMessage: false
       }))
     },
     onError: (error) => {
@@ -179,7 +180,8 @@ const GroupSection = () => {
       if (errorMessage?.includes("E11000")) {
         dispatch(setSuccess({
           success: true,
-          message: "Group name already exists"
+          message: "Group name already exists",
+          isMessage: false
         }))
         setConfirm(false)
       } else {
@@ -198,7 +200,8 @@ const GroupSection = () => {
       setUpdateGroup(false)
       dispatch(setSuccess({
         success: result.updateGroup.success,
-        message: result.updateGroup.message
+        message: result.updateGroup.message,
+        isMessage: false
       }))
     },
     onError: (error)=> {
@@ -206,7 +209,8 @@ const GroupSection = () => {
       if (errorMessage?.includes("E11000")) {
         dispatch(setSuccess({
           success: true,
-          message: "Group name already exists"
+          message: "Group name already exists",
+          isMessage: false
         }))
         setConfirm(false)
       } else {
@@ -226,7 +230,8 @@ const GroupSection = () => {
       setAddMember(false)
       dispatch(setSuccess({
         success: result.deleteGroup.success,
-        message: result.deleteGroup.message
+        message: result.deleteGroup.message,
+        isMessage: false
       }))
     },
     onError: ()=> {

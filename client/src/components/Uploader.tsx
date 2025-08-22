@@ -213,6 +213,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     }
   }, []);
 
+  console.log(excelData)
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [], 
@@ -239,7 +240,8 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     if (errorMessage?.includes("Not Included")) {
       dispatch(setSuccess({
         success: true,
-        message: "There is a buckets not included"
+        message: "There is a buckets not included",
+        isMessage: false
       }))
       setExcelData([])
       setFile([])
@@ -247,7 +249,8 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     } else if(errorMessage.includes('E11000')) {
       dispatch(setSuccess({
         success: true,
-        message: "Duplicate file name"
+        message: "Duplicate file name",
+        isMessage:false
       }))
       setExcelData([])
       setFile([])

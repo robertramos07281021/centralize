@@ -50,7 +50,7 @@ const TLAgentProduction:React.FC<ComponentProp> = ({bucket,interval}) => {
   return (
     <div className='col-span-6 border border-slate-400 flex flex-col bg-white rounded-xl p-2 overflow-hidden'>
       <div className=' bg-white  text-slate-700 flex items-end gap-2 justify-between'>
-        <h1 className="font-bold text-3xl">
+        <h1 className="font-bold lg:text-lg 2xl:text-3xl">
           {bucketObject[bucket?.id as keyof typeof bucketObject]}
           {
             !bucket?.principal &&

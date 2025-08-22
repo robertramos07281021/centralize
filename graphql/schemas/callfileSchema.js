@@ -2,12 +2,7 @@ import { gql } from "graphql-tag";
 
 const callfileTypeDefs = gql`
   scalar DateTime
-
-  type Success {
-    message: String
-    success: Boolean
-  }
-
+  
   type User {
     name: String
   }

@@ -51,7 +51,7 @@ type Assigned = Group | User
 
 type CustomerAccounts = {
     _id: string
-    max_dpd: number
+    dpd: number
     assigned: Assigned
     account_bucket: AccountBucket
     customer_info: CustomerInfo
@@ -68,7 +68,7 @@ const FIND_CUSTOMER_ACCOUNTS = gql`
     findCustomerAccount(query: $query) {
       CustomerAccounts {
         _id
-        max_dpd
+        dpd
         assigned {
           ... on User {
             name
@@ -252,7 +252,8 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
         if(res.data) {
           dispatch(setSuccess({
             success:true,
-            message: "Task successfully removed"
+            message: "Task successfully removed",
+            isMessage: false
           }))
         }
       } catch (error) {
@@ -313,7 +314,8 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
       setHandleCheckAll(false)
       dispatch(setSuccess({
         success:true,
-        message: "Task successfully added"
+        message: "Task successfully added",
+        isMessage: false
       }))
     },
     onError: (error) => {
@@ -412,7 +414,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
                   {ca.account_bucket.name}
               </div>
               <div className="px-6 ">
-                  {ca.max_dpd}
+                  {ca.dpd}
               </div>
               <div className="px-6 capitalize">
                 {ca.assigned?.name}

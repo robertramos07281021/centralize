@@ -14,11 +14,6 @@ const groupTypeDefs = gql`
     members: [Users],
   }
 
-  type Success {
-    success: Boolean
-    message: String
-  }
-
   type Query {
     findGroup:[GroupTask]
   }

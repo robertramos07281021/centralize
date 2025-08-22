@@ -35,6 +35,35 @@ const CustomerExtnTypeDefs = gql`
   type Query {
     findAccountHistories(id:ID!):[AccountHistory]
   }
+
+  type AccountUpdateHistory {
+    principal_os: Float,
+    total_os: Float,
+    balance: Float,
+    updated_date: DateTime,
+    updated_by: ID
+  }
+  
+  type UpdatedCustomerAccount {
+    balance: Float,
+    out_standing_details: outStandingDetails
+    account_update_history: [AccountUpdateHistory]
+  }
+
+  type Success {
+    customerAccount: UpdatedCustomerAccount
+  }
+
+  input CustomerAccountsInput {
+    id:ID!
+    total_os: Float
+    principal_os: Float
+    balance: Float
+  }
+
+  type Mutation {
+    updateCustomerAccount(input:CustomerAccountsInput):Success
+  }
 `
 
 export default CustomerExtnTypeDefs

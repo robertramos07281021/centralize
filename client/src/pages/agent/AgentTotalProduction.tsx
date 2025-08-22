@@ -59,7 +59,7 @@ const RateIcon = ({ rate }: { rate: number }) => {
   );
 };
 
-const Divition = ({label, current, previous, color, target }: Divition ) => {
+const Division = ({label, current, previous, color, target }: Divition ) => {
   const rate =
     previous === 0 ? -100 : ((current - previous) / previous) * 100;
   const formattedRate =
@@ -77,8 +77,12 @@ const Divition = ({label, current, previous, color, target }: Divition ) => {
 
   const targetPercentage = (current / target )*100
 
+
+  const checkIfNumber = isNaN(targetPercentage) || targetPercentage === Infinity ? "-" : `${targetPercentage.toFixed(2)}%`
+
   const theVariance = target - current
   const variancePercentage = (theVariance / target) * 100
+    const checkIfNumberVariacePercent = isNaN(variancePercentage) || variancePercentage === Infinity ? "" : `${variancePercentage.toFixed(2)}%`
 
 
   return (
@@ -88,9 +92,9 @@ const Divition = ({label, current, previous, color, target }: Divition ) => {
       </h1>
       <div className="flex justify-between pt-2 items-center">
         <h1>C</h1>
-        <h1 className="text-4xl">{targetPercentage.toFixed(2)}%</h1>
+        <h1 className="text-4xl">{checkIfNumber}</h1>
       </div>
-      <h1 className="text-xs flex justify-end">V - {variancePercentage.toFixed(2)}%</h1>
+      <h1 className="text-xs flex justify-end">V - {checkIfNumberVariacePercent}</h1>
       <div className="h-full flex flex-col justify-center">
         <div className="flex justify-between item-center">
           <h1 className="text-sm font-medium">Target</h1>
@@ -148,21 +152,21 @@ export default function AgentTotalProduction () {
 
   return (
     <div className="grid grid-cols-3  gap-2">
-      <Divition 
+      <Division 
         label="Daily Total Collected"
         previous={prod?.dtcPrevious || 0}
         current={prod?.dtcCurrent || 0}
         target={userLogged?.targets.daily || 0}
         color="yellow"
       />
-      <Divition 
+      <Division 
         label="Weekly Total Collected"
         previous={0}
         current={collectionsData?.monthlyWeeklyCollected.weekly || 0}
         target={userLogged?.targets.weekly || 0}
         color="teal"
       />
-      <Divition 
+      <Division 
         label="Monthly Total Collected"
         previous={prod?.dtcPrevious || 0}
         current={collectionsData?.monthlyWeeklyCollected.monthly || 0}

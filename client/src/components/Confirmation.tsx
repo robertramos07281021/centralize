@@ -94,9 +94,9 @@ const Confirmation:React.FC<modalProps> = ({yes, no, message, toggle}) => {
     <div tabIndex={0} 
     onKeyDown={(e)=> e} 
     className="fixed w-screen h-screen bg-black/20 top-0 left-0 z-50 backdrop-blur-[1.5px] flex items-center justify-center">
-    <div className="w-96 h-72 bg-white rounded-lg overflow-hidden flex flex-col shadow-xl shadow-black/60">
+    <div className="min-w-96 max-h-96 max-w-120 bg-white rounded-lg overflow-hidden flex flex-col shadow-xl shadow-black/60">
       <div className={`${color[toggle]?.title} p-2 text-2xl text-white font-medium`}>Confirmation</div>
-      <div className="h-full flex flex-col items-center justify-center gap-10">
+      <div className="h-full p-10 flex flex-col items-center justify-center gap-10">
         <p className="text-xl font-medium text-slate-700 px-10 text-center">{message}</p>
         <div className="flex gap-10">
         <button 

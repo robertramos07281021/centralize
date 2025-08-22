@@ -29,11 +29,6 @@ const taskTypeDefs = gql`
     sms: String
   }
 
-  type Success {
-    success: Boolean
-    message: String
-  }
-
   type current {
     disposition: String
   }
@@ -64,7 +59,7 @@ const taskTypeDefs = gql`
 
   type GroupTask {
     _id:ID
-    task:[MyTasks]
+    task:[Search]
 
   }
 
@@ -96,7 +91,7 @@ const taskTypeDefs = gql`
   }
 
   type Query {
-    myTasks:[MyTasks]
+    myTasks:[Search]
     groupTask:GroupTask
   }
   type Mutation{

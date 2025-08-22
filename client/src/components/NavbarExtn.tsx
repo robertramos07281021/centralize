@@ -4,7 +4,7 @@ import { RootState, useAppDispatch } from "../redux/store"
 import { accountsNavbar } from "../middleware/exports.ts"
 import gql from "graphql-tag"
 import {  useMutation, useQuery, useSubscription } from "@apollo/client"
-import { setDeselectCustomer, setServerError } from "../redux/slices/authSlice.ts"
+import { setDeselectCustomer, setServerError, setSuccess } from "../redux/slices/authSlice.ts"
 import { useEffect } from "react"
 
 type MyTask = {
@@ -25,6 +25,10 @@ type SubSuccess = {
   members:string[]
 }
   
+type SubSuccessMessage = {
+  bucket: string
+  message: string
+}
 
 const SOMETHING_ESCALATING = gql`
   subscription somethingEscalating {
@@ -52,12 +56,30 @@ const DESELECT_TASK = gql`
   }
 `
 
+const SELECTED_BUCKET_MESSAGE = gql`
+  query SelectedBucket($id: ID) {
+    selectedBucket(id: $id) {
+      message
+    }
+  }
+`
+
+const NEW_BUCKET_MESSAGE = gql`
+  subscription Subscription {
+    newBucketMessage {
+      bucket
+      message
+    }
+  }
+`
 
 const NavbarExtn = () => {
-  const {userLogged,selectedCustomer} = useSelector((state:RootState)=> state.auth)
+  const {userLogged,selectedCustomer,success} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
   const {data:myTask, refetch} = useQuery<{myTasks:MyTask[]}>(MY_TASK)
   const dispatch = useAppDispatch()
+
+  const {refetch:messageRefetch} = useQuery<{selectedBucket:{message: string}}>(SELECTED_BUCKET_MESSAGE,{skip: !success.success})
 
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_ESCALATING, {
     onData: async({data})=> {
@@ -81,6 +103,25 @@ const NavbarExtn = () => {
     }
   })
 
+  useSubscription<{newBucketMessage:SubSuccessMessage}>(NEW_BUCKET_MESSAGE,{
+    onData: async({data}) => {
+      if(!userLogged) return
+      if(data) {
+        if(data.data?.newBucketMessage.message === 'NEW_BUCKET_MESSAGE' && userLogged.buckets.includes(data.data.newBucketMessage.bucket)) {
+          const res = await messageRefetch({id: data.data.newBucketMessage.bucket})
+          if(res.data) {
+            dispatch(setSuccess({
+              message: res.data.selectedBucket.message,
+              success: true,
+              isMessage: true
+            }))
+          }
+        }
+      }
+    }
+
+  })
+
   const [deselectTask] = useMutation<{deselectTask:{message: string, success: boolean}}>(DESELECT_TASK,{
     onCompleted: ()=> {
       dispatch(setDeselectCustomer()) 
@@ -99,6 +140,7 @@ const NavbarExtn = () => {
       return ()=> clearTimeout(timer)
     }
   },[location.pathname])
+
 
   const userType = userLogged?.type as keyof typeof accountsNavbar;
   if (!userType || !accountsNavbar[userType]) return null; 

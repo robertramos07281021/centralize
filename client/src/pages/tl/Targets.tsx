@@ -75,12 +75,12 @@ const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
         data: [newTargetdata?.collected || 0,variance],
         backgroundColor: [
           'oklch(54.6% 0.245 262.881)',
-          'oklch(70.5% 0.213 47.604)',
+          variance > 0 ? 'oklch(70.5% 0.213 47.604)' : 'green',
           'oklch(63.7% 0.237 25.331)',
         ],
         borderColor: [
           'oklch(54.6% 0.245 262.881)',
-          'oklch(70.5% 0.213 47.604)',
+           variance > 0 ? 'oklch(70.5% 0.213 47.604)' : 'green',
           'oklch(63.7% 0.237 25.331)',
         ],
         borderWidth: 1,

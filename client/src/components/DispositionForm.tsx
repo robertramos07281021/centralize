@@ -303,7 +303,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     onCompleted: (res) => {
       dispatch(setSuccess({
         success: res.createDisposition.success,
-        message: res.createDisposition.message
+        message: res.createDisposition.message,
+        isMessage: false
       }))
       setConfirm(false)
       resetForm()
@@ -321,7 +322,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     onCompleted: async(res)=> {
       dispatch(setSuccess({
         success: res.tlEscalation.success,
-        message: res.tlEscalation.message
+        message: res.tlEscalation.message,
+        isMessage: false
       }))
       await deselectTask({variables: {id:selectedCustomer?._id}})
     },
@@ -365,6 +367,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     if (inputValue.startsWith('00')) {
       inputValue = '0';
     }
+    
     const numericValue = parseFloat(inputValue);
     const balance = selectedCustomer?.balance ?? 0;
     const amount = numericValue > balance ? balance.toFixed(2) : inputValue;

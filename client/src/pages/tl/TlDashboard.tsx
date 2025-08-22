@@ -12,7 +12,8 @@ import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../../redux/store';
 import { BsFilterCircleFill ,BsFillPlusCircleFill  } from "react-icons/bs";
 import { setServerError } from '../../redux/slices/authSlice';
-
+import { SiGooglemessages } from "react-icons/si";
+import MessageModal, { MessageChildren } from './MessageModal';
 
 const DEPT_BUCKET = gql`
   query getDeptBucket {
@@ -51,6 +52,7 @@ const TlDashboard  = () => {
   
   const [selectedBucket, setSelectedBucket] = useState<string | null | undefined>(userLogged?.buckets[0])
   const [selectedIntervals, setSelectedIntervals] = useState<IntervalsTypes>(IntervalsTypes.DAILY) 
+  const [isOpenMessage, setIsopenMessage] = useState<boolean>(false)
 
   const bucketSelectorRef = useRef<HTMLDivElement | null>(null)
   const intervalSelectorRef = useRef<HTMLDivElement | null>(null)
@@ -75,6 +77,8 @@ const TlDashboard  = () => {
     }
   },[findBucket])
 
+  const messageRef = useRef<MessageChildren | null>(null)
+
   return (
     <div className="h-full overflow-hidden p-2 grid grid-rows-13 grid-cols-8 bg-slate-600/10 gap-2 relative" onMouseDown={(e)=> {
       if(!bucketSelectorRef.current?.contains(e.target as Node)) {
@@ -83,7 +87,9 @@ const TlDashboard  = () => {
       if(!intervalSelectorRef.current?.contains(e.target as Node)) {
         setShowIntervals(false)
       }
-
+      if(!messageRef.current?.divElement?.contains(e.target as Node)) {
+        setIsopenMessage(false)
+      }
     }}>
       <div className='grid grid-cols-6 gap-2 col-span-8 row-span-2'>
         <DailyFTE bucket={findBucket}/>
@@ -132,15 +138,20 @@ const TlDashboard  = () => {
           </label>
         </div>
       }
+      {
+        isOpenMessage &&
+        <MessageModal bucket={findBucket} ref={messageRef} closeModal={()=> setIsopenMessage(false)}/>
+      }
 
       <div className='text-5xl absolute bottom-5 right-5 flex flex-col gap-5'>
+        <SiGooglemessages  className='cursor-pointer' onClick={()=> setIsopenMessage(prev => !prev)}/>
         {
           !findBucket?.principal &&
-          <BsFilterCircleFill className='' onClick={()=> setShowIntervals(prev=> !prev)}/>
+          <BsFilterCircleFill className='cursor-pointer' onClick={()=> setShowIntervals(prev=> !prev)}/>
         }
         {
           userLogged && userLogged?.buckets?.length > 1 &&
-          <BsFillPlusCircleFill className={` duration-200 ${showSelector ? "rotate-45" : ""}`} onClick={()=> setShowSelector(prev=> !prev)}/>
+          <BsFillPlusCircleFill className={`cursor-pointer duration-200 ${showSelector ? "rotate-45" : ""}`} onClick={()=> setShowSelector(prev=> !prev)}/>
         }
       </div>
     </div>

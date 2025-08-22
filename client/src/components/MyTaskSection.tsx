@@ -1,82 +1,15 @@
 import { useMutation, useQuery, useSubscription } from "@apollo/client"
 import gql from "graphql-tag"
-import { useEffect, useState } from "react"
+import { useCallback, useEffect, useState } from "react"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { dateAndTime } from "../middleware/dateAndTime"
 import { setSelectedCustomer, setServerError } from "../redux/slices/authSlice"
-import { CurrentDispo } from "../middleware/types"
+import { Search } from "../middleware/types"
 
-type outStandingDetails = {
-  principal_os: number
-  interest_os: number
-  admin_fee_os: number
-  txn_fee_os: number
-  late_charge_os: number
-  dst_fee_os: number
-  total_os: number
-  waive_fee_os: number
-  late_charge_waive_fee_os:number
-  
-}
-
-type grassDetails = {
-  grass_region: string
-  vendor_endorsement: string
-  grass_date: string
-}
-
-type AccountBucket = {
-  name: string
-  dept: string
-  _id:string
-}
-
-type CustomerRegistered = {
-  fullName:string
-  dob:string
-  gender:string
-  contact_no:string[]
-  emails:string[]
-  addresses:string[]
-  isRPC: boolean
-  _id:string
-}
-
-type CurrentDisposition = {
-  disposition: string
-}
-
-type EmergencyContact = {
-  name: string
-  mobile: string
-}
-
-type CustomerData = {
-  _id: string
-  case_id: string
-  account_id: string
-  endorsement_date: string
-  credit_customer_id: string
-  bill_due_date: string
-  max_dpd: number
-  dpd: number
-  balance: number
-  paid_amount: number
-  month_pd: number
-  isRPCToday: boolean
-  assigned_date: string
-  out_standing_details: outStandingDetails
-  grass_details: grassDetails
-  account_bucket: AccountBucket
-  dispo_history: CurrentDispo[]
-  emergency_contact: EmergencyContact
-  current_disposition: CurrentDisposition
-  customer_info: CustomerRegistered
-}
 
 type GroupTask = {
-  task: CustomerData[] | [];
+  task: Search[] | [];
   _id: string;
 }
 
@@ -93,8 +26,10 @@ const MY_TASKS = gql`
       dpd
       balance
       paid_amount
-      assigned_date
+      isRPCToday
       month_pd
+      assigned
+      assigned_date
       emergency_contact {
         name
         mobile
@@ -117,6 +52,13 @@ const MY_TASKS = gql`
         sms
         RFD
       }
+      account_update_history {
+        principal_os
+        total_os
+        balance
+        updated_date
+        updated_by
+      }
       out_standing_details {
         principal_os
         interest_os
@@ -124,17 +66,13 @@ const MY_TASKS = gql`
         txn_fee_os
         late_charge_os
         dst_fee_os
-        total_os
         waive_fee_os
-        late_charge_waive_fee_os
+        total_os
       }
       grass_details {
         grass_region
         vendor_endorsement
         grass_date
-      }
-      current_disposition {
-        disposition
       }
       account_bucket {
         name
@@ -148,12 +86,31 @@ const MY_TASKS = gql`
         contact_no
         emails
         addresses
-        isRPC
         _id
+        isRPC
+      }
+      current_disposition {
+        _id
+        amount
+        disposition
+        payment_date
+        ref_no
+        existing
+        comment
+        payment
+        payment_method
+        user
+        RFD
+        dialer
+        createdAt
+        contact_method
+        chatApp
+        sms
       }
     }
   }
 `
+
 
 const GROUP_TASKS =gql`
   query groupTask {
@@ -170,8 +127,10 @@ const GROUP_TASKS =gql`
         dpd
         balance
         paid_amount
-        assigned_date
+        isRPCToday
         month_pd
+        assigned
+        assigned_date
         emergency_contact {
           name
           mobile
@@ -194,6 +153,13 @@ const GROUP_TASKS =gql`
           sms
           RFD
         }
+        account_update_history {
+          principal_os
+          total_os
+          balance
+          updated_date
+          updated_by
+        }
         out_standing_details {
           principal_os
           interest_os
@@ -201,17 +167,13 @@ const GROUP_TASKS =gql`
           txn_fee_os
           late_charge_os
           dst_fee_os
-          total_os
           waive_fee_os
-          late_charge_waive_fee_os
+          total_os
         }
         grass_details {
           grass_region
           vendor_endorsement
           grass_date
-        }
-        current_disposition {
-          disposition
         }
         account_bucket {
           name
@@ -225,8 +187,26 @@ const GROUP_TASKS =gql`
           contact_no
           emails
           addresses
-          isRPC
           _id
+          isRPC
+        }
+        current_disposition {
+          _id
+          amount
+          disposition
+          payment_date
+          ref_no
+          existing
+          comment
+          payment
+          payment_method
+          user
+          RFD
+          dialer
+          createdAt
+          contact_method
+          chatApp
+          sms
         }
       }
     }
@@ -294,7 +274,7 @@ const DESELECT_TASK = gql`
 const MyTaskSection = () => {
   const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
-  const {data:myTasksData, refetch} = useQuery<{myTasks:CustomerData[] | []}>(MY_TASKS)
+  const {data:myTasksData, refetch} = useQuery<{myTasks:Search[] | []}>(MY_TASKS)
   const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
 
   useEffect(()=> {
@@ -352,11 +332,11 @@ const MyTaskSection = () => {
   })
   
 
-  const [data, setData] = useState<CustomerData[] | null>([])
+  const [data, setData] = useState<Search[] | null>([])
   const [selection, setSelection] = useState<string>("")
 
   const groupLength = groupTaskData?.groupTask.task.filter(e=> userLogged?.buckets.toString().includes(e.account_bucket._id)).length || null
-  const taskLength = myTasksData?.myTasks.filter(e=> userLogged?.buckets.toString().includes(e.account_bucket._id)).length
+  const taskLength = myTasksData?.myTasks.filter(e=> userLogged?.buckets.toString().includes(e.account_bucket?._id)).length
 
   useEffect(()=> {
     if(selection.trim()==="my_task") {
@@ -395,7 +375,7 @@ const MyTaskSection = () => {
     }
   })
   
-  const handleClickSelect = async(data:CustomerData) => {
+  const handleClickSelect = useCallback(async(data:Search) => {
     if(selectedCustomer) {
       await deselectTask({variables: {id: selectedCustomer?._id }})  
     }
@@ -403,7 +383,7 @@ const MyTaskSection = () => {
     if(res.data.selectTask.success) {
       dispatch(setSelectedCustomer({...data, isRPCToday: false}))
     }
-  }
+  },[deselectTask,dispatch,selectedCustomer])
 
   const handleClickGroupTask = () => {
     if(selection && selection.trim() !== "my_task"){
@@ -442,7 +422,7 @@ const MyTaskSection = () => {
             {data?.map(d => (
               <div key={d._id} className="py-1.5 2xl:text-xs lg:text-[0.6em] hover:bg-blue-100 even:bg-slate-100 grid grid-cols-4 px-5 items-center">
                 <div className="px-2 text-nowrap truncate">{d.customer_info.fullName}</div>
-                <div>{d.current_disposition.disposition ? d.current_disposition.disposition : "N/A" }</div>
+                <div>{d?.current_disposition?.disposition ? d.current_disposition.disposition : "N/A" }</div>
                 <div>
                   {dateAndTime(d.assigned_date)}
                 </div>

@@ -1858,7 +1858,7 @@ const dispositionResolver = {
           result = {
             collected: findDisposition[0]?.collected ? findDisposition[0]?.collected : 0,
             target: newDataCollected.target,
-            totalPrincipal: newDataCollected.target
+            totalPrincipal: callfile.totalPrincipal
           }
         }
 
@@ -1879,7 +1879,7 @@ const dispositionResolver = {
         end.setHours(23, 59, 59, 999);
         
         const [customerAccount, dispoType, userProdRaw] = await Promise.all([
-          CustomerAccount.findById(input.customer_account).populate( 'current_disposition'),
+          CustomerAccount.findById(input.customer_account).populate('current_disposition').lean(),
           DispoType.findById(input.disposition).lean(),
           Production.findOne({
             user: user._id,
@@ -1901,8 +1901,9 @@ const dispositionResolver = {
         if (withPayment.includes(dispoType.code) && !input.amount && input.disposition) {
           throw new CustomError("Amount is required", 401);
         }
-        
-        const ptp = (customerAccount?.current_disposition && customerAccount?.current_disposition.ptp === true) || dispoType.code === "PTP";
+        const ptpDispotype = await DispoType.findOne({code: 'PTP'})
+     
+        const ptp = (customerAccount?.current_disposition && customerAccount?.current_disposition.disposition.toString() === ptpDispotype._id.toString()) || dispoType.code === "PTP";
 
         const payment = customerAccount.balance - parseFloat(input.amount || 0) === 0 ? "full" : 'partial';
 

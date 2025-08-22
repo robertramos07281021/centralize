@@ -156,7 +156,8 @@ const AgentView = () => {
       setIsAuthorize(false)
       dispatch(setSuccess({
         success: res.unlockUser.success,
-        message: res.unlockUser.message 
+        message: res.unlockUser.message,
+        isMessage: false
       }))
       await refetch()
       await agentProdDataRefetch()
@@ -220,7 +221,8 @@ const AgentView = () => {
         <SetTargetsModal agentToUpdate={userToUpdateTargets || null} cancel={()=> {setUpdateSetTarget(false); setUserToUpdateTargets(null)}} success={(message, success)=> {
           dispatch(setSuccess({
             success,
-            message
+            message,
+            isMessage: false
           }))
           refetch()
           agentProdDataRefetch()

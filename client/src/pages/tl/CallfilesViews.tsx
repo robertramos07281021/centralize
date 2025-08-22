@@ -200,7 +200,8 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
           if(res.data) {
             dispatch(setSuccess({
               success: true,
-              message: "File successfully uploaded"
+              message: "File successfully uploaded",
+              isMessage: false
             }))
             setUploading()
           }
@@ -260,7 +261,8 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
         if(res.data) {
           dispatch(setSuccess({
             success: data.finishedCallfile.success,
-            message: data.finishedCallfile.message
+            message: data.finishedCallfile.message,
+            isMessage: false
           }))
         }
       } catch (error) {
@@ -284,7 +286,8 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
           
           dispatch(setSuccess({
             success: data.deleteCallfile.success,
-            message: data.deleteCallfile.message
+            message: data.deleteCallfile.message,
+            isMessage: false
           }))
         }
       } catch (error) {
@@ -306,7 +309,8 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
         if(res.data) {
           dispatch(setSuccess({
             success: data.setCallfileTarget.success,
-            message: data.setCallfileTarget.message
+            message: data.setCallfileTarget.message,
+            isMessage: false
           }))
           setTarget(0)
         }
@@ -361,7 +365,8 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
           setConfirm(false)
           dispatch(setSuccess({
             success: true,
-            message: `${name}.csv successfully downloaded`
+            message: `${name}.csv successfully downloaded`,
+            isMessage: false
           }))
         } catch (err) {
           dispatch(setServerError(true))

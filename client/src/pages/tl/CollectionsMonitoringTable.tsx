@@ -45,8 +45,8 @@ const CollectionsMonitoringTable:React.FC<ComponentProp> = ({bucket, interval}) 
   const collectionPercent = newData ? (newData.collected / newData.target) * 100 : 0
 
   return (
-    <div>
-      <h1 className="font-medium text-lg text-gray-800 bg-blue-200 px-2 py-1.5 text-center">Collections Monitoring</h1>
+    <div className="lg:text-xs 2xl:text-base">
+      <h1 className="font-medium lg:text-sm 2xl:text-lg text-gray-800 bg-blue-200 px-2 py-1.5 text-center">Collections Monitoring</h1>
       <table className="w-full text-gray-600 text-center table-fixed">
         <thead>
           <tr >
