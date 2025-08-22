@@ -205,7 +205,7 @@ const UPDATE_RPC = gql`
               ),
             }}
           />
-          <p className="px-2 text-slate-500 text-xs font-bold">Balance: {customer.balance.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })} - {customer.max_dpd}(DPD)</p>
+          <p className="px-2 text-slate-500 text-xs font-bold">Balance: {customer?.balance?.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })} - {customer?.max_dpd}(DPD)</p>
         </div>
         <div className="text-slate-500 text-xs px-2">
           <span>{customer.customer_info.dob}, </span>

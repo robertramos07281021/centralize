@@ -300,7 +300,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     }
   })
 
-  const [setCallfileTarget] = useMutation<{setCallfileTarget:Success}>(SET_CALLFILE_TARGET,{
+  const [setCallfileTarget, {loading: setCallfileTargetLoading}] = useMutation<{setCallfileTarget:Success}>(SET_CALLFILE_TARGET,{
     onCompleted: async(data) => {
       try {
         setConfirm(false)
@@ -419,7 +419,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     }
   },[data,setTotalPage,setCanUpload])
 
-  if(downloadCallfilesLoading || deleteLoading || finishingLoading || loading) return <Loading/>
+  if(downloadCallfilesLoading || deleteLoading || finishingLoading || loading || setCallfileTargetLoading) return <Loading/>
 
   const labels = ['Name','Bucket','Date','Endo','Work Days','Accounts','Unworkable','Connected','OB','Principal','Target','Collected','Status','Finished By','Action']
 
