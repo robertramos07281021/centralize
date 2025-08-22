@@ -7,9 +7,10 @@ import { RootState, useAppDispatch } from "../../redux/store";
 import React, { useCallback, useEffect, useState } from "react";
 import Confirmation from "../../components/Confirmation";
 import { setServerError, setSuccess } from "../../redux/slices/authSlice";
-import Loading from "../Loading";
 import { useLocation } from "react-router-dom";
 import { IoSettingsSharp } from "react-icons/io5";
+import { BiLoader } from "react-icons/bi";
+
 
 type Finished = {
   name: string
@@ -283,7 +284,6 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       try {
         const res = await refetch()
         if(res.data) {
-          
           dispatch(setSuccess({
             success: data.deleteCallfile.success,
             message: data.deleteCallfile.message,
@@ -300,7 +300,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     }
   })
 
-  const [setCallfileTarget, {loading: setCallfileTargetLoading}] = useMutation<{setCallfileTarget:Success}>(SET_CALLFILE_TARGET,{
+  const [setCallfileTarget, {loading:setCallfileTargetLoading}] = useMutation<{setCallfileTarget:Success}>(SET_CALLFILE_TARGET,{
     onCompleted: async(data) => {
       try {
         setConfirm(false)
@@ -419,7 +419,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     }
   },[data,setTotalPage,setCanUpload])
 
-  if(downloadCallfilesLoading || deleteLoading || finishingLoading || loading || setCallfileTargetLoading) return <Loading/>
+  const isLoading = downloadCallfilesLoading || deleteLoading || finishingLoading || loading || setCallfileTargetLoading
 
   const labels = ['Name','Bucket','Date','Endo','Work Days','Accounts','Unworkable','Connected','OB','Principal','Target','Collected','Status','Finished By','Action']
 
@@ -465,15 +465,21 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
                     <td>{status}</td>
                     <td className="truncate">{finishedBy}</td>
                     <td className="flex py-2 lg:gap-3 2xl:gap-3">
-                      {
-                        checkStatus &&
-                        <>
-                          <FaSquareCheck className="hover:scale-110 text-green-500 lg:text-xs 2xl:text-lg cursor-pointer" onClick={()=> onClickIcon(res.callfile._id, "FINISHED", res.callfile.name)} title="Finish"/>
-                          <IoSettingsSharp className="text-orange-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" title="Set Target" onClick={()=> {setModalTarget(true); setCallfileId(res.callfile)}}/>
-                        </>
-                      }
-                      <FaTrash className=" text-red-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DELETE", res.callfile.name)} title="Delete"/>
-                      <FaDownload className="text-blue-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DOWNLOAD", res.callfile.name)} title='Download' />
+                    {
+                      !isLoading ? 
+                      <>
+                        {
+                          checkStatus &&
+                          <>
+                            <FaSquareCheck className="hover:scale-110 text-green-500 lg:text-xs 2xl:text-lg cursor-pointer" onClick={()=> onClickIcon(res.callfile._id, "FINISHED", res.callfile.name)} title="Finish"/>
+                            <IoSettingsSharp className="text-orange-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" title="Set Target" onClick={()=> {setModalTarget(true); setCallfileId(res.callfile)}}/>
+                          </>
+                        }
+                        <FaTrash className=" text-red-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DELETE", res.callfile.name)} title="Delete"/>
+                        <FaDownload className="text-blue-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DOWNLOAD", res.callfile.name)} title='Download' />
+                      </> :
+                      <BiLoader  className="animate-spin text-2xl"/>
+                    }
                     </td>
                   </tr>
                 )

@@ -267,10 +267,8 @@ const Navbar = () => {
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       if(data && userLogged) {
-        console.log(data)
         dispatch(setUserLogged({...userLogged,isOnline: data?.getMe?.isOnline, targets: data?.getMe?.targets || {daily: 0, weekly: 0, monthly: 0}}))
         if(!userLogged?.isOnline) {
-          console.log(userLogged.isOnline)
           setConfirmation(true)
           setModalProps({
             no: ()=> {
