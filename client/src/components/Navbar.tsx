@@ -118,7 +118,7 @@ const Navbar = () => {
   const location = useLocation()
   const {userLogged,selectedCustomer,breakValue, serverError, success} = useSelector((state:RootState)=> state.auth)
   const modalRef = useRef<HTMLDivElement>(null)
-  const {error, data, refetch} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 5000})
+  const {error, data, refetch} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 5000,notifyOnNetworkStatusChange: true,})
   const [poPupUser, setPopUpUser] = useState<boolean>(false) 
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: ()=> {
