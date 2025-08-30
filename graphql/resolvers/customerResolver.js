@@ -1127,6 +1127,7 @@ const customerResolver = {
           message: "Callfile successfully created"
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },

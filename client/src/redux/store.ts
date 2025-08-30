@@ -4,7 +4,7 @@ import { combineReducers } from "redux";
 import CryptoJS from 'crypto-js'
 import authReducer from "./slices/authSlice"
 import { useDispatch } from "react-redux";
-import { WebStorage } from "redux-persist";
+import type { WebStorage } from "redux-persist";
 
 const rootReducer = combineReducers({
   auth: authReducer

@@ -100,8 +100,10 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             late_charge_waive_fee_os,
             emergencyContactMobile,
             case_id,
+            dpd,
             platform_user_id,
             balance,
+            max_dpd,
             principal_os
           } = row
 
@@ -162,6 +164,8 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             dst_fee_os: Number(dst_fee_os) || 0,
             balance: Number(balance) || Number(total_os),
             total_os: Number(total_os),
+            dpd: Number(dpd),
+            max_dpd: Number(max_dpd),
             contact: contact ? normalizeContact(contact).toString().trim() : "",
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
           }
@@ -209,10 +213,12 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       };
       reader.readAsBinaryString(file);
     } catch (error) {
+      console.log(error)
       dispatch(setServerError(true))
     }
   }, []);
 
+  console.log(excelData)
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [], 
@@ -226,6 +232,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     },
   });
   
+  
   const [createCustomer,{loading}] = useMutation(CREATE_CUSTOMER, {
     onCompleted:() => {
       successUpload()
@@ -234,6 +241,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       onSuccess()
     },
     onError: (error)=> {
+      console.log(error)
     const errorMessage = error.message;
     if (errorMessage?.includes("Not Included")) {
       dispatch(setSuccess({

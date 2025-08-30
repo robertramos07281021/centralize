@@ -435,7 +435,7 @@ const userResolvers = {
 
         if(!user) throw new CustomError("Invalid",401)
 
-        if(user.isLock) throw new CustomError('Lock',401)  
+        if(user.isLock) throw new CustomError('Lock',401)
           
         const validatePassword = await bcrypt.compare(password, user.password)
 

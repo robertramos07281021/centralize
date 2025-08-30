@@ -755,7 +755,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                       value={data.ref_no ?? ""}
                       placeholder="Enter reference no."
                       onChange={(e)=> handleDataChange('ref_no',e.target.value)}
-                      className={` bg-gray-50 border-gray-500 border rounded-lg text-xs 2xl:text-sm w-full p-2`}/>
+                      className={` bg-gray-50 border-gray-500 border rounded-lg text-xs 2xl:text-sm w-full p-2`}
+                    />
                 </label>
                 :
                 <IFBANK label="Ref. No"/>

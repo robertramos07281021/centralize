@@ -61,9 +61,16 @@ function getMillisecondsUntilEndOfDay() {
 
 const app = express()
 connectDB()
+const allowedOrigins = [process.env.MY_FRONTEND]
 
 app.use(cors({
-  origin: true,
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
   credentials: true,
 }));
 
@@ -71,6 +78,7 @@ app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
 app.use(cookieParser())
 app.use(compression())
+
 app.use('/recordings', express.static(path.join(process.cwd(), 'recordings')));
 const sessionStore = MongoStore.create({
   mongoUrl: process.env.MONGO_URL,
@@ -127,7 +135,6 @@ const wsServer = new WebSocketServer({
 useServer({ schema,
   context: async (ctx, msg, args) => {
     const cookieHeader  = ctx.connectionParams.authorization.split(" ")[1] || '';
-  
     let user = null
     const token = cookieHeader
     if (!token) throw new CustomError('Missing Token', 401)
@@ -147,7 +154,6 @@ useServer({ schema,
         });
       } else {
         entry.sockets.add(socket);
-
         if (entry.cleanupTimer) {
           clearTimeout(entry.cleanupTimer);
           entry.cleanupTimer = null;
