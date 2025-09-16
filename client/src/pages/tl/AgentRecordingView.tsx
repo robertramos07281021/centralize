@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from "@apollo/client"
 import gql from "graphql-tag"
 import { useSelector } from "react-redux"
-import { useLocation } from "react-router-dom"
+import { Navigate, useLocation } from "react-router-dom"
 import { RootState, useAppDispatch } from "../../redux/store"
 import {  useCallback, useEffect, useRef, useState } from "react"
 import { RiArrowDropDownFill } from "react-icons/ri";
@@ -10,6 +10,9 @@ import { FaDownload } from "react-icons/fa6";
 import { CgSpinner } from "react-icons/cg";
 import Pagination from "../../components/Pagination"
 import Loading from "../Loading"
+import { FaBoxArchive } from "react-icons/fa6";
+import Wrapper from "../../components/Wrapper.tsx"
+import Navbar from "../../components/Navbar.tsx"
 
 const AGENT_RECORDING = gql`
   query getAgentDispositionRecords($agentID: ID, $limit: Int, $page: Int, $from: String, $to: String, $search: String, $dispotype: [String]) {
@@ -26,12 +29,21 @@ const AGENT_RECORDING = gql`
         contact_no
         createdAt
         dialer
+        recordings {
+          name
+          size
+        }
       }
       total
       dispocodes
     }
   }
 `
+
+type Recording = {
+  name: string
+  size: number
+}
 
 type Diposition = {
   _id: string
@@ -44,7 +56,8 @@ type Diposition = {
   comment: string
   contact_no: string[]
   createdAt: string
-  dialer: string
+  dialer: string,
+  recordings : Recording[]
 }
 
 type Record = {
@@ -68,8 +81,8 @@ type Agent = {
 
 
 const DL_RECORDINGS = gql`
-  mutation findRecordings($id: ID) {
-    findRecordings(id: $id) {
+  mutation findRecordings($_id: ID!, $name: String!) {
+    findRecordings(_id: $_id, name: $name) {
       success
       message
       url
@@ -102,7 +115,7 @@ type SearchRecordings = {
 const AgentRecordingView = () => {
   const location = useLocation()
   const dispatch = useAppDispatch()
-  const {limit, agentRecordingPage} = useSelector((state:RootState) => state.auth)
+  const {limit, agentRecordingPage, userLogged} = useSelector((state:RootState) => state.auth)
   const [page, setPage] = useState<string>("1")
 
   const [dataSearch, setDataSearch] = useState<SearchRecordings>({
@@ -121,9 +134,24 @@ const AgentRecordingView = () => {
 
   const searchPage = triggeredSearch.search ? 1 : agentRecordingPage
 
-  const {data: recordings, loading:recordingsLoading, refetch} = useQuery<{getAgentDispositionRecords:Record}>(AGENT_RECORDING,{variables: {
-    agentID: location.state, limit: limit, page:searchPage, from: triggeredSearch.from, to: triggeredSearch.to, search: triggeredSearch.search, dispotype: triggeredSearch.dispotype
-  } })
+  const isAgentRecordings = location.pathname !== '/agent-recordings'
+
+  const {data: recordings, loading:recordingsLoading, refetch} = useQuery<{getAgentDispositionRecords:Record}>(AGENT_RECORDING,{
+    variables: {
+      agentID: location.state, 
+      limit: limit, 
+      page:searchPage, 
+      from: triggeredSearch.from, 
+      to: triggeredSearch.to, 
+      search: triggeredSearch.search, 
+      dispotype: triggeredSearch.dispotype
+    },
+    notifyOnNetworkStatusChange: true,
+    skip: isAgentRecordings
+  })
+  console.log('hello')
+  
+  const [openRecordingsBox, setOpenRecordingsBox] = useState<string | null>(null)
 
   const {data: agentInfoData} = useQuery<{getUser:Agent}>(AGENT_INFO,{variables: {id: location.state}})
 
@@ -149,7 +177,6 @@ const AgentRecordingView = () => {
   useEffect(()=> {
     if(recordings) {
       const totalPage = Math.ceil(recordings?.getAgentDispositionRecords?.total/limit)
-
       setTotalPage(totalPage)
     }
   },[recordings])
@@ -198,9 +225,9 @@ const AgentRecordingView = () => {
     }
   })
 
-  const onDLRecordings = useCallback(async(id:string) => {
-    setIsLoading(id)
-    await findRecordings({variables: {id}})
+  const onDLRecordings = useCallback(async(_id:string, name:string) => {
+    setIsLoading(_id)
+    await findRecordings({variables: {_id, name}})
   },[setIsLoading,findRecordings])
 
 
@@ -214,6 +241,8 @@ const AgentRecordingView = () => {
 
   const [selectingDispotype, setSelectingDispotype] = useState<boolean>(false)
   const dispotypeRef = useRef<HTMLDivElement | null>(null)
+  const recordingsRef = useRef<HTMLDivElement | null>(null)
+
 
   const handleOnCheck = useCallback((e:React.ChangeEvent<HTMLInputElement>, value:string)=> {
     if(e.target.checked) {
@@ -223,138 +252,183 @@ const AgentRecordingView = () => {
     }
   },[setDataSearch])
 
+  function fileSizeToDuration(fileSizeBytes:number) {
+    const bytesPerSecond = (16 * 1000) / 8;
+    const seconds = Math.floor(fileSizeBytes / bytesPerSecond);
+    const minutes = Math.floor(seconds / 60);
+    const remainingSeconds = seconds % 60;
+
+    return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
+  }
+
+
   if(recordingsLoading) return <Loading/>
  
-  return (
-    <div className="w-full h-full flex flex-col overflow-hidden p-2" onMouseDown={(e)=> {
-      if(!dispotypeRef.current?.contains(e.target as Node)) {
-        setSelectingDispotype(false)
-      }
-    }}>
-      <h1 className="capitalize text-2xl font-bold text-gray-500 mb-5">{agentInfoData?.getUser?.name}</h1>
-      <div className=" flex justify-end px-10 gap-5">
-        <div className="w-60 h-8 relative" ref={dispotypeRef} >
-          <div className="w-full rounded border-slate-300 border flex items-center px-2 h-full justify-between" onClick={()=> {setSelectingDispotype(!selectingDispotype)}}>
-            {
-              triggeredSearch.dispotype.length > 0 ? <p className="text-xs text-gray-500 cursor-default select-none">{triggeredSearch.dispotype.join(', ')}</p> :
-              <>
-                <p className="text-xs text-gray-500 cursor-default select-none truncate" title={dataSearch.dispotype.join(', ')}>{dataSearch.dispotype.length > 0 ? dataSearch.dispotype.join(', ') : "Filter Disposition type"}</p>
-                <RiArrowDropDownFill className="text-2xl"/>
-              </>
-              }
-          </div>
-          {
-            selectingDispotype && triggeredSearch.dispotype.length === 0 &&
-            <div className="absolute top-8 left-0 w-full border px-2 py-1 text-xs text-gray-500 flex flex-col max-h-80 overflow-y-auto bg-white z-50 border-slate-300 shadow-md shadow-black/20 select-none">
-            {
-              recordings?.getAgentDispositionRecords.dispocodes.map((e, index)=> 
-                <label key={index} className="py-1 flex gap-1 items-center">
-                  <input type="checkbox" 
-                    name={e} 
-                    id={e} 
-                    value={e}
-                    checked={dataSearch.dispotype.includes(e)}
-                    onChange={(e)=> handleOnCheck(e,e.target.value)}
-                  />
-                  <span>{e}</span>
-                </label>
-              )
-            }
+  return ["QA","TL",'MIS'].includes(userLogged?.type || "")  ? (
+    <Wrapper>
+      <Navbar/>
+      <div className="w-full h-full flex flex-col overflow-hidden p-2" onMouseDown={(e)=> {
+        if(!dispotypeRef.current?.contains(e.target as Node)) {
+          setSelectingDispotype(false)
+        }
+        if(!recordingsRef.current?.contains(e.target as Node)) {
+          setOpenRecordingsBox(null)
+        }
+      }}>
+        <h1 className="capitalize text-2xl font-bold text-gray-500 mb-5">{agentInfoData?.getUser?.name}</h1>
+        <div className=" flex justify-end px-10 gap-5">
+          <div className="w-60 h-8 relative" ref={dispotypeRef} >
+            <div className="w-full rounded border-slate-300 border flex items-center px-2 h-full justify-between" onClick={()=> {setSelectingDispotype(!selectingDispotype)}}>
+              {
+                triggeredSearch.dispotype.length > 0 ? <p className="text-xs text-gray-500 cursor-default select-none">{triggeredSearch.dispotype.join(', ')}</p> :
+                <>
+                  <p className="text-xs text-gray-500 cursor-default select-none truncate" title={dataSearch.dispotype.join(', ')}>{dataSearch.dispotype.length > 0 ? dataSearch.dispotype.join(', ') : "Filter Disposition type"}</p>
+                  <RiArrowDropDownFill className="text-2xl"/>
+                </>
+                }
             </div>
-          }
-        </div>
-
-        <input type="search"
-          name="search" 
-          id="search" 
-          autoComplete="off"
-          value={dataSearch.search}
-          placeholder="Search . . ."
-          onChange={(e)=> setDataSearch({...dataSearch,search:  e.target.value})}
-          className="border rounded border-slate-300 px-2 text-sm w-50 py-1 outline-none"
-        />
-        <label>
-        <span className="text-gray-600 font-medium text-sm">From: </span>
-          <input 
-            type="date" 
-            name="from" 
-            id="from" 
-            value={dataSearch.from}
-            onChange={(e) => setDataSearch({...dataSearch, from: e.target.value})}
-            className="border rounded border-slate-300 px-2 text-sm w-50 py-1" 
-          />     
-
-        </label>
-        <label >
-          <span className="text-gray-600 font-medium text-sm">To: </span>
-          <input 
-            type="date" 
-            name="to"
-            id="to"
-            value={dataSearch.to}
-            onChange={(e) => setDataSearch({...dataSearch, to: e.target.value})}
-            className="border rounded border-slate-300 px-2 text-sm w-50 py-1" 
-          />           
-      
-        </label>      
-        <button 
-          className="bg-blue-500 text-white font-bold  rounded px-5 text-xs hover:bg-blue-800"
-          onClick={onClickSearch}
-          >Search</button>
-      </div>
-      <div className="h-full overflow-auto w-full px-10 mt-3">
-        <table className="w-full table-fixed">
-          <thead className="lg:text-sm 2xl:text-lg sticky top-0 bg-blue-100 text-gray-600">
-            <tr className="text-left">
-              <th className="pl-5 py-1.5 col-span-2 w-55">Name</th>
-              <th >Contact No</th>
-              <th >Dialer</th>
-              <th>Amount</th>
-              <th className="text-nowrap">Payment Date</th>
-              <th>Ref No.</th>
-              <th>Comment</th>
-              <th className="text-nowrap">Dispo Date</th>
-              <th>Disposition</th>
-              <th>Action</th>
-            </tr>
-          </thead>
-          <tbody>
             {
-              recordings?.getAgentDispositionRecords.dispositions.map(e=> 
-                <tr key={e._id} className="lg:text-xs 2xl:text-sm cursor-default">
-                  <td  className="pl-5 py-1.5 w-55 truncate">{e.customer_name}</td>
-                  <td className="truncate pr-2" title={e.contact_no.join(', ')}>{e.contact_no.join(', ')}</td>
-                  <td>{e.dialer}</td>
-                  <td>{e.amount ? e.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) : "-"}</td>
-                  <td>{e.payment_date ? new Date(e.payment_date).toLocaleDateString() : "-"}</td>
-                  <td title={e.ref_no}>{e.ref_no || "-"}</td>
-                  <td className="truncate" title={e.comment}>{e.comment || "-"}</td>
-                  <td>{new Date(e.createdAt).toLocaleDateString()}</td>
-                  <td>{e.dispotype}</td>
-                  <td>
-                  {
-                    (isLoading === e._id && loading) ?
-                    <div className="cursor-progress">
-                      <CgSpinner className="text-xl animate-spin"/>
-                    </div> 
-                      : 
-                    <div onClick={()=> onDLRecordings(e._id)} className="cursor-pointer relative">
-                      <FaDownload className="text-lg text-fuchsia-700 peer"/>
-                      <div className="absolute text-nowrap bg-white z-50 left-5 top-0 ml-2 peer-hover:block hidden border px-1">Download Recordings</div>
-                    </div> 
-                  }
-                  </td>
-                </tr>
-
-              )
+              selectingDispotype && triggeredSearch.dispotype.length === 0 &&
+              <div className="absolute top-8 left-0 w-full border px-2 py-1 text-xs text-gray-500 flex flex-col max-h-80 overflow-y-auto bg-white z-50 border-slate-300 shadow-md shadow-black/20 select-none">
+              {
+                recordings?.getAgentDispositionRecords.dispocodes.map((e, index)=> 
+                  <label key={index} className="py-1 flex gap-1 items-center">
+                    <input type="checkbox" 
+                      name={e} 
+                      id={e} 
+                      value={e}
+                      checked={dataSearch.dispotype.includes(e)}
+                      onChange={(e)=> handleOnCheck(e,e.target.value)}
+                    />
+                    <span>{e}</span>
+                  </label>
+                )
+              }
+              </div>
             }
-          </tbody>
-        </table>
+          </div>
+
+          <input type="search"
+            name="search" 
+            id="search" 
+            autoComplete="off"
+            value={dataSearch.search}
+            placeholder="Search . . ."
+            onChange={(e)=> setDataSearch({...dataSearch,search:  e.target.value})}
+            className="border rounded border-slate-300 px-2 text-sm w-50 py-1 outline-none"
+          />
+          <label>
+          <span className="text-gray-600 font-medium text-sm">From: </span>
+            <input 
+              type="date" 
+              name="from" 
+              id="from" 
+              value={dataSearch.from}
+              onChange={(e) => setDataSearch({...dataSearch, from: e.target.value})}
+              className="border rounded border-slate-300 px-2 text-sm w-50 py-1" 
+            />     
+
+          </label>
+          <label >
+            <span className="text-gray-600 font-medium text-sm">To: </span>
+            <input 
+              type="date" 
+              name="to"
+              id="to"
+              value={dataSearch.to}
+              onChange={(e) => setDataSearch({...dataSearch, to: e.target.value})}
+              className="border rounded border-slate-300 px-2 text-sm w-50 py-1" 
+            />           
+        
+          </label>      
+          <button 
+            className="bg-blue-500 text-white font-bold  rounded px-5 text-xs hover:bg-blue-800"
+            onClick={onClickSearch}
+            >Search</button>
+        </div>
+        <div className="h-full overflow-auto w-full px-10 mt-3">
+          <table className="w-full table-fixed">
+            <thead className="lg:text-sm 2xl:text-lg sticky top-0 z-20 bg-blue-100 text-gray-600">
+              <tr className="text-left">
+                <th className="pl-5 py-1.5 col-span-2 w-55">Name</th>
+                <th >Contact No</th>
+                <th >Dialer</th>
+                <th>Amount</th>
+                <th className="text-nowrap">Payment Date</th>
+                <th>Ref No.</th>
+                <th>Comment</th>
+                <th className="text-nowrap">Dispo Date</th>
+                <th>Disposition</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {
+                recordings?.getAgentDispositionRecords.dispositions.map(e=> 
+                  <tr key={e._id} className="lg:text-xs 2xl:text-sm cursor-default">
+                    <td  className="pl-5 py-1.5 w-55 truncate">{e.customer_name}</td>
+                    <td className="truncate pr-2" title={e.contact_no.join(', ')}>{e.contact_no.join(', ')}</td>
+                    <td>{e.dialer}</td>
+                    <td>{e.amount ? e.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) : "-"}</td>
+                    <td>{e.payment_date ? new Date(e.payment_date).toLocaleDateString() : "-"}</td>
+                    <td title={e.ref_no}>{e.ref_no || "-"}</td>
+                    <td className="truncate" title={e.comment}>{e.comment || "-"}</td>
+                    <td>{new Date(e.createdAt).toLocaleDateString()}</td>
+                    <td>{e.dispotype}</td>
+                    <td>
+                    {
+                      (isLoading === e._id && loading) ?
+                      <div className="cursor-progress">
+                        <CgSpinner className="text-xl animate-spin"/>
+                      </div> 
+                        : 
+                      <div className="">
+                        {
+                          e.recordings.length > 0 ? 
+                          <div className="relative" >
+                            <FaBoxArchive className="text-lg text-fuchsia-700 peer cursor-pointer" title="Recordings" onClick={()=> {
+                              if(openRecordingsBox === e._id) {
+                                setOpenRecordingsBox(null)
+                              } else {
+                                setOpenRecordingsBox(e._id)
+                              }
+                            }}/>
+                            {
+                              openRecordingsBox === e._id &&
+                              <div className="absolute border border-slate-500 text-gray-700 right-full w-auto mr-2 shadow shadow-black/40" ref={recordingsRef}>
+                                {
+                                  e.recordings.map((x,index) => 
+                                    <div key={index} onClick={()=> onDLRecordings(e._id, x.name)} className="text-nowrap flex p-2 bg-white rouned items-center cursor-pointer">
+                                      <p className="mr-">{fileSizeToDuration(x.size)} </p>
+                                      <p className="mx-2">{x.name}</p>
+                                      <FaDownload />
+                                    </div>
+                                  )
+                                }
+                              </div>
+                            }
+                          </div>
+                          :
+                          "No Recordings"
+                        }
+    
+                      </div> 
+                    }
+                    </td>
+                  </tr>
+
+                )
+              }
+            </tbody>
+          </table>
+        </div>
+        <div className="text-end">
+          <Pagination value={page} onChangeValue={(e) => setPage(e)} onKeyDownValue={(e)=> dispatch(setAgentRecordingPage(e))} totalPage={totalPage} currentPage={agentRecordingPage}/>
+        </div>
       </div>
-      <div className="text-end">
-        <Pagination value={page} onChangeValue={(e) => setPage(e)} onKeyDownValue={(e)=> dispatch(setAgentRecordingPage(e))} totalPage={totalPage} currentPage={agentRecordingPage}/>
-      </div>
-    </div>
+    </Wrapper>
+  ) : (
+    <Navigate to="/"/>
   )
 }
 

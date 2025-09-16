@@ -66,6 +66,7 @@ type UserState = {
   adminUsersPage: number,
   myToken: string | null
   success: Success
+  selectedCampaign: string | null
 }
 
 const initialState:UserState = {
@@ -96,7 +97,8 @@ const initialState:UserState = {
     dob: "",
     email: ""
   },
-  selectedCustomer: null
+  selectedCustomer: null,
+  selectedCampaign: null
 };
 
 const authSlice = createSlice({
@@ -160,39 +162,14 @@ const authSlice = createSlice({
     setAdminUsersPage: (state, action:PayloadAction<number>) => {
       state.adminUsersPage = action.payload
     },
-
-    setLogout: (state) => {
-      state.selectedCustomer = null
-      state.userLogged = null
-      state.search= {
-        fullName: "",
-        contact_no: "",
-        dob: "",
-        email: ""
-      }
-      state.serverError = false
-      state.selectedGroup = ""
-      state.selectedAgent = ""
-      state.page = 1
-      state.tasker = Tasker.group
-      state.taskFilter = TaskFilter.assigned
-      state.selectedDisposition = [] 
-      state.productionManagerPage = 1
-      state.agentRecordingPage = 1
-      state.breakTimer = 0
-      state.start =  ""
-      state.breakValue = BreakEnum.WELCOME
-      state.adminUsersPage = 1
-      state.myToken = null
-      state.success = {
-        success: false,
-        message: "",
-        isMessage: false
-      }
-    },
+    setLogout: () => initialState,
     setSuccess: (state, action:PayloadAction<Success>) => {
       state.success = action.payload
+    },
+    setSelectedCampaign: (state, action:PayloadAction<string | null>)=> {
+      state.selectedCampaign = action.payload
     } 
+
   },
     
 });
@@ -219,5 +196,6 @@ export const {
   setAdminUsersPage,
   setMyToken,
   setSuccess,
+  setSelectedCampaign,
 } = authSlice.actions;
 export default authSlice.reducer;

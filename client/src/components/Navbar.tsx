@@ -316,7 +316,7 @@ const Navbar = () => {
             { poPupUser &&
               <div ref={modalRef} className="w-40 h-auto border border-slate-200 shadow-xl shadow-black/8 rounded-xl top-13 end-5 bg-white absolute flex flex-col p-2 text-slate-500 font-medium">
                 {
-                  accountsNavbar[userLogged?.type].map((e,index)=> {
+                  accountsNavbar[userLogged?.type]?.map((e,index)=> {
                     const navTo = (userLogged?.type === "AGENT" && breakValue !== BreakEnum.PROD) ? '/break-view' : e.link
                     return (
                     <Link key={index} to={navTo} className={`${index === 0 && 'rounded-t-lg'} grow px-2 border-b border-slate-200 flex items-center hover:text-white hover:bg-slate-500 duration-200 ease-in-out cursor-pointer py-2`} onClick={()=> setPopUpUser(false) }>

@@ -27,10 +27,10 @@ const CallReportTables:React.FC<ComponentsProps> = ({totalAccounts, reportsData,
   
   const positive = ['PTP','FFUP','UNEG','RTP','PAID','DISP','LM','HUP','WN']
   
-  const positiveCalls = reportsData && reportsData.length > 0 ? reportsData?.filter(x=> positive.includes(x.code)) : []
+  const positiveCalls = reportsData && reportsData?.length > 0 ? reportsData?.filter(x=> positive.includes(x.code)) : []
   const negativeCalls = reportsData && reportsData?.length > 0 ? reportsData?.filter(x=> !positive.includes(x.code)) : []
-  const negativeTotalPrincipal = callfile.totalPrincipal - positiveCalls.map(x=> x.amount).reduce((t,v) => t + v) 
-  const filteredPositive = positiveCalls.length > 0 ? positiveCalls?.map(y=> y.count)?.reduce((t,v)=> t + v) : []
+  const negativeTotalPrincipal = callfile?.totalPrincipal - (positiveCalls.length > 0 ? positiveCalls?.map(x=> x.amount)?.reduce((t,v) => t + v) : 0)
+  const filteredPositive = positiveCalls?.length > 0 ? positiveCalls?.map(y=> y.count)?.reduce((t,v)=> t + v) : []
 
   const totalNegativeCount = totalAccounts - Number(filteredPositive)
 
@@ -102,7 +102,7 @@ const CallReportTables:React.FC<ComponentsProps> = ({totalAccounts, reportsData,
             <th className="border border-black bg-green-600 text-white">Total</th>
             <td className="border border-black">{filteredPositive}</td>
             <td className="border border-black">100%</td>
-            <td className="border border-black">{positiveCalls?.map(x=> x.amount).reduce((t,v)=> t + v ).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) ?? 0}</td>
+            <td className="border border-black">{positiveCalls.length > 0 ? positiveCalls?.map(x=> x.amount).reduce((t,v)=> t + v ).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) : (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'})}</td>
             <td className="border border-black">100%</td>
           </tr>
         </tbody>

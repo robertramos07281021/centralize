@@ -161,6 +161,12 @@ export const accountsNavbar:{[key:string]:links[]} = {
       name: "Report",
       link: "/aom-reports"
     },
+  ],
+  QA: [
+    {
+      name: "Agents Dashboard",
+      link: "/qa-agents-dashboard"
+    }
   ]
 }
 

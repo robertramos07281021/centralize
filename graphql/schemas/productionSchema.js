@@ -86,6 +86,11 @@ const productionTypeDefs = gql`
     target_today: Float
   }
   
+
+  type Recording {
+    name: String
+    size: Float
+  }
   type DispositionInfo {
     _id: ID
     customer_name: String
@@ -98,6 +103,7 @@ const productionTypeDefs = gql`
     contact_no: [String]
     createdAt: DateTime
     dialer: String
+    recordings: [Recording]
   }
 
   type AgentDispo {

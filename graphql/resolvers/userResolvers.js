@@ -16,6 +16,23 @@ import Disposition from "../../models/disposition.js";
 const userResolvers = {
   DateTime,
   Query: {
+    getBucketUser: async(_,{bucketId},{user}) => {
+      try {
+        let filter = null
+        if(bucketId) {
+          filter = bucketId
+        } else {
+          filter = {$in: user.buckets}
+        }
+        const findUser = await User.find({
+          type: {$eq: 'AGENT'},
+          buckets: filter
+        })
+        return findUser
+      } catch (error) {
+        throw new CustomError(error.message,500)
+      }
+    },
     getUsers: async (_,{page = 1}) => {
       try {
         const res = await User.aggregate([
@@ -472,11 +489,11 @@ const userResolvers = {
           Production.find({$and: [{user: user._id},{createdAt: {$gte: todayStart, $lt: todayEnd}}]}),Production.find({user: new mongoose.Types.ObjectId(user._id)}).sort({'createdAt': 1})
         ])
 
-        res.cookie('token', token, {
-          httpOnly: true,
-          secure:false ,
-          sameSite: "Lax"
-        });
+        // res.cookie('token', token, {
+        //   httpOnly: true,
+        //   secure:false ,
+        //   sameSite: "Lax"
+        // });
         
         const prodLength = findProd.length <= 0
         

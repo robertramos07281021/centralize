@@ -74,6 +74,8 @@ const Reports = () => {
     }
   },[campaign])
 
+  console.log('hello')
+
   return (
     <div  className="h-full flex relative justify-end bg-slate-200 overflow-hidden">
       <div className="w-2/12 fixed left-0 flex flex-col p-5 gap-5 h-full bg-white">

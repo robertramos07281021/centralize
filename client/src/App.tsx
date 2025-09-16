@@ -43,6 +43,8 @@ import { Chart,
 import ChartDataLabels from 'chartjs-plugin-datalabels';
 import MISDashboard from "./pages/tl/MISDashboard"
 import FTEUserView from "./pages/aom/FTEUserView"
+import QARoute from "./routes/QARoute.tsx"
+import QAAgentViews from "./pages/qa/QAAgentViews.tsx"
 
 Chart.register(...registerables,
   ChartDataLabels,
@@ -64,7 +66,7 @@ function App() {
         <Route path="/" element={<Login/>}/>
         <Route path="*" element={<Error/>}/>
         <Route path="/change-password" element={<ChangePassword/>}/>
-    
+        <Route path="/agent-recordings" element={<AgentRecordingView/>}/>
         <Route element={<AdminRoute/>}>
           <Route path="/admin-dashboard" element={<AdminDashboard/>}/>
           <Route path="/setup" element={<SetupView/>}/>
@@ -95,13 +97,16 @@ function App() {
           <Route path="/mis-dashboard" element={<MISDashboard/>}/>
           <Route path="/tl-production-manager" element={<ProductionManagerView/>}/>
           <Route path="/agent-production" element={<AgentView/>}/>
-          <Route path="/agent-recordings" element={<AgentRecordingView/>}/>
           <Route path="/tl-task-manager" element={<TaskManagerView/>}/>
           <Route path="/tl-cip" element={<CustomerDisposition/>}/>
           <Route path="/tl-reports" element={<BacklogManagementView/>}/>
         </Route>
         <Route element={<CeoRoute/>}>
           <Route path="/ceo-dashboard" element={<CeoDashboard/>}/>
+        </Route>
+        <Route element={<QARoute/>}>
+
+          <Route path="/qa-agents-dashboard" element={<QAAgentViews/>}/>
         </Route>
       </Routes>
     </BrowserRouter>

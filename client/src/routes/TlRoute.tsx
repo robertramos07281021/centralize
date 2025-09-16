@@ -7,7 +7,7 @@ import { RootState } from "../redux/store"
 
 export const TlRoute = () => {
   const {userLogged} = useSelector((state: RootState)=> state.auth)
-  return userLogged && (userLogged?.type === "TL" || userLogged?.type === "MIS") ? (
+  return (userLogged?.type === "TL" || userLogged?.type === "MIS" || userLogged?.type === "QA" ) ? (
     <Wrapper>
       <Navbar/>
       <Outlet/>

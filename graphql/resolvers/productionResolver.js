@@ -1,4 +1,6 @@
-
+import ftp from "basic-ftp"
+import fs from "fs";
+import path from "path";
 import mongoose from "mongoose";
 import { DateTime } from "../../middlewares/dateTime.js";
 import CustomError from "../../middlewares/errors.js";
@@ -805,16 +807,16 @@ const productionResolver = {
       }
     },
     getAgentDispositionRecords: async(_,{agentID, limit, page, from, to, search, dispotype})=> {
-      
+      const client = new ftp.Client();
       try {
         const skip = ((page - 1) * limit)
-
         const dispoWithRecordings = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP','KOR']
         const today = new Date()
         today.setHours(0,0,0,0)
         const dialer = ["vici", 'issabel']
         const dispoFilter = dispotype.length > 0  ? dispotype : dispoWithRecordings
-         const filtered = {
+
+        const filtered = {
           user: new mongoose.Types.ObjectId(agentID),
           "dispotype.code" : {$in: dispoFilter},
           dialer: {$in: dialer},
@@ -854,7 +856,7 @@ const productionResolver = {
             }
           },
           {
-            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true}
+            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true }
           },
           {
             $lookup: {
@@ -865,7 +867,7 @@ const productionResolver = {
             }
           },
           {
-            $unwind: { path: "$customer", preserveNullAndEmptyArrays: true}
+            $unwind: { path: "$customer", preserveNullAndEmptyArrays: true }
           },
           {
             $lookup: {
@@ -876,7 +878,7 @@ const productionResolver = {
             }
           },
           {
-            $unwind: { path: "$bucket", preserveNullAndEmptyArrays: true}
+            $unwind: { path: "$bucket", preserveNullAndEmptyArrays: true }
           },
           {
             $lookup: {
@@ -887,7 +889,7 @@ const productionResolver = {
             }
           },
           {
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true}
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true }
           },
           {
             $match: filtered
@@ -898,6 +900,7 @@ const productionResolver = {
               _id: "$_id",
               customer_name: "$customer.fullName",
               payment: "$payment",
+              bucket: "$bucket",
               amount:  "$amount",
               dispotype: "$dispotype.code",
               payment_date:  "$payment_date",
@@ -929,24 +932,98 @@ const productionResolver = {
               data: [
                 {$skip: skip},
                 {$limit: limit},
-          
               ],
             }
           }
         ])
+          await client.access({
+            host: process.env.FILEZILLA_HOST,
+            user: process.env.FILEZILLA_USER,
+            password: process.env.FILEZILLA_PASSWORD,
+            port: 21,
+            secure: false,
+          });
+
+        
+        const withRecordings = []
+
+        for(const filtered of forFiltering[0]?.data) {
+          const months = [
+            'January',
+            'February',
+            'March',
+            'April',
+            'May',
+            'June',
+            'July',
+            'August',
+            'September',
+            'October',
+            'November',
+            'December'
+          ]
+          function checkDate(number) {
+            return number > 9 ? number : `0${number}`;
+          }
+         
+          const createdAt = new Date(filtered.createdAt)
+          const yearCreated = createdAt.getFullYear()
+          const monthCreated = months[createdAt.getMonth()]
+          const dayCreated = createdAt.getDate()
+          const contact = filtered.contact_no
+          const issabelIpAddress = filtered.bucket.issabelIp
+          const month = createdAt.getMonth() + 1;
+          const viciIpAddress = filtered.bucket.viciIp
+       
+            const fileNale = {
+            "172.20.21.64" : "HOMECREDIT",
+            "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
+            "172.20.21.17" : "PSBANK",
+            "172.20.21.27" : "MIXED CAMPAIGN",
+            "172.20.21.30" : "MCC",
+            "172.20.21.35" : "MIXED CAMPAIGN",
+            "172.20.21.67" : "MIXED CAMPAIGN NEW",
+            '172.20.21.97' : "UB"
+          }
+
+        
+          const remoteDirVici =  `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`     
+          const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${issabelIpAddress}/${monthCreated + ' ' + yearCreated}/${checkDate(dayCreated)}`
+
+          const remoteDir = filtered.dialer === "vici" ? remoteDirVici : remoteDirIssabel
+
+          try {
+            const files = await client.list(remoteDir)
+           
+            const matches = files
+            .filter(fileInfo => (contact ?? []).some(contact => fileInfo.name.includes(contact)))
+            .map(fileInfo => ({
+              name: fileInfo.name,
+              size: fileInfo.size
+            }));
+            withRecordings.push({...filtered,recordings: matches})
+          } catch (error) {
+            continue
+          }
+        }
+
 
         const newMapForDispoCode = forFiltering[0]?.metadata[0].dispotypeCodes || []
         const total = forFiltering[0]?.metadata[0].total || 0
-        const result = forFiltering[0]?.data || []
+
 
         return {
-          dispositions: result,
+          dispositions: withRecordings || [],
           dispocodes: newMapForDispoCode,
           total: total
         }
+
+
       } catch (error) {
         throw new CustomError(error.message, 500)  
-      } 
+      } finally {
+        client.close();
+      }
     },
     monthlyWeeklyCollected: async(_,__,{user})=> {
       try {

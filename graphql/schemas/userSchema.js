@@ -103,6 +103,7 @@ const userTypeDefs = gql`
     getUsers(page: Int!, limit: Int!): PaginatedUsers!
     getUser(id: ID): Users
     getMe: Users
+    getBucketUser(bucketId:ID):[Users]
     getAomUser: [Users]
     findUsers(search: String!, page: Int!, limit: Int!): PaginatedUsers!
     findDeptAgents:[DeptUser]

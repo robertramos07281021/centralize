@@ -33,7 +33,8 @@ enum Type {
   MIS = "MIS",
   CEO = 'CEO',
   ADMIN = 'ADMIN',
-  OPERATION = 'OPERATION'
+  OPERATION = 'OPERATION',
+  QA = 'QA'
 }
 
 enum AccountType {
@@ -95,7 +96,7 @@ const GET_DEPT_BUCKET = gql`
   }
 `
 
-const validForCampaignAndBucket = ['TL','AGENT','MIS']
+const validForCampaignAndBucket = ['TL','AGENT','MIS',"QA"]
 
 const RegisterView = () => {
 
@@ -266,20 +267,19 @@ const RegisterView = () => {
             <select
               id="type"
               name="type"
-              value={data.type === null ? "" : data.type as Type}
+              value={data.type || ""}
               onChange={(e)=> {
                 const value = e.target.value === "" ? null : e.target.value as Type
                 setData(prev => ({...prev, type: value}))}}
               className={`bg-slate-50 border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
               >
               <option value="">Choose a type</option>
-              <option value={Type.AGENT}>AGENT</option>
-              <option value={Type.TL}>TL</option>
-              <option value={Type.AOM}>AOM</option>
-              <option value={Type.MIS}>MIS</option>
-              <option value={Type.CEO}>CEO</option>
-              <option value={Type.ADMIN}>ADMIN</option>
-              <option value={Type.OPERATION}>OPERATION</option>
+              {
+                Object.entries(Type).map(([key,value])=> 
+                  <option value={key} key={key}>{value}</option>
+
+                )
+              }
             </select>
           </label>
           <label className="w-full">
@@ -388,7 +388,12 @@ const RegisterView = () => {
                   })()
                 }
               </div>
-              <MdKeyboardArrowDown className="text-lg absolute right-0 top-9" onClick={()=> {if(validForCampaignAndBucket.toString().includes(data.type as Type)) {setSelectDept(!selectDept); setSelectBucket(false)}}}/>
+              <MdKeyboardArrowDown className="text-lg absolute right-0 top-9" onClick={()=> {
+                if(validForCampaignAndBucket.toString().includes(data.type as Type)){
+                  setSelectDept(!selectDept); 
+                  setSelectBucket(false);
+                }
+              }}/>
             </div>
             {
               ( selectDept && data.branch && branchDeptData && branchDeptData?.getBranchDept?.length > 0) &&
