@@ -1011,7 +1011,7 @@ const customerResolver = {
         const callfileOB = input.map(x=> x.total_os).reduce((t,v)=> t+v)
 
         const newCallfile = new Callfile({name: callfile, bucket: findBucket._id, totalAccounts: input.length || 0,totalPrincipal: callfilePrincipal || 0,totalOB: callfileOB})
-        
+        console.log(input[0].address_2)
 
         await Promise.all(input.map(async (element) => {
           const contact_no = []
@@ -1030,10 +1030,10 @@ const customerResolver = {
             addresses.push(element.address)
           }
           if(element.address_2) {
-            addresses.push(element.address_2)
+            addresses.push(element.address_2.toString())
           }
           if(element.address_3) {
-            addresses.push(element.address_3)
+            addresses.push(element.address_3.toString())
           }
 
           if(element.email) {

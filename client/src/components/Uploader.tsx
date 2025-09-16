@@ -94,6 +94,9 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             contact_2, 
             contact_3, 
             contact, 
+            address,
+            address_2,
+            address_3,
             endorsement_date, 
             birthday,
             grass_date,
@@ -168,8 +171,12 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             max_dpd: Number(max_dpd),
             contact: contact ? normalizeContact(contact).toString().trim() : "",
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
+            address: address?.toString(),
+            address_2: address_2?.toString(),
+            address_3: address_3?.toString(),
           }
           
+
           if(emergencyContactMobile) {
             rows['emergencyContactMobile'] = normalizeContact(emergencyContactMobile)
           }

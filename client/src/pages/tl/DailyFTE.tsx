@@ -62,15 +62,15 @@ const DailyFTE:React.FC<ComponentProp> = ({bucket}) => {
   return (  
     <div className=' col-span-2 rounded-xl grid grid-cols-3 gap-2' >
       <div className="border border-slate-400 rounded-xl p-2 bg-white flex flex-col justify-between">
-        <h1 className="text-sm 2xl:text-lg font-medium text-gray-600">Assigned</h1>
+        <h1 className="text-sm 2xl:text-lg font-medium text-gray-600">Expected Calling Agents</h1>
         <p className="text-3xl 2xl:text-5xl text-end font-bold text-gray-600">{findCampaignAssignedData?.assigned}</p>
       </div>
       <div className="border border-slate-400 rounded-xl p-2 bg-white flex flex-col justify-between">
-        <h1 className="text-sm 2xl:text-lg font-medium text-gray-600">Present Today</h1>
+        <h1 className="text-sm 2xl:text-lg font-medium text-gray-600">Actual</h1>
         <p className="text-3xl 2xl:text-5xl text-end font-bold text-gray-600">{findData?.online}</p>
       </div>
       <div className="border border-slate-400 rounded-xl p-2 bg-white flex flex-col justify-between">
-        <h1 className="text-sm 2xl:text-lg font-medium text-gray-600">FTE Daily % </h1>
+        <h1 className="text-sm 2xl:text-lg font-medium text-gray-600">Attendance % </h1>
         <p className="text-3xl 2xl:text-5xl text-end font-bold text-gray-600">{isNaN(FTEPercent) ? 0 :FTEPercent.toFixed(2)}%</p>
       </div>
     </div>

@@ -291,8 +291,8 @@ const taskResolver = {
   },
   Mutation: {
     selectTask: async(_,{id}, {user, pubsub, PUBSUB_EVENTS})=>{
-      if(!user) throw new CustomError("Unauthorized",401)
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
     
         const ca = await CustomerAccount.findById(id)
         if(!ca) throw new CustomError("Customer account not found", 404) 
