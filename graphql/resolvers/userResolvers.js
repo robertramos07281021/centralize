@@ -10,8 +10,6 @@ import {DateTime} from "../../middlewares/dateTime.js";
 import Production from "../../models/production.js";
 import Bucket from "../../models/bucket.js";
 import mongoose from "mongoose";
-import CustomerAccount from "../../models/customerAccount.js";
-import Disposition from "../../models/disposition.js";
 
 const userResolvers = {
   DateTime,
@@ -66,6 +64,7 @@ const userResolvers = {
     },
     getMe: async (_, __, { user }) => {
       if (!user) throw new CustomError("Not authenticated",401)
+  
       return user;
     },
     getAomUser: async() => {

@@ -808,6 +808,7 @@ const productionResolver = {
     },
     getAgentDispositionRecords: async(_,{agentID, limit, page, from, to, search, dispotype})=> {
       const client = new ftp.Client();
+     
       try {
         const skip = ((page - 1) * limit)
         const dispoWithRecordings = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP','KOR']
@@ -1003,6 +1004,7 @@ const productionResolver = {
             }));
             withRecordings.push({...filtered,recordings: matches})
           } catch (error) {
+            console.log(error)
             continue
           }
         }
@@ -1020,6 +1022,7 @@ const productionResolver = {
 
 
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)  
       } finally {
         client.close();

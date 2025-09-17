@@ -1703,6 +1703,7 @@ const dispositionResolver = {
     },
     getTargetPerCampaign: async(_,{bucket, interval}) => {
       try {
+      
         const buckets = await Bucket.findById(bucket)
         const callfile = await Callfile.findOne({bucket:buckets._id, active: {$eq: true}})  
 
@@ -1817,10 +1818,12 @@ const dispositionResolver = {
           })
         } else {
 
+          const AllBucketCallfile = (await Callfile.find({bucket:buckets._id}).lean()).map(bucket => bucket._id)
+         
           const findDisposition = await Disposition.aggregate([
             {
               $match: {
-                callfile: {$eq: callfile._id},
+                callfile: {$in: AllBucketCallfile.map(e=> new mongoose.Types.ObjectId(e))},
                 createdAt: selectedInterval
               }
             },
@@ -1855,6 +1858,8 @@ const dispositionResolver = {
               }
             }
           ])
+
+      
           result = {
             collected: findDisposition[0]?.collected ? findDisposition[0]?.collected : 0,
             target: newDataCollected.target,
@@ -1862,8 +1867,10 @@ const dispositionResolver = {
           }
         }
 
+
         return result
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)        
       }
     }

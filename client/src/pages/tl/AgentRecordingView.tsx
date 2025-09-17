@@ -149,7 +149,8 @@ const AgentRecordingView = () => {
     notifyOnNetworkStatusChange: true,
     skip: isAgentRecordings
   })
-  console.log('hello')
+
+
   
   const [openRecordingsBox, setOpenRecordingsBox] = useState<string | null>(null)
 
@@ -364,58 +365,79 @@ const AgentRecordingView = () => {
             </thead>
             <tbody>
               {
-                recordings?.getAgentDispositionRecords.dispositions.map(e=> 
-                  <tr key={e._id} className="lg:text-xs 2xl:text-sm cursor-default">
-                    <td  className="pl-5 py-1.5 w-55 truncate">{e.customer_name}</td>
-                    <td className="truncate pr-2" title={e.contact_no.join(', ')}>{e.contact_no.join(', ')}</td>
-                    <td>{e.dialer}</td>
-                    <td>{e.amount ? e.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) : "-"}</td>
-                    <td>{e.payment_date ? new Date(e.payment_date).toLocaleDateString() : "-"}</td>
-                    <td title={e.ref_no}>{e.ref_no || "-"}</td>
-                    <td className="truncate" title={e.comment}>{e.comment || "-"}</td>
-                    <td>{new Date(e.createdAt).toLocaleDateString()}</td>
-                    <td>{e.dispotype}</td>
-                    <td>
-                    {
-                      (isLoading === e._id && loading) ?
-                      <div className="cursor-progress">
-                        <CgSpinner className="text-xl animate-spin"/>
-                      </div> 
-                        : 
-                      <div className="">
-                        {
-                          e.recordings.length > 0 ? 
-                          <div className="relative" >
-                            <FaBoxArchive className="text-lg text-fuchsia-700 peer cursor-pointer" title="Recordings" onClick={()=> {
-                              if(openRecordingsBox === e._id) {
-                                setOpenRecordingsBox(null)
-                              } else {
-                                setOpenRecordingsBox(e._id)
-                              }
-                            }}/>
-                            {
-                              openRecordingsBox === e._id &&
-                              <div className="absolute border border-slate-500 text-gray-700 right-full w-auto mr-2 shadow shadow-black/40" ref={recordingsRef}>
+                recordings?.getAgentDispositionRecords.dispositions.map(e=> {
+                  const callRecord  = [...e.recordings].sort((a,b) => b.size - a.size)
+                  
+
+
+                  return (
+                    <tr key={e._id} className="lg:text-xs 2xl:text-sm cursor-default even:bg-slate-100">
+                      <td  className="pl-5 py-1.5 w-55 truncate">{e.customer_name}</td>
+                      <td className="truncate pr-2" title={e.contact_no.join(', ')}>{e.contact_no.join(', ')}</td>
+                      <td>{e.dialer}</td>
+                      <td>{e.amount ? e.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) : "-"}</td>
+                      <td>{e.payment_date ? new Date(e.payment_date).toLocaleDateString() : "-"}</td>
+                      <td title={e.ref_no}>{e.ref_no || "-"}</td>
+                      <td className="truncate" title={e.comment}>{e.comment || "-"}</td>
+                      <td>{new Date(e.createdAt).toLocaleDateString()}</td>
+                      <td>{e.dispotype}</td>
+                      <td>
+                      {
+                        (isLoading === e._id && loading) ?
+                        <div className="cursor-progress">
+                          <CgSpinner className="text-xl animate-spin"/>
+                        </div> 
+                          : 
+                        <div className="">
+                          {
+                            e.recordings.length > 0 ? 
+                            <div className="relative flex gap-5" >
+                                <div title={callRecord[0]?.name} className="flex gap-2" onClick={()=> onDLRecordings(e._id, callRecord[0]?.name)}>
+                                  <p className="mr-">{fileSizeToDuration(callRecord[0].size)} </p>
+                                  <FaDownload />
+                                </div>
                                 {
-                                  e.recordings.map((x,index) => 
-                                    <div key={index} onClick={()=> onDLRecordings(e._id, x.name)} className="text-nowrap flex p-2 bg-white rouned items-center cursor-pointer">
-                                      <p className="mr-">{fileSizeToDuration(x.size)} </p>
-                                      <p className="mx-2">{x.name}</p>
-                                      <FaDownload />
-                                    </div>
-                                  )
+                                  callRecord?.length > 1 &&
+                                  (()=> {
+                                    const others = callRecord.slice(1)
+                                    return (
+                                      <div>
+                                        <FaBoxArchive className="text-lg text-fuchsia-700 peer cursor-pointer" title="Others" onClick={()=> {
+                                          if(openRecordingsBox === e._id) {
+                                            setOpenRecordingsBox(null)
+                                          } else {
+                                            setOpenRecordingsBox(e._id)
+                                          }
+                                        }}/>
+                                        {openRecordingsBox === e._id &&
+                                          <div className="absolute border border-slate-500 text-gray-700 right-full w-auto mr-2 shadow shadow-black/40 bg-white" ref={recordingsRef}>
+                                            {
+                                              others.map((o,index) => 
+                                                <div key={index} onClick={()=> onDLRecordings(e._id, o.name)} className="text-nowrap flex p-2 bg-white rouned items-center cursor-pointer gap-2">
+                                                  <p className="mr-">{fileSizeToDuration(o.size)} </p>
+                                                  <div>{o.name}</div>  
+                                                  <FaDownload />
+                                                </div>
+                                              )
+                                            }
+                                          </div>
+                                        }
+                                      </div>
+                                    )
+                                    
+                                  })()
                                 }
-                              </div>
-                            }
-                          </div>
-                          :
-                          "No Recordings"
-                        }
-    
-                      </div> 
-                    }
-                    </td>
-                  </tr>
+                            </div>
+                            :
+                            "No Recordings"
+                          }
+      
+                        </div> 
+                      }
+                      </td>
+                    </tr>
+                  )
+                }
 
                 )
               }

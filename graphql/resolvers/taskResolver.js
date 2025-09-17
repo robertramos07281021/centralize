@@ -373,7 +373,7 @@ const taskResolver = {
     },
     updateDatabase: async()=> {
       try {
-        
+       
 
         return {
           success: true,

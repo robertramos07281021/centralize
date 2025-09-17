@@ -128,6 +128,8 @@ const Navbar = () => {
       dispatch(setServerError(true))
     }
   })
+
+  console.log(error)
   const [popUpBreak, setPopUpBreak] = useState<boolean>(false)
 
   useSubscription<{agentLocked:AgentLock}>(LOCK_AGENT, {
@@ -268,7 +270,8 @@ const Navbar = () => {
     const timer = setTimeout(async()=> {
       if(data && userLogged) {
         dispatch(setUserLogged({...userLogged,isOnline: data?.getMe?.isOnline, targets: data?.getMe?.targets || {daily: 0, weekly: 0, monthly: 0}}))
-        if(!userLogged?.isOnline) {
+        console.log(data?.getMe?.isOnline)
+        if(!data?.getMe?.isOnline) {
           setConfirmation(true)
           setModalProps({
             no: ()=> {

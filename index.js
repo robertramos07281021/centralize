@@ -169,14 +169,12 @@ useServer({ schema,
   onDisconnect: async (ctx) => {
     const socket = ctx.extra?.socket;
     const userId = ctx.extra?.userId;
-
     if (!userId || !socket) return;
 
     const entry = connectedUsers.get(userId);
     if (!entry) return;
 
     entry.sockets.delete(socket);
-
     if (entry.sockets.size === 0) {
       entry.cleanupTimer = setTimeout(async () => {
         const latest = connectedUsers.get(userId);
@@ -184,7 +182,7 @@ useServer({ schema,
           connectedUsers.delete(userId);
           await User.findByIdAndUpdate(userId, { isOnline: false });
         }
-      }, 5000); 
+      }, 600000); 
     }
   },
 
