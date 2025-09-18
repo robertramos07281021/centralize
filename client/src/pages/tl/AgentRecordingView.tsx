@@ -366,10 +366,8 @@ const AgentRecordingView = () => {
             <tbody>
               {
                 recordings?.getAgentDispositionRecords.dispositions.map(e=> {
-                  const callRecord  = [...e.recordings].sort((a,b) => b.size - a.size)
-                  
-
-
+                  const callRecord  = e.recordings?.length > 0 ? [...e.recordings].sort((a,b) => b.size - a.size) : []
+                
                   return (
                     <tr key={e._id} className="lg:text-xs 2xl:text-sm cursor-default even:bg-slate-100">
                       <td  className="pl-5 py-1.5 w-55 truncate">{e.customer_name}</td>
@@ -390,7 +388,7 @@ const AgentRecordingView = () => {
                           : 
                         <div className="">
                           {
-                            e.recordings.length > 0 ? 
+                            e.recordings?.length > 0 ? 
                             <div className="relative flex gap-5" >
                                 <div title={callRecord[0]?.name} className="flex gap-2" onClick={()=> onDLRecordings(e._id, callRecord[0]?.name)}>
                                   <p className="mr-">{fileSizeToDuration(callRecord[0].size)} </p>

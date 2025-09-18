@@ -1017,8 +1017,11 @@ const callfileResolver = {
       try {
 
         const selectedBucket = await Bucket.findById(bucket).lean()
-        const callfile = await Callfile.findOne({bucket: selectedBucket._id, active: true})
-        if(!callfile) return null
+
+        const callfile = (await Callfile.find({bucket: selectedBucket._id})).map(c=> new mongoose.Types.ObjectId(c._id))
+        
+        if(callfile.length < 1) return null
+
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -1040,36 +1043,38 @@ const callfileResolver = {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         endOfMonth.setMilliseconds(-1);
+        const existingFile = await Callfile.findOne({bucket: selectedBucket._id, active: {$eq: true}})
 
         let selectedInterval = {}
         let newDataCollected = {}
+        
         if(interval === "daily") {
           selectedInterval['$gt'] = todayStart
           selectedInterval['$lte'] = todayEnd
-          newDataCollected['target'] = (Number(callfile.target) / 4) / 6
+          newDataCollected['target'] = (Number(existingFile.target) / 4) / 6
         } else if (interval === "weekly") {
           selectedInterval['$gt'] = startOfWeek
           selectedInterval['$lte'] = endOfWeek
-          newDataCollected['target'] = Number(callfile.target) / 4
+          newDataCollected['target'] = Number(existingFile.target) / 4
         } else if (interval === "monthly") {
           selectedInterval['$gt'] = startOfMonth
           selectedInterval['$lte'] = endOfMonth
-          newDataCollected['target'] = Number(callfile.target)
+          newDataCollected['target'] = Number(existingFile.target)
         }
 
         const dispotypesFilter = await DispoType.findOne({code: {$eq: "PAID"}})
-
+       
         const findCustomerCallfile = await Disposition.aggregate([
           {
             $match: {
               createdAt: selectedInterval,
-              callfile: callfile._id,
+              callfile: {$in: callfile},
               disposition: dispotypesFilter._id
             }
           },
           {
             $group: {
-              _id: "$callfile",
+              _id: null,
               collected: {
                 $sum: "$amount"
               }
@@ -1084,9 +1089,9 @@ const callfileResolver = {
         ])
 
         newDataCollected['collected'] = findCustomerCallfile[0]?.collected || 0
+
         return newDataCollected
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message,500)
       }
     }

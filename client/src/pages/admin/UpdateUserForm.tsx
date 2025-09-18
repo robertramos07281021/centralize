@@ -119,6 +119,7 @@ const UPDATE_USER = gql`
         buckets
         _id
         user_id
+        vici_id
       }
     }
   }
@@ -144,6 +145,7 @@ const STATUS_UPDATE = gql`
         buckets
         _id
         user_id
+        vici_id
       }
     }
   }
@@ -171,6 +173,7 @@ const UNLOCK_USER = gql`
         user_id
         group
         account_type
+        vici_id
       }
     }
   }
@@ -198,11 +201,24 @@ const LOGOUT_USER = gql`
         user_id
         group
         account_type
+        vici_id
       }
     }
   }
 `
 type UserType = "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" ;
+
+enum Types {
+  AGENT = "AGENT",
+  TL = "TL",
+  AOM = "AOM",
+  MIS = "MIS",
+  CEO = "CEO",
+  ADMIN = "ADMIN",
+  OPERATION = "OPERATION"
+}
+
+
 
 type Data = {
   username: string;
@@ -214,6 +230,7 @@ type Data = {
   account_type: string
   callfile_id: string
   user_id: string
+  vici_id: string
 }
 
 const UpdateUserForm:React.FC<modalProps> = ({state}) => {
@@ -239,9 +256,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
   const [check, setCheck] = useState<boolean>(state?.active)
 
   const [data, setData] = useState<Data>({
-    
     username: state?.username,
-    type:   "AGENT" as "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION"  ,
+    type: "AGENT" as "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION"  ,
     name: "",
     branch: "",
     departments: [],
@@ -249,6 +265,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     callfile_id: "",
     account_type: "",
     user_id: "",
+    vici_id: ""
   })
 
   
@@ -263,7 +280,8 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
         buckets: state?.buckets || [],
         callfile_id: state?.callfile_id || "",
         account_type: state?.account_type,
-        user_id: state?.user_id || ""
+        user_id: state?.user_id || "",
+        vici_id: state.vici_id || ""
       })
     }
   },[state])
@@ -394,9 +412,10 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
       branch: state?.branch,
       departments: state?.departments,
       buckets: state?.buckets,
-      account_type: state.account_type,
-      callfile_id: state.callfile_id,
-      user_id: state.user_id
+      account_type: state?.account_type,
+      callfile_id: state?.callfile_id,
+      user_id: state?.user_id,
+      vici_id: state?.vici_id
     })
   }
 
@@ -517,7 +536,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
             setSelectionBucket(false)
           }
       }}>
-        <div className=" w-full flex flex-col gap-2 py-5">
+        <div className=" w-full flex flex-col gap-2 py-5 text-slate-600">
           {
             required && 
           <div className="text-center text-xs text-red-500">All fields are required.</div>
@@ -533,16 +552,14 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
                 const newType = e.target.value as UserType;
                 setData(prev=>({ ...prev, type: newType }));
               }}
-              className={`bg-slate-50 border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              className={`bg-slate-50 border-slate-300 border text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
               >
               <option value="">Choose a bucket</option>
-              <option value="AGENT">AGENT</option>
-              <option value="TL">TL</option>
-              <option value="AOM">AOM</option>
-              <option value="MIS">MIS</option>
-              <option value="CEO">CEO</option>
-              <option value="ADMIN">ADMIN</option>
-              <option value="OPERATION">OPERATION</option>
+              {
+                Object.entries(Types).map(([key,value]) => 
+                  <option value={value} key={key}>{value}</option>
+                )
+              }
             </select>
           </label>
 
@@ -555,7 +572,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               autoComplete="off"
               value={data?.username}
               disabled
-              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
+              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}  
               />
           </label>
 
@@ -569,37 +586,52 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               value={data?.name}
               onChange={(e)=> setData(prev=> ({...prev, name: e.target.value}))}
               disabled={!isUpdate}
-              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
+              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200 capitalize`}  
               />
           </label>
 
-          <label className="w-full">
-            <p className=" text-base font-medium text-slate-500">SIP ID</p>
-            <input 
-              type="text" 
-              id="sip_id" 
-              name="sip_id" 
-              autoComplete="off"
-              value={data?.user_id}
-              onChange={(e)=> setData(prev=> ({...prev, user_id: e.target.value}))}
-              disabled={!isUpdate}
-              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
+          <div className="flex gap-2">
+            <label className="w-full">
+              <p className=" text-base font-medium text-slate-500">SIP ID</p>
+              <input 
+                type="text" 
+                id="sip_id" 
+                name="sip_id" 
+                autoComplete="off"
+                value={data?.user_id}
+                onChange={(e)=> setData(prev=> ({...prev, user_id: e.target.value}))}
+                disabled={!isUpdate}
+                className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
+                />
+            </label>
+            <label className="w-full">
+              <p className=" text-base font-medium text-slate-500">Callfile ID</p>
+              <input 
+                type="text" 
+                id="callfile_id" 
+                name="callfile_id" 
+                autoComplete="off"
+                value={data?.callfile_id}
+                onChange={(e)=> setData(prev=> ({...prev, callfile_id: e.target.value}))}
+                disabled={!isUpdate}
+                className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
               />
-          </label>
-          <label className="w-full">
-            <p className=" text-base font-medium text-slate-500">Callfile ID</p>
-            <input 
-              type="text" 
-              id="callfile_id" 
-              name="callfile_id" 
-              autoComplete="off"
-              value={data?.callfile_id}
-              onChange={(e)=> setData(prev=> ({...prev, callfile_id: e.target.value}))}
-              disabled={!isUpdate}
-              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
-            />
-          </label>
-    
+            </label>
+            <label className="w-full">
+              <p className=" text-base font-medium text-slate-500">VICI ID</p>
+              <input 
+                type="text" 
+                id="vici_id" 
+                name="vici_id" 
+                autoComplete="off"
+                value={data?.vici_id}
+                onChange={(e)=> setData(prev=> ({...prev, vici_id: e.target.value}))}
+                disabled={!isUpdate}
+                className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"}  border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}  
+              />
+            </label>
+      
+            </div>    
           <label className="w-full">
             <p className=" text-base font-medium text-slate-500">Account Type</p>
             <select
@@ -608,7 +640,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               value={data.account_type || ""}
               onChange={(e)=> setData(prev=> ({...prev, account_type: e.target.value}))}
               disabled={!isUpdate}
-              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
               <option value="">Choose account type</option>
               <option value="caller">Caller</option>
@@ -625,7 +657,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               value={branchObject[data.branch]}
               onChange={(e)=> {setData(prev=> ({...prev, branch: objectBranch[e.target.value], departments: [], buckets: []}))}}
               disabled={!isUpdate}
-              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              className={`${data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"} border-slate-300 border  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
               <option value="">Choose a branch</option>
               {

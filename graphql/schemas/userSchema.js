@@ -53,6 +53,7 @@ const userTypeDefs = gql`
     group: ID
     targets: Target
     account_type: String
+    vici_id: String
   }
 
   type PaginatedUsers {
@@ -135,13 +136,12 @@ const userTypeDefs = gql`
     callfile_id: String,
     account_type: String
     id:ID!
+    vici_id: String
   }
 
   type Mutation {
     createUser(createInput:CreatingAccount): Success
-
     updateUser(updateInput:UpdateAccount): Success
-
     updatePassword(password:String!, confirmPass:String!) : Users
     resetPassword(id:ID!): Success
     login(username:String!, password:String!) : Login

@@ -811,16 +811,15 @@ const productionResolver = {
      
       try {
         const skip = ((page - 1) * limit)
-        const dispoWithRecordings = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP','KOR']
+        // const dispoWithRecordings = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP','KOR','OCA']
         const today = new Date()
         today.setHours(0,0,0,0)
         const dialer = ["vici", 'issabel']
-        const dispoFilter = dispotype.length > 0  ? dispotype : dispoWithRecordings
+        
 
         const filtered = {
           user: new mongoose.Types.ObjectId(agentID),
-          "dispotype.code" : {$in: dispoFilter},
-          dialer: {$in: dialer},
+          // "dispotype.code" : {$in: dispoFilter},
           $or: [
             {
               "customer.contact_no" : {$elemMatch: { $regex: search, $options: "i" }},
@@ -828,8 +827,21 @@ const productionResolver = {
             {
               "customer.fullName" : { $regex: search, $options: "i" }
             },
+            {
+              dialer : { $regex: search, $options: "i" }
+            },
           ]
         }
+        if(dispotype.length > 0) {
+          filtered["dispotype.code"] = {$in: dispotype}
+        }
+       
+
+
+        if(!dialer.includes(search.toLowerCase())) {
+          filtered['dialer'] = {$in: dialer}
+        }
+
       
         if(from && to) { 
           const dateStart = new Date(from)
@@ -847,6 +859,7 @@ const productionResolver = {
           filtered['createdAt'] = {$lt: today}
         }
 
+  
         const forFiltering = await Disposition.aggregate([
           {
             $lookup: {
@@ -893,6 +906,17 @@ const productionResolver = {
             $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true }
           },
           {
+            $lookup: {
+              from: "users",
+              localField: "user",
+              foreignField: "_id",
+              as: "dispo_user",
+            }
+          },
+          {
+            $unwind: { path: "$dispo_user", preserveNullAndEmptyArrays: true }
+          },
+          {
             $match: filtered
           },
           {$sort: { "createdAt" : -1 }},
@@ -909,7 +933,8 @@ const productionResolver = {
               comment: "$comment",
               contact_no: '$customer.contact_no',
               createdAt: "$createdAt",
-              dialer: "$dialer"
+              dialer: "$dialer",
+              user: "$dispo_user"
             }
           },
           {
@@ -937,14 +962,14 @@ const productionResolver = {
             }
           }
         ])
-          await client.access({
-            host: process.env.FILEZILLA_HOST,
-            user: process.env.FILEZILLA_USER,
-            password: process.env.FILEZILLA_PASSWORD,
-            port: 21,
-            secure: false,
-          });
-
+        await client.access({
+          host: process.env.FILEZILLA_HOST,
+          user: process.env.FILEZILLA_USER,
+          password: process.env.FILEZILLA_PASSWORD,
+          port: 21,
+          secure: false,
+        });
+       
         
         const withRecordings = []
 
@@ -975,7 +1000,6 @@ const productionResolver = {
           const issabelIpAddress = filtered.bucket.issabelIp
           const month = createdAt.getMonth() + 1;
           const viciIpAddress = filtered.bucket.viciIp
-       
             const fileNale = {
             "172.20.21.64" : "HOMECREDIT",
             "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
@@ -986,8 +1010,8 @@ const productionResolver = {
             "172.20.21.67" : "MIXED CAMPAIGN NEW",
             '172.20.21.97' : "UB"
           }
-
         
+          
           const remoteDirVici =  `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`     
           const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${issabelIpAddress}/${monthCreated + ' ' + yearCreated}/${checkDate(dayCreated)}`
 
@@ -995,34 +1019,37 @@ const productionResolver = {
 
           try {
             const files = await client.list(remoteDir)
-           
+            const userRecordings = []
             const matches = files
             .filter(fileInfo => (contact ?? []).some(contact => fileInfo.name.includes(contact)))
             .map(fileInfo => ({
               name: fileInfo.name,
               size: fileInfo.size
             }));
-            withRecordings.push({...filtered,recordings: matches})
-          } catch (error) {
-            console.log(error)
+
+            if(filtered.dialer === "vici") {
+              for(const file of matches) {
+                if(file.name.includes(filtered.user.vici_id) || file.name.includes(filtered.user.user_id)) {
+                  userRecordings.push(file)
+                }
+              }
+            }
+            withRecordings.push({...filtered,recordings: filtered.dialer === "vici" ? userRecordings : matches})
+          } catch (err) {
+            withRecordings.push({...filtered})
             continue
           }
         }
 
-
-        const newMapForDispoCode = forFiltering[0]?.metadata[0].dispotypeCodes || []
-        const total = forFiltering[0]?.metadata[0].total || 0
-
+        const newMapForDispoCode = forFiltering[0]?.metadata.length > 0 ? forFiltering[0]?.metadata[0]?.dispotypeCodes : []
+        const total = forFiltering[0]?.metadata.length > 0  ?  forFiltering[0]?.metadata[0].total : 0
 
         return {
           dispositions: withRecordings || [],
           dispocodes: newMapForDispoCode,
           total: total
         }
-
-
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)  
       } finally {
         client.close();

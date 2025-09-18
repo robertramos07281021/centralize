@@ -1817,8 +1817,11 @@ const dispositionResolver = {
             }
           })
         } else {
+          const existingCallfile = await Callfile.findOne({bucket:buckets._id,active: {$eq: true}}).lean()
+
 
           const AllBucketCallfile = (await Callfile.find({bucket:buckets._id}).lean()).map(bucket => bucket._id)
+
          
           const findDisposition = await Disposition.aggregate([
             {
@@ -1843,31 +1846,62 @@ const dispositionResolver = {
                 "dispotype.code": {$eq: 'PAID'}
               }
             },
+     
             {
-              $group :{
-                _id: "$callfile",
-                collected: {
-                  $sum: "$amount"
-                }
+              $facet: {
+                allCallfile: [
+                  {
+                    $group :{
+                      _id: null,
+                      collected: {
+                        $sum: "$amount"
+                      }
+                    }
+                  },
+                  {
+                    $project: {
+                      _id: 0,
+                      collected: 1
+                    }
+                  }
+                ],
+                activeCallfile: [
+                  {
+                    $match: {
+                      callfile: { $eq: existingCallfile._id }
+                    }
+                  },
+                  {
+                    $group :{
+                      _id: null,
+                      collected: {
+                        $sum: "$amount"
+                      }
+                    }
+                  },
+                  {
+                    $project: {
+                      _id: 0,
+                      collected: 1
+                    }
+                  }
+                ]
               }
             },
-            {
-              $project: {
-                _id: 0,
-                collected: 1
-              }
-            }
           ])
+          
+       
+          const collected = findDisposition[0]?.allCallfile?.length > 0 ? findDisposition[0].allCallfile[0].collected : 0
 
-      
+          const totalPrincipal = findDisposition[0].activeCallfile?.length > 0 ? callfile.totalPrincipal + (findDisposition[0].activeCallfile[0].collected || 0) : callfile.totalPrincipal
+          
           result = {
-            collected: findDisposition[0]?.collected ? findDisposition[0]?.collected : 0,
+            collected: collected,
             target: newDataCollected.target,
-            totalPrincipal: callfile.totalPrincipal
+            totalPrincipal: totalPrincipal
+
           }
         }
-
-
         return result
       } catch (error) {
         console.log(error)

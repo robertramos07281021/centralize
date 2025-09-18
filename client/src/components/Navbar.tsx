@@ -129,7 +129,7 @@ const Navbar = () => {
     }
   })
 
-  console.log(error)
+
   const [popUpBreak, setPopUpBreak] = useState<boolean>(false)
 
   useSubscription<{agentLocked:AgentLock}>(LOCK_AGENT, {

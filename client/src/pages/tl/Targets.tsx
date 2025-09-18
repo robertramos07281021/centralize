@@ -50,6 +50,7 @@ const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
   },[tlBucketData])
   const newTargetdata = targetsData?.getTargetPerCampaign || null
 
+
   useEffect(()=> {
     const timer = async () => {
       try {
@@ -64,8 +65,8 @@ const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
     }
   },[bucket, interval])
 
-  const variance = newTargetdata ? newTargetdata.target - newTargetdata.collected : 0
-  const callfileVariance = newTargetdata?  (newTargetdata.collected/newTargetdata.totalPrincipal) * 100 : 0
+  const variance = newTargetdata ? newTargetdata?.target - newTargetdata?.collected : 0
+  const callfileVariance = newTargetdata ? (newTargetdata.collected/newTargetdata.totalPrincipal) * 100 : 0
 
   const data = {
     labels: ['Collected', 'Target Variance','Endorsement Variance'],
@@ -116,7 +117,9 @@ const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
         },
         text: [
           `${bucketObject[bucket?._id as keyof typeof bucketObject]} ${!bucket?.principal ? ` - ${interval.toUpperCase()}` : "" } `,
+
           `${newTargetdata ? newTargetdata?.collected?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : 0 } / ${newTargetdata ? newTargetdata?.totalPrincipal?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || newTargetdata?.collected?.toLocaleString('en-PH',{style: 'currency',currency: 'PHP',}) : 0} - ${callfileVariance?.toFixed(2)}%`,
+          
           `Target - ${newTargetdata ? newTargetdata?.target?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : 0}    Variance - ${variance?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}`
         ],
       },

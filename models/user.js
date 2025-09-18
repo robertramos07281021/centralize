@@ -77,6 +77,9 @@ const userSchema = new Schema(
       type: Boolean,
       default: true
     },
+    vici_id: {
+      type: String,
+    },
     targets: {
       daily: {
         type: Number,

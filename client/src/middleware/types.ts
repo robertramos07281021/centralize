@@ -40,6 +40,7 @@ export type Users = {
   createdAt: string
   account_type: string
   user_id: string
+  vici_id: string
 }
 
 export type CustomerData = {

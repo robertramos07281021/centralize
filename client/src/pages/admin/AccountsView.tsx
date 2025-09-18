@@ -53,7 +53,7 @@ const DELETE_USER = gql`
 
 
 const FIND_QUERY = gql` 
-  query Query($search: String!, $page: Int!, $limit: Int!) {
+  query findUsers($search: String!, $page: Int!, $limit: Int!) {
     findUsers(search: $search, page:$page, limit: $limit ) {
       total
       users {
@@ -72,6 +72,7 @@ const FIND_QUERY = gql`
         buckets
         createdAt
         user_id
+        vici_id
       }
     }
   }
@@ -93,6 +94,7 @@ type Users = {
   account_type: string
   createdAt: string
   user_id: string
+  vici_id: string
 }
 
 const AccountsView = () => {
@@ -227,7 +229,7 @@ const AccountsView = () => {
           <div className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-12 py-2 font-bold">
             <div className="col-span-2 px-2">Name</div>
             <div>Username</div>      
-            <div>Agent ID</div>      
+            <div>SIP ID</div>      
             <div>Type</div>
             <div>Branch</div>
             <div>Campaign</div>
@@ -241,7 +243,7 @@ const AccountsView = () => {
             {
               users?.map((user)=> 
                 <div key={user._id} className="grid grid-cols-12 text-xs py-2 hover:bg-blue-50 even:bg-gray-50 cursor-default items-center">
-                  <div className="font-medium px-2 text-gray-900 whitespace-nowrap dark:text-white truncate col-span-2" title={user.name.toUpperCase()}>
+                  <div className="font-medium px-2 text-gray-700 whitespace-nowrap dark:text-white truncate col-span-2" title={user.name.toUpperCase()}>
                     {user.name.toUpperCase()}
                   </div>
                   <div>
