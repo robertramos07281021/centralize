@@ -27,7 +27,7 @@ const FIND_AGENT = gql`
 `
 
 type Bucket = {
-  id:string
+  _id:string
   name: string
   dept: string
 }
@@ -35,17 +35,24 @@ type Bucket = {
 const GET_DEPT_BUCKETS = gql`
   query Query {
     getDeptBucket {
-      id
+      _id
       name
       dept
     }
   }
 `
+type ComponentProps = {
+  bucket: string
+}
 
-const AgentSection = () => {
+const AgentSection:React.FC<ComponentProps> = ({bucket}) => {
   const {data:AgentsData} = useQuery<{findAgents:Agent[]}>(FIND_AGENT)
   const [selectedAgent, setSelectedAgent] = useState<string>("")
   const dispatch = useAppDispatch()
+
+  const selectedBucketAgent = AgentsData?.findAgents.filter(x=> x.buckets.includes(bucket))
+  
+  console.log(selectedBucketAgent)
 
   const {data:deptBucketData} = useQuery<{getDeptBucket:Bucket[]}>(GET_DEPT_BUCKETS)
 
@@ -56,8 +63,9 @@ const AgentSection = () => {
   
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const ad = deptBucketData?.getDeptBucket || []
-    return Object.fromEntries(ad.map(e=> [e.id, e.name]))
+    return Object.fromEntries(ad.map(e=> [e._id, e.name]))
   },[deptBucketData])
+
 
   useEffect(()=> {
     dispatch(setAgent(agentsNewObject[selectedAgent]))
@@ -73,7 +81,7 @@ const AgentSection = () => {
       >
         <option value="">Select Agent</option>
         {
-          AgentsData?.findAgents.map((a)=> (
+          selectedBucketAgent?.map((a)=> (
             <option key={a._id} value={a.name} className='uppercase'>
               {a.user_id} - {a.name.toUpperCase()} - {a.buckets.map((b)=> bucketObject[b]).join(", ")}
             </option>

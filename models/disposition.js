@@ -19,7 +19,6 @@ const dispositionSchema = new Schema(
     user: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true
     },
     payment_date: {
       type: String,
@@ -76,9 +75,37 @@ const dispositionSchema = new Schema(
       enum: ['openvox','dinstar','inbound','M360'],
       default: undefined
     },
+    selectivesDispo: {
+      type: Boolean,
+      default: false
+    },
+    paidDispo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: 'Disposition'
+    }
   },
   { timestamps: true }
 );
+
+
+
+
+dispositionSchema.pre("save", function (next) {
+  if (this.isNew && this.createdAt) {
+    this.$__.timestamps = false; 
+  }
+  next();
+});
+
+
+dispositionSchema.pre("insertMany", function (next, docs) {
+  docs.forEach(doc => {
+    if (doc.createdAt) {
+      doc.$__.timestamps = false;
+    }
+  });
+  next();
+});
 
 const Disposition = mongoose.model("Disposition", dispositionSchema);
 export default Disposition;

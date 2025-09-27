@@ -25,6 +25,7 @@ const dispositionTypeDefs = gql`
     sms: String
     dialer: String
     chatApp: String
+    selectivesDispo: Boolean
   }
   
 
@@ -157,6 +158,10 @@ const dispositionTypeDefs = gql`
     collected: Float
   }
 
+  type RPCCount {
+    isRPC: Int
+  }
+
   type BucketTargets {
     collected: Float
     totalPrincipal: Float
@@ -188,8 +193,8 @@ const dispositionTypeDefs = gql`
   }
 
   input Input {
-    bucket: ID!,
-    interval: String!
+    bucket: ID,
+    interval: String
   }
 
   type Query {
@@ -207,9 +212,9 @@ const dispositionTypeDefs = gql`
     getTLPTPTotals(input: Input): TLTotal
     getTLPTPKeptTotals(input: Input): TLTotal
     getTLPaidTotals(input: Input): TLTotal,
-    getTLDailyCollected(input: Input): TLTotal
-    agentDispoDaily(bucket:ID!, interval: String!): [AgentDispo]
-    getTargetPerCampaign(bucket:ID!,interval: String!): BucketTargets
+    getTLDailyCollected(input: Input): RPCCount
+    agentDispoDaily(bucket:ID, interval: String): [AgentDispo]
+    getTargetPerCampaign(bucket:ID,interval: String): BucketTargets
   }
 
   type Mutation {

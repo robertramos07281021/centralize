@@ -52,6 +52,11 @@ const subscriptionsResolver = {
       subscribe: (_,__,{pubsub, PUBSUB_EVENTS}) => {
         return pubsub.asyncIterableIterator([PUBSUB_EVENTS.NEW_BUCKET_MESSAGE])
       }
+    },
+    accountOffline: {
+      subscribe: (_,__,{pubsub, PUBSUB_EVENTS}) => {
+        return pubsub.asyncIterableIterator([PUBSUB_EVENTS.OFFLINE_USER])
+      }
     }
   }
 }

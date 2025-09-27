@@ -114,6 +114,9 @@ const customerTypeDefs = gql`
     dialer: String
     createdAt: DateTime
     contact_method: String
+    sms: String
+    chatApp: String
+    selectivesDispo: Boolean
   }
 
   type GroupMember {

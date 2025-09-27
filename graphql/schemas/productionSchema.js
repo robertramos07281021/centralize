@@ -104,6 +104,7 @@ const productionTypeDefs = gql`
     createdAt: DateTime
     dialer: String
     recordings: [Recording]
+    selectivesDispo: Boolean
   }
 
   type AgentDispo {
@@ -114,10 +115,12 @@ const productionTypeDefs = gql`
 
 
   type MyProduction {
-    dtcCurrent: Float
-    dtcPrevious: Float
-    ytCurrent: Float
-    ytPrevious: Float
+    totalAmountUnsuccessPTP: Float,
+    totalCountUnsuccessPTP: Int,
+    totalAmountSuccessPTP: Float,
+    totalCountSuccessPTP: Int
+    totalAmountKept: Float,
+    totalCountKept: Float
   }
 
   input Targets {
@@ -131,12 +134,17 @@ const productionTypeDefs = gql`
     weekly: Float
   }
 
+  type AgentRPCCount {
+    count: Int
+  }
+
 
   type Query {
     getAgentProductionPerDay:[PerDay]
     getAgentProductionPerMonth:[perMonth]
     getAgentTotalDispositions:[AgentTotalDispo]
     getAgentDailyCollection: DailyCollection
+    getAgentRPCCount: AgentRPCCount
     ProductionReport(dispositions:[ID],from:String,to:String):ProductionReport
     getAgentProductions:[AgentProduction]
     agentProduction:MyProduction

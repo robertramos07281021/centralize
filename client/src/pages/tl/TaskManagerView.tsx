@@ -210,7 +210,7 @@ const TaskManagerView = () => {
           </div>
         </div>
         {
-          tasker === "group" ? <GroupSection/> : <AgentSection/>
+          tasker === "group" ? <GroupSection/> : <AgentSection bucket={String(bucketObject[bucketSelect] as keyof typeof bucketObject) }/>
         }
       </div>
       <TaskDispoSection selectedBucket={bucketObject[bucketSelect] || null} dpd={dpd}/>

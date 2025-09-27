@@ -31,9 +31,14 @@ const CustomerExtnTypeDefs = gql`
     dispotype: DispoType
     user: User
   }
+  type NoPTPCollection {
+    count: Int
+    amount: Float
+  }
 
   type Query {
     findAccountHistories(id:ID!):[AccountHistory]
+    noPTPCollection(bucket: ID, interval: String):NoPTPCollection
   }
 
   type AccountUpdateHistory {

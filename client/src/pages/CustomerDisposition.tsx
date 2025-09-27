@@ -40,7 +40,7 @@ const SEARCH = gql`
       paid_amount
       isRPCToday
       month_pd
-      assigned 
+      assigned
       assigned_date
       emergency_contact {
         name
@@ -63,6 +63,7 @@ const SEARCH = gql`
         chatApp
         sms
         RFD
+        selectivesDispo
       }
       account_update_history {
         principal_os
@@ -119,6 +120,7 @@ const SEARCH = gql`
         contact_method
         chatApp
         sms
+        selectivesDispo
       }
     }
   }
@@ -151,40 +153,55 @@ const UPDATE_RPC = gql`
     }
   }
 `
+const DISPOTYPES = gql`
+  query getDispositionTypes {
+    getDispositionTypes {
+      id
+      code
+      name
+    }
+  }
+`
+type Dispotype = {
+  id: string
+  code: string
+  name: string
+}
 
-  const SearchResult = memo(({ data, search, onClick }: { data: Search[], search: string, onClick: (c: Search) => void }) => 
+
+const SearchResult = memo(({ data, search, onClick }: { data: Search[], search: string, onClick: (c: Search) => void }) => 
   {
 
-    const [selectedIndex, setSelectedIndex] = useState(0)
-    const refs = useRef<(HTMLDivElement | null)[]>([]);
-    useEffect(() => {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === 'ArrowDown') {
-          setSelectedIndex(prev => (prev + 1 < data.length ? prev + 1 : prev));
-        } else if (e.key === 'ArrowUp') {
-          setSelectedIndex(prev => (prev - 1 >= 0 ? prev - 1 : prev));
-        } else if (e.key === 'Enter') {
-          if (data[selectedIndex]) {
-            onClick(data[selectedIndex]);
-          }
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const refs = useRef<(HTMLDivElement | null)[]>([]);
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowDown') {
+        setSelectedIndex(prev => (prev + 1 < data.length ? prev + 1 : prev));
+      } else if (e.key === 'ArrowUp') {
+        setSelectedIndex(prev => (prev - 1 >= 0 ? prev - 1 : prev));
+      } else if (e.key === 'Enter') {
+        if (data[selectedIndex]) {
+          onClick(data[selectedIndex]);
         }
-    };
-      document.addEventListener('keydown', handleKeyDown);
-      return () => document.removeEventListener('keydown', handleKeyDown);
-    }, [data, onClick]);
-
-    useEffect(()=> {
-      if(!data) {
-        setSelectedIndex(0)
       }
-    },[search,data])
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [data, onClick]);
+
+  useEffect(()=> {
+    if(!data) {
+      setSelectedIndex(0)
+    }
+  },[search,data])
 
     useEffect(() => {
       const selectedRef = refs.current[selectedIndex];
       if (selectedRef) {
         selectedRef.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       }
-    }, [selectedIndex]);
+  }, [selectedIndex]);
 
     return (
     <>
@@ -270,7 +287,12 @@ const CustomerDisposition = () => {
   const { data: searchData, refetch } = useQuery<{ search: Search[] }>(SEARCH, {
     skip: isSearch,
     fetchPolicy: "network-only",
+    notifyOnNetworkStatusChange: true
   });
+
+  const {data:dispotypes} = useQuery<{getDispositionTypes:Dispotype[]}>(DISPOTYPES)
+  const findPaid = dispotypes?.getDispositionTypes.filter(dt => ['PTP',"PAID"].includes(dt.code)).map(x=> x.id)
+
 
   const length = searchData?.search?.length || 0;
 
@@ -298,7 +320,8 @@ const CustomerDisposition = () => {
     onCompleted: ()=> {
       setSearch("")
     },
-    onError: ()=>{
+    onError: (error)=>{
+      console.log(error)
       dispatch(setServerError(true))
     }
   })
@@ -399,7 +422,7 @@ const CustomerDisposition = () => {
 
   return userLogged ? (
     <div 
-      className="h-full w-full overflow-auto outline-none" 
+      className="h-full w-full outline-none overflow-auto" 
       onMouseDown={(e)=> {
         if(!childrenDivRef.current?.divElement?.contains(e.target as Node)) {
           childrenDivRef?.current?.showButtonToFalse()
@@ -416,16 +439,16 @@ const CustomerDisposition = () => {
             userLogged.type === "AGENT" &&
             <AgentTimer/>
           }
-        <MyTaskSection/>
+          <MyTaskSection/>
         </div>
-        <div className="w-full grid grid-cols-2 gap-5 px-5 pb-5">
-          <div className="flex flex-col items-center"> 
+        <div className="w-full flex gap-5 px-5 pb-5 mt-2 h-full overflow-auto ">
+          <div className="flex flex-col items-center w-full"> 
             <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Information</h1>
             <div className="border flex flex-col rounded-xl border-slate-400 w-full h-full items-center justify-center p-5 gap-1.5 relative">
               <div className={`flex w-full ${selectedCustomer?.customer_info.isRPC ? "justify-start": "justify-end"} `}>
                 {
-                  selectedCustomer?._id && !selectedCustomer.customer_info.isRPC &&
-                  <button className={` px-10 py-1.5 rounded text-white font-bold bg-orange-400 hover:bg-orange-600 cursor-pointer ${isUpdate ? " 2xl:absolute top-5 right-5" : ""} `}onClick={handleClickRPC}>RPC</button>
+                  selectedCustomer && !selectedCustomer?.customer_info.isRPC &&
+                  <button className={` px-10 py-1.5 rounded text-white font-bold bg-orange-400 hover:bg-orange-600 cursor-pointer ${isUpdate ? "2xl:absolute top-5 right-5" : ""} `}onClick={handleClickRPC}>RPC</button>
                 }
                 {
                   selectedCustomer?._id && selectedCustomer?.customer_info?.isRPC &&
@@ -484,31 +507,33 @@ const CustomerDisposition = () => {
               {
                 !isUpdate &&
                 <div className="2xl:text-sm lg:text-xs mt-5 flex gap-5">
-                  { selectedCustomer &&
+                  { 
+                    selectedCustomer &&
                     <>
                       {
-                        selectedCustomer.balance != 0 &&
+                        (!selectedCustomer?.current_disposition || (!selectedCustomer?.current_disposition?.selectivesDispo && findPaid?.includes(selectedCustomer?.current_disposition?.disposition.toString()) && (selectedCustomer?.current_disposition && selectedCustomer?.current_disposition.user?.toString() === userLogged?._id?.toString())) || (selectedCustomer?.current_disposition && !findPaid?.includes(selectedCustomer?.current_disposition?.disposition.toString()) ) ) && 
                         <button 
                           type="button" 
-                          onClick={()=> setIsUpdate(true)}
-                          className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}>
-                          Update
+                          onClick={()=> setIsUpdate(true)} 
+                          className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`} 
+                        > 
+                          Update 
                         </button>
                       }
                       <button 
                         type="button" 
                         onClick={clearSelectedCustomer}
-                        className={`bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}>
+                        className={`bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}
+                      >
                         Cancel
                       </button>
                     </>
-                    
                   }
                 </div>
               }
             </div>
           </div>
-          <div className="flex flex-col items-center">
+          <div className="flex flex-col items-center w-full">
             <h1 className="text-center font-bold text-slate-600 text-lg mb-4">Customer Update Information</h1>
             <div className={`border w-full flex justify-center h-full border-slate-400 rounded-xl relative ${!isUpdate && "flex items-center justify-center"}`}>
               {

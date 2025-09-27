@@ -5,7 +5,6 @@ import { useEffect, useMemo } from "react"
 import { CurrentDispo } from "../middleware/types"
 import { IoMdCloseCircleOutline } from "react-icons/io";
 
-
 type Agent = {
   _id: string
   name: string
@@ -36,17 +35,16 @@ const DISPOTYPES = gql`
   }
 `
 
-
 type ComponentProps = {
   close: ()=> void
-
 }
 
 const DispositionRecords:React.FC<ComponentProps> = ({close}) => {
   const {selectedCustomer} = useSelector((state:RootState)=> state.auth )
 
-  const {data:agentData} = useQuery<{findAgents:Agent[]}>(AGENTS)
-  const {data:dispotypesData} = useQuery<{getDispositionTypes:Dispotype[]}>(DISPOTYPES)
+  const {data:agentData} = useQuery<{findAgents:Agent[]}>(AGENTS,{ notifyOnNetworkStatusChange: true })
+  
+  const {data:dispotypesData} = useQuery<{getDispositionTypes:Dispotype[]}>(DISPOTYPES, { notifyOnNetworkStatusChange: true })
 
   const dispotypeObject = useMemo(()=> {
     const data = dispotypesData?.getDispositionTypes || []
@@ -71,7 +69,6 @@ const DispositionRecords:React.FC<ComponentProps> = ({close}) => {
   const dispo_historySorted = notExisting?.slice().sort((a, b) => Number(new Date(b.createdAt)) - Number(new Date(a.createdAt)))  || []
   const checkIfExistingIsLatest = findExisting ? (checkingOnly[0]._id === findExisting?._id) : null 
 
-
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
@@ -81,8 +78,6 @@ const DispositionRecords:React.FC<ComponentProps> = ({close}) => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [close]);
-
-
 
   return (
     <div className="w-full h-full z-40 gap-5 absolute px-10 top-0 left-0 bg-black/50 backdrop-blur-[2px] p-10 overflow-hidden">
@@ -107,6 +102,7 @@ const DispositionRecords:React.FC<ComponentProps> = ({close}) => {
                   <th className="lg:pl-2 2xl:pl-5 py-2 text-nowrap">Comm App</th>
                   <th className="lg:pl-2 2xl:pl-5 py-2 ">Comments</th>
                   <th className="lg:pl-2 2xl:pl-5 py-2 ">RFD</th>
+                  <th className="lg:pl-2 2xl:pl-5 py-2 ">Selectives</th>
                 </tr>
               </thead>
               <tbody>
@@ -130,6 +126,10 @@ const DispositionRecords:React.FC<ComponentProps> = ({close}) => {
                       <td className="lg:pl-2 2xl:pl-5 py-1.5">{findExisting.payment}</td>
                       <td className="lg:pl-2 2xl:pl-5 py-1.5">{findExisting.payment_date}</td>
                       {
+                        findExisting.selectivesDispo && 
+                        <td></td>
+                      }
+                      {
                         findExisting.contact_method === 'calls' && 
                         <td className="lg:pl-2 2xl:pl-5 py-1.5">{findExisting.dialer}</td>
                       }
@@ -147,6 +147,7 @@ const DispositionRecords:React.FC<ComponentProps> = ({close}) => {
                       }
                       <td className="truncate lg:pl-2 2xl:pl-5 py-1.5 max-w-30" title={findExisting.comment ? findExisting.comment.toString() : ''}>{findExisting.comment}</td>
                       <td className="truncate lg:pl-2 2xl:pl-5 py-1.5 max-w-30 pr-2" title={findExisting.RFD ? findExisting.RFD.toString() : ''}>{findExisting.RFD}</td>
+                      <td className="lg:pl-2 2xl:pl-5 py-1.5 max-w-30 pr-2">{findExisting.selectivesDispo ? "Yes":"No"}</td>
                     </tr>
                 }
                
@@ -187,6 +188,7 @@ const DispositionRecords:React.FC<ComponentProps> = ({close}) => {
                         }
                         <td className="truncate lg:pl-2 2xl:pl-5 py-1.5 max-w-30 pr-2" title={ne.comment ? ne.comment.toString() : ''}>{ne.comment}</td>
                         <td className="truncate lg:pl-2 2xl:pl-5 py-1.5 max-w-30 pr-2" title={ne.RFD ? ne.RFD.toString() : ''}>{ne.RFD}</td>
+                        <td className="lg:pl-2 2xl:pl-5 py-1.5 max-w-30 pr-2">{ne.selectivesDispo? "Yes" : "No"}</td>
                       </tr>
 
                     )

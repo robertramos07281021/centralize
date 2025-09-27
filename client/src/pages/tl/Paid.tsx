@@ -1,9 +1,10 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
 import { useEffect } from "react"
-import { useAppDispatch } from "../../redux/store";
-import { setServerError } from "../../redux/slices/authSlice";
-import { Bucket, IntervalsTypes } from "./TlDashboard";
+import { useSelector } from "react-redux"
+import { RootState } from "../../redux/store.ts"
+import { useLocation } from "react-router-dom"
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 type PaidType = {
   count: number
@@ -19,40 +20,43 @@ const PAID_DAILY = gql`
   }
 `
 
-type ComponentProp = {
-  bucket: Bucket | null | undefined
-  interval: IntervalsTypes 
-}
 
-const Paid:React.FC<ComponentProp> = ({bucket,interval}) => {
-  const {data:paidData, refetch} = useQuery<{getTLPaidTotals:PaidType}>(PAID_DAILY,{variables: {input: {bucket: bucket?._id, interval: interval},skip: !bucket?._id}})
-  const dispatch = useAppDispatch()
+
+const Paid = () => {
+  const {intervalTypes, selectedBucket} = useSelector((state:RootState)=> state.auth)
+  const location = useLocation()
+  const isTLDashboard = location.pathname.includes('tl-dashboard')
+  const {data:paidData, refetch, loading} = useQuery<{getTLPaidTotals:PaidType}>(PAID_DAILY,{variables: {input: {bucket: selectedBucket, interval: intervalTypes},skip: !isTLDashboard},notifyOnNetworkStatusChange: true})
 
   useEffect(()=> {
     const timer = async()=> {
-      try {
-        await refetch()
-      } catch (error) { 
-        console.log(error)
-        dispatch(setServerError(true))
-      }
+      await refetch()
     }
-    if(bucket?._id) {
+    if(selectedBucket) {
       timer()
     }
-  },[bucket?._id,interval])
+  },[selectedBucket,intervalTypes])
   const paidSelected = paidData?.getTLPaidTotals || null
 
   return (
     <div className='border-blue-400 border bg-blue-200 rounded-xl p-2 text-blue-500 flex flex-col'>
       <div className='lg:text-base 2xl:text-lg font-black '>
-        <h1>Paid Collection <span className="text-xs font-medium capitalize">{`(${interval})`}</span> </h1>
+        <h1>Total Amount Collected  </h1>
+        <p className="text-xs font-medium capitalize">{`(${intervalTypes})`}</p>
       </div>
-      <div className='h-full w-full flex justify-between items-center  text-lg  2xl:text-3xl'>
-        <div className="font-bold text-center ">{paidSelected ? paidSelected?.count : 0}</div>
-        <div className="font-medium flex justify-end items-center gap-2">
-          <p>{paidSelected ? paidSelected?.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</p>
-        </div>
+      <div className='h-full w-full flex justify-between items-center  text-lg  2xl:text-xl'>
+        {
+          !loading ?
+          <>
+            <div className="font-bold text-center ">{paidSelected ? paidSelected?.count : 0}</div>
+            <div className="font-medium flex justify-end items-center gap-2">
+              <p>{paidSelected ? paidSelected?.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</p>
+            </div>
+          </> :
+          <div className="flex justify-end w-full">
+            <AiOutlineLoading3Quarters className="animate-spin" />
+          </div>
+        }
       </div>  
     </div>
   )

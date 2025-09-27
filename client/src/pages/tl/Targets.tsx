@@ -3,10 +3,12 @@ import { ChartOptions } from "chart.js";
 import gql from "graphql-tag";
 import { useEffect, useMemo } from "react";
 import { Doughnut } from "react-chartjs-2"
-import { useAppDispatch } from "../../redux/store";
-import { setServerError } from "../../redux/slices/authSlice";
+import { RootState } from "../../redux/store";
+
 import { GoDotFill } from "react-icons/go";
 import { Bucket } from "./TlDashboard";
+import { useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
 
 
 type Target = {
@@ -16,7 +18,7 @@ type Target = {
 }
 
 const TARGET_PER_BUCKET = gql`
-  query GetTargetPerCampaign($bucket:ID!,$interval: String!) {
+  query GetTargetPerCampaign($bucket:ID,$interval: String) {
     getTargetPerCampaign(bucket:$bucket, interval:$interval ) {
       collected
       totalPrincipal
@@ -34,15 +36,15 @@ const TL_BUCKET = gql`
   }
 `
 
-type ComponentProps = {
-  bucket: Bucket | null | undefined
-  interval: string
-}
 
-const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
-  const {data:targetsData, refetch} = useQuery<{getTargetPerCampaign:Target}>(TARGET_PER_BUCKET,{variables: {bucket: bucket?._id, interval},skip: !bucket?._id})
-  const {data:tlBucketData, refetch:deptBucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
-  const dispatch = useAppDispatch()
+
+const Targets= () => {
+  const {intervalTypes, selectedBucket} = useSelector((state:RootState)=> state.auth)
+  const location = useLocation()
+  const isTLDashboard = location.pathname.includes('tl-dashboard')
+
+  const {data:targetsData, refetch} = useQuery<{getTargetPerCampaign:Target}>(TARGET_PER_BUCKET,{variables: {bucket: selectedBucket, interval: intervalTypes},skip: !isTLDashboard, notifyOnNetworkStatusChange: true})
+  const {data:tlBucketData, refetch:deptBucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET,{notifyOnNetworkStatusChange: true})
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = tlBucketData?.getDeptBucket || []
@@ -50,20 +52,17 @@ const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
   },[tlBucketData])
   const newTargetdata = targetsData?.getTargetPerCampaign || null
 
+  const findBucket = tlBucketData?.getDeptBucket.find(bucket => bucket._id === selectedBucket)
 
   useEffect(()=> {
     const timer = async () => {
-      try {
-        await refetch()
-        await deptBucketRefetch()
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
+      await refetch()
+      await deptBucketRefetch()
     }
-    if(bucket?._id) {
+    if(selectedBucket) {
       timer()
     }
-  },[bucket, interval])
+  },[selectedBucket, intervalTypes])
 
   const variance = newTargetdata ? newTargetdata?.target - newTargetdata?.collected : 0
   const callfileVariance = newTargetdata ? (newTargetdata.collected/newTargetdata.totalPrincipal) * 100 : 0
@@ -116,10 +115,10 @@ const Targets:React.FC<ComponentProps> = ({bucket, interval}) => {
           weight: 'bold',
         },
         text: [
-          `${bucketObject[bucket?._id as keyof typeof bucketObject]} ${!bucket?.principal ? ` - ${interval.toUpperCase()}` : "" } `,
+          `${bucketObject[selectedBucket as keyof typeof bucketObject]} ${!findBucket?.principal ? ` - ${intervalTypes?.toUpperCase()}` : "" } `,
 
           `${newTargetdata ? newTargetdata?.collected?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : 0 } / ${newTargetdata ? newTargetdata?.totalPrincipal?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) || newTargetdata?.collected?.toLocaleString('en-PH',{style: 'currency',currency: 'PHP',}) : 0} - ${callfileVariance?.toFixed(2)}%`,
-          
+
           `Target - ${newTargetdata ? newTargetdata?.target?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : 0}    Variance - ${variance?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}`
         ],
       },

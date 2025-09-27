@@ -5,8 +5,9 @@ import { useQuery } from '@apollo/client';
 import { useEffect, useMemo } from 'react';
 import { Chart } from "react-chartjs-2";
 import { useSelector } from "react-redux";
-import { RootState, useAppDispatch } from "../../redux/store";
-import { setServerError } from "../../redux/slices/authSlice";
+import { RootState } from "../../redux/store";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { useLocation } from "react-router-dom";
 
 
 type AgentProdPerDay = {
@@ -31,18 +32,16 @@ const AGENT_PER_DAY_PROD = gql`
 `
 
 const MixedChartView = () => {
-  const dispatch = useAppDispatch()
-  const {data:agentProdPerDayData, refetch:PerDayRefetch} = useQuery<{getAgentProductionPerDay:AgentProdPerDay[]}>(AGENT_PER_DAY_PROD)
+  const location = useLocation()
+  const isAgentDashboard = location.pathname.includes('agent-dashboard')
+  const {data:agentProdPerDayData, refetch:PerDayRefetch, loading} = useQuery<{getAgentProductionPerDay:AgentProdPerDay[]}>(AGENT_PER_DAY_PROD,{notifyOnNetworkStatusChange: true, skip: !isAgentDashboard})
   const {userLogged} = useSelector((state:RootState)=> state.auth)
+
   useEffect(()=> {
-    const timer = setTimeout(async()=> {
-      try {
-        await PerDayRefetch()
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
-    })
-    return () => clearTimeout(timer)
+    const refetching = async()=> {
+      await PerDayRefetch()
+    }
+    refetching()
   },[])
 
   const dailyTargets = userLogged?.targets?.daily || 0
@@ -58,7 +57,7 @@ const MixedChartView = () => {
 
   const newProdData = useMemo(()=> {
     return agentProdPerDayData?.getAgentProductionPerDay.map(x=> {
-      const theVariance = dailyTargets - (x.total)
+      const theVariance = dailyTargets - (x.ptp_kept)
       return {
         ...x,
         variance: theVariance
@@ -79,9 +78,9 @@ const MixedChartView = () => {
     type: "bar" | "line";
   }[]= [
     { label: "PTP", key: "ptp", color: color[2], type: "bar" },
-    { label: "PTP Kept", key: "ptp_kept", color: color[7], type: "bar" },
-    { label: "Paid Collected", key: "paid", color: color[15], type: "bar" },
-    { label: "Collected", key: "total", color: "#000", type: "line" },
+    { label: "Kept", key: "ptp_kept", color: color[7], type: "bar" },
+    // { label: "Paid Collected", key: "paid", color: color[15], type: "bar" },
+    // { label: "Collected", key: "total", color: "#000", type: "line" },
     { label: "Variance", key: "variance", color: "red", type: "line" },
   ];
 
@@ -190,7 +189,18 @@ const MixedChartView = () => {
 
   return (
     <div className="border flex rounded-lg border-slate-200 lg:col-span-6 lg:row-span-2 p-2 shadow-md shadow-black/20 bg-white">
-      <Chart type="bar" data={dataPerDay} options={optionPerDay} plugins={[customGridLinePlugi]}  />
+      {
+        loading ? 
+        <div className="flex justify-center items-center w-full">
+          <AiOutlineLoading3Quarters className="animate-spin text-7xl" />
+
+        </div>
+        :
+
+        <Chart type="bar" data={dataPerDay} options={optionPerDay} plugins={[customGridLinePlugi]}  />
+      }
+
+      
     </div>
   
   )

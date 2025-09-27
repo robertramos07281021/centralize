@@ -3,8 +3,7 @@ import gql from "graphql-tag"
 import { IoMdArrowDown, IoMdArrowUp  } from "react-icons/io";
 import { HiOutlineMinusSm } from "react-icons/hi";
 import { useEffect } from "react";
-import { useAppDispatch } from "../../redux/store";
-import { setServerError } from "../../redux/slices/authSlice";
+import { useLocation } from "react-router-dom";
 
 
 type DailyCollection = {
@@ -43,6 +42,14 @@ type RateProps = {
   count: number
 };
 
+const AGENT_RPC_COUNT = gql`
+  query getAgentRPCCount {
+    getAgentRPCCount {
+      count
+    }
+  }
+`
+
 const RateIcon = ({ rate }: { rate: number }) => {
   if (isNaN(rate) || rate === -100 || rate === Infinity) {
     return <HiOutlineMinusSm className="text-blue-500 text-xs lg:text-base " />;
@@ -79,9 +86,12 @@ const StatCard = ({ label, current, previous, color, count }: RateProps) => {
     <div
       className={` rounded-xl border ${colorMap[color]} p-2 shadow shadow-black/20 flex flex-col `}
     >
-      <h1 className="text-xs lg:text-sm font-bold">
-        {label} <span className="text-[0.7em] lg:text-xs">(Daily)</span>
-      </h1>
+      <div className="flex gap-2">
+        <h1 className="text-xs lg:text-sm font-bold">
+          {label} <span className="text-[0.6em] lg:text-[0.7em]">(Daily)</span>
+        </h1>
+
+      </div>
       <div className="h-full flex flex-col justify-center">
         <div className="flex flex-col items-center">
           <div className="flex text-sm items-center justify-between w-full gap-1">
@@ -104,24 +114,35 @@ const StatCard = ({ label, current, previous, color, count }: RateProps) => {
 };
 
 export default function DailyCollections() {
-  const dispatch = useAppDispatch()
-  const {data,refetch} = useQuery<{getAgentDailyCollection:DailyCollection}>(AGENT_DAILY_COLLECTIONS)
+  const location = useLocation()
+  const isAgentDashboard = location.pathname.includes('agent-dashboard')
+  const {data,refetch} = useQuery<{getAgentDailyCollection:DailyCollection}>(AGENT_DAILY_COLLECTIONS,{notifyOnNetworkStatusChange: true, skip: !isAgentDashboard})
+  const {data:rpcCountData, refetch:rpcCountRefetch} = useQuery<{getAgentRPCCount:{count: number}}>(AGENT_RPC_COUNT,{notifyOnNetworkStatusChange: true, skip: !isAgentDashboard})
 
   const stats = data?.getAgentDailyCollection;
 
   useEffect(()=> {
-    const timer = setTimeout(async()=> {
-     try {
-       await refetch()
-     } catch (error) {
-      dispatch(setServerError(true))
-     } 
-    })
-    return () => clearTimeout(timer)
-  },[refetch])
+    const timer = async()=> {
+      await refetch()
+      await rpcCountRefetch()
+    }
+    timer()
+  },[refetch, rpcCountRefetch])
 
   return (
     <div className="grid grid-cols-3 gap-2">
+      <div className={` rounded-xl border bg-yellow-200 border-yellow-400 text-yellow-500 p-2 shadow shadow-black/20 flex flex-col `}>
+        <div className="flex gap-2">
+          <h1 className="text-xs lg:text-sm font-bold">
+            RPC
+          </h1>
+        </div>
+        <div className="h-full flex justify-between items-center">
+          <h1 className="text-[0.7em] lg:text-xs font-medium">Count</h1>
+          <p className="text-7xl font-bold">{rpcCountData?.getAgentRPCCount.count}</p>
+        </div>
+      </div>
+
       <StatCard
         label="PTP"
         current={stats?.ptp_amount || 0}
@@ -129,19 +150,13 @@ export default function DailyCollections() {
         color="orange"
         count={stats?.ptp_count || 0}
       />
+
       <StatCard
-        label="PTP Kept"
+        label="Kept"
         current={stats?.ptp_kept_amount || 0}
         previous={stats?.ptp_kept_yesterday || 0}
         count={stats?.ptp_kept_count || 0}
         color="green"
-      />
-      <StatCard
-        label="Paid Collected"
-        current={stats?.paid_amount || 0}
-        previous={stats?.paid_yesterday || 0}
-        count={stats?.paid_count || 0}
-        color="blue"
       />
     </div>
   )

@@ -137,6 +137,7 @@ export type CurrentDispo = {
   chatApp: string
   sms: string
   RFD: String
+  selectivesDispo: boolean
 }
 
 export type AccountUpdateHistory = {
@@ -170,4 +171,10 @@ export type Search = {
   emergency_contact: EmergencyContact
   dispo_history: CurrentDispo[]
   current_disposition: CurrentDispo
+}
+
+export enum IntervalsTypes {
+  DAILY = 'daily',
+  WEEKLY = 'weekly',
+  MONTHLY = 'monthly'
 }

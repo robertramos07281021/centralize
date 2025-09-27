@@ -193,7 +193,7 @@ const FieldsDiv = ({label, value, endorsementDate}:{label:string, value:string |
   return (
     <div className="flex flex-col items-center 2xl:flex-row w-full ">
       <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-5/10 leading-4 select-none">{label} :</p>
-      <div className={`${newValue || null  ? "p-2": "p-4"} select-none 2xl:ml-2 text-xs 2xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
+      <div className={`${newValue || null  ? "p-2": "p-4"} 2xl:ml-2 text-xs 2xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}>{newValue || ""}</div>
     </div>
   )
 }
@@ -226,12 +226,12 @@ export type ChildHandle = {
 
 const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
   const location = useLocation()
-  const isTLCIP = location.pathname === 'tl-cip'
+  const isTLCIP = ['/tl-cip','/agent-cip'].includes(location.pathname)
   const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
   const [showAccounts, setShowAccounts] = useState<boolean>(false)
-  const {data} = useQuery<{customerOtherAccounts:Search[]}>(OTHER_ACCOUNTS,{variables: {caId: selectedCustomer?._id}, skip: !selectedCustomer || isTLCIP})
+  const {data} = useQuery<{customerOtherAccounts:Search[]}>(OTHER_ACCOUNTS,{variables: {caId: selectedCustomer?._id}, skip: !selectedCustomer && !isTLCIP})
   const [showAccountHistory, setShowAccountHistory] = useState<boolean>(false)
-  const {data:accountHistory, refetch} = useQuery<{findAccountHistories:AccountHistory[]}>(ACCOUNT_HISTORIES,{variables: {id: selectedCustomer?._id},skip: !selectedCustomer })
+  const {data:accountHistory, refetch} = useQuery<{findAccountHistories:AccountHistory[]}>(ACCOUNT_HISTORIES,{variables: {id: selectedCustomer?._id},skip: !selectedCustomer && !isTLCIP })
   const [showButton, setShowButton] = useState<boolean>(false)
   const divRef = useRef<HTMLDivElement | null>(null);
   const [showDispoHistory, setShowDispoHistory] = useState<boolean>(false)
@@ -276,7 +276,7 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
         <UpdatedAccountHistory close={()=> setShowUpdateOnCA(false)}/>
       }
       
-      <div className="fixed top-30 gap-2 left-5 z-30">
+      <div className={`fixed ${userLogged?.type === "AGENT" ? "top-40" : "top-30"} gap-2 left-5 z-30`}>
         <div className="relative ">
           {
             selectedCustomer &&
@@ -290,12 +290,12 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
           {
             showButton &&
               <div className="border mt-1 flex flex-col gap-8 p-8 rounded-md border-slate-400 bg-white shadow  " ref={divRef}>
-                <Buttons label="Account History" onClick={()=> setShowDispoHistory(true)} length={selectedCustomer && selectedCustomer.dispo_history.length > 0 ? selectedCustomer.dispo_history.length : 0} color="blue"/>
+                <Buttons label="Account History" onClick={()=> setShowDispoHistory(true)} length={selectedCustomer && selectedCustomer?.dispo_history?.length > 0 ? selectedCustomer?.dispo_history?.length : 0} color="blue"/>
                 <Buttons label="Other Accounts" onClick={()=> setShowAccounts(true)} length={ data && data?.customerOtherAccounts?.length > 0 ? data?.customerOtherAccounts?.length : 0} color="green"/>
-                <Buttons label="Past Callfile History" onClick={()=> setShowAccountHistory(true)} length={accountHistory && accountHistory.findAccountHistories.length > 0 ? accountHistory.findAccountHistories.length : 0} color="yellow"/>
+                <Buttons label="Past Callfile History" onClick={()=> setShowAccountHistory(true)} length={accountHistory && accountHistory.findAccountHistories?.length > 0 ? accountHistory?.findAccountHistories?.length : 0} color="yellow"/>
                 {
                   selectedCustomer.account_bucket.can_update_ca && 
-                  <Buttons label="Update Account History" onClick={()=> setShowUpdateOnCA(true)} length= {UpdateAccountHistory && UpdateAccountHistory.length > 0 ? UpdateAccountHistory.length : 0} color="cyan"/>
+                  <Buttons label="Update Account History" onClick={()=> setShowUpdateOnCA(true)} length= {UpdateAccountHistory && UpdateAccountHistory?.length > 0 ? UpdateAccountHistory?.length : 0} color="cyan"/>
                 }
               </div>
             }
@@ -311,7 +311,7 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
           <div className="flex flex-col gap-2  w-full">
             <FieldsDiv label="Bucket" value={ selectedCustomer?.account_bucket?.name } endorsementDate={null}/>
             <FieldsDiv label="Case ID / PN / Account ID" value={ selectedCustomer?.case_id } endorsementDate={null}/>
-            <FieldsDiv label="Principal OS" value= { selectedCustomer?.out_standing_details.principal_os || 0 } endorsementDate={null}/>
+            <FieldsDiv label="Principal OS" value= { selectedCustomer?.out_standing_details?.principal_os || 0 } endorsementDate={null}/>
           </div>
           <div className="flex flex-col gap-2  w-full">
             <FieldsDiv label="DPD" value={ selectedCustomer?.dpd } endorsementDate={null}/>
@@ -325,19 +325,19 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
             <div>
               <p className="font-medium 2xl:text-lg lg:text-base ">Outstanding Balance</p>
               <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
-                {selectedCustomer?.out_standing_details.total_os.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+                {selectedCustomer?.out_standing_details?.total_os?.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
               </div>
             </div>
             <div>
               <p className="font-medium 2xl:text-base lg:text-md ">Balance</p>
               <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
-                {selectedCustomer?.balance.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+                {selectedCustomer?.balance?.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
               </div>
             </div>
             <div>
               <p className="font-medium 2xl:text-lg lg:text-base ">Total Paid</p>
               <div className="min-w-45 border p-2 rounded-lg border-slate-400 bg-gray-100 2xl:text-lg lg:text-base">
-                {selectedCustomer?.paid_amount.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
+                {selectedCustomer?.paid_amount?.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}
               </div>
             </div>
           </div> : 
@@ -346,19 +346,19 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
         {
           data && data?.customerOtherAccounts?.length > 0 && 
           (()=> {
-            const sumofOtherOB = data?.customerOtherAccounts.map(x=> x.out_standing_details.total_os).reduce((t,v)=> t+v) + selectedCustomer.out_standing_details.total_os
+            const sumofOtherOB = data?.customerOtherAccounts?.map(x=> x.out_standing_details?.total_os).reduce((t,v)=> t+v) + selectedCustomer?.out_standing_details?.total_os
 
-            const sumofOtherPrincipal = data.customerOtherAccounts.map(x=> x.out_standing_details.principal_os).reduce((t,v)=> t+v) + selectedCustomer.out_standing_details.principal_os
+            const sumofOtherPrincipal = data?.customerOtherAccounts?.map(x=> x.out_standing_details?.principal_os).reduce((t,v)=> t+v) + selectedCustomer?.out_standing_details?.principal_os
 
             return (
               <div className="mt-5 flex justify-center gap-5 text-slate-500">
                 <div>
                   <h1 className="font-medium 2xl:text-lg lg:text-base">Customer Total OB</h1>
-                  <div className="min-w-45 p-2 border border-slate-500 rounded-md">{sumofOtherOB.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</div>
+                  <div className="min-w-45 p-2 border border-slate-500 rounded-md">{sumofOtherOB?.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</div>
                 </div>
                 <div>
                   <h1 className="font-medium 2xl:text-lg lg:text-base">Customer Total Principal</h1>
-                  <div className="min-w-45 p-2 border border-slate-500 rounded-md">{sumofOtherPrincipal.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</div>
+                  <div className="min-w-45 p-2 border border-slate-500 rounded-md">{sumofOtherPrincipal?.toLocaleString('en-PH', { style: 'currency', currency: 'PHP' })}</div>
                 </div>
               </div>
             )

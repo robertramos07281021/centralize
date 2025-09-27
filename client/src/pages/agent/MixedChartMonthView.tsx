@@ -44,15 +44,15 @@ export default function MixedChartMonthView() {
     type: "bar" | "line";
   }[]= [
     { label: "PTP", key: "ptp", color: color[2], type: "bar" },
-    { label: "PTP Kept", key: "ptp_kept", color: color[7], type: "bar" },
-    { label: "Paid Collected", key: "paid", color: color[15], type: "bar" },
-    { label: "Collected", key: "total", color: "#000", type: "line" },
+    { label: "Kept", key: "ptp_kept", color: color[7], type: "bar" },
+    // { label: "Paid Collected", key: "paid", color: color[15], type: "bar" },
+    // { label: "Collected", key: "total", color: "#000", type: "line" },
     { label: "Variance", key: "variance", color: "red", type: "line" },
   ];
 
   const newProdData = useMemo(()=> {
     return agentProdPerMonthData?.getAgentProductionPerMonth.map(x=> {
-      const theVariance = monthlyTarget - x.total
+      const theVariance = monthlyTarget - x.ptp_kept
 
       return {
         ...x,

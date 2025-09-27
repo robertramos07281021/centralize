@@ -103,7 +103,6 @@ const FIND_CUSTOMER_ACCOUNTS = gql`
           name
           code
         }
-
       }
       totalCountCustomerAccounts
     }
@@ -163,11 +162,11 @@ type Props = {
 }
 
 const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
+  const {selectedGroup, selectedAgent, page, tasker, taskFilter, selectedDisposition, limit} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
   const location = useLocation()
-  const isTaskManager = location.pathname !== '/tl-task-manager'
-  const {data:GroupData,refetch:groupRefetch} = useQuery<{findGroup:Group[]}>(DEPT_GROUP,{skip:isTaskManager})
-  const {selectedGroup, selectedAgent, page, tasker, taskFilter, selectedDisposition, limit} = useSelector((state:RootState)=> state.auth)
+  const isTaskManager = location.pathname.includes('tl-task-manager')
+  const {data:GroupData,refetch:groupRefetch} = useQuery<{findGroup:Group[]}>(DEPT_GROUP,{skip:!isTaskManager, notifyOnNetworkStatusChange: true})
   const groupDataNewObject:{[key:string]:string} = useMemo(()=> {
     const group = GroupData?.findGroup || []
     return Object.fromEntries(group.map(e=> [e.name, e._id]))
@@ -185,9 +184,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
   }
   
 
-  const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount}>(FIND_CUSTOMER_ACCOUNTS,{variables: {query: query},skip:isTaskManager })
-
-
+  const {data:CustomerAccountsData, refetch:CADRefetch, loading} = useQuery<{findCustomerAccount:FindCustomerAccount}>(FIND_CUSTOMER_ACCOUNTS,{variables: {query: query},skip:!isTaskManager, notifyOnNetworkStatusChange: true })
 
   const debouncedSearch = useMemo(() => {
     return debounce(async(val: CADQueryValue) => {
@@ -403,18 +400,18 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
           }
           {
             CustomerAccountsData?.findCustomerAccount?.CustomerAccounts.map((ca)=> ( 
-            <div key={ca._id} className="bg-white border-b border-gray-200 hover:bg-slate-100 grid grid-cols-6 py-2 items-center text-xs">
+            <div key={ca._id} className="bg-white border-b border-gray-200 hover:bg-slate-100 grid grid-cols-6 py-2 items-center text-xs px-2">
               <div className="font-medium text-gray-900 whitespace-nowrap dark:text-white uppercase">
-                  {ca.customer_info.fullName}
+                {ca.customer_info.fullName}
               </div>
               <div className="px-6">
-                  {ca.dispoType ? (ca.dispoType.code === "PAID" ? `${ca.dispoType.code} (Partial)` : ca.dispoType.code) : "New Endorsed"}
+                {ca.dispoType ? (ca.dispoType.code === "PAID" ? `${ca.dispoType.code}` : ca.dispoType.code) : "New Endorsed"}
               </div>
               <div className="px-6 ">
-                  {ca.account_bucket.name}
+                {ca.account_bucket.name}
               </div>
               <div className="px-6 ">
-                  {ca.dpd}
+                {ca.dpd}
               </div>
               <div className="px-6 capitalize">
                 {ca.assigned?.name}

@@ -1,6 +1,6 @@
 import {  useMutation, useQuery, useSubscription, useLazyQuery } from "@apollo/client";
 import gql from "graphql-tag";
-import { FaTrash } from "react-icons/fa";
+// import { FaTrash } from "react-icons/fa";
 import { FaSquareCheck, FaDownload} from "react-icons/fa6";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../redux/store";
@@ -10,6 +10,8 @@ import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import { useLocation } from "react-router-dom";
 import { IoSettingsSharp } from "react-icons/io5";
 import Loading from "../Loading";
+import { FaSquarePlus } from "react-icons/fa6";
+import { useDropzone } from "react-dropzone";
 
 type Finished = {
   name: string
@@ -150,6 +152,19 @@ const TL_BUCKET = gql`
   }
 `
 
+type Data = {
+  account_no: string
+  amount: number
+}
+
+const ADD_SELECTIVE = gql`
+  mutation addSelective($_id: ID, $selectiveName: String, $selectives: [Selective]) {
+    addSelective(_id: $_id, selectiveName: $selectiveName, selectives: $selectives) {
+      message
+      success
+    }
+  }
+`
 const SET_CALLFILE_TARGET = gql`
   mutation setCallfileTarget($callfile: ID!, $target: Float!) {
     setCallfileTarget(callfile: $callfile, target: $target) {
@@ -166,6 +181,8 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   const [callfileTarget,setTarget] = useState<number>(0)
   const isProductionManager = location.pathname !== '/tl-production-manager'
   const [callfileId, setCallfileId] = useState<Callfile | null>(null)
+  const [addSelectiveModal, setAddSelectiveModal] = useState<boolean>(false)
+  const [file, setFile] = useState<File[]>([])
 
   const {data, refetch,loading} = useQuery<{getCallfiles:CallFilesResult}>(GET_CALLFILES,{
     variables: {
@@ -327,9 +344,6 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     } 
   })
 
-
-
- 
   const onClickIcon = (id:string, action: "FINISHED" | "DELETE" | "DOWNLOAD" | "SET",name: string) => {
     setConfirm(true)
     const modalTxt = {
@@ -419,10 +433,89 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     }
   },[data,setTotalPage,setCanUpload])
 
+  const [required, setRequired] = useState(false)
+  const [excelData, setExcelData] = useState<Data[]>([])
+  const [callfile, setCallfile] = useState<string | null>(null)
+
+  const handleFileUpload = useCallback(async(file: File) => {
+    try {
+      const { read, utils } = await import("xlsx");
+      const reader = new FileReader();
+
+      reader.onload = (e) => {
+        const binaryString = e.target?.result;
+        const workbook = read(binaryString, { type: "binary" });
+        const sheetName = workbook.SheetNames[0]; 
+        const sheet = workbook.Sheets[sheetName];
+        const jsonData:Data[] = utils.sheet_to_json(sheet); 
+        const dateConverting = jsonData.map((row) => {
+          return {
+            account_no: row.account_no,
+            amount: Number(row.amount),
+          }
+        })
+        setExcelData(dateConverting.slice(0,dateConverting.length)); 
+      };
+      reader.readAsBinaryString(file);
+    } catch (error) {
+      dispatch(setServerError(true))
+    }
+  }, []);
+
+
+  const { getRootProps, getInputProps, isDragActive } = useDropzone({
+    accept: {
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [], 
+      "application/vnd.ms-excel": [], 
+    },
+    onDrop: (acceptedFiles) => {
+      if (acceptedFiles.length > 0) {
+        setFile(acceptedFiles)
+        handleFileUpload(acceptedFiles[0]);
+      }
+    },
+  });
+
+  const [addSelective] = useMutation<{addSelective:Success}>(ADD_SELECTIVE,{
+    onCompleted: (data) => {
+      setFile([])
+      dispatch(setSuccess({
+        success: data.addSelective.success,
+        message: data.addSelective.message,
+        isMessage: false
+      }))
+      setCallfile(null)
+      setExcelData([])
+    },
+    onError: (error) => {
+      console.log(error)
+    }
+  })
+  const submitSetSelective = useCallback(()=> {
+    if(file.length > 0) {
+      setRequired(false)
+      setConfirm(true)
+      setModalProps({
+        message: "Are you sure you want to add this selective?",
+        toggle: 'FINISHED',
+        yes: async()=> {
+          setConfirm(false)
+          await addSelective({variables: {_id: callfile,selectiveName: file[0].name, selectives: excelData}})
+          setAddSelectiveModal(false)
+        },
+        no: () => {
+          setConfirm(false)
+        }
+      })
+    } else {
+      setRequired(true)
+    }
+  },[setRequired, file, callfile, addSelective, setModalProps, excelData ])
+
+
   const isLoading = downloadCallfilesLoading || deleteLoading || finishingLoading || loading || setCallfileTargetLoading
 
   if(isLoading) return <Loading/>
-
 
   const labels = ['Name','Bucket','Date','Endo','Work Days','Accounts','Unworkable','Connected','OB','Principal','Target','Collected','Status','Finished By','Action']
 
@@ -471,18 +564,23 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
                       {
                         checkStatus &&
                         <>
+                          <FaSquarePlus className=" lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" title="Add Selective" onClick={()=> {
+                            setAddSelectiveModal(prev=> !prev); 
+                            setCallfile(res.callfile._id)
+                          }}/>
+
                           <FaSquareCheck className="hover:scale-110 text-green-500 lg:text-xs 2xl:text-lg cursor-pointer" onClick={()=> onClickIcon(res.callfile._id, "FINISHED", res.callfile.name)} title="Finish"/>
+
                           <IoSettingsSharp className="text-orange-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" title="Set Target" onClick={()=> {setModalTarget(true); setCallfileId(res.callfile)}}/>
                         </>
                       }
-                      <FaTrash className=" text-red-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DELETE", res.callfile.name)} title="Delete"/>
+                      {/* <FaTrash className=" text-red-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DELETE", res.callfile.name)} title="Delete"/> */}
                       <FaDownload className="text-blue-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DOWNLOAD", res.callfile.name)} title='Download' />
                     </td>
                   </tr>
                 )
               })
             }
-
           </tbody>
         </table>
       </div> 
@@ -509,7 +607,51 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
               <div className="flex gap-5">
                 <button className="w-30 bg-orange-500 py-2 rounded text-white hover:bg-orange-700 cursor-pointer" onClick={() => onClickIcon(callfileId._id,'SET',callfileId.name)}>Submit</button>
                 <button className="w-30 bg-slate-500 py-2 rounded text-white hover:bg-slate-700 cursor-pointer" onClick={()=> {setModalTarget(false); setCallfileId(null); setTarget(0)}}>Cancel</button>
-
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+      {
+        addSelectiveModal &&
+        <div className="absolute top-0 left-0 bg-black/20 backdrop-blur-xs w-full h-full z-40 flex items-center justify-center">
+          <div className="w-2/8 border h-2/5 rounded-md flex flex-col overflow-hidden border-slate-500">
+            <h1 className="p-2 text-2xl bg-slate-500 text-white font-medium">
+              Add Selectives
+            </h1>
+            <div className="w-full h-full bg-white flex items-center justify-center flex-col gap-8">
+              <div {...getRootProps()} className={`${required && "border-red-500 bg-red-50"} border-2 border-dashed p-2 rounded-lg text-center cursor-pointer px-10 py-10 flex items-center justify-center lg:text-xs 2xl:sm`}>
+                <input {...getInputProps()} />
+                {
+                  file.length === 0 &&
+                  <>
+                    {isDragActive ? (
+                      <p className="text-blue-600">📂 Drop your files here...</p>
+                    ) : ( 
+                      <p className="text-gray-600">Drag & Drop file here or Click and select file</p>
+                    )}
+                  </>
+                }
+                {
+                  file.length > 0 && (
+                    <ul>
+                      {file.map((file) => (
+                        <li key={file.name} className="text-green-600">
+                          📄 {file.name}
+                        </li>
+                      ))}
+                    </ul>
+                  )
+                }
+              </div>
+              <div className="flex gap-5">
+                <button className="w-30 bg-blue-500 py-2 rounded text-white hover:bg-blue-700 cursor-pointer" onClick={submitSetSelective}>Submit</button>
+                <button className="w-30 bg-slate-500 py-2 rounded text-white hover:bg-slate-700 cursor-pointer" onClick={()=> {
+                  setAddSelectiveModal(prev => !prev);
+                  setFile([]);
+                  setRequired(false);
+                  setCallfile(null);
+                  }}>Cancel</button>
               </div>
             </div>
           </div>

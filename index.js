@@ -49,6 +49,9 @@ import CustomError from "./middlewares/errors.js";
 import path from "path";
 import CustomerExtnResolver from "./graphql/resolvers/customerExtnResolver.js";
 import CustomerExtnTypeDefs from "./graphql/schemas/customerExtnSchema.js";
+import cron from "node-cron";
+import CustomerAccount from "./models/customerAccount.js";
+import mongoose from "mongoose";
 
 const connectedUsers = new Map();
 
@@ -107,6 +110,60 @@ app.use((req, res, next) => {
   next();
 });
 
+cron.schedule("0 0 * * *", async () => {
+  try {
+    const cutoff = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+    const customerAccounts = await CustomerAccount.aggregate([
+      {
+        $match: {
+          assigned: { $ne: null },
+        }
+      },
+      {
+        $lookup: {
+          from: "dispositions",
+          localField: "current_disposition",
+          foreignField: "_id",
+          as: "cd",
+        }
+      },
+      { $unwind: { path: "$cd", preserveNullAndEmptyArrays: true } },
+      { $match: { "cd.createdAt" : { $lte: cutoff } } },
+      { $project: { _id: 1, user: "$cd.user" } }
+    ])
+    .allowDiskUse(true) 
+
+    
+    const ids = [];
+    const users = [];
+
+
+    for await (const doc of customerAccounts) {
+      ids.push(doc._id);
+      if (doc.user) users.push(doc.user);
+    }
+
+    if (ids.length > 0) {
+      await CustomerAccount.updateMany(
+        { _id: { $in: ids } },
+        { 
+          $unset: { assignedModel: "", assigned_date: "", assigned: "" }
+        },
+      );
+      await pubsub.publish(PUBSUB_EVENTS.TASK_CHANGING, {
+        taskChanging: {
+          members: users,
+          message: PUBSUB_EVENTS.TASK_CHANGING
+        },
+      });
+
+    }
+  } catch (error) {
+    console.error("Cron job error", error)
+  }
+},{
+  timezone: "Asia/Singapore"
+});
 
 const resolvers = mergeResolvers([ subscriptionResolvers, userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver,callfileResolver, recordingsResolver, CustomerExtnResolver ]);
 
@@ -162,7 +219,6 @@ useServer({ schema,
     } catch (err) {
       console.log("WebSocket token error:", err.message);
     }
-    
     return { user, pubsub, PUBSUB_EVENTS };
   },
    
@@ -181,8 +237,14 @@ useServer({ schema,
         if (!latest || latest.sockets.size === 0) {
           connectedUsers.delete(userId);
           await User.findByIdAndUpdate(userId, { isOnline: false });
+          await pubsub.publish(PUBSUB_EVENTS.TASK_CHANGING, {
+            accountOffline: {
+              agentId: userId,
+              message: PUBSUB_EVENTS.OFFLINE_USER
+            },
+          });
         }
-      }, 600000); 
+      }, 600000);
     }
   },
 

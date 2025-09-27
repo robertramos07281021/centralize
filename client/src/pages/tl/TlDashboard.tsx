@@ -11,9 +11,12 @@ import { useQuery } from '@apollo/client';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../../redux/store';
 import { BsFilterCircleFill ,BsFillPlusCircleFill  } from "react-icons/bs";
-import { setServerError } from '../../redux/slices/authSlice';
+import { setIntervalTypes, setSelectedBucket, setServerError } from '../../redux/slices/authSlice';
 import { SiGooglemessages } from "react-icons/si";
 import MessageModal, { MessageChildren } from './MessageModal';
+import { IntervalsTypes } from '../../middleware/types.ts';
+import { useLocation } from 'react-router-dom';
+import NoPTPPayment from './NoPTPPayment.tsx';
 
 const DEPT_BUCKET = gql`
   query getDeptBucket {
@@ -31,33 +34,27 @@ export type Bucket = {
   principal: boolean
 }
 
-export enum IntervalsTypes {
-  DAILY = 'daily',
-  WEEKLY = 'weekly',
-  MONTHLY = 'monthly'
-}
+
 
 const TlDashboard  = () => {
 
   const [showSelector, setShowSelector] = useState<boolean>(false)
   const [showIntervals,setShowIntervals] = useState<boolean>(false)
   const dispatch = useAppDispatch()
+  const location = useLocation()
   const {data,refetch} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET)
-  const {userLogged} = useSelector((state:RootState)=> state.auth)
+  const {userLogged, selectedBucket, intervalTypes} = useSelector((state:RootState)=> state.auth)
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const bucketData = data?.getDeptBucket || []
     return Object.fromEntries(bucketData.map(bd=> [bd._id, bd.name]))
   },[data])
-  
-  const [selectedBucket, setSelectedBucket] = useState<string | null | undefined>(userLogged?.buckets[0])
-  const [selectedIntervals, setSelectedIntervals] = useState<IntervalsTypes>(IntervalsTypes.DAILY) 
   const [isOpenMessage, setIsopenMessage] = useState<boolean>(false)
 
   const bucketSelectorRef = useRef<HTMLDivElement | null>(null)
   const intervalSelectorRef = useRef<HTMLDivElement | null>(null)
 
-  const findBucket = data?.getDeptBucket.find(x=> x._id === selectedBucket) || null
+  const findBucket = data?.getDeptBucket.find(bucket => bucket._id === selectedBucket)
 
   useEffect(()=> {
     const refetching = async() => {
@@ -70,10 +67,16 @@ const TlDashboard  = () => {
     refetching()
   },[])
 
+  useEffect(()=> {
+    if(location.pathname.includes('tl-dashboard') && userLogged && !selectedBucket){
+      dispatch(setSelectedBucket(userLogged?.buckets[0]))
+    }
+  },[location.pathname,userLogged])
+
 
   useEffect(()=> {
     if(findBucket && findBucket.principal ) {
-      setSelectedIntervals(IntervalsTypes.MONTHLY)
+      dispatch(setIntervalTypes(IntervalsTypes.MONTHLY))
     }
   },[findBucket])
 
@@ -92,16 +95,19 @@ const TlDashboard  = () => {
       }
     }}>
       <div className='grid grid-cols-6 gap-2 col-span-8 row-span-2'>
-        <DailyFTE bucket={findBucket}/>
-        <PTP bucket={findBucket} interval={selectedIntervals}/>
-        <PTPKeptTl bucket={findBucket} interval={selectedIntervals}/>
-        <Paid bucket={findBucket} interval={selectedIntervals}/>
-        <TLDailyCollected bucket={findBucket} interval={selectedIntervals}/>
+        <DailyFTE />
+        <div className='grid grid-cols-5 col-span-4 gap-2 '>
+          <TLDailyCollected />
+          <PTP/>
+          <PTPKeptTl/>
+          <NoPTPPayment/>
+          <Paid />
+        </div>
       </div>
 
       <div className='col-span-full grid grid-cols-8 row-span-11 gap-2'>
-        <TLAgentProduction bucket={findBucket} interval={selectedIntervals}/>
-        <Targets bucket={findBucket} interval={selectedIntervals}/>
+        <TLAgentProduction />
+        <Targets />
       </div>
       {
         showSelector &&
@@ -109,7 +115,7 @@ const TlDashboard  = () => {
           {
             userLogged?.buckets.map(x=> 
               <label key={x} className={`w-full border border-slate-400 text-gray-700 hover:bg-slate-200 cursor-pointer px-2 py-1 rounded ${selectedBucket === x ? "bg-blue-200" : ""}`}>
-                <input type="radio" name='bucketSelector' id={bucketObject[x]} value={bucketObject[x]} onChange={()=> setSelectedBucket(x)} hidden/>
+                <input type="radio" name='bucketSelector' id={bucketObject[x]} value={x} onChange={()=> dispatch(setSelectedBucket(x))} hidden/>
                 {bucketObject[x]}
               </label>
             )
@@ -118,24 +124,17 @@ const TlDashboard  = () => {
       }
       { showIntervals &&
         <div className='absolute bottom-10 right-20 w-2/20 border bg-white rounded-md border-slate-500 p-2 flex flex-col gap-2' ref={intervalSelectorRef}>
-          <label className={`w-full border border-slate-400 text-gray-700 hover:bg-slate-200 cursor-pointer px-2 py-1 rounded ${selectedIntervals === IntervalsTypes.DAILY ? "bg-blue-200" : ""}`}>
-            <input type="radio" name='bucketSelector' id={IntervalsTypes.DAILY} value={IntervalsTypes.DAILY} onChange={(e)=> setSelectedIntervals(e.target.value as IntervalsTypes)} hidden/>
-            <span className='uppercase'>
-              {IntervalsTypes.DAILY}
-            </span>
-          </label>
-          <label className={`w-full border border-slate-400 text-gray-700 hover:bg-slate-200 cursor-pointer px-2 py-1 rounded ${selectedIntervals === IntervalsTypes.WEEKLY ? "bg-blue-200" : ""}`}>
-            <input type="radio" name='bucketSelector' id={IntervalsTypes.WEEKLY} value={IntervalsTypes.WEEKLY} onChange={(e)=> setSelectedIntervals(e.target.value as IntervalsTypes)} hidden/>
-            <span className='uppercase'>
-              {IntervalsTypes.WEEKLY}
-            </span>
-          </label>
-          <label className={`w-full border border-slate-400 text-gray-700 hover:bg-slate-200 cursor-pointer px-2 py-1 rounded ${selectedIntervals === IntervalsTypes.MONTHLY ? "bg-blue-200" : ""}`}>
-            <input type="radio" name='bucketSelector' id={IntervalsTypes.MONTHLY} value={IntervalsTypes.MONTHLY} onChange={(e)=> setSelectedIntervals(e.target.value as IntervalsTypes)} hidden/>
-            <span className='uppercase'>
-              {IntervalsTypes.MONTHLY}
-            </span>
-          </label>
+          {
+            Object.entries(IntervalsTypes).map(([key,value]) => 
+            <label key={key} className={`w-full border border-slate-400 text-gray-700 hover:bg-slate-200 cursor-pointer px-2 py-1 rounded ${value === intervalTypes ? "bg-blue-200" : ""}`}>
+              <input type="radio" name='bucketSelector' id={value} value={value} onChange={(e)=> dispatch(setIntervalTypes(e.target.value as IntervalsTypes))} hidden/>
+              <span className='uppercase'>
+                {value}
+              </span>
+            </label>
+            
+            )
+          }
         </div>
       }
       {
@@ -151,7 +150,7 @@ const TlDashboard  = () => {
         }
         {
           userLogged && userLogged?.buckets?.length > 1 &&
-          <BsFillPlusCircleFill className={`cursor-pointer duration-200 ${showSelector ? "rotate-45" : ""}`} onClick={()=> setShowSelector(prev=> !prev)}/>
+          <BsFillPlusCircleFill className={`cursor-pointer duration-200 bg-white rounded-full ${showSelector ? "rotate-45" : ""}`} onClick={()=> setShowSelector(prev=> !prev)}/>
         }
       </div>
     </div>

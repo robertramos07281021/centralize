@@ -8,6 +8,9 @@ import Department from "../../models/department.js"
 import DispoType from "../../models/dispoType.js"
 import Bucket from "../../models/bucket.js"
 import Disposition from "../../models/disposition.js"
+import Selective from "../../models/selective.js"
+import { error } from "console"
+import User from "../../models/user.js"
 
 const callfileResolver = {
   DateTime,
@@ -556,6 +559,7 @@ const callfileResolver = {
               amount: "$currentDispo.amount",
               balance:  "$balance",
               dialer: "$currentDispo.dialer",
+              case_id: "$case_id",
               platform_user_id: "$customer_info.platform_customer_id",
               emergencyContactName: "$emergency_contact.name",
               emergencyContactMobile: "$emergency_contact.mobile",
@@ -648,7 +652,7 @@ const callfileResolver = {
             'contact2',
             'contact3',
             'isRPC',
-            'platform_user_id',
+            'case_id',
             'dpd',
             'max_dpd',
             "fullname",
@@ -853,7 +857,7 @@ const callfileResolver = {
     getToolsProduction: async(_,{bucket, interval}) => {
       try {
         const selectedBucket = await Bucket.findById(bucket).lean()
-        const callfile = await Callfile.findOne({bucket: selectedBucket._id, active: true})
+        const callfile = (await Callfile.find({bucket: selectedBucket._id}).lean()).map(cf => new mongoose.Types.ObjectId(cf._id))
         if(!callfile) return null
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
@@ -889,17 +893,133 @@ const callfileResolver = {
           selectedInterval['$gt'] = startOfMonth
           selectedInterval['$lte'] = endOfMonth
         }
-        
-        const dispotypesFilter = (await DispoType.find({code: {$in: ['PTP','PAID']}})).map(e=> new mongoose.Types.ObjectId(e._id))
 
-        const findCustomersCallfile = await Disposition.aggregate([
+        const existingCallfile = await Callfile.findOne({bucket: selectedBucket._id, active: true})
+
+        const dispotypesPositive = (await DispoType.find({status: 1}).lean()).map(dt => dt._id)
+
+        const customerAccount = await CustomerAccount.aggregate([
           {
             $match: {
-              callfile: callfile._id,
-              disposition: {$in: dispotypesFilter},
-              createdAt: selectedInterval
+              $expr: { $gt: [{ $size: "$history" }, 0] },
+              callfile: {$eq: existingCallfile._id}
+            }
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "history",
+              foreignField: "_id",
+              as: "histories"
             },
           },
+          {
+            $addFields: {
+              histories: {
+                $filter: {
+                  input: "$histories",
+                  as: "h",
+                  cond: { $in: ["$$h.disposition", dispotypesPositive] }
+                }
+              }
+            }
+          },
+          {
+            $match: {
+              $expr: { $gt: [{ $size: "$histories" }, 0] } 
+            }
+          }
+        ])
+
+
+        const TotalRPC = await CustomerAccount.aggregate([
+          {
+            $lookup: {
+              from: "customers",
+              localField: "customer",
+              foreignField: "_id",
+              as: "customer_info",
+            }
+          },
+          {
+            $unwind: {path: "$customer_info",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "current_disposition",
+              foreignField: "_id",
+              as: "cd",
+            }
+          },
+          {
+            $unwind: {path: "$cd",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "history",
+              foreignField: "_id",
+              as: "histories",
+            }
+          },
+          {
+            $addFields: {
+              hasDispoOnthisInterval: {
+                $anyElementTrue: {
+                  $map: {
+                    input: "$histories",
+                    as: "h",
+                    in: {
+                      $and: [
+                        { $gt: ["$$h.createdAt", selectedInterval.$gt] },
+                        { $lte: ["$$h.createdAt", selectedInterval.$lte] }
+                      ]
+                    }
+                  }
+                }
+              }
+            }
+          },
+          {
+            $match: {
+              $or: [
+                {
+                  current_disposition: {$ne: null},
+                },
+                {
+                  current_disposition: {$exists: true}
+                }
+              ],
+              "customer_info.isRPC": {$eq: true},
+              hasDispoOnthisInterval: {$eq: true}
+            }
+          },
+          {
+            $group: {
+              _id: {
+                case_id: "$case_id",
+                contact_method: "$cd.contact_method"
+              },
+            }
+          },
+          {
+            $group: {
+              _id: "$_id.contact_method",
+              isRPC: { $sum: 1 }
+            }
+          },
+          {
+            $project: {
+              _id: 1,
+              isRPC: 1
+            }
+          }
+        ])
+
+
+
+        const findCustomersCallfile = await Disposition.aggregate([
           {
             $lookup: {
               from: "dispotypes",
@@ -924,6 +1044,17 @@ const callfileResolver = {
           },
           {
             $lookup: {
+              from: "callfiles",
+              localField: "callfile",
+              foreignField: "_id",
+              as: "accountCallfile"
+            },
+          },
+          {
+            $unwind: {path: "$accountCallfile",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
               from: "customers",
               localField: "ca.customer",
               foreignField: "_id",
@@ -934,30 +1065,45 @@ const callfileResolver = {
             $unwind: {path: "$customer",preserveNullAndEmptyArrays: true}
           },
           {
+            $match: {
+              createdAt: selectedInterval,
+              callfile: {$in: callfile},
+            },
+          },
+          {
+            $addFields: {
+              isExisting: {
+                $cond: [
+                  { $not: [{ $in: ["$ca.case_id", customerAccount.map(ca => ca.case_id)] }] },
+                  true,
+                  false
+                ]    
+              }
+            }
+          },
+          {
             $group: {
               _id: {
                 contact_method: '$contact_method'
-              },
-              rpc: {
-                $sum: {
-                  $cond: [
-                    {
-                      $and: [
-                        { $eq: ['$customer.isRPC', true] },
-
-                      ]
-                    },
-                    1,
-                    0
-                  ]
-                }
               },
               ptp: {
                 $sum: {
                   $cond: [
                     {
                       $and: [
-                        { $eq: ['$dispotype.code', 'PTP']}
+                        { $eq: ['$dispotype.code', 'PTP'] },
+                        { $eq: ['$existing', true] },
+                        {
+                          $or: [
+                            { $eq: ['$accountCallfile.active', true] },
+                            {
+                              $and: [
+                                { $eq: ['$accountCallfile.active', false] },
+                                { $eq: ['$isExisting', true] }
+                              ]
+                            }
+                          ]
+                        }
                       ]
                     },
                     "$amount",
@@ -970,7 +1116,6 @@ const callfileResolver = {
                   $cond: [
                     {
                       $and: [
-
                         { $eq: ['$dispotype.code', 'PAID']},
                         { $eq: ['$ptp', true]}
                       ]
@@ -986,7 +1131,6 @@ const callfileResolver = {
                     {
                       $and: [
                         { $eq: ['$dispotype.code', 'PAID']},
-                        { $eq: ['$ptp', false]}
                       ]
                     },
                     "$amount",
@@ -1000,16 +1144,26 @@ const callfileResolver = {
             $project: {
               _id: 0,
               contact_method: "$_id.contact_method",
-              rpc: 1,
               ptp: 1,
               kept: 1,
               paid: 1,
             }
           }
         ])
-        
-        return findCustomersCallfile || null
+      
+        const newMap = TotalRPC.map((result) => {
+          const checkTools = findCustomersCallfile.find(x => result._id === x.contact_method)
+          const isThier = checkTools ? checkTools : {ptp: 0, kept: 0, paid: 0}
+          return {
+            ...isThier,
+            contact_method: result._id,
+            rpc: result.isRPC
+          }
+        })
+
+        return newMap || null
       } catch (error) {
+
         throw new CustomError(error.message,500)
       }
     },
@@ -1047,7 +1201,7 @@ const callfileResolver = {
 
         let selectedInterval = {}
         let newDataCollected = {}
-        
+
         if(interval === "daily") {
           selectedInterval['$gt'] = todayStart
           selectedInterval['$lte'] = todayEnd
@@ -1182,6 +1336,114 @@ const callfileResolver = {
         }
       } catch (error) {
         throw new CustomError(error.message,500)  
+      }
+    },
+    addSelective: async(_,{_id, selectiveName, selectives},{pubsub,PUBSUB_EVENTS}) => {
+      try {
+        const paidDispo = await DispoType.findOne({code: "PAID"})
+        const ptpDispo = await DispoType.findOne({code: "PTP"})
+        
+        const callfile = await Callfile.findById(_id)
+        
+        await Selective.create({name: selectiveName, callfile: callfile._id})
+        
+        await Promise.all(
+          selectives.map(async(i) => 
+            {
+              const res = await CustomerAccount.findOne({case_id: {$eq: i.account_no}, callfile: {$eq: callfile._id}}).populate('current_disposition')
+              
+              if(res && res.balance !== 0) {
+                const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+  
+                const cdCreatedAt = new Date(res?.current_disposition?.createdAt) <= threeDaysAgo
+
+                const data = {
+                  customer_account: res._id,
+                  amount: i.amount,
+                  disposition: paidDispo._id,
+                  selectivesDispo: true,
+                  callfile: callfile,
+                  existing: true
+                }
+
+                if(res.current_disposition && !res.current_disposition.selectivesDispo && res.current_disposition.disposition.toString() === paidDispo._id.toString()) {
+                  data['user'] = res.current_disposition.user
+                  data['createdAt'] = new Date(res.current_disposition.createdAt)
+                  data['ptp'] = res.current_disposition.ptp
+                } 
+                
+                if(res.current_disposition && res.current_disposition.disposition.toString() === ptpDispo._id.toString() && !res.current_disposition.selectivesDispo ) {
+                  
+                  data['createdAt'] = new Date(res?.current_disposition?.createdAt)
+                  data['ptp'] = true
+                  
+                  if(!cdCreatedAt) {
+                    data['user'] = res.current_disposition.user
+                  }
+                }
+                
+                if(res.balance === i.amount) {
+                  data["payment"] = 'full'
+                } else {
+                  data["payment"] = 'partial'
+                }
+
+                const newDispo = new Disposition(data)
+                
+                if(res.current_disposition) {
+                  const forUpdate = {
+                    existing: false
+                  }
+
+                  if((res.current_disposition.disposition === paidDispo._id && !res.current_disposition.selectivesDispo) || !cdCreatedAt) {
+                    forUpdate['paidDispo'] = newDispo._id
+                  }
+
+                  await Disposition.findByIdAndUpdate(res.current_disposition,{
+                    $set: forUpdate
+                  })
+                }
+
+                await newDispo.save()
+                await CustomerAccount.findByIdAndUpdate(res._id,{
+                  $set: {
+                    current_disposition: newDispo._id
+                  },
+                  $inc: {
+                    balance: res.balance - Number(i.amount) < 0 ? 0 : -Number(i.amount),
+                    paid_amount: Number(i.amount)
+                  },  
+                  $push: {
+                    history: newDispo
+                  },
+                  $unset: {
+                    assigned: "",
+                    assigned_date: "",
+                    assignedModel: ""
+                  }
+                  
+                })
+                
+              }
+            }
+          )
+        )
+        const users = (await User.find({buckets: callfile.bucket})).map(u=> String(u._id))
+
+        await pubsub.publish(PUBSUB_EVENTS.DISPOSITION_UPDATE, {
+          dispositionUpdated: {
+            members: users,
+            message: "NEW_DISPOSITION"
+          },
+        });
+
+        return {
+          success: true,
+          message: "Successfully added selectives"
+        }
+      } catch (error) {
+        console.log(error)
+        throw new CustomError(error.message,500) 
       }
     }
   },

@@ -206,8 +206,10 @@ const customerResolver = {
               month_pd: "$ca.month_pd",
               balance: "$ca.balance",
               paid_amount: "$ca.paid_amount",
-              isRPCToday: "$isRPCToday",
-              dispo_history: "$dispo_history",
+              isRPCToday: 1,
+              assigned: "$ca.assigned",
+              assigned_date: "$ca.assigned_date",
+              dispo_history: 1,
               current_disposition: "$cd",
               out_standing_details: "$ca.out_standing_details",
               grass_details: "$ca.grass_details",
@@ -216,7 +218,6 @@ const customerResolver = {
             }
           }
         ])
-
         return accounts
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -1179,7 +1180,7 @@ const customerResolver = {
           $push: {
             updatedBy: {
               user: user._id,
-              updatedType: 'Update RPC'
+              updatedType: 'ISRPC'
             }
           }
         },{new: true})

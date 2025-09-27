@@ -55,19 +55,26 @@ const callfileTypeDefs = gql`
     collected: Float
   }
 
+  input Selective {
+    account_no: String
+    amount: Float
+  }
+
+
   type Query {
     getCallfiles(bucket:ID, limit:Int! , page:Int! ,status: String!):CallFilesResult
     downloadCallfiles(callfile:ID!): String!
     monthlyDetails: [MonthlyDetails]
     getBucketCallfile(bucketId:[ID]):[Callfile]
-    getToolsProduction(bucket:ID!,interval:String!):[ToolsProduction]
-    getCollectionMonitoring(bucket:ID!, interval:String!):Collection
+    getToolsProduction(bucket:ID,interval:String):[ToolsProduction]
+    getCollectionMonitoring(bucket:ID, interval:String):Collection
   }
 
   type Mutation {
     setCallfileTarget(callfile:ID!,target:Float!):Success
     finishedCallfile(callfile:ID!):Success
     deleteCallfile(callfile:ID!):Success
+    addSelective(_id:ID, selectiveName:String, selectives:[Selective]):Success
   }
 
 `

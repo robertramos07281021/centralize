@@ -76,10 +76,17 @@ const NEW_BUCKET_MESSAGE = gql`
 const NavbarExtn = () => {
   const {userLogged,selectedCustomer,success} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
-  const {data:myTask, refetch} = useQuery<{myTasks:MyTask[]}>(MY_TASK)
+  const {data:myTask, refetch} = useQuery<{myTasks:MyTask[]}>(MY_TASK,{notifyOnNetworkStatusChange: true})
   const dispatch = useAppDispatch()
 
-  const {refetch:messageRefetch} = useQuery<{selectedBucket:{message: string}}>(SELECTED_BUCKET_MESSAGE,{skip: !success.success})
+  useEffect(()=> {
+    const refetching = async()=> {
+      await refetch()
+    }
+    refetching()
+  },[])
+
+  const { refetch:messageRefetch } = useQuery<{selectedBucket:{message: string}}>(SELECTED_BUCKET_MESSAGE,{skip: !success.success, notifyOnNetworkStatusChange: true})
 
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_ESCALATING, {
     onData: async({data})=> {

@@ -202,6 +202,16 @@ enum Code {
   WN = 'w'
 }
 
+type User = { _id: string };
+type DispoType = { id: string };
+type Customer = {
+  assigned?: string;
+  current_disposition?: {
+    disposition?: string;
+    selectivesDispo?: boolean;
+  };
+};
+
 const DispositionForm:React.FC<Props> = ({updateOf}) => {
 
   const {selectedCustomer, userLogged} = useSelector((state:RootState)=> state.auth)
@@ -213,7 +223,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
   const existingDispo = selectedCustomer?.dispo_history.find(x=> x.existing === true)
   const neverChangeContactMethod = ['PTP','UNEG','PAID','DEC','RTP','ITP']
   const dispoNeverChangeContactMethod  = disposition?.getDispositionTypes.filter(x=> neverChangeContactMethod.includes(x.code)).map(x=> x.id)
-  const checkIfChangeContactMethod = dispoNeverChangeContactMethod?.includes(existingDispo?.disposition ?? "")
+  const checkIfChangeContactMethod = dispoNeverChangeContactMethod?.includes(existingDispo?.disposition || "")
 
   const [required, setRequired] = useState(false)
   const [confirm, setConfirm] = useState(false)
@@ -225,8 +235,10 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     const d: DispositionType[] = disposition?.getDispositionTypes || [];
     return Object.fromEntries(d.map(e => [e.code, e.id]));
   }, [disposition]);
-  
-  
+
+  const ptpDispoType = disposition?.getDispositionTypes.find(d=> d.code === "PTP")
+  const paidDispoType = disposition?.getDispositionTypes.find(d=> d.code === "PAID")
+
   const dispoKeyCode: Record<string, string> = useMemo(() => {
     const d: DispositionType[] = disposition?.getDispositionTypes || [];
     return Object.fromEntries(d.map(e => [e.code,Code[e.code as keyof typeof Code]]));
@@ -246,12 +258,12 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     RFD: null,
     sms: null
   })
-  
-  useEffect(()=> {
-    if(!checkIfChangeContactMethod && !existingDispo ) return;
-    setData(prev => ({ ...prev, contact_method: existingDispo?.contact_method as AccountType}));
-  },[checkIfChangeContactMethod, existingDispo])
 
+  useEffect(()=> {
+    if(checkIfChangeContactMethod && existingDispo) {
+      setData(prev => ({ ...prev, contact_method: existingDispo?.contact_method as AccountType}));
+    }
+  },[checkIfChangeContactMethod, existingDispo])
 
   const selectedDispo = disposition?.getDispositionTypes?.find(x => x.id === data.disposition)?.code ?? ""
 
@@ -311,7 +323,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
       updateOf()
       dispatch(setDeselectCustomer())
     },
-    onError: async() => {
+    onError: async(err) => {
+      console.log(err)
       await deselectTask({variables: {id:selectedCustomer?._id}})
       setConfirm(false)
       dispatch(setServerError(true))
@@ -468,7 +481,38 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
     return newDate > dateNow 
   },[]) 
 
-  return  selectedCustomer && (
+function canProceed(
+  customer: Customer | null | undefined,
+  user: User | null | undefined,
+  ptpDispoType: DispoType | null | undefined,
+  paidDispoType: DispoType | null | undefined
+): boolean {
+  if (!customer) return false;
+
+  const cd = customer.current_disposition;
+  const dispo = cd?.disposition;
+  const hasSelective = cd?.selectivesDispo;
+  const assignedToUser = customer.assigned === user?._id;
+  const notAssigned = !customer.assigned;
+
+  const ptpId = ptpDispoType?.id;
+  const paidId = paidDispoType?.id;
+
+  const isNotPTPorPaidAndUnassigned =
+    ![ptpId, paidId].includes(dispo ?? "") && notAssigned;
+
+  const isPTPAndAssignedToUser =
+    dispo === ptpId && assignedToUser;
+
+  const isPaidWithSelective =
+    dispo === paidId && hasSelective;
+
+  return !!(isNotPTPorPaidAndUnassigned || isPTPAndAssignedToUser || isPaidWithSelective);
+}
+
+  // return (selectedCustomer && ((![ptpDispoType?.id,paidDispoType?.id].includes( selectedCustomer?.current_disposition?.disposition) && !selectedCustomer?.assigned) || (ptpDispoType?.id === selectedCustomer?.current_disposition?.disposition && selectedCustomer?.assigned === userLogged?._id)) || (selectedCustomer?.current_disposition && selectedCustomer?.current_disposition.disposition === paidDispoType?.id && selectedCustomer?.current_disposition.selectivesDispo ) || (selectedCustomer?.current_disposition && selectedCustomer?.current_disposition.disposition === ptpDispoType?.id && selectedCustomer?.assigned === userLogged?._id) || (selectedCustomer?.current_disposition && selectedCustomer?.current_disposition.selectivesDispo && selectedCustomer?.current_disposition.disposition === paidDispoType?.id))
+  return canProceed(selectedCustomer, userLogged, ptpDispoType, paidDispoType) 
+  && (
     <>
       {
         escalateTo &&
@@ -530,6 +574,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
                   {
                     Object.entries(dispoObject).map(([key,value])=> {
                       const findDispoName = disposition?.getDispositionTypes.find(x=> x.id === value)
+
                       return findDispoName?.active && (
                         <option value={key} key={key} accessKey={Code[findDispoName?.code as keyof typeof Code]}>
                           {`${findDispoName?.name} - ${key} - "${dispoKeyCode[key] || ""}"`}
@@ -789,7 +834,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
               <button
                 type="button"
                 className="bg-red-500 hover:bg-red-600 focus:outline-none text-white  focus:ring-4 focus:ring-red-400 font-medium rounded-lg px-5 py-4 2xl:px-5 2xl:py-2.5 xl:me-2 2xl:mb-2 cursor-pointer 2xl:text-sm text-xs"
-                onClick={()=> handleSubmitEscalationToTl(selectedCustomer?._id)}
+                onClick={()=> handleSubmitEscalationToTl(selectedCustomer?._id || "")}
                 >
                 TL Escalation
               </button>

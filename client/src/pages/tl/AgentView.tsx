@@ -121,9 +121,17 @@ const AgentView = () => {
   const dispatch = useDispatch()
   const location = useLocation()
   const isAgentProd = location.pathname !== '/agent-production'
-  const {data:tlAgentData, refetch} = useQuery<{findDeptAgents:TLAgent[]}>(TL_AGENT,{skip: isAgentProd})
-  const {data: agentProdData, refetch:agentProdDataRefetch} = useQuery<{getAgentProductions:AgentProductions[]}>(AGENT_PRODUCTION, {skip: isAgentProd})
+  const {data:tlAgentData, refetch} = useQuery<{findDeptAgents:TLAgent[]}>(TL_AGENT,{skip: isAgentProd, notifyOnNetworkStatusChange: true})
+  const {data: agentProdData, refetch:agentProdDataRefetch} = useQuery<{getAgentProductions:AgentProductions[]}>(AGENT_PRODUCTION, {skip: isAgentProd, notifyOnNetworkStatusChange: true})
   const [agentProduction,setAgentProduction] = useState<TLAgent[]>([])
+
+  useEffect(()=> {
+    const refetching = async()=> {
+      await refetch()
+      await agentProdDataRefetch()
+    }
+    refetching()
+  },[])
 
   useSubscription<{somethingOnAgentAccount:{buckets:string[],message: string}}>(SOMETHING_LOCK,{
     onData: async({data}) => {

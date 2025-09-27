@@ -70,7 +70,7 @@ const recordingsResolver = {
           fs.mkdirSync(localDir, { recursive: true });
         }
         
-        
+        console.log(first)
         const remoteDir = findDispo.dialer === "vici" ? `${remoteDirVici}` : `${remoteDirIssabel}`
         const remotePath = `${remoteDir}/${name}`;
         const localPath = `./recordings/${name}`;

@@ -1,32 +1,43 @@
 import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { useEffect } from "react";
-import { useAppDispatch } from "../../redux/store";
+import { RootState, useAppDispatch } from "../../redux/store";
 import { setServerError } from "../../redux/slices/authSlice";
-import { Bucket, IntervalsTypes } from "./TlDashboard";
+import { useLocation } from "react-router-dom";
+import { useSelector } from "react-redux";
+import { Bucket } from "./TlDashboard.tsx";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 type Collected = {
-  amount: number
+  isRPC: number
 }
 
 const DAILY_COLLECTION = gql`
   query getTLDailyCollected($input:Input) {
     getTLDailyCollected(input:$input) {
-      amount
+      isRPC
     }
   }
 `
 
-type ComponentProp = {
-  bucket: Bucket | null | undefined
-  interval: IntervalsTypes
-}
+const SELECTED_BUCKET = gql`
+  query selectedBucket($id: ID) {
+    selectedBucket(id: $id) {
+      principal
+    }
+  }
+`
 
-
-
-const TLDailyCollected:React.FC<ComponentProp> = ({bucket,interval}) => {
+const TLDailyCollected= () => {
   const dispatch = useAppDispatch()
-  const {data:dailyCollected, refetch } = useQuery<{getTLDailyCollected:Collected}>(DAILY_COLLECTION,{variables: {input: {bucket:bucket?._id, interval: interval},skip: !bucket?._id}})
+  const location = useLocation()
+  const isTLDashboard = location.pathname.includes('tl-dashboard')
+  const {intervalTypes, selectedBucket} = useSelector((state:RootState)=> state.auth)
+
+  const {data:dailyCollected, refetch, loading } = useQuery<{getTLDailyCollected:Collected}>(DAILY_COLLECTION,{variables: {input: {bucket:selectedBucket, interval: intervalTypes},skip: !isTLDashboard}, notifyOnNetworkStatusChange: true})
+  
+  const {data:bucketData} = useQuery<{selectedBucket:Bucket}>(SELECTED_BUCKET,{variables: {id: selectedBucket}, skip: !isTLDashboard, notifyOnNetworkStatusChange: true})
+
 
   useEffect(()=> {
     const timer = async()=> {
@@ -36,27 +47,36 @@ const TLDailyCollected:React.FC<ComponentProp> = ({bucket,interval}) => {
         dispatch(setServerError(true))
       }
     } 
-    if(bucket?._id) {
+    if(selectedBucket) {
       timer()
     }
-  },[bucket,interval])
+  },[selectedBucket,intervalTypes])
 
-  
   const paidSelected = dailyCollected?.getTLDailyCollected || null
 
   return (
     <div className='border-yellow-400 border bg-yellow-200 rounded-xl p-2 text-yellow-500 flex flex-col'>
       <div className='lg:text-base 2xl:text-lg font-black '>
         <h1>
-          Daily Collected
-          {
-            !bucket?.principal &&
-            <span className="text-xs font-medium capitalize">{`(${interval})`}</span> 
+          RPC {
+            !bucketData?.selectedBucket.principal &&
+            <span className="text-xs font-medium capitalize">{`(${intervalTypes})`}</span> 
           }
         </h1>
       </div>
-      <div className='h-full w-full flex font-medium justify-end gap-2 items-center  text-lg  2xl:text-3xl'>
-        <p>{paidSelected ? paidSelected?.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}): (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</p>
+      <div className='h-full w-full flex font-medium justify-between gap-2 items-center text-lg 2xl:text-xl'>
+        {
+          !loading ? 
+          <>
+            <p>Total</p>
+            <p>{paidSelected ? paidSelected?.isRPC : 0}</p>
+          </>
+          :
+          <div className="flex justify-end w-full">
+            <AiOutlineLoading3Quarters className="animate-spin" />
+          </div>
+        
+        }
      
       </div>
     </div>

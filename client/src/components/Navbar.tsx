@@ -112,13 +112,22 @@ const LOCK_AGENT = gql`
   }
 `
 
+const OFFLINE_USER = gql`
+  subscription accountOffline {
+    accountOffline {
+      message
+      agentId
+    }
+  }
+`
+
 const Navbar = () => {
   const navigate = useNavigate()
   const dispatch = useAppDispatch()
   const location = useLocation()
   const {userLogged,selectedCustomer,breakValue, serverError, success} = useSelector((state:RootState)=> state.auth)
   const modalRef = useRef<HTMLDivElement>(null)
-  const {error, data, refetch} = useQuery<{ getMe: UserInfo }>(myUserInfos,{pollInterval: 5000,notifyOnNetworkStatusChange: true,})
+  const {error, data, refetch} = useQuery<{ getMe: UserInfo }>(myUserInfos,{notifyOnNetworkStatusChange: true,})
   const [poPupUser, setPopUpUser] = useState<boolean>(false) 
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: ()=> {
@@ -129,16 +138,23 @@ const Navbar = () => {
     }
   })
 
-
   const [popUpBreak, setPopUpBreak] = useState<boolean>(false)
 
   useSubscription<{agentLocked:AgentLock}>(LOCK_AGENT, {
-    onData: ({data}) => {
+    onData:async ({data}) => {
       if(data) {
         if(data.data?.agentLocked.message === "AGENT_LOCK" && data.data?.agentLocked.agentId === userLogged?._id ){
-          setTimeout(async()=> {
-            await refetch()
-          },50)
+          await refetch()
+        }
+      }
+    }
+  })
+
+  useSubscription<{accountOffline:AgentLock}>(OFFLINE_USER, {
+    onData: async({data}) => {
+      if(data) {
+        if(data.data?.accountOffline.message === "AGENT_LOCK" && data.data?.accountOffline.agentId === userLogged?._id ){
+          await refetch()
         }
       }
     }
@@ -270,7 +286,6 @@ const Navbar = () => {
     const timer = setTimeout(async()=> {
       if(data && userLogged) {
         dispatch(setUserLogged({...userLogged,isOnline: data?.getMe?.isOnline, targets: data?.getMe?.targets || {daily: 0, weekly: 0, monthly: 0}}))
-        console.log(data?.getMe?.isOnline)
         if(!data?.getMe?.isOnline) {
           setConfirmation(true)
           setModalProps({

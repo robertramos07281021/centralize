@@ -4,16 +4,19 @@ import gql from "graphql-tag";
 import { useQuery } from "@apollo/client";
 import { useEffect } from "react";
 import { useSelector } from "react-redux";
-import { RootState, useAppDispatch } from "../../redux/store";
-import { setServerError } from "../../redux/slices/authSlice";
+import { RootState } from "../../redux/store";
+import { useLocation } from "react-router-dom";
+
 
 const AGENT_PRODUCTION = gql`
   query agentProduction {
     agentProduction {
-      dtcCurrent
-      dtcPrevious
-      ytCurrent
-      ytPrevious
+      totalAmountUnsuccessPTP
+      totalCountUnsuccessPTP
+      totalAmountSuccessPTP
+      totalCountSuccessPTP
+      totalAmountKept
+      totalCountKept
     }
   }
 `
@@ -28,10 +31,12 @@ const WEEKLY_AND_MONTLY_COLLECTION = gql`
 `
 
 type Production = {
-  dtcCurrent: number
-  dtcPrevious: number
-  ytCurrent: number
-  ytPrevious: number
+  totalAmountUnsuccessPTP: number
+  totalCountUnsuccessPTP: number,
+  totalAmountSuccessPTP: number,
+  totalCountSuccessPTP: number
+  totalAmountKept: number
+  totalCountKept: number
 }
 
 type Divition = {
@@ -45,7 +50,7 @@ type Divition = {
 const colorsObject:{[key:string]:string} = {
   purple: 'border-purple-500 text-purple-500 bg-purple-200',
   teal: 'border-teal-500 text-teal-500 bg-teal-200',
-  yellow: 'border-yellow-500 text-yellow-500 bg-yellow-200'
+  blue: 'border-blue-500 text-blue-500 bg-blue-200'
 }
 
 const RateIcon = ({ rate }: { rate: number }) => {
@@ -134,41 +139,74 @@ const Division = ({label, current, previous, color, target }: Divition ) => {
 }
 
 export default function AgentTotalProduction () {
-  const {data,refetch} = useQuery<{agentProduction:Production}>(AGENT_PRODUCTION)
+  const location = useLocation()
+  const isAgentDashboard = location.pathname.includes('agent-dashboard')
+  const {data,refetch} = useQuery<{agentProduction:Production}>(AGENT_PRODUCTION,{skip: !isAgentDashboard, notifyOnNetworkStatusChange: true })
   const {userLogged} = useSelector((state:RootState)=> state.auth)
   const prod = data?.agentProduction || null;
-  const {data:collectionsData} = useQuery<{monthlyWeeklyCollected:{monthly: number, weekly: number}}>(WEEKLY_AND_MONTLY_COLLECTION)
-  const dispatch = useAppDispatch()
+  const {data:collectionsData} = useQuery<{monthlyWeeklyCollected:{monthly: number, weekly: number}}>(WEEKLY_AND_MONTLY_COLLECTION,{skip: !isAgentDashboard, notifyOnNetworkStatusChange: true })
+
   useEffect(()=> {
     const refetching = async() => {
-      try {
-        await refetch()
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
+      await refetch()
     }
     refetching()
   },[])
 
+  console.log((Number(prod?.totalCountUnsuccessPTP) + Number(prod?.totalCountSuccessPTP)) / Number(prod?.totalCountKept)*100)
+
+  console.log(prod?.totalCountKept)
   return (
     <div className="grid grid-cols-3  gap-2">
+      <div className={`rounded-xl border border-blue-500 text-blue-500 bg-blue-200 p-2 shadow shadow-black/20 flex flex-col`}>
+        <h1 className="text-xs lg:text-sm font-bold">
+          Total PTP
+        </h1>
+        <div className="flex flex-col justify-center h-full gap-2">
+          <div className="flex flex-col">
+            <div className="flex justify-between">
+              <p className="text-xs font-medium">Success</p>
+              <p className="text-3xl">{prod?.totalCountSuccessPTP || 0}</p>
+            </div>
+            <div className="flex justify-between">
+              <p className="text-xs font-medium">Amount</p>
+              <p className="text-xs ">{prod?.totalAmountSuccessPTP?.toLocaleString('en-PH',{style: 'currency', currency: "PHP"}) || (0).toLocaleString('en-PH',{style: 'currency', currency: "PHP"})}</p>
+            </div>
+          </div>
+          <div className="flex flex-col">
+            <div className="flex justify-between text-red-500">
+              <p className="text-xs font-medium">Unsuccess</p>
+              <p className="text-xs font-bold">{prod?.totalCountUnsuccessPTP || 0}</p>
+            </div>
+            <div className="flex justify-between text-red-500">
+              <p className="text-xs font-medium">Amount</p>
+              <p className="text-xs ">{prod?.totalAmountUnsuccessPTP?.toLocaleString('en-PH',{style: 'currency', currency: "PHP"}) || (0).toLocaleString('en-PH',{style: 'currency', currency: "PHP"})}</p>
+            </div>
+          </div>
+
+          <div className="flex flex-col text-green-500">
+          <h1 className="text-xs font-medium text-green-500">PTP To KEPT %</h1>
+            <div className="flex justify-between ">
+              <p className="text-xs font-medium">Count</p>
+              <p className="text-xs">{prod?.totalCountKept || 0} - {(Number(prod?.totalCountKept) /(Number(prod?.totalCountUnsuccessPTP) + Number(prod?.totalCountSuccessPTP)) *100).toFixed(2) }%</p>
+            </div>
+            <div className="flex justify-between ">
+              <p className="text-xs font-medium">Amount</p>
+              <p className="text-xs ">{prod?.totalAmountKept?.toLocaleString('en-PH',{style: 'currency', currency: "PHP"}) || (0).toLocaleString('en-PH',{style: 'currency', currency: "PHP"})} - {(Number(prod?.totalAmountKept) / (Number(prod?.totalAmountSuccessPTP) + Number(prod?.totalAmountUnsuccessPTP))*100).toFixed(2)}%</p>
+            </div>
+          </div>
+        </div>
+      </div>
       <Division 
-        label="Daily Total Collected"
-        previous={prod?.dtcPrevious || 0}
-        current={prod?.dtcCurrent || 0}
-        target={userLogged?.targets.daily || 0}
-        color="yellow"
-      />
-      <Division 
-        label="Weekly Total Collected"
+        label="Weekly Total KEPT"
         previous={0}
         current={collectionsData?.monthlyWeeklyCollected.weekly || 0}
         target={userLogged?.targets.weekly || 0}
         color="teal"
       />
       <Division 
-        label="Monthly Total Collected"
-        previous={prod?.dtcPrevious || 0}
+        label="Monthly Total KEPT"
+        previous={0}
         current={collectionsData?.monthlyWeeklyCollected.monthly || 0}
         target={userLogged?.targets.monthly || 0}
         color="purple"

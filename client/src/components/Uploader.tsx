@@ -70,7 +70,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
   const dispatch = useAppDispatch()
   const [excelData, setExcelData] = useState<Data[]>([]);
   const [file, setFile] = useState<File[]>([]);
- 
+
   const handleFileUpload = useCallback(async(file: File) => {
     try {
       const { read, utils, SSF } = await import("xlsx");
@@ -111,7 +111,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           } = row
 
           function normalizeContact(contact:string) {
-
             if(isNaN(Number(contact))) return ""
             const cleaned = contact.toString().trim().replace(/[+\-\s()]/g, '').replace(/^0/, '');
             const metroManila = /^2\d{7,8}$/;
@@ -176,7 +175,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             address_3: address_3?.toString(),
           }
           
-
           if(emergencyContactMobile) {
             rows['emergencyContactMobile'] = normalizeContact(emergencyContactMobile)
           }
@@ -215,17 +213,14 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           ...rows
           }
         })
-
         setExcelData(dateConverting.slice(0,dateConverting.length)); 
       };
       reader.readAsBinaryString(file);
     } catch (error) {
-      console.log(error)
       dispatch(setServerError(true))
     }
   }, []);
 
-  console.log(excelData)
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [], 
@@ -248,7 +243,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       onSuccess()
     },
     onError: (error)=> {
-      console.log(error)
     const errorMessage = error.message;
     if (errorMessage?.includes("Not Included")) {
       dispatch(setSuccess({

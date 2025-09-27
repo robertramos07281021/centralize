@@ -51,7 +51,7 @@ const groupResolver = {
         if(!deletedGroup) throw new CustomError("Group successfully deleted")
 
         await User.updateMany({_id: {$in: deletedGroup.members}},{$set: {group: null}})
-        await CustomerAccount.updateMany({assigned: deletedGroup._id}, {$set: {assigned: null}})
+        await CustomerAccount.updateMany({assigned: deletedGroup._id}, {$unset: {assigned: "", assigned_date: "", assignedModel: ""}})
         return {
           success: true,
           message: "Group successfully deleted"
@@ -144,13 +144,12 @@ const groupResolver = {
       } catch (error) {
         throw new CustomError(error.message, 500) 
       }
-
     },
     deleteGroupTask: async(_,{ caIds },{ pubsub, PUBSUB_EVENTS }) => {
       try {
         const findAccounts = await CustomerAccount.find({_id: {$in: caIds}})
         await Promise.all(findAccounts.map(async(e)=> {
-          await CustomerAccount.findByIdAndUpdate(e._id,{$set: {assigned: null, assigned_date: null} })
+          await CustomerAccount.findByIdAndUpdate(e._id,{$set: {assigned: null, assigned_date: null, assignedModel: ""} })
         }))
 
         const agent = new Set(findAccounts.map(e=> e.assigned))

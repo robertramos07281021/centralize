@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useSubscription } from "@apollo/client"
 import gql from "graphql-tag"
-import { useCallback, useEffect, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../redux/store"
 import { dateAndTime } from "../middleware/dateAndTime"
@@ -106,6 +106,7 @@ const MY_TASKS = gql`
         contact_method
         chatApp
         sms
+        selectivesDispo
       }
     }
   }
@@ -207,6 +208,7 @@ const GROUP_TASKS =gql`
           contact_method
           chatApp
           sms
+          selectivesDispo
         }
       }
     }
@@ -271,16 +273,40 @@ const DESELECT_TASK = gql`
   }
 `
 
+const ALL_DISPOTYPES = gql`
+  query getAllDispositionTypes {
+    getAllDispositionTypes {
+      _id
+      name
+      code
+    }
+  }
+`
+
+type Dispotypes = {
+  _id: string
+  name: string
+  code: string
+}
+
 const MyTaskSection = () => {
   const {userLogged, selectedCustomer} = useSelector((state:RootState)=> state.auth)
   const dispatch = useAppDispatch()
-  const {data:myTasksData, refetch} = useQuery<{myTasks:Search[] | []}>(MY_TASKS)
-  const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS)
+  const {data:myTasksData, refetch} = useQuery<{myTasks:Search[] | []}>(MY_TASKS,{notifyOnNetworkStatusChange: true})
+  const {data:groupTaskData, refetch:groupTaskRefetch} = useQuery<{groupTask:GroupTask}>(GROUP_TASKS,{notifyOnNetworkStatusChange: true})
+
+  const {data:allDispoTypesData,refetch:dispotypesRefetch} = useQuery<{getAllDispositionTypes:Dispotypes[]}>(ALL_DISPOTYPES,{notifyOnNetworkStatusChange: true})
+
+  const dispotypesNewMap = useMemo(()=> {
+    const data = allDispoTypesData?.getAllDispositionTypes || []
+    return Object.fromEntries(data.map(d=> [d._id, d.code]))
+  },[allDispoTypesData])
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       await refetch()
       await groupTaskRefetch()
+      await dispotypesRefetch()
     },300)
     return () => clearTimeout(timer)
   },[])
@@ -290,7 +316,8 @@ const MyTaskSection = () => {
       if(!userLogged) return
       if(data) {
         if(data.data?.somethingChanged?.message === "TASK_SELECTION" && data.data?.somethingChanged?.members?.toString().includes(userLogged._id)) {
-         await refetch()
+          await refetch()
+          await groupTaskRefetch()
         }
       }
     }
@@ -312,7 +339,7 @@ const MyTaskSection = () => {
     onData: async({data})=> {
       if(!userLogged) return
       if(data){
-          if(data.data?.dispositionUpdated?.message === "NEW_DISPOSITION" && data.data?.dispositionUpdated?.members?.toString().includes(userLogged?._id)) {
+        if(data.data?.dispositionUpdated?.message === "NEW_DISPOSITION" && data.data?.dispositionUpdated?.members?.toString().includes(userLogged?._id)) {
           await refetch()
           await groupTaskRefetch()
         }
@@ -351,7 +378,6 @@ const MyTaskSection = () => {
       dispatch(setServerError(true))
     }
   })
-
 
   useEffect(()=> {
     setSelection("")
@@ -392,7 +418,7 @@ const MyTaskSection = () => {
       setSelection("group_task")
     } 
   }
-
+ 
   return (
     <div className={`mt-3 flex justify-end gap-5 relative`}>
       {
@@ -422,7 +448,7 @@ const MyTaskSection = () => {
             {data?.map(d => (
               <div key={d._id} className="py-1.5 2xl:text-xs lg:text-[0.6em] hover:bg-blue-100 even:bg-slate-100 grid grid-cols-4 px-5 items-center">
                 <div className="px-2 text-nowrap truncate">{d.customer_info.fullName}</div>
-                <div>{d?.current_disposition?.disposition ? d.current_disposition.disposition : "N/A" }</div>
+                <div>{d?.current_disposition?.disposition ? dispotypesNewMap[d.current_disposition.disposition] : "N/A" }</div>
                 <div>
                   {dateAndTime(d.assigned_date)}
                 </div>

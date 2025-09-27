@@ -154,7 +154,7 @@ const AgentRecordingView = () => {
   
   const [openRecordingsBox, setOpenRecordingsBox] = useState<string | null>(null)
 
-  const {data: agentInfoData} = useQuery<{getUser:Agent}>(AGENT_INFO,{variables: {id: location.state}})
+  const {data: agentInfoData} = useQuery<{getUser:Agent}>(AGENT_INFO,{variables: {id: location.state}, notifyOnNetworkStatusChange: true})
 
   const [isLoading, setIsLoading] = useState<string>('')
   
@@ -369,7 +369,7 @@ const AgentRecordingView = () => {
                   const callRecord  = e.recordings?.length > 0 ? [...e.recordings].sort((a,b) => b.size - a.size) : []
                 
                   return (
-                    <tr key={e._id} className="lg:text-xs 2xl:text-sm cursor-default even:bg-slate-100">
+                    <tr key={e._id} className="lg:text-xs 2xl:text-sm cursor-default even:bg-slate-100 text-slate-700">
                       <td  className="pl-5 py-1.5 w-55 truncate">{e.customer_name}</td>
                       <td className="truncate pr-2" title={e.contact_no.join(', ')}>{e.contact_no.join(', ')}</td>
                       <td>{e.dialer}</td>

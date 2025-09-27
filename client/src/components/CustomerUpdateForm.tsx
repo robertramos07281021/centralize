@@ -221,16 +221,18 @@ const CustomerUpdateForm:React.FC<CustomerUpdateFormProps> = ({cancel}) => {
   return (
     <>
       <form ref={updateForm} className="flex flex-col gap-3 w-full items-center justify-center p-5 lg:text-xs text-[0.8em]" onSubmit={(e)=> handleSubmitUpdateForm(e)} noValidate>
-   
-        <label className="flex gap-2 w-full">
-          <input type="checkbox" name="rpc" id="rpc"
-            checked={formState.isRPC}
-            onChange={(e) => {
-              setFormState(prev => ({ ...prev, isRPC: e.target.checked }));
-            }}
-          />
-          <h1>RPC</h1>
-        </label>
+        { 
+          !selectedCustomer?.customer_info.isRPC &&
+          <label className="flex gap-2 w-full">
+            <input type="checkbox" name="rpc" id="rpc"
+              checked={formState.isRPC}
+              onChange={(e) => {
+                setFormState(prev => ({ ...prev, isRPC: e.target.checked }));
+              }}
+            />
+            <h1>RPC</h1>
+          </label>
+        }
 
         <label 
           className="text-slate-500 dark:text-white 2xl:w-1/2 w-full lg:w-8/10">

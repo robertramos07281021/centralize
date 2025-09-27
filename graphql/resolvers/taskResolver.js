@@ -17,7 +17,10 @@ const taskResolver = {
         const myTask = await CustomerAccount.aggregate([
           {
             $match:
-            {$and : [{assigned: user._id},{ on_hands: false}]}
+              {
+                assigned: new mongoose.Types.ObjectId(user._id),
+                on_hands: false
+              }
           }, 
           {
             $lookup: {
@@ -113,6 +116,7 @@ const taskResolver = {
               grass_details: "$grass_details",
               account_bucket: "$account_bucket",
               assigned: "$assigned",
+              current_disposition: "$cd",
               account_update_history: '$account_update_history',
               assigned_date: "$assigned_date",
               emergency_contact: "$emergency_contact"
@@ -250,45 +254,6 @@ const taskResolver = {
       }
     }
   },
-  MyTasks: {
-    customer_info: async(parent)=> {
-      try {
-        const customerInfo = await Customer.findById(parent.customer)
-        if(!customerInfo) throw new CustomError("Customer not found", 404)
-        return {
-          _id:customerInfo._id,
-          fullName:customerInfo.fullName,
-          dob: customerInfo.dob,
-          gender: customerInfo.gender,
-          contact_no: customerInfo.contact_no,
-          emails: customerInfo.emails,
-          addresses: customerInfo.addresses
-        }
-      } catch (error) {
-        throw new CustomError(error.message, 500)  
-      }
-    },
-    account_bucket: async(parent) => {
-      try {
-        const bucket = await Bucket.findById(parent.bucket)
-        if(!bucket) throw new CustomError("Bucket not found", 404)
-        return bucket
-      } catch (error) {
-        throw new CustomError(error.message, 500)  
-      }
-    },
-    current_disposition: async(parent) => {
-      try {
-        const disposition = await Disposition.findById(parent.current_disposition).populate('disposition')
-
-        return {
-          disposition: disposition ? disposition.disposition.name : null,
-        }
-      } catch (error) {
-        throw new CustomError(error.message, 500)  
-      }
-    }, 
-  },
   Mutation: {
     selectTask: async(_,{id}, {user, pubsub, PUBSUB_EVENTS})=>{
       try {
@@ -299,14 +264,14 @@ const taskResolver = {
       
         const findGroup = await Group.findById(ca.assigned)
  
-        const assigned = ca.assigned ? (findGroup ? findGroup.members : [user._id]) : []
+        const assigned = ca.assignedModel ? (ca.assignedModel === 'Group' ? findGroup.members : [ca.assigned]) : []
 
         if(ca.on_hands) throw new CustomError("Already taken")
 
         ca.on_hands = true
 
         await ca.save()
-        
+ 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
             members: [...new Set([...assigned,user._id])],
@@ -319,6 +284,7 @@ const taskResolver = {
           message: "Successfully selected"
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)  
       }
     },
@@ -354,7 +320,7 @@ const taskResolver = {
         const findTl = await User.findById(tlUserId)
         if(!findTl) throw new CustomError('User not found',404)
 
-        await CustomerAccount.updateOne({_id: id},{$set: {assigned: findTl._id}})
+        await CustomerAccount.updateOne({_id: id},{$set: {assigned: findTl._id, assignedModel: 'User'}})
         
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {

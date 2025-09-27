@@ -1,5 +1,5 @@
 import { createSlice, PayloadAction  } from "@reduxjs/toolkit";
-import { Search } from "../../middleware/types";
+import { IntervalsTypes, Search } from "../../middleware/types";
 import { BreakEnum } from "../../middleware/exports";
 
 type User = {
@@ -67,6 +67,8 @@ type UserState = {
   myToken: string | null
   success: Success
   selectedCampaign: string | null
+  intervalTypes: IntervalsTypes
+  selectedBucket: string | null
 }
 
 const initialState:UserState = {
@@ -98,7 +100,9 @@ const initialState:UserState = {
     email: ""
   },
   selectedCustomer: null,
-  selectedCampaign: null
+  selectedCampaign: null,
+  intervalTypes: IntervalsTypes.DAILY,
+  selectedBucket: null
 };
 
 const authSlice = createSlice({
@@ -168,10 +172,14 @@ const authSlice = createSlice({
     },
     setSelectedCampaign: (state, action:PayloadAction<string | null>)=> {
       state.selectedCampaign = action.payload
-    } 
-
+    },
+    setIntervalTypes: (state,action:PayloadAction<IntervalsTypes>)=> {
+      state.intervalTypes = action.payload
+    },
+    setSelectedBucket: (state, action: PayloadAction<string | null>) => {
+      state.selectedBucket = action.payload
+    }
   },
-    
 });
 
 export const { 
@@ -197,5 +205,7 @@ export const {
   setMyToken,
   setSuccess,
   setSelectedCampaign,
+  setIntervalTypes,
+  setSelectedBucket
 } = authSlice.actions;
 export default authSlice.reducer;
