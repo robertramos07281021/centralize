@@ -102,7 +102,7 @@ const DELETE_GROUP_MEMBER = gql`
 `
 
 type Bucket = {
-  id:string
+  _id:string
   name: string
   dept: string
 }
@@ -110,7 +110,7 @@ type Bucket = {
 const GET_DEPT_BUCKETS = gql`
   query Query {
     getDeptBucket {
-      id
+      _id
       name
       dept
     }
@@ -135,7 +135,7 @@ const GroupSection = () => {
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const bucketData = deptBucketData?.getDeptBucket || []
-    return Object.fromEntries(bucketData.map(bd=> [bd.id, bd.name]))
+    return Object.fromEntries(bucketData.map(bd=> [bd._id, bd.name]))
     },[deptBucketData])
 
   const dgdObject:{[key:string]:string} = useMemo(()=> {

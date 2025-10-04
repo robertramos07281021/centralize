@@ -151,7 +151,8 @@ const userTypeDefs = gql`
     updateActiveStatus(id:ID!): Success
     unlockUser(id:ID!): Success
     authorization(password:String!):Success 
-    deleteUser(id:ID!):Success
+    deleteUser(id:ID!):Success,
+    updateUserVici_id(vici_id:String!):Success
   }
 `;
 

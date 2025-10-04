@@ -45,6 +45,7 @@ import MISDashboard from "./pages/tl/MISDashboard"
 import FTEUserView from "./pages/aom/FTEUserView"
 import QARoute from "./routes/QARoute.tsx"
 import QAAgentViews from "./pages/qa/QAAgentViews.tsx"
+import QADashboard from "./pages/qa/QADashboard.tsx"
 
 Chart.register(...registerables,
   ChartDataLabels,
@@ -107,6 +108,7 @@ function App() {
         <Route element={<QARoute/>}>
 
           <Route path="/qa-agents-dashboard" element={<QAAgentViews/>}/>
+          <Route path="/qa-dashboard" element={<QADashboard/>}/>
         </Route>
       </Routes>
     </BrowserRouter>

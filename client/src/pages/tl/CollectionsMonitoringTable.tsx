@@ -57,10 +57,10 @@ const CollectionsMonitoringTable = () => {
           </thead>
           <tbody> 
             <tr>
-              <td className="py-1.5">{newData ? newData?.target.toLocaleString('en-PH',{style: 'currency',currency: "PHP"}) : (0).toLocaleString('en-PH',{style: 'currency',currency: "PHP"})}</td>
-              <td>{newData ? newData.collected.toLocaleString('en-PH',{style: 'currency',currency: "PHP"}) : (0).toLocaleString('en-PH',{style: 'currency',currency: "PHP"})}</td>
-              <td>{theVariance.toLocaleString('en-PH',{style: 'currency',currency: "PHP"})}</td>
-              <td>{collectionPercent.toFixed(2)}%</td>
+              <td className="py-1.5">{newData ? newData?.target?.toLocaleString('en-PH',{style: 'currency',currency: "PHP"}) : (0).toLocaleString('en-PH',{style: 'currency',currency: "PHP"})}</td>
+              <td>{newData ? newData?.collected?.toLocaleString('en-PH',{style: 'currency',currency: "PHP"}) : (0).toLocaleString('en-PH',{style: 'currency',currency: "PHP"})}</td>
+              <td>{theVariance?.toLocaleString('en-PH',{style: 'currency',currency: "PHP"})}</td>
+              <td>{collectionPercent?.toFixed(2)}%</td>
             </tr>
           </tbody>
         </table>

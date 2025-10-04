@@ -58,6 +58,7 @@ const callfileTypeDefs = gql`
   input Selective {
     account_no: String
     amount: Float
+    date: String
   }
 
 

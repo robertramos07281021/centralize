@@ -52,7 +52,6 @@ const AgentSection:React.FC<ComponentProps> = ({bucket}) => {
 
   const selectedBucketAgent = AgentsData?.findAgents.filter(x=> x.buckets.includes(bucket))
   
-  console.log(selectedBucketAgent)
 
   const {data:deptBucketData} = useQuery<{getDeptBucket:Bucket[]}>(GET_DEPT_BUCKETS)
 

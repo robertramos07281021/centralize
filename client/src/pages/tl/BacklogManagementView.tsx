@@ -15,7 +15,7 @@ type DispositionType = {
 }
 
 type Bucket = {
-  id: string,
+  _id: string,
   name: string,
   dept: string
 }
@@ -23,7 +23,7 @@ type Bucket = {
 const DEPT_BUCKET_QUERY = gql`
   query getDeptBucket {
     getDeptBucket {
-      id
+      _id
       name
       dept
     }
@@ -93,7 +93,7 @@ const BacklogManagementView = () => {
   if(Boolean(searchAgent)) {
     bucketsOfCallfile.push(...agentSelector?.findAgents?.find(x=> x.user_id === searchAgent)?.buckets ?? [])
   } else if (Boolean(searchBucket)) {
-    bucketsOfCallfile.push(departmentBucket?.getDeptBucket.find(x=> x.name === searchBucket)?.id)
+    bucketsOfCallfile.push(departmentBucket?.getDeptBucket.find(x=> x.name === searchBucket)?._id)
   }
   
   const [selectedCallfile, setSelectedCallfile] = useState<string>("")
@@ -203,7 +203,7 @@ const BacklogManagementView = () => {
                   <div className={`${agents?.length === 0 ? "h-10" : "max-h-96"} border w-full absolute top-10  overflow-y-auto bg-white border-slate-500 rounded z-50`}>
                     {
                     buckets?.map((bucket) => 
-                      <div key={bucket.id} className="flex bg-white flex-col font-medium text-slate-600 p-2" onClick={async()=> {
+                      <div key={bucket._id} className="flex bg-white flex-col font-medium text-slate-600 p-2" onClick={async()=> {
                         setSearchBucket(bucket.name); 
                         setSearchAgent("");
                         setBucketDropdown(false); 

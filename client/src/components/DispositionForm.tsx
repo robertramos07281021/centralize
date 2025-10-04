@@ -106,7 +106,10 @@ enum RFD {
   WI = 'Wrong item',
   DI = 'Defective Item',
   HACS = 'Have agreement with customer Service',
-  OOT = 'Out of town / Out of country'
+  OOT = 'Out of town / Out of country',
+  UBO = 'Use by Other',
+  BLS = 'Bussiness Loss/Slowdown',
+  BUSSCLOSURE = 'Bussiness Closure'
 }
 
 enum Payment {
@@ -221,6 +224,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
   const {data:tlData} = useQuery<{getBucketTL:TL[]}>(USER_TL,{skip: !selectedCustomer})
   
   const existingDispo = selectedCustomer?.dispo_history.find(x=> x.existing === true)
+
   const neverChangeContactMethod = ['PTP','UNEG','PAID','DEC','RTP','ITP']
   const dispoNeverChangeContactMethod  = disposition?.getDispositionTypes.filter(x=> neverChangeContactMethod.includes(x.code)).map(x=> x.id)
   const checkIfChangeContactMethod = dispoNeverChangeContactMethod?.includes(existingDispo?.disposition || "")
@@ -260,7 +264,8 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
   })
 
   useEffect(()=> {
-    if(checkIfChangeContactMethod && existingDispo) {
+    if(checkIfChangeContactMethod && existingDispo && !selectedCustomer?.current_disposition?.selectivesDispo ) {
+      console.log('hello')
       setData(prev => ({ ...prev, contact_method: existingDispo?.contact_method as AccountType}));
     }
   },[checkIfChangeContactMethod, existingDispo])
@@ -268,6 +273,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
   const selectedDispo = disposition?.getDispositionTypes?.find(x => x.id === data.disposition)?.code ?? ""
 
   const { contact_method, dialer, chatApp, sms } = data;
+
   useEffect(() => {
     if (dialer !== null || chatApp !== null || sms !== null) {
       setData(prev => ({ ...prev, dialer: null, chatApp: null, sms: null }));
@@ -498,8 +504,7 @@ function canProceed(
   const ptpId = ptpDispoType?.id;
   const paidId = paidDispoType?.id;
 
-  const isNotPTPorPaidAndUnassigned =
-    ![ptpId, paidId].includes(dispo ?? "") && notAssigned;
+  const isNotPTPorPaidAndUnassigned = ![ptpId, paidId].includes(dispo ?? "") && notAssigned;
 
   const isPTPAndAssignedToUser =
     dispo === ptpId && assignedToUser;
@@ -510,7 +515,8 @@ function canProceed(
   return !!(isNotPTPorPaidAndUnassigned || isPTPAndAssignedToUser || isPaidWithSelective);
 }
 
-  // return (selectedCustomer && ((![ptpDispoType?.id,paidDispoType?.id].includes( selectedCustomer?.current_disposition?.disposition) && !selectedCustomer?.assigned) || (ptpDispoType?.id === selectedCustomer?.current_disposition?.disposition && selectedCustomer?.assigned === userLogged?._id)) || (selectedCustomer?.current_disposition && selectedCustomer?.current_disposition.disposition === paidDispoType?.id && selectedCustomer?.current_disposition.selectivesDispo ) || (selectedCustomer?.current_disposition && selectedCustomer?.current_disposition.disposition === ptpDispoType?.id && selectedCustomer?.assigned === userLogged?._id) || (selectedCustomer?.current_disposition && selectedCustomer?.current_disposition.selectivesDispo && selectedCustomer?.current_disposition.disposition === paidDispoType?.id))
+
+
   return canProceed(selectedCustomer, userLogged, ptpDispoType, paidDispoType) 
   && (
     <>
@@ -644,7 +650,7 @@ function canProceed(
                     id="contact_method"
                     required
                     value={data.contact_method ?? ""}
-                    onChange={(e)=> handleDataChange('contact_method', checkIfChangeContactMethod ? existingDispo?.contact_method : e.target.value)}
+                    onChange={(e)=> handleDataChange('contact_method', checkIfChangeContactMethod && !selectedCustomer.current_disposition?.selectivesDispo ? existingDispo?.contact_method : e.target.value)}
                     className={`${required && !data.contact_method ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                   >
                     <option value="">Select Contact Method</option>
@@ -666,7 +672,7 @@ function canProceed(
                       id="dialer"
                       required = {data.contact_method === AccountType.CALLS}
                       value={ data.dialer ?? ""}
-                      onChange={(e)=> handleDataChange('dialer',checkIfChangeContactMethod ? existingDispo?.dialer : e.target.value)}
+                      onChange={(e)=> handleDataChange('dialer',(checkIfChangeContactMethod && !selectedCustomer.current_disposition?.selectivesDispo) ? existingDispo?.dialer : e.target.value)}
                       className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                     > 
                       <option value="">Select Dialer</option>
@@ -689,7 +695,7 @@ function canProceed(
                       id="sms_collector"
                       required = {data.contact_method === AccountType.SMS}
                       value={ data.sms ?? ""}
-                       onChange={(e)=> handleDataChange('sms', checkIfChangeContactMethod ? existingDispo?.sms : e.target.value)}
+                       onChange={(e)=> handleDataChange('sms', (checkIfChangeContactMethod && !selectedCustomer.current_disposition?.selectivesDispo) ? existingDispo?.sms : e.target.value)}
                       className={`${required && !data.dialer ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"}  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                     > 
                       <option value="">Select SMS Collector</option>
@@ -712,7 +718,7 @@ function canProceed(
                       id="chat_app"
                       value={data.chatApp ?? ""}
                       required = {data.contact_method === AccountType.SKIP}
-                      onChange={(e)=> handleDataChange('chatApp',checkIfChangeContactMethod ? existingDispo?.chatApp : e.target.value)}
+                      onChange={(e)=> handleDataChange('chatApp',(checkIfChangeContactMethod && !selectedCustomer.current_disposition?.selectivesDispo) ? existingDispo?.chatApp : e.target.value)}
                       className={`${required && !data.chatApp ? "bg-red-100 border-red-500" : "bg-gray-50  border-gray-500"} border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                     >
                       <option value="">Select Chat App</option>

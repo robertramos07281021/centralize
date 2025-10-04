@@ -29,13 +29,14 @@ const PAID_PROD = gql`
 `
 
 type Bucket = {
-  id:string
+  _id:string
   name: string
 }
+
 const TL_BUCKET = gql`
   query GetDeptBucket {
     getDeptBucket {
-      id
+      _id
       name
     }
   }
@@ -56,7 +57,7 @@ const PaidProd = () => {
   const dispatch = useAppDispatch()
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = tlBucketData?.getDeptBucket || []
-    return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
+    return Object.fromEntries(tlBuckets.map(e=> [e._id, e.name]))
   },[tlBucketData])
   
   const {data:paidProd, refetch} = useQuery<{getTLPaidToday:PaidProd[]}>(PAID_PROD)

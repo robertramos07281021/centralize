@@ -134,7 +134,7 @@ const AgentRecordingView = () => {
 
   const searchPage = triggeredSearch.search ? 1 : agentRecordingPage
 
-  const isAgentRecordings = location.pathname !== '/agent-recordings'
+  const isAgentRecordings = location.pathname === '/agent-recordings'
 
   const {data: recordings, loading:recordingsLoading, refetch} = useQuery<{getAgentDispositionRecords:Record}>(AGENT_RECORDING,{
     variables: {
@@ -147,11 +147,17 @@ const AgentRecordingView = () => {
       dispotype: triggeredSearch.dispotype
     },
     notifyOnNetworkStatusChange: true,
-    skip: isAgentRecordings
+    skip: !isAgentRecordings
   })
 
+  useEffect(()=>{ 
+    const refetching = async() => {
+      await refetch()
+    }
+    refetching()
+  },[])
 
-  
+
   const [openRecordingsBox, setOpenRecordingsBox] = useState<string | null>(null)
 
   const {data: agentInfoData} = useQuery<{getUser:Agent}>(AGENT_INFO,{variables: {id: location.state}, notifyOnNetworkStatusChange: true})

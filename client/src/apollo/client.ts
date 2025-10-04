@@ -4,13 +4,20 @@ import { createClient } from 'graphql-ws'
 import { getMainDefinition } from '@apollo/client/utilities'
 import { store } from "../redux/store";
 
+// const httpLink = new HttpLink({
+//   uri:import.meta.env.VITE_GRAPHQL_HTTP,
+//   credentials: 'include',
+// });
+
 const httpLink = new HttpLink({
-  uri:import.meta.env.VITE_GRAPHQL_HTTP,
+  uri:'/graphql',
   credentials: 'include',
 });
 
+const path = window.location.hostname
+
 const wsLink = new GraphQLWsLink(createClient({
-  url:import.meta.env.VITE_GRAPHQL_WS,
+  url: `ws://${path}:4000/graphql`,
   connectionParams: () => {
     const token = store.getState().auth.myToken;
     return {

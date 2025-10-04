@@ -15,6 +15,7 @@ type User = {
   group: string
   targets: Targets
   isOnline: boolean
+  vici_id: String
 }
 
 type search = {

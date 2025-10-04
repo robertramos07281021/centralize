@@ -28,13 +28,13 @@ const TL_PTP_KEPT = gql`
   }
 `
 type Bucket = {
-  id:string
+  _id:string
   name: string
 }
 const TL_BUCKET = gql`
   query GetDeptBucket {
     getDeptBucket {
-      id
+      _id
       name
     }
   }
@@ -53,7 +53,7 @@ const PTPKeptProd = () => {
   const {data:tlBucketData, refetch:deptBucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET, {notifyOnNetworkStatusChange: true})
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = tlBucketData?.getDeptBucket || []
-    return Object.fromEntries(tlBuckets.map(e=> [e.id, e.name]))
+    return Object.fromEntries(tlBuckets.map(e=> [e._id, e.name]))
   },[tlBucketData])
 
   const {data:ptpKeptData, refetch } = useQuery<{getTLPTPKeptToday:PtpKeptProd[]}>(TL_PTP_KEPT,{notifyOnNetworkStatusChange: true})

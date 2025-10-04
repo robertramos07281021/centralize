@@ -48,7 +48,8 @@ const recordingsResolver = {
           "172.20.21.30" : "MCC",
           "172.20.21.35" : "MIXED CAMPAIGN",
           "172.20.21.67" : "MIXED CAMPAIGN NEW",
-          '172.20.21.97' : "UB"
+          '172.20.21.97' : "UB",
+          '172.20.21.70' : "MIXED CAMPAIGN NEW 2"
         }
           function checkDate(number) {
           return number > 9 ? number : `0${number}`;
@@ -70,8 +71,10 @@ const recordingsResolver = {
           fs.mkdirSync(localDir, { recursive: true });
         }
         
-        console.log(first)
-        const remoteDir = findDispo.dialer === "vici" ? `${remoteDirVici}` : `${remoteDirIssabel}`
+          
+        const ifATOME = (['CASH S2','LAZCASH S1','ACS1-TEAM 1','ACS1-TEAM 2','ACS1-TEAM 3'].includes(findDispo.bucket.name) && (createdAt.getMonth() < 7 && dayCreated < 18)) ? `/REC-172.20.21.18-MIXED CAMPAIGN NEW 2/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`: remoteDirVici
+
+        const remoteDir = findDispo.dialer === "vici" ? ifATOME : `${remoteDirIssabel}`
         const remotePath = `${remoteDir}/${name}`;
         const localPath = `./recordings/${name}`;
         await client.downloadTo(localPath, remotePath);
@@ -84,6 +87,7 @@ const recordingsResolver = {
         }
 
       } catch (err) {
+        console.log(err)
         throw new CustomError(err.message, 500)
       } finally {
         client.close();

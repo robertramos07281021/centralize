@@ -92,7 +92,7 @@ const NavbarExtn = () => {
     onData: async({data})=> {
       if(!userLogged) return
       if(data) {
-        if(data.data?.somethingChanged.message === "TASK_SELECTION" && data.data?.somethingChanged.members.toString().includes(userLogged._id)) {
+        if(data.data?.somethingChanged?.message === "TASK_SELECTION" && data.data?.somethingChanged?.members.toString().includes(userLogged._id)) {
          await refetch()
         }
       }
@@ -103,7 +103,7 @@ const NavbarExtn = () => {
     onData: async({data})=> {
       if(!userLogged) return
       if(data) {
-        if(data.data?.taskChanging.message === "TASK_CHANGING" && data.data?.taskChanging.members.toString().includes(userLogged._id)) {
+        if(data.data?.taskChanging?.message === "TASK_CHANGING" && data.data?.taskChanging?.members?.toString().includes(userLogged._id)) {
           await refetch()
         }
       }
@@ -114,7 +114,7 @@ const NavbarExtn = () => {
     onData: async({data}) => {
       if(!userLogged) return
       if(data) {
-        if(data.data?.newBucketMessage.message === 'NEW_BUCKET_MESSAGE' && userLogged.buckets.includes(data.data.newBucketMessage.bucket)) {
+        if(data.data?.newBucketMessage?.message === 'NEW_BUCKET_MESSAGE' && userLogged.buckets.includes(data.data?.newBucketMessage?.bucket)) {
           const res = await messageRefetch({id: data.data.newBucketMessage.bucket})
           if(res.data) {
             dispatch(setSuccess({

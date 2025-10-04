@@ -79,6 +79,10 @@ const dispositionSchema = new Schema(
       type: Boolean,
       default: false
     },
+    selectiveFiles: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Selective"
+    },
     paidDispo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Disposition'

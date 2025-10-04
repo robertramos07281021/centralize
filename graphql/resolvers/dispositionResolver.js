@@ -1469,7 +1469,7 @@ const dispositionResolver = {
           },
           {
             $match: {
-              createdAt:selectedInterval,
+              createdAt: selectedInterval,
               "dispotype.code" : "PAID",
               selectivesDispo: true,
               callfile: {$in: callfile}

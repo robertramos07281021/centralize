@@ -139,14 +139,14 @@ type SubSuccess = {
 
 
 type Bucket = {
-  id:string
+  _id:string
   name: string
 }
 
 const TL_BUCKET = gql`
   query GetDeptBucket {
     getDeptBucket {
-      id
+      _id
       name
     }
   }
@@ -155,6 +155,7 @@ const TL_BUCKET = gql`
 type Data = {
   account_no: string
   amount: number
+  date: string
 }
 
 const ADD_SELECTIVE = gql`
@@ -195,18 +196,15 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
     notifyOnNetworkStatusChange: true,
   })
 
-  const {data:deptBucket} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET)
+  const {data:deptBucket, refetch:bucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET,{skip: !Boolean(bucket)})
 
   useEffect(()=> {
     if(bucket) {
-      const timer = setTimeout(async()=> {
-        try {
-          await refetch()
-        } catch (error) {
-          dispatch(setServerError(true)) 
-        }
-      })
-      return () => clearTimeout(timer)
+      const timer = async()=> {
+        await refetch()
+        await bucketRefetch()
+      }
+      timer()
     }
   },[bucket,refetch])
 
@@ -449,9 +447,11 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
         const sheet = workbook.Sheets[sheetName];
         const jsonData:Data[] = utils.sheet_to_json(sheet); 
         const dateConverting = jsonData.map((row) => {
+
           return {
-            account_no: row.account_no,
+            account_no: String(row.account_no),
             amount: Number(row.amount),
+            date: String(row.date)
           }
         })
         setExcelData(dateConverting.slice(0,dateConverting.length)); 
@@ -466,7 +466,9 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [], 
-      "application/vnd.ms-excel": [], 
+      "application/vnd.ms-excel": [],
+      "text/csv": [],
+      "application/csv": []
     },
     onDrop: (acceptedFiles) => {
       if (acceptedFiles.length > 0) {
@@ -537,7 +539,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
               data?.getCallfiles?.result?.map((res,index) => {
                 const date = new Date(res.callfile.createdAt);
                 const today = new Date();
-                const findBucket = deptBucket?.getDeptBucket.find(e=> e.id === res.callfile.bucket)
+                const findBucket = deptBucket?.getDeptBucket.find(e=> e._id === res.callfile.bucket)
 
                 const diffTime = today.getTime() - date.getTime();
                 const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));

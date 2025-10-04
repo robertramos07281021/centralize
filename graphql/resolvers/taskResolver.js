@@ -8,6 +8,7 @@ import DispoType from "../../models/dispoType.js"
 import Group from "../../models/group.js"
 import User from "../../models/user.js"
 import Callfile from "../../models/callfile.js"
+import Selective from "../../models/selective.js"
 
 const taskResolver = {
   Query: {
@@ -339,7 +340,8 @@ const taskResolver = {
     },
     updateDatabase: async()=> {
       try {
-       
+        
+        const findSelectives = await Disposition.find({selectiveFiles: {$eq: new mongoose.Types.ObjectId("68da0371ee872f3ae955225b")}})
 
         return {
           success: true,

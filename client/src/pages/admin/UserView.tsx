@@ -28,7 +28,6 @@ const UserView = () => {
   const {data, refetch} = useQuery<{getModifyReport:ModifyRecords[]}>(MODIFY_RECORD_QUERY,{variables: {id: state?._id},skip: !state?._id})
   const dispatch = useAppDispatch()
 
-  console.log(state)
 
   useEffect(()=> {
     const timer = setTimeout(async()=> {

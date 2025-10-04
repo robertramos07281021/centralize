@@ -36,14 +36,12 @@ const TL_BUCKET = gql`
   }
 `
 
-
-
 const Targets= () => {
   const {intervalTypes, selectedBucket} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
   const isTLDashboard = location.pathname.includes('tl-dashboard')
 
-  const {data:targetsData, refetch} = useQuery<{getTargetPerCampaign:Target}>(TARGET_PER_BUCKET,{variables: {bucket: selectedBucket, interval: intervalTypes},skip: !isTLDashboard, notifyOnNetworkStatusChange: true})
+  const {data:targetsData, refetch} = useQuery<{getTargetPerCampaign:Target}>(TARGET_PER_BUCKET,{variables: {bucket: selectedBucket, interval: intervalTypes},skip: !isTLDashboard || !selectedBucket, notifyOnNetworkStatusChange: true})
   const {data:tlBucketData, refetch:deptBucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET,{notifyOnNetworkStatusChange: true})
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {

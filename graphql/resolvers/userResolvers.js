@@ -700,6 +700,21 @@ const userResolvers = {
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
+    },
+    updateUserVici_id: async(_,{vici_id},{user})=> {
+      try {
+        const updateUser = await User.findByIdAndUpdate(user._id,{$set: {
+          vici_id: vici_id
+        }})
+
+        if(!updateUser) throw new CustomError('User not found',401)
+        return {
+          success: true,
+          message: "Successfully added vici dial id"
+        }
+      } catch (error) {
+        throw new CustomError(error.message, 500)
+      }
     }
   },
 };

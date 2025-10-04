@@ -63,7 +63,7 @@ const groupResolver = {
     addGroupMember: async(_,{id,member},{user, pubsub, PUBSUB_EVENTS}) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-
+    
         const findGroup = await Group.findById(id)
         if(!findGroup) throw new CustomError("Group not found", 404)
 

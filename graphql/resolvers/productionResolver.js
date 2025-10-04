@@ -145,13 +145,12 @@ const productionResolver = {
                             {
                               $eq: ['$dispotype.code','PTP']
                             },
-                            { 
-                              $gte: [
-                                '$createdAt',
-                                { $dateSubtract: { startDate: '$$NOW', unit: 'day', amount: 3 } }
-                              ]
-                            },
-                            { $eq: ['$selectivesDispo', false] },
+                            // { 
+                            //   $gte: [
+                            //     '$createdAt',
+                            //     { $dateSubtract: { startDate: '$$NOW', unit: 'day', amount: 3 } }
+                            //   ]
+                            // },
                             { $ne: [ { $type: "$paidDispo" }, "objectId" ] }
                           ]
                         },
@@ -167,19 +166,6 @@ const productionResolver = {
                             { $eq: ['$dispotype.code','PAID'] },
                             { $eq: ['$ptp',true] },
                             { $eq: ['$selectivesDispo', false] },
-                          ]
-                        },
-                        {
-                          $and: [
-                            { $eq: ['$dispotype.code','PAID'] },
-                            { $eq: ['$selectivesDispo', false] },
-                            { $eq: ['$ptp',false] },
-                            {
-                              $eq: [
-                                { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                                "$payment_date"
-                              ]
-                            }
                           ]
                         },
                       ]
@@ -212,11 +198,17 @@ const productionResolver = {
     agentProduction: async(_, __, {user})=> {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
+        const now = new Date()
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
 
         const dtc = await Disposition.aggregate([
           {
             $match: {
               user: new mongoose.Types.ObjectId(user._id) ,
+              createdAt: {$gte: startOfMonth, $lte: endOfMonth},
+              selectivesDispo: false
             }
           },
           {
@@ -230,6 +222,7 @@ const productionResolver = {
           {
             $unwind: { path: "$pd", preserveNullAndEmptyArrays: true } 
           },
+
           {
             $lookup: {
               from: "dispotypes",
@@ -240,11 +233,6 @@ const productionResolver = {
           },
           {
             $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
-          },
-          {
-            $match: {
-              "dispotype.code": {$in: ['PAID',"PTP"]}
-            }
           },
           {
             $lookup: {
@@ -258,104 +246,29 @@ const productionResolver = {
             $unwind: { path: "$pd_dispotype", preserveNullAndEmptyArrays: true } 
           },
           {
+            $match: {
+              "dispotype.code": {$in: ['PAID',"PTP"]}
+            }
+          },
+          {
             $group: {
-              _id: "$user",
-              totalAmountUnsuccessPTP: {
-                $sum: {
-                  $cond: [
-                    {
-                      $and: [
-                        { 
-                          $lt: [
-                            '$createdAt',
-                            { $dateSubtract: { startDate: '$$NOW', unit: 'day', amount: 3 } }
-                          ]
-                        },
-                        { $eq: ['$selectivesDispo', false] },
-                        { $eq: ['$dispotype.code','PTP'] }
-                      ]
-                    },
-                    "$amount",
-                    0
-                  ]
-                }
-              },
-              totalCountUnsuccessPTP: {
-                $sum: {
-                  $cond: [
-                    {
-                      $and: [
-                        { 
-                          $lt: [
-                            '$createdAt',
-                            { $dateSubtract: { startDate: '$$NOW', unit: 'day', amount: 3 } }
-                          ]
-                        },
-                        { $eq: ['$selectivesDispo', false] },
-                        { $eq: ['$dispotype.code','PTP'] }
-                      ]
-                    },
-                    1,
-                    0
-                  ]
-                }
-              },
-              totalAmountSuccessPTP: {
+              _id: null,
+              totalAmountPTP: {
                 $sum: {
                   $cond: [
                     {
                       $or: [
-                        {
-                          $and: [
-                            { $eq: [ { $type: "$paidDispo" }, "objectId" ] },
-                            { $eq: ['$dispotype.code','PTP'] },
-                            { $eq: ['$pd_dispotype.code','PAID'] },
-                            { $eq: ['$pd.selectivesDispo', true] },
-                          ]
-                        },
-                        {
-                          $and: [
-                            { 
-                              $gte: [
-                                '$createdAt',
-                                { $dateSubtract: { startDate: '$$NOW', unit: 'day', amount: 3 } }
-                              ]
-                            },
-                            { $eq: ['$dispotype.code','PTP'] },
-                            { $ne: [ { $type: "$paidDispo" }, "objectId" ] },
-                            { $eq: ['$selectivesDispo', false] },
-                          ]
-                        },
-                        {
-                          $and: [
-                            { $eq: ['$dispotype.code','PAID'] },
-                            { $eq: ['$ptp',true] },
-                            { $eq: [ { $type: "$paidDispo" }, "objectId" ] },
-                            { $eq: ['$selectivesDispo',false ] },
-                            { $eq: ['$pd_dispotype.code','PAID'] },
-                            { $eq: ['$pd.selectivesDispo', true] },
-                          ]
-                        },
-                        {
+                        {  
                           $and: [
                             { $eq: ['$dispotype.code','PAID'] },
                             { $eq: ['$ptp',true] },
                             { $ne: [ { $type: "$paidDispo" }, "objectId" ] },
-                            { $eq: ['$selectivesDispo',false ] },
                           ]
                         },
                         {
                           $and: [
-                            { $eq: ['$dispotype.code','PAID'] },
-                            { $eq: ['$ptp',false] },
+                            { $eq: ['$dispotype.code','PTP'] },
                             { $ne: [ { $type: "$paidDispo" }, "objectId" ] },
-                            { $eq: ['$selectivesDispo',false] },
-                            {
-                              $eq: [
-                                { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                                "$payment_date"
-                              ]
-                            }
                           ]
                         },
                       ]
@@ -365,48 +278,22 @@ const productionResolver = {
                   ]
                 }
               },
-              totalCountSuccessPTP: {
+              totalCountPTP: {
                 $sum: {
                   $cond: [
                     {
                       $or: [
-                        {
-                          $and: [
-                            { $eq: [ { $type: "$paidDispo" }, "objectId" ] },
-                            { $eq: ['$dispotype.code','PTP'] },
-                            { $eq: ['$pd_dispotype.code','PAID'] },
-                            { $eq: ['$pd.selectivesDispo', true] },
-                          ]
-                        },
-                        {
-                          $and: [
-                            { 
-                              $gte: [
-                                '$createdAt',
-                                { $dateSubtract: { startDate: '$$NOW', unit: 'day', amount: 3 } }
-                              ]
-                            },
-                            { $eq: ['$dispotype.code','PTP'] },
-                            { $ne: [ { $type: "$paidDispo" }, "objectId" ] },
-                            { $eq: ['$selectivesDispo', false] },
-                          ]
-                        },
-                        {
-                          $and: [
-                            { $eq: ['$dispotype.code','PAID'] },
-                            { $eq: ['$ptp',true] },
-                            { $eq: [ { $type: "$paidDispo" }, "objectId" ] },
-                            { $eq: ['$selectivesDispo',false ] },
-                            { $eq: ['$pd_dispotype.code','PAID'] },
-                            { $eq: ['$pd.selectivesDispo', true] },
-                          ]
-                        },
-                        {
+                        {  
                           $and: [
                             { $eq: ['$dispotype.code','PAID'] },
                             { $eq: ['$ptp',true] },
                             { $ne: [ { $type: "$paidDispo" }, "objectId" ] },
-                            { $eq: ['$selectivesDispo',false ] },
+                          ]
+                        },
+                        {
+                          $and: [
+                            { $eq: ['$dispotype.code','PTP'] },
+                            { $ne: [ { $type: "$paidDispo" }, "objectId" ] },
                           ]
                         },
                       ]
@@ -449,10 +336,8 @@ const productionResolver = {
           {
             $project: {
               _id: 0,
-              totalAmountUnsuccessPTP: 1,
-              totalCountUnsuccessPTP: 1,
-              totalAmountSuccessPTP: 1,
-              totalCountSuccessPTP: 1,
+              totalCountPTP: 1,
+              totalAmountPTP: 1,
               totalAmountKept: 1,
               totalCountKept: 1
             }
@@ -461,15 +346,13 @@ const productionResolver = {
 
         return dtc[0]
       } catch (error) {
+  
         throw new CustomError(error.message, 500)   
       } 
     },
     getAgentProductionPerMonth: async(_,__,{user}) => {
-
-      
       try {
         if(!user) throw new CustomError("Unauthorized",401)
-  
         const year = new Date().getFullYear()
         const firstMonth = new Date(year, 0, 1)
         const lastMonth = new Date(year, 11, 31, 23, 59, 59, 999)
@@ -484,6 +367,17 @@ const productionResolver = {
           },
           {
             $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "paidDispo",
+              foreignField: "_id",
+              as: "pd",
+            }
+          },
+          {
+            $unwind: { path: "$pd", preserveNullAndEmptyArrays: true } 
           },
           {
             $match: {
@@ -514,12 +408,6 @@ const productionResolver = {
                             }
                           ] 
                         },
-                        // { 
-                        //   $and: [
-                        //     { $eq: ['$dispotype.code', 'PAID'] },
-                        //     { $eq: ['$ptp', true] }
-                        //   ]
-                        // }
                       ]
                     },
                     "$amount",
@@ -539,7 +427,7 @@ const productionResolver = {
                           $eq: ['$dispotype.code','PAID']
                         },
                         {
-                          $eq: ['$selectiveDispo',true]
+                          $eq: ['$selectivesDispo',true]
                         }
                       ]
                     },
@@ -575,14 +463,36 @@ const productionResolver = {
               ptp: {
                 $sum: {
                   $cond: [
-                    {
-                      $and: [
+                    { 
+                      $or: [
                         {
-                          $eq: ['$dispotype.code','PTP']
+                          $and: [
+                            {
+                              $eq: ['$dispotype.code','PTP']
+                            },
+                            // { 
+                            //   $gte: [
+                            //     '$createdAt',
+                            //     { $dateSubtract: { startDate: '$$NOW', unit: 'day', amount: 3 } }
+                            //   ]
+                            // },
+                            { $ne: [ { $type: "$paidDispo" }, "objectId" ] }
+                          ]
                         },
                         {
-                          $eq: ['$existing',true]
-                        }
+                          $and: [
+                            { $eq: ['$dispotype.code','PTP'] },
+                            { $eq: ['$selectivesDispo', false] },
+                            { $eq: ['$pd.selectivesDispo', true] }
+                          ]
+                        },
+                        {
+                          $and: [
+                            { $eq: ['$dispotype.code','PAID'] },
+                            { $eq: ['$ptp',true] },
+                            { $eq: ['$selectivesDispo', false] },
+                          ]
+                        },
                       ]
                     },
                     "$amount",
@@ -652,7 +562,6 @@ const productionResolver = {
               count: -1
             }
           }
-
         ])
         return res
       } catch (error) {
@@ -749,10 +658,8 @@ const productionResolver = {
                           $or: [
                             {
                               $and: [
-                                { $eq: [ "$havePd", true ] },
+                                { $eq: [ "$havePd", false ] },
                                 { $eq: ['$code','PTP'] },
-                                { $eq: ['$pd_code','PAID'] },
-                                { $eq: ['$pd.selectivesDispo', true] },
                               ]
                             },
                             {
@@ -772,10 +679,8 @@ const productionResolver = {
                               $and: [
                                 { $eq: ['$code','PAID'] },
                                 { $eq: ['$ptp',true] },
-                                { $eq: ["$havePd", true] },
+                                { $eq: ["$havePd", false] },
                                 { $eq: ['$selectivesDispo',false ] },
-                                { $eq: ['$pd_code','PAID'] },
-                                { $eq: ['$pd.selectivesDispo', true] },
                               ]
                             },
                             {
@@ -889,10 +794,8 @@ const productionResolver = {
                           $or: [
                             {
                               $and: [
-                                { $eq: [ "$havePd", true ] },
+                                { $eq: [ "$havePd", false ] },
                                 { $eq: ['$code','PTP'] },
-                                { $eq: ['$pd_code','PAID'] },
-                                { $eq: ['$pd.selectivesDispo', true] },
                               ]
                             },
                             {
@@ -906,16 +809,6 @@ const productionResolver = {
                                 { $eq: ['$code','PTP'] },
                                 { $eq: ["$havePd", false ] },
                                 { $eq: ['$selectivesDispo', false] },
-                              ]
-                            },
-                            {
-                              $and: [
-                                { $eq: ['$code','PAID'] },
-                                { $eq: ['$ptp',true] },
-                                { $eq: ["$havePd", true] },
-                                { $eq: ['$selectivesDispo',false ] },
-                                { $eq: ['$pd_code','PAID'] },
-                                { $eq: ['$pd.selectivesDispo', true] },
                               ]
                             },
                             {
@@ -1077,6 +970,7 @@ const productionResolver = {
             }
           }
         ])
+
         return agentCollection[0]
       } catch (error) {
         throw new CustomError(error.message, 500)        
@@ -1217,10 +1111,16 @@ const productionResolver = {
         today.setHours(0,0,0,0)
         const dialer = ["vici", 'issabel']
         
-
         const filtered = {
           user: new mongoose.Types.ObjectId(agentID),
-          // "dispotype.code" : {$in: dispoFilter},
+          $or: [
+            {
+              selectivesDispo: {$eq: false},
+            },
+            {
+              selectivesDispo: {$exists: false}
+            }
+          ],
           $or: [
             {
               "customer.contact_no" : {$elemMatch: { $regex: search, $options: "i" }},
@@ -1236,8 +1136,6 @@ const productionResolver = {
         if(dispotype.length > 0) {
           filtered["dispotype.code"] = {$in: dispotype}
         }
-       
-
 
         if(!dialer.includes(search.toLowerCase())) {
           filtered['dialer'] = {$in: dialer}
@@ -1260,7 +1158,6 @@ const productionResolver = {
           filtered['createdAt'] = {$lt: today}
         }
 
-  
         const forFiltering = await Disposition.aggregate([
           {
             $lookup: {
@@ -1370,7 +1267,6 @@ const productionResolver = {
           port: 21,
           secure: false,
         });
-       
         
         const withRecordings = []
 
@@ -1409,15 +1305,22 @@ const productionResolver = {
             "172.20.21.30" : "MCC",
             "172.20.21.35" : "MIXED CAMPAIGN",
             "172.20.21.67" : "MIXED CAMPAIGN NEW",
-            '172.20.21.97' : "UB"
+            '172.20.21.97' : "UB",
+            '172.20.21.70' : 'MIXED CAMPAIGN NEW 2'
           }
         
-          
+         
+
           const remoteDirVici =  `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`     
           const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${issabelIpAddress}/${monthCreated + ' ' + yearCreated}/${checkDate(dayCreated)}`
+          
 
-          const remoteDir = filtered.dialer === "vici" ? remoteDirVici : remoteDirIssabel
 
+          const ifATOME = (['CASH S2','LAZCASH S1','ACS1-TEAM 1','ACS1-TEAM 2','ACS1-TEAM 3'].includes(filtered.bucket.name) && (createdAt.getMonth() < 7 && dayCreated < 18)) ? `/REC-172.20.21.18-MIXED CAMPAIGN NEW 2/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`: remoteDirVici
+
+
+          const remoteDir = filtered.dialer === "vici" ? ifATOME : remoteDirIssabel
+        
           try {
             const files = await client.list(remoteDir)
             const userRecordings = []
@@ -1427,7 +1330,7 @@ const productionResolver = {
               name: fileInfo.name,
               size: fileInfo.size
             }));
-
+            
             if(filtered.dialer === "vici") {
               for(const file of matches) {
                 if(file.name.includes(filtered.user.vici_id) || file.name.includes(filtered.user.user_id)) {
@@ -1444,6 +1347,7 @@ const productionResolver = {
 
         const newMapForDispoCode = forFiltering[0]?.metadata.length > 0 ? forFiltering[0]?.metadata[0]?.dispotypeCodes : []
         const total = forFiltering[0]?.metadata.length > 0  ?  forFiltering[0]?.metadata[0].total : 0
+        
 
         return {
           dispositions: withRecordings || [],
@@ -1456,13 +1360,12 @@ const productionResolver = {
         client.close();
       }
     },
-    //hereeee ================================
     monthlyWeeklyCollected: async(_,__,{user})=> {
       try {
         const now = new Date();
         const currentDay = now.getDay();
         const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
-
+      
         const startOfWeek = new Date(now);
         startOfWeek.setDate(now.getDate() + diffToMonday);
         startOfWeek.setHours(0, 0, 0, 0);
@@ -1507,6 +1410,9 @@ const productionResolver = {
                     {
                       $and: [
                         {
+                          $eq: ['$ptp',true]
+                        },
+                        {
                           $eq: ['$selectivesDispo',true]
                         },
                         {
@@ -1518,6 +1424,30 @@ const productionResolver = {
                       ]
                     },
                     "$amount",
+                    0
+                  ]
+                }
+              },
+              monthlyCount: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $eq: ['$ptp',true]
+                        },
+                        {
+                          $eq: ['$selectivesDispo',true]
+                        },
+                        {
+                          $gte: ['$createdAt',startOfMonth]
+                        },
+                        {
+                          $lte: ['$createdAt',endOfMonth]
+                        }
+                      ]
+                    },
+                    1,
                     0
                   ]
                 }
@@ -1528,13 +1458,16 @@ const productionResolver = {
                     {
                       $and: [
                         {
+                          $eq: ['$ptp',true]
+                        },
+                        {
                           $eq: ['$selectivesDispo',true]
                         },
                         {
-                          $gte: ['$createdAt',startOfMonth]
+                          $gte: ['$createdAt',startOfWeek]
                         },
                         {
-                          $lte: ['$createdAt',endOfMonth]
+                          $lte: ['$createdAt',endOfWeek]
                         }
                       ]
                     },
@@ -1543,72 +1476,24 @@ const productionResolver = {
                   ]
                 }
               },
-            }
-          },
-          {
-            $project: {
-              _id: 0,
-              monthly: 1,
-              weekly: 1
-            }
-          }
-        ])
-        
-        const res = findDisposition[0] || {}
-        
-        return res
-      } catch (error) {
-        throw new CustomError(error.message, 500)   
-      }
-    },
-    getAgentRPCCount: async(_,__,{user})=> {
-      try {
-        const now = new Date();
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-        endOfMonth.setMilliseconds(-1);
-
-        const RPCCustomerAccount = await CustomerAccount.aggregate([
-          {
-            $match:{
-              bucket: {$in: user.buckets.map(x => new mongoose.Types.ObjectId(x))},
-              createdAt: {$gt: startOfMonth, $lte: endOfMonth}
-            }
-          },
-          {
-            $lookup: {
-              from: "customers",
-              localField: "customer",
-              foreignField: "_id",
-              as: "customerInfo",
-            }
-          },
-          {
-            $unwind: { path: "$customerInfo", preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "current_disposition",
-              foreignField: "_id",
-              as: "cd",
-            }
-          },
-          {
-            $unwind: { path: "$cd", preserveNullAndEmptyArrays: true}
-          },
-          
-          {
-            $group: {
-              _id: null,
-              count: {
+              weeklyCount: {
                 $sum: {
                   $cond: [
-                    { 
-                      $and: [ 
-                       {$eq: ['$cd.user', user._id]},
-                       {$eq: ['$customerInfo.isRPC', true]}
-                      ] 
+                    {
+                      $and: [
+                        {
+                          $eq: ['$ptp',true]
+                        },
+                        {
+                          $eq: ['$selectivesDispo',true]
+                        },
+                        {
+                          $gte: ['$createdAt',startOfWeek]
+                        },
+                        {
+                          $lte: ['$createdAt',endOfWeek]
+                        }
+                      ]
                     },
                     1,
                     0
@@ -1620,7 +1505,181 @@ const productionResolver = {
           {
             $project: {
               _id: 0,
-              count : 1
+              monthly: 1,
+              weekly: 1,
+              weeklyCount: 1,
+              monthlyCount: 1,
+            }
+          }
+        ])
+        
+        const res = findDisposition[0] || {monthly: 0, weekly: 0, weeklyCount: 0, monthlyCount: 0}
+
+        return res
+      } catch (error) {
+        throw new CustomError(error.message, 500)   
+      }
+    },
+    getAgentRPCCount: async(_,__,{user})=> {
+      try {
+        const now = new Date()
+        const startDate = new Date(now);
+        startDate.setHours(0, 0, 0, 0);
+        const endDate = new Date(now);
+        endDate.setHours(23, 59, 59, 999);
+
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
+
+        const rpcCount = ['PTP','PAID','UNEG','DISP',"LM",'HUP','RTP','FFUP']
+
+        const RPCCustomerAccount = await Disposition.aggregate([
+          {
+            $match:{
+              user: new mongoose.Types.ObjectId(user._id),
+            }
+          },
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "ca",
+            }
+          },
+          {
+            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "customers",
+              localField: "ca.customer",
+              foreignField: "_id",
+              as: "customer",
+            }
+          },
+          {
+            $unwind: { path: "$customer", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              "dispotype.code": {$in: rpcCount}
+            }
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "paidDispo",
+              foreignField: "_id",
+              as: "pd",
+            }
+          },
+          {
+            $unwind: { path: "$pd", preserveNullAndEmptyArrays: true}
+          },
+          {
+            $group: {
+              _id: '$ca.case_id',
+              dailyCount: {
+                $max: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $gt: ['$createdAt', startDate] },
+                        { $lte: ['$createdAt', endDate] },
+                        { $eq: ['$customer.isRPC', true] },
+                        {
+                          $or: [
+                            {
+                              $and: [
+                                { $ne: ['$dispotype.code', 'PTP'] },
+                                { $ne: ['$dispotype.code', 'PAID'] }
+                              ]
+                            },
+                            {
+                              $and: [
+                                { $eq: ['$dispotype.code', 'PTP'] },
+                                { $eq: ['$pd.selectivesDispo', true] }
+                              ]
+                            },
+                            {
+                              $and: [
+                                { $eq: ['$dispotype.code', 'PAID'] },
+                                { $eq: ['$selectivesDispo', false] }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    1,
+                    0
+                  ]
+                }
+              },
+              totalCount: {
+                $max: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $gt: ['$createdAt', startOfMonth] },
+                        { $lte: ['$createdAt', endOfMonth] },
+                        { $eq: ['$customer.isRPC', true] },
+                        {
+                          $or: [
+                            {
+                              $and: [
+                                { $ne: ['$dispotype.code', 'PTP'] },
+                                { $ne: ['$dispotype.code', 'PAID'] }
+                              ]
+                            },
+                            {
+                              $and: [
+                                { $eq: ['$dispotype.code', 'PTP'] },
+                                { $eq: ['$pd.selectivesDispo', true] }
+                              ]
+                            },
+                            {
+                              $and: [
+                                { $eq: ['$dispotype.code', 'PAID'] },
+                                { $eq: ['$selectivesDispo', false] }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    1,
+                    0
+                  ]
+                }
+              },
+            }
+          },
+          {
+            $group: {
+              _id: null,
+              dailyCount: { $sum: '$dailyCount' },
+              totalCount: { $sum: '$totalCount' },
+            }
+          },
+          {
+            $project: {
+              _id: 0,
+              dailyCount: 1,
+              totalCount: 1,
             }
           }
         ])

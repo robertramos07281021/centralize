@@ -13,15 +13,11 @@ export default defineConfig({
       '/graphql': {
         target: 'http://localhost:4000',
         changeOrigin: true,
-        secure: false,
         ws: true,  
       },
     },
-
   },
-
   build: {
     chunkSizeWarningLimit: 2000, 
   }
-
 })

@@ -320,8 +320,7 @@ const CustomerDisposition = () => {
     onCompleted: ()=> {
       setSearch("")
     },
-    onError: (error)=>{
-      console.log(error)
+    onError: ()=>{
       dispatch(setServerError(true))
     }
   })

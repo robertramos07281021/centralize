@@ -58,7 +58,6 @@ const TaskManagerView = () => {
     return () => clearTimeout(timer)
   },[refetch, tlBucketRefetch])
 
-  
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = bucketData?.getTLBucket || []
     return Object.fromEntries(tlBuckets.map(e=> [e.name, e._id]))
@@ -88,7 +87,6 @@ const TaskManagerView = () => {
   const onClick = useCallback(()=> {
     setShowSelection(!showSelection) 
   },[setShowSelection,showSelection])
-
 
   const [dpd, setDpd] = useState<number | null>(null)
 
@@ -187,7 +185,6 @@ const TaskManagerView = () => {
               value={bucketSelect}
               onChange={(e)=> setBucketSelect(e.target.value)}
             >
-        
               {
                 bucketData?.getTLBucket.map(e=> 
                   <option key={e._id} value={e.name}>{e.name}</option>

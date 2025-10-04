@@ -7,6 +7,7 @@ import { Chart } from "react-chartjs-2"
 import { useSelector } from "react-redux"
 import { RootState, useAppDispatch } from "../../redux/store"
 import { setServerError } from "../../redux/slices/authSlice"
+import { useLocation } from "react-router-dom"
 
 type AgentProdPerMonth = {
     total: number
@@ -29,7 +30,9 @@ const AGENT_PER_MONTH_PROD = gql`
 `
 
 export default function MixedChartMonthView() {
-  const {data:agentProdPerMonthData, refetch:PerMonthRefetch} = useQuery<{getAgentProductionPerMonth:AgentProdPerMonth[]}>(AGENT_PER_MONTH_PROD)
+  const location = useLocation()
+  const isAgentDashboard = location.pathname.includes('agent-dashboard')
+  const {data:agentProdPerMonthData, refetch:PerMonthRefetch} = useQuery<{getAgentProductionPerMonth:AgentProdPerMonth[]}>(AGENT_PER_MONTH_PROD,{ notifyOnNetworkStatusChange: true , skip: !isAgentDashboard })
   const {userLogged} = useSelector((state:RootState)=> state.auth)
   const labelsPermonth =  month.map((m)=> {return m.slice(0,3)})
   const totals = agentProdPerMonthData?.getAgentProductionPerMonth.map((e)=> e.total) || []

@@ -64,7 +64,9 @@ const DELETEBUCKET = gql `mutation
 
 const BucketSection = () => {
   const dispatch = useAppDispatch()
+
   const {data:dept, refetch} = useQuery<{getDepts:Department[]}>(DEPARTMENT_QUERY,{ variables: { name: "admin" } })
+  
   const campaignOnly = dept?.getDepts.filter((d)=> d.name!== "admin")
   const newDepts = useMemo(() => [...new Set(campaignOnly?.map((d) => d.id))], [campaignOnly])
   const [deptSelected,setDeptSelected] = useState<string | null>(null)

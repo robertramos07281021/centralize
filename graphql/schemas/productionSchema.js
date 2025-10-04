@@ -115,10 +115,8 @@ const productionTypeDefs = gql`
 
 
   type MyProduction {
-    totalAmountUnsuccessPTP: Float,
-    totalCountUnsuccessPTP: Int,
-    totalAmountSuccessPTP: Float,
-    totalCountSuccessPTP: Int
+    totalAmountPTP: Float,
+    totalCountPTP: Int,
     totalAmountKept: Float,
     totalCountKept: Float
   }
@@ -132,10 +130,13 @@ const productionTypeDefs = gql`
   type Collected {
     monthly: Float
     weekly: Float
+    monthlyCount: Int
+    weeklyCount: Int
   }
 
   type AgentRPCCount {
-    count: Int
+    dailyCount: Int
+    totalCount: Int
   }
 
 

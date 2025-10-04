@@ -437,7 +437,7 @@ const MyTaskSection = () => {
       }
       {
         selection.trim() !== "" &&
-        <div className="absolute border border-slate-300 rounded-lg shadow-md shadow-black/20 w-2/4 h-96 translate-y-1/2 -bottom-50 right-5 p-2 text-slate-500 flex flex-col bg-white z-50">
+        <div className="absolute border border-slate-300 rounded-lg shadow-md shadow-black/20 w-2/4 h-96 translate-y-1/2 -bottom-50 right-5 p-2 text-slate-500 flex flex-col bg-white z-40">
           <div className="py-1.5 2xl:text-xs lg:text-[0.6em] bg-slate-200 grid grid-cols-4 px-5 items-center">
             <div className="px-2 text-nowrap truncate">Customer Name</div>
             <div >Disposition</div>

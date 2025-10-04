@@ -27,6 +27,7 @@ const LOGIN = gql `
         isOnline
         account_type
         group
+        vici_id
         targets {
           daily
           weekly
@@ -74,6 +75,7 @@ type User = {
   group: string
   targets: Targets
   isOnline: boolean
+  vici_id: string
 }
 
 type Login = {

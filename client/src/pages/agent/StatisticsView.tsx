@@ -1,9 +1,8 @@
 import AgentTimer from "./AgentTimer"
-import DailyCollections from "./DailyCollections"
 import MixedChartView from "./MixedChartView"
 import MixedChartMonthView from "./MixedChartMonthView"
 import OverallPerformance from "./OverallPerformance"
-import AgentTotalProduction from "./AgentTotalProduction"
+import DashboardMinis from "./DashboardMinis.tsx"
 
 const StatisticsView = () => {
 
@@ -13,10 +12,7 @@ const StatisticsView = () => {
         <AgentTimer/>
       </div>
       <div className=" h-full w-full grid grid-cols-1 lg:grid-cols-9 lg:grid-rows-4 lg:gap-2 overflow-hidden grid-rows-3 gap-2 p-2">
-        <div className="lg:row-span-2 lg:col-span-3 grid grid-rows-2 gap-2">
-          <DailyCollections/>
-          <AgentTotalProduction/>
-        </div>
+        <DashboardMinis/>
         <MixedChartView/>
         <MixedChartMonthView/>
         <OverallPerformance/>
