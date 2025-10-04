@@ -20,7 +20,7 @@ const GET_AGENT_BUCKET = gql`
 const AgentTimer = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
   const [time, setTime] = useState(new Date());
-
+  
   useEffect(() => {
     if(userLogged?.type === "AGENT") {
       const timer = setInterval(() => {

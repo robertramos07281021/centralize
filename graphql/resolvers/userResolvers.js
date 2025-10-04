@@ -708,6 +708,7 @@ const userResolvers = {
         }})
 
         if(!updateUser) throw new CustomError('User not found',401)
+          
         return {
           success: true,
           message: "Successfully added vici dial id"

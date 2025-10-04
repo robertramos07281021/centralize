@@ -28,7 +28,7 @@ const AdminDashboard = () => {
 
 
   const [updateDatabase, { loading }] = useMutation<{
-    updateDatabase: Success;
+    updateDatabase:Success;
   }>(UPDATE_DATABASE, {
     onCompleted: (res) => {
       const result = res.updateDatabase;

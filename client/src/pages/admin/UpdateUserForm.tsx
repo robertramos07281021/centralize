@@ -218,8 +218,6 @@ enum Types {
   OPERATION = "OPERATION"
 }
 
-
-
 type Data = {
   username: string;
   type: UserType;
