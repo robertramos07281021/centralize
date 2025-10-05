@@ -265,7 +265,6 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
 
   useEffect(()=> {
     if(checkIfChangeContactMethod && existingDispo && !selectedCustomer?.current_disposition?.selectivesDispo ) {
-      console.log('hello')
       setData(prev => ({ ...prev, contact_method: existingDispo?.contact_method as AccountType}));
     }
   },[checkIfChangeContactMethod, existingDispo])
@@ -329,8 +328,7 @@ const DispositionForm:React.FC<Props> = ({updateOf}) => {
       updateOf()
       dispatch(setDeselectCustomer())
     },
-    onError: async(err) => {
-      console.log(err)
+    onError: async() => {
       await deselectTask({variables: {id:selectedCustomer?._id}})
       setConfirm(false)
       dispatch(setServerError(true))

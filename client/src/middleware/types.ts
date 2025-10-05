@@ -9,6 +9,7 @@ export type UserInfo = {
   callfile_id: string
   buckets: string[]
   user_id:string
+  vici_id: string
 };
 
 export type Department = {

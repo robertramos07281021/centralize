@@ -315,8 +315,7 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
         isMessage: false
       }))
     },
-    onError: (error) => {
-      console.log(error)
+    onError: () => {
       dispatch(setServerError(true))
     }
   })

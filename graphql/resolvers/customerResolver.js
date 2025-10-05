@@ -218,6 +218,7 @@ const customerResolver = {
             }
           }
         ])
+
         return accounts
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -1126,7 +1127,6 @@ const customerResolver = {
           message: "Callfile successfully created"
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },

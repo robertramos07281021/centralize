@@ -285,7 +285,6 @@ const taskResolver = {
           message: "Successfully selected"
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)  
       }
     },
@@ -341,14 +340,13 @@ const taskResolver = {
     updateDatabase: async()=> {
       try {
         
-        const findSelectives = await Disposition.find({selectiveFiles: {$eq: new mongoose.Types.ObjectId("68da0371ee872f3ae955225b")}})
+        // const findSelectives = await Disposition.find({selectiveFiles: {$eq: new mongoose.Types.ObjectId("68da0371ee872f3ae955225b")}})
 
         return {
           success: true,
           message: "Customers Account Successfully update"
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },

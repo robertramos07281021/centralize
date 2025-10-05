@@ -62,56 +62,57 @@ Chart.register(...registerables,
 function App() {
 
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<Login/>}/>
-        <Route path="*" element={<Error/>}/>
-        <Route path="/change-password" element={<ChangePassword/>}/>
-        <Route path="/agent-recordings" element={<AgentRecordingView/>}/>
-        <Route element={<AdminRoute/>}>
-          <Route path="/admin-dashboard" element={<AdminDashboard/>}/>
-          <Route path="/setup" element={<SetupView/>}/>
-          <Route path="/accounts" element={<AccountsView/>}/>
-          <Route path="/register" element={<RegisterView/>}/>
-          <Route path="/user-account" element={<UserView/>}/>
-          <Route path="/disposition-settings" element={<DispositionConfigurationView/>}/>
 
-        </Route>
-        <Route element={<AgentRoute/>}>
-          <Route path="/agent-dashboard" element={<StatisticsView/>}/>
-          <Route path="/break-view" element={<BreakView/>}/>
-          <Route path="/agent-cip" element={<CustomerDisposition/>}/>
-          <Route path="/agent-report" element={<AgentReport/>}/>
-        </Route>
-        <Route element={<AomRoute/>}>
-          <Route path="/aom-dashboard" element={<AomDashboard/>}/>
-          <Route path="/aom-reports" element={<Reports/>} />
-          <Route path="/aom-fte-user" element={<FTEUserView/>}/>
-        </Route>
-        <Route element={<OpsRoute/>}>
-          <Route path="/operation-dashboard" element={<OperationDashboard/>}/>
-          <Route path="/operation-reports" element={<Reports/>} />
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<Login/>}/>
+          <Route path="*" element={<Error/>}/>
+          <Route path="/change-password" element={<ChangePassword/>}/>
+          <Route path="/agent-recordings" element={<AgentRecordingView/>}/>
+          <Route element={<AdminRoute/>}>
+            <Route path="/admin-dashboard" element={<AdminDashboard/>}/>
+            <Route path="/setup" element={<SetupView/>}/>
+            <Route path="/accounts" element={<AccountsView/>}/>
+            <Route path="/register" element={<RegisterView/>}/>
+            <Route path="/user-account" element={<UserView/>}/>
+            <Route path="/disposition-settings" element={<DispositionConfigurationView/>}/>
 
-        </Route>
-        <Route element={<TlRoute/>}>
-          <Route path="/tl-dashboard" element={<TlDashboard/>}/>
-          <Route path="/mis-dashboard" element={<MISDashboard/>}/>
-          <Route path="/tl-production-manager" element={<ProductionManagerView/>}/>
-          <Route path="/agent-production" element={<AgentView/>}/>
-          <Route path="/tl-task-manager" element={<TaskManagerView/>}/>
-          <Route path="/tl-cip" element={<CustomerDisposition/>}/>
-          <Route path="/tl-reports" element={<BacklogManagementView/>}/>
-        </Route>
-        <Route element={<CeoRoute/>}>
-          <Route path="/ceo-dashboard" element={<CeoDashboard/>}/>
-        </Route>
-        <Route element={<QARoute/>}>
+          </Route>
+          <Route element={<AgentRoute/>}>
+            <Route path="/agent-dashboard" element={<StatisticsView/>}/>
+            <Route path="/break-view" element={<BreakView/>}/>
+            <Route path="/agent-cip" element={<CustomerDisposition/>}/>
+            <Route path="/agent-report" element={<AgentReport/>}/>
+          </Route>
+          <Route element={<AomRoute/>}>
+            <Route path="/aom-dashboard" element={<AomDashboard/>}/>
+            <Route path="/aom-reports" element={<Reports/>} />
+            <Route path="/aom-fte-user" element={<FTEUserView/>}/>
+          </Route>
+          <Route element={<OpsRoute/>}>
+            <Route path="/operation-dashboard" element={<OperationDashboard/>}/>
+            <Route path="/operation-reports" element={<Reports/>} />
 
-          <Route path="/qa-agents-dashboard" element={<QAAgentViews/>}/>
-          <Route path="/qa-dashboard" element={<QADashboard/>}/>
-        </Route>
-      </Routes>
-    </BrowserRouter>
+          </Route>
+          <Route element={<TlRoute/>}>
+            <Route path="/tl-dashboard" element={<TlDashboard/>}/>
+            <Route path="/mis-dashboard" element={<MISDashboard/>}/>
+            <Route path="/tl-production-manager" element={<ProductionManagerView/>}/>
+            <Route path="/agent-production" element={<AgentView/>}/>
+            <Route path="/tl-task-manager" element={<TaskManagerView/>}/>
+            <Route path="/tl-cip" element={<CustomerDisposition/>}/>
+            <Route path="/tl-reports" element={<BacklogManagementView/>}/>
+          </Route>
+          <Route element={<CeoRoute/>}>
+            <Route path="/ceo-dashboard" element={<CeoDashboard/>}/>
+          </Route>
+          <Route element={<QARoute/>}>
+
+            <Route path="/qa-agents-dashboard" element={<QAAgentViews/>}/>
+            <Route path="/qa-dashboard" element={<QADashboard/>}/>
+          </Route>
+        </Routes>
+      </BrowserRouter>
   )
 }
 

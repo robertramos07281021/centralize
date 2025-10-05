@@ -1152,7 +1152,7 @@ const dispositionResolver = {
 
         const existingCalllfile = await Callfile.findOne({bucket:selectedBucket._id, active : true})
         
-        const dispotypesPositive = (await DispoType.find({status: 1}).lean()).map(dt => dt._id)
+        const dispotypesPositive = (await DispoType.find({status: 1}).lean()).map(dt => new mongoose.Types.ObjectId(dt._id))
 
         const customerAccount = await CustomerAccount.aggregate([
           {
@@ -1235,8 +1235,6 @@ const dispositionResolver = {
           {
             $match: {
               createdAt: selectedInterval,
-              "dispotype.code" : "PTP",
-              existing: true,
               callfile: {$in: callfile},
               $or: [
                 {
@@ -1244,15 +1242,28 @@ const dispositionResolver = {
                     {
                       "customerAccount.case_id": {$nin : customerAccount.map(ca => ca.case_id)},
                     },
-                    {
-                      "accountCallfile.active" : {$eq: false}
-                    }
+                    { "accountCallfile.active" : { $eq: false } }
+                  ]
+                },
+                { "accountCallfile.active" : { $eq: true } }
+              ],
+              $or: [
+                {
+                  $and: [
+                    { "dispotype.code" : "PTP" },
+                    { existing: true },
                   ]
                 },
                 {
-                  "accountCallfile.active" : {$eq: true}
+                  $and: [
+                    {'dispotype.code' : "PAID"},
+                    { selectivesDispo : false },
+                    { ptp: true },
+                    { existing: true },
+                  ]
                 }
               ]
+
             }
           },
           {
@@ -1274,6 +1285,7 @@ const dispositionResolver = {
             }
           }
         ])
+
         return PTP[0]
       } catch (error) {
 
@@ -1507,7 +1519,7 @@ const dispositionResolver = {
     getTLDailyCollected: async(_,{input}) => {
       try {
         const selectedBucket = await Bucket.findById(input.bucket).lean()
-        const callfile = await Callfile.find({bucket:selectedBucket._id})
+        const callfile = (await Callfile.find({bucket:selectedBucket._id})).map(c=> new mongoose.Types.ObjectId(c._id))
 
         if(callfile.length < 1) return null
         
@@ -1536,92 +1548,80 @@ const dispositionResolver = {
 
         let selectedInterval = {}
         if(input.interval === "daily") {
-          selectedInterval['gt'] = todayStart
-          selectedInterval['lte'] = todayEnd
+          selectedInterval['$gt'] = todayStart
+          selectedInterval['$lte'] = todayEnd
           
         } else if (input.interval === "weekly") {
-          selectedInterval['gt'] = startOfWeek
-          selectedInterval['lte'] = endOfWeek
+          selectedInterval['$gt'] = startOfWeek
+          selectedInterval['$lte'] = endOfWeek
           
         } else if (input.interval === "monthly") {
-          selectedInterval['gt'] = startOfMonth
-          selectedInterval['lte'] = endOfMonth
+          selectedInterval['$gt'] = startOfMonth
+          selectedInterval['$lte'] = endOfMonth
         }
         
-        const TotalRPC = await CustomerAccount.aggregate([
+        const rpcCount = ['PTP','PAID','UNEG','DISP','RTP','FFUP']
+  
+        const TotalRPC = await Disposition.aggregate([
+          {
+            $match: {
+              callfile: {$in: callfile},
+              createdAt: selectedInterval,
+              selectivesDispo: false
+            }
+          },
+
           {
             $lookup: {
-              from: "customers",
-              localField: "customer",
+              from: "dispotypes",
+              localField: "disposition",
               foreignField: "_id",
-              as: "customer_info",
+              as: "dispotype",
             }
           },
           {
-            $unwind: {path: "$customer_info",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "current_disposition",
-              foreignField: "_id",
-              as: "cd",
-            }
-          },
-          {
-            $unwind: {path: "$cd",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "history",
-              foreignField: "_id",
-              as: "histories",
-            }
-          },
-          {
-            $addFields: {
-              hasDispoOnthisInterval: {
-                $anyElementTrue: {
-                  $map: {
-                    input: "$histories",
-                    as: "h",
-                    in: {
-                      $and: [
-                        { $gt: ["$$h.createdAt", selectedInterval.gt] },
-                        { $lte: ["$$h.createdAt", selectedInterval.lte] }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
           },
           {
             $match: {
-              $or: [
-                {
-                  current_disposition: {$ne: null},
-                },
-                {
-                  current_disposition: {$exists: true}
-                }
-              ],
-              "customer_info.isRPC": {$eq: true},
-              hasDispoOnthisInterval: {$eq: true}
+              'dispotype.code': {$in: rpcCount}
+            }
+          },
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "ca",
+            }
+          },
+          {
+            $unwind: {path: "$ca",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "customers",
+              localField: "ca.customer",
+              foreignField: "_id",
+              as: "customer",
+            }
+          },
+          {
+            $unwind: {path: "$customer",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              "customer.isRPC": true
             }
           },
           {
             $group: {
-              _id: {
-                case_id: "$case_id",
-                contact_method: "$cd.contact_method"
-              }
+              _id: "$ca.case_id",
             }
           },
           {
             $group: {
-              _id: "$_id.contact_method",
+              _id: null,
               isRPC: { $sum: 1 }
             }
           },
@@ -1632,12 +1632,8 @@ const dispositionResolver = {
             }
           }
         ])
-   
-        const thePRC = TotalRPC.length > 0 ? TotalRPC.map(x=> x.isRPC).reduce((v,t)=> v + t) : 0
 
-        return {
-          isRPC: thePRC
-        }
+        return TotalRPC[0]
       } catch (error) {
         throw new CustomError(error.message, 500) 
       }
@@ -1681,155 +1677,16 @@ const dispositionResolver = {
           selectedInterval['$lte'] = endOfMonth
         }
         
-        const existingCallfile = await Callfile.findOne({bucket: selectedBucket._id, active: true})
+  
+        const rpcCount = ['PTP','PAID','UNEG','DISP','RTP','FFUP']
         
-        const dispotypesPositive = (await DispoType.find({status: 1}).lean()).map(dt => dt._id)
-
-        const customerAccount = await CustomerAccount.aggregate([
+        const RPCCount = await Disposition.aggregate([
           {
             $match: {
-              $expr: { $gt: [{ $size: "$history" }, 0] },
-              callfile: {$eq: existingCallfile._id}
+              callfile: {$in: callfile},
+              createdAt: selectedInterval,
+              selectivesDispo: false
             }
-          },
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "history",
-              foreignField: "_id",
-              as: "histories"
-            },
-          },
-          {
-            $addFields: {
-              histories: {
-                $filter: {
-                  input: "$histories",
-                  as: "h",
-                  cond: { $in: ["$$h.disposition", dispotypesPositive] }
-                }
-              }
-            }
-          },
-          {
-            $match: {
-              $expr: { $gt: [{ $size: "$histories" }, 0] } 
-            }
-          }
-        ])
-        const isRPCAccounts = await CustomerAccount.aggregate([
-
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "current_disposition",
-              foreignField: "_id",
-              as: "cd"
-            },
-          },
-          {
-            $unwind: {path: "$cd",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "customers",
-              localField: "customer",
-              foreignField: "_id",
-              as: "customer_info"
-            },
-          },
-          {
-            $unwind: {path: "$customer_info",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "history",
-              foreignField: "_id",
-              as: "histories"
-            },
-          },
-          
-          {
-            $addFields: {
-              hasDispoOnthisInterval: {
-                $anyElementTrue: {
-                  $map: {
-                    input: "$histories",
-                    as: "h",
-                    in: {
-                      $and: [
-                        { $gt: ["$$h.createdAt", selectedInterval.$gt] },
-                        { $lte: ["$$h.createdAt", selectedInterval.$lte] }
-                      ]
-                    }
-                  }
-                }
-              }
-            }
-          },
-          {
-            $match: {
-              $or: [
-                {
-                  current_disposition: {$ne: null},
-                },
-                {
-                  current_disposition: {$exists: true}
-                }
-              ],
-              "customer_info.isRPC": {$eq: true},
-              hasDispoOnthisInterval: {$eq: true}
-            }
-          },
-
-          {
-            $group: {
-              _id: "$cd.user",
-              isRPC: { $sum: 1 }
-            }
-          },
-          {
-            $project: {
-              _id: 1,
-              isRPC: 1
-            }
-          }
-        ])
-
-        const agentDispoDaily = await Disposition.aggregate([
-          {
-            $lookup: {
-              from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
-              as: "customerAccount"
-            },
-          },
-          {
-            $unwind: {path: "$customerAccount",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "callfiles",
-              localField: "callfile",
-              foreignField: "_id",
-              as: "accountCallfile"
-            },
-          },
-          {
-            $unwind: {path: "$accountCallfile",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
-              from: "customers",
-              localField: "customerAccount.customer",
-              foreignField: "_id",
-              as: "customer"
-            },
-          },
-          {
-            $unwind: {path: "$customer",preserveNullAndEmptyArrays: true}
           },
           {
             $lookup: {
@@ -1844,20 +1701,91 @@ const dispositionResolver = {
           },
           {
             $match: {
-              createdAt: selectedInterval,
-              callfile : {$in: callfile},
+              'dispotype.code': {$in: rpcCount}
             }
           },
           {
-            $addFields: {
-              isExisting: {
-                $cond: [
-                  { $not: [{ $in: ["$customerAccount.case_id", customerAccount.map(ca => ca.case_id)] }] },
-                  true,
-                  false
-                ]    
-              }
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "ca",
             }
+          },
+          {
+            $unwind: {path: "$ca",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $lookup: {
+              from: "customers",
+              localField: "ca.customer",
+              foreignField: "_id",
+              as: "customer",
+            }
+          },
+          {
+            $unwind: {path: "$customer",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              "customer.isRPC": true,
+            },
+          },
+          {
+            $group: {
+              _id: {
+                case_id: "$ca.case_id",
+                user: "$user",
+              },
+            }
+          },
+          {
+            $group: {
+              _id: "$_id.user",
+              rpc: { $sum: 1 },
+            }
+          },
+          {
+            $project: {
+              _id: 1,
+              rpc: 1,
+            }
+          }
+        ])
+
+        const disposition = await Disposition.aggregate([
+          {
+            $match: {
+              callfile: {$in: callfile},
+              createdAt: selectedInterval,
+            }
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            }
+          },
+          {
+            $unwind: {path: "$dispotype",preserveNullAndEmptyArrays: true}
+          },
+          {
+            $match: {
+              'dispotype.code': {$in: ['PTP','PAID']}
+            }
+          },
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "ca",
+            }
+          },
+          {
+            $unwind: {path: "$ca",preserveNullAndEmptyArrays: true}
           },
           {
             $group: {
@@ -1866,18 +1794,19 @@ const dispositionResolver = {
                 $sum: {
                   $cond: [
                     {
-                      $and: [
-                        { $eq: ['$dispotype.code', 'PTP'] },
-                        { $eq: ['$existing', true] },
+                      $or: [
                         {
-                          $or: [
-                            { $eq: ['$accountCallfile.active', true] },
-                            {
-                              $and: [
-                                { $eq: ['$accountCallfile.active', false] },
-                                { $eq: ['$isExisting', true] }
-                              ]
-                            }
+                          $and : [
+                            { $eq: ["$dispotype.code", 'PTP'] },
+                            { $eq: ['$existing', true] }
+                          ]
+                        },
+                        {
+                          $and: [
+                            { $eq: ['$dispotype.code',"PAID"] },
+                            { $eq: ['$existing',true ] },
+                            { $eq: ['$ptp', true] },
+                            { $eq: ['$selectivesDispo', false] }
                           ]
                         }
                       ]
@@ -1893,27 +1822,15 @@ const dispositionResolver = {
                     {
                       $and: [
                         { $eq: ['$dispotype.code','PAID'] },
-                        { $eq: ["$ptp", true] }
+                        { $eq: ['$ptp', true] },
+                        { $eq: ['$selectivesDispo', true] }
                       ]
                     },
                     "$amount",
                     0
                   ]
                 }
-              },
-              collected: {
-                $sum: {
-                  $cond: [
-                    {
-                      $and: [
-                        { $eq: ['$dispotype.code','PAID'] },
-                      ]
-                    },
-                    "$amount",
-                    0
-                  ]
-                }
-              },
+              }
             }
           },
           {
@@ -1921,23 +1838,24 @@ const dispositionResolver = {
               _id: 0,
               user: "$_id",
               ptp: 1,
-              kept: 1,
-              collected: 1
+              kept: 1
             }
           }
         ])
+        
 
-        const newMap = agentDispoDaily.map(add => {
-          const findUser = isRPCAccounts.find(x => x._id.toString() === add.user.toString())
-
+        const newResult = disposition.map(d=> {
+          const userRPC = RPCCount.find(rpc => rpc._id.toString() === d.user.toString())
+      
           return {
-            ...add,
-            RPC: findUser ? findUser.isRPC : 0
+            ...d,
+            RPC: userRPC.rpc
           }
         })
 
-        return newMap
+        return newResult
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -2083,7 +2001,8 @@ const dispositionResolver = {
             },
             {
               $match: {
-                "dispotype.code": {$eq: 'PAID'}
+                "dispotype.code": { $eq: 'PAID' },
+                selectivesDispo: {$eq: true}
               }
             },
      
@@ -2277,7 +2196,6 @@ const dispositionResolver = {
           message: "Disposition successfully created"
         }
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

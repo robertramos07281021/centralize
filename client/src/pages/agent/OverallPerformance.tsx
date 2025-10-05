@@ -1,8 +1,7 @@
 import { gql, useQuery } from "@apollo/client"
 import { useEffect } from "react"
 import { month } from "../../middleware/exports"
-import { useAppDispatch } from "../../redux/store"
-import { setServerError } from "../../redux/slices/authSlice"
+import { useLocation } from "react-router-dom"
 
 type AgentTotalDispo = {
   count: number
@@ -35,23 +34,20 @@ const DISPO_TYPES = gql`
 `
 
 export default function OverallPerformance () {
-  const {data:agentTotalDispoData, refetch:TotalDispoRefetch} = useQuery<{getAgentTotalDispositions:AgentTotalDispo[]}>(AGENT_TOTAL_DISPO)
-  const {data:dispotypeData, refetch:DispoTypeRefetch} = useQuery<{getDispositionTypes:DispositionType[]}>(DISPO_TYPES)
-  const dispatch = useAppDispatch()
+  const location = useLocation()
+  const isAgentDashboard = location.pathname.includes('agent-dashboard')
+  const {data:agentTotalDispoData, refetch:TotalDispoRefetch} = useQuery<{getAgentTotalDispositions:AgentTotalDispo[]}>(AGENT_TOTAL_DISPO,{skip: !isAgentDashboard, notifyOnNetworkStatusChange: true})
+  const {data:dispotypeData, refetch:DispoTypeRefetch} = useQuery<{getDispositionTypes:DispositionType[]}>(DISPO_TYPES,{skip: !isAgentDashboard, notifyOnNetworkStatusChange: true})
+
   const Month = new Date().getMonth()
 
   useEffect(()=> {
-    const timer = setTimeout(async()=> {
-      try {
-        await TotalDispoRefetch()
-        await DispoTypeRefetch()
-        
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
-    })
-    return () => clearTimeout(timer)
-  },[TotalDispoRefetch,DispoTypeRefetch])
+    const timer = async()=> {
+      await TotalDispoRefetch()
+      await DispoTypeRefetch()
+    }
+    timer()
+  },[])
 
   return (
     <div className="border rounded-lg border-slate-200 lg:col-span-2 lg:row-span-2 shadow-md shadow-black/20 p-2 bg-white flex flex-col">

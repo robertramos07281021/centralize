@@ -50,7 +50,7 @@ type DoughnutData = {
 }
 
 const ReportsComponents:React.FC<ReportsComponents> = ({dispositions, from, to}) => {
-  const {data:productionReportData, refetch} = useQuery<{ProductionReport:ProductionReport}>(REPORT,{variables: {dispositions, from, to}})
+  const {data:productionReportData, refetch} = useQuery<{ProductionReport:ProductionReport}>(REPORT,{variables: {dispositions, from, to},notifyOnNetworkStatusChange: true})
   const [doughnutData,setDoughnutData] = useState<DoughnutData>({datas: [], colors: [], labels: []})
 
   useEffect(()=> {
@@ -88,7 +88,10 @@ const ReportsComponents:React.FC<ReportsComponents> = ({dispositions, from, to})
   },[productionReportData])
 
   useEffect(()=> {
-    refetch()
+    const refetching = async() => {
+      await refetch()
+    }
+    refetching()
   },[dispositions.length,from,to])
 
   const data:ChartData<'doughnut'> = {

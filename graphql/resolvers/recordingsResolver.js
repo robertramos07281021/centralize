@@ -87,7 +87,6 @@ const recordingsResolver = {
         }
 
       } catch (err) {
-        console.log(err)
         throw new CustomError(err.message, 500)
       } finally {
         client.close();

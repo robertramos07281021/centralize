@@ -43,7 +43,6 @@ type AgentDailies = {
   user: string
   ptp: number
   kept: number
-  collected: number
   RPC: number
 
 }
@@ -54,7 +53,6 @@ const AGENT_DAILY_PROD = gql`
       user
       ptp
       kept
-      collected
       RPC
     }
   }
@@ -97,7 +95,6 @@ const AgentProductionMonitoringTable = () => {
                 <th className="py-1.5">RPC</th>
                 <th>PTP</th>
                 <th>Kept</th>
-                <th>Amount Collected</th>
                 <th>Collection %</th>
                 <th>Target</th>
                 <th>Variance</th>
@@ -107,15 +104,14 @@ const AgentProductionMonitoringTable = () => {
               {
                 bucketAgents?.map((x)=> {
                   const findAgent = agentDailyProd?.agentDispoDaily ? agentDailyProd?.agentDispoDaily.find(agent => agent.user === x._id) : null
-                  const collectionPercent = findAgent ? ((findAgent?.kept + findAgent?.collected) / x.targets[intervalTypes]) * 100 : null
-                  const theVariance = findAgent ? x.targets[intervalTypes] - (findAgent?.kept + findAgent?.collected) : null
+                  const collectionPercent = findAgent ? ((findAgent?.kept) / x.targets[intervalTypes]) * 100 : null
+                  const theVariance = findAgent ? x.targets[intervalTypes] - (findAgent?.kept) : null
                   return (
                     <tr className="text-center text-gray-600" key={x._id}>
                       <th className="py-2 lg:text-xs 2xl:text-sm text-left pl-2 capitalize text-nowrap">{x.name}</th>
                       <td>{findAgent?.RPC || '-'}</td>
                       <td>{findAgent?.ptp.toLocaleString('en-PH',{style: 'currency', currency: "PHP"}) || '-'}</td>
                       <td>{findAgent?.kept.toLocaleString('en-PH',{style: 'currency', currency: "PHP"}) || '-'}</td>
-                      <td>{findAgent?.collected.toLocaleString('en-PH',{style: 'currency', currency: "PHP"}) || '-'}</td>
                       <td className={`${collectionPercent && collectionPercent < 100 ? "text-red-500" : "text-green-500"} `} >{isNaN(Number(collectionPercent)) || !collectionPercent ? '-' : `${collectionPercent?.toFixed(2)}%`}</td>
                       <td>{x.targets[intervalTypes]?.toLocaleString('en-PH',{style: 'currency', currency: "PHP"}) || '-'}</td>
                       <td className={`${theVariance && theVariance < 0 ? "text-green-500": "text-red-500" }  `}>{theVariance?.toLocaleString('en-PH',{style: 'currency', currency: "PHP"}) || '-'}</td>

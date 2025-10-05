@@ -705,13 +705,14 @@ const userResolvers = {
       try {
         const updateUser = await User.findByIdAndUpdate(user._id,{$set: {
           vici_id: vici_id
-        }})
+        }},{new: true})
 
         if(!updateUser) throw new CustomError('User not found',401)
           
         return {
           success: true,
-          message: "Successfully added vici dial id"
+          message: "Successfully added vici dial id",
+          user: updateUser
         }
       } catch (error) {
         throw new CustomError(error.message, 500)

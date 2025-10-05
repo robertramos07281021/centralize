@@ -155,7 +155,6 @@ const dispositionTypeDefs = gql`
     RPC: Int
     ptp: Float
     kept: Float
-    collected: Float
   }
 
   type RPCCount {

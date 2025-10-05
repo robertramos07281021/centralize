@@ -19,7 +19,7 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
       close: `${successObject?.isMessage ? "text-black" : "text-green-400"}`
     },
     UPDATED: {
-      toast: "bg-orange-400",
+      toast: `bg-orange-400`,
       close: "text-orange-400"
     },
     DELETED: {
@@ -137,7 +137,7 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
   if (messageText.includes("MESSAGE")) successType = "MESSAGE";
 
   return (
-    <div className={`${toastColor[successType].toast} min-w-96 max-w-96 min-h-13 rounded-xl border-slate-100 shadow shadow-black/20 border fixed right-5 top-20 z-50 flex items-center px-4 font-medium ${successObject?.isMessage ? "text-black" : "text-white"}  justify-between gap-10`} >
+    <div className={`${toastColor[successType].toast} min-w-96 min-h-13 max-h-13 rounded-xl border-slate-100 shadow shadow-black/20 border fixed right-5 top-20 z-50 flex items-center px-4 font-medium ${successObject?.isMessage ? "text-black" : "text-white"}  justify-between gap-10`} >
       <p>
         {successObject?.message}
       </p>

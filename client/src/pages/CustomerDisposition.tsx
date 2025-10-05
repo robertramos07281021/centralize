@@ -291,7 +291,7 @@ const CustomerDisposition = () => {
   });
 
   const {data:dispotypes} = useQuery<{getDispositionTypes:Dispotype[]}>(DISPOTYPES)
-  const findPaid = dispotypes?.getDispositionTypes.filter(dt => ['PTP',"PAID"].includes(dt.code)).map(x=> x.id)
+  const findPaid = dispotypes?.getDispositionTypes?.find(dt => dt.code === "PAID")
 
 
   const length = searchData?.search?.length || 0;
@@ -510,13 +510,13 @@ const CustomerDisposition = () => {
                     selectedCustomer &&
                     <>
                       {
-                        (!selectedCustomer?.current_disposition || (!selectedCustomer?.current_disposition?.selectivesDispo && findPaid?.includes(selectedCustomer?.current_disposition?.disposition.toString()) && (selectedCustomer?.current_disposition && selectedCustomer?.current_disposition.user?.toString() === userLogged?._id?.toString())) || (selectedCustomer?.current_disposition && !findPaid?.includes(selectedCustomer?.current_disposition?.disposition.toString()) ) ) && 
+                        ((selectedCustomer?.current_disposition && (findPaid?.id === selectedCustomer?.current_disposition?.disposition && selectedCustomer?.current_disposition.selectivesDispo)) || (!selectedCustomer?.current_disposition) || (selectedCustomer.assigned && selectedCustomer.assigned === userLogged._id) || (!selectedCustomer.assigned && (findPaid?.id !== selectedCustomer?.current_disposition?.disposition))) && 
                         <button 
                           type="button" 
                           onClick={()=> setIsUpdate(true)} 
                           className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`} 
                         > 
-                          Update 
+                          Update
                         </button>
                       }
                       <button 

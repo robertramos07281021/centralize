@@ -130,7 +130,7 @@ const DispositionRecords:React.FC<ComponentProps> = ({close}) => {
                         <td></td>
                       }
                       {
-                        findExisting.contact_method === 'calls' && 
+                        (findExisting.contact_method === 'calls' && findExisting.dialer) && 
                         <td className="lg:pl-2 2xl:pl-5 py-1.5">{findExisting.dialer}</td>
                       }
                       {

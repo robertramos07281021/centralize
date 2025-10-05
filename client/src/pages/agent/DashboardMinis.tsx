@@ -3,6 +3,7 @@ import gql from "graphql-tag"
 import { useEffect } from "react"
 import { useSelector } from "react-redux"
 import { RootState } from "../../redux/store.ts"
+import { useLocation } from "react-router-dom"
 
 type DailyCollection = {
   ptp_amount: number
@@ -79,6 +80,7 @@ type WeeklyAndMontlyColl = {
 
 const DashboardMinis = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
+  const location = useLocation()
   const isAgentDashboard = location.pathname.includes('agent-dashboard')
   const {data:rpcCountData, refetch:rpcCountRefetch} = useQuery<{getAgentRPCCount:{dailyCount: number,totalCount: number}}>(AGENT_RPC_COUNT,{notifyOnNetworkStatusChange: true, skip: !isAgentDashboard})
 
@@ -105,7 +107,7 @@ const DashboardMinis = () => {
         <h1 className="lg:text-xs 2xl:text-base font-bold">RPC <span className="lg:text-[0.7em] 2xl:text-xs font-normal">(Daily)</span></h1>
         <div className="text-4xl 2xl:text-5xl h-full flex items-center justify-center">
           <p className="text-center">
-            {rpcCountData?.getAgentRPCCount.dailyCount}
+            {rpcCountData?.getAgentRPCCount?.dailyCount || 0}
           </p>
         </div>
       </div>
@@ -156,7 +158,7 @@ const DashboardMinis = () => {
         <h1 className="lg:text-xs 2xl:text-base font-bold">Total RPC <span className="lg:text-[0.7em] 2xl:text-xs font-normal">(Monthly)</span></h1>
         <div className="text-4xl 2xl:text-5xl h-full flex items-center justify-center">
           <p>
-            {rpcCountData?.getAgentRPCCount?.totalCount}
+            {rpcCountData?.getAgentRPCCount?.totalCount || 0}
           </p>
         </div>
       </div>

@@ -5,8 +5,7 @@ import { color, month } from "../../middleware/exports"
 import { ChartData, ChartDataset, ChartOptions, Plugin } from "chart.js"
 import { Chart } from "react-chartjs-2"
 import { useSelector } from "react-redux"
-import { RootState, useAppDispatch } from "../../redux/store"
-import { setServerError } from "../../redux/slices/authSlice"
+import { RootState } from "../../redux/store"
 import { useLocation } from "react-router-dom"
 
 type AgentProdPerMonth = {
@@ -170,17 +169,11 @@ export default function MixedChartMonthView() {
     maintainAspectRatio: false
   }
 
-  const dispatch = useAppDispatch()
-
   useEffect(()=> {
-    const timer = setTimeout(async()=> {
-      try {
-        await PerMonthRefetch()
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
-    })
-    return () => clearTimeout(timer)
+    const timer = async()=> {
+      await PerMonthRefetch()
+    }
+   timer()
   },[])
 
   return (
