@@ -65,11 +65,11 @@ const ALL_BUCKET = gql`
   }
 `
 
-
 type Bucket ={
   _id: string
   name: string
 }
+
 const CallfilesConfig = () => {
   const [page, setPage] = useState<string>('1')
   const [totalPage, setTotalPage] = useState<number>(1)
@@ -111,7 +111,7 @@ const CallfilesConfig = () => {
 
   console.log(data)
   console.log(bucketsData)
-  
+
   return (
     <div className=" h-full w-full flex flex-col py-1">
       <div className="border h-full w-full">
