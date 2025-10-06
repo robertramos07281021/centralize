@@ -5,6 +5,7 @@ import { RootState } from "../../redux/store.ts"
 import { setCallfilesPages } from "../../redux/slices/authSlice.ts"
 import gql from "graphql-tag"
 import { useQuery } from "@apollo/client"
+import { useLocation } from "react-router-dom"
 
 
 const Callifles = gql`
@@ -73,15 +74,32 @@ const CallfilesConfig = () => {
   const [page, setPage] = useState<string>('1')
   const [totalPage, setTotalPage] = useState<number>(1)
   const dispatch = useDispatch()
+  const location = useLocation()
+  const isCallfileConfig = location.pathname.includes('callfile-configurations')
   const {callfilesPages, limit} = useSelector((state:RootState) => state.auth)
   const [selectedBucket,setSelectedBucket] = useState<string | null>(null)
-  console.log(callfilesPages)
+
   const {data, refetch} = useQuery<{getCF:Results}>(Callifles,{
     variables: { bucket: "685ccd9a88d8094e2dd39f7b", page: callfilesPages, limit: limit },
-    // skip: !selectedBucket,
+    // skip: !selectedBucket || !isCallfileConfig,
     notifyOnNetworkStatusChange: true
   })
-  const {data:bucketsData, refetch:bucketRefetch} = useQuery<{getAllBucket:Bucket}>(ALL_BUCKET)
+
+  useEffect(()=> {
+    setPage(callfilesPages.toString())
+  },[callfilesPages])
+
+  useEffect(()=> {  
+    if(data) {
+      const searchExistingPages = Math.ceil((data?.getCF.total || 1) / limit)
+      setTotalPage(searchExistingPages)
+    }
+  },[data])
+
+  const {data:bucketsData, refetch:bucketRefetch} = useQuery<{getAllBucket:Bucket}>(ALL_BUCKET,{
+    skip: !isCallfileConfig,
+    notifyOnNetworkStatusChange: true
+  })
 
   useEffect(()=> {
     const refetching = async()=> {
@@ -90,9 +108,10 @@ const CallfilesConfig = () => {
     }
     refetching()
   },[])
+
   console.log(data)
   console.log(bucketsData)
-
+  
   return (
     <div className=" h-full w-full flex flex-col py-1">
       <div className="border h-full w-full">
