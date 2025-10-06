@@ -64,7 +64,7 @@ const TlDashboard  = () => {
   
   const {data,refetch} = useQuery<{getAllBucket:Bucket[]}>(DEPT_BUCKET,{notifyOnNetworkStatusChange: true, skip: !isTLDashboard})
 
-  const {data:aomBucketData, refetch:bucketDateRefetch} = useQuery<{findAomBucket:AomBucket[]}>(AOM_BUCKET)
+  const {data:aomBucketData, refetch:bucketDateRefetch} = useQuery<{findAomBucket:AomBucket[]}>(AOM_BUCKET,{notifyOnNetworkStatusChange: true, skip: !isTLDashboard})
 
   const newAomBucketsData = aomBucketData?.findAomBucket.flatMap(ab => ab.buckets) || []
 
