@@ -1593,7 +1593,7 @@ const productionResolver = {
           },
           {
             $match: {
-              createdAt: {$gt: startDate, $lte: endDate}
+              createdAt: {$gt: startOfMonth, $lte: endOfMonth}
             }
           },
           {
@@ -1702,6 +1702,7 @@ const productionResolver = {
             }
           }
         ])
+        console.log(RPCCustomerAccount)
 
         return RPCCustomerAccount[0]
       } catch (error) {
