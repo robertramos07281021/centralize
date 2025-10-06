@@ -16,7 +16,9 @@ const callfileTypeDefs = gql`
     endo: String
     finished_by: User
     totalPrincipal: Float
+    totalAccounts: Int
     target: Float
+    totalOB: Float
   }
 
   type Result {
@@ -64,6 +66,7 @@ const callfileTypeDefs = gql`
 
   type Query {
     getCallfiles(bucket:ID, limit:Int! , page:Int! ,status: String!):CallFilesResult
+    getCF(bucket:ID!,limit:Int!,page:Int!):[Callfile]
     downloadCallfiles(callfile:ID!): String!
     monthlyDetails: [MonthlyDetails]
     getBucketCallfile(bucketId:[ID]):[Callfile]

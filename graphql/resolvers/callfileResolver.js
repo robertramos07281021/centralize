@@ -1211,6 +1211,36 @@ const callfileResolver = {
       } catch (error) {
         throw new CustomError(error.message,500)
       }
+    },
+    getCF: async(_,{bucket,limit,page}) => {
+      try {
+        const skip = (page - 1) * limit
+        const callfile = await Callfile.aggregate([
+          {
+            $match: {
+              bucket: new mongoose.Types.ObjectId(bucket)
+            }
+          },
+          {
+            $facet: {
+              count: [
+                {
+                  $count: "total"
+                }
+              ],
+              data: [
+                { $sort: { "$createdAt": -1 } },
+                { $skip: skip },
+                { $limit: limit }
+              ]
+            }
+          }
+        ])
+        console.log(callfile)
+        return callfile
+      } catch (error) {
+        throw new CustomError(error.message,500) 
+      }
     }
   },
   Result: {

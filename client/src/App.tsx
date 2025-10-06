@@ -46,6 +46,7 @@ import FTEUserView from "./pages/aom/FTEUserView"
 import QARoute from "./routes/QARoute.tsx"
 import QAAgentViews from "./pages/qa/QAAgentViews.tsx"
 import QADashboard from "./pages/qa/QADashboard.tsx"
+import CallfilesConfig from "./pages/admin/CallfilesConfig.tsx"
 
 Chart.register(...registerables,
   ChartDataLabels,
@@ -75,6 +76,8 @@ function App() {
             <Route path="/accounts" element={<AccountsView/>}/>
             <Route path="/register" element={<RegisterView/>}/>
             <Route path="/user-account" element={<UserView/>}/>
+            <Route path="/callfile-configurations" element={<CallfilesConfig/>}/>
+
             <Route path="/disposition-settings" element={<DispositionConfigurationView/>}/>
 
           </Route>

@@ -69,7 +69,8 @@ type UserState = {
   success: Success
   selectedCampaign: string | null
   intervalTypes: IntervalsTypes
-  selectedBucket: string | null
+  selectedBucket: string | null,
+  callfilesPages: number
 }
 
 const initialState:UserState = {
@@ -92,6 +93,7 @@ const initialState:UserState = {
     message: "",
     isMessage: false
   },
+  callfilesPages: 1,
   breakValue: BreakEnum.WELCOME,
   userLogged: null,
   search: {
@@ -179,6 +181,9 @@ const authSlice = createSlice({
     },
     setSelectedBucket: (state, action: PayloadAction<string | null>) => {
       state.selectedBucket = action.payload
+    },
+    setCallfilesPages: (state,action:PayloadAction<number>)=> {
+      state.callfilesPages = action.payload
     }
   },
 });
@@ -207,6 +212,7 @@ export const {
   setSuccess,
   setSelectedCampaign,
   setIntervalTypes,
-  setSelectedBucket
+  setSelectedBucket,
+  setCallfilesPages
 } = authSlice.actions;
 export default authSlice.reducer;
