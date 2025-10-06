@@ -11,6 +11,7 @@ import { BsFillUnlockFill, BsFillLockFill } from "react-icons/bs";
 import { FaTrashAlt } from "react-icons/fa";
 import { FaUserGear } from "react-icons/fa6";
 import Confirmation from "../../components/Confirmation";
+import { Department } from "../../middleware/types.ts";
 
 type DeptBranchBucket = {
   _id: string
@@ -25,6 +26,7 @@ const GET_DEPTS = gql`
     }
   }
 `
+
 const GET_BRANCHES = gql`
   query getBranches {
     getBranches {
@@ -33,6 +35,7 @@ const GET_BRANCHES = gql`
     }
   }
 `
+
 const GET_ALL_BUCKET = gql`
   query getAllBucket {
     getAllBucket {
@@ -40,8 +43,8 @@ const GET_ALL_BUCKET = gql`
       name
     }
   }
-
 `
+
 const DELETE_USER = gql`
   mutation deleteUser($id: ID!) {
     deleteUser(id: $id) {
@@ -50,7 +53,6 @@ const DELETE_USER = gql`
     }
   }
 `
-
 
 const FIND_QUERY = gql` 
   query findUsers($search: String!, $page: Int!, $limit: Int!) {
@@ -104,15 +106,20 @@ const AccountsView = () => {
   const {limit, adminUsersPage} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
 
-  const {data:getDeptData, refetch:deptRefetch} = useQuery<{getDepts:DeptBranchBucket[]}>(GET_DEPTS)
+  const {data:getDeptData, refetch:deptRefetch} = useQuery<{getDepts:Department[]}>(GET_DEPTS)
+
   const {data:getBranchData, refetch:branchRefetch} = useQuery<{getBranches:DeptBranchBucket[]}>(GET_BRANCHES)
+
   const {data: getAllBucketsData, refetch:bucketRefetch} = useQuery<{getAllBucket:DeptBranchBucket[]}>(GET_ALL_BUCKET) 
+
   const [totalPage, setTotalPage] = useState<number>(1)
 
   const deptObject:{[key:string]:string} = useMemo(()=> {
     const deptData = getDeptData?.getDepts || []
-    return Object.fromEntries(deptData.map((db)=> [db._id, db.name]))
+    return Object.fromEntries(deptData.map((db)=> [db.id, db.name]))
   },[getDeptData])
+
+
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const allBucketData = getAllBucketsData?.getAllBucket || []
@@ -125,7 +132,7 @@ const AccountsView = () => {
   },[getBranchData])
   
   const {data:searchData, refetch } = useQuery<{findUsers:{users:Users[],total:number}}>(FIND_QUERY,{variables: { search, page: adminUsersPage, limit}})
-  
+
   const users = searchData?.findUsers.users || [];
 
   const [confirm, setConfirm] = useState<boolean>(false)
@@ -180,18 +187,15 @@ const AccountsView = () => {
   },[searchData])
 
   useEffect(()=> {
-    const timer = setTimeout(async()=> {
-      try {
-        await refetch()
-        await deptRefetch()
-        await branchRefetch()
-        await bucketRefetch()
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
-    })
-    return () => clearTimeout(timer)
-  },[refetch,deptRefetch,branchRefetch,bucketRefetch,location.pathname])
+    const timer = async()=> {
+      await refetch()
+      await deptRefetch()
+      await branchRefetch()
+      await bucketRefetch()
+    }
+    timer()
+  },[])
+
 
   return (
     <>

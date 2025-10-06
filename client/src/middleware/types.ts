@@ -1,11 +1,11 @@
 export type UserInfo = {
-  _id: string;
-  type: "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" | "MIS";
-  branch: string;
-  username: string;
+  _id: string
+  type: "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" | "MIS"
+  branch: string
+  username: string
   name: string;
   change_password: boolean
-  departments: string[],
+  departments: string[]
   callfile_id: string
   buckets: string[]
   user_id:string
@@ -13,24 +13,25 @@ export type UserInfo = {
 };
 
 export type Department = {
-  id: string;
-  name: string;
-  branch: string;
-  aom: UserInfo | null;
+  id: string
+  name: string
+  branch: string
+  aom: UserInfo | null
 }
 
 export type Dept = {
-  name: string;
-  branch: string;
+  name: string
+  branch: string
   aom: string
+  id: string
 }
 
 export type Users = {
-  _id: string;
-  type: "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION";
-  branch: string;
-  username: string;
-  name: string;
+  _id: string
+  type: "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION"
+  branch: string
+  username: string
+  name: string
   change_password: boolean
   departments: string[]
   buckets: string[]

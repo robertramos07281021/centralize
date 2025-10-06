@@ -25,6 +25,7 @@ const DEPARTMENT_QUERY = gql`
     }
   }
 `
+
 const DEPARTMENT_BUCKET = gql`
   query findDeptBucket($dept:ID) {
     findDeptBucket(dept: $dept) {
@@ -53,6 +54,7 @@ const UPDATEBUCKET = gql `mutation
     }
   }
 `
+
 const DELETEBUCKET = gql `mutation
   deleteBucket($id:ID!) {
     deleteBucket(id:$id) {
@@ -69,6 +71,7 @@ const BucketSection = () => {
   
   const campaignOnly = dept?.getDepts.filter((d)=> d.name!== "admin")
   const newDepts = useMemo(() => [...new Set(campaignOnly?.map((d) => d.id))], [campaignOnly])
+
   const [deptSelected,setDeptSelected] = useState<string | null>(null)
   const deptObject:{[key:string]:string} = useMemo(()=> {
     const deptArray = dept?.getDepts || []
@@ -114,6 +117,7 @@ const BucketSection = () => {
         await refetch()
         await bucketRefetch()
       } catch (error) {
+        console.log(error)
         dispatch(setServerError(true))
       }
     })

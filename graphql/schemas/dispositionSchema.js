@@ -136,14 +136,6 @@ const dispositionTypeDefs = gql`
     sms
     field
   }
-  type TLDashboardProd {
-    bucket: ID
-    calls: Float
-    sms: Float
-    email: Float
-    field: Float
-    skip: Float
-  }
 
   type TLTotal {
     count: Int
@@ -205,9 +197,6 @@ const dispositionTypeDefs = gql`
     getAOMPTPPerDay: [AomDailyCollection]
     getAOMPTPKeptPerDay: [AomDailyCollection]
     getAOMPaidPerDay: [AomDailyCollection]
-    getTLPaidToday:[TLDashboardProd]
-    getTLPTPKeptToday: [TLDashboardProd]
-    getTLPTPToday: [TLDashboardProd]
     getTLPTPTotals(input: Input): TLTotal
     getTLPTPKeptTotals(input: Input): TLTotal
     getTLPaidTotals(input: Input): TLTotal,

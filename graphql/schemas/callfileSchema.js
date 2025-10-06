@@ -63,10 +63,14 @@ const callfileTypeDefs = gql`
     date: String
   }
 
+  type AdminCallfile {
+    result: [Callfile]
+    total: Int
+  }
 
   type Query {
     getCallfiles(bucket:ID, limit:Int! , page:Int! ,status: String!):CallFilesResult
-    getCF(bucket:ID!,limit:Int!,page:Int!):[Callfile]
+    getCF(bucket:ID!,limit:Int!,page:Int!):AdminCallfile
     downloadCallfiles(callfile:ID!): String!
     monthlyDetails: [MonthlyDetails]
     getBucketCallfile(bucketId:[ID]):[Callfile]

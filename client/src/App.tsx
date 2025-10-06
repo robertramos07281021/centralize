@@ -9,7 +9,6 @@ import { OpsRoute } from "./routes/OpsRoute"
 import { TlRoute } from "./routes/TlRoute"
 import { CeoRoute } from "./routes/CeoRoute"
 import AdminDashboard from "./pages/admin/AdminDashboard"
-import AomDashboard from "./pages/aom/AomDashboard"
 import CeoDashboard from "./pages/ceo/CeoDashboard"
 import TlDashboard from "./pages/tl/TlDashboard"
 import OperationDashboard from "./pages/operation/OperationDashboard"
@@ -77,9 +76,7 @@ function App() {
             <Route path="/register" element={<RegisterView/>}/>
             <Route path="/user-account" element={<UserView/>}/>
             <Route path="/callfile-configurations" element={<CallfilesConfig/>}/>
-
             <Route path="/disposition-settings" element={<DispositionConfigurationView/>}/>
-
           </Route>
           <Route element={<AgentRoute/>}>
             <Route path="/agent-dashboard" element={<StatisticsView/>}/>
@@ -88,7 +85,7 @@ function App() {
             <Route path="/agent-report" element={<AgentReport/>}/>
           </Route>
           <Route element={<AomRoute/>}>
-            <Route path="/aom-dashboard" element={<AomDashboard/>}/>
+            <Route path="/aom-dashboard" element={<TlDashboard/>}/>
             <Route path="/aom-reports" element={<Reports/>} />
             <Route path="/aom-fte-user" element={<FTEUserView/>}/>
           </Route>

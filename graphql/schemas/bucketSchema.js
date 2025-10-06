@@ -12,8 +12,8 @@ const bucketTypeDefs = gql`
     principal: Boolean
     message: String
     can_update_ca: Boolean
+    isActive: Boolean
   }
-  
   
   type GetBuckets {
     dept: String
@@ -24,7 +24,6 @@ const bucketTypeDefs = gql`
     dept: String,
     buckets: [Bucket]
   }
-
 
   input UpdateBucket {
     id: ID

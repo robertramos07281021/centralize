@@ -221,14 +221,12 @@ const TaskDispoSection:React.FC<Props> = ({selectedBucket, dpd}) => {
   useEffect(()=> {
     const timer = setTimeout(async()=> {
       if(selectedBucket) {
-     
         await CADRefetch()
         setRequired(false)
         setTaskToAdd([])
         setHandleCheckAll(false)
         setTaskManagerPage("1")
         dispatch(setPage(1))
-      
       }
     })
 

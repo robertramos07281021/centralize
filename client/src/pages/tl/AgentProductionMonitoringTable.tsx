@@ -6,6 +6,7 @@ import { useSelector } from "react-redux"
 import { useLocation } from "react-router-dom"
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
+
 type Targets = {
   daily: number
   weekly: number
@@ -20,24 +21,6 @@ type Agent = {
   type: string
   targets: Targets
 }
-
-const GET_DEPARTMENT_AGENT = gql`
-  query findAgents {
-    findAgents {
-      _id
-      name
-      user_id
-      buckets
-      type
-      targets {
-        daily
-        weekly
-        monthly
-      }
-    }
-  }
-`
-
 
 type AgentDailies = {
   user: string
@@ -58,16 +41,32 @@ const AGENT_DAILY_PROD = gql`
   }
 `
 
-
-
+const BUCKET_AGENTS = gql`
+  query getBucketUser($bucketId: ID) {
+    getBucketUser(bucketId: $bucketId) {
+      _id
+      name
+      buckets
+      type
+      targets {
+        daily
+        weekly
+        monthly
+      }
+    }
+  }
+`
 
 const AgentProductionMonitoringTable = () => {
   const  {intervalTypes, selectedBucket} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
-  const isTLDashboard = location.pathname.includes('tl-dashboard')
-  const {data:agentBucketData, refetch:findAgentRefetch} = useQuery<{findAgents:Agent[]}>(GET_DEPARTMENT_AGENT, {notifyOnNetworkStatusChange: true})
+  const pathName = location.pathname.slice(1)
+  const isTLDashboard = ['tl-dashboard','aom-dashboard']?.includes(pathName)
+
+  const {data:agentBucketData, refetch:findAgentRefetch} = useQuery<{getBucketUser:Agent[]}>(BUCKET_AGENTS, {notifyOnNetworkStatusChange: true, variables: {bucketId: selectedBucket, skip: !selectedBucket || !isTLDashboard, }})
+
   const {data:agentDailyProd, refetch, loading} = useQuery<{agentDispoDaily:AgentDailies[]}>(AGENT_DAILY_PROD, {variables: {bucket:selectedBucket, interval:intervalTypes},skip:!isTLDashboard, notifyOnNetworkStatusChange: true})
-  
+
   useEffect(()=> {
     const refetching = async() => {
       await findAgentRefetch()
@@ -76,8 +75,8 @@ const AgentProductionMonitoringTable = () => {
     refetching()
   },[selectedBucket, intervalTypes])
 
-  const bucketAgents = selectedBucket ? agentBucketData?.findAgents.filter(x=> x.buckets.includes(selectedBucket) && x.type === "AGENT") : []
-  
+  const bucketAgents = selectedBucket ? agentBucketData?.getBucketUser?.filter(x=> x.buckets?.includes(selectedBucket) && x.type === "AGENT") : []
+
   return (
     <div className="h-full flex flex-col lg:text-xs 2xl:text-base overflow-hidden">
       <h1 className="font-medium lg:text-sm 2xl:text-lg text-gray-800 bg-blue-200 px-2 py-1.5 text-center">Agent Production Monitoring</h1>

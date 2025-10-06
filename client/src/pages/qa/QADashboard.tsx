@@ -5,7 +5,6 @@ import GaugeChart from "react-gauge-chart";
 
 
 const AdminDashboard = () => {
-
   const [value, setValue] = useState(0.5); 
   const [hehe, setHehe] = useState(40)
 
@@ -135,7 +134,7 @@ const AdminDashboard = () => {
             <div className="h-full grid grid-cols-5 grid-rows-1 px-10  items-end content-center justify-center">
               <div className="w-full h-full flex flex-col justify-end items-center">
                 <div className="mb-2 font-black text-blue-800">40%</div>
-                <div className={`"  w-16 h-[${hehe}%] duration-500 rounded-t-md bg-green-700 text-center transition-all  "`}></div>
+                <div className={`w-16 h-[${hehe}%] duration-500 rounded-t-md bg-green-700 text-center transition-all`}></div>
               </div>
 
               <div className="w-full h-full flex flex-col justify-end items-center">

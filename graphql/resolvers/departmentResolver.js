@@ -11,6 +11,7 @@ const deptResolver = {
         const result = await Department.find()
         return result
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message,500)
       }
     },

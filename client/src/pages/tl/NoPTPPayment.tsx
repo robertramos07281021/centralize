@@ -11,7 +11,6 @@ type NoPTPCollection = {
   amount: number
 }
 
-
 const NO_PTP_COLLECTION = gql`
   query noPTPCollection($bucket: ID, $interval: String) {
     noPTPCollection(bucket: $bucket, interval: $interval) {
@@ -20,7 +19,6 @@ const NO_PTP_COLLECTION = gql`
     }
   }
 `
-
 const NoPTPPayment = () => {
   const {intervalTypes, selectedBucket, userLogged} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()

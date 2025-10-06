@@ -7,8 +7,8 @@ const deptTypeDefs = gql`
     name: String
     branch: String
     aom: String
-
   }
+  
   type Aom {
     _id: ID
     name: String

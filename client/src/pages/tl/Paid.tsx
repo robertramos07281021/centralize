@@ -25,7 +25,8 @@ const PAID_DAILY = gql`
 const Paid = () => {
   const {intervalTypes, selectedBucket} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
-  const isTLDashboard = location.pathname.includes('tl-dashboard')
+  const pathName = location.pathname.slice(1)
+  const isTLDashboard = ['tl-dashboard','aom-dashboard'].includes(pathName)
   const {data:paidData, refetch, loading} = useQuery<{getTLPaidTotals:PaidType}>(PAID_DAILY,{variables: {input: {bucket: selectedBucket, interval: intervalTypes},skip: !isTLDashboard},notifyOnNetworkStatusChange: true})
 
   useEffect(()=> {

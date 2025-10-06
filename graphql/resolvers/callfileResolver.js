@@ -1229,15 +1229,20 @@ const callfileResolver = {
                 }
               ],
               data: [
-                { $sort: { "$createdAt": -1 } },
+                { $sort: { "createdAt": -1 } },
                 { $skip: skip },
                 { $limit: limit }
               ]
             }
           }
         ])
-        console.log(callfile)
-        return callfile
+        const data = callfile[0]?.data?.length > 0 ? callfile[0].data : []
+        const totals = callfile[0].count?.length > 0 ? callfile[0].count[0].total : 0
+
+        return {
+          result: data,
+          total: totals
+        }
       } catch (error) {
         throw new CustomError(error.message,500) 
       }
@@ -1364,8 +1369,6 @@ const callfileResolver = {
             if(i.date && i.date !== "undefined" ){
               data['payment_date'] = i.date
             }
-
-            console.log(res?.current_disposition?.disposition?.toString() === paidDispo._id.toString())
 
             if(res?.current_disposition && !res?.current_disposition?.selectivesDispo && res?.current_disposition?.disposition?.toString() === paidDispo._id.toString()) {
               data['user'] = res?.current_disposition?.user

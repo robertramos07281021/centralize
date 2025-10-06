@@ -134,12 +134,12 @@ const userResolvers = {
               ],
               total: [{$count: "totalUser"}]
             }
-          
           }
         ])
-    
+        
         const users = res[0]?.users || []
         const total = res[0]?.total[0]?.totalUser || 0
+
         return {
           users: users,
           total: total,
@@ -151,7 +151,9 @@ const userResolvers = {
     findDeptAgents: async(_,__,{user})=> {
       try {
         if (!user) throw new CustomError("Not authenticated",401);
+        
         const agent = await User.find({$and: [{buckets: {$in: user.buckets}},{type: {$eq: "AGENT"}}]})
+
         return agent
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -169,22 +171,24 @@ const userResolvers = {
     getCampaignAssigned: async(_,__,{user}) => {
       try {
         const aomCampaign = await Department.find({aom: user._id}).lean()
-        const aomCampaignNameArray = aomCampaign.map(e =>new mongoose.Types.ObjectId(e._id))
-        const type = user.type
-        const filter = type === "AOM" ? {departments: {$in: aomCampaignNameArray}} : {buckets: {$in: user.buckets.map(x => new mongoose.Types.ObjectId(x))}}
+        const aomCampaignNameArray = aomCampaign.map(e =>e.name)
 
-        const isAom = type === "AOM" ? "$departments" : "$buckets"
+        const aombuckets = (await Bucket.find({dept: {$in: aomCampaignNameArray}})).map(ab => new mongoose.Types.ObjectId(ab._id))
+  
+        const userIs = user.type === "AOM" ? aombuckets : user.buckets.map(x => new mongoose.Types.ObjectId(x))
+
+
         const assignedUserPerCampagin = await User.aggregate([
           {
             $match: {
               type: {$eq: "AGENT"},
               active: true,
-              ...filter
+              buckets: {$in: userIs}
             }
           },
           {
             $group: {
-              _id: isAom,
+              _id: "$buckets",
               assigned: {$sum: 1}
             }
           },
@@ -196,8 +200,6 @@ const userResolvers = {
             }
           }
         ])
-
-      
 
         return assignedUserPerCampagin.map(x=> {
           return {
@@ -708,7 +710,7 @@ const userResolvers = {
         }},{new: true})
 
         if(!updateUser) throw new CustomError('User not found',401)
-          
+
         return {
           success: true,
           message: "Successfully added vici dial id",

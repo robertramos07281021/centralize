@@ -27,7 +27,8 @@ const PTP_DAILY = gql`
 const PTP = () => {
   const {intervalTypes, selectedBucket} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
-  const isTLDashboard = location.pathname.includes('tl-dashbaord')
+  const pathName = location.pathname.slice(1)
+  const isTLDashboard = ['tl-dashboard','aom-dashboard'].includes(pathName)
 
   const {data:ptpData, refetch, loading} = useQuery<{getTLPTPTotals:PTPType}>(PTP_DAILY,{variables: {input: {bucket: selectedBucket, interval: intervalTypes },skip: !isTLDashboard}, notifyOnNetworkStatusChange: true})
   const dispatch = useAppDispatch()

@@ -39,9 +39,12 @@ const TL_BUCKET = gql`
 const Targets= () => {
   const {intervalTypes, selectedBucket} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
-  const isTLDashboard = location.pathname.includes('tl-dashboard')
+  
+  const pathName = location.pathname.slice(1)
+  const isTLDashboard = ['tl-dashboard','aom-dashboard']?.includes(pathName)
 
   const {data:targetsData, refetch} = useQuery<{getTargetPerCampaign:Target}>(TARGET_PER_BUCKET,{variables: {bucket: selectedBucket, interval: intervalTypes},skip: !isTLDashboard || !selectedBucket, notifyOnNetworkStatusChange: true})
+
   const {data:tlBucketData, refetch:deptBucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET,{notifyOnNetworkStatusChange: true})
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
@@ -140,8 +143,6 @@ const Targets= () => {
       <div  className={`flex justify-center w-full h-full py-2 px-5 relative`} >
         <GoDotFill className={`absolute top-0 left-0 text-5xl ${isNaN(callfileVariance) ? "" : callfileVariance >= 50 ? "text-green-500" : "text-red-500"} `}/>
         <Doughnut data={data} options={options} />
-
-
       </div>
       </div>
     </div>  

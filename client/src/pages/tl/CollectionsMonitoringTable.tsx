@@ -23,7 +23,9 @@ type CollectionMonitoringData = {
 const CollectionsMonitoringTable = () => {
   const {intervalTypes, selectedBucket} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
-  const isTLDashboard = location.pathname.includes('tl-dashboard')
+  const pathName = location.pathname.slice(1)
+  const isTLDashboard = ['tl-dashboard','aom-dashboard']?.includes(pathName)
+  
   const {data, refetch, loading} = useQuery<{getCollectionMonitoring:CollectionMonitoringData}>(COLLECTION_MONITORING,{variables: {bucket: selectedBucket, interval: intervalTypes}, skip:!isTLDashboard,notifyOnNetworkStatusChange: true })
 
   useEffect(()=> {

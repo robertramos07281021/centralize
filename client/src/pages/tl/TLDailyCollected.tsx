@@ -1,8 +1,7 @@
 import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { useEffect } from "react";
-import { RootState, useAppDispatch } from "../../redux/store";
-import { setServerError } from "../../redux/slices/authSlice";
+import { RootState } from "../../redux/store";
 import { useLocation } from "react-router-dom";
 import { useSelector } from "react-redux";
 import { Bucket } from "./TlDashboard.tsx";
@@ -29,9 +28,9 @@ const SELECTED_BUCKET = gql`
 `
 
 const TLDailyCollected= () => {
-  const dispatch = useAppDispatch()
   const location = useLocation()
-  const isTLDashboard = location.pathname.includes('tl-dashboard')
+  const pathName = location.pathname.slice(1)
+  const isTLDashboard = ['tl-dashboard','aom-dashboard']?.includes(pathName)
   const {intervalTypes, selectedBucket} = useSelector((state:RootState)=> state.auth)
 
   const {data:dailyCollected, refetch, loading } = useQuery<{getTLDailyCollected:Collected}>(DAILY_COLLECTION,{variables: {input: {bucket:selectedBucket, interval: intervalTypes},skip: !isTLDashboard}, notifyOnNetworkStatusChange: true})
@@ -41,11 +40,7 @@ const TLDailyCollected= () => {
 
   useEffect(()=> {
     const timer = async()=> {
-      try {
-        await refetch()
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
+      await refetch()
     } 
     if(selectedBucket) {
       timer()
@@ -59,7 +54,7 @@ const TLDailyCollected= () => {
       <div className='lg:text-base 2xl:text-lg font-black '>
         <h1>
           RPC {
-            !bucketData?.selectedBucket.principal &&
+            !bucketData?.selectedBucket?.principal &&
             <span className="text-xs font-medium capitalize">{`(${intervalTypes})`}</span> 
           }
         </h1>

@@ -31,6 +31,10 @@ const bucketSchema = new Schema(
       type: Boolean,
       default: false
     },
+    isActive: {
+      type: Boolean,
+      default: true
+    },
     target_details: {
       default_target_daily: {
         type: Number,

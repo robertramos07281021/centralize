@@ -23,7 +23,9 @@ const TL_BUCKET = gql`
   
 const TLAgentProduction = () => {
   const { intervalTypes, selectedBucket } = useSelector((state:RootState)=> state.auth)
-  const {data:tlBucketData, refetch:getDeptBucketRefetch} = useQuery<{getAllBucket:Bucket[]}>(TL_BUCKET,{notifyOnNetworkStatusChange: true})
+  const pathName = location.pathname.slice(1)
+  const isTLDashboard = ['tl-dashboard','aom-dashboard'].includes(pathName)
+  const {data:tlBucketData, refetch:getDeptBucketRefetch} = useQuery<{getAllBucket:Bucket[]}>(TL_BUCKET,{notifyOnNetworkStatusChange: true, skip: !isTLDashboard})
 
   useEffect(()=> {
     const timer = async () => {

@@ -1,8 +1,8 @@
 import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
 import { useEffect } from "react"
-import { RootState, useAppDispatch } from "../../redux/store"
-import { setServerError } from "../../redux/slices/authSlice"
+import { RootState } from "../../redux/store"
+
 import { useSelector } from "react-redux"
 
 type DailyFTEType = {
@@ -47,27 +47,25 @@ const DailyFTE = () => {
   const {selectedBucket} = useSelector((state:RootState)=> state.auth)
   const {data, refetch} = useQuery<{getDailyFTE:DailyFTEType[]}>(DAILY_FTE)
   const {data:campaignAssignedData, refetch:campaignAssignedRefetch} = useQuery<{getCampaignAssigned:CampaignAssigned[]}>(CAMPAIGN_ASSIGNED,{notifyOnNetworkStatusChange: true})
-  const dispatch = useAppDispatch()
+
 
   useEffect(()=> {
-    const fetchData = async () => {
-      try {
-        await refetch()
-        await campaignAssignedRefetch()
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
+    const fetchData = async() => {
+      await refetch()
+      await campaignAssignedRefetch()
     }
     fetchData()
   },[])
 
+
   const findCampaignAssignedData = campaignAssignedData?.getCampaignAssigned.find(y => y.campaign === selectedBucket)
   const findData = data?.getDailyFTE.find(b => b.campaign === selectedBucket)
   const FTEPercent = (Number(findData?.online) / Number(findCampaignAssignedData?.assigned)) * 100
+
   return (  
     <div className=' col-span-2 rounded-xl grid grid-cols-3 gap-2' >
-      <DivFTEs label="Expected Calling Agents" value={findCampaignAssignedData?.assigned}/>
-      <DivFTEs label="Actual" value={findData?.online}/>
+      <DivFTEs label="Expected Calling Agents" value={findCampaignAssignedData?.assigned || 0}/>
+      <DivFTEs label="Actual" value={findData?.online || 0}/>
       <DivFTEs label="Attendance %" value={`${isNaN(FTEPercent) ? 0 : FTEPercent.toFixed(2)}%`}/>
     </div>
   )

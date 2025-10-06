@@ -87,6 +87,7 @@ const userTypeDefs = gql`
     targets: Target
     buckets: [Bucket]
     departments: [Department] 
+    vici_id: String
   }
 
   type CampaignUser {
@@ -108,32 +109,33 @@ const userTypeDefs = gql`
     getAomUser: [Users]
     findUsers(search: String!, page: Int!, limit: Int!): PaginatedUsers!
     findDeptAgents:[DeptUser]
-    findAgents:[Users],
+    findAgents:[Users]
     getCampaignAssigned: [CampaignUser]
-    getAOMCampaignFTE: [AOM_FTE],
+    getAOMCampaignFTE: [AOM_FTE]
     getHelperAgent: [Users]
     getBucketTL:[Users]
   }
 
   input CreatingAccount {
-    name: String!, 
-    username: String!, 
-    type: String!, 
-    departments: [ID], 
-    branch: ID, 
-    user_id: String, 
+    name: String!
+    username: String!
+    type: String!
+    departments: [ID]
+    branch: ID,
+    user_id: String 
     buckets:[ID] 
     account_type: String 
     callfile_id: String
   }
+
   input UpdateAccount {
-    name:String!, 
-    type:String!, 
-    departments:[ID], 
-    branch:ID, 
-    buckets:[ID], 
-    user_id: String,
-    callfile_id: String,
+    name:String!
+    type:String!
+    departments:[ID]
+    branch:ID
+    buckets:[ID]
+    user_id: String
+    callfile_id: String
     account_type: String
     id:ID!
     vici_id: String
@@ -151,7 +153,7 @@ const userTypeDefs = gql`
     updateActiveStatus(id:ID!): Success
     unlockUser(id:ID!): Success
     authorization(password:String!):Success 
-    deleteUser(id:ID!):Success,
+    deleteUser(id:ID!):Success
     updateUserVici_id(vici_id:String!):Success
   }
 `;

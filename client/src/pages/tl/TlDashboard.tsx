@@ -11,7 +11,7 @@ import { useQuery } from '@apollo/client';
 import { useSelector } from 'react-redux';
 import { RootState, useAppDispatch } from '../../redux/store';
 import { BsFilterCircleFill ,BsFillPlusCircleFill  } from "react-icons/bs";
-import { setIntervalTypes, setSelectedBucket, setServerError } from '../../redux/slices/authSlice';
+import { setIntervalTypes, setSelectedBucket } from '../../redux/slices/authSlice';
 import { SiGooglemessages } from "react-icons/si";
 import MessageModal, { MessageChildren } from './MessageModal';
 import { IntervalsTypes } from '../../middleware/types.ts';
@@ -19,11 +19,12 @@ import { useLocation } from 'react-router-dom';
 import NoPTPPayment from './NoPTPPayment.tsx';
 
 const DEPT_BUCKET = gql`
-  query getDeptBucket {
-    getDeptBucket {
+  query getAllBucket {
+    getAllBucket {
       _id
       name
       principal
+      isActive
     }
   }
 `
@@ -32,21 +33,45 @@ export type Bucket = {
   _id: string
   name: string
   principal: boolean
+  isActive: boolean
+}
+
+const AOM_BUCKET = gql`
+  query findAomBucket {
+    findAomBucket {
+      buckets {
+        _id
+        name
+      }
+    }
+  }
+`
+
+type AomBucket = {
+  buckets: Bucket[]
 }
 
 
-
 const TlDashboard  = () => {
+  const {userLogged, selectedBucket, intervalTypes} = useSelector((state:RootState)=> state.auth)
 
   const [showSelector, setShowSelector] = useState<boolean>(false)
   const [showIntervals,setShowIntervals] = useState<boolean>(false)
   const dispatch = useAppDispatch()
   const location = useLocation()
-  const {data,refetch} = useQuery<{getDeptBucket:Bucket[]}>(DEPT_BUCKET)
-  const {userLogged, selectedBucket, intervalTypes} = useSelector((state:RootState)=> state.auth)
+  const pathName = location.pathname.slice(1)
+  const isTLDashboard = ['tl-dashboard','aom-dashboard'].includes(pathName)
+  
+  const {data,refetch} = useQuery<{getAllBucket:Bucket[]}>(DEPT_BUCKET,{notifyOnNetworkStatusChange: true, skip: !isTLDashboard})
+
+  const {data:aomBucketData, refetch:bucketDateRefetch} = useQuery<{findAomBucket:AomBucket[]}>(AOM_BUCKET)
+
+  const newAomBucketsData = aomBucketData?.findAomBucket.flatMap(ab => ab.buckets) || []
+
+  const buckets = userLogged?.type === "AOM" ? newAomBucketsData.map(abd=> abd._id) : userLogged?.buckets
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
-    const bucketData = data?.getDeptBucket || []
+    const bucketData = data?.getAllBucket || []
     return Object.fromEntries(bucketData.map(bd=> [bd._id, bd.name]))
   },[data])
   const [isOpenMessage, setIsopenMessage] = useState<boolean>(false)
@@ -54,25 +79,25 @@ const TlDashboard  = () => {
   const bucketSelectorRef = useRef<HTMLDivElement | null>(null)
   const intervalSelectorRef = useRef<HTMLDivElement | null>(null)
 
-  const findBucket = data?.getDeptBucket.find(bucket => bucket._id === selectedBucket)
+  const findBucket = data?.getAllBucket.find(bucket => bucket._id === selectedBucket)
 
   useEffect(()=> {
     const refetching = async() => {
-      try {
-        await  refetch()
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
+      await refetch()
+      await bucketDateRefetch()
     }
     refetching()
   },[])
 
   useEffect(()=> {
-    if(location.pathname.includes('tl-dashboard') && userLogged && !selectedBucket){
-      dispatch(setSelectedBucket(userLogged?.buckets[0]))
+    if(isTLDashboard && userLogged && !selectedBucket){
+      if(userLogged.type === "AOM") {
+        dispatch(setSelectedBucket(newAomBucketsData[0]?._id))
+      } else {
+        dispatch(setSelectedBucket(userLogged?.buckets[0]))
+      }
     }
   },[location.pathname,userLogged])
-
 
   useEffect(()=> {
     if(findBucket && findBucket.principal ) {
@@ -113,11 +138,16 @@ const TlDashboard  = () => {
         showSelector &&
         <div className='absolute bottom-10 right-20 w-2/20 border bg-white rounded-md border-slate-500 p-2 flex flex-col gap-2' ref={bucketSelectorRef}>
           {
-            userLogged?.buckets.map(x=> 
-              <label key={x} className={`w-full border border-slate-400 text-gray-700 hover:bg-slate-200 cursor-pointer px-2 py-1 rounded ${selectedBucket === x ? "bg-blue-200" : ""}`}>
+            buckets?.map(x=> {
+              const findBucket = data?.getAllBucket.find(y=> x === y._id)
+              return findBucket?.isActive && (
+                <label key={x} className={`w-full border border-slate-400 text-gray-700 hover:bg-slate-200 cursor-pointer px-2 py-1 rounded ${selectedBucket === x ? "bg-blue-200" : ""}`}>
                 <input type="radio" name='bucketSelector' id={bucketObject[x]} value={x} onChange={()=> dispatch(setSelectedBucket(x))} hidden/>
                 {bucketObject[x]}
               </label>
+
+              )
+            }
             )
           }
         </div>
@@ -132,7 +162,6 @@ const TlDashboard  = () => {
                 {value}
               </span>
             </label>
-            
             )
           }
         </div>
@@ -149,7 +178,7 @@ const TlDashboard  = () => {
           <BsFilterCircleFill className='cursor-pointer' onClick={()=> setShowIntervals(prev=> !prev)}/>
         }
         {
-          userLogged && userLogged?.buckets?.length > 1 &&
+          (userLogged && (buckets && buckets?.length > 1)) &&
           <BsFillPlusCircleFill className={`cursor-pointer duration-200 bg-white rounded-full ${showSelector ? "rotate-45" : ""}`} onClick={()=> setShowSelector(prev=> !prev)}/>
         }
       </div>

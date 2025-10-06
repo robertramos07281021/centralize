@@ -974,7 +974,6 @@ const productionResolver = {
 
         return agentCollection[0]
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)        
       }
     },
@@ -1702,7 +1701,7 @@ const productionResolver = {
             }
           }
         ])
-        console.log(RPCCustomerAccount)
+
 
         return RPCCustomerAccount[0]
       } catch (error) {

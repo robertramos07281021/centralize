@@ -6,7 +6,7 @@ import GroupSection from "./GroupSection";
 import TaskDispoSection from "./TaskDispoSection";
 import AgentSection from "./AgentSection";
 import { RootState, useAppDispatch } from "../../redux/store";
-import { setAgent, setSelectedDisposition, setSelectedGroup, setServerError, setTasker, setTaskFilter, Tasker, TaskFilter } from "../../redux/slices/authSlice";
+import { setAgent, setSelectedDisposition, setSelectedGroup, setTasker, setTaskFilter, Tasker, TaskFilter } from "../../redux/slices/authSlice";
 import { useSelector } from "react-redux";
 
 type DispositionTypes = {
@@ -42,21 +42,17 @@ const BUCKETS = gql`
 const TaskManagerView = () => {
   const dispatch = useAppDispatch()
   const {tasker, taskFilter, selectedDisposition} = useSelector((state:RootState)=> state.auth)
-  const {data:DispositionTypes, refetch} = useQuery<{getDispositionTypes:DispositionTypes[]}>(GET_ALL_DISPOSITION_TYPE)
-  const {data:bucketData, refetch:tlBucketRefetch} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS)
+  const {data:DispositionTypes, refetch} = useQuery<{getDispositionTypes:DispositionTypes[]}>(GET_ALL_DISPOSITION_TYPE,{notifyOnNetworkStatusChange: true})
+  const {data:bucketData, refetch:tlBucketRefetch} = useQuery<{getTLBucket:Bucket[]}>(BUCKETS,{notifyOnNetworkStatusChange: true})
   const [bucketSelect, setBucketSelect] = useState<keyof typeof bucketObject | "">("")
 
   useEffect(()=> {
-    const timer = setTimeout(async()=> {
-      try {
-        await refetch()
-        await tlBucketRefetch()
-      } catch (error) {
-        dispatch(setServerError(true))
-      }
-    })
-    return () => clearTimeout(timer)
-  },[refetch, tlBucketRefetch])
+    const timer = async()=> {
+      await refetch()
+      await tlBucketRefetch()
+    }
+    timer()
+  },[])
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const tlBuckets = bucketData?.getTLBucket || []
@@ -68,6 +64,7 @@ const TaskManagerView = () => {
       setBucketSelect(bucketData.getTLBucket[0].name)
     }
   },[bucketData])
+
   useEffect(()=> {
     dispatch(setSelectedGroup(""))
     dispatch(setAgent(""))
