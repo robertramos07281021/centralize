@@ -105,12 +105,13 @@ const AccountsView = () => {
   const dispatch = useAppDispatch()
   const {limit, adminUsersPage} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
+  const isAccounts = location.pathname.includes('accounts')
 
-  const {data:getDeptData, refetch:deptRefetch} = useQuery<{getDepts:Department[]}>(GET_DEPTS)
+  const {data:getDeptData, refetch:deptRefetch} = useQuery<{getDepts:Department[]}>(GET_DEPTS,{skip: !isAccounts, notifyOnNetworkStatusChange: true})
 
-  const {data:getBranchData, refetch:branchRefetch} = useQuery<{getBranches:DeptBranchBucket[]}>(GET_BRANCHES)
+  const {data:getBranchData, refetch:branchRefetch} = useQuery<{getBranches:DeptBranchBucket[]}>(GET_BRANCHES,{skip: !isAccounts, notifyOnNetworkStatusChange: true})
 
-  const {data: getAllBucketsData, refetch:bucketRefetch} = useQuery<{getAllBucket:DeptBranchBucket[]}>(GET_ALL_BUCKET) 
+  const {data: getAllBucketsData, refetch:bucketRefetch} = useQuery<{getAllBucket:DeptBranchBucket[]}>(GET_ALL_BUCKET,{skip: !isAccounts, notifyOnNetworkStatusChange: true}) 
 
   const [totalPage, setTotalPage] = useState<number>(1)
 
@@ -118,8 +119,6 @@ const AccountsView = () => {
     const deptData = getDeptData?.getDepts || []
     return Object.fromEntries(deptData.map((db)=> [db.id, db.name]))
   },[getDeptData])
-
-
 
   const bucketObject:{[key:string]:string} = useMemo(()=> {
     const allBucketData = getAllBucketsData?.getAllBucket || []
