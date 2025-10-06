@@ -92,7 +92,6 @@ function App() {
           <Route element={<OpsRoute/>}>
             <Route path="/operation-dashboard" element={<OperationDashboard/>}/>
             <Route path="/operation-reports" element={<Reports/>} />
-
           </Route>
           <Route element={<TlRoute/>}>
             <Route path="/tl-dashboard" element={<TlDashboard/>}/>
@@ -107,7 +106,6 @@ function App() {
             <Route path="/ceo-dashboard" element={<CeoDashboard/>}/>
           </Route>
           <Route element={<QARoute/>}>
-
             <Route path="/qa-agents-dashboard" element={<QAAgentViews/>}/>
             <Route path="/qa-dashboard" element={<QADashboard/>}/>
           </Route>
