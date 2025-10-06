@@ -51,7 +51,6 @@ import CustomerExtnResolver from "./graphql/resolvers/customerExtnResolver.js";
 import CustomerExtnTypeDefs from "./graphql/schemas/customerExtnSchema.js";
 import cron from "node-cron";
 import CustomerAccount from "./models/customerAccount.js";
-import mongoose from "mongoose";
 
 const connectedUsers = new Map();
 
