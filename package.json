@@ -46,6 +46,7 @@
     "json-2-csv": "^5.5.9",
     "jsonwebtoken": "^9.0.2",
     "meter": "^0.1.9",
+    "moment": "^2.30.1",
     "mongodb": "^6.14.2",
     "mongoose": "^8.15.1",
     "node-cron": "^4.2.1",
