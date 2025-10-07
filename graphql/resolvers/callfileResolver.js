@@ -1222,6 +1222,17 @@ const callfileResolver = {
             }
           },
           {
+            $lookup: {
+              from: "users",
+              localField: "finished_by",
+              foreignField: "_id",
+              as: "finished_by"
+            },
+          },
+          {
+            $unwind: {path: "$finished_by",preserveNullAndEmptyArrays: true}
+          },
+          {
             $facet: {
               count: [
                 {
@@ -1238,7 +1249,6 @@ const callfileResolver = {
         ])
         const data = callfile[0]?.data?.length > 0 ? callfile[0].data : []
         const totals = callfile[0].count?.length > 0 ? callfile[0].count[0].total : 0
-
         return {
           result: data,
           total: totals

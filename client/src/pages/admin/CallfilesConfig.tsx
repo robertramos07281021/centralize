@@ -117,7 +117,6 @@ const CallfilesConfig = () => {
     notifyOnNetworkStatusChange: true,
   });
 
-  console.log(data, "d");
   useEffect(() => {
     const refetching = async () => {
       await refetch();
@@ -126,34 +125,8 @@ const CallfilesConfig = () => {
     refetching();
   }, [selectedOption]);
 
-  const countWorkdays = (startDate: string, endDate: string) => {
-  const start = new Date(startDate);
-  const end = new Date(endDate);
-  
-  // If end date is earlier than start date, return 0
-  if (end < start) return 0;
 
-  // Adjust both start and end to start from the beginning of the day
-  start.setHours(0, 0, 0, 0);
-  end.setHours(0, 0, 0, 0);
-
-  let totalWorkdays = 0;
-  
-  // Loop through each date between start and end
-  while (start <= end) {
-    // Check if the current date is a weekday (Mon-Fri)
-    if (start.getDay() !== 0 && start.getDay() !== 6) { // 0: Sunday, 6: Saturday
-      totalWorkdays++;
-    }
-    // Move to the next day
-    start.setDate(start.getDate() + 1);
-  }
-
-  return totalWorkdays;
-};
-
-const workdays = countWorkdays('7/31/2025', '8/1/2025');
-console.log(workdays);
+  // const workdays = countWorkdays("7/31/2025", "8/1/2025");
 
   return (
     <div className=" h-[85vh] w-full flex flex-col py-1">
@@ -196,7 +169,6 @@ console.log(workdays);
                 </div>
               )} */}
             </motion.div>
-
           </div>
         </div>
 
@@ -214,12 +186,16 @@ console.log(workdays);
 
         <div className="overflow-auto flex rounded-b-md flex-col h-full">
           <motion.div
-            className="flex flex-col  "
+            className="flex flex-col"
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
           >
             {data?.getCF && data?.getCF.result.length > 0 ? (
-              data.getCF.result.map((res, index) => (
+              data.getCF.result.map((res, index) => {
+
+                const totalDate = Math.floor((new Date(res.endo).getTime() - new Date(res.createdAt).getTime()) / (1000 * 3600 * 24)) 
+
+                return (
                 <motion.div
                   key={res._id}
                   className="grid gap-3 bg-gray-100 px-3 py-2 items-center grid-cols-9"
@@ -227,33 +203,25 @@ console.log(workdays);
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <div className="whitespace-nowrap truncate" title={res.name} >{res.name}</div>
+                  <div className="whitespace-nowrap truncate" title={res.name}>
+                    {res.name}
+                  </div>
                   <div>
                     {new Date(res.createdAt).toLocaleDateString("en-US")}
                   </div>
                   <div>
-                    {}
                     {res.endo
                       ? new Date(res.endo).toLocaleDateString("en-US")
                       : "-"}
                   </div>
                   <div>
-                    {res.endo ? (
-                      Math.floor(
-                        (new Date(res.endo).getTime() -
-                          new Date(res.createdAt).getTime()) /
-                          (1000 * 3600 * 24)
-                      )
-                    ) : (
-                      <span>0</span>
-                    )}
+                    { res.endo ? ( totalDate ) === 0 ? 1 : totalDate : ( <span>0</span> ) }
                   </div>
-                  <div>{res.finished_by?.name || "null"}</div>
+                  <div className="capitalize">{res.finished_by?.name || "-"}</div>
                   <div className="truncate">{res.totalAccounts || 0}</div>
                   <div className="truncate">
-                    {res.totalOB?.toLocaleString("en-PH", {
-                      style: "currency",
-                      currency: "PHP",
+                    { res.totalOB?.toLocaleString("en-PH", { 
+                      style: "currency", currency: "PHP"
                     }) ||
                       (0).toLocaleString("en-PH", {
                         style: "currency",
@@ -286,9 +254,14 @@ console.log(workdays);
                     )}
                   </div>
                 </motion.div>
-              ))
+              )})
             ) : (
-              <option className="flex justify-center px-3 py-2 bg-gray-100" disabled>No buckets available</option>
+              <option
+                className="flex justify-center px-3 py-2 bg-gray-100"
+                disabled
+              >
+                No buckets available
+              </option>
             )}
           </motion.div>
         </div>
