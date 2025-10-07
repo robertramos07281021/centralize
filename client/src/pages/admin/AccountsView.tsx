@@ -290,6 +290,7 @@ const AccountsView = () => {
                   {user.departments
                     ?.map((e) => deptObject[e]?.toString())
                     .join(", ")}
+                    
                 </div>
                 <div className="pr-5">
                   {user.buckets

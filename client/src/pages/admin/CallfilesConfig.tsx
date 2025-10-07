@@ -125,7 +125,6 @@ const CallfilesConfig = () => {
     refetching();
   }, [selectedOption]);
 
-
   // const workdays = countWorkdays("7/31/2025", "8/1/2025");
 
   return (
@@ -171,17 +170,19 @@ const CallfilesConfig = () => {
             </motion.div>
           </div>
         </div>
-
-        <div className="grid grid-cols-9 gap-3 bg-gray-200 pl-3 pr-6 rounded-t-md py-2 font-semibold">
-          <div>Name</div>
-          <div>Created At</div>
-          <div>Endo</div>
-          <div>Total Work Days</div>
-          <div>Finished By</div>
-          <div>Total Accounts</div>
-          <div>Total OB</div>
-          <div>Total Principal</div>
-          <div>Activity</div>
+        <div className="flex bg-gray-200 rounded-t-md">
+          <div className="grid w-full grid-cols-10 gap-3  px-3  py-2 font-semibold">
+            <div>Name</div>
+            <div>Created At</div>
+            <div>Endo</div>
+            <div>Work Days</div>
+            <div>Finished By</div>
+            <div>Total Accounts</div>
+            <div>Total OB</div>
+            <div>Total Principal</div>
+            <div>Activity</div>
+            <div></div>
+          </div>
         </div>
 
         <div className="overflow-auto flex rounded-b-md flex-col h-full">
@@ -192,69 +193,128 @@ const CallfilesConfig = () => {
           >
             {data?.getCF && data?.getCF.result.length > 0 ? (
               data.getCF.result.map((res, index) => {
-
-                const totalDate = Math.floor((new Date(res.endo).getTime() - new Date(res.createdAt).getTime()) / (1000 * 3600 * 24)) 
+                const totalDate = Math.floor(
+                  (new Date(res.endo).getTime() -
+                    new Date(res.createdAt).getTime()) /
+                    (1000 * 3600 * 24)
+                );
 
                 return (
-                <motion.div
-                  key={res._id}
-                  className="grid gap-3 bg-gray-100 px-3 py-2 items-center grid-cols-9"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <div className="whitespace-nowrap truncate" title={res.name}>
-                    {res.name}
-                  </div>
-                  <div>
-                    {new Date(res.createdAt).toLocaleDateString("en-US")}
-                  </div>
-                  <div>
-                    {res.endo
-                      ? new Date(res.endo).toLocaleDateString("en-US")
-                      : "-"}
-                  </div>
-                  <div>
-                    { res.endo ? ( totalDate ) === 0 ? 1 : totalDate : ( <span>0</span> ) }
-                  </div>
-                  <div className="capitalize">{res.finished_by?.name || "-"}</div>
-                  <div className="truncate">{res.totalAccounts || 0}</div>
-                  <div className="truncate">
-                    { res.totalOB?.toLocaleString("en-PH", { 
-                      style: "currency", currency: "PHP"
-                    }) ||
-                      (0).toLocaleString("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      })}
-                  </div>
-                  <div className="truncate">
-                    {res.totalPrincipal?.toLocaleString("en-PH", {
-                      style: "currency",
-                      currency: "PHP",
-                    }) ||
-                      (0).toLocaleString("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      })}
-                  </div>
-                  <div className="">
-                    {res.active ? (
-                      <div className="flex">
-                        <div className="bg-green-400 px-3 py-1 rounded-full border-green-600 font-black text-sm uppercase text-green-700 border-2">
-                          Active
-                        </div>{" "}
+                  <motion.div
+                    key={res._id}
+                    className="flex flex-row w-full bg-gray-100 px-3"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <div className="grid gap-3  py-2 w-full items-center grid-cols-10">
+                      <div
+                        className="whitespace-nowrap truncate"
+                        title={res.name}
+                      >
+                        {res.name}
                       </div>
-                    ) : (
-                      <div className="flex">
-                        <div className="bg-red-400 px-3 py-1 rounded-full border-red-600 font-black text-sm uppercase text-red-700 border-2">
-                          inActive
-                        </div>{" "}
+                      <div>
+                        {new Date(res.createdAt).toLocaleDateString("en-US")}
                       </div>
-                    )}
-                  </div>
-                </motion.div>
-              )})
+                      <div>
+                        {res.endo
+                          ? new Date(res.endo).toLocaleDateString("en-US")
+                          : "-"}
+                      </div>
+                      <div>
+                        {res.endo ? (
+                          totalDate === 0 ? (
+                            1
+                          ) : (
+                            totalDate
+                          )
+                        ) : (
+                          <span>0</span>
+                        )}
+                      </div>
+                      <div className="capitalize">
+                        {res.finished_by?.name || "-"}
+                      </div>
+                      <div className="truncate">{res.totalAccounts || 0}</div>
+                      <div className="truncate">
+                        {res.totalOB?.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        }) ||
+                          (0).toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })}
+                      </div>
+                      <div className="truncate">
+                        {res.totalPrincipal?.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        }) ||
+                          (0).toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })}
+                      </div>
+                      <div className="">
+                        {res.active ? (
+                          <div className="flex">
+                            <div className="bg-green-400 px-3 py-1 rounded-full border-green-600 font-black text-sm uppercase text-green-700 border-2">
+                              Active
+                            </div>{" "}
+                          </div>
+                        ) : (
+                          <div className="flex">
+                            <div className="bg-red-400 px-3 py-1 rounded-full border-red-600 font-black text-sm uppercase text-red-700 border-2">
+                              inActive
+                            </div>{" "}
+                          </div>
+                        )}
+                      </div>
+                      <div className="gap-3 flex">
+                        <div className="items-center flex ">
+                          <div className="bg-blue-700 border-2 border-blue-900 hover:bg-blue-800 transition-all py-1 px-2 cursor-pointer rounded-sm shadow-sm">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke-width="2"
+                              stroke="currentColor"
+                              className="size-5 text-white"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+
+                        <div className="items-center flex ">
+                          <div className="bg-red-700 border-2 border-red-900  hover:bg-red-800 transition-all py-1 px-2 cursor-pointer  rounded-sm shadow-sm">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              stroke-width="2"
+                              stroke="currentColor"
+                              className="size-5 text-white  "
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                );
+              })
             ) : (
               <option
                 className="flex justify-center px-3 py-2 bg-gray-100"
