@@ -30,7 +30,7 @@ const ReportsTables:React.FC<ComponentProp> = ({totalAccounts, dispo,secondTitle
 
   return (
      <>
-      <table className="border border-collapse border-black w-2/6">
+      <table className="border border-collapse border-black w-3/6 2xl:w-2/6 text-xs 2xl:text-base">
         <tbody className="text-center">
           <tr className="border-black border">
             <th className={`w-1/3 py-0.5 ${colorObject[color as keyof typeof colorObject]} border-black border`} rowSpan={2}>{firstTitle}</th>
@@ -43,10 +43,10 @@ const ReportsTables:React.FC<ComponentProp> = ({totalAccounts, dispo,secondTitle
           </tr>
         </tbody>
       </table>
-      <table>
+      <table className="2xl:text-base text-xs">
         <thead>
           <tr>
-            <th colSpan={5} className={`border border-black ${colorObject[color as keyof typeof colorObject]}`}>{secondTitle}</th>
+            <th colSpan={5} className={`border border-black py-1 ${colorObject[color as keyof typeof colorObject]}`}>{secondTitle}</th>
           </tr>
         </thead>
         <tbody>

@@ -36,7 +36,7 @@ const CallReportTables:React.FC<ComponentsProps> = ({totalAccounts, reportsData,
 
   return (
     <>
-      <table className="border-collapse border border-black w-2/6">
+      <table className="border-collapse border border-black w-2/6 text-xs 2xl:text-base">
         <tbody>
           <tr className="border border-black">
             <th className="w-1/2 py-0.5 bg-blue-600 text-white border-black border">Total Endorsement</th>
@@ -53,7 +53,7 @@ const CallReportTables:React.FC<ComponentsProps> = ({totalAccounts, reportsData,
         </tbody>
       </table>
       
-      <table className="border border-collapse border-black w-2/6">
+      <table className="border border-collapse border-black w-2/6 2xl:text-base text-xs">
         <tbody className="text-center">
           <tr className="border-black border">
             <th className="w-1/3 py-0.5 bg-blue-600 text-white border-black border" rowSpan={2}>Calling Status</th>
@@ -67,10 +67,10 @@ const CallReportTables:React.FC<ComponentsProps> = ({totalAccounts, reportsData,
         </tbody>
       </table>
 
-      <table>
+      <table className="2xl:text-base text-xs">
         <thead className="border-collapse border border-black">
           <tr>
-            <th colSpan={5} className="border border-black bg-blue-600 text-white">Positive Calls Status</th>
+            <th colSpan={5} className="border border-black py-1 bg-blue-600 text-white">Positive Calls Status</th>
           </tr>
         </thead>
         <tbody className="text-center">
@@ -108,10 +108,10 @@ const CallReportTables:React.FC<ComponentsProps> = ({totalAccounts, reportsData,
         </tbody>
       </table>
 
-      <table>
+      <table className="2xl:text-base text-xs">
         <thead className="border-collapse border border-black">
           <tr>
-            <th colSpan={5} className="border border-black bg-blue-600 text-white">Negative Calls Status</th>
+            <th colSpan={5} className="border py-1 border-black bg-blue-600 text-white">Negative Calls Status</th>
           </tr>
         </thead>
         <tbody className="text-center">

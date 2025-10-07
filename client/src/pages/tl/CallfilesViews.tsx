@@ -525,7 +525,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       <div className=" h-full w-full overflow-y-auto overflow-hidden flex-nowrap overflow-x-auto inline flex-col relative">
         <table className="w-full table-fixed text-left">
           <thead >
-            <tr  className="bg-slate-100 text-gray-500">
+            <tr  className="bg-slate-100 text-gray-500 2xl:text-base text-xs">
               {
                 labels.map((x,index )=>
                   <th className="py-1" key={index}>{x}</th>
@@ -546,7 +546,7 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
                 const status = checkStatus ? "Active" : "Finished"
                 const finishedBy = res.callfile.finished_by ? res.callfile.finished_by.name : "-"
                 return (
-                  <tr key={index} className="text-xs text-gray-600">
+                  <tr key={index} className="text-[0.7rem] 2xl:text-xs text-gray-600 ">
                     <td className="truncate pr-2 col-span-2" title={res.callfile.name}>{res.callfile.name}</td>
                     <td>{findBucket?.name}</td>
                     <td>{new Date(res.callfile.createdAt).toLocaleDateString()}</td>

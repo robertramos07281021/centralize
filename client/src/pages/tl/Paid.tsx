@@ -41,11 +41,11 @@ const Paid = () => {
 
   return (
     <div className='border-blue-400 border bg-blue-200 rounded-xl p-2 text-blue-500 flex flex-col'>
-      <div className='lg:text-base 2xl:text-lg font-black '>
+      <div className='text-xs 2xl:text-lg font-black '>
         <h1>Total Amount Collected  </h1>
-        <p className="text-xs font-medium capitalize">{`(${intervalTypes})`}</p>
+        <p className="text-[0.6rem] 2xl:text-xs font-medium capitalize ">{`(${intervalTypes})`}</p>
       </div>
-      <div className='h-full w-full flex justify-between items-center  text-lg  2xl:text-xl'>
+      <div className='h-full w-full flex justify-between items-center  text-base  2xl:text-xl'>
         {
           !loading ?
           <>

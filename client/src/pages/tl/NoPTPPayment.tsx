@@ -37,12 +37,12 @@ const NoPTPPayment = () => {
 
   return (
     <div className='border-indigo-400 border bg-indigo-200 text-indigo-500 rounded-xl p-2 flex flex-col'>
-      <div className='lg:text-base 2xl:text-lg font-black '>
+      <div className='lg:text-xs 2xl:text-lg font-black '>
         <h1>
-          No PTP Payment <span className="text-xs font-medium capitalize">{`(${intervalTypes})`}</span> 
+          No PTP Payment <span className="text-[0.6rem] 2xl:text-xs font-medium capitalize">{`(${intervalTypes})`}</span> 
         </h1>
       </div>
-      <div className='h-full w-full flex justify-between items-center  text-lg  2xl:text-xl'>
+      <div className='h-full w-full flex justify-between items-center  text-base  2xl:text-xl'>
         {
           !loading ? 
           <>

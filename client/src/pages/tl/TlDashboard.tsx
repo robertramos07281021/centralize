@@ -172,10 +172,10 @@ const TlDashboard  = () => {
       }
 
       <div className='text-5xl absolute bottom-5 right-5 flex flex-col gap-5'>
-        <SiGooglemessages  className='cursor-pointer' onClick={()=> setIsopenMessage(prev => !prev)}/>
+        <SiGooglemessages  className='cursor-pointer bg-white rounded-full' onClick={()=> setIsopenMessage(prev => !prev)}/>
         {
           !findBucket?.principal &&
-          <BsFilterCircleFill className='cursor-pointer' onClick={()=> setShowIntervals(prev=> !prev)}/>
+          <BsFilterCircleFill className='cursor-pointer bg-white rounded-full' onClick={()=> setShowIntervals(prev=> !prev)}/>
         }
         {
           (userLogged && (buckets && buckets?.length > 1)) &&

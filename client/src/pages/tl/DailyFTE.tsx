@@ -37,8 +37,8 @@ const CAMPAIGN_ASSIGNED = gql`
 const DivFTEs = ({label, value}:{label:string,value:string | number | null | undefined}) => {
   return (
     <div className="border border-slate-400 rounded-xl p-2 bg-white flex flex-col justify-between">
-      <h1 className="text-sm 2xl:text-base font-medium text-gray-600">{label}</h1>
-      <p className="text-3xl 2xl:text-5xl text-end font-bold text-gray-600">{value}</p>
+      <h1 className="text-[0.6rem] 2xl:text-base font-medium text-gray-600">{label}</h1>
+      <p className="text-4xl 2xl:text-5xl text-end font-bold text-gray-600">{value}</p>
     </div>
   )
 }
@@ -48,7 +48,6 @@ const DailyFTE = () => {
   const {data, refetch} = useQuery<{getDailyFTE:DailyFTEType[]}>(DAILY_FTE)
   const {data:campaignAssignedData, refetch:campaignAssignedRefetch} = useQuery<{getCampaignAssigned:CampaignAssigned[]}>(CAMPAIGN_ASSIGNED,{notifyOnNetworkStatusChange: true})
 
-
   useEffect(()=> {
     const fetchData = async() => {
       await refetch()
@@ -56,7 +55,6 @@ const DailyFTE = () => {
     }
     fetchData()
   },[])
-
 
   const findCampaignAssignedData = campaignAssignedData?.getCampaignAssigned.find(y => y.campaign === selectedBucket)
   const findData = data?.getDailyFTE.find(b => b.campaign === selectedBucket)

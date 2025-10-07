@@ -51,15 +51,15 @@ const TLDailyCollected= () => {
 
   return (
     <div className='border-yellow-400 border bg-yellow-200 rounded-xl p-2 text-yellow-500 flex flex-col'>
-      <div className='lg:text-base 2xl:text-lg font-black '>
+      <div className='lg:text-xs 2xl:text-lg font-black '>
         <h1>
           RPC {
             !bucketData?.selectedBucket?.principal &&
-            <span className="text-xs font-medium capitalize">{`(${intervalTypes})`}</span> 
+            <span className="text-[0.6rem] 2xl:text-xs font-medium capitalize">{`(${intervalTypes})`}</span> 
           }
         </h1>
       </div>
-      <div className='h-full w-full flex font-medium justify-between gap-2 items-center text-lg 2xl:text-xl'>
+      <div className='h-full w-full flex font-medium justify-between gap-2 items-center text-base 2xl:text-xl'>
         {
           !loading ? 
           <>

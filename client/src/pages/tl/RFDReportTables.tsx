@@ -10,7 +10,7 @@ type ComponentProp = {
 
 const RFDReportTables:React.FC<ComponentProp> = ({RFD}) => {
   return (
-     <table className="w-1/2">
+     <table className="w-1/2 2xl:text-base text-xs">
       <thead>
         <tr>
           <th colSpan={3} className="border border-black bg-blue-600 text-white">EOD</th>
