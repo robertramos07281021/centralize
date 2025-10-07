@@ -7,6 +7,7 @@ import gql from "graphql-tag";
 import { useQuery } from "@apollo/client";
 import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
+import Confirmation from "../../components/Confirmation.tsx";
 
 const Callifles = gql`
   query getCF($bucket: ID, $limit: Int!, $page: Int!) {
@@ -75,6 +76,7 @@ const CallfilesConfig = () => {
   const [totalPage, setTotalPage] = useState<number>(1);
   const dispatch = useDispatch();
   const location = useLocation();
+  const [deletes, setDeletes] = useState(false);
   const isCallfileConfig = location.pathname.includes(
     "callfile-configurations"
   );
@@ -131,7 +133,7 @@ const CallfilesConfig = () => {
     <div className=" h-[85vh] w-full flex flex-col py-1">
       <div className="p-5 flex h-full flex-col w-full">
         <div className="w-full mb-2 justify-between items-center flex">
-          <div className="font-black uppercase text-2xl text-gray-400">
+          <div className="font-black uppercase text-2xl text-gray-500">
             CallFile Configuration
           </div>
           <div className="flex gap-3">
@@ -143,12 +145,12 @@ const CallfilesConfig = () => {
             >
               <select
                 id="dropdown"
-                value={selectedOption || ""}
+                value={selectedOption || "SELECT A BUCKET"}
                 onChange={handleChange}
                 className=" focus:outline-none cursor-pointer rounded-md items-center flex h-full"
               >
                 <option className="uppercase" value="">
-                  Select a bucket
+                  SELECT A BUCKET
                 </option>
                 {bucketsData?.getAllBucket &&
                 bucketsData.getAllBucket.length > 0 ? (
@@ -171,7 +173,7 @@ const CallfilesConfig = () => {
           </div>
         </div>
         <div className="flex bg-gray-200 rounded-t-md">
-          <div className="grid w-full grid-cols-10 gap-3  px-3  py-2 font-semibold">
+          <div className="grid w-full grid-cols-11 gap-3  px-3  py-2 font-semibold">
             <div>Name</div>
             <div>Created At</div>
             <div>Endo</div>
@@ -181,7 +183,7 @@ const CallfilesConfig = () => {
             <div>Total OB</div>
             <div>Total Principal</div>
             <div>Activity</div>
-            <div></div>
+            <div className="col-span-2" ></div>
           </div>
         </div>
 
@@ -207,7 +209,7 @@ const CallfilesConfig = () => {
                     animate={{ opacity: 1 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <div className="grid gap-3  py-2 w-full items-center grid-cols-10">
+                    <div className="grid gap-3  py-2 w-full items-center grid-cols-11">
                       <div
                         className="whitespace-nowrap truncate"
                         title={res.name}
@@ -272,8 +274,8 @@ const CallfilesConfig = () => {
                           </div>
                         )}
                       </div>
-                      <div className="gap-3 flex">
-                        <div className="items-center flex ">
+                      <div className="gap-3 col-span-2 flex justify-center">
+                        <div className="items-center flex">
                           <div className="bg-blue-700 border-2 border-blue-900 hover:bg-blue-800 transition-all py-1 px-2 cursor-pointer rounded-sm shadow-sm">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
@@ -292,8 +294,32 @@ const CallfilesConfig = () => {
                           </div>
                         </div>
 
+                        {res.active && (
+                          <div className="items-center flex ">
+                            <div className="bg-green-700 border-2 border-green-900 hover:bg-green-800 transition-all py-1 px-2 cursor-pointer rounded-sm shadow-sm">
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                stroke-width="3"
+                                stroke="currentColor"
+                                className="size-5 text-white  "
+                              >
+                                <path
+                                  stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  d="m4.5 12.75 6 6 9-13.5"
+                                />
+                              </svg>
+                            </div>
+                          </div>
+                        )}
+
                         <div className="items-center flex ">
-                          <div className="bg-red-700 border-2 border-red-900  hover:bg-red-800 transition-all py-1 px-2 cursor-pointer  rounded-sm shadow-sm">
+                          <div
+                            onClick={() => setDeletes(true)}
+                            className="bg-red-700 border-2 border-red-900  hover:bg-red-800 transition-all py-1 px-2 cursor-pointer  rounded-sm shadow-sm"
+                          >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               fill="none"

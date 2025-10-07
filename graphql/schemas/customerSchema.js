@@ -40,6 +40,7 @@ const customerTypeDefs = gql`
   emergencyContactMobile: String
   dpd: Int
   mpd: Int
+  batch_no: String
   vendor_endorsement: String
   }
 

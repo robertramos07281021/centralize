@@ -37,7 +37,6 @@ const TLDailyCollected= () => {
   
   const {data:bucketData} = useQuery<{selectedBucket:Bucket}>(SELECTED_BUCKET,{variables: {id: selectedBucket}, skip: !isTLDashboard, notifyOnNetworkStatusChange: true})
 
-
   useEffect(()=> {
     const timer = async()=> {
       await refetch()
@@ -70,9 +69,7 @@ const TLDailyCollected= () => {
           <div className="flex justify-end w-full">
             <AiOutlineLoading3Quarters className="animate-spin" />
           </div>
-        
         }
-     
       </div>
     </div>
   )

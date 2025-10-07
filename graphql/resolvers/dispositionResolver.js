@@ -1541,10 +1541,9 @@ const dispositionResolver = {
 
         const newResult = disposition.map(d=> {
           const userRPC = RPCCount.find(rpc => rpc._id.toString() === d.user.toString())
-      
           return {
             ...d,
-            RPC: userRPC.rpc
+            RPC: userRPC ? userRPC.rpc : 0
           }
         })
 

@@ -1082,6 +1082,7 @@ const customerResolver = {
             paid_amount,
             bill_due_date: element.bill_due_date,
             account_id: element.account_id ,
+            batch_no: element.batch_no,
             out_standing_details: {
               principal_os: element.principal_os,
               interest_os: element.interest_os,

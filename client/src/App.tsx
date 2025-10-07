@@ -69,6 +69,7 @@ function App() {
           <Route path="*" element={<Error/>}/>
           <Route path="/change-password" element={<ChangePassword/>}/>
           <Route path="/agent-recordings" element={<AgentRecordingView/>}/>
+          <Route path="/break-view" element={<BreakView/>}/>
           <Route element={<AdminRoute/>}>
             <Route path="/admin-dashboard" element={<AdminDashboard/>}/>
             <Route path="/setup" element={<SetupView/>}/>
@@ -80,7 +81,6 @@ function App() {
           </Route>
           <Route element={<AgentRoute/>}>
             <Route path="/agent-dashboard" element={<StatisticsView/>}/>
-            <Route path="/break-view" element={<BreakView/>}/>
             <Route path="/agent-cip" element={<CustomerDisposition/>}/>
             <Route path="/agent-report" element={<AgentReport/>}/>
           </Route>

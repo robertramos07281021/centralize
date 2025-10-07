@@ -44,7 +44,10 @@ const customerAccountSchema = new Schema(
     },
     dpd: {
       type: Number,
-      defailt: 0
+      default: 0
+    },
+    batch_no: {
+      type: String,
     },
     max_dpd: {
       type: Number,

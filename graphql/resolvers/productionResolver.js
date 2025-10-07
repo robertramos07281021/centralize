@@ -1286,6 +1286,7 @@ const productionResolver = {
             'November',
             'December'
           ]
+          
           function checkDate(number) {
             return number > 9 ? number : `0${number}`;
           }
@@ -1307,11 +1308,9 @@ const productionResolver = {
             "172.20.21.35" : "MIXED CAMPAIGN",
             "172.20.21.67" : "MIXED CAMPAIGN NEW",
             '172.20.21.97' : "UB",
-            '172.20.21.70' : 'MIXED CAMPAIGN NEW 2'
+            '172.20.21.70' : 'ATOME'
           }
         
-         
-
           const remoteDirVici =  `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`     
           const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${issabelIpAddress}/${monthCreated + ' ' + yearCreated}/${checkDate(dayCreated)}`
           

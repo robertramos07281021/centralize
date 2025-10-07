@@ -39,7 +39,7 @@ const TL_BUCKET = gql`
 const Targets= () => {
   const {intervalTypes, selectedBucket} = useSelector((state:RootState)=> state.auth)
   const location = useLocation()
-  
+
   const pathName = location.pathname.slice(1)
   const isTLDashboard = ['tl-dashboard','aom-dashboard']?.includes(pathName)
 
@@ -54,6 +54,7 @@ const Targets= () => {
   const newTargetdata = targetsData?.getTargetPerCampaign || null
 
   const findBucket = tlBucketData?.getDeptBucket.find(bucket => bucket._id === selectedBucket)
+
 
   useEffect(()=> {
     const timer = async () => {

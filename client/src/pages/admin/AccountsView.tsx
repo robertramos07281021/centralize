@@ -16,6 +16,8 @@ import { FaTrashAlt } from "react-icons/fa";
 import { FaUserGear } from "react-icons/fa6";
 import Confirmation from "../../components/Confirmation";
 import { Department } from "../../middleware/types.ts";
+import { motion, AnimatePresence } from "framer-motion";
+import RegisterView from "./RegisterView.tsx";
 
 type DeptBranchBucket = {
   _id: string;
@@ -112,6 +114,7 @@ const AccountsView = () => {
   );
   const location = useLocation();
   const isAccounts = location.pathname.includes("accounts");
+  const [create, setCreate] = useState(false);
 
   const { data: getDeptData, refetch: deptRefetch } = useQuery<{
     getDepts: Department[];
@@ -221,43 +224,55 @@ const AccountsView = () => {
 
   return (
     <>
-      <div className="h-full flex flex-col overflow-hidden p-2">
+      <div className="h-full relative flex flex-col overflow-hidden p-2">
         <div className=" flex justify-between  items-center p-3">
-          <h1 className="text-2xl font-medium text-slate-500">Accounts</h1>
-          <Link to="/register">
-            <button
-              type="button"
-              className="focus:outline-none font-black text-green-900 bg-green-500  hover:text-green-950 hover:bg-green-600 focus:ring-4 focus:ring-green-300 uppercase rounded-lg text-sm px-5 py-2.5 me-2 mb-2 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 border-2 border-green-800 cursor-pointer"
+          <h1 className="text-2xl text-gray-500 uppercase font-black">
+            Accounts
+          </h1>
+          <div className="flex gap-3 h-full">
+            <motion.div
+              className="h-full flex rounded-md shadow-md"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", duration: 0.6 }}
+            >
+              <label className="flex border h-full border-slate-500 rounded-md">
+                <div className=" inset-y-0 start-0 flex items-center px-2 pointer-events-none">
+                  <CiSearch />
+                </div>
+                <input
+                  type="search"
+                  id="default-search"
+                  name="default-search"
+                  autoComplete="off"
+                  value={search}
+                  className=" w-full focus:outline-none"
+                  placeholder="Search . . ."
+                  onChange={(e) => {
+                    setSearch(e.target.value);
+                    dispatch(setAdminUsersPage(1));
+                    setPage(adminUsersPage.toString());
+                  }}
+                  required
+                />
+              </label>
+            </motion.div>
+
+            <motion.div
+              onClick={() => setCreate(true)}
+              className="focus:outline-none shadow-md font-black text-green-900 bg-green-500  hover:text-green-950 hover:bg-green-600 focus:ring-4 focus:ring-green-300 uppercase rounded-lg text-sm px-5 py-2.5 me-2  dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 border-2 border-green-800 cursor-pointer"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", duration: 0.6, delay: 0.1 }}
             >
               Create Account
-            </button>
-          </Link>
+            </motion.div>
+          </div>
         </div>
-        <div className="flex justify-center ">
-          <label className="flex border border-slate-500 rounded-xl w-96">
-            <div className=" inset-y-0 start-0 flex items-center px-2 pointer-events-none">
-              <CiSearch />
-            </div>
-            <input
-              type="search"
-              id="default-search"
-              name="default-search"
-              autoComplete="off"
-              value={search}
-              className="p-2 w-full focus:outline-none"
-              placeholder="Search . . ."
-              onChange={(e) => {
-                setSearch(e.target.value);
-                dispatch(setAdminUsersPage(1));
-                setPage(adminUsersPage.toString());
-              }}
-              required
-            />
-          </label>
-        </div>
+        <div className="flex justify-center "></div>
 
-        <div className=" h-full overflow-y-hidden flex flex-col mx-5 mt-2 ">
-          <div className="text-xs text-gray-700 uppercase bg-gray-100 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-12 py-2 font-bold">
+        <div className=" h-full overflow-y-hidden flex flex-col mx-3 ">
+          <div className=" rounded-t-md pr-3 bg-gray-200 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-12 py-2 font-semibold">
             <div className="col-span-2 px-2">Name</div>
             <div>Username</div>
             <div>SIP ID</div>
@@ -271,10 +286,13 @@ const AccountsView = () => {
             <div></div>
           </div>
           <div className="overflow-y-auto">
-            {users?.map((user) => (
-              <div
+            {users?.map((user, index) => (
+              <motion.div
                 key={user._id}
-                className="grid grid-cols-12 text-xs py-2 hover:bg-blue-50 even:bg-gray-50 cursor-default items-center"
+                className="grid grid-cols-12 py-2 hover:bg-blue-50 even:bg-gray-100 cursor-default items-center"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ delay: index * 0.1 }}
               >
                 <div
                   className="font-medium px-2 text-gray-700 whitespace-nowrap dark:text-white truncate col-span-2"
@@ -282,32 +300,41 @@ const AccountsView = () => {
                 >
                   {user.name.toUpperCase()}
                 </div>
-                <div>{user.username}</div>
-                <div>{user.user_id}</div>
-                <div>{user.type}</div>
-                <div>{branchObject[user.branch]}</div>
-                <div className="pr-5">
-                  {user.departments
+                <div className="truncate">{user.username}</div>
+                <div>{user.user_id || "-"}</div>
+                <div>{user.type || "-"}</div>
+                <div>{branchObject[user.branch] || "-"}</div>
+                <div
+                  className="pr-5 truncate"
+                  title={user.departments
                     ?.map((e) => deptObject[e]?.toString())
                     .join(", ")}
-                    
+                >
+                  {user.departments
+                    ?.map((e) => deptObject[e]?.toString())
+                    .join(", ") || "-"}
                 </div>
-                <div className="pr-5">
-                  {user.buckets
+                <div
+                  className="pr-5 truncate"
+                  title={user.buckets
                     ?.map((b) => bucketObject[b]?.toString())
                     .join(", ")}
+                >
+                  {user.buckets
+                    ?.map((b) => bucketObject[b]?.toString())
+                    .join(", ") || "-"}
                 </div>
                 <div>
                   <FaCircle
                     className={`${
-                      user.active ? "text-green-400" : "text-gray-950"
+                      user.active ? "text-green-400" : "text-red-700"
                     } `}
                   />
                 </div>
                 <div>
                   <FaCircle
                     className={`${
-                      user.isOnline ? "text-green-400" : "text-gray-950"
+                      user.isOnline ? "text-green-400" : "text-red-700"
                     } `}
                   />
                 </div>
@@ -318,24 +345,40 @@ const AccountsView = () => {
                     <BsFillUnlockFill />
                   )}
                 </div>
-                <div className="flex justify-center gap-5">
+                <div className="flex justify-center items-center gap-2">
                   <Link
                     to="/user-account"
                     state={user}
-                    className="font-medium text-blue-600 dark:text-blue-500 hover:underline relative"
+                    className="font-medium bg-blue-700 hover:bg-blue-800 transition-all border-2 border-blue-900 rounded-sm px-2 py-1 text-blue-600 dark:text-blue-500 hover:underline relative"
                   >
                     <FaUserGear
-                      className="text-xl text-blue-500 hover:scale-125"
+                      className="text-xl text-white "
                       title="View"
                     />
                   </Link>
-                  <FaTrashAlt
-                    onClick={() => onClickDelete(user)}
-                    className="text-red-500 text-lg cursor-pointer hover:scale-125"
-                    title="Delete"
-                  />
+                  <div className="items-center flex ">
+                    <div
+                      onClick={() => onClickDelete(user)}
+                      className="bg-red-700 border-2 border-red-900  hover:bg-red-800 transition-all py-1 px-2 cursor-pointer  rounded-sm shadow-sm"
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        stroke-width="2"
+                        stroke="currentColor"
+                        className="size-5 text-white  "
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                        />
+                      </svg>
+                    </div>
+                  </div>
                 </div>
-              </div>
+              </motion.div>
             ))}
           </div>
         </div>
@@ -348,8 +391,31 @@ const AccountsView = () => {
             currentPage={adminUsersPage}
           />
         </div>
+        <AnimatePresence>
+          {create && (
+            <div className="absolute flex z-10 top-0 justify-center items-center left-0 w-full h-full">
+              <motion.div
+                onClick={() => setCreate(false)}
+                className="bg-[#00000050] cursor-pointer relative flex z-10 backdrop-blur-sm w-full h-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              ></motion.div>
+              <motion.div
+                className="absolute flex justify-center items-center z-20 bg-[#fff] p-2 rounded-md  "
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+              >
+                <RegisterView />
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
       </div>
-      {confirm && <Confirmation {...modalProps} />}
+      <AnimatePresence>
+        {confirm && <Confirmation {...modalProps} />}
+      </AnimatePresence>
     </>
   );
 };

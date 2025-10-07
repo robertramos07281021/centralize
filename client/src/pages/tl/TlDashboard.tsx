@@ -101,7 +101,7 @@ const TlDashboard  = () => {
 
   useEffect(()=> {
     if(findBucket && findBucket.principal ) {
-      dispatch(setIntervalTypes(IntervalsTypes.MONTHLY))
+      dispatch(setIntervalTypes(IntervalsTypes.DAILY))
     }
   },[findBucket])
 

@@ -13,8 +13,8 @@ type Data = {
   admin_fee_os: number
   bill_due_date:string 
   birthday:string 
-  endorsement_date: number
-  grass_date: number 
+  endorsement_date: string
+  grass_date: string 
   case_id: string
   contact: string
   contact_2: string
@@ -35,7 +35,6 @@ type Data = {
   max_dpd:number
   penalty_interest_os:number 
   principal_os:number
-  scenario:string
   tagging:string 
   total_os:number
   collectorID: string
@@ -46,6 +45,7 @@ type Data = {
   emergencyContactMobile: string
   dpd: number
   mpd: number
+  batch_no: string
 }
 
 const CREATE_CUSTOMER = gql `mutation
@@ -107,7 +107,8 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             platform_user_id,
             balance,
             max_dpd,
-            principal_os
+            principal_os,
+            batch_no
           } = row
 
           function normalizeContact(contact:string) {
@@ -154,6 +155,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
               return undefined;
             }
           };
+  
 
           const rows = {
             ...row,
@@ -166,28 +168,31 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             dst_fee_os: Number(dst_fee_os) || 0,
             balance: Number(balance) || Number(total_os),
             total_os: Number(total_os),
-            dpd: Number(dpd),
-            max_dpd: Number(max_dpd),
-            contact: contact ? normalizeContact(contact).toString().trim() : "",
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
-            address: address?.toString(),
-            address_2: address_2?.toString(),
-            address_3: address_3?.toString(),
+            address: String(address),
           }
-          
+
+
           if(emergencyContactMobile) {
             rows['emergencyContactMobile'] = normalizeContact(emergencyContactMobile)
           }
+
           if(platform_user_id) {
-            rows['platform_user_id'] = platform_user_id.toString().trim()
+            rows['platform_user_id'] = String(platform_user_id).trim()
           }
 
           if(case_id) {
-            rows['case_id'] = case_id.toString().trim()
+            rows['case_id'] = String(case_id).trim()
+          }
+          if(!isNaN(Number(dpd))) {
+            rows['dpd'] = Number(dpd)
+          }
+          if(!isNaN(Number(max_dpd))) {
+            rows['max_dpd'] = Number(dpd)
           }
 
           if(grass_date) {
-            rows['grass_date'] = safeDate(grass_date.toString())
+            rows['grass_date'] = safeDate(grass_date)
           }
 
           if(bill_due_date) {
@@ -195,20 +200,36 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           }
 
           if(endorsement_date) {
-            rows['endorsement_date'] = safeDate(endorsement_date.toString())
+            rows['endorsement_date'] = safeDate(endorsement_date)
           }
 
           if(birthday) {
             rows['birthday'] = safeDate(birthday)
           }
 
-          if(contact_2) {
-            rows['contact_2'] = normalizeContact(contact_2).toString().trim()
+          if(Boolean(contact)) {
+            rows['contact'] = String(normalizeContact(contact)).trim()
           }
 
-          if(contact_3) {
-            rows['contact_3'] = normalizeContact(contact_3).toString().trim()
+          if(Boolean(contact_2)) {
+            rows['contact_2'] = String(normalizeContact(contact_2)).trim()
           }
+
+          if(Boolean(contact_3)) {
+            rows['contact_3'] = String(normalizeContact(contact_3)).trim()
+          }
+
+          if(address_2) {
+            rows['address_2'] = String(address_2)
+          }
+          if(address_3) {
+            rows['address_3'] = String(address_3)
+          }
+
+          if(batch_no) {
+            rows['batch_no'] = String(batch_no).trim()
+          }
+
           return {
           ...rows
           }
@@ -234,7 +255,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     },
   });
   
-  
+  console.log(excelData)
   const [createCustomer,{loading}] = useMutation(CREATE_CUSTOMER, {
     onCompleted:() => {
       successUpload()
