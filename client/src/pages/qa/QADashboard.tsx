@@ -1,26 +1,23 @@
-
 import { motion } from "framer-motion";
 import { useState } from "react";
 import GaugeChart from "react-gauge-chart";
 
-
 const AdminDashboard = () => {
-  const [value, setValue] = useState(0.5); 
-  const [hehe, setHehe] = useState(40)
-
+  const [value, setValue] = useState(1);
+  const [hehe, setHehe] = useState(40);
 
   return (
     <div className="w-full h-full overflow-hidden relative flex flex-col">
       <div className="bg-blue-500 shadow-md py-3 px-4">
         <div className="flex items-center">
-          <div className="bg-blue-300 cursor-pointer rounded-md shadow-md hover:shadow-none transition-all hover:bg-blue-400 mr-3 py-2 px-3 h-full">
+          <div className="bg-blue-300 cursor-pointer rounded-md shadow-md hover:shadow-none transition-all hover:bg-gray-300 mr-3 py-2 px-3 h-full">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
               stroke-width="3"
               stroke="currentColor"
-              className="size-6 text-blue-600"
+              className="size-6 text-gray-500"
             >
               <path
                 stroke-linecap="round"
@@ -29,14 +26,14 @@ const AdminDashboard = () => {
               />
             </svg>
           </div>
-          <div className="bg-blue-300 cursor-pointer rounded-md shadow-md hover:shadow-none transition-all hover:bg-blue-400 mr-3 py-2 px-3 h-full">
+          <div className="bg-blue-300 cursor-pointer rounded-md shadow-md hover:shadow-none transition-all hover:bg-gray-300 mr-3 py-2 px-3 h-full">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
               stroke-width="3"
               stroke="currentColor"
-              className="size-6 text-blue-600"
+              className="size-6 text-gray-500"
             >
               <path
                 stroke-linecap="round"
@@ -53,7 +50,7 @@ const AdminDashboard = () => {
       <div className="flex flex-col">
         <div className="grid grid-cols-4 relative mt-3 gap-3 px-3 ">
           <motion.div
-            className="bg-blue-500 font-black uppercase text-blue-800 text-center border-4 rounded-md p-2 border-blue-800"
+            className="bg-gray-200 font-black uppercase text-gray-500 text-center border-4 rounded-md p-2 border-gray-500"
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring" }}
@@ -62,16 +59,16 @@ const AdminDashboard = () => {
             <div className=" text-5xl text-red-800">100</div>
           </motion.div>
           <motion.div
-            className="bg-blue-500 font-black uppercase text-blue-800 text-center border-4 rounded-md p-2 border-blue-800"
+            className="bg-gray-200 font-black uppercase text-gray-500 text-center border-4 rounded-md p-2 border-gray-500"
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", delay: 0.1 }}
           >
             <div>Total Calls</div>
-            <div className=" text-5xl text-red-800">101</div>
+            <div className=" text-5xl text-red-800">100</div>
           </motion.div>
           <motion.div
-            className="bg-blue-500 font-black uppercase text-blue-800 text-center border-4 rounded-md p-2 border-blue-800"
+            className="bg-gray-200 font-black uppercase text-gray-500 text-center border-4 rounded-md p-2 border-gray-500"
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", delay: 0.2 }}
@@ -80,7 +77,7 @@ const AdminDashboard = () => {
             <div className=" text-5xl text-red-800">100</div>
           </motion.div>
           <motion.div
-            className="bg-blue-500 font-black uppercase text-blue-800 text-center border-4 rounded-md p-2 border-blue-800"
+            className="bg-gray-200 font-black uppercase text-gray-500 text-center border-4 rounded-md p-2 border-gray-500"
             initial={{ opacity: 0, y: 100 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", delay: 0.3 }}
@@ -91,10 +88,11 @@ const AdminDashboard = () => {
         </div>
       </div>
       <div className="pt-4 px-16">
-        <motion.div className="flex gap-48"
-        initial={{opacity: 0}}
-        animate={{opacity: 1}}
-        transition={{delay: 0.7}}
+        <motion.div
+          className="flex gap-48"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.7 }}
         >
           <input type="radio" />
           <input type="radio" />
@@ -108,8 +106,8 @@ const AdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring" }}
         >
-          <div className="grid  rounded-md shadow border-4 border-blue-800 grid-rows-5 h-full bg-blue-500">
-            <div className="grid-cols-6 text-center grid items-center px-4 shadow-md rounded-t-md font-black text-sm text-blue-800 bg-blue-400">
+          <div className="grid  rounded-md shadow border-4 border-gray-500 grid-rows-5 h-full bg-gray-200">
+            <div className="grid-cols-6 text-center grid items-center px-4 shadow-md rounded-t-sm font-black text-sm text-gray-500 bg-gray-300">
               <div>Agent Name</div>
               <div>Total Calls</div>
               <div>Calls Answered</div>
@@ -125,39 +123,41 @@ const AdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", delay: 0.4 }}
         >
-          <div className=" rounded-md flex flex-col shadow border-4 border-blue-800 h-full bg-blue-500">
-            <div className="bg-blue-400 rounded-t-md flex flex-col w-full">
-              <div className="font-black uppercase text-center py-3 text-blue-800 text-2xl shadow-md ">
+          <div className=" rounded-md flex flex-col shadow border-4 border-gray-500 h-full bg-gray-200">
+            <div className="bg-gray-300 rounded-t-sm flex flex-col w-full">
+              <div className="font-black uppercase text-center py-3 text-gray-500 text-2xl shadow-md ">
                 Call Abandon Rate - By Department
               </div>
             </div>
             <div className="h-full grid grid-cols-5 grid-rows-1 px-10  items-end content-center justify-center">
               <div className="w-full h-full flex flex-col justify-end items-center">
-                <div className="mb-2 font-black text-blue-800">40%</div>
-                <div className={`w-16 h-[${hehe}%] duration-500 rounded-t-md bg-green-700 text-center transition-all`}></div>
+                <div className="mb-2 font-black text-gray-500">40%</div>
+                <div
+                  className={`w-16 h-[40%] duration-500 rounded-t-md bg-green-700 text-center transition-all`}
+                ></div>
               </div>
 
               <div className="w-full h-full flex flex-col justify-end items-center">
-                <div className="mb-2 font-black text-blue-800">25%</div>
+                <div className="mb-2 font-black text-gray-500">25%</div>
                 <div className="w-16 h-[25%] rounded-t-md bg-green-700 text-center"></div>
               </div>
 
               <div className="w-full h-full flex flex-col justify-end items-center">
-                <div className="mb-2 font-black text-blue-800">70%</div>
+                <div className="mb-2 font-black text-gray-500">70%</div>
                 <div className="w-16 h-[70%] rounded-t-md bg-green-700 text-center"></div>
               </div>
 
               <div className="w-full h-full flex flex-col justify-end items-center">
-                <div className="mb-2 font-black text-blue-800">55%</div>
+                <div className="mb-2 font-black text-gray-500">55%</div>
                 <div className="w-16 h-[55%] rounded-t-md bg-green-700 text-center"></div>
               </div>
 
               <div className="w-full h-full flex flex-col justify-end items-center">
-                <div className="mb-2 font-black text-blue-800">85%</div>
+                <div className="mb-2 font-black text-gray-500">85%</div>
                 <div className="w-16 h-[85%] rounded-t-md bg-red-700 text-center"></div>
               </div>
             </div>
-            <div className="px-10 border-t-2 border-blue-800 grid grid-cols-5 text-sm gap-3 truncate text-center font-black uppercase text-blue-900 justify-evenly py-2">
+            <div className="px-10 border-t-2 border-gray-500 grid grid-cols-5 text-sm gap-3 truncate text-center font-black uppercase text-gray-500 justify-evenly py-2">
               <div>Washing Machine</div>
               <div>Toaster</div>
               <div>Fridge</div>
@@ -171,17 +171,17 @@ const AdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", delay: 0.5 }}
         >
-          <div className=" rounded-md shadow  border-4 relative flex flex-col border-blue-800 h-full bg-blue-500">
-            <div className="bg-blue-400  rounded-t-sm justify-evenly py-2 shadow-md w-full flex text-sm ">
-              <div className="font-black uppercase text-center py-3 text-blue-800 ">
+          <div className=" rounded-md shadow  border-4 relative flex flex-col border-gray-500 h-full bg-gray-200">
+            <div className="bg-gray-300  rounded-t-sm justify-evenly py-2 shadow-md w-full flex text-sm ">
+              <div className="font-black uppercase text-center py-3 text-gray-500 ">
                 Overall Satisfaction Score
               </div>
-              <div className="font-black uppercase text-center py-3 text-blue-800 ">
+              <div className="font-black uppercase text-center py-3 text-gray-500 ">
                 Satisfaction Score - By Agent
               </div>
             </div>
             <div className="flex h-full">
-              <div className="flex items-center justify-center h-full flex-col w-full relative"  >
+              <div className="flex items-center justify-center h-full flex-col w-full relative">
                 <GaugeChart
                   id="gauge-chart"
                   nrOfLevels={100}
@@ -190,13 +190,14 @@ const AdminDashboard = () => {
                   arcWidth={0.3}
                   needleColor="#333"
                   arcsLength={[1]}
+                  
                   hideText
                 />
-                <div className="font-black uppercase text-blue-800">
+                <div className="font-black uppercase text-gray-500">
                   Satisfaction Score: 3.33
                 </div>
               </div>
-              <div className="flex flex-col w-full h-full py-3 px-3 items-end font-black text-blue-800">
+              <div className="flex flex-col w-full h-full py-3 px-3 items-end font-black text-gray-500">
                 <div className="h-full flex w-full">
                   <div className="h-full flex pr-5 border-r-2 flex-col text-end justify-evenly">
                     <div>Jim</div>
@@ -230,14 +231,14 @@ const AdminDashboard = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", delay: 0.6 }}
         >
-          <div className=" rounded-md shadow border-4 relative flex flex-col border-blue-800 h-full bg-blue-500">
-            <div className="bg-blue-400 rounded-t-md w-full">
-              <div className="font-black uppercase text-center py-3 text-blue-800 text-2xl shadow-md ">
+          <div className=" rounded-md shadow border-4 relative flex flex-col border-gray-500 h-full bg-gray-200">
+            <div className="bg-gray-300 rounded-t-md w-full">
+              <div className="font-black uppercase text-center py-3 text-gray-500 text-2xl shadow-md ">
                 SLA Limits
               </div>
             </div>
 
-            <div className="h-full flex text-blue-800 relative flex-col items-center">
+            <div className="h-full flex text-gray-500 relative flex-col items-center">
               <div className="h-full px-10 font-black items-center justify-center content-center flex relative w-full">
                 <div className="text-2xl w-full uppercase ">
                   Call answered in less than 180 seconds:

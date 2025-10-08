@@ -178,9 +178,9 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           }
 
           if(platform_user_id) {
-            rows['platform_user_id'] = String(platform_user_id).trim()
+            rows['platform_user_id'] = platform_user_id.toString().trim()
           }
-
+          
           if(case_id) {
             rows['case_id'] = String(case_id).trim()
           }
@@ -190,33 +190,42 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           if(!isNaN(Number(max_dpd))) {
             rows['max_dpd'] = Number(dpd)
           }
-
+          
           if(grass_date) {
             rows['grass_date'] = safeDate(grass_date)
           }
-
+          
           if(bill_due_date) {
             rows['bill_due_date'] = safeDate(bill_due_date)
           }
-
+          
           if(endorsement_date) {
             rows['endorsement_date'] = safeDate(endorsement_date)
           }
-
+          
           if(birthday) {
             rows['birthday'] = safeDate(birthday)
           }
-
+          
           if(Boolean(contact)) {
-            rows['contact'] = String(normalizeContact(contact)).trim()
+     
+            rows['contact'] = normalizeContact(contact).trim()
           }
 
           if(Boolean(contact_2)) {
-            rows['contact_2'] = String(normalizeContact(contact_2)).trim()
+            if(Number(contact_2) === 0 ) {
+              rows['contact_2'] = ""
+            } else {
+              rows['contact_2'] = String(normalizeContact(String(contact_2))).trim()
+            }
           }
 
           if(Boolean(contact_3)) {
-            rows['contact_3'] = String(normalizeContact(contact_3)).trim()
+            if(Number(contact_3) === 0 ) {
+              rows['contact_3'] = ""
+            } else {
+              rows['contact_3'] = String(normalizeContact(String(contact_3))).trim()
+            }
           }
 
           if(address_2) {
@@ -229,7 +238,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           if(batch_no) {
             rows['batch_no'] = String(batch_no).trim()
           }
-
+          
           return {
           ...rows
           }
@@ -254,7 +263,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       }
     },
   });
-  
   console.log(excelData)
   const [createCustomer,{loading}] = useMutation(CREATE_CUSTOMER, {
     onCompleted:() => {
@@ -284,6 +292,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       setFile([])
     } 
     else {
+      console.log(errorMessage)
       dispatch(setServerError(true))
     }
   }

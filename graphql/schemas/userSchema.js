@@ -8,18 +8,18 @@ const userTypeDefs = gql`
   }
 
   enum Break {
-    LUNCH 
+    LUNCH
     COFFEE
-    MEETING 
-    TECHSUPP 
-    CRBREAK 
-    COACHING 
+    MEETING
+    TECHSUPP
+    CRBREAK
+    COACHING
     HRMEETING
-    HANDSETNEGO 
+    HANDSETNEGO
     SKIPTRACING
-    CLINIC 
+    CLINIC
     PROD
-    WELCOME 
+    WELCOME
   }
 
   type Login {
@@ -54,6 +54,7 @@ const userTypeDefs = gql`
     targets: Target
     account_type: String
     vici_id: String
+    departmentDetails: Department
   }
 
   type PaginatedUsers {
@@ -75,8 +76,8 @@ const userTypeDefs = gql`
   type DeptUser {
     _id: ID
     name: String
-    user_id: String,
-    group: ID 
+    user_id: String
+    group: ID
     type: String
     isOnline: Boolean
     isLock: Boolean
@@ -86,34 +87,35 @@ const userTypeDefs = gql`
     attempt_login: Int
     targets: Target
     buckets: [Bucket]
-    departments: [Department] 
+    departments: [Department]
     vici_id: String
   }
 
   type CampaignUser {
-    campaign: ID,
+    campaign: ID
     assigned: Int
   }
   union FTE = Department | Bucket
 
   type AOM_FTE {
-    department: Department 
+    department: Department
     users: [Users]
   }
 
   type Query {
     getUsers(page: Int!, limit: Int!): PaginatedUsers!
+    getQAUsers(page: Int!, limit: Int!): PaginatedUsers!
     getUser(id: ID): Users
     getMe: Users
-    getBucketUser(bucketId:ID):[Users]
+    getBucketUser(bucketId: ID): [Users]
     getAomUser: [Users]
     findUsers(search: String!, page: Int!, limit: Int!): PaginatedUsers!
-    findDeptAgents:[DeptUser]
-    findAgents:[Users]
+    findDeptAgents: [DeptUser]
+    findAgents: [Users]
     getCampaignAssigned: [CampaignUser]
     getAOMCampaignFTE: [AOM_FTE]
     getHelperAgent: [Users]
-    getBucketTL:[Users]
+    getBucketTL: [Users]
   }
 
   input CreatingAccount {
@@ -121,40 +123,47 @@ const userTypeDefs = gql`
     username: String!
     type: String!
     departments: [ID]
-    branch: ID,
-    user_id: String 
-    buckets:[ID] 
-    account_type: String 
+    branch: ID
+    user_id: String
+    buckets: [ID]
+    account_type: String
     callfile_id: String
   }
 
   input UpdateAccount {
-    name:String!
-    type:String!
-    departments:[ID]
-    branch:ID
-    buckets:[ID]
+    name: String!
+    type: String!
+    departments: [ID]
+    branch: ID
+    buckets: [ID]
     user_id: String
     callfile_id: String
     account_type: String
-    id:ID!
+    id: ID!
     vici_id: String
   }
 
+  input UpdateQAInput {
+    userId: ID!
+    departments: [ID]
+    buckets: [ID]
+  }
+
   type Mutation {
-    createUser(createInput:CreatingAccount): Success
-    updateUser(updateInput:UpdateAccount): Success
-    updatePassword(password:String!, confirmPass:String!) : Users
-    resetPassword(id:ID!): Success
-    login(username:String!, password:String!) : Login
+    createUser(createInput: CreatingAccount): Success
+    updateUser(updateInput: UpdateAccount): Success
+    updatePassword(password: String!, confirmPass: String!): Users
+    resetPassword(id: ID!): Success
+    login(username: String!, password: String!): Login
     logout: Success
     adminLogout(id: ID): Success
-    logoutToPersist(id:ID!):Success
-    updateActiveStatus(id:ID!): Success
-    unlockUser(id:ID!): Success
-    authorization(password:String!):Success 
-    deleteUser(id:ID!):Success
-    updateUserVici_id(vici_id:String!):Success
+    logoutToPersist(id: ID!): Success
+    updateActiveStatus(id: ID!): Success
+    unlockUser(id: ID!): Success
+    authorization(password: String!): Success
+    deleteUser(id: ID!): Success
+    updateUserVici_id(vici_id: String!): Success
+    updateQAUser(input:UpdateQAInput): Success
   }
 `;
 

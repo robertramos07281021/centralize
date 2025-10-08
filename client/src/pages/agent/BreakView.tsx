@@ -145,7 +145,7 @@ const BreakView = () => {
     }
   };
 
-  return (
+  return userLogged && ['AGENT','QA'].includes(userLogged?.type) ? (
     <div className="w-full h-full flex flex-col p-5">
       <div>
         <AgentTimer/>
@@ -210,6 +210,8 @@ const BreakView = () => {
       </div>
 
     </div>
+  ) : (
+    <Navigate to="/"/>
   )
 }
 

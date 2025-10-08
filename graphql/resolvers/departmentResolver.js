@@ -3,6 +3,7 @@ import CustomError from "../../middlewares/errors.js";
 import Branch from "../../models/branch.js";
 import User from "../../models/user.js";
 import Bucket from "../../models/bucket.js";
+import mongoose from "mongoose";
 
 const deptResolver = {
   Query: {
@@ -42,6 +43,20 @@ const deptResolver = {
         throw new CustomError(error.message,500)
       }
     },
+    getDepartmentBucket: async(_,{depts})=> {
+      try {
+      
+        const deptsRes = (await Department.find({_id: {$in: depts.map(d=> new mongoose.Types.ObjectId(d))}})).map(d=> d.name)
+        if(deptsRes.length < 1) {
+          throw new CustomError("No Campaign selected",404)
+        }
+        const buckets = await Bucket.find({dept: {$in: deptsRes}}) 
+        
+        return buckets
+      } catch (error) {
+        throw new CustomError(error.message,500)
+      }
+    }
   },
   Dept: {
     aom: async(parent) => {

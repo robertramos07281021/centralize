@@ -180,7 +180,7 @@ const DashboardMinis = () => {
           </p>
         </div>
       </div>
-      <WithoutTargetDiv count={rpcCountData?.getAgentRPCCount?.dailyCount || 0} amount={data?.getAgentDailyCollection?.ptp_amount || 0} interval="Daily" color="red"/>
+      <WithoutTargetDiv count={data?.getAgentDailyCollection?.ptp_count || 0} amount={data?.getAgentDailyCollection?.ptp_amount || 0} interval="Daily" color="red"/>
       
       <WithTargetDiv count={Number(data?.getAgentDailyCollection?.ptp_kept_count) || 0 } interval="Daily" target={Number(userLogged?.targets?.daily) || 0} collected={data?.getAgentDailyCollection?.ptp_kept_amount || 0} color="blue" title="KEPT"/>
 

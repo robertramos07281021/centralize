@@ -492,7 +492,7 @@ const RegisterView = () => {
                     .toString()
                     .includes(data.type as Type)) &&
                 "bg-gray-200"
-              } w-full text-sm border rounded-lg flex justify-between ${
+              } w-full text-sm border  rounded-lg flex justify-between ${
                 selectDept && data.branch
                   ? "border-blue-500"
                   : "border-slate-300"
@@ -562,7 +562,7 @@ const RegisterView = () => {
               data.branch &&
               branchDeptData &&
               branchDeptData?.getBranchDept?.length > 0 && (
-                <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-70 overflow-y-auto border z-40">
+                <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h- rounded-b-md shadow-md overflow-y-auto border z-40">
                   {branchDeptData?.getBranchDept.map((e) => (
                     <label key={e.id} className="flex gap-2">
                       <input
@@ -637,7 +637,7 @@ const RegisterView = () => {
               />
             </div>
             {selectBucket && data.departments.length > 0 && (
-              <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-50 overflow-y-auto border z-40">
+              <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-20 rounded-b-md overflow-y-auto border z-40">
                 {getDeptBucketData?.getBuckets.map((e, index) => (
                   <div key={index} className="py-0.5">
                     <div className="uppercase text-sm">{e.dept}</div>

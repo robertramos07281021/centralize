@@ -2,7 +2,6 @@ import { gql } from "graphql-tag";
 
 const bucketTypeDefs = gql`
 
-
   type Bucket {
     _id:ID
     name: String

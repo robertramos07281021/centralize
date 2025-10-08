@@ -10,7 +10,7 @@ const branchTypeDefs = gql`
     success: Boolean
     message: String
   }
-  
+    
   type Query {
     getBranches:[Branch]
     getBranch(name:String):Branch 

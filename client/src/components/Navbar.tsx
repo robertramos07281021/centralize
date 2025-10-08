@@ -137,6 +137,7 @@ const Navbar = () => {
       dispatch(setServerError(true))
     }
   })
+  
 
   const [popUpBreak, setPopUpBreak] = useState<boolean>(false)
 
@@ -153,7 +154,7 @@ const Navbar = () => {
   useSubscription<{accountOffline:AgentLock}>(OFFLINE_USER, {
     onData: async({data}) => {
       if(data) {
-        if(data.data?.accountOffline.message === "AGENT_LOCK" && data.data?.accountOffline.agentId === userLogged?._id ){
+        if(data.data?.accountOffline.message === "OFFLINE_USER" && data.data?.accountOffline.agentId === userLogged?._id ){
           await refetch()
         }
       }

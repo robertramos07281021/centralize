@@ -8,7 +8,7 @@ const deptTypeDefs = gql`
     branch: String
     aom: String
   }
-  
+
   type Aom {
     _id: ID
     name: String
@@ -37,6 +37,7 @@ const deptTypeDefs = gql`
     getDept(name: String): Department
     getBranchDept(branch:String) : [Department]
     getAomDept: [Department]
+    getDepartmentBucket(depts:[ID]):[Bucket]
   }
 
   type Mutation {

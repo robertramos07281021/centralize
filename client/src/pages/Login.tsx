@@ -98,7 +98,8 @@ const Login = () => {
     CEO: "/ceo-dashboard",
     OPERATION: "/operation-dashboard",
     MIS: "/mis-dashboard",
-    QA: '/qa-agents-dashboard'
+    QA: '/qa-agents-dashboard',
+    QASUPERVISOR: '/qasv-dashboard'
   }), []);
 
   const [eye, setEye] = useState<boolean>(false)
