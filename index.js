@@ -63,7 +63,7 @@ function getMillisecondsUntilEndOfDay() {
 
 const app = express()
 connectDB()
-const allowedOrigins = [process.env.MY_FRONTEND,'http://localhost:4000',"http://172.16.24.31:4000"]
+const allowedOrigins = [process.env.MY_FRONTEND,'http://localhost:4000',`http://${process.env.MY_IP}:4000`]
 
 app.use(cors({
   origin: function (origin, callback) {
