@@ -864,7 +864,6 @@ const userResolvers = {
         }
 
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500);
       }
     }

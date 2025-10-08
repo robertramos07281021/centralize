@@ -8,11 +8,6 @@ import { Link, useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
 
 
-type DeptBranchBucket = {
-  _id: string;
-  name: string;
-};
-
 const BUCKET_AGENT = gql`
   query getBucketUser($bucketId: ID) {
     getBucketUser(bucketId: $bucketId) {
@@ -76,7 +71,6 @@ const QAAgentViews = () => {
   }, [refetch, bucketRefetching]);
 
   const dispatch = useAppDispatch();
-  console.log(newMapBucjket, "gA?");
 
   return (
     <div className="overflow-hidden flex h-full w-full flex-col">

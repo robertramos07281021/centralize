@@ -112,18 +112,12 @@ const BucketSection = () => {
   })
 
   useEffect(()=> {
-    const timer = setTimeout(async()=>{
-      try {
-        await refetch()
-        await bucketRefetch()
-      } catch (error) {
-        console.log(error)
-        dispatch(setServerError(true))
-      }
-    })
-    return () => clearTimeout(timer)
+    const timer = async()=>{
+      await refetch()
+      await bucketRefetch()
+    }
+    timer()
   },[dept,refetch,bucketRefetch])
-
 
 // mutations ==============================================
 

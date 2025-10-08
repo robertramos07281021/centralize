@@ -7,7 +7,6 @@ import { RootState } from "../redux/store.ts"
 
 const QASVRoute = () => {
   const {userLogged} = useSelector((state:RootState)=> state.auth)
-  console.log(userLogged?.type === "QASUPERVISOR")
   return userLogged?.type === "QASUPERVISOR" ? (
     <Wrapper>
       <Navbar/>

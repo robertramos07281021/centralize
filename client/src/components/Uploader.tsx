@@ -263,7 +263,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       }
     },
   });
-  console.log(excelData)
+
   const [createCustomer,{loading}] = useMutation(CREATE_CUSTOMER, {
     onCompleted:() => {
       successUpload()
@@ -292,7 +292,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       setFile([])
     } 
     else {
-      console.log(errorMessage)
       dispatch(setServerError(true))
     }
   }

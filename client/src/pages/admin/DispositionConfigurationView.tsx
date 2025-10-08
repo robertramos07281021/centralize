@@ -115,7 +115,7 @@ const DispositionConfigurationView = () => {
   const [dispoData, setDispoData] = useState<Dispotype[]>([]);
   const [search, setSearch] = useState<string>("");
 
-  console.log(dispoData, "fu");
+
   useEffect(() => {
     if (dispotypeData) {
       if (search) {
@@ -125,7 +125,6 @@ const DispositionConfigurationView = () => {
             e.code.toLowerCase().includes(search.toLowerCase())
         );
         setDispoData(filterDispotype);
-        console.log(filterDispotype, "eto");
       } else {
         setDispoData(dispotypeData.getDispositionTypes);
       }

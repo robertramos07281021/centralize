@@ -19,7 +19,6 @@ const CallFileContent = () => {
     GET_DEPTx
   );
 
-  console.log(data, "haha?")
 
   if (loading) return <div>Loading...</div>;
   if (error) return <div>Error: {error.message}</div>;

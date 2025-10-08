@@ -787,60 +787,6 @@ const productionResolver = {
               },
               ptp_count: {
                 $sum: {
-                  // $cond: [
-                  //   {
-                  //     $and: [
-                  //       '$isToday',
-                  //       {
-                  //         $or: [
-                  //           {
-                  //             $and: [
-                  //               { $eq: [ "$havePd", false ] },
-                  //               { $eq: ['$code','PTP'] },
-                  //             ]
-                  //           },
-                  //           {
-                  //             $and: [
-                  //               { 
-                  //                 $gte: [
-                  //                   '$createdAt',
-                  //                   { $dateSubtract: { startDate: '$$NOW', unit: 'day', amount: 3 } }
-                  //                 ]
-                  //               },
-                  //               { $eq: ['$code','PTP'] },
-                  //               { $eq: ["$havePd", false ] },
-                  //               { $eq: ['$selectivesDispo', false] },
-                  //             ]
-                  //           },
-                  //           {
-                  //             $and: [
-                  //               { $eq: ['$code','PAID'] },
-                  //               { $eq: ['$ptp',true] },
-                  //               { $eq: ["$havePd", false ] },
-                  //               { $eq: ['$selectivesDispo',false ] },
-                  //             ]
-                  //           },
-                  //           // {
-                  //           //   $and: [
-                  //           //     { $eq: ['$code','PAID'] },
-                  //           //     { $eq: ['$ptp',false] },
-                  //           //     { $eq: ["$havePd", false] },
-                  //           //     { $eq: ['$selectivesDispo',false]},
-                  //           //     {
-                  //           //       $eq: [
-                  //           //         { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                  //           //         "$payment_date"
-                  //           //       ]
-                  //           //     }
-                  //           //   ]
-                  //           // },
-                  //         ]
-                  //       }
-                  //     ]
-                  //   }, 
-                  //   1,
-                  //   0
-                  // ]
                   $cond: [
                     {
                       $and: [
@@ -1033,7 +979,6 @@ const productionResolver = {
             }
           }
         ])
-        console.log(agentCollection)
         return agentCollection[0]
       } catch (error) {
         throw new CustomError(error.message, 500)        

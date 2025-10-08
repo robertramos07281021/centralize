@@ -488,8 +488,8 @@ const CallfilesViews:React.FC<Props> = ({bucket, status, setTotalPage, setCanUpl
       setCallfile(null)
       setExcelData([])
     },
-    onError: (error) => {
-      console.log(error)
+    onError: () => {
+      dispatch(setServerError(true))
     }
   })
   const submitSetSelective = useCallback(()=> {

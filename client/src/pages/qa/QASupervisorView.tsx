@@ -3,7 +3,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { VscLoading } from "react-icons/vsc";
 import Confirmation from "../../components/Confirmation.tsx";
-import { skip } from "node:test";
 import { useAppDispatch } from "../../redux/store.ts";
 import { setServerError, setSuccess } from "../../redux/slices/authSlice.ts";
 import Loading from "../Loading.tsx";
@@ -175,7 +174,6 @@ const QASupervisorView = () => {
       await usersRefetch()
     },
     onError: (error) => {
-      console.log(error)
       setModalProps({
         message: "",
         toggle: "UPDATE" as "UPDATE",
