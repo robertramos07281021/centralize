@@ -563,7 +563,7 @@ function canProceed(
         <h1 className="text-center font-bold text-slate-600 xl:text-base 2xl:text-lg mb-5">Customer Disposition</h1>
         {
           selectedCustomer?._id &&
-          <div className="flex xl:gap-10 gap-2 justify-center select-none">
+          <div className="flex xl:gap-5 gap-2 justify-center select-none">
             <div className="flex flex-col gap-2 w-full">
               <label className="flex flex-col 2xl:flex-row items-center">
                 <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs 2xl:w-2/6 leading-4">Disposition</p>
@@ -619,7 +619,6 @@ function canProceed(
                       id="payment"
                       required={requiredDispo.includes(selectedDispo)}
                       value={data.payment ?? ""}
-                  
                       onChange={(e)=> {
                         if(e.target.value === Payment.FULL) {
                           setData(prev=> ({...prev, amount: selectedCustomer.balance.toFixed(2)}))

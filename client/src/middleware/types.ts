@@ -64,6 +64,7 @@ export type CustomerData = {
   gender:string
   grass_region:string 
   interest_os:number
+  batch_no:string
   late_charge_os:number
   max_dpd:number
   dpd: number
@@ -164,6 +165,7 @@ export type Search = {
   month_pd: number
   assigned: string
   assigned_date: string
+  batch_no: string
   account_update_history: AccountUpdateHistory[]
   out_standing_details: outStandingDetails
   grass_details: grassDetails

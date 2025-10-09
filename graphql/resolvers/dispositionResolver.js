@@ -1602,6 +1602,7 @@ const dispositionResolver = {
         let result = {}
 
         if(buckets.principal) {
+          
           const customerAccount = await CustomerAccount.aggregate([
             {
               $lookup: {
@@ -1636,7 +1637,8 @@ const dispositionResolver = {
             {
               $match: {
                 callfile: {$eq: callfile._id},
-                current_disposition: { $exists: true }
+                current_disposition: { $exists: true },
+                createdAt: selectedInterval
               }
             },
             {
@@ -1667,6 +1669,7 @@ const dispositionResolver = {
               target: callfile.target
             }
           })
+          console.log(result)
         } else {
           const existingCallfile = await Callfile.findOne({bucket:buckets._id,active: {$eq: true}}).lean()
 
@@ -1677,7 +1680,7 @@ const dispositionResolver = {
           const findDisposition = await Disposition.aggregate([
             {
               $match: {
-                callfile: {$in: AllBucketCallfile.map(e=> new mongoose.Types.ObjectId(e))},
+                callfile: { $in: AllBucketCallfile.map(e=> new mongoose.Types.ObjectId(e)) },
                 createdAt: selectedInterval
               }
             },

@@ -8,6 +8,9 @@ import gql from "graphql-tag"
 import { useMutation } from "@apollo/client"
 import AgentTimer from "./AgentTimer"
 import { FaEye, FaEyeSlash  } from "react-icons/fa";
+import Wrapper from "../../components/Wrapper.tsx"
+import Navbar from "../../components/Navbar.tsx"
+import NavbarExtn from "../../components/NavbarExtn.tsx"
 
 
 type UpdateProduction = {
@@ -44,6 +47,7 @@ type LoginProd = {
 const BreakView = () => {
   const dispatch = useAppDispatch()
   const navigate = useNavigate()
+
   const {breakValue,userLogged,breakTimer,start} = useSelector((state:RootState)=> state.auth)
   const [password, setPassword] = useState<string>('')
   const [requried, setRequired] = useState<boolean>(false)
@@ -146,6 +150,9 @@ const BreakView = () => {
   };
 
   return userLogged && ['AGENT','QA'].includes(userLogged?.type) ? (
+    <Wrapper>
+      <Navbar/>
+      <NavbarExtn/>
     <div className="w-full h-full flex flex-col p-5">
       <div>
         <AgentTimer/>
@@ -173,7 +180,7 @@ const BreakView = () => {
                   className="text-sm py-1 outline-0 px-2 w-65" 
                   placeholder="Enter your password" 
                   onChange={(e)=> setPassword(e.target.value)}
-                />
+                  />
                 {
                   eye ? (
                     <div className="px-2" onClick={()=> setEye(false)}>
@@ -210,6 +217,7 @@ const BreakView = () => {
       </div>
 
     </div>
+  </Wrapper>
   ) : (
     <Navigate to="/"/>
   )

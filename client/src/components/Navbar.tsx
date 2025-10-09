@@ -128,7 +128,8 @@ const Navbar = () => {
   const {userLogged,selectedCustomer,breakValue, serverError, success} = useSelector((state:RootState)=> state.auth)
   const modalRef = useRef<HTMLDivElement>(null)
   const {error, data, refetch} = useQuery<{ getMe: UserInfo }>(myUserInfos,{notifyOnNetworkStatusChange: true,})
-  const [poPupUser, setPopUpUser] = useState<boolean>(false) 
+  const [poPupUser, setPopUpUser] = useState<boolean>(false)
+
   const [deselectTask] = useMutation(DESELECT_TASK,{
     onCompleted: ()=> {
       dispatch(setDeselectCustomer())
@@ -138,6 +139,12 @@ const Navbar = () => {
     }
   })
   
+  useEffect(()=> {
+    const refetching = async()=> {
+      await refetch()  
+    }
+    refetching()
+  },[])
 
   const [popUpBreak, setPopUpBreak] = useState<boolean>(false)
 
@@ -150,7 +157,7 @@ const Navbar = () => {
       }
     }
   })
-
+  
   useSubscription<{accountOffline:AgentLock}>(OFFLINE_USER, {
     onData: async({data}) => {
       if(data) {
@@ -320,7 +327,7 @@ const Navbar = () => {
         <SuccessToast successObject={success || null} close={()=> dispatch(setSuccess({success:false, message:"",isMessage: false}))}/>
       }
       <div className="sticky top-0 z-40 print:hidden">
-        <div className="p-2 bg-blue-500 flex justify-between items-center ">
+        <div className="py-2 px-5 bg-blue-500 flex justify-between items-center ">
           <div className="flex text-2xl gap-2 font-medium items-center text-white italic">
             <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
             Collections System
@@ -330,7 +337,7 @@ const Navbar = () => {
             }
           </div>
           <div className="p-1 flex gap-2 text-xs z-50">
-            <p className="font-medium text-white italic flex items-center">Hello&nbsp;<span className="uppercase">{userLogged?.name}</span></p>
+            <p className="font-black text-lg mr-2 flex items-center text-blue-800 text-shadow-sm uppercase">Hello!&nbsp;<span className="uppercase">{userLogged?.name}</span></p>
             <BsFillPersonVcardFill className="text-4xl cursor-pointer " onClick={()=> {setPopUpUser(!poPupUser); setPopUpBreak(false)}}/>
             { poPupUser &&
               <div ref={modalRef} className="w-40 h-auto border border-slate-200 shadow-xl shadow-black/8 rounded-xl top-13 end-5 bg-white absolute flex flex-col p-2 text-slate-500 font-medium">

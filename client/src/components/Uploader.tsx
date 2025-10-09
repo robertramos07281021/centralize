@@ -251,6 +251,8 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
     }
   }, []);
 
+
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [], 
@@ -292,6 +294,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       setFile([])
     } 
     else {
+      console.log(errorMessage)
       dispatch(setServerError(true))
     }
   }

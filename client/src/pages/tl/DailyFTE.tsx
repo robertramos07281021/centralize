@@ -2,7 +2,7 @@ import { useQuery } from "@apollo/client"
 import gql from "graphql-tag"
 import { useEffect } from "react"
 import { RootState } from "../../redux/store"
-
+import { motion } from "framer-motion"
 import { useSelector } from "react-redux"
 
 type DailyFTEType = {
@@ -61,11 +61,15 @@ const DailyFTE = () => {
   const FTEPercent = (Number(findData?.online) / Number(findCampaignAssignedData?.assigned)) * 100
 
   return (  
-    <div className=' col-span-2 rounded-xl grid grid-cols-3 gap-2' >
+    <motion.div className=' col-span-2 rounded-xl grid grid-cols-3 gap-2' 
+      initial={{opacity: 0, y: 10}}
+      animate={{opacity: 1, y: 0}}
+      transition={{type: 'spring', duration: 1}}
+    >
       <DivFTEs label="Expected Calling Agents" value={findCampaignAssignedData?.assigned || 0}/>
       <DivFTEs label="Actual" value={findData?.online || 0}/>
       <DivFTEs label="Attendance %" value={`${isNaN(FTEPercent) ? 0 : FTEPercent.toFixed(2)}%`}/>
-    </div>
+    </motion.div>
   )
 }
 

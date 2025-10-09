@@ -71,7 +71,6 @@ const userResolvers = {
     findUsers: async (_, { search, page, limit }) => {
       try {
         const searchFilter = { $regex: search, $options: "i" };
-
         const res = await User.aggregate([
           {
             $lookup: {

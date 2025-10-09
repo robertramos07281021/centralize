@@ -152,6 +152,7 @@ const customerTypeDefs = gql`
     balance: Float
     dpd: Int
     paid_amount: Float
+    batch_no:String
     out_standing_details: outStandingDetails
     grass_details: grassDetails
     account_bucket: Bucket
@@ -187,6 +188,7 @@ const customerTypeDefs = gql`
     assigned: ID
     assigned_date: String
     paid_amount: Float
+    batch_no:String
     out_standing_details: outStandingDetails
     account_update_history: [AccountUpdateHistory]
     grass_details: grassDetails

@@ -43,7 +43,7 @@ const ActivationButton:React.FC<ButtonProps> = ({id, active, refetch}) => {
     <label className="flex h-full relative p-0.5">
       <div className={`h-4 w-8 rounded-full border bg-blue-300 border-slate-400`}>
       </div>
-      <div className={`h-5 w-5 border rounded-full border-slate-300 absolute ${active ? "left-0 bg-blue-700" : "right-0 bg-slate-700" } top-0 z-50 bg-blue-700 duration-200 ease-in-out`}></div>
+      <div className={`h-5 w-5 border rounded-full border-slate-300 absolute ${active ? "left-0 bg-blue-700" : "right-0 bg-slate-700" } top-0 z-20 bg-blue-700 duration-200 ease-in-out`}></div>
       <input 
         type="checkbox" 
         name="acitvation" 

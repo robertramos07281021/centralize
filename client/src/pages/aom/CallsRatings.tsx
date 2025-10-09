@@ -172,7 +172,7 @@ const unconnected = rawCounts.map((e) => -e.unconnected)
   }
 
   return (
-    <div className="row-start-3 col-start-3 bg-white col-span-full row-span-2 rounded-xl border border-slate-200 shadow-sm shadow-black/20 p-2">
+    <div className="row-start-3  col-start-3 bg-white col-span-full row-span-2 rounded-xl border-slate-200 shadow-sm shadow-black/20 p-2">
       <Bar options={options} data={data} />
     </div>
   )

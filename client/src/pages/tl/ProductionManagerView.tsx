@@ -72,7 +72,7 @@ const ProductionManagerView = () => {
       <div className="h-full flex flex-col ">
         <div className="p-5 flex gap-20 ">
           <div className="w-1/2 flex flex-col gap-2">
-            <h1 className="lg:text-sm 2xl:text-sm font-medium text-gray-600 text-center">Call files</h1>
+            <h1 className=" font-black uppercase text-2xl text-gray-600">Call files</h1>
             <div className="flex gap-10 h-full items-end">
                <label className="flex flex-col w-1/2 gap-2">
                 <p className="lg:text-xs 2xl:text-sm font-bold text-gray-400">Bucket</p>

@@ -43,7 +43,7 @@ const Targets= () => {
   const pathName = location.pathname.slice(1)
   const isTLDashboard = ['tl-dashboard','aom-dashboard']?.includes(pathName)
 
-  const {data:targetsData, refetch} = useQuery<{getTargetPerCampaign:Target}>(TARGET_PER_BUCKET,{variables: {bucket: selectedBucket, interval: intervalTypes},skip: !isTLDashboard || !selectedBucket, notifyOnNetworkStatusChange: true})
+  const {data:targetsData, refetch} = useQuery<{getTargetPerCampaign:Target}>(TARGET_PER_BUCKET,{variables: {bucket: selectedBucket, interval: intervalTypes},skip: !isTLDashboard, notifyOnNetworkStatusChange: true})
 
   const {data:tlBucketData, refetch:deptBucketRefetch} = useQuery<{getDeptBucket:Bucket[]}>(TL_BUCKET,{notifyOnNetworkStatusChange: true})
 

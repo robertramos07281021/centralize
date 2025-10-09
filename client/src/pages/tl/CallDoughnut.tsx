@@ -3,6 +3,7 @@ import { ChartData, ChartOptions } from "chart.js"
 import gql from "graphql-tag"
 import { useCallback, useEffect, useState } from "react"
 import { Doughnut } from "react-chartjs-2"
+import { motion } from "framer-motion"
 
 
 const GET_DISPOSITION_TYPES = gql`
@@ -129,11 +130,15 @@ const CallDoughnut:React.FC<ComponentsProps> = ({totalAccounts,dispoData}) => {
             dispoData.map((dd,index)=> {
               const findDispotype = disposition?.getDispositionTypes.find(x=> x.code === dd.code)
               return (
-                <div key={index} className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 py-0.5 hover:scale-105 cursor-default hover:font-bold">
-                <div style={{backgroundColor: `${positive.includes(dd?.code) ? `oklch(62.7% 0.194 149.214)` : `oklch(63.7% 0.237 25.331)`}`}} className="px-2">{dd.code} </div>
+                <motion.div key={index} className="lg:text-xs 2xl:text-base text-slate-900 font-medium grid grid-cols-3 gap-2 py-0.5 hover:scale-105 transition-all cursor-pointer hover:font-bold"
+                initial={{opacity: 0}}
+                animate={{opacity: 1}}
+                transition={{delay: index * 0.05}}
+                >
+                <div style={{backgroundColor: `${positive.includes(dd?.code) ? `oklch(62.7% 0.194 149.214)` : `oklch(63.7% 0.237 25.331)`}`}} className="px-2 font-black py-1 rounded-sm shadow-sm">{dd.code}  </div>
                 <div>{findDispotype?.name}</div>
                 <div className="text-center">{dispositionCount(dd.code)} - {percentageOfDispo(dd.code).toFixed(2)}%</div>
-              </div>
+              </motion.div>
               )
             })
           }

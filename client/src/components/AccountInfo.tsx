@@ -306,7 +306,20 @@ const AccountInfo = forwardRef<ChildHandle,{}>((_,ref) => {
           userLogged?.type !== "AGENT" && !updateCustomerAccounts && Math.ceil(selectedCustomer.balance) > 0 && selectedCustomer.account_bucket.can_update_ca && 
           <button className="absolute right-5 py-2.5 top-0 hover:bg-orange-600 bg-orange-400 font-medium rounded-lg text-sm cursor-pointer px-5 text-white" onClick={()=> setUpdateCustomerAccounts(prev => !prev)}>Update</button>
         }
-        <h1 className="text-center font-bold text-slate-600 xl:text-base 2xl:text-lg mb-5">Account Information</h1>
+        <h1 className="text-center font-bold text-slate-600 xl:text-base 2xl:text-lg">Account Information</h1>
+
+        {
+          selectedCustomer.batch_no &&
+          <div className=" flex items-center justify-center text-gray-600">
+            <div className="w-1/4 flex flex-col text-center">
+              <div className="font-bold text-gray-800 text-sm">Batch No.</div>
+              <div className="border rounded-md border-slate-500 text-sm py-1.5 bg-gray-100">
+                {selectedCustomer.batch_no}
+              </div>
+            </div>
+          </div>
+        }
+        
         <div className="flex xl:gap-10 gap-2 justify-center">
           <div className="flex flex-col gap-2  w-full">
             <FieldsDiv label="Bucket" value={ selectedCustomer?.account_bucket?.name } endorsementDate={null}/>

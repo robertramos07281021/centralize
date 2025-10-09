@@ -202,6 +202,7 @@ const customerResolver = {
               bill_due_date: "$bill_due_date",
               max_dpd: "$ca.max_dpd",
               dpd: "$ca.dpd",
+              batch_no: "$ca.batch_no",
               account_update_history: '$ca.account_update_history',
               month_pd: "$ca.month_pd",
               balance: "$ca.balance",

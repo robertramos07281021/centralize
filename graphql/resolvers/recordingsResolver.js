@@ -49,7 +49,7 @@ const recordingsResolver = {
           "172.20.21.35" : "MIXED CAMPAIGN",
           "172.20.21.67" : "MIXED CAMPAIGN NEW",
           '172.20.21.97' : "UB",
-          '172.20.21.70' : "MIXED CAMPAIGN NEW 2"
+          '172.20.21.70' : "ATOME"
         }
           function checkDate(number) {
           return number > 9 ? number : `0${number}`;

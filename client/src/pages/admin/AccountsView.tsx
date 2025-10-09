@@ -114,6 +114,7 @@ const AccountsView = () => {
   const location = useLocation();
   const isAccounts = location.pathname.includes("accounts");
   const [create, setCreate] = useState(false);
+  const [updateModal, setUpdateModal] = useState(false)
 
   const { data: getDeptData, refetch: deptRefetch } = useQuery<{
     getDepts: Department[];
@@ -356,6 +357,8 @@ const AccountsView = () => {
                       title="View"
                     />
                   </Link>
+
+                  
                   <div className="items-center flex ">
                     <div
                       onClick={() => onClickDelete(user)}
@@ -393,6 +396,28 @@ const AccountsView = () => {
         </div>
         <AnimatePresence>
           {create && (
+            <div className="absolute flex z-10 top-0 justify-center items-center left-0 w-full h-full">
+              <motion.div
+                onClick={() => setCreate(false)}
+                className="bg-[#00000050] cursor-pointer relative flex z-10 backdrop-blur-sm w-full h-full"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              ></motion.div>
+              <motion.div
+                className="absolute flex justify-center items-center z-20 bg-[#fff] p-2 rounded-md  "
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+              >
+                <RegisterView />
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {updateModal && (
             <div className="absolute flex z-10 top-0 justify-center items-center left-0 w-full h-full">
               <motion.div
                 onClick={() => setCreate(false)}

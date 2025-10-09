@@ -30,6 +30,7 @@ const MY_TASKS = gql`
       month_pd
       assigned
       assigned_date
+      batch_no
       emergency_contact {
         name
         mobile
@@ -132,6 +133,7 @@ const GROUP_TASKS =gql`
         month_pd
         assigned
         assigned_date
+        batch_no
         emergency_contact {
           name
           mobile
