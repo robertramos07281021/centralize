@@ -1113,14 +1113,16 @@ const callfileResolver = {
           }
         ])
 
+      
 
-        const newMap = TotalRPC.map((result) => {
-          const checkTools = findCustomersCallfile.find(x => result._id === x.contact_method)
-          const isThier = checkTools ? checkTools : {ptp: 0, kept: 0, paid: 0}
+        const newMap = findCustomersCallfile.map((result) => {
+          const checkTools = TotalRPC.find(x => x._id === result.contact_method)
+          const isThier = checkTools ? checkTools : 0
+
           return {
-            ...isThier,
-            contact_method: result._id,
-            rpc: result.isRPC
+            ...result,
+            contact_method: result.contact_method,
+            rpc: isThier.isRPC
           }
         })
 

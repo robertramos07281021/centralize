@@ -4,27 +4,21 @@ const customerTypeDefs = gql`
   scalar DateTime
 
   input CustomerData {
-  address: String
-  address_2: String
-  address_3: String
+  address: [String]
   admin_fee_os: Float
   bill_due_date: String 
   birthday: String
   endorsement_date: String
   grass_date: String
   case_id: String      
-  contact: String
-  contact_2: String
-  contact_3: String
+  contact: [String]
   platform_user_id: String 
   credit_user_id: String    
   customer_name: String
   dpd_grp: String
   dst_fee_os: Float
   balance: Float
-  email: String
-  email_2: String
-  email_3: String
+  email: [String]
   gender: String
   grass_region: String 
   interest_os: Float

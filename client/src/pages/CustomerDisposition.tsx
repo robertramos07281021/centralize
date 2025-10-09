@@ -345,8 +345,6 @@ const CustomerDisposition = () => {
     notifyOnNetworkStatusChange: true,
   });
 
-  console.log(selectedCustomer);
-
   const { data: dispotypes } = useQuery<{ getDispositionTypes: Dispotype[] }>(
     DISPOTYPES
   );

@@ -1015,45 +1015,15 @@ const customerResolver = {
         const newCallfile = new Callfile({name: callfile, bucket: findBucket._id, totalAccounts: input.length || 0,totalPrincipal: callfilePrincipal || 0,totalOB: callfileOB})
 
         await Promise.all(input.map(async (element) => {
-          const contact_no = []
-          const addresses = []
-          const emails = []
-          if(element.contact) {
-            contact_no.push(`${element.contact}`)
-          }
-          if(element.contact_2) {
-            contact_no.push(`${element.contact_2}`)
-          }
-          if(element.contact_3) {
-            contact_no.push(`${element.contact_3}`)
-          }
-          if(element.address) {
-            addresses.push(element.address)
-          }
-          if(element.address_2) {
-            addresses.push(element.address_2.toString())
-          }
-          if(element.address_3) {
-            addresses.push(element.address_3.toString())
-          }
-
-          if(element.email) {
-            emails.push(element.email)
-          }
-          if(element.email_2) {
-            emails.push(element.email_2)
-          }
-          if(element.email_3) {
-            emails.push(element.email_3)
-          }
+        
           const customer = new Customer({
             fullName: element.customer_name,
             platform_customer_id: element.platform_user_id || null,
             gender: element.gender || null,
             dob: element.birthday || null,
-            addresses,
-            emails,
-            contact_no,
+            addresses: element.address,
+            emails: element.email,
+            contact_no: element.contact,
           });
           
           const paid_amount = element.total_os - element.balance 

@@ -10,7 +10,7 @@ const recordingsResolver = {
     findRecordings: async(_,{name,_id}) => {
       const client = new ftp.Client();
       try {
-
+     
         const months = [
           'January',
           'February',
@@ -25,7 +25,6 @@ const recordingsResolver = {
           'November',
           'December'
         ]
-
         const findDispo = await Disposition.findById(_id).populate({
           path: 'customer_account',
           populate: {
@@ -51,7 +50,18 @@ const recordingsResolver = {
           '172.20.21.97' : "UB",
           '172.20.21.70' : "ATOME"
         }
-          function checkDate(number) {
+        const issabelNasFileBane = {
+            '172.20.21.57': "ATOME CASH S1-ISSABEL_172.20.21.57",
+            "172.20.21.32" : "ATOME CASH S2-ISSABEL_172.20.21.32",
+            "172.20.21.62" : "AVON-ISSABEL_172.20.21.62",
+            '172.20.21.72' : "CIGNAL-ISSABEL_172.20.21.72",
+            '172.20.21.50' : "CTBC-ISSABEL_172.20.21.50"
+          }
+          
+
+
+
+        function checkDate(number) {
           return number > 9 ? number : `0${number}`;
         }
 
@@ -64,22 +74,19 @@ const recordingsResolver = {
         });
 
         const remoteDirVici =  `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`     
-        const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${issabelIpAddress}/${monthCreated + ' ' + yearCreated}/${checkDate(dayCreated)}`
+        const remoteDirIssabel = `/ISSABEL RECORDINGS/${issabelNasFileBane[issabelIpAddress]}/${monthCreated + ' ' + yearCreated}/${checkDate(dayCreated)}`
         const localDir = './recordings'
 
         if (!fs.existsSync(localDir)) {
           fs.mkdirSync(localDir, { recursive: true });
         }
-        
-          
-        const ifATOME = (['CASH S2','LAZCASH S1','ACS1-TEAM 1','ACS1-TEAM 2','ACS1-TEAM 3'].includes(findDispo.bucket.name) && (createdAt.getMonth() < 7 && dayCreated < 18)) ? `/REC-172.20.21.18-MIXED CAMPAIGN NEW 2/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`: remoteDirVici
-
+        const ifATOME = (['CASH S2','LAZCASH S1','ACS1-TEAM 1','ACS1-TEAM 2','ACS1-TEAM 3'].includes(findDispo?.bucket?.name) && (createdAt.getMonth() < 7 && dayCreated < 18)) ? `/REC-172.20.21.18-MIXED CAMPAIGN NEW 2/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`: remoteDirVici
+     
         const remoteDir = findDispo.dialer === "vici" ? ifATOME : `${remoteDirIssabel}`
         const remotePath = `${remoteDir}/${name}`;
         const localPath = `./recordings/${name}`;
         await client.downloadTo(localPath, remotePath);
         const toDownload = `http://${process.env.MY_IP}:4000/recordings/${name}`
-
         return {
           success: true,
           url: toDownload,

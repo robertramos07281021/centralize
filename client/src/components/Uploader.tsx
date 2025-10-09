@@ -6,7 +6,8 @@ import Loading from "../pages/Loading";
 import { useAppDispatch } from "../redux/store";
 import { setServerError, setSuccess } from "../redux/slices/authSlice";
 
-type Data = {
+
+type ExcelData = {
   address: string
   address_2: string
   address_3: string
@@ -68,7 +69,7 @@ type modalProps = {
 
 const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,canUpload, successUpload}) => {
   const dispatch = useAppDispatch()
-  const [excelData, setExcelData] = useState<Data[]>([]);
+  const [excelData, setExcelData] = useState<Record<string,any>[]>([]);
   const [file, setFile] = useState<File[]>([]);
 
   const handleFileUpload = useCallback(async(file: File) => {
@@ -81,7 +82,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
         const workbook = read(binaryString, { type: "binary" });
         const sheetName = workbook.SheetNames[0]; 
         const sheet = workbook.Sheets[sheetName];
-        const jsonData:Data[] = utils.sheet_to_json(sheet); 
+        const jsonData:ExcelData[] = utils.sheet_to_json(sheet); 
         const dateConverting = jsonData.map((row) => {
           const { 
             interest_os, 
@@ -97,6 +98,9 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             address,
             address_2,
             address_3,
+            email,
+            email_2,
+            email_3,
             endorsement_date, 
             birthday,
             grass_date,
@@ -108,44 +112,51 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             balance,
             max_dpd,
             principal_os,
-            batch_no
+            batch_no,
+            ...others
           } = row
 
           function normalizeContact(contact:string) {
-            if(isNaN(Number(contact))) return ""
-            const cleaned = contact.toString().trim().replace(/[+\-\s()]/g, '').replace(/^0/, '');
-            const metroManila = /^2\d{7,8}$/;
-            const fiveDigitAreaCodes = /^(8822|8842)\d{5}$/;
-            const provincialLandline = /^(3[2-8]|4[2-9]|5[2-6]|6[2-8]|7[2-8]|8[2-8])\d{7}$/;
-            const mobile = /^9\d{9}$/;
-            const mobileWithSTZ = /^630\d{10}$/;
-            const mobileWithST = /^63\d{10}$/;
-
-            if (mobileWithSTZ.test(cleaned)) {
-              return '0' + cleaned.slice(3);
+            const contactSlice = contact.toString().split('/')
+            if(contactSlice.length > 1) {
+              return contactSlice.toString()
+            } else {
+              if(isNaN(Number(contact))) return ""
+              const cleaned = contact.toString().trim().replace(/[+\-\s()]/g, '').replace(/^0/, '');
+              const metroManila = /^2\d{7,8}$/;
+              const fiveDigitAreaCodes = /^(8822|8842)\d{5}$/;
+              const provincialLandline = /^(3[2-8]|4[2-9]|5[2-6]|6[2-8]|7[2-8]|8[2-8])\d{7}$/;
+              const mobile = /^9\d{9}$/;
+              const mobileWithSTZ = /^630\d{10}$/;
+              const mobileWithST = /^63\d{10}$/;
+  
+              if (mobileWithSTZ.test(cleaned)) {
+                return '0' + cleaned.slice(3);
+              }
+  
+              if (mobileWithST.test(cleaned)) {
+                return '0' + cleaned.slice(2);
+              }
+  
+              if (mobile.test(cleaned)) {
+                return '0' + cleaned;
+              }
+  
+              if (metroManila.test(cleaned)) {
+                return '0' + cleaned;
+              }
+  
+              if (fiveDigitAreaCodes.test(cleaned)) {
+                return '0' + cleaned;
+              }
+  
+              if (provincialLandline.test(cleaned)) {
+                return '0' + cleaned;
+              }
+              
+              return new Set(cleaned);
             }
 
-            if (mobileWithST.test(cleaned)) {
-              return '0' + cleaned.slice(2);
-            }
-
-            if (mobile.test(cleaned)) {
-              return '0' + cleaned;
-            }
-
-            if (metroManila.test(cleaned)) {
-              return '0' + cleaned;
-            }
-
-            if (fiveDigitAreaCodes.test(cleaned)) {
-              return '0' + cleaned;
-            }
-
-            if (provincialLandline.test(cleaned)) {
-              return '0' + cleaned;
-            }
-            
-            return cleaned;
           }
 
           const safeDate = (date: string) => {
@@ -155,10 +166,12 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
               return undefined;
             }
           };
-  
 
           const rows = {
-            ...row,
+            ...others,
+            contact: [],
+            email: [],
+            address: [],
             principal_os: Number(principal_os) || Number(total_os),
             interest_os: Number(interest_os) || 0,
             admin_fee_os: Number(admin_fee_os) || 0,
@@ -169,9 +182,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             balance: Number(balance) || Number(total_os),
             total_os: Number(total_os),
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
-            address: String(address),
-          }
-
+          } as Record<string, any>
 
           if(emergencyContactMobile) {
             rows['emergencyContactMobile'] = normalizeContact(emergencyContactMobile)
@@ -184,9 +195,11 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           if(case_id) {
             rows['case_id'] = String(case_id).trim()
           }
+
           if(!isNaN(Number(dpd))) {
             rows['dpd'] = Number(dpd)
           }
+
           if(!isNaN(Number(max_dpd))) {
             rows['max_dpd'] = Number(dpd)
           }
@@ -207,38 +220,68 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
             rows['birthday'] = safeDate(birthday)
           }
           
-          if(Boolean(contact)) {
-     
-            rows['contact'] = normalizeContact(contact).trim()
-          }
-
-          if(Boolean(contact_2)) {
-            if(Number(contact_2) === 0 ) {
-              rows['contact_2'] = ""
+          if(contact) {
+            const newContact = normalizeContact(contact)?.toString()?.split(',')
+            if(newContact.length > 1) {
+              newContact.map(nc => 
+                rows['contact'].push(nc)
+              )
             } else {
-              rows['contact_2'] = String(normalizeContact(String(contact_2))).trim()
+              rows['contact'].push(...newContact)
+            }
+          }
+         
+          if(contact_2) {
+            const newContact = normalizeContact(contact_2)?.toString()?.split(',')
+            if(newContact.length > 1) {
+              newContact.map(nc => 
+                rows['contact'].push(nc)
+              )
+            } else {
+              rows['contact'].push(...newContact)
+            }
+          }
+          
+          if(contact_3) {
+             const newContact = normalizeContact(contact_3)?.toString()?.split(',')
+            if(newContact.length > 1) {
+              newContact.map(nc => 
+                rows['contact'].push(nc)
+              )
+            } else {
+              rows['contact'].push(...newContact)
             }
           }
 
-          if(Boolean(contact_3)) {
-            if(Number(contact_3) === 0 ) {
-              rows['contact_3'] = ""
-            } else {
-              rows['contact_3'] = String(normalizeContact(String(contact_3))).trim()
-            }
+          if(address) {
+            rows['address'].push(String(address))
           }
 
           if(address_2) {
-            rows['address_2'] = String(address_2)
+            rows['address'].push(String(address_2))
           }
+
           if(address_3) {
-            rows['address_3'] = String(address_3)
+            rows['address'].push(String(address_3))
           }
+
+          if(email) {
+            rows['email'].push(String(email))
+          }
+
+          if(email_2) {
+            rows['email'].push(String(email_2))
+          }
+
+          if(email_3) {
+            rows['email'].push(String(email_3))
+          }
+
 
           if(batch_no) {
             rows['batch_no'] = String(batch_no).trim()
           }
-          
+
           return {
           ...rows
           }
@@ -250,7 +293,6 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       dispatch(setServerError(true))
     }
   }, []);
-
 
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({

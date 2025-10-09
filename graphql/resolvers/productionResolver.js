@@ -1114,7 +1114,6 @@ const productionResolver = {
      
       try {
         const skip = ((page - 1) * limit)
-        // const dispoWithRecordings = ['UNEG','FFUP','ITP','PAID','PTP','DEC','RTP','KOR','OCA']
         const today = new Date()
         today.setHours(0,0,0,0)
         const dialer = ["vici", 'issabel']
@@ -1297,16 +1296,15 @@ const productionResolver = {
           function checkDate(number) {
             return number > 9 ? number : `0${number}`;
           }
-         
-          const createdAt = new Date(filtered.createdAt)
+          const createdAt = new Date(filtered?.createdAt)
           const yearCreated = createdAt.getFullYear()
           const monthCreated = months[createdAt.getMonth()]
           const dayCreated = createdAt.getDate()
-          const contact = filtered.contact_no
-          const issabelIpAddress = filtered.bucket.issabelIp
+          const contact = filtered?.contact_no
+          const issabelIpAddress = filtered?.bucket?.issabelIp
           const month = createdAt.getMonth() + 1;
-          const viciIpAddress = filtered.bucket.viciIp
-            const fileNale = {
+          const viciIpAddress = filtered?.bucket?.viciIp
+          const fileNale = {
             "172.20.21.64" : "HOMECREDIT",
             "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
             "172.20.21.17" : "PSBANK",
@@ -1317,50 +1315,92 @@ const productionResolver = {
             '172.20.21.97' : "UB",
             '172.20.21.70' : 'ATOME'
           }
-        
-          const remoteDirVici =  `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`     
-          const remoteDirIssabel = `/ISSABEL RECORDINGS/ISSABEL_${issabelIpAddress}/${monthCreated + ' ' + yearCreated}/${checkDate(dayCreated)}`
           
-
-
-          const ifATOME = (['CASH S2','LAZCASH S1','ACS1-TEAM 1','ACS1-TEAM 2','ACS1-TEAM 3'].includes(filtered.bucket.name) && (createdAt.getMonth() < 7 && dayCreated < 18)) ? `/REC-172.20.21.18-MIXED CAMPAIGN NEW 2/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`: remoteDirVici
-
-
+          const issabelNasFileBane = {
+            '172.20.21.57': "ATOME CASH S1-ISSABEL_172.20.21.57",
+            "172.20.21.32" : "ATOME CASH S2-ISSABEL_172.20.21.32",
+            "172.20.21.62" : "AVON-ISSABEL_172.20.21.62",
+            '172.20.21.72' : "CIGNAL-ISSABEL_172.20.21.72",
+            '172.20.21.50' : "CTBC-ISSABEL_172.20.21.50"
+          }
+          
+          const remoteDirVici =  `/REC-${viciIpAddress}-${fileNale[viciIpAddress]}/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`     
+          const remoteDirIssabel = `/ISSABEL RECORDINGS/${issabelNasFileBane[issabelIpAddress]}/${monthCreated + ' ' + yearCreated}/${checkDate(dayCreated)}`
+          
+          const ifATOME = (['CASH S2','LAZCASH S1','ACS1-TEAM 1','ACS1-TEAM 2','ACS1-TEAM 3'].includes(filtered?.bucket?.name) && (createdAt.getMonth() < 7 && dayCreated < 18)) ? `/REC-172.20.21.18-MIXED CAMPAIGN NEW 2/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`: remoteDirVici
+          
           const remoteDir = filtered.dialer === "vici" ? ifATOME : remoteDirIssabel
-        
+       
+          
           try {
             const files = await client.list(remoteDir)
             const userRecordings = []
+
             const matches = files
             .filter(fileInfo => (contact ?? []).some(contact => fileInfo.name.includes(contact)))
             .map(fileInfo => ({
               name: fileInfo.name,
               size: fileInfo.size
             }));
-            
+  
+            function getClosestFile(files, createdAt) {
+              let closest = null;
+              let smallestDiff = Infinity;
+
+              for (const file of files) {
+                const parts = file.name.split("-");
+                const dateStr = parts[3];
+                const timeStr = parts[4];
+
+                const year = dateStr.slice(0, 4);
+                const month = dateStr.slice(4, 6);
+                const day = dateStr.slice(6, 8);
+
+                const hour = timeStr.slice(0, 2);
+                const minute = timeStr.slice(2, 4);
+                const second = timeStr.slice(4, 6);
+
+                const fileDate = new Date(`${year}-${month}-${day}T${hour}:${minute}:${second}Z`);
+
+                const diff = Math.abs(fileDate.getTime() - createdAt.getTime());
+
+                if (diff < smallestDiff) {
+                  smallestDiff = diff;
+                  closest = file;
+                }
+              }
+
+              return closest;
+            }
+
+
             if(filtered.dialer === "vici") {
               for(const file of matches) {
-                if(file.name.includes(filtered.user.vici_id) || file.name.includes(filtered.user.user_id)) {
+                if(file.name.includes(`_${filtered?.user?.vici_id}_`)) {
                   userRecordings.push(file)
                 }
               }
+            } else {
+              if(getClosestFile(matches, createdAt) !== null) {
+                userRecordings.push(getClosestFile(matches, createdAt))
+              } 
             }
-            withRecordings.push({...filtered,recordings: filtered.dialer === "vici" ? userRecordings : matches})
+            withRecordings.push({...filtered,recordings: userRecordings})
           } catch (err) {
             withRecordings.push({...filtered})
             continue
           }
         }
-
-        const newMapForDispoCode = forFiltering[0]?.metadata.length > 0 ? forFiltering[0]?.metadata[0]?.dispotypeCodes : []
-        const total = forFiltering[0]?.metadata.length > 0  ?  forFiltering[0]?.metadata[0].total : 0
+        console.log(withRecordings[0].recordings)
+        const newMapForDispoCode = forFiltering[0]?.metadata?.length > 0 ? forFiltering[0]?.metadata[0]?.dispotypeCodes : []
+        const total = forFiltering[0]?.metadata?.length > 0  ?  forFiltering[0]?.metadata[0]?.total : 0
         
-
         return {
           dispositions: withRecordings || [],
           dispocodes: newMapForDispoCode,
           total: total
         }
+
       } catch (error) {
         throw new CustomError(error.message, 500)  
       } finally {

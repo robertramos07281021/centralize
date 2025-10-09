@@ -138,7 +138,7 @@ const CallfilesConfig = () => {
           </div>
           <div className="flex gap-3">
             <motion.div
-              className="border-blue-800 py-2 font-black shadow-md text-blue-900 cursor-pointer rounded-md border-2 px-3 bg-blue-500 hover:bg-blue-600 "
+              className="border-blue-800 py-2 font-black shadow-md text-blue-900 cursor-pointer rounded-md border px-3 bg-blue-500 hover:bg-blue-600 "
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.6, type: "spring" }}
@@ -317,7 +317,7 @@ const CallfilesConfig = () => {
 
                         <div className="items-center flex ">
                           <div
-                            onClick={() => setDeletes(true)}
+
                             className="bg-red-700 border-2 border-red-900  hover:bg-red-800 transition-all py-1 px-2 cursor-pointer  rounded-sm shadow-sm"
                           >
                             <svg

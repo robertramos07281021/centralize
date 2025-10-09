@@ -273,6 +273,7 @@ const AgentRecordingView = () => {
   const onDLRecordings = useCallback(
     async (_id: string, name: string) => {
       setIsLoading(_id);
+      console.log(name)
       await findRecordings({ variables: { _id, name } });
     },
     [setIsLoading, findRecordings]
@@ -451,6 +452,8 @@ const AgentRecordingView = () => {
                       ? [...e.recordings].sort((a, b) => b.size - a.size)
                       : [];
 
+
+                      console.log(e)
                   return (
                     <motion.tr
                       key={e._id}
@@ -502,7 +505,7 @@ const AgentRecordingView = () => {
                                   className="flex justify-start items-center w-full gap-2"
                                 >
                                   <p className="mr-">
-                                    {fileSizeToDuration(callRecord[0].size)}{" "}
+                                    {fileSizeToDuration(callRecord[0]?.size)}{" "}
                                   </p>
                                   <div
                                     onClick={() =>

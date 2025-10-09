@@ -337,8 +337,8 @@ const Navbar = () => {
             }
           </div>
           <div className="p-1 flex gap-2 text-xs z-50">
-            <p className="font-black text-lg mr-2 flex items-center text-blue-800 text-shadow-sm uppercase">Hello!&nbsp;<span className="uppercase">{userLogged?.name}</span></p>
-            <BsFillPersonVcardFill className="text-4xl cursor-pointer " onClick={()=> {setPopUpUser(!poPupUser); setPopUpBreak(false)}}/>
+            <p className="font-black text-lg mr-2 flex items-center text-white text-shadow-sm uppercase">Hello!&nbsp;<span className="uppercase">{userLogged?.name}</span></p>
+            <BsFillPersonVcardFill className="text-4xl cursor-pointer text-white" onClick={()=> {setPopUpUser(!poPupUser); setPopUpBreak(false)}}/>
             { poPupUser &&
               <div ref={modalRef} className="w-40 h-auto border border-slate-200 shadow-xl shadow-black/8 rounded-xl top-13 end-5 bg-white absolute flex flex-col p-2 text-slate-500 font-medium">
                 {
