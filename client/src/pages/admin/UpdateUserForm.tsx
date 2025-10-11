@@ -206,7 +206,7 @@ const LOGOUT_USER = gql`
     }
   }
 `
-type UserType = "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" ;
+type UserType = "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" | "QA" | "QASUPERVISOR" ;
 
 enum Types {
   AGENT = "AGENT",
@@ -215,7 +215,9 @@ enum Types {
   MIS = "MIS",
   CEO = "CEO",
   ADMIN = "ADMIN",
-  OPERATION = "OPERATION"
+  OPERATION = "OPERATION",
+  QA = "QA",
+  QASUPERVISOR = "QASUPERVISOR"
 }
 
 type Data = {
@@ -246,7 +248,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
 
 
   const isValidUserType = (value: string): value is UserType => {
-    return ["AGENT", "ADMIN", "AOM", "TL", "CEO", "OPERATION"].includes(value);
+    return ["AGENT", "ADMIN", "AOM", "TL", "CEO", "OPERATION",'QA',"QASUPERVISOR"].includes(value);
   };
   
   const safeType = isValidUserType(state?.type) ? state.type : "AGENT";
@@ -255,7 +257,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
 
   const [data, setData] = useState<Data>({
     username: state?.username,
-    type: "AGENT" as "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION"  ,
+    type: "AGENT" as "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" | 'QA' | 'QASUPERVISOR' ,
     name: "",
     branch: "",
     departments: [],
@@ -284,7 +286,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
     }
   },[state])
 
-
+  console.log(safeType)
   const branchObject:{[key:string]:string} = useMemo(()=> {
     const branchArray = branchesData?.getBranches || []
     return Object.fromEntries(branchArray.map((ba)=> [ba.id, ba.name]))
@@ -552,7 +554,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
               }}
               className={`bg-slate-50 border-slate-300 border text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
               >
-              <option value="">Choose a bucket</option>
+              <option value="">--Choose a Type--</option>
               {
                 Object.entries(Types).map(([key,value]) => 
                   <option value={value} key={key}>{value}</option>

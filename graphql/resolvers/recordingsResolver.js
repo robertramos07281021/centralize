@@ -50,17 +50,15 @@ const recordingsResolver = {
           '172.20.21.97' : "UB",
           '172.20.21.70' : "ATOME"
         }
+
         const issabelNasFileBane = {
-            '172.20.21.57': "ATOME CASH S1-ISSABEL_172.20.21.57",
-            "172.20.21.32" : "ATOME CASH S2-ISSABEL_172.20.21.32",
-            "172.20.21.62" : "AVON-ISSABEL_172.20.21.62",
-            '172.20.21.72' : "CIGNAL-ISSABEL_172.20.21.72",
-            '172.20.21.50' : "CTBC-ISSABEL_172.20.21.50"
-          }
+          '172.20.21.57': "ATOME CASH S1-ISSABEL_172.20.21.57",
+          "172.20.21.32" : "ATOME CASH S2-ISSABEL_172.20.21.32",
+          "172.20.21.62" : "AVON-ISSABEL_172.20.21.62",
+          '172.20.21.72' : "CIGNAL-ISSABEL_172.20.21.72",
+          '172.20.21.50' : "CTBC-ISSABEL_172.20.21.50"
+        }
           
-
-
-
         function checkDate(number) {
           return number > 9 ? number : `0${number}`;
         }

@@ -4,6 +4,7 @@ import { Doughnut } from "react-chartjs-2"
 import { colorDispo } from "../../middleware/exports"
 import { useEffect, useState } from "react"
 import { ChartData, ChartOptions } from "chart.js"
+import {motion}from "framer-motion"
 
 
 const REPORT = gql`
@@ -137,20 +138,24 @@ const ReportsComponents:React.FC<ReportsComponents> = ({dispositions, from, to})
 
 
   return (
-    <div className="h-full flex overflow-hidden mt-2 gap-5"> 
-      <div className="p-5 h-full flex flex-col w-1/2">
-        <h1 className="text-center text-xl font-medium text-gray-500 mb-10">Dispositions</h1>
-        <div className="grid grid-cols-3 lg:text-sm 2xl:text-lg">
+    <div className="h-full flex p-5 overflow-hidden mt-2 gap-5"> 
+      <motion.div className=" bg-gray-100 border-2 rounded-md shadow-md border-gray-400 h-full flex flex-col w-1/2"
+        initial={{y: 20, opacity: 0}}
+        animate={{y: 0, opacity: 1}}
+        transition={{delay: 0.4}}
+      >
+        <h1 className="text-center text-xl uppercase text-gray-500 rounded-t-sm py-3 bg-gray-300 font-black ">Dispositions</h1>
+        <div className="grid grid-cols-3 lg:text-sm 2xl:text-lg px-3 py-2">
           {labels.map((e,index)=> 
-            <div key={index} className="text-slate-500 font-medium ">{e}</div>
+            <div key={index} className="text-slate-800 font-black uppercase ">{e}</div>
           )}
         </div>
-        <div className="h-full overflow-y-auto">
+        <div className="h-full overflow-y-auto px-4">
           {
             productionReportData?.ProductionReport.dispotypes.map((e)=> {
 
               return (
-                <div key={e.dispotype._id} className="grid grid-cols-3 lg:text-xs 2xl:text-sm text-gray-500 py-0.5">
+                <div key={e.dispotype._id} className="grid grid-cols-3 lg:text-xs 2xl:text-sm text-gray-500 ">
                   <div className="flex gap-5 justify-between pr-3">
                     <div>{e.dispotype.name}</div>
                     <div style={{backgroundColor: colorDispo[e.dispotype.code]}} className={`w-1/2`}></div> 
@@ -162,7 +167,7 @@ const ReportsComponents:React.FC<ReportsComponents> = ({dispositions, from, to})
             })
           }
         </div>
-      </div>
+      </motion.div>
       <div className="p-20 w-1/2 h-full">
         <Doughnut data={data} options={options}/>
       </div>

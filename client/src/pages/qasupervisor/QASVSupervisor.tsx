@@ -33,8 +33,11 @@ const GET_USERS = gql`
       users {
         _id
         name
+        active
         type
         buckets
+        isOnline
+        isLock
         departments
       }
       total
@@ -71,6 +74,9 @@ type User = {
   buckets: string[];
   departments: string[];
   type: string;
+  active: boolean;
+  isOnline: boolean;
+  isLock: boolean;
 };
 
 type GetUser = {
@@ -101,6 +107,18 @@ const QASupervisorView = () => {
   const { data: bucketData } = useQuery<{
     getAllBucket: { _id: string; name: string; branch: string }[];
   }>(GET_ALL_BUCKETS);
+
+  useEffect(() => {
+    if (userId) {
+      if (userId?.userId) {
+        setUserId((prev) => ({
+          ...prev,
+          departments: userId?.userId?.departments ?? [],
+          buckets: userId?.userId?.buckets ?? [],
+        }));
+      }
+    }
+  }, [userId]);
 
   const {
     data: deptBucketData,
@@ -188,7 +206,7 @@ const QASupervisorView = () => {
       setUpdate(false);
       await usersRefetch();
     },
-    onError: (error) => {
+    onError: () => {
       setModalProps({
         message: "",
         toggle: "UPDATE" as "UPDATE",
@@ -241,9 +259,11 @@ const QASupervisorView = () => {
 
   if (usersLoading || updateLoading) return <Loading />;
 
+  console.log(usersData);
+
   return (
-    <>
-      <div className="relative w-full h-full">
+    <div className="h-full relative">
+      <div className=" w-full h-full p-5">
         {/* <div className="px-5 flex justify-end pt-4">
         <select
           name="campaign"
@@ -254,40 +274,48 @@ const QASupervisorView = () => {
           <option>dsa</option>
         </select>
       </div> */}
-        <div className="flex pt-4 px-5 justify-end">
+        <div className="flex px-5 justify-end">
           <div className="flex px-2 py-1 rounded-md shadow-md items-center border">
             <div>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 fill="none"
                 viewBox="0 0 24 24"
-                stroke-width="1.5"
+                strokeWidth="1.5"
                 stroke="currentColor"
                 className="size-5"
               >
                 <path
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
                   d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
                 />
               </svg>
             </div>
             <input
-              className="px-3 focus:outline-none"
+              className="px-3 py-1 focus:outline-none"
               placeholder="Search..."
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
-        <div className="p-5  overflow-hidden">
-          <div className="grid grid-cols-9 gap-3 px-2 py-2 rounded-t-md font-black uppercase bg-gray-300">
-            <div className="col-span-2">Name</div>
-            <div className="col-span-2">Campaign</div>
-            <div className="col-span-4">buckets</div>
-            <div className="col-span-1">Actions</div>
+        <div className="border-2 rounded-md border-gray-300 mt-3  overflow-hidden">
+          <div className="grid grid-cols-7 gap-3 px-2 py-2  font-black uppercase bg-gray-300">
+            <div
+              className="
+            "
+            >
+              Name
+            </div>
+            <div className="">Campaign</div>
+            <div className="">buckets</div>
+            <div className="flex justify-center">activity</div>
+            <div className="flex justify-center">online</div>
+            <div className="flex justify-center">lock</div>
+            <div className="flex justify-center">Actions</div>
           </div>
-          <div className="flex  flex-col">
+          <div className="flex  flex-col overflow-auto h-[76vh] rounded-b-md">
             {usersData?.getQAUsers?.users
               ?.filter((user) => {
                 const term = searchTerm.toLowerCase();
@@ -307,26 +335,75 @@ const QASupervisorView = () => {
               .map((user, index) => (
                 <motion.div
                   key={user._id}
-                  className="grid grid-cols-9 gap-3 items-center bg-gray-100 py-2 px-2 even:bg-gray-200"
+                  className="grid grid-cols-7 gap-3 items-center bg-gray-100 py-2 pl-2 even:bg-gray-200"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <div className="col-span-2 first-letter:uppercase">
-                    {user.name}
-                  </div>
-                  <div className="col-span-2">
+                  <div className=" first-letter:uppercase">{user.name}</div>
+                  <div className="">
                     {user.departments
                       .map((dept) => newDeptMap[dept])
                       .join(", ")}
                   </div>
-                  <div className="col-span-4">
+                  <div className="">
                     {user.buckets
                       .map((bucket) => newBucketMap[bucket])
                       .join(", ")}
                   </div>
+                  <div className="justify-center flex">
+                    {user.active ? (
+                      <div className=" shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"></div>
+                    ) : (
+                      <div className=" shadow-md bg-red-600 w-5 rounded-full h-5"></div>
+                    )}
+                  </div>
+                  <div className=" flex justify-center">
+                    {user.isOnline ? (
+                      <div className=" shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"></div>
+                    ) : (
+                      <div className=" shadow-md bg-red-600 w-5 rounded-full h-5"></div>
+                    )}
+                  </div>
+                  <div className="justify-center flex">
+                    {user.isLock ? (
+                      <div className="bg-red-500 px-2 border-2 rounded-sm border-red-800 shadow-md cursor-pointer hover:bg-red-600 transition-all text-white py-1">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="3"
+                          stroke="currentColor"
+                          className="size-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                          />
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="bg-green-500 px-2 border-2 rounded-sm border-green-800 shadow-md cursor-pointer hover:bg-green-600 transition-all text-white py-1">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke-width="3"
+                          stroke="currentColor"
+                          className="size-5"
+                        >
+                          <path
+                            stroke-linecap="round"
+                            stroke-linejoin="round"
+                            d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
 
-                  <div className="col-span-1 flex">
+                  <div className="col-span-1 flex justify-center">
                     <div
                       onClick={() => {
                         setUpdate(true);
@@ -358,7 +435,7 @@ const QASupervisorView = () => {
           {update && (
             <div className="absolute top-0  left-0 flex justify-center items-center w-full h-full overflow-hidden">
               <motion.div
-                className="w-full h-full overflow-hidden bg-[#00000050] backdrop-blur-sm relative z-10 cursor-pointer "
+                className="w-full flex h-full overflow-hidden bg-[#00000050] backdrop-blur-sm relative z-10 cursor-pointer "
                 onClick={() => {
                   setUpdate(false);
                   setUserId({
@@ -377,9 +454,12 @@ const QASupervisorView = () => {
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.5 }}
               >
-                <div className="text-xl uppercase text-center pb-2 font-black">
+                <div className="text-xl uppercase text-center font-black">
                   Select the campaign and buckets
                 </div>
+                <h1 className="text-center capitalize text-gray-400 pb-2 font-normal text-sm ">
+                  Username: {userId.userId?.name}
+                </h1>
                 {required && (
                   <h1 className="text-center text-sm text-red-500">
                     {userId.departments.length <= 0 &&
@@ -506,7 +586,7 @@ const QASupervisorView = () => {
         </AnimatePresence>
       </div>
       {confirm && <Confirmation {...modalProps} />}
-    </>
+    </div>
   );
 };
 

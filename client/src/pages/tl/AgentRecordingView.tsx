@@ -273,7 +273,7 @@ const AgentRecordingView = () => {
   const onDLRecordings = useCallback(
     async (_id: string, name: string) => {
       setIsLoading(_id);
-      console.log(name)
+      console.log(name);
       await findRecordings({ variables: { _id, name } });
     },
     [setIsLoading, findRecordings]
@@ -333,16 +333,18 @@ const AgentRecordingView = () => {
           }
         }}
       >
-        <h1 className="uppercase text-2xl px-10 font-black text-gray-500 mb-5">
+        <h1 className="uppercase text-2xl px-5 font-black text-gray-800 mb-5">
           {agentInfoData?.getUser?.name}
         </h1>
         <div className=" flex justify-end px-10 gap-5">
           <div className="w-60 h-8 relative" ref={dispotypeRef}>
-            <div
+            <motion.div
               className="w-full rounded border-slate-300 border flex items-center px-2 h-full justify-between"
               onClick={() => {
                 setSelectingDispotype(!selectingDispotype);
               }}
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
             >
               {triggeredSearch.dispotype.length > 0 ? (
                 <p className="text-xs text-gray-500 cursor-default select-none">
@@ -361,9 +363,9 @@ const AgentRecordingView = () => {
                   <RiArrowDropDownFill className="text-2xl" />
                 </>
               )}
-            </div>
+            </motion.div>
             {selectingDispotype && triggeredSearch.dispotype.length === 0 && (
-              <div className="absolute top-8 left-0 w-full border px-2 py-1 text-xs text-gray-500 flex flex-col max-h-80 overflow-y-auto bg-white z-50 border-slate-300 shadow-md shadow-black/20 select-none">
+              <div className="absolute top-9 left-0 w-full border px-2 py-1 rounded-md text-xs text-gray-500 flex flex-col max-h-80 overflow-y-auto bg-white z-50 border-slate-300 shadow-md shadow-black/20 select-none">
                 {recordings?.getAgentDispositionRecords.dispocodes.map(
                   (e, index) => (
                     <label key={index} className="py-1 flex gap-1 items-center">
@@ -383,7 +385,7 @@ const AgentRecordingView = () => {
             )}
           </div>
 
-          <input
+          <motion.input
             type="search"
             name="search"
             id="search"
@@ -393,10 +395,19 @@ const AgentRecordingView = () => {
             onChange={(e) =>
               setDataSearch({ ...dataSearch, search: e.target.value })
             }
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
             className="border rounded border-slate-300 px-2 text-sm w-50 py-1 outline-none"
           />
-          <label>
-            <span className="text-gray-600 font-medium text-sm">From: </span>
+          <motion.label
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            <span className="text-gray-800 font-black uppercase text-sm">
+              From:{" "}
+            </span>
             <input
               type="date"
               name="from"
@@ -405,11 +416,17 @@ const AgentRecordingView = () => {
               onChange={(e) =>
                 setDataSearch({ ...dataSearch, from: e.target.value })
               }
-              className="border rounded border-slate-300 px-2 text-sm w-50 py-1"
+              className="border rounded h-full border-slate-300 px-2 text-sm w-50 py-1"
             />
-          </label>
-          <label>
-            <span className="text-gray-600 font-medium text-sm">To: </span>
+          </motion.label>
+          <motion.label
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
+          >
+            <span className="text-gray-800 uppercase font-black text-sm">
+              To:{" "}
+            </span>
             <input
               type="date"
               name="to"
@@ -418,33 +435,42 @@ const AgentRecordingView = () => {
               onChange={(e) =>
                 setDataSearch({ ...dataSearch, to: e.target.value })
               }
-              className="border rounded border-slate-300 px-2 text-sm w-50 py-1"
+              className="border rounded h-full border-slate-300 px-2 text-sm w-50 py-1"
             />
-          </label>
-          <button
-            className="bg-blue-500 font-black text-blue-800 cursor-pointer border-blue-800 transition-all uppercase border-2  rounded px-5 text-xs hover:bg-blue-600"
+          </motion.label>
+          <motion.button
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.3 }}
             onClick={onClickSearch}
           >
-            Search
-          </button>
+            <div className="bg-blue-500 h-full items-center flex font-black text-white cursor-pointer border-blue-800 transition-all uppercase border-2  rounded px-5 text-xs hover:bg-blue-600">
+              Search
+            </div>
+          </motion.button>
         </div>
-        <div className="h-full overflow-auto w-full px-10 mt-3">
-          <table className="w-full table-fixed">
-            <thead className="lg:text-sm 2xl:text-lg sticky top-0 z-20 bg-blue-100 rounded-md text-gray-600">
-              <tr className="text-left">
-                <th className="pl-5 py-1.5 col-span-2 w-55">Name</th>
-                <th>Contact No</th>
-                <th>Dialer</th>
-                <th>Amount</th>
-                <th className="text-nowrap">Payment Date</th>
-                <th>Ref No.</th>
-                <th>Comment</th>
-                <th className="text-nowrap">Dispo Date</th>
-                <th>Disposition</th>
-                <th>Action</th>
-              </tr>
-            </thead>
-            <tbody>
+        <div className="h-full w-full px-5 mt-3">
+          <motion.div
+            className="w-full h-full table-fixed rounded-md overflow-hidden"
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.4 }}
+          >
+            <div className="lg:text-sm font-black uppercase 2xl:text-lg sticky top-0 z-20 bg-gray-300 text-gray-800">
+              <div className="text-left justify-center px-4 grid grid-cols-10 gap-3 items-center py-3">
+                <div className="">Name</div>
+                <div>Contact No</div>
+                <div>Dialer</div>
+                <div>Amount</div>
+                <div className="text-nowrap truncate">Payment Date</div>
+                <div>Ref No.</div>
+                <div>Comment</div>
+                <div className="text-nowrap">Dispo Date</div>
+                <div>Disposition</div>
+                <div className="text-center flex justify-center" >Actions</div>
+              </div>
+            </div>
+            <div className=" overflow-auto h-[70vh]">
               {recordings?.getAgentDispositionRecords.dispositions.map(
                 (e, index) => {
                   const callRecord =
@@ -452,46 +478,65 @@ const AgentRecordingView = () => {
                       ? [...e.recordings].sort((a, b) => b.size - a.size)
                       : [];
 
-
-                      console.log(e)
+                  console.log(e);
                   return (
-                    <motion.tr
+                    <motion.div
                       key={e._id}
-                      className="lg:text-xs 2xl:text-sm cursor-default even:bg-slate-100 text-slate-700"
+                      className="lg:text-xs 2xl:text-sm  items-center py-3 gap-3 pl-4 pr-2 grid grid-cols-10 cursor-default bg-gray-100 even:bg-gray-200 text-slate-800"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: index * 0.1 }}
                     >
-                      <td className="pl-5 py-1.5 w-55 truncate">
-                        {e.customer_name}
-                      </td>
-                      <td
+                      <div className=" truncate">{e.customer_name}</div>
+                      <div
                         className="truncate pr-2"
                         title={e.contact_no.join(", ")}
                       >
                         {e.contact_no.join(", ")}
-                      </td>
-                      <td>{e.dialer}</td>
-                      <td>
-                        {e.amount
-                          ? e.amount.toLocaleString("en-PH", {
-                              style: "currency",
-                              currency: "PHP",
-                            })
-                          : "-"}
-                      </td>
-                      <td>
-                        {e.payment_date
-                          ? new Date(e.payment_date).toLocaleDateString()
-                          : "-"}
-                      </td>
-                      <td title={e.ref_no}>{e.ref_no || "-"}</td>
-                      <td className="truncate" title={e.comment}>
-                        {e.comment || "-"}
-                      </td>
-                      <td>{new Date(e.createdAt).toLocaleDateString()}</td>
-                      <td>{e.dispotype}</td>
-                      <td>
+                      </div>
+                      <div>{e.dialer}</div>
+                      <div>
+                        {e.amount ? (
+                          e.amount.toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })
+                        ) : (
+                          <div className="text-gray-400 italic text-left  ">
+                            No amount
+                          </div>
+                        )}
+                      </div>
+                      <div>
+                        {e.payment_date ? (
+                          new Date(e.payment_date).toLocaleDateString()
+                        ) : (
+                          <div className="text-gray-400 italic text-left">
+                            No payment date
+                          </div>
+                        )}
+                      </div>
+                      <div title={e.ref_no}>
+                        {e.ref_no || (
+                          <div
+                            className="text-gray-400 italic text-left truncate"
+                            title="
+                            No reference number"
+                          >
+                            No reference number
+                          </div>
+                        )}
+                      </div>
+                      <div className="truncate" title={e.comment}>
+                        {e.comment || (
+                          <div className="text-gray-400 italic text-left">
+                            No comment
+                          </div>
+                        )}
+                      </div>
+                      <div>{new Date(e.createdAt).toLocaleDateString()}</div>
+                      <div>{e.dispotype}</div>
+                      <div>
                         {isLoading === e._id && loading ? (
                           <div className="cursor-progress">
                             <CgSpinner className="text-xl animate-spin" />
@@ -499,28 +544,12 @@ const AgentRecordingView = () => {
                         ) : (
                           <div className="">
                             {e.recordings?.length > 0 ? (
-                              <div className="relative flex">
-                                <div
-                                  title={callRecord[0]?.name}
-                                  className="flex justify-start items-center w-full gap-2"
-                                >
-                                  <p className="mr-">
-                                    {fileSizeToDuration(callRecord[0]?.size)}{" "}
-                                  </p>
-                                  <div
-                                    onClick={() =>
-                                      onDLRecordings(e._id, callRecord[0]?.name)
-                                    }
-                                    className="bg-blue-500 rounded-sm border cursor-pointer border-blue-800 px-2 py-1 hover:bg-blue-600 transition-all"
-                                  >
-                                    <FaDownload color="white" />
-                                  </div>
-                                </div>
+                              <div className="flex gap-1 ">
                                 {callRecord?.length > 1 &&
                                   (() => {
                                     const others = callRecord.slice(1);
                                     return (
-                                      <div>
+                                      <div className="flex justify-end w-full ">
                                         <div
                                           onClick={() => {
                                             if (openRecordingsBox === e._id) {
@@ -529,7 +558,7 @@ const AgentRecordingView = () => {
                                               setOpenRecordingsBox(e._id);
                                             }
                                           }}
-                                          className=" bg-fuchsia-700 cursor-pointer border-fuchsia-900 hover:bg-fuchsia-800 transition-all border rounded-sm px-2 py-1"
+                                          className=" bg-fuchsia-700 items-center flex shadow-md cursor-pointer border-fuchsia-900 hover:bg-fuchsia-800 transition-all border rounded-sm px-3 py-1"
                                         >
                                           <FaBoxArchive
                                             className="text-white peer"
@@ -561,19 +590,37 @@ const AgentRecordingView = () => {
                                       </div>
                                     );
                                   })()}
+                                <div
+                                  title={callRecord[0]?.name}
+                                  className="flex justify-end items-center w-full"
+                                >
+                                  <div
+                                    onClick={() =>
+                                      onDLRecordings(e._id, callRecord[0]?.name)
+                                    }
+                                    className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
+                                  >
+                                    <FaDownload color="white" />
+                                    <p className="text-white">
+                                      {fileSizeToDuration(callRecord[0]?.size)}{" "}
+                                    </p>
+                                  </div>
+                                </div>
                               </div>
                             ) : (
-                              "No Recordings"
+                              <div className="text-gray-400 italic text-center">
+                                No Recordings
+                              </div>
                             )}
                           </div>
                         )}
-                      </td>
-                    </motion.tr>
+                      </div>
+                    </motion.div>
                   );
                 }
               )}
-            </tbody>
-          </table>
+            </div>
+          </motion.div>
         </div>
         <div className="text-end">
           <Pagination

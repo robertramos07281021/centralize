@@ -290,7 +290,7 @@ const RegisterView = () => {
           }
         }}
       >
-        <div className="p-5 text-2xl font-medium text-slate-500 ">
+        <div className="p-5 text-2xl font-black uppercase text-slate-800 ">
           Create Account
         </div>
         <form className=" px-5 w-full py-2 flex flex-col gap-2 items-center justify-center ">
@@ -300,7 +300,9 @@ const RegisterView = () => {
             </div>
           )}
           <label className="w-full">
-            <p className="w-full text-base font-medium text-slate-500">Type</p>
+            <p className="w-full text-base font-black uppercase text-slate-800">
+              Type:
+            </p>
             <select
               id="type"
               name="type"
@@ -322,8 +324,8 @@ const RegisterView = () => {
           </label>
           <div className="flex gap-3">
             <label className="w-full">
-              <p className="w-full text-base font-medium text-slate-500">
-                Name
+              <p className="w-full text-base font-black uppercase text-slate-800">
+                Name:
               </p>
               <input
                 type="text"
@@ -342,7 +344,7 @@ const RegisterView = () => {
             </label>
 
             <label className="w-full">
-              <p className="w-full text-base font-medium text-slate-500">
+              <p className="w-full text-base font-black uppercase text-slate-800">
                 Username
               </p>
               <input
@@ -361,9 +363,9 @@ const RegisterView = () => {
               />
             </label>
           </div>
-          <div className="flex gap-3" >
+          <div className="flex gap-3">
             <label className="w-full">
-              <p className="w-full text-base font-medium text-slate-500">
+              <p className="w-full text-base font-black uppercase text-slate-800">
                 SIP Id
               </p>
               <input
@@ -389,8 +391,8 @@ const RegisterView = () => {
             </label>
 
             <label className="w-full">
-              <p className="w-full text-base font-medium text-slate-500">
-                Callfile ID
+              <p className="w-full text-base font-black uppercase text-slate-800">
+                Callfile ID:
               </p>
               <input
                 type="text"
@@ -416,8 +418,8 @@ const RegisterView = () => {
           </div>
 
           <label className="w-full">
-            <p className="w-full text-base font-medium text-slate-500">
-              Account Type
+            <p className="w-full text-base font-black uppercase text-slate-800">
+              Account Type:
             </p>
             <select
               id="account_type"
@@ -442,8 +444,8 @@ const RegisterView = () => {
           </label>
 
           <label className="w-full">
-            <p className="w-full text-base font-medium text-slate-500">
-              Branch
+            <p className="w-full text-base font-black uppercase text-slate-800">
+              Branch:
             </p>
             <select
               id="branch"
@@ -482,8 +484,8 @@ const RegisterView = () => {
           </label>
 
           <div className="w-full relative" ref={campaignDiv}>
-            <p className="w-full text-base font-medium text-slate-500">
-              Campaign
+            <p className="w-full text-base font-black uppercase text-slate-800">
+              Campaign:
             </p>
             <div
               className={`${
@@ -562,7 +564,7 @@ const RegisterView = () => {
               data.branch &&
               branchDeptData &&
               branchDeptData?.getBranchDept?.length > 0 && (
-                <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h- rounded-b-md shadow-md overflow-y-auto border z-40">
+                <div className="w-full absolute left-0 h-36 top-16.5 bg-white border-slate-300 p-1.5 max-h- rounded-md mt-1 shadow-md overflow-y-auto border z-40">
                   {branchDeptData?.getBranchDept.map((e) => (
                     <label key={e.id} className="flex gap-2">
                       <input
@@ -580,8 +582,8 @@ const RegisterView = () => {
               )}
           </div>
           <div className="w-full relative" ref={bucketDiv}>
-            <p className="w-full text-base font-medium text-slate-500">
-              Bucket
+            <p className="w-full text-base font-black uppercase text-slate-800">
+              Bucket:
             </p>
             <div
               className={`${
@@ -663,10 +665,10 @@ const RegisterView = () => {
               </div>
             )}
           </div>
-          <div>
+          <div className="flex justify-end w-full" >
             <button
               type="button"
-              className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
+              className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-md uppercase text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
               onClick={submitForm}
             >
               Submit

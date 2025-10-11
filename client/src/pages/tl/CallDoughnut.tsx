@@ -135,7 +135,7 @@ const CallDoughnut:React.FC<ComponentsProps> = ({totalAccounts,dispoData}) => {
                 animate={{opacity: 1}}
                 transition={{delay: index * 0.05}}
                 >
-                <div style={{backgroundColor: `${positive.includes(dd?.code) ? `oklch(62.7% 0.194 149.214)` : `oklch(63.7% 0.237 25.331)`}`}} className="px-2 font-black py-1 rounded-sm shadow-sm">{dd.code}  </div>
+                <div style={{backgroundColor: `${positive.includes(dd?.code) ? `oklch(40.7% 0.194 149.214)` : `oklch(50.7% 0.237 25.331)`}`}} className="px-2 font-black py-1 text-gray-100 rounded-sm shadow-sm">{dd.code}  </div>
                 <div>{findDispotype?.name}</div>
                 <div className="text-center">{dispositionCount(dd.code)} - {percentageOfDispo(dd.code).toFixed(2)}%</div>
               </motion.div>

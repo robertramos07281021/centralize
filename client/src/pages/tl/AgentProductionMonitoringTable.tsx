@@ -19,6 +19,7 @@ type Agent = {
   user_id: string
   buckets: string[]
   type: string
+  active: boolean
   targets: Targets
 }
 
@@ -48,6 +49,7 @@ const BUCKET_AGENTS = gql`
       name
       buckets
       type
+      active
       targets {
         daily
         weekly
@@ -102,10 +104,11 @@ const AgentProductionMonitoringTable = () => {
             <tbody>
               {
                 bucketAgents?.map((x)=> {
+                
                   const findAgent = agentDailyProd?.agentDispoDaily ? agentDailyProd?.agentDispoDaily.find(agent => agent.user === x._id) : null
                   const collectionPercent = findAgent ? ((findAgent?.kept) / x.targets[intervalTypes]) * 100 : null
                   const theVariance = findAgent ? x.targets[intervalTypes] - (findAgent?.kept) : null
-                  return (
+                  return x.active && (
                     <tr className="text-center text-gray-600" key={x._id}>
                       <th className="py-2 lg:text-xs 2xl:text-sm text-left pl-2 capitalize text-nowrap">{x.name}</th>
                       <td>{findAgent?.RPC || '-'}</td>

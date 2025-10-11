@@ -185,7 +185,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
           } as Record<string, any>
 
           if(emergencyContactMobile) {
-            rows['emergencyContactMobile'] = normalizeContact(emergencyContactMobile)
+            rows['emergencyContactMobile'] = normalizeContact(emergencyContactMobile).toString()
           }
 
           if(platform_user_id) {
@@ -293,7 +293,7 @@ const Uploader:React.FC<modalProps> = ({width, bucket, bucketRequired,onSuccess,
       dispatch(setServerError(true))
     }
   }, []);
-
+console.log(excelData)
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {

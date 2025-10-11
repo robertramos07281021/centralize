@@ -1296,6 +1296,7 @@ const productionResolver = {
           function checkDate(number) {
             return number > 9 ? number : `0${number}`;
           }
+
           const createdAt = new Date(filtered?.createdAt)
           const yearCreated = createdAt.getFullYear()
           const monthCreated = months[createdAt.getMonth()]
@@ -1304,6 +1305,7 @@ const productionResolver = {
           const issabelIpAddress = filtered?.bucket?.issabelIp
           const month = createdAt.getMonth() + 1;
           const viciIpAddress = filtered?.bucket?.viciIp
+          
           const fileNale = {
             "172.20.21.64" : "HOMECREDIT",
             "172.20.21.10" : "MIXED CAMPAIGN NEW 2",
@@ -1391,7 +1393,6 @@ const productionResolver = {
             continue
           }
         }
-        console.log(withRecordings[0].recordings)
         const newMapForDispoCode = forFiltering[0]?.metadata?.length > 0 ? forFiltering[0]?.metadata[0]?.dispotypeCodes : []
         const total = forFiltering[0]?.metadata?.length > 0  ?  forFiltering[0]?.metadata[0]?.total : 0
         

@@ -166,7 +166,7 @@ const ReportsView: React.FC<Props> = ({ search }) => {
     <div
       className={` col-span-2 flex flex-col overflow-auto relative h-5/6 px-5`}
     >
-      <div className="text-center sticky bg-white top-0 uppercase font-medium 2xl:text-lg lg:text-base text-slate-500 flex item-center justify-center gap-5 py-5 ">
+      <div className="text-center border-b-2 border-gray-200 sticky bg-white top-0 uppercase font-black 2xl:text-lg lg:text-2xl  text-slate-800 flex item-center justify-center gap-5 pb-5 ">
         <>
           {reportsData?.getDispositionReports?.bucket && (
             <span>Bucket: {reportsData.getDispositionReports.bucket}</span>

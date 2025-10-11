@@ -114,7 +114,7 @@ const AccountsView = () => {
   const location = useLocation();
   const isAccounts = location.pathname.includes("accounts");
   const [create, setCreate] = useState(false);
-  const [updateModal, setUpdateModal] = useState(false)
+  const [updateModal, setUpdateModal] = useState(false);
 
   const { data: getDeptData, refetch: deptRefetch } = useQuery<{
     getDepts: Department[];
@@ -127,7 +127,6 @@ const AccountsView = () => {
   const { data: getAllBucketsData, refetch: bucketRefetch } = useQuery<{
     getAllBucket: DeptBranchBucket[];
   }>(GET_ALL_BUCKET, { skip: !isAccounts, notifyOnNetworkStatusChange: true });
-  
 
   const [totalPage, setTotalPage] = useState<number>(1);
 
@@ -261,7 +260,7 @@ const AccountsView = () => {
 
             <motion.div
               onClick={() => setCreate(true)}
-              className="focus:outline-none shadow-md font-black text-green-900 bg-green-500  hover:text-green-950 hover:bg-green-600 focus:ring-4 focus:ring-green-300 uppercase rounded-lg text-sm px-5 py-2.5 me-2  dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 border-2 border-green-800 cursor-pointer"
+              className="focus:outline-none shadow-md font-black text-white bg-green-500   hover:bg-green-600 focus:ring-4 focus:ring-green-300 uppercase rounded-lg text-sm px-5 py-2.5 me-2  dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 border-2 border-green-800 cursor-pointer"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: "spring", duration: 0.6, delay: 0.1 }}
@@ -272,8 +271,13 @@ const AccountsView = () => {
         </div>
         <div className="flex justify-center "></div>
 
-        <div className=" h-full overflow-y-hidden flex flex-col mx-3 ">
-          <div className=" rounded-t-md pr-3 bg-gray-200 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-12 py-2 font-semibold">
+        <motion.div
+          className=" h-full overflow-y-hidden flex flex-col mx-3 "
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
+          <div className=" rounded-t-md pr-3 bg-gray-200 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-12 py-2 font-black uppercase">
             <div className="col-span-2 px-2">Name</div>
             <div>Username</div>
             <div>SIP ID</div>
@@ -281,9 +285,9 @@ const AccountsView = () => {
             <div>Branch</div>
             <div>Campaign</div>
             <div>Bucket</div>
-            <div>Active</div>
-            <div>Online</div>
-            <div>Lock</div>
+            <div className="text-center">Active</div>
+            <div className="text-center">Online</div>
+            <div className="text-center">Lock</div>
             <div></div>
           </div>
           <div className="overflow-y-auto">
@@ -325,25 +329,57 @@ const AccountsView = () => {
                     ?.map((b) => bucketObject[b]?.toString())
                     .join(", ") || "-"}
                 </div>
-                <div>
+                <div className="flex items-center justify-center h-full">
                   <FaCircle
                     className={`${
-                      user.active ? "text-green-400" : "text-red-700"
+                      user.active
+                        ? "text-green-500 w-5 h-5 animate-pulse"
+                        : "text-red-700 w-5 h-5 "
                     } `}
                   />
                 </div>
-                <div>
-                  <FaCircle
-                    className={`${
-                      user.isOnline ? "text-green-400" : "text-red-700"
-                    } `}
-                  />
-                </div>
-                <div className="text-xl">
-                  {user.isLock ? (
-                    <BsFillLockFill className="text-red-400" />
+                <div className="flex items-center justify-center h-full">
+                  {user.isOnline ? (
+                    <div className=" shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"></div>
                   ) : (
-                    <BsFillUnlockFill />
+                    <div className=" shadow-md bg-red-600 w-5 rounded-full h-5"></div>
+                  )}
+                </div>
+                <div className="flex items-center justify-center h-full">
+                  {user.isLock ? (
+                    <div className=" bg-red-700 cursor-pointer hover:bg-red-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-red-900 text-white">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="3"
+                        stroke="currentColor"
+                        className="size-5"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                        />
+                      </svg>
+                    </div>
+                  ) : (
+                    <div className=" bg-green-700 cursor-pointer hover:bg-green-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-green-900 text-white">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="3"
+                        stroke="currentColor"
+                        className="size-5"
+                      >
+                        <path
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                          d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                        />
+                      </svg>
+                    </div>
                   )}
                 </div>
                 <div className="flex justify-center items-center gap-2">
@@ -352,13 +388,9 @@ const AccountsView = () => {
                     state={user}
                     className="font-medium bg-blue-700 hover:bg-blue-800 border-2 border-blue-900 rounded-sm px-2 py-1 text-blue-600 dark:text-blue-500 hover:underline relative"
                   >
-                    <FaUserGear
-                      className="text-xl text-white "
-                      title="View"
-                    />
+                    <FaUserGear className="text-xl text-white " title="View" />
                   </Link>
 
-                  
                   <div className="items-center flex ">
                     <div
                       onClick={() => onClickDelete(user)}
@@ -384,7 +416,7 @@ const AccountsView = () => {
               </motion.div>
             ))}
           </div>
-        </div>
+        </motion.div>
         <div className="">
           <Pagination
             value={page}

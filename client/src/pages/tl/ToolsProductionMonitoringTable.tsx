@@ -81,9 +81,9 @@ const ToolsProductionMonitoringTable = () => {
                   <tr key={index} className="border-t border-white odd:bg-blue-50">
                     <td className="text-left px-5 capitalize">{tool}</td>
                     <td>{findTools?.rpc || 0}</td>
-                    <td>{findTools?.ptp.toLocaleString('en-PH',{style: "currency", currency: "PHP"}) || '-'}</td>
-                    <td>{findTools?.kept.toLocaleString('en-PH',{style: "currency", currency: "PHP"}) || '-'}</td>
-                    <td>{findTools?.paid.toLocaleString('en-PH',{style: "currency", currency: "PHP"}) || '-'}</td>
+                    <td>{findTools?.ptp.toLocaleString('en-PH',{style: "currency", currency: "PHP"}) || (0).toLocaleString('en-PH',{style: "currency", currency: "PHP"})}</td>
+                    <td>{findTools?.kept.toLocaleString('en-PH',{style: "currency", currency: "PHP"}) || (0).toLocaleString('en-PH',{style: "currency", currency: "PHP"})}</td>
+                    <td>{findTools?.paid.toLocaleString('en-PH',{style: "currency", currency: "PHP"}) || (0).toLocaleString('en-PH',{style: "currency", currency: "PHP"})}</td>
                   </tr>
                 )
               })

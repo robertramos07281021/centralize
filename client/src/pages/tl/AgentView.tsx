@@ -1,17 +1,22 @@
-import { useMutation, useQuery, useSubscription } from "@apollo/client"
-import gql from "graphql-tag"
-import { useCallback, useEffect, useState } from "react"
+import { useMutation, useQuery, useSubscription } from "@apollo/client";
+import gql from "graphql-tag";
+import { useCallback, useEffect, useState } from "react";
 import { GoDotFill } from "react-icons/go";
 import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import { useDispatch, useSelector } from "react-redux";
 import { MdRecordVoiceOver } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
-import { BsFillUnlockFill, BsFillLockFill, BsFillKeyFill } from "react-icons/bs";
+import {
+  BsFillUnlockFill,
+  BsFillLockFill,
+  BsFillKeyFill,
+} from "react-icons/bs";
 import AuthenticationPass from "../../components/AuthenticationPass";
 import { RootState } from "../../redux/store";
 import { LuSettings } from "react-icons/lu";
 import SetTargetsModal from "./SetTargetsModal";
 import SetBucketTargetsModal from "./SetBucketTargetsModal";
+import { motion } from "framer-motion";
 
 const TL_AGENT = gql`
   query findDeptAgents {
@@ -38,37 +43,36 @@ const TL_AGENT = gql`
       }
     }
   }
-`
+`;
 
 type Bucket = {
-  name: string
-}
+  name: string;
+};
 
 type Department = {
-  name: string
-}
+  name: string;
+};
 
 type Target = {
-  daily: number
-  weekly: number
-  monthly: number
-}
-
+  daily: number;
+  weekly: number;
+  monthly: number;
+};
 
 type TLAgent = {
-  _id: string
-  name: string
-  user_id: string
-  type: string
-  isOnline: boolean
-  isLock: boolean
-  active: boolean
-  attempt_login: number
-  callfile_id: string
-  buckets: Bucket[]
-  departments: Department[]
-  targets?: Target
-}
+  _id: string;
+  name: string;
+  user_id: string;
+  type: string;
+  isOnline: boolean;
+  isLock: boolean;
+  active: boolean;
+  attempt_login: number;
+  callfile_id: string;
+  buckets: Bucket[];
+  departments: Department[];
+  targets?: Target;
+};
 
 const AGENT_PRODUCTION = gql`
   query getAgentProductions {
@@ -83,20 +87,20 @@ const AGENT_PRODUCTION = gql`
       createdAt
     }
   }
-`
+`;
 
 type ProdHistory = {
-  type: string
-  existing: boolean
-  start :string
-}
+  type: string;
+  existing: boolean;
+  start: string;
+};
 
 type AgentProductions = {
-  _id: string
-  user: string
-  createdAt: string
-  prod_history: ProdHistory[]
-}
+  _id: string;
+  user: string;
+  createdAt: string;
+  prod_history: ProdHistory[];
+};
 
 const UNLOCK_USER = gql`
   mutation unlockUser($id: ID!) {
@@ -105,7 +109,7 @@ const UNLOCK_USER = gql`
       message
     }
   }
-`
+`;
 
 const SOMETHING_LOCK = gql`
   subscription SomethingOnAgentAccount {
@@ -114,162 +118,256 @@ const SOMETHING_LOCK = gql`
       message
     }
   }
-`
+`;
 
 const AgentView = () => {
-  const {userLogged} = useSelector((state:RootState) => state.auth)
-  const dispatch = useDispatch()
-  const location = useLocation()
-  const isAgentProd = location.pathname !== '/agent-production'
-  const {data:tlAgentData, refetch} = useQuery<{findDeptAgents:TLAgent[]}>(TL_AGENT,{skip: isAgentProd, notifyOnNetworkStatusChange: true})
-  const {data: agentProdData, refetch:agentProdDataRefetch} = useQuery<{getAgentProductions:AgentProductions[]}>(AGENT_PRODUCTION, {skip: isAgentProd, notifyOnNetworkStatusChange: true})
-  const [agentProduction,setAgentProduction] = useState<TLAgent[]>([])
+  const { userLogged } = useSelector((state: RootState) => state.auth);
+  const dispatch = useDispatch();
+  const location = useLocation();
+  const isAgentProd = location.pathname !== "/agent-production";
+  const { data: tlAgentData, refetch } = useQuery<{
+    findDeptAgents: TLAgent[];
+  }>(TL_AGENT, { skip: isAgentProd, notifyOnNetworkStatusChange: true });
+  const { data: agentProdData, refetch: agentProdDataRefetch } = useQuery<{
+    getAgentProductions: AgentProductions[];
+  }>(AGENT_PRODUCTION, {
+    skip: isAgentProd,
+    notifyOnNetworkStatusChange: true,
+  });
+  const [agentProduction, setAgentProduction] = useState<TLAgent[]>([]);
 
-  useEffect(()=> {
-    const refetching = async()=> {
-      await refetch()
-      await agentProdDataRefetch()
-    }
-    refetching()
-  },[])
+  useEffect(() => {
+    const refetching = async () => {
+      await refetch();
+      await agentProdDataRefetch();
+    };
+    refetching();
+  }, []);
 
-  useSubscription<{somethingOnAgentAccount:{buckets:string[],message: string}}>(SOMETHING_LOCK,{
-    onData: async({data}) => {
-      if(data) {
-        if(data.data?.somethingOnAgentAccount.message === "SOMETHING_ON_AGENT_ACCOUNT" && data.data?.somethingOnAgentAccount.buckets.some(bucket =>  userLogged?.buckets.includes(bucket))) {
-         await refetch()
-         await agentProdDataRefetch()
+  useSubscription<{
+    somethingOnAgentAccount: { buckets: string[]; message: string };
+  }>(SOMETHING_LOCK, {
+    onData: async ({ data }) => {
+      if (data) {
+        if (
+          data.data?.somethingOnAgentAccount.message ===
+            "SOMETHING_ON_AGENT_ACCOUNT" &&
+          data.data?.somethingOnAgentAccount.buckets.some((bucket) =>
+            userLogged?.buckets.includes(bucket)
+          )
+        ) {
+          await refetch();
+          await agentProdDataRefetch();
         }
       }
-    }
-  })
+    },
+  });
 
-  useEffect(()=> {
-    if(tlAgentData) {
-      setAgentProduction(tlAgentData.findDeptAgents)
+  useEffect(() => {
+    if (tlAgentData) {
+      setAgentProduction(tlAgentData.findDeptAgents);
     }
-  },[tlAgentData])
+  }, [tlAgentData]);
 
-  const [search,setSearch] = useState<string>("")
+  const [search, setSearch] = useState<string>("");
 
-  useEffect(()=> {
-    const filteredData = tlAgentData?.findDeptAgents?.filter(e=> e.user_id.includes(search) || e.name.toLowerCase().includes(search.toLowerCase()) || e.buckets.some(bucket => bucket.name.toLowerCase().includes(search.toLowerCase())) || e.departments.some(dept => dept.name.toLowerCase().includes(search.toLowerCase())) )
-    if(filteredData){
-      setAgentProduction(filteredData)
+  useEffect(() => {
+    const filteredData = tlAgentData?.findDeptAgents?.filter(
+      (e) =>
+        e.user_id.includes(search) ||
+        e.name.toLowerCase().includes(search.toLowerCase()) ||
+        e.buckets.some((bucket) =>
+          bucket.name.toLowerCase().includes(search.toLowerCase())
+        ) ||
+        e.departments.some((dept) =>
+          dept.name.toLowerCase().includes(search.toLowerCase())
+        )
+    );
+    if (filteredData) {
+      setAgentProduction(filteredData);
     }
-  },[search,tlAgentData])
-  
-  const [unlockUser] = useMutation<{unlockUser:{success: boolean,message: string}}>(UNLOCK_USER, {
-    onCompleted: async(res) => {
-      setIsAuthorize(false)
-      dispatch(setSuccess({
-        success: res.unlockUser.success,
-        message: res.unlockUser.message,
-        isMessage: false
-      }))
-      await refetch()
-      await agentProdDataRefetch()
+  }, [search, tlAgentData]);
+
+  const [unlockUser] = useMutation<{
+    unlockUser: { success: boolean; message: string };
+  }>(UNLOCK_USER, {
+    onCompleted: async (res) => {
+      setIsAuthorize(false);
+      dispatch(
+        setSuccess({
+          success: res.unlockUser.success,
+          message: res.unlockUser.message,
+          isMessage: false,
+        })
+      );
+      await refetch();
+      await agentProdDataRefetch();
     },
     onError: () => {
-      dispatch(setServerError(true))
-    }
-  })
+      dispatch(setServerError(true));
+    },
+  });
 
   const [authentication, setAuthentication] = useState({
     yesMessage: "",
     event: () => {},
-    no: () => {}
-  })
+    no: () => {},
+  });
 
-  const [isAuthorize, setIsAuthorize] = useState<boolean>(false)
+  const [isAuthorize, setIsAuthorize] = useState<boolean>(false);
 
   enum ButtonType {
     SET = "SET",
     UNLOCK = "UNLOCK",
-    SET_TARGETS = "SET_TARGETS"
+    SET_TARGETS = "SET_TARGETS",
   }
 
-  const [userToUpdateTargets, setUserToUpdateTargets] = useState<string | null>(null)
-  const [updateSetTargets, setUpdateSetTarget] = useState<boolean>(false)
-  const [bucketTargetModal, setBucketTargetModal] = useState<boolean>(false) 
+  const [userToUpdateTargets, setUserToUpdateTargets] = useState<string | null>(
+    null
+  );
+  const [updateSetTargets, setUpdateSetTarget] = useState<boolean>(false);
+  const [bucketTargetModal, setBucketTargetModal] = useState<boolean>(false);
 
-  const unlockingUser = useCallback(async(userId: string | null)=> {
-    await unlockUser({variables: {id:userId}})
-  },[unlockUser])
-
-  const eventType:Record<keyof typeof ButtonType, (userId: string | null)=> Promise<void>> = {
-    SET : async(userId) => {
-      setUserToUpdateTargets(userId)
-      setUpdateSetTarget(true)
-      setIsAuthorize(false)
+  const unlockingUser = useCallback(
+    async (userId: string | null) => {
+      await unlockUser({ variables: { id: userId } });
     },
-    UNLOCK : unlockingUser,
-    SET_TARGETS : async() => {
-      setBucketTargetModal(true)
-      setIsAuthorize(false)
-    }
-  }
+    [unlockUser]
+  );
 
-  const onClickAction = useCallback((userId:string | null,lock: boolean,  eventMethod:keyof typeof ButtonType, attempt: number) => {
-    const message = eventMethod.toLowerCase()
-    if((lock && eventMethod === ButtonType.UNLOCK && attempt === 0) || eventMethod === ButtonType.SET || eventMethod === ButtonType.SET_TARGETS) {
-      setIsAuthorize(true)
-      setAuthentication({
-        yesMessage: message,
-        event: () => { eventType[eventMethod]?.(userId)},
-        no: ()=> {setIsAuthorize(false)}
-      })
-    } 
-  },[,setAuthentication,setIsAuthorize])
+  const eventType: Record<
+    keyof typeof ButtonType,
+    (userId: string | null) => Promise<void>
+  > = {
+    SET: async (userId) => {
+      setUserToUpdateTargets(userId);
+      setUpdateSetTarget(true);
+      setIsAuthorize(false);
+    },
+    UNLOCK: unlockingUser,
+    SET_TARGETS: async () => {
+      setBucketTargetModal(true);
+      setIsAuthorize(false);
+    },
+  };
+
+  const onClickAction = useCallback(
+    (
+      userId: string | null,
+      lock: boolean,
+      eventMethod: keyof typeof ButtonType,
+      attempt: number
+    ) => {
+      const message = eventMethod.toLowerCase();
+      if (
+        (lock && eventMethod === ButtonType.UNLOCK && attempt === 0) ||
+        eventMethod === ButtonType.SET ||
+        eventMethod === ButtonType.SET_TARGETS
+      ) {
+        setIsAuthorize(true);
+        setAuthentication({
+          yesMessage: message,
+          event: () => {
+            eventType[eventMethod]?.(userId);
+          },
+          no: () => {
+            setIsAuthorize(false);
+          },
+        });
+      }
+    },
+    [, setAuthentication, setIsAuthorize]
+  );
 
   return (
     <>
-      {
-        updateSetTargets &&
-        <SetTargetsModal agentToUpdate={userToUpdateTargets || null} cancel={()=> {setUpdateSetTarget(false); setUserToUpdateTargets(null)}} success={(message, success)=> {
-          dispatch(setSuccess({
-            success,
-            message,
-            isMessage: false
-          }))
-          refetch()
-          agentProdDataRefetch()
-          setUserToUpdateTargets(null)
-          setUpdateSetTarget(false)
-        }}/>
-      }
-      {
-        bucketTargetModal && 
-        <SetBucketTargetsModal cancel={()=> setBucketTargetModal(false)} refetch={()=> {setBucketTargetModal(false); refetch(); agentProdDataRefetch()}}/>
-      }
+      {updateSetTargets && (
+        <SetTargetsModal
+          agentToUpdate={userToUpdateTargets || null}
+          cancel={() => {
+            setUpdateSetTarget(false);
+            setUserToUpdateTargets(null);
+          }}
+          success={(message, success) => {
+            dispatch(
+              setSuccess({
+                success,
+                message,
+                isMessage: false,
+              })
+            );
+            refetch();
+            agentProdDataRefetch();
+            setUserToUpdateTargets(null);
+            setUpdateSetTarget(false);
+          }}
+        />
+      )}
+      {bucketTargetModal && (
+        <SetBucketTargetsModal
+          cancel={() => setBucketTargetModal(false)}
+          refetch={() => {
+            setBucketTargetModal(false);
+            refetch();
+            agentProdDataRefetch();
+          }}
+        />
+      )}
       <div className="h-full w-full flex flex-col overflow-hidden p-2">
-        <h1 className="p-2 text-xl font-medium text-gray-500">Agent Production</h1>
-        <div className="flex justify-center gap-20 relative">
-          <input 
-            type="search" 
-            name="search" 
-            id="search" 
-            value={search}
-            onChange={(e)=> setSearch(e.target.value)}
-            className="border px-2 rounded-md text-gray-500 py-1.5 w-1/5 text-sm"
-            placeholder="Enter Agent ID here..." 
-            autoComplete="off"/>
-          <button className="right-5 absolute px-5 py-2 text-sm bg-orange-500 rounded-md text-white border hover:bg-orange-600" onClick={()=> onClickAction( null, false, ButtonType.SET_TARGETS, 0)}>Set Targets</button>
+        <h1 className="py-5 pt-6 px-6 uppercase font-black text-2xl  text-gray-500">
+          Agent Production
+        </h1>
+        <div className="flex justify-end items-end gap-3 px-5 relative">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="h-full"
+          >
+            <input
+              type="search"
+              name="search"
+              id="search"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="border w-full h-full shadow-md px-3 rounded-md text-gray-500 py-1 text-sm"
+              placeholder="Enter Agent ID here..."
+              autoComplete="off"
+            />
+          </motion.div>
+          <motion.button
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="shadow-md"
+            onClick={() =>
+              onClickAction(null, false, ButtonType.SET_TARGETS, 0)
+            }
+          >
+            <div className="right-5 px-5 py-2 text-sm bg-orange-500 transition-all rounded-md text-orange-900 border-2 cursor-pointer font-black uppercase  border-orange-800 hover:bg-orange-600">
+              Set Targets
+            </div>
+          </motion.button>
         </div>
 
-        <div className="h-full overflow-hidden m-5 lg:text-xs 2xl:text-sm">
-          <div className="grid grid-cols-11 font-medium text-slate-500 bg-slate-100 ">
-            <div className="px-2 py-1 flex items-center">Name</div>
+        <motion.div
+          className="h-full overflow-hidden m-5 text-sm rounded-md"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0 }}
+        >
+          <div className="grid px-2 gap-2 grid-cols-11 font-black uppercase  text-slate-800 bg-gray-300 ">
+            <div className=" py-1 flex items-center">Name</div>
             <div className="py-1 truncate flex items-center">Agent ID</div>
             <div className="py-1 truncate flex items-center">Callfile ID</div>
             <div className="py-1 truncate flex items-center">Bucket</div>
             <div className="py-1 truncate flex items-center">Campaign</div>
-            <div className="py-1 truncate flex items-center">Online</div>
-            <div className="py-1 truncate flex items-center">Lock</div>
+            <div className="py-1 truncate flex items-center text-center justify-center">Online</div>
+            <div className="py-1 truncate flex items-center text-center justify-center">Lock</div>
             <div className="py-1 truncate flex items-center">Status</div>
             <div className="py-1 col-span-2 flex flex-col">
               <div className="text-center">Targets</div>
-              <div className="grid grid-cols-3 text-[0.8em]">
+              <div className="grid grid-cols-3 text-center text-[0.8em]">
                 <div>Daily</div>
                 <div>Weekly</div>
                 <div>Montly</div>
@@ -278,77 +376,239 @@ const AgentView = () => {
             <div className="py-1 truncate flex items-center">Action</div>
           </div>
           <div className="h-full overflow-y-auto">
-            {
-              agentProduction.map((e) => {
-                const findAgentProd = agentProdData?.getAgentProductions.find(y=> y.user === e._id)
-                const findExsitingStatus = findAgentProd?.prod_history.find(x=> x.existing === true)
-                return e.type === "AGENT" && e.active && (
-                  <div key={e._id} className="cursor-default px-2 py-1 grid grid-cols-11 lg:text-xs 2xl:text-sm text-gray-500 font-normal even:bg-slate-50 hover:bg-blue-50 last:pb-4">
-                    <div className="capitalize truncate">{e.name}</div>
-                    <div >{e.user_id}</div>
-                    <div >{e.callfile_id}</div>
-                    <div className=" truncate pr-6" title={e.buckets.map(e=> e.name).join(', ')}>{e.buckets.map(e=> e.name).join(', ')}</div>
-                    <div className=" truncate pr-2">{e.departments.map(e=> e.name).join(', ')}</div>
-                    <div > 
-                      <GoDotFill className={`${e.isOnline ? "text-green-400" : "text-slate-600"} text-2xl`} />
-                    </div>
-                    <div className=" flex items-center"> 
-                      {
-                        e.isLock ?
-                        <BsFillLockFill  className="text-red-600 text-xl" /> :
-                        <BsFillUnlockFill className="text-slate-600 text-xl" /> 
-                      }
-                    </div>
-                    <div className="flex items-center "> 
-                      { findExsitingStatus ? findExsitingStatus?.type : "-" }
-                    </div>
-                    <div className="col-span-2 "> 
-                      <div className="w-full grid grid-cols-3">
-                        <div>
-                          {e.targets?.daily.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'})}
-                        </div>
-                        <div>
-                          {e.targets?.weekly.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'})}
-                        </div>
-                        <div>
-                          {e.targets?.monthly.toLocaleString('en-PH', {style: 'currency',currency: 'PHP'}) || (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP'})}
+            {agentProduction.map((e, index) => {
+              const findAgentProd = agentProdData?.getAgentProductions.find(
+                (y) => y.user === e._id
+              );
+              const findExsitingStatus = findAgentProd?.prod_history.find(
+                (x) => x.existing === true
+              );
+              return (
+                e.type === "AGENT" &&
+                e.active && (
+                  <motion.div
+                    key={e._id}
+                    className="cursor-default bg-gray-100  even:bg-gray-200    "
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <div className="items-center hover:bg-gray-300 transition-all gap-2 px-2 py-2 grid grid-cols-11 lg:text-xs 2xl:text-sm text-gray-800 font-normal">
+                      <div className="capitalize truncate">{e.name}</div>
+                      <div>{e.user_id}</div>
+                      <div>{e.callfile_id}</div>
+                      <div
+                        className=" truncate pr-6"
+                        title={e.buckets.map((e) => e.name).join(", ")}
+                      >
+                        {e.buckets.map((e) => e.name).join(", ")}
+                      </div>
+                      <div className=" truncate pr-2">
+                        {e.departments.map((e) => e.name).join(", ")}
+                      </div>
+                      <div className="text-center flex justify-center">
+                        {e.isOnline ? (
+                          <div className=" shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"></div>
+                        ) : (
+                          <div className=" shadow-md bg-red-600 w-5 rounded-full h-5"></div>
+                        )}
+                      </div>
+                      <div className=" flex  text-center justify-center">
+                        {e.isLock ? (
+                          <div className=" bg-red-700 cursor-pointer hover:bg-red-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-red-900 text-white">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth="3"
+                              stroke="currentColor"
+                              className="size-5"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                              />
+                            </svg>
+                          </div>
+                        ) : (
+                          <div className=" bg-green-700 cursor-pointer hover:bg-green-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-green-900 text-white">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth="3"
+                              stroke="currentColor"
+                              className="size-5"
+                            >
+                              <path
+                                stroke-linecap="round"
+                                stroke-linejoin="round"
+                                d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                              />
+                            </svg>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex items-center ">
+                        {findExsitingStatus ? findExsitingStatus?.type : "-"}
+                      </div>
+                      <div className="col-span-2 ">
+                        <div className="w-full grid grid-cols-3">
+                          <div
+                            title={
+                              e.targets?.daily.toLocaleString("en-PH", {
+                                style: "currency",
+                                currency: "PHP",
+                              }) ||
+                              (0).toLocaleString("en-PH", {
+                                style: "currency",
+                                currency: "PHP",
+                              })
+                            }
+                          >
+                            {e.targets?.daily.toLocaleString("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            }) ||
+                              (0).toLocaleString("en-PH", {
+                                style: "currency",
+                                currency: "PHP",
+                              })}
+                          </div>
+                          <div
+                            title={
+                              e.targets?.weekly.toLocaleString("en-PH", {
+                                style: "currency",
+                                currency: "PHP",
+                              }) ||
+                              (0).toLocaleString("en-PH", {
+                                style: "currency",
+                                currency: "PHP",
+                              })
+                            }
+                          >
+                            {e.targets?.weekly.toLocaleString("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            }) ||
+                              (0).toLocaleString("en-PH", {
+                                style: "currency",
+                                currency: "PHP",
+                              })}
+                          </div>
+                          <div
+                            title={
+                              e.targets?.monthly.toLocaleString("en-PH", {
+                                style: "currency",
+                                currency: "PHP",
+                              }) ||
+                              (0).toLocaleString("en-PH", {
+                                style: "currency",
+                                currency: "PHP",
+                              })
+                            }
+                          >
+                            {e.targets?.monthly.toLocaleString("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            }) ||
+                              (0).toLocaleString("en-PH", {
+                                style: "currency",
+                                currency: "PHP",
+                              })}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="pl-2 flex gap-5">
-                      <div className="relative">
-                        <button className="bg-blue-500 rounded-full py-1 px-1 text-white hover:scale-110 duration-100 ease-in-out cursor-pointer peer"
-                        onClick={()=> onClickAction(e._id,e.isLock, ButtonType.UNLOCK, e.attempt_login)}
-                        ><BsFillKeyFill  /></button>
-                        <div className="absolute text-nowrap px-1 bg-white z-50 left-full top-0 ml-2 peer-hover:block hidden border">Unlock Agent</div>
-                      </div>
+                      <div className="grid grid-cols-3 text-white gap-1">
+                        <div
+                          onClick={() =>
+                            onClickAction(
+                              e._id,
+                              e.isLock,
+                              ButtonType.UNLOCK,
+                              e.attempt_login
+                            )
+                          }
+                          className=" w-hull flex justify-center hover:bg-blue-700 transition-all items-center border border-blue-800 bg-blue-600 cursor-pointer rounded-sm h-full py-1"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="2"
+                            stroke="currentColor"
+                            className="size-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"
+                            />
+                          </svg>
+                        </div>
 
-                      <div className="relative">
-                        <button className="bg-orange-500 rounded-full py-1 px-1 text-white hover:scale-110 duration-100 ease-in-out cursor-pointer peer"
-                        onClick={()=> onClickAction( e._id, e.isLock, ButtonType.SET, e.attempt_login)}
-                        ><LuSettings /></button>
-                        <div className="absolute text-nowrap px-1 bg-white z-50 left-full top-0 ml-2 peer-hover:block hidden border">Set Targets</div>
+                        <div
+                          onClick={() =>
+                            onClickAction(
+                              e._id,
+                              e.isLock,
+                              ButtonType.SET,
+                              e.attempt_login
+                            )
+                          }
+                          className=" w-hull flex justify-center hover:bg-orange-700 transition-all items-center border border-orange-800 bg-orange-600 cursor-pointer rounded-sm h-full py-1"
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="2"
+                            stroke="currentColor"
+                            className="size-6"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z"
+                            />
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                            />
+                          </svg>
+                        </div>
+                        <Link to="/agent-recordings" state={e._id}>
+                          <div className=" w-hull flex justify-center hover:bg-green-700 transition-all items-center border border-green-800 bg-green-600 cursor-pointer rounded-sm h-full py-1">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth="2"
+                              stroke="currentColor"
+                              className="size-6"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                              />
+                            </svg>
+                          </div>
+                        </Link>
                       </div>
-
-                      <Link to="/agent-recordings" state={e._id} className="relative">
-                        <button className="bg-green-500 w-auto rounded-full py-1 px-1 text-white hover:scale-110 duration-100 ease-in-out cursor-pointer peer"
-                        ><MdRecordVoiceOver /></button>
-                        <div className="absolute text-nowrap bg-white z-50 left-full top-0 ml-2 peer-hover:block hidden border px-1">Recordings</div>
-                      </Link>
                     </div>
-                  </div>
+                  </motion.div>
                 )
-              })
-            }
+              );
+            })}
           </div>
-        </div>
+        </motion.div>
       </div>
-      {
-        isAuthorize &&
-        <AuthenticationPass {...authentication}/>
-      }
+      {isAuthorize && <AuthenticationPass {...authentication} />}
     </>
-  )
-}
+  );
+};
 
-export default AgentView
+export default AgentView;

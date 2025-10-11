@@ -905,17 +905,6 @@ const callfileResolver = {
           },
           {
             $lookup: {
-              from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
-              as: "ca",
-            }
-          },
-          {
-            $unwind: {path: "$ca",preserveNullAndEmptyArrays: true}
-          },
-          {
-            $lookup: {
               from: "dispotypes",
               localField: "disposition",
               foreignField: "_id",
@@ -957,13 +946,13 @@ const callfileResolver = {
             $group: {
               _id: {
                 case_id: "$ca.case_id",
-                contact_method: "$contact_method"
               },
+              contact_method: { $first : "$contact_method" }
             }
           },
           {
             $group: {
-              _id: "$_id.contact_method",
+              _id: "$contact_method",
               isRPC: { $sum: 1 }
             }
           },

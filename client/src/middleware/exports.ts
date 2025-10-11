@@ -175,10 +175,6 @@ export const accountsNavbar:{[key:string]:links[]} = {
       name: "Agents Recordings",
       link: "/qa-agents-dashboard"
     },
-    {
-      name: "QA Supervisor",
-      link: "/qa-supervisor"
-    },
   ]
 }
 

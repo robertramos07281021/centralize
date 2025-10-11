@@ -331,6 +331,8 @@ const CustomerDisposition = () => {
   const { userLogged, selectedCustomer, breakValue } = useSelector(
     (state: RootState) => state.auth
   );
+  const [randomCustomer, setRandomCustomer] = useState<any>(null);
+  const [floatDial, setFloatDial] = useState(true);
   const containerRef = useRef(null);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -387,6 +389,7 @@ const CustomerDisposition = () => {
     async (customer: Search) => {
       await selectTask({ variables: { id: customer._id } });
       dispatch(setSelectedCustomer(customer));
+      setFloatDial(true);
     },
     [selectTask, dispatch]
   );
@@ -469,6 +472,57 @@ const CustomerDisposition = () => {
     },
   });
 
+  // useEffect(() => {
+  //   const handleKeyDown = async (e: KeyboardEvent) => {
+  //     if (!selectedCustomer) {
+  //       const key = e.key.toLowerCase();
+  //       if (["a", "b", "c"].includes(key)) {
+  //         await handleSearchAndSelectByFirstLetter(key);
+  //       }
+  //     }
+  //   };
+
+  //   window.addEventListener("keydown", handleKeyDown);
+  //   return () => window.removeEventListener("keydown", handleKeyDown);
+  // }, [selectedCustomer]);
+
+  const handleRandomCustomerSelect = async () => {
+    try {
+      const result = await refetch(); // No search filter
+
+      const list = result?.data?.search || [];
+
+      if (list.length > 0) {
+        const randomIndex = Math.floor(Math.random() * list.length);
+        const randomCustomer = list[randomIndex];
+
+        await selectTask({ variables: { id: randomCustomer._id } });
+        dispatch(setSelectedCustomer(randomCustomer));
+      } else {
+        console.log("No customers found");
+      }
+    } catch (error) {
+      console.error("Random select error:", error);
+    }
+  };
+
+  const handleRandomCustomer = async () => {
+    if (isSearch) {
+      setIsSearch(false);
+      await refetch();
+    }
+
+    const list = searchData?.search || [];
+
+    if (list.length > 0) {
+      const randomIndex = Math.floor(Math.random() * list.length);
+      const random = list[randomIndex];
+
+      setRandomCustomer(random);
+      dispatch(setSelectedCustomer(random));
+    }
+  };
+
   const callbackUpdateRPC = useCallback(async () => {
     await updateRPC({ variables: { id: selectedCustomer?.customer_info._id } });
   }, [updateRPC, selectedCustomer]);
@@ -497,10 +551,20 @@ const CustomerDisposition = () => {
       : selectedCustomer.customer_info?.gender.toLowerCase()
     : "";
 
+  useEffect(() => {
+    if (
+      searchData &&
+      Array.isArray(searchData.search) &&
+      searchData.search.length > 0
+    ) {
+      console.log("Search results updated", searchData.search);
+    }
+  }, [searchData]);
+
   return userLogged ? (
     <div
       ref={containerRef}
-      className="h-full w-full outline-none overflow-auto"
+      className="h-screen w-full relative outline-none overflow-auto"
       onMouseDown={(e) => {
         if (!childrenDivRef.current?.divElement?.contains(e.target as Node)) {
           childrenDivRef?.current?.showButtonToFalse();
@@ -509,23 +573,27 @@ const CustomerDisposition = () => {
     >
       {(isRPCToday || isRPC) && <Confirmation {...modalProps} />}
       <div>
-        <div className="p-5">
+        <div className="">
           {userLogged.type === "AGENT" && <AgentTimer />}
           <MyTaskSection />
         </div>
-        <div className="w-full flex gap-5 px-5 py-5 h-full overflow-auto ">
+        <div className="w-full flex gap-5 px-5 py-5 h-full overflow-hidden ">
           <motion.div
-            className="flex flex-col items-center w-full"
+            className="flex flex-col  items-center w-full"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 1, type: "spring" }}
           >
-            <h1 className="text-center font-bold text-slate-600 text-lg mb-4">
+            <h1 className="text-center uppercase  font-black text-slate-600 text-2xl mb-4">
               Customer Information
             </h1>
-            <div className="border flex flex-col shadow-md shadow-black/20 rounded-xl border-slate-400 w-full h-full items-center justify-center p-5 gap-1.5 relative">
+            <div
+              className={`" ${
+                selectedCustomer ? "w-full px-5" : "w-[40%] px-5"
+              } border bg-gray-100 flex flex-col shadow-md shadow-black/20 rounded-xl justify-center items-center  border-slate-400 h-full py-10 relative "`}
+            >
               <div
-                className={`flex w-full ${
+                className={`flex w-full  h-full ${
                   selectedCustomer?.customer_info.isRPC
                     ? "justify-start"
                     : "justify-end"
@@ -560,6 +628,7 @@ const CustomerDisposition = () => {
                     className=" w-full p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
                   />
                   <div
+                  
                     className={`${
                       length > 0 && search ? "" : "hidden"
                     } absolute max-h-96 border border-slate-400 w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-md top-10`}
@@ -574,7 +643,9 @@ const CustomerDisposition = () => {
               )}
               <FieldDisplay
                 label="Full Name"
-                value={selectedCustomer?.customer_info?.fullName}
+                value={
+                  (randomCustomer || selectedCustomer)?.customer_info?.fullName
+                }
               />
               <FieldDisplay
                 label="Date Of Birth (yyyy-mm-dd)"
@@ -614,7 +685,7 @@ const CustomerDisposition = () => {
                   <p className="font-bold text-slate-500 uppercase lg:text-sm text-[0.9rem]">
                     Emergency Contact Person :
                   </p>
-                  <div className="flex gap-2 flex-col lg:flex-row">
+                  <div className="flex gap-2  flex-col lg:flex-row">
                     <FieldDisplay
                       label="Name"
                       value={selectedCustomer.emergency_contact.name}
@@ -627,7 +698,7 @@ const CustomerDisposition = () => {
                 </div>
               )}
               {!isUpdate && (
-                <div className="2xl:text-sm lg:text-xs mt-5 flex gap-5">
+                <div className=" 2xl:text-sm lg:text-xs mt-5 flex gap-5">
                   {selectedCustomer && (
                     <>
                       {((selectedCustomer?.current_disposition &&
@@ -645,7 +716,7 @@ const CustomerDisposition = () => {
                         <button
                           type="button"
                           onClick={() => setIsUpdate(true)}
-                          className={`bg-orange-400 hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}
+                          className={`bg-orange-400 font-black hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 transition-all uppercase rounded-md shadow-md  w-24 py-2.5 me-2 mb-2 cursor-pointer`}
                         >
                           Update
                         </button>
@@ -653,7 +724,7 @@ const CustomerDisposition = () => {
                       <button
                         type="button"
                         onClick={clearSelectedCustomer}
-                        className={`bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg  w-24 py-2.5 me-2 mb-2 cursor-pointer`}
+                        className={`bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-black transition-all uppercase shadow-md rounded-md  w-24 py-2.5 me-2 mb-2 cursor-pointer`}
                       >
                         Cancel
                       </button>
@@ -663,38 +734,54 @@ const CustomerDisposition = () => {
               )}
             </div>
           </motion.div>
-          <motion.div
-            className="flex flex-col items-center w-full"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 1, type: "spring", delay: 0.2 }}
-          >
-            <h1 className="text-center font-bold text-slate-600 text-lg mb-4">
-              Customer Update Information
-            </h1>
-            <div
-              className={`border shadow-md shadow-black/20 w-full flex justify-center h-full border-slate-400 rounded-xl relative ${
-                !isUpdate && "flex items-center justify-center"
-              }`}
-            >
-              {isUpdate ? (
-                <CustomerUpdateForm cancel={() => setIsUpdate(false)} />
-              ) : (
-                <p className="w- 2xl:text-2xl font-light text-slate-500 select-none">
-                  For Updating Customer Info Only
-                </p>
+          {isUpdate && (
+            <div className="absolute z-100 top-0 justify-center items-center left-0 w-full flex h-full">
+              <motion.div
+                onClick={() => setIsUpdate(false)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className=" cursor-pointer z-30 absolute top-0 left-0 bg-black/30 backdrop-blur-sm w-full h-full"
+              ></motion.div>
+              <motion.div
+                className="flex flex-col  items-center relative z-40"
+                initial={{ opacity: 0, scale: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0 }}
+              >
+                <h1 className="text-center font-black uppercase text-white text-shadow-md text-2xl mb-4">
+                  Customer Update Information
+                </h1>
+                <div
+                  className={`border bg-gray-100 shadow-md shadow-black/20 w-full flex justify-center h-full border-slate-400 rounded-xl relative ${
+                    !isUpdate && "flex items-center justify-center"
+                  }`}
+                >
+                  {isUpdate ? (
+                    <CustomerUpdateForm cancel={() => setIsUpdate(false)} />
+                  ) : (
+                    <p className="w- 2xl:text-2xl font-light text-slate-500 select-none">
+                      For Updating Customer Info Only
+                    </p>
+                  )}
+                </div>
+              </motion.div>
+            </div>
+          )}
+          <div className="h-full l ">
+            <div>
+              <AccountInfo ref={childrenDivRef} />
+            </div>
+            <div className="flex items-end h-full w-full justify-end">
+              {selectedCustomer && selectedCustomer.balance > 0 && (
+                <DispositionForm updateOf={() => setIsUpdate(false)} />
               )}
             </div>
-          </motion.div>
+          </div>
         </div>
       </div>
-      <div className=" grid grid-cols-2 gap-5">
-        <AccountInfo ref={childrenDivRef} />
-        {selectedCustomer && selectedCustomer.balance > 0 && (
-          <DispositionForm updateOf={() => setIsUpdate(false)} />
-        )}
-      </div>
-      {/* {!selectedCustomer && (
+
+      {/* {floatDial && (
         <motion.div
           drag
           dragConstraints={containerRef}
@@ -707,13 +794,16 @@ const CustomerDisposition = () => {
         >
           <div className="absolute w-full font-black uppercase text-green-900 justify-evenly cursor-grab flex flex-col  h-full items-center right-0 z-20 top-0">
             <motion.div
-              className=" absolute -left-3 top-5   transition-al "
+              className="absolute -left-3 top-5 transition-al"
               initial={{ x: 40, y: 40, opacity: 0 }}
               animate={{ x: 0, y: 0, opacity: 1 }}
               transition={{ type: "spring", delay: 0.4 }}
             >
-              <div className="bg-green-500 transition-all hover:scale-110 hover:bg-green-600 px-3 py-1 cursor-pointer rounded-full border-2 border-green-900">
-                a
+              <div
+                onClick={handleRandomCustomerSelect}
+                className="bg-green-500 transition-all hover:scale-110 hover:bg-green-600 px-3 py-1 cursor-pointer rounded-full border-2 border-green-900"
+              >
+                A
               </div>
             </motion.div>
             <motion.div
@@ -721,6 +811,7 @@ const CustomerDisposition = () => {
               initial={{ x: -40, y: 40, opacity: 0 }}
               animate={{ x: 0, y: 0, opacity: 1 }}
               transition={{ type: "spring", delay: 0.6 }}
+              onClick={() => setSearch("639")}
             >
               <div className="bg-green-500 transition-all hover:scale-110 hover:bg-green-600 px-3 py-1 cursor-pointer rounded-full border-2 border-green-900">
                 b
