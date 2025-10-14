@@ -13,7 +13,6 @@ import CeoDashboard from "./pages/ceo/CeoDashboard";
 import TlDashboard from "./pages/tl/TlDashboard";
 import OperationDashboard from "./pages/operation/OperationDashboard";
 import AccountsView from "./pages/admin/AccountsView";
-import RegisterView from "./pages/admin/RegisterView";
 import SetupView from "./pages/admin/SetupView";
 import UserView from "./pages/admin/UserView";
 import CustomerDisposition from "./pages/CustomerDisposition";
