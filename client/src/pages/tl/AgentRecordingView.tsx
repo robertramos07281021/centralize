@@ -13,7 +13,6 @@ import {
 import { FaDownload } from "react-icons/fa6";
 import { CgSpinner } from "react-icons/cg";
 import Pagination from "../../components/Pagination";
-import Loading from "../Loading";
 import { FaBoxArchive } from "react-icons/fa6";
 import Wrapper from "../../components/Wrapper.tsx";
 import Navbar from "../../components/Navbar.tsx";
@@ -273,7 +272,6 @@ const AgentRecordingView = () => {
   const onDLRecordings = useCallback(
     async (_id: string, name: string) => {
       setIsLoading(_id);
-      console.log(name);
       await findRecordings({ variables: { _id, name } });
     },
     [setIsLoading, findRecordings]
@@ -317,13 +315,13 @@ const AgentRecordingView = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   }
 
-  if (recordingsLoading) return <Loading />;
+  // if (recordingsLoading) return <Loading />;
 
   return ["QA", "TL", "MIS"].includes(userLogged?.type || "") ? (
     <Wrapper>
       <Navbar />
       <div
-        className="w-full h-full flex flex-col overflow-hidden p-2"
+        className="w-full h-full flex flex-col gap-2 overflow-hidden"
         onMouseDown={(e) => {
           if (!dispotypeRef.current?.contains(e.target as Node)) {
             setSelectingDispotype(false);
@@ -333,11 +331,11 @@ const AgentRecordingView = () => {
           }
         }}
       >
-        <h1 className="uppercase text-2xl px-5 font-black text-gray-800 mb-5">
+        <h1 className="uppercase text-2xl px-5 font-black text-gray-800">
           {agentInfoData?.getUser?.name}
         </h1>
         <div className=" flex justify-end px-10 gap-5">
-          <div className="w-60 h-8 relative" ref={dispotypeRef}>
+          <div className="w-60 relative" ref={dispotypeRef}>
             <motion.div
               className="w-full rounded border-slate-300 border flex items-center px-2 h-full justify-between"
               onClick={() => {
@@ -449,9 +447,9 @@ const AgentRecordingView = () => {
             </div>
           </motion.button>
         </div>
-        <div className="h-full w-full px-5 mt-3">
+        <div className="h-full w-full px-5 flex flex-col overflow-hidden">
           <motion.div
-            className="w-full h-full table-fixed rounded-md overflow-hidden"
+            className="w-full h-full rounded-md overflow-hidden"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
@@ -470,15 +468,13 @@ const AgentRecordingView = () => {
                 <div className="text-center flex justify-center" >Actions</div>
               </div>
             </div>
-            <div className=" overflow-auto h-[70vh]">
+            <div className=" overflow-auto h-full">
               {recordings?.getAgentDispositionRecords.dispositions.map(
                 (e, index) => {
                   const callRecord =
                     e.recordings?.length > 0
                       ? [...e.recordings].sort((a, b) => b.size - a.size)
                       : [];
-
-                  console.log(e);
                   return (
                     <motion.div
                       key={e._id}
@@ -622,15 +618,15 @@ const AgentRecordingView = () => {
             </div>
           </motion.div>
         </div>
-        <div className="text-end">
-          <Pagination
-            value={page}
-            onChangeValue={(e) => setPage(e)}
-            onKeyDownValue={(e) => dispatch(setAgentRecordingPage(e))}
-            totalPage={totalPage}
-            currentPage={agentRecordingPage}
-          />
-        </div>
+  
+        <Pagination
+          value={page}
+          onChangeValue={(e) => setPage(e)}
+          onKeyDownValue={(e) => dispatch(setAgentRecordingPage(e))}
+          totalPage={totalPage}
+          currentPage={agentRecordingPage}
+        />
+      
       </div>
     </Wrapper>
   ) : (

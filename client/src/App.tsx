@@ -74,7 +74,6 @@ function App() {
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/setup" element={<SetupView />} />
           <Route path="/accounts" element={<AccountsView />} />
-          <Route path="/register" element={<RegisterView />} />
           <Route path="/user-account" element={<UserView />} />
           <Route
             path="/callfile-configurations"
@@ -122,7 +121,6 @@ function App() {
         <Route element={<QASVRoute />}>
           <Route path="/qasv-dashboard" element={<QASVSupervisor />} />
         </Route>
-        
       </Routes>
     </BrowserRouter>
   );

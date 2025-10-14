@@ -63,6 +63,18 @@ const UPDATE_QA_USER = gql`
   }
 `;
 
+const UNLOCK_USER = gql`
+  mutation unlockUser($id: ID!) {
+    unlockUser(id: $id) {
+      message
+      success
+      user {
+        name
+      }
+    }
+  }
+`;
+
 type Bucket = {
   _id: string;
   name: string;
@@ -90,6 +102,12 @@ type ForUpdate = {
   buckets: string[];
 };
 
+type SuccessUpdate = {
+  user: User;
+  success: boolean;
+  message: string;
+};
+
 const QASupervisorView = () => {
   const dispatch = useAppDispatch();
   const [update, setUpdate] = useState(false);
@@ -102,11 +120,11 @@ const QASupervisorView = () => {
 
   const { data: deptData } = useQuery<{
     getDepts: { id: string; name: string; branch: string }[];
-  }>(GET_ALL_DEPTS);
+  }>(GET_ALL_DEPTS, { notifyOnNetworkStatusChange: true });
 
   const { data: bucketData } = useQuery<{
     getAllBucket: { _id: string; name: string; branch: string }[];
-  }>(GET_ALL_BUCKETS);
+  }>(GET_ALL_BUCKETS, { notifyOnNetworkStatusChange: true });
 
   useEffect(() => {
     if (userId) {
@@ -129,8 +147,8 @@ const QASupervisorView = () => {
   }>(GET_DEPARTMENT_BUCKET, {
     variables: {
       depts: userId.departments,
-      skip: userId?.departments?.length < 1,
     },
+    skip: userId?.departments?.length < 1,
     notifyOnNetworkStatusChange: true,
   });
 
@@ -173,7 +191,7 @@ const QASupervisorView = () => {
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "UPDATE" as "UPDATE",
+    toggle: "UPDATE" as "UPDATE" | "CREATE",
     yes: () => {},
     no: () => {},
   });
@@ -257,9 +275,43 @@ const QASupervisorView = () => {
     }
   }, [userId, setModalProps, setRequired, updateQAUser, setConfirm]);
 
-  if (usersLoading || updateLoading) return <Loading />;
+  const [unlockUser] = useMutation<{ unlockUser: SuccessUpdate }>(UNLOCK_USER, {
+    onCompleted: async (res) => {
+      const result = await usersRefetch();
+      if (result.data) {
+        dispatch(
+          setSuccess({
+            success: res.unlockUser.success,
+            message: res.unlockUser.message,
+            isMessage: false,
+          })
+        );
+      }
+    },
+    onError: () => {
+      dispatch(setServerError(true));
+    },
+  });
 
-  console.log(usersData);
+  const handleUnlockUser = useCallback(
+    async (id: string) => {
+      setConfirm(true);
+      setModalProps({
+        message: `Do you want to unlock this user?`,
+        toggle: "CREATE",
+        yes: async () => {
+          await unlockUser({ variables: { id: id } });
+          setConfirm(false);
+        },
+        no: () => {
+          setConfirm(false);
+        },
+      });
+    },
+    [setModalProps, setConfirm, unlockUser]
+  );
+
+  if (usersLoading || updateLoading) return <Loading />;
 
   return (
     <div className="h-full relative">
@@ -274,7 +326,8 @@ const QASupervisorView = () => {
           <option>dsa</option>
         </select>
       </div> */}
-        <div className="flex px-5 justify-end">
+        <div className="flex px-5 justify-between">
+          <div className="uppercase text-2xl font-black" >QA Dashboard</div>
           <div className="flex px-2 py-1 rounded-md shadow-md items-center border">
             <div>
               <svg
@@ -300,7 +353,7 @@ const QASupervisorView = () => {
             />
           </div>
         </div>
-        <div className="border-2 rounded-md border-gray-300 mt-3  overflow-hidden">
+        <div className="rounded-md border-gray-300 mt-3  overflow-hidden">
           <div className="grid grid-cols-7 gap-3 px-2 py-2  font-black uppercase bg-gray-300">
             <div
               className="
@@ -313,7 +366,7 @@ const QASupervisorView = () => {
             <div className="flex justify-center">activity</div>
             <div className="flex justify-center">online</div>
             <div className="flex justify-center">lock</div>
-            <div className="flex justify-center">Actions</div>
+            <div className="flex justify-center"></div>
           </div>
           <div className="flex  flex-col overflow-auto h-[76vh] rounded-b-md">
             {usersData?.getQAUsers?.users
@@ -335,7 +388,7 @@ const QASupervisorView = () => {
               .map((user, index) => (
                 <motion.div
                   key={user._id}
-                  className="grid grid-cols-7 gap-3 items-center bg-gray-100 py-2 pl-2 even:bg-gray-200"
+                  className="grid grid-cols-7 gap-3 items-center bg-gray-100 py-2 pl-2 text-sm even:bg-gray-200"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
@@ -367,7 +420,10 @@ const QASupervisorView = () => {
                   </div>
                   <div className="justify-center flex">
                     {user.isLock ? (
-                      <div className="bg-red-500 px-2 border-2 rounded-sm border-red-800 shadow-md cursor-pointer hover:bg-red-600 transition-all text-white py-1">
+                      <div
+                        className="bg-red-500 px-2 border-2 rounded-sm border-red-800 shadow-md cursor-pointer hover:bg-red-600 transition-all text-white py-1"
+                        onClick={() => handleUnlockUser(user._id)}
+                      >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
@@ -384,18 +440,18 @@ const QASupervisorView = () => {
                         </svg>
                       </div>
                     ) : (
-                      <div className="bg-green-500 px-2 border-2 rounded-sm border-green-800 shadow-md cursor-pointer hover:bg-green-600 transition-all text-white py-1">
+                      <div className="bg-gray-300 px-2 border-2 rounded-sm border-gray-400 transition-all text-gray-400 py-1">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
                           viewBox="0 0 24 24"
-                          stroke-width="3"
+                          strokeWidth="3"
                           stroke="currentColor"
                           className="size-5"
                         >
                           <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
                             d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
                           />
                         </svg>
@@ -449,15 +505,15 @@ const QASupervisorView = () => {
                 exit={{ opacity: 0 }}
               ></motion.div>
               <motion.div
-                className="bg-white absolute z-20 h-9/10 w-4/10 p-10 overflow-hidden flex flex-col rounded-md shadow-md"
+                className="bg-white absolute z-20 h-9/10 w-6/10 p-10 overflow-hidden flex flex-col rounded-md shadow-md"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.5 }}
               >
-                <div className="text-xl uppercase text-center font-black">
+                <div className="text-xl lg:text-3xl uppercase text-center font-black">
                   Select the campaign and buckets
                 </div>
-                <h1 className="text-center capitalize text-gray-400 pb-2 font-normal text-sm ">
+                <h1 className="text-center capitalize font-sans text-gray-400 pb-2 font-normal italic text-sm lg:text-xl ">
                   Username: {userId.userId?.name}
                 </h1>
                 {required && (
@@ -473,13 +529,13 @@ const QASupervisorView = () => {
                       "Please select Department and Bucket"}
                   </h1>
                 )}
-                <div className="grid grid-cols-2 font-semibold">
+                <div className="grid grid-cols-2  lg:text-xl font-semibold">
                   <div className="text-center">Campaign</div>
 
-                  <div className="text-center">Buckets</div>
+                  <div className="text-center ">Buckets</div>
                 </div>
                 <div className="flex flex-col h-full  overflow-hidden relative">
-                  <div className="grid grid-cols-2 gap-3 h-full overflow-hidden">
+                  <div className="grid grid-cols-2 gap-3 text-sm lg:text-lg h-full overflow-hidden">
                     <div className="overflow-auto flex flex-col gap-0">
                       {deptData?.getDepts?.map((dept) => {
                         return (

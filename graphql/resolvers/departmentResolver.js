@@ -26,9 +26,10 @@ const deptResolver = {
     },
     getBranchDept: async(_,{branch}) => {
       try {
-        const res = await Department.find({branch})
-        if(!res.length === 0) throw new CustomError("Branch not exists",404)
-        return res.length > 0 ? res : [];
+       const findBranch = await Branch.findOne({name: branch})
+        if(!findBranch) throw new CustomError("Branch not exists",404)
+        const res = await Department.find({branch: findBranch.name})
+        return res || [];
       } catch (error) {
         throw new CustomError(error.message, 500)
       }

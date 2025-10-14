@@ -4,38 +4,44 @@ const customerTypeDefs = gql`
   scalar DateTime
 
   input CustomerData {
-  address: [String]
-  admin_fee_os: Float
-  bill_due_date: String 
-  birthday: String
-  endorsement_date: String
-  grass_date: String
-  case_id: String      
-  contact: [String]
-  platform_user_id: String 
-  credit_user_id: String    
-  customer_name: String
-  dpd_grp: String
-  dst_fee_os: Float
-  balance: Float
-  email: [String]
-  gender: String
-  grass_region: String 
-  interest_os: Float
-  late_charge_os: Float
-  max_dpd: Float   
-  penalty_interest_os: Float 
-  late_charge_waive_fee_os: Float
-  principal_os: Float
-  total_os: Float
-  txn_fee_os: Float
-  collectorID: String
-  emergencyContactName: String
-  emergencyContactMobile: String
-  dpd: Int
-  mpd: Int
-  batch_no: String
-  vendor_endorsement: String
+    address: [String]
+    admin_fee_os: Float
+    bill_due_date: String 
+    birthday: String
+    endorsement_date: String
+    grass_date: String
+    case_id: String      
+    contact: [String]
+    platform_user_id: String 
+    credit_user_id: String    
+    customer_name: String
+    dpd_grp: String
+    dst_fee_os: Float
+    balance: Float
+    email: [String]
+    gender: String
+    grass_region: String 
+    interest_os: Float
+    late_charge_os: Float
+    max_dpd: Float   
+    penalty_interest_os: Float 
+    late_charge_waive_fee_os: Float
+    principal_os: Float
+    total_os: Float
+    txn_fee_os: Float
+    collectorID: String
+    emergencyContactName: String
+    emergencyContactMobile: String
+    dpd: Int
+    mpd: Int
+    batch_no: String
+    vendor_endorsement: String
+    writeoff_balance: Float
+    overall_balance: Float
+    cf: Float
+    mo_balance: Float
+    pastdue_amount: Float
+    mo_amort: Float
   }
 
   type CustomerInfo {
@@ -68,6 +74,12 @@ const customerTypeDefs = gql`
     total_os: Float
     waive_fee_os: Float
     late_charge_waive_fee_os: Float
+    writeoff_balance: Float
+    overall_balance: Float
+    cf: Float
+    mo_balance: Float
+    pastdue_amount: Float
+    mo_amort: Float
   }
 
   type grassDetails {

@@ -10,7 +10,7 @@ import {
 } from "../redux/slices/authSlice";
 import { useSelector } from "react-redux";
 import { AccountUpdateHistory } from "../middleware/types";
-import { motion, AnimatePresence,  } from "framer-motion";
+import { motion, AnimatePresence  } from "framer-motion";
 
 type CustomerProps = {
   cancel: () => void;
@@ -182,20 +182,20 @@ const UpdateCustomerAccount: React.FC<CustomerProps> = ({ cancel }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className=" cursor-pointer z-30 absolute top-0 left-0 bg-black/30 backdrop-blur-sm w-full h-full"
+          className=" cursor-pointer z-30 absolute top-0 left-0 bg-black/30 backdrop-blur-sm w-full h-full "
         ></motion.div>
         <motion.fieldset
-          className="flex  px-10 flex-col gap-5 border border-slate-500 shadow-md z-30 rounded-xl p-2 bg-white"
+          className="flex flex-col gap-5 border border-slate-500 shadow-md z-30 rounded-md overflow-hidden bg-white"
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.5, opacity: 0 }}
         >
-          <legend className="p-2 text-xl font-medium text-gray-600">
+          <div className="w-full py-3  text-2xl text-center bg-gray-300 rounded-t-md font-black uppercase text-gray-600">
             For Update
-          </legend>
-          <div className="flex lg:gap-4 2xl:gap-10 items-center 2xl:text-base text-xs lg:text-sm flex-col 2xl:flex-row justify-center">
-            <label>
-              <p className="font-medium text-gray-600">Outstanding Balance :</p>
+          </div>
+          <div className="flex lg:gap-2 2xl:gap-10 px-10 items-end 2xl:text-base text-xs lg:text-sm flex-col 2xl:flex-row justify-start">
+            <label className="flex items-center gap-2" >
+              <p className="font-black uppercase text-gray-600">Outstanding Balance :</p>
               <input
                 type="text"
                 id="total_os"
@@ -205,8 +205,8 @@ const UpdateCustomerAccount: React.FC<CustomerProps> = ({ cancel }) => {
                 onChange={(e) => handleOnChangeAmount(e, "total_os")}
               />
             </label>
-            <label>
-              <p className="font-medium text-gray-600">Principal Balance :</p>
+            <label className="flex items-center gap-2" >
+              <p className="font-black uppercase text-gray-600">Principal Balance :</p>
               <input
                 type="text"
                 className="border rounded-lg p-2 border-slate-400"
@@ -214,8 +214,8 @@ const UpdateCustomerAccount: React.FC<CustomerProps> = ({ cancel }) => {
                 onChange={(e) => handleOnChangeAmount(e, "principal")}
               />
             </label>
-            <label>
-              <p className="font-medium text-gray-600">Balance :</p>
+            <label className="flex items-center gap-2" >
+              <p className="font-black uppercase text-gray-600">Balance :</p>
               <input
                 type="text"
                 value={formData.balance || ""}

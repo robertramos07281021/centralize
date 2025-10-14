@@ -22,7 +22,7 @@ const Pagination: React.FC<modalProps> = ({
   currentPage,
 }) => {
   return (
-    <div className="flex justify-end mt-2">
+    <div className="flex justify-end p-2">
       <div className="flex items-center gap-2 lg:text-[0.6em] 2xl:text-[0.6em] font-bold text-gray-600">
         <MdKeyboardDoubleArrowLeft
           className={`text-lg ${

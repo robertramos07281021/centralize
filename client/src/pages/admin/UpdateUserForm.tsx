@@ -206,6 +206,7 @@ const LOGOUT_USER = gql`
     }
   }
 `
+
 type UserType = "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" | "QA" | "QASUPERVISOR" ;
 
 enum Types {
@@ -527,7 +528,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
 
   return (
     <>
-      <div className="px-5 w-full grid grid-cols-2 gap-10 col-span-2" onMouseDown={(e)=> 
+      <div className=" w-full grid grid-cols-2 gap-10 col-span-2" onMouseDown={(e)=> 
         {
           if(!campaignDiv.current?.contains(e.target as Node)) {
               setSelectionDept(false)
@@ -748,7 +749,7 @@ const UpdateUserForm:React.FC<modalProps> = ({state}) => {
           <div>
           {
             isUpdate ? 
-            <div className="flex gap-10">
+            <div className="flex">
               <button type="button" className="bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5" 
               onClick={() => handleSubmit("UPDATE",false)}
               >Submit</button>

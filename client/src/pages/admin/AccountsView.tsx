@@ -11,7 +11,6 @@ import {
   setServerError,
   setSuccess,
 } from "../../redux/slices/authSlice";
-import { BsFillUnlockFill, BsFillLockFill } from "react-icons/bs";
 import { FaUserGear } from "react-icons/fa6";
 import Confirmation from "../../components/Confirmation";
 import { Department } from "../../middleware/types.ts";
@@ -59,6 +58,12 @@ const DELETE_USER = gql`
   }
 `;
 
+type SuccessUpdate = {
+  user: Users;
+  success: boolean;
+  message: string;
+};
+
 const FIND_QUERY = gql`
   query findUsers($search: String!, $page: Int!, $limit: Int!) {
     findUsers(search: $search, page: $page, limit: $limit) {
@@ -80,6 +85,18 @@ const FIND_QUERY = gql`
         createdAt
         user_id
         vici_id
+      }
+    }
+  }
+`;
+
+const UNLOCK_USER = gql`
+  mutation unlockUser($id: ID!) {
+    unlockUser(id: $id) {
+      message
+      success
+      user {
+        name
       }
     }
   }
@@ -111,6 +128,7 @@ const AccountsView = () => {
   const { limit, adminUsersPage } = useSelector(
     (state: RootState) => state.auth
   );
+  const [cancel, setCancel] = useState<boolean>(false);
   const location = useLocation();
   const isAccounts = location.pathname.includes("accounts");
   const [create, setCreate] = useState(false);
@@ -147,7 +165,11 @@ const AccountsView = () => {
 
   const { data: searchData, refetch } = useQuery<{
     findUsers: { users: Users[]; total: number };
-  }>(FIND_QUERY, { variables: { search, page: adminUsersPage, limit } });
+  }>(FIND_QUERY, {
+    variables: { search, page: adminUsersPage, limit },
+    skip: !isAccounts,
+    notifyOnNetworkStatusChange: true,
+  });
 
   const users = searchData?.findUsers.users || [];
 
@@ -155,7 +177,7 @@ const AccountsView = () => {
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "DELETE" as "DELETE",
+    toggle: "DELETE" as "DELETE" | "CREATE",
     yes: () => {},
     no: () => {},
   });
@@ -222,9 +244,45 @@ const AccountsView = () => {
     timer();
   }, []);
 
+  const [unlockUser] = useMutation<{ unlockUser: SuccessUpdate }>(UNLOCK_USER, {
+    onCompleted: async (res) => {
+      const result = await refetch();
+      if (result.data) {
+        dispatch(
+          setSuccess({
+            success: res.unlockUser.success,
+            message: res.unlockUser.message,
+            isMessage: false,
+          })
+        );
+      }
+    },
+    onError: () => {
+      dispatch(setServerError(true));
+    },
+  });
+
+  const handleUnlockUser = useCallback(
+    async (id: string) => {
+      setConfirm(true);
+      setModalProps({
+        message: `Do you want to unlock this user?`,
+        toggle: "CREATE",
+        yes: async () => {
+          await unlockUser({ variables: { id: id } });
+          setConfirm(false);
+        },
+        no: () => {
+          setConfirm(false);
+        },
+      });
+    },
+    [setModalProps, setConfirm, unlockUser]
+  );
+
   return (
     <>
-      <div className="h-full relative flex flex-col overflow-hidden p-2">
+      <div className="h-full relative flex flex-col overflow-hidden pt-2 px-2">
         <div className=" flex justify-between  items-center p-3">
           <h1 className="text-2xl text-gray-500 uppercase font-black">
             Accounts
@@ -259,7 +317,10 @@ const AccountsView = () => {
             </motion.div>
 
             <motion.div
-              onClick={() => setCreate(true)}
+              onClick={() => {
+                setCreate(true);
+                setCancel(false);
+              }}
               className="focus:outline-none shadow-md font-black text-white bg-green-500   hover:bg-green-600 focus:ring-4 focus:ring-green-300 uppercase rounded-lg text-sm px-5 py-2.5 me-2  dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 border-2 border-green-800 cursor-pointer"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
@@ -294,7 +355,7 @@ const AccountsView = () => {
             {users?.map((user, index) => (
               <motion.div
                 key={user._id}
-                className="grid grid-cols-12 py-2 hover:bg-blue-50 even:bg-gray-100 cursor-default items-center"
+                className="grid grid-cols-12 py-2 hover:bg-gray-200 even:bg-gray-100 cursor-default items-center"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: index * 0.1 }}
@@ -305,10 +366,10 @@ const AccountsView = () => {
                 >
                   {user.name.toUpperCase()}
                 </div>
-                <div className="truncate">{user.username}</div>
-                <div>{user.user_id || "-"}</div>
-                <div>{user.type || "-"}</div>
-                <div>{branchObject[user.branch] || "-"}</div>
+                <div className="truncate pr-1" title={user.username} >{user.username}</div>
+                <div>{user.user_id || <div className="text-xs italic text-gray-400" >No SIP ID</div>}</div>
+                <div className="truncate pr-1" >{user.type || "-"}</div>
+                <div>{branchObject[user.branch] || <div className="text-xs italic text-gray-400" >No branch</div>}</div>
                 <div
                   className="pr-5 truncate"
                   title={user.departments
@@ -317,7 +378,7 @@ const AccountsView = () => {
                 >
                   {user.departments
                     ?.map((e) => deptObject[e]?.toString())
-                    .join(", ") || "-"}
+                    .join(", ") || <div className="text-xs italic text-gray-400" >No campaign</div>}
                 </div>
                 <div
                   className="pr-5 truncate"
@@ -327,7 +388,7 @@ const AccountsView = () => {
                 >
                   {user.buckets
                     ?.map((b) => bucketObject[b]?.toString())
-                    .join(", ") || "-"}
+                    .join(", ") || <div className="text-xs italic text-gray-400" >No bucket</div>}
                 </div>
                 <div className="flex items-center justify-center h-full">
                   <FaCircle
@@ -347,7 +408,10 @@ const AccountsView = () => {
                 </div>
                 <div className="flex items-center justify-center h-full">
                   {user.isLock ? (
-                    <div className=" bg-red-700 cursor-pointer hover:bg-red-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-red-900 text-white">
+                    <div
+                      className=" bg-red-700 cursor-pointer hover:bg-red-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-red-900 text-white"
+                      onClick={() => handleUnlockUser(user._id)}
+                    >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
@@ -357,14 +421,14 @@ const AccountsView = () => {
                         className="size-5"
                       >
                         <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                           d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
                         />
                       </svg>
                     </div>
                   ) : (
-                    <div className=" bg-green-700 cursor-pointer hover:bg-green-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-green-900 text-white">
+                    <div className="bg-gray-300 px-2 border-2 rounded-sm border-gray-400 transition-all text-gray-400 py-1">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
@@ -374,15 +438,15 @@ const AccountsView = () => {
                         className="size-5"
                       >
                         <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                           d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
                         />
                       </svg>
                     </div>
                   )}
                 </div>
-                <div className="flex justify-center items-center gap-2">
+                <div className="flex justify-center items-center gap-2 overflow-hidden  ">
                   <Link
                     to="/user-account"
                     state={user}
@@ -417,32 +481,42 @@ const AccountsView = () => {
             ))}
           </div>
         </motion.div>
-        <div className="">
-          <Pagination
-            value={page}
-            onChangeValue={(e) => setPage(e)}
-            onKeyDownValue={(e) => dispatch(setAdminUsersPage(e))}
-            totalPage={totalPage}
-            currentPage={adminUsersPage}
-          />
-        </div>
+  
+        <Pagination
+          value={page}
+          onChangeValue={(e) => setPage(e)}
+          onKeyDownValue={(e) => dispatch(setAdminUsersPage(e))}
+          totalPage={totalPage}
+          currentPage={adminUsersPage}
+        />
+
         <AnimatePresence>
           {create && (
             <div className="absolute flex z-10 top-0 justify-center items-center left-0 w-full h-full">
               <motion.div
                 onClick={() => setCreate(false)}
-                className="bg-[#00000050] cursor-pointer relative flex z-10 backdrop-blur-sm w-full h-full"
+                className="bg-[#00000050] cursor-pointer absolute flex z-10 backdrop-blur-sm w-full h-full"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               ></motion.div>
+              {cancel && (
+                <motion.div
+                  onClick={() => setCancel(false)}
+                  className=" cursor-pointer left-0 top-0 relative flex z-20 w-full h-full"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                ></motion.div>
+              )}
+
               <motion.div
                 className="absolute flex justify-center items-center z-20 bg-[#fff] p-2 rounded-md  "
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
               >
-                <RegisterView />
+                <RegisterView setCancel={setCancel} cancel={cancel} />
               </motion.div>
             </div>
           )}
@@ -453,7 +527,7 @@ const AccountsView = () => {
             <div className="absolute flex z-10 top-0 justify-center items-center left-0 w-full h-full">
               <motion.div
                 onClick={() => setCreate(false)}
-                className="bg-[#00000050] cursor-pointer relative flex z-10 backdrop-blur-sm w-full h-full"
+                className="bg-[#00000050] cursor-default relative flex z-10 backdrop-blur-sm w-full h-full"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
@@ -464,7 +538,7 @@ const AccountsView = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
               >
-                <RegisterView />
+                <RegisterView cancel={cancel} setCancel={setCancel} />
               </motion.div>
             </div>
           )}

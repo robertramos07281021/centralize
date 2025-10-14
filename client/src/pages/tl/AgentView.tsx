@@ -1,19 +1,11 @@
 import { useMutation, useQuery, useSubscription } from "@apollo/client";
 import gql from "graphql-tag";
 import { useCallback, useEffect, useState } from "react";
-import { GoDotFill } from "react-icons/go";
 import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import { useDispatch, useSelector } from "react-redux";
-import { MdRecordVoiceOver } from "react-icons/md";
 import { Link, useLocation } from "react-router-dom";
-import {
-  BsFillUnlockFill,
-  BsFillLockFill,
-  BsFillKeyFill,
-} from "react-icons/bs";
 import AuthenticationPass from "../../components/AuthenticationPass";
 import { RootState } from "../../redux/store";
-import { LuSettings } from "react-icons/lu";
 import SetTargetsModal from "./SetTargetsModal";
 import SetBucketTargetsModal from "./SetBucketTargetsModal";
 import { motion } from "framer-motion";
@@ -362,8 +354,12 @@ const AgentView = () => {
             <div className="py-1 truncate flex items-center">Callfile ID</div>
             <div className="py-1 truncate flex items-center">Bucket</div>
             <div className="py-1 truncate flex items-center">Campaign</div>
-            <div className="py-1 truncate flex items-center text-center justify-center">Online</div>
-            <div className="py-1 truncate flex items-center text-center justify-center">Lock</div>
+            <div className="py-1 truncate flex items-center text-center justify-center">
+              Online
+            </div>
+            <div className="py-1 truncate flex items-center text-center justify-center">
+              Lock
+            </div>
             <div className="py-1 truncate flex items-center">Status</div>
             <div className="py-1 col-span-2 flex flex-col">
               <div className="text-center">Targets</div>
@@ -395,16 +391,36 @@ const AgentView = () => {
                   >
                     <div className="items-center hover:bg-gray-300 transition-all gap-2 px-2 py-2 grid grid-cols-11 lg:text-xs 2xl:text-sm text-gray-800 font-normal">
                       <div className="capitalize truncate">{e.name}</div>
-                      <div>{e.user_id}</div>
-                      <div>{e.callfile_id}</div>
+                      <div>
+                        {e.user_id || (
+                          <div className="text-gray-400 italic text-xs">
+                            No agent ID
+                          </div>
+                        )}
+                      </div>
+                      <div className="truncate">
+                        {e.callfile_id || (
+                          <div className="text-gray-400 italic text-xs">
+                            No callfile ID
+                          </div>
+                        )}
+                      </div>
                       <div
                         className=" truncate pr-6"
                         title={e.buckets.map((e) => e.name).join(", ")}
                       >
-                        {e.buckets.map((e) => e.name).join(", ")}
+                        {e.buckets.map((e) => e.name).join(", ") || (
+                          <div className="text-gray-400 italic text-xs">
+                            No bucket
+                          </div>
+                        )}
                       </div>
                       <div className=" truncate pr-2">
-                        {e.departments.map((e) => e.name).join(", ")}
+                        {e.departments.map((e) => e.name).join(", ") || (
+                          <div className="text-gray-400 italic text-xs">
+                            No campaign
+                          </div>
+                        ) }
                       </div>
                       <div className="text-center flex justify-center">
                         {e.isOnline ? (
@@ -432,7 +448,7 @@ const AgentView = () => {
                             </svg>
                           </div>
                         ) : (
-                          <div className=" bg-green-700 cursor-pointer hover:bg-green-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-green-900 text-white">
+                          <div className="bg-gray-300 px-2 border-2 rounded-sm border-gray-400 transition-all text-gray-400 py-1">
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               fill="none"
@@ -442,8 +458,8 @@ const AgentView = () => {
                               className="size-5"
                             >
                               <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                                 d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
                               />
                             </svg>
@@ -451,7 +467,11 @@ const AgentView = () => {
                         )}
                       </div>
                       <div className="flex items-center ">
-                        {findExsitingStatus ? findExsitingStatus?.type : "-"}
+                        {findExsitingStatus ? findExsitingStatus?.type : (
+                          <div className="text-gray-400 italic text-xs">
+                            No status
+                          </div>
+                        )}
                       </div>
                       <div className="col-span-2 ">
                         <div className="w-full grid grid-cols-3">
@@ -530,7 +550,7 @@ const AgentView = () => {
                               e.attempt_login
                             )
                           }
-                          className=" w-hull flex justify-center hover:bg-blue-700 transition-all items-center border border-blue-800 bg-blue-600 cursor-pointer rounded-sm h-full py-1"
+                          className=" w-hull flex justify-center hover:bg-blue-700 transition-all items-center border-2 border-blue-800 bg-blue-600 cursor-pointer rounded-sm h-full py-1"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -538,7 +558,7 @@ const AgentView = () => {
                             viewBox="0 0 24 24"
                             strokeWidth="2"
                             stroke="currentColor"
-                            className="size-5"
+                            className="size-4"
                           >
                             <path
                               strokeLinecap="round"
@@ -557,7 +577,7 @@ const AgentView = () => {
                               e.attempt_login
                             )
                           }
-                          className=" w-hull flex justify-center hover:bg-orange-700 transition-all items-center border border-orange-800 bg-orange-600 cursor-pointer rounded-sm h-full py-1"
+                          className=" w-hull flex justify-center hover:bg-orange-700 transition-all items-center border-2 border-orange-800 bg-orange-600 cursor-pointer rounded-sm h-full py-1"
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"
@@ -565,7 +585,7 @@ const AgentView = () => {
                             viewBox="0 0 24 24"
                             strokeWidth="2"
                             stroke="currentColor"
-                            className="size-6"
+                            className="size-4"
                           >
                             <path
                               strokeLinecap="round"
@@ -580,19 +600,22 @@ const AgentView = () => {
                           </svg>
                         </div>
                         <Link to="/agent-recordings" state={e._id}>
-                          <div className=" w-hull flex justify-center hover:bg-green-700 transition-all items-center border border-green-800 bg-green-600 cursor-pointer rounded-sm h-full py-1">
+                          <div
+                            className=" w-hull flex justify-center hover:bg-green-700 transition-all items-center border-2 border-green-800 bg-green-600 cursor-pointer rounded-sm h-full py-1"
+                            title="Agent Recordings"
+                          >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               fill="none"
                               viewBox="0 0 24 24"
-                              strokeWidth="2"
+                              strokeWidth="2.5"
                               stroke="currentColor"
-                              className="size-6"
+                              className="size-4"
                             >
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                                d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"
                               />
                             </svg>
                           </div>

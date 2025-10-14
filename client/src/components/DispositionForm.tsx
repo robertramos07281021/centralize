@@ -591,7 +591,7 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
         className="h-full w-full flex"
         initial={{ x: 50, opacity: 0 }}
         animate={{ opacity: 1, x: 0 }}
-        transition={{delay: 0.1}}
+        transition={{ delay: 0.2 }}
       >
         {escalateTo && (
           <div className="absolute top-0 left-0 w-full h-full bg-white/10 backdrop-blur-[1px] z-50 flex items-center justify-center ">
@@ -644,7 +644,7 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
 
         <form
           ref={Form}
-          className="flex flex-col h-full w-full"
+          className="flex flex-col h-full justify-end w-full"
           noValidate
           onSubmit={handleSubmitForm}
         >
@@ -652,7 +652,7 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
             Customer Disposition
           </h1>
           {selectedCustomer?._id && (
-            <div className="flex bg-gray-100 uppercase w-full h-full p-5 rounded-md border border-slate-400 shadow-md xl:gap-5 gap-2 justify-center select-none">
+            <div className="flex bg-gray-100 uppercase w-full h-full p-5 rounded-md border border-slate-400 shadow-md xl:gap-2 gap-2 justify-center select-none">
               <div className="flex flex-col gap-2 w-full">
                 <label className="flex flex-col 2xl:flex-row items-center">
                   <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs  leading-4">
@@ -706,82 +706,92 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                     })}
                   </select>
                 </label>
-                {anabledDispo.includes(selectedDispo) ? (
-                  <label className="flex flex-col 2xl:flex-row items-center">
-                    <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4">
-                      Amount
-                    </p>
-                    <div
-                      className={`flex border items-center rounded-lg w-full ${
-                        required && (!data.amount || data.amount === "0")
-                          ? "bg-red-100 border-red-500"
-                          : "bg-gray-50  border-gray-500"
-                      } `}
-                    >
-                      <p className="px-2">&#x20B1;</p>
-                      <input
-                        type="text"
-                        name="amount"
-                        id="amount"
-                        autoComplete="off"
-                        value={data.amount ?? 0}
-                        onChange={handleOnChangeAmount}
-                        pattern="^\d+(\.\d{1,2})?$"
-                        placeholder="Enter amount"
-                        required={requiredDispo.includes(selectedDispo)}
-                        className={`w-full text-xs 2xl:text-sm  text-gray-900 p-2 outline-none`}
-                      />
-                    </div>
-                  </label>
-                ) : (
-                  <IFBANK label="Amount" />
-                )}
-                {anabledDispo.includes(selectedDispo) ? (
-                  <label className="flex flex-col 2xl:flex-row items-center">
-                    <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4">
-                      Payment
-                    </p>
-                    <select
-                      name="payment"
-                      id="payment"
-                      required={requiredDispo.includes(selectedDispo)}
-                      value={data.payment ?? ""}
-                      onChange={(e) => {
-                        if (e.target.value === Payment.FULL) {
-                          setData((prev) => ({
-                            ...prev,
-                            amount: selectedCustomer.balance.toFixed(2),
-                          }));
-                        }
-                        handleDataChange("payment", e.target.value);
-                      }}
-                      className={`${
-                        required && !data.payment
-                          ? "bg-red-100 border-red-500"
-                          : "bg-gray-50  border-gray-500"
-                      } border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
-                    >
-                      <option value="" accessKey="8">
-                        Select Payment
-                      </option>
-                      {Object.entries(Payment).map(([key, value], index) => {
-                        return (
-                          <option
-                            value={value}
-                            key={key}
-                            className="capitalize"
-                            accessKey={index > 0 ? "0" : "9"}
-                          >
-                            {value.charAt(0).toUpperCase() +
-                              value.slice(1, value.length)}
+                <div className="flex w-full gap-2">
+                  <div className="w-full">
+                    {anabledDispo.includes(selectedDispo) ? (
+                      <label className="flex flex-col w-full 2xl:flex-row items-center">
+                        <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4">
+                          Amount
+                        </p>
+                        <div
+                          className={`flex border items-center rounded-lg w-full ${
+                            required && (!data.amount || data.amount === "0")
+                              ? "bg-red-100 border-red-500"
+                              : "bg-gray-50  border-gray-500"
+                          } `}
+                        >
+                          <p className="px-2">&#x20B1;</p>
+                          <input
+                            type="text"
+                            name="amount"
+                            id="amount"
+                            autoComplete="off"
+                            value={data.amount ?? 0}
+                            onChange={handleOnChangeAmount}
+                            pattern="^\d+(\.\d{1,2})?$"
+                            placeholder="Enter amount"
+                            required={requiredDispo.includes(selectedDispo)}
+                            className={`w-full text-xs 2xl:text-sm  text-gray-900 p-2 outline-none`}
+                          />
+                        </div>
+                      </label>
+                    ) : (
+                      <IFBANK label="Amount" />
+                    )}
+                  </div>
+
+                  <div className="w-full">
+                    {anabledDispo.includes(selectedDispo) ? (
+                      <label className="flex flex-col w-full 2xl:flex-row items-center">
+                        <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4">
+                          Payment
+                        </p>
+                        <select
+                          name="payment"
+                          id="payment"
+                          required={requiredDispo.includes(selectedDispo)}
+                          value={data.payment ?? ""}
+                          onChange={(e) => {
+                            if (e.target.value === Payment.FULL) {
+                              setData((prev) => ({
+                                ...prev,
+                                amount: selectedCustomer.balance.toFixed(2),
+                              }));
+                            }
+                            handleDataChange("payment", e.target.value);
+                          }}
+                          className={`${
+                            required && !data.payment
+                              ? "bg-red-100 border-red-500"
+                              : "bg-gray-50  border-gray-500"
+                          } border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                        >
+                          <option value="" accessKey="8">
+                            Select Payment
                           </option>
-                        );
-                      })}
-                    </select>
-                  </label>
-                ) : (
-                  <IFBANK label="Payment" />
-                )}
+                          {Object.entries(Payment).map(
+                            ([key, value], index) => {
+                              return (
+                                <option
+                                  value={value}
+                                  key={key}
+                                  className="capitalize"
+                                  accessKey={index > 0 ? "0" : "9"}
+                                >
+                                  {value.charAt(0).toUpperCase() +
+                                    value.slice(1, value.length)}
+                                </option>
+                              );
+                            }
+                          )}
+                        </select>
+                      </label>
+                    ) : (
+                      <IFBANK label="Payment" />
+                    )}
+                  </div>
+                </div>
+
                 <label className="flex flex-col 2xl:flex-row items-center">
                   <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
                     Contact Method
@@ -973,97 +983,102 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                   </select>
                 </label>
               </div>
-              <div className="flex flex-col gap-2 w-full">
-                {anabledDispo.includes(selectedDispo) ? (
-                  <label className="flex flex-col 2xl:flex-row items-center">
-                    <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4">
-                      Payment Date
-                    </p>
-                    <input
-                      type="date"
-                      id="payment_date"
-                      name="payment_date"
-                      required={selectedDispo === "PAID"}
-                      value={data.payment_date ?? ""}
-                      onChange={(e) =>
-                        handleDataChange("payment_date", e.target.value)
-                      }
-                      className={`${
-                        (required && !data.payment_date) ||
-                        (required &&
-                          data.payment_date &&
-                          checkIfValid(data.payment_date))
-                          ? "bg-red-100 border-red-500"
-                          : "bg-gray-50  border-gray-500"
-                      } border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
-                    />
-                  </label>
-                ) : (
-                  <IFBANK label="Payment Date" />
-                )}
-                {anabledDispo.includes(selectedDispo) ? (
-                  <label className="flex flex-col 2xl:flex-row items-center">
-                    <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
-                      Payment Method
-                    </p>
-                    <select
-                      name="payment_method"
-                      id="payment_method"
-                      value={data.payment_method ?? ""}
-                      onChange={(e) =>
-                        handleDataChange("payment_method", e.target.value)
-                      }
-                      className={` bg-gray-50  border-gray-500 border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2`}
-                    >
-                      <option value="">Select Method</option>
-                      {Object.entries(PaymentMethod).map(([key, value]) => {
-                        return (
-                          <option value={value} key={key}>
-                            {value}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </label>
-                ) : (
-                  <IFBANK label="Payment Method" />
-                )}
-                {anabledDispo.includes(selectedDispo) ? (
-                  <label className="flex flex-col 2xl:flex-row items-center">
+              <div className="flex gap-2 w-full flex-col">
+                <div className="w-full flex flex-col gap-2">
+                  {anabledDispo.includes(selectedDispo) ? (
+                    <label className="flex flex-col 2xl:flex-row items-center">
+                      <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4">
+                        Payment Date
+                      </p>
+                      <input
+                        type="date"
+                        id="payment_date"
+                        name="payment_date"
+                        required={selectedDispo === "PAID"}
+                        value={data.payment_date ?? ""}
+                        onChange={(e) =>
+                          handleDataChange("payment_date", e.target.value)
+                        }
+                        className={`${
+                          (required && !data.payment_date) ||
+                          (required &&
+                            data.payment_date &&
+                            checkIfValid(data.payment_date))
+                            ? "bg-red-100 border-red-500"
+                            : "bg-gray-50  border-gray-500"
+                        } border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                      />
+                    </label>
+                  ) : (
+                    <IFBANK label="Payment Date" />
+                  )}
+                  {anabledDispo.includes(selectedDispo) ? (
+                    <label className="flex flex-col mt-1 2xl:flex-row items-center">
+                      <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
+                        Payment Method
+                      </p>
+                      <select
+                        name="payment_method"
+                        id="payment_method"
+                        value={data.payment_method ?? ""}
+                        onChange={(e) =>
+                          handleDataChange("payment_method", e.target.value)
+                        }
+                        className={` bg-gray-50  border-gray-500 border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2`}
+                      >
+                        <option value="">Select Method</option>
+                        {Object.entries(PaymentMethod).map(([key, value]) => {
+                          return (
+                            <option value={value} key={key}>
+                              {value}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </label>
+                  ) : (
+                    <IFBANK label="Payment Method" />
+                  )}
+                </div>
+
+                <div className="w-full ">
+                  {anabledDispo.includes(selectedDispo) ? (
+                    <label className="flex flex-col 2xl:flex-row items-center">
+                      <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
+                        Ref. No
+                      </p>
+                      <input
+                        type="text"
+                        name="ref"
+                        id="ref"
+                        autoComplete="off"
+                        value={data.ref_no ?? ""}
+                        placeholder="Enter reference no."
+                        onChange={(e) =>
+                          handleDataChange("ref_no", e.target.value)
+                        }
+                        className={` bg-gray-50 border-gray-500 border rounded-lg text-xs 2xl:text-sm w-full p-2`}
+                      />
+                    </label>
+                  ) : (
+                    <IFBANK label="Ref. No" />
+                  )}
+                  <label className="flex flex-col mt-1 2xl:flex-row items-center">
                     <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
-                      Ref. No
+                      Comment
                     </p>
-                    <input
-                      type="text"
-                      name="ref"
-                      id="ref"
-                      autoComplete="off"
-                      value={data.ref_no ?? ""}
-                      placeholder="Enter reference no."
+                    <textarea
+                      name="comment"
+                      id="comment"
+                      placeholder="Comment here..."
+                      value={data.comment ?? ""}
                       onChange={(e) =>
-                        handleDataChange("ref_no", e.target.value)
+                        handleDataChange("comment", e.target.value)
                       }
-                      className={` bg-gray-50 border-gray-500 border rounded-lg text-xs 2xl:text-sm w-full p-2`}
-                    />
+                      className="bg-gray-50 h-11 border border-gray-500 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2 resize-none"
+                    ></textarea>
                   </label>
-                ) : (
-                  <IFBANK label="Ref. No" />
-                )}
-                <label className="flex flex-col 2xl:flex-row items-center">
-                  <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
-                    Comment
-                  </p>
-                  <textarea
-                    name="comment"
-                    id="comment"
-                    placeholder="Comment here..."
-                    value={data.comment ?? ""}
-                    onChange={(e) =>
-                      handleDataChange("comment", e.target.value)
-                    }
-                    className="bg-gray-50 border border-gray-500 text-gray-900 rounded-lg h-24 focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2 resize-none"
-                  ></textarea>
-                </label>
+                </div>
               </div>
             </div>
           )}

@@ -98,7 +98,12 @@ const GET_DEPT_BUCKET = gql`
 
 const validForCampaignAndBucket = ["TL", "AGENT", "MIS", "QA"];
 
-const RegisterView = () => {
+type RegisterProps = {
+  cancel?: boolean;
+  setCancel?: React.Dispatch<React.SetStateAction<boolean>>;
+};
+
+const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
   const [selectDept, setSelectDept] = useState<boolean>(false);
   const [selectBucket, setSelectBucket] = useState<boolean>(false);
   const [data, setData] = useState<Data>({
@@ -274,13 +279,20 @@ const RegisterView = () => {
     }
   }, [data.type, data]);
 
+  useEffect(() => {
+    if (!cancel) {
+      setSelectDept(false);
+      setSelectBucket(false);
+    }
+  }, [cancel]);
+
   const bucketDiv = useRef<HTMLDivElement | null>(null);
   const campaignDiv = useRef<HTMLDivElement | null>(null);
 
   return (
     <div className="w-full">
       <div
-        className="w-full flex flex-col bg-[]"
+        className="w-full flex flex-col"
         onMouseDown={(e) => {
           if (!bucketDiv.current?.contains(e.target as Node)) {
             setSelectBucket(false);
@@ -311,6 +323,11 @@ const RegisterView = () => {
                 const value =
                   e.target.value === "" ? null : (e.target.value as Type);
                 setData((prev) => ({ ...prev, type: value }));
+              }}
+              onClick={() => {
+                if (!cancel) {
+                  setCancel?.(true);
+                }
               }}
               className={`bg-slate-50 border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
@@ -345,7 +362,7 @@ const RegisterView = () => {
 
             <label className="w-full">
               <p className="w-full text-base font-black uppercase text-slate-800">
-                Username
+                Username:
               </p>
               <input
                 type="text"
@@ -366,7 +383,7 @@ const RegisterView = () => {
           <div className="flex gap-3">
             <label className="w-full">
               <p className="w-full text-base font-black uppercase text-slate-800">
-                SIP Id
+                SIP Id:
               </p>
               <input
                 type="text"
@@ -432,6 +449,7 @@ const RegisterView = () => {
                     : (e.target.value as AccountType);
                 setData((prev) => ({ ...prev, account_type: value }));
               }}
+              onClick={() => setCancel?.(true)}
               className={`${
                 !data.type ? "bg-gray-200" : "bg-gray-50"
               } border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
@@ -463,6 +481,7 @@ const RegisterView = () => {
                   branch: branchObject[e.target.value],
                 }))
               }
+              onClick={() => setCancel?.(true)}
               disabled={
                 !data.type ||
                 !validForCampaignAndBucket.toString().includes(data.type)
@@ -512,13 +531,14 @@ const RegisterView = () => {
                   .join(", ")
                   .replace(/_/g, " ")}
                 onClick={() => {
+                  console.log(selectDept, cancel);
                   if (
                     validForCampaignAndBucket
                       .toString()
                       .includes(data.type as Type)
                   ) {
                     setSelectDept(!selectDept);
-                    setSelectBucket(false);
+                    setCancel?.(true);
                   }
                 }}
               >
@@ -555,6 +575,7 @@ const RegisterView = () => {
                       .includes(data.type as Type)
                   ) {
                     setSelectDept(!selectDept);
+
                     setSelectBucket(false);
                   }
                 }}
@@ -612,6 +633,7 @@ const RegisterView = () => {
                       .includes(data.type as Type)
                   )
                     setSelectBucket((prev) => !prev);
+                  setCancel?.(true);
                 }}
               >
                 {data.buckets.length < 1
@@ -665,10 +687,13 @@ const RegisterView = () => {
               </div>
             )}
           </div>
-          <div className="flex justify-end w-full" >
+          <div className="flex justify-end w-full">
+            <div className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-md uppercase text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5">
+              Cancel
+            </div>
             <button
               type="button"
-              className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-md uppercase text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
+              className="bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-medium rounded-md uppercase text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
               onClick={submitForm}
             >
               Submit

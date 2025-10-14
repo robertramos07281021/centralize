@@ -69,6 +69,12 @@ const MY_TASKS = gql`
         dst_fee_os
         waive_fee_os
         total_os
+        writeoff_balance
+        overall_balance
+        cf
+        mo_balance
+        pastdue_amount
+        mo_amort
       }
       grass_details {
         grass_region
@@ -172,6 +178,12 @@ const GROUP_TASKS =gql`
           dst_fee_os
           waive_fee_os
           total_os
+          writeoff_balance
+          overall_balance
+          cf
+          mo_balance
+          pastdue_amount
+          mo_amort
         }
         grass_details {
           grass_region
@@ -313,6 +325,7 @@ const MyTaskSection = () => {
     return () => clearTimeout(timer)
   },[])
 
+  
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_NEW_IN_TASK,{
     onData: async({data})=> {
       if(!userLogged) return
@@ -422,7 +435,7 @@ const MyTaskSection = () => {
   }
  
   return (
-    <div className={`mt-3 flex justify-end gap-5 relative`}>
+    <div className={`mt-3 flex justify-end gap-5 relative px-5`}>
       {
         taskLength !== undefined && taskLength > 0 &&
         <div className="flex flex-col gap-2 justify-between w-1/15">

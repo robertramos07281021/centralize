@@ -11,86 +11,87 @@ const callFileSchema = new Schema(
       type: String,
       required: true,
       unique: true,
-      uppercase: true
+      uppercase: true,
     },
     bucket: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Bucket"
+      ref: "Bucket",
     },
     active: {
       type: Boolean,
-      default: true
+      default: true,
     },
     endo: {
-      type: String
+      type: String,
     },
     finished_by: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "User"
+      ref: "User",
     },
     totalAccounts: {
       type: Number,
-      default: 0
+      default: 0,
     },
     totalPrincipal: {
       type: Number,
-      default: 0
+      default: 0,
     },
     totalOB: {
       type: Number,
-      default: 0
+      default: 0,
     },
     variance: {
       type: Number,
-      default: 0
+      default: 0,
     },
     isVarianceTake: {
       type: Boolean,
-      default: true
+      default: true,
     },
     target: {
       type: Number,
-      default: 0
+      default: 0,
     },
     penetration_details: {
       calls: {
         vici: {
           total: {
             type: Number,
-            default: 0
+            default: 0,
           },
         },
         issable: {
           total: {
             type: Number,
-            default: 0
-          }
+            default: 0,
+          },
         },
         inbound: {
           total: {
             type: Number,
-            default: 0
-          }
+            default: 0,
+          },
         },
-      }
-    }
+      },
+    },
   },
   { timestamps: true }
 );
 
-callFileSchema.post('findOneAndDelete',async(data) => {
+callFileSchema.post("findOneAndDelete", async (data) => {
   try {
-    if(data) {
-      const accounts = await CustomerAccount.find({callfile: data._id})
-      const customerIds = accounts.map(acc => new mongoose.Types.ObjectId(acc.customer));
+    if (data) {
+      const accounts = await CustomerAccount.find({ callfile: data._id });
+      const customerIds = accounts.map(
+        (acc) => new mongoose.Types.ObjectId(acc.customer)
+      );
       await Customer.deleteMany({ _id: { $in: customerIds } });
       await CustomerAccount.deleteMany({ callfile: data._id });
     }
   } catch (error) {
-    throw new CustomError(error.message, 500)
+    throw new CustomError(error.message, 500);
   }
-})
-
+});
 
 const Callfile = mongoose.model("Callfile", callFileSchema);
 export default Callfile;

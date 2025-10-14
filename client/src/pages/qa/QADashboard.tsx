@@ -15,29 +15,29 @@ const AdminDashboard = () => {
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
-              stroke-width="3"
+              strokeWidth="3"
               stroke="currentColor"
-              className="size-6 text-gray-500"
+              className="size-6 text-blue-600"
             >
               <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 d="M15.75 19.5 8.25 12l7.5-7.5"
               />
             </svg>
           </div>
-          <div className="bg-blue-300 cursor-pointer rounded-md shadow-md hover:shadow-none transition-all hover:bg-gray-300 mr-3 py-2 px-3 h-full">
+          <div className="bg-blue-300 cursor-pointer rounded-md shadow-md hover:shadow-none transition-all hover:bg-blue-400 mr-3 py-2 px-3 h-full">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
-              stroke-width="3"
+              strokeWidth="3"
               stroke="currentColor"
               className="size-6 text-gray-500"
             >
               <path
-                stroke-linecap="round"
-                stroke-linejoin="round"
+                strokeLinecap="round"
+                strokeLinejoin="round"
                 d="m8.25 4.5 7.5 7.5-7.5 7.5"
               />
             </svg>

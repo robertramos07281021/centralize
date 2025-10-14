@@ -68,6 +68,7 @@ const CustomerExtnTypeDefs = gql`
 
   type Mutation {
     updateCustomerAccount(input:CustomerAccountsInput):Success
+    # randomCustomerAccount:CustomerData
   }
 `
 

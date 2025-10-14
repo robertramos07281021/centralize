@@ -154,9 +154,8 @@ const ProductionManagerView = () => {
               </motion.fieldset>
             </div>
           </div>
-
           <div className="w-1/2 flex flex-col gap-2">
-            <h1 className="lg:text-sm 2xl:text-sm font-medium text-gray-600 text-center">
+            <h1 className="text-2xl font-black uppercase text-gray-600 text-center">
               {canUpload && "Uploader"}
             </h1>
             <div className=" h-full flex items-end">

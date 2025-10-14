@@ -13,7 +13,6 @@ import {
 import OtherAccountsViews from "./OtherAccountsViews";
 import { useLocation } from "react-router-dom";
 import AccountHistoriesView from "./AccountHistoriesView";
-import { BsExclamationSquareFill } from "react-icons/bs";
 import DispositionRecords from "./DispositionRecords";
 import UpdateCustomerAccount from "./UpdateCustomerAccount";
 import UpdatedAccountHistory from "./UpdatedAccountHistory";
@@ -65,6 +64,10 @@ const OTHER_ACCOUNTS = gql`
         waive_fee_os
         total_os
         late_charge_waive_fee_os
+        cf
+        mo_balance
+        pastdue_amount
+        mo_amort
       }
       grass_details {
         grass_region
@@ -199,6 +202,8 @@ const FieldsDiv = ({
     "late charge os",
     "waive fee os",
     "txn fee os",
+    "cf",
+    "txn fee os",
   ];
 
   if (Number(value) && endorsementDate) {
@@ -283,6 +288,7 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
       skip: !selectedCustomer && !isTLCIP,
     }
   );
+
   const [showAccountHistory, setShowAccountHistory] = useState<boolean>(false);
   const { data: accountHistory, refetch } = useQuery<{
     findAccountHistories: AccountHistory[];
@@ -324,21 +330,39 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
 
   return (
     selectedCustomer && (
-      <>
+      <div className="flex flex-col w-full">
         {showAccounts && (
-          <OtherAccountsViews
-            others={data?.customerOtherAccounts || []}
-            close={() => setShowAccounts(false)}
-          />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <OtherAccountsViews
+              others={data?.customerOtherAccounts || []}
+              close={() => setShowAccounts(false)}
+            />
+          </motion.div>
         )}
         {showAccountHistory && (
-          <AccountHistoriesView
-            histories={accountHistory?.findAccountHistories || []}
-            close={() => setShowAccountHistory(false)}
-          />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <AccountHistoriesView
+              histories={accountHistory?.findAccountHistories || []}
+              close={() => setShowAccountHistory(false)}
+            />
+          </motion.div>
         )}
         {showDispoHistory && (
-          <DispositionRecords close={() => setShowDispoHistory(false)} />
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <DispositionRecords close={() => setShowDispoHistory(false)} />
+          </motion.div>
         )}
         {showUpdateOnCA && (
           <UpdatedAccountHistory close={() => setShowUpdateOnCA(false)} />
@@ -363,13 +387,13 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
-                  stroke-width="2"
+                  strokeWidth="2"
                   stroke="currentColor"
                   className="size-6"
                 >
                   <path
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
                     d="M12 9v3.75m-9.303 3.376c-.866 1.5.217 3.374 1.948 3.374h14.71c1.73 0 2.813-1.874 1.948-3.374L13.949 3.378c-.866-1.5-3.032-1.5-3.898 0L2.697 16.126ZM12 15.75h.007v.008H12v-.008Z"
                   />
                 </svg>
@@ -524,115 +548,192 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
           </motion.div>
         </div>
         <motion.div
-          className="w-full"
+          className="w-full flex lg:flex-row flex-col"
           initial={{ x: 50, opacity: 0 }}
           animate={{ opacity: 1, x: 0 }}
         >
-          {userLogged?.type !== "AGENT" &&
-            !updateCustomerAccounts &&
-            Math.ceil(selectedCustomer.balance) > 0 &&
-            selectedCustomer.account_bucket.can_update_ca && (
-              <button
-                className="absolute right-5 py-2.5 top-0 hover:bg-orange-600 bg-orange-400 font-medium rounded-lg text-sm cursor-pointer px-5 text-white"
-                onClick={() => setUpdateCustomerAccounts((prev) => !prev)}
-              >
-                Update
-              </button>
+          <div className="w-full">
+            <h1 className="text-center font-black uppercase text-slate-600 text-2xl py-4">
+              Account Information
+            </h1>
+
+            {selectedCustomer.batch_no && (
+              <div className=" flex items-center justify-center text-gray-600">
+                <div className="w-1/4 flex flex-col text-center">
+                  <div className="font-bold text-gray-800 text-sm">
+                    Batch No.
+                  </div>
+                  <div className="border rounded-md border-slate-500 text-sm py-1.5 bg-gray-100">
+                    {selectedCustomer.batch_no}
+                  </div>
+                </div>
+              </div>
             )}
-          <h1 className="text-center font-black uppercase text-slate-600 text-2xl my-2">
-            Account Information
-          </h1>
 
-          {selectedCustomer.batch_no && (
-            <div className=" flex items-center justify-center text-gray-600">
-              <div className="w-1/4 flex flex-col text-center">
-                <div className="font-bold text-gray-800 text-sm">Batch No.</div>
-                <div className="border rounded-md border-slate-500 text-sm py-1.5 bg-gray-100">
-                  {selectedCustomer.batch_no}
-                </div>
+            <div className="flex w-full xl:gap-2 gap-2 bg-gray-100 border-t border-x border-slate-400 rounded-t-xl px-5 pt-5 justify-center">
+              <div className="flex flex-col uppercase gap-2  w-full">
+                <FieldsDiv
+                  label="Bucket"
+                  value={selectedCustomer?.account_bucket?.name}
+                  endorsementDate={null}
+                />
+                <FieldsDiv
+                  label="Case ID / PN / Account ID"
+                  value={selectedCustomer?.case_id}
+                  endorsementDate={null}
+                />
+                <FieldsDiv
+                  label="Principal OS"
+                  value={
+                    selectedCustomer?.out_standing_details?.principal_os || 0
+                  }
+                  endorsementDate={null}
+                />
+              </div>
+              <div className="flex flex-col gap-2 uppercase  w-full">
+                <FieldsDiv
+                  label="DPD"
+                  value={selectedCustomer?.dpd}
+                  endorsementDate={null}
+                />
+                <FieldsDiv
+                  label="Max DPD"
+                  value={selectedCustomer?.max_dpd}
+                  endorsementDate={null}
+                />
+                <FieldsDiv
+                  label="DPD Due Date"
+                  value={selectedCustomer?.max_dpd}
+                  endorsementDate={selectedCustomer?.endorsement_date}
+                />
               </div>
             </div>
-          )}
+            {!updateCustomerAccounts ? (
+              <div className="flex flex-col pt-2 bg-gray-100 border-x border-gray-400 border-b rounded-b-xl shadow-md px-5 pb-5 items-end justify-center gap-1 text-slate-800 uppercase font-medium">
+                {selectedCustomer.out_standing_details.mo_balance != 0 &&
+                  selectedCustomer.out_standing_details.mo_balance != 0 &&
+                  selectedCustomer.out_standing_details.mo_balance != 0 &&
+                  selectedCustomer.out_standing_details.mo_balance != 0 && (
+                    <div className=" w-full flex flex-col lg:ml-3 gap-5 text-slate-800">
+                      <div className="bg-gray-100 w-full gap-2 flex flex-row rounded-md">
+                        <div>
+                          <h1 className="font-medium 2xl:text-sm text-xs">
+                            Write Off Balance
+                          </h1>
+                          <div className="min-w-32 p-1 pl-2 border border-slate-500 rounded-md">
+                            {(
+                              selectedCustomer?.out_standing_details
+                                ?.mo_balance ?? 0
+                            ).toLocaleString("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            })}
+                          </div>
+                        </div>
 
-          <div className="flex xl:gap-10 gap-2 bg-gray-100 border-t border-x border-slate-400 rounded-t-xl px-5 pt-5 justify-center">
-            <div className="flex flex-col uppercase gap-2  w-full">
-              <FieldsDiv
-                label="Bucket"
-                value={selectedCustomer?.account_bucket?.name}
-                endorsementDate={null}
-              />
-              <FieldsDiv
-                label="Case ID / PN / Account ID"
-                value={selectedCustomer?.case_id}
-                endorsementDate={null}
-              />
-              <FieldsDiv
-                label="Principal OS"
-                value={
-                  selectedCustomer?.out_standing_details?.principal_os || 0
-                }
-                endorsementDate={null}
-              />
-            </div>
-            <div className="flex flex-col gap-2 uppercase  w-full">
-              <FieldsDiv
-                label="DPD"
-                value={selectedCustomer?.dpd}
-                endorsementDate={null}
-              />
-              <FieldsDiv
-                label="Max DPD"
-                value={selectedCustomer?.max_dpd}
-                endorsementDate={null}
-              />
-              <FieldsDiv
-                label="DPD Due Date"
-                value={selectedCustomer?.max_dpd}
-                endorsementDate={selectedCustomer?.endorsement_date}
-              />
-            </div>
-          </div>
-          {!updateCustomerAccounts ? (
-            <div className="flex flex-row pt-2 bg-gray-100 border-x border-gray-400 border-b rounded-b-xl shadow-md px-5 pb-5 items-center justify-center xl:gap-5 gap-2 text-slate-800 uppercase font-medium">
-              <div>
-                <p className="font-medium 2xl:text-lg lg:text-sm ">
-                  Outstanding Balance
-                </p>
-                <div className="min-w-45 border p-2 rounded-lg border-slate-500 bg-gray-100 2xl:text-lg lg:text-base">
-                  {selectedCustomer?.out_standing_details?.total_os?.toLocaleString(
-                    "en-PH",
-                    { style: "currency", currency: "PHP" }
+                        <div>
+                          <h1 className="font-medium 2xl:text-sm text-xs">
+                            Past Due Amount
+                          </h1>
+                          <div className="min-w-32 p-1 pl-2 border border-slate-500 rounded-md">
+                            {(
+                              selectedCustomer?.out_standing_details
+                                ?.pastdue_amount ?? 0
+                            ).toLocaleString("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            })}
+                          </div>
+                        </div>
+
+                        <div>
+                          <h1 className="font-medium 2xl:text-sm text-xs">
+                            MO_Amort
+                          </h1>
+                          <div className="min-w-32 pl-2 p-1 border border-slate-500 rounded-md">
+                            {(
+                              selectedCustomer?.out_standing_details
+                                ?.mo_amort ?? 0
+                            ).toLocaleString("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            })}
+                          </div>
+                        </div>
+                        <div>
+                          <h1 className="font-medium 2xl:text-sm text-xs">
+                            CF
+                          </h1>
+                          <div className="min-w-32 pl-2 p-1 border border-slate-500 rounded-md">
+                            {(
+                              selectedCustomer?.out_standing_details?.cf ?? 0
+                            ).toLocaleString("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
                   )}
+
+                <div className="flex w-full gap-2 items-end">
+                  <div className="w-full">
+                    <p className="font-medium whitespace-nowrap min-w-40 w-full text-xs 2xl:text-sm ">
+                      Outstanding Balance
+                    </p>
+                    <div className="w-full  border p-2 rounded-lg border-slate-500 bg-gray-100 2xl:text-sm lg:text-base">
+                      {selectedCustomer?.out_standing_details?.total_os?.toLocaleString(
+                        "en-PH",
+                        { style: "currency", currency: "PHP" }
+                      )}
+                    </div>
+                  </div>
+                  <div className="w-full">
+                    <p className="font-medium text-xs 2xl:text-sm ">Balance</p>
+                    <div className="w-full border p-2 rounded-lg border-slate-500 bg-gray-100 2xl:text-sm lg:text-base">
+                      {selectedCustomer?.balance?.toLocaleString("en-PH", {
+                        style: "currency",
+                        currency: "PHP",
+                      })}
+                    </div>
+                  </div>
+                  <div className="w-full">
+                    <p className="font-medium text-xs 2xl:text-sm">
+                      Total Paid
+                    </p>
+                    <div className="w-full border p-2 rounded-lg border-slate-500 bg-gray-100 2xl:text-sm lg:text-base">
+                      {selectedCustomer?.paid_amount?.toLocaleString("en-PH", {
+                        style: "currency",
+                        currency: "PHP",
+                      })}
+                    </div>
+                  </div>
+                  <div className="flex justify-end h-full items-end">
+                    {userLogged?.type !== "AGENT" &&
+                      !updateCustomerAccounts &&
+                      Math.ceil(selectedCustomer.balance) > 0 &&
+                      selectedCustomer.account_bucket.can_update_ca && (
+                        <button
+                          className=" hover:bg-orange-600 bg-orange-500 transition-all shadow-md hover:shadow-none font-black uppercase rounded-md py-3 flex text-sm cursor-pointer px-5 text-white"
+                          onClick={() =>
+                            setUpdateCustomerAccounts((prev) => !prev)
+                          }
+                        >
+                          Update
+                        </button>
+                      )}
+                  </div>
                 </div>
               </div>
+            ) : (
               <div>
-                <p className="font-medium 2xl:text-base lg:text-md ">Balance</p>
-                <div className="min-w-45 border p-2 rounded-lg border-slate-500 bg-gray-100 2xl:text-lg lg:text-base">
-                  {selectedCustomer?.balance?.toLocaleString("en-PH", {
-                    style: "currency",
-                    currency: "PHP",
-                  })}
-                </div>
+                <UpdateCustomerAccount
+                  cancel={() => setUpdateCustomerAccounts((prev) => !prev)}
+                />
               </div>
-              <div>
-                <p className="font-medium 2xl:text-lg lg:text-base ">
-                  Total Paid
-                </p>
-                <div className="min-w-45 border p-2 rounded-lg border-slate-500 bg-gray-100 2xl:text-lg lg:text-base">
-                  {selectedCustomer?.paid_amount?.toLocaleString("en-PH", {
-                    style: "currency",
-                    currency: "PHP",
-                  })}
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div>
-            <UpdateCustomerAccount
-              cancel={() => setUpdateCustomerAccounts((prev) => !prev)}
-            />asaasasasassaasasassa
-            </div>
-          )}
+            )}
+          </div>
           {data &&
             data?.customerOtherAccounts?.length > 0 &&
             (() => {
@@ -649,34 +750,41 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                 selectedCustomer?.out_standing_details?.principal_os;
 
               return (
-                <div className="mt-5 flex justify-center gap-5 text-slate-500">
-                  <div>
-                    <h1 className="font-medium 2xl:text-lg lg:text-base">
-                      Customer Total OB
-                    </h1>
-                    <div className="min-w-45 p-2 border border-slate-500 rounded-md">
-                      {sumofOtherOB?.toLocaleString("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      })}
+                <motion.div
+                  className=" w-full flex flex-col mt-2 lg:mt-0 lg:ml-3 justify-center gap-5 text-slate-800"
+                  initial={{ x: 20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div className="bg-gray-100 w-full shadow-md px-3 py-4 border gap-1 flex flex-col border-slate-400 rounded-md">
+                    <div>
+                      <h1 className="font-medium 2xl:text-lg lg:text-base">
+                        Customer Total OB
+                      </h1>
+                      <div className="min-w-45 p-1 pl-2 border border-slate-500 rounded-md">
+                        {sumofOtherOB?.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <h1 className="font-medium 2xl:text-lg lg:text-base">
+                        Customer Total Principal
+                      </h1>
+                      <div className="min-w-45 p-1 pl-2 border border-slate-500 rounded-md">
+                        {sumofOtherPrincipal?.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      </div>
                     </div>
                   </div>
-                  <div>
-                    <h1 className="font-medium 2xl:text-lg lg:text-base">
-                      Customer Total Principal
-                    </h1>
-                    <div className="min-w-45 p-2 border border-slate-500 rounded-md">
-                      {sumofOtherPrincipal?.toLocaleString("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      })}
-                    </div>
-                  </div>
-                </div>
+                </motion.div>
               );
             })()}
         </motion.div>
-      </>
+      </div>
     )
   );
 });

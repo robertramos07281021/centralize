@@ -147,7 +147,7 @@ const AgentReport = () => {
               </div>
             )}
           </div>
-          <div className="flex gap-5 items-center">
+          <div className="flex flex-col lg:flex-row gap-5 items-center">
             <motion.label
               className="flex gap-2 ml-5 items-center"
               initial={{ y: 20, opacity: 0 }}

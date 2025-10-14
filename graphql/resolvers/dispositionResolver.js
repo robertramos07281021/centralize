@@ -1668,7 +1668,7 @@ const dispositionResolver = {
               target: callfile.target
             }
           })
-          console.log(result)
+          
         } else {
           const existingCallfile = await Callfile.findOne({bucket:buckets._id,active: {$eq: true}}).lean()
 

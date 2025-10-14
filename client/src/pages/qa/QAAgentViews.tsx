@@ -109,21 +109,21 @@ const QAAgentViews = () => {
         >
           <div className="w-full overflow-hidden rounded-md div-fixed">
             <div className=" bg-gray-300 uppercase font-black overflow-hidden">
-              <div className="grid grid-cols-7 items-center">
+              <div className="grid grid-cols-6 items-center">
                 <div className="px-2 py-2">Name</div>
                 <div className="px-2 py-2">SIP</div>
                 <div className="px-2 py-2">Buckets</div>
                 <div className="text-center flex justify-center">Activity</div>
                 <div className="text-center flex justify-center">online</div>
-                <div className="text-center flex justify-center">lock</div>
+                {/* <div className="text-center flex justify-center">lock</div> */}
                 <div className="text-center flex justify-center"></div>
               </div>
             </div>
             <div>
               {agendivata?.getBucketUser.map((user, index) => (
-                <motion.tr
+                <motion.div
                   key={user._id}
-                  className=" even:bg-gray-200 grid py-2 items-center w-full grid-cols-7 bg-gray-100 cursor-default transition-all hover:bg-gray-200 select-none"
+                  className=" even:bg-gray-200 grid py-2 items-center w-full grid-cols-6 bg-gray-100 cursor-default transition-all hover:bg-gray-200 select-none"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
@@ -155,7 +155,7 @@ const QAAgentViews = () => {
                       <div className=" shadow-md bg-red-600 w-5 rounded-full h-5"></div>
                     )}
                   </div>
-                  <div className="justify-center flex">
+                  {/* <div className="justify-center flex">
                     {user.isLock ? (
                       <div className="bg-red-500 px-2 border-2 rounded-sm border-red-800 shadow-md cursor-pointer hover:bg-red-600 transition-all text-white py-1">
                         <svg
@@ -174,24 +174,24 @@ const QAAgentViews = () => {
                         </svg>
                       </div>
                     ) : (
-                      <div className="bg-green-500 px-2 border-2 rounded-sm border-green-800 shadow-md cursor-pointer hover:bg-green-600 transition-all text-white py-1">
+                      <div className="bg-gray-300 px-2 border-2 rounded-sm border-gray-400 transition-all text-gray-400 py-1">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
                           viewBox="0 0 24 24"
-                          stroke-width="3"
+                          strokeWidth="3"
                           stroke="currentColor"
                           className="size-5"
                         >
                           <path
-                            stroke-linecap="round"
-                            stroke-linejoin="round"
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
                             d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
                           />
                         </svg>
                       </div>
                     )}
-                  </div>
+                  </div> */}
                   <div className=" flex justify-center">
                     <Link
                       className=" bg-blue-600 border-2 hover:bg-blue-700 text-white border-blue-800 shadow-md rounded-sm px-2 py-1"
@@ -202,19 +202,19 @@ const QAAgentViews = () => {
                         xmlns="http://www.w3.org/2000/svg"
                         fill="none"
                         viewBox="0 0 24 24"
-                        stroke-width="1.5"
+                        strokeWidth="1.5"
                         stroke="currentColor"
-                        class="size-5"
+                        className="size-5"
                       >
                         <path
-                          stroke-linecap="round"
-                          stroke-linejoin="round"
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
                           d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"
                         />
                       </svg>
                     </Link>
                   </div>
-                </motion.tr>
+                </motion.div>
               ))}
             </div>
           </div>

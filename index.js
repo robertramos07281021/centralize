@@ -199,8 +199,8 @@ useServer({ schema,
       const decoded = jwt.verify(token, process.env.SECRET);
       user = await User.findById(decoded.id);
       ctx.extra.userId = decoded.id;
-      
       const userId = user._id.toString();
+
       const socket = ctx.extra.socket;
       let entry = connectedUsers.get(userId);
     

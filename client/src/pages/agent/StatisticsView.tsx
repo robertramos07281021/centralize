@@ -80,10 +80,10 @@ const StatisticsView = () => {
     <div className="flex flex-col lg:h-full bg-slate-200 relative lg:overflow-hidden ">
       {
         !userLogged?.vici_id &&
-        <div className="absolute top-12 right-4 flex items-center justify-center">
+        <div className="absolute top-16 right-6 flex items-center justify-center">
           <CgDanger
             onClick={() => setOpen(true)}
-            className={`"  text-5xl p-1 shadow-md cursor-pointer rounded-full  bg-red-600 z-20 "`}
+            className={`"  text-4xl p-1 shadow-md cursor-pointer rounded-full  bg-red-600 z-20 "`}
             color="white"
           />
           <div className="w-10 h-10 border absolute bg-red-600 z-10 border-red-500 animate-ping rounded-full"></div>

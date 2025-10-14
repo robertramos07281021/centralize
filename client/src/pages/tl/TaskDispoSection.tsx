@@ -471,7 +471,7 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
             (ca, index) => (
               <motion.div
                 key={ca._id}
-                className="even:bg-gray-100 cursor-default gap-10 bg-gray-200 hover:py-4 hover:bg-gray-300 transition-all grid grid-cols-8 py-2 items-center text-sm px-6"
+                className="even:bg-gray-100 cursor-default gap-10 bg-gray-200 hover:bg-gray-300 transition-all grid grid-cols-8 py-2 items-center text-sm px-6"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ delay: index * 0.1 }}
@@ -490,8 +490,8 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
                     : "New Endorsed"}
                 </div>
                 <div className="">{ca.account_bucket.name}</div>
-                <div className="">{ca.dpd}</div>
-                <div className="capitalize">{ca.assigned?.name}</div>
+                <div className="">{ca.dpd|| <div className="italic font-sans text-gray-400 text-xs" >No DPD</div>}</div>
+                <div className="">{ca.assigned?.name || <div className="italic font-sans text-gray-400 text-xs" >No name assigned </div>}</div>
                 <div className="flex items-center justify-end">
                   {(selectedGroup || selectedAgent) && (
                     <input

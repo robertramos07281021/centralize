@@ -90,6 +90,12 @@ type outStandingDetails = {
   total_os: number
   waive_fee_os: number
   late_charge_waive_fee_os: number
+  writeoff_balance:number
+  overall_balance:number
+  cf:number
+  mo_balance:number
+  pastdue_amount:number
+  mo_amort:number
 }
 
 

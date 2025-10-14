@@ -358,12 +358,12 @@ const CallfilesConfig = () => {
             </div>
           </div>
           <div className="flex bg-gray-200 rounded-t-md">
-            <div className="grid w-full grid-cols-11 gap-3  px-3  py-2 font-semibold">
+            <div className="grid w-full grid-cols-11 gap-3  px-3  py-2 font-black uppercase">
               <div>Name</div>
               <div>Created At</div>
               <div>Endo</div>
               <div>Work Days</div>
-              <div>Finished By</div>
+              <div className="truncate" title="Finished by"  >Finished By</div>
               <div className="whitespace-nowrap truncate" title="Total Accounts" >Total Accounts</div>
               <div>Total OB</div>
               <div className="whitespace-nowrap truncate" title="Total Principal">Total Principal</div>
@@ -459,8 +459,34 @@ const CallfilesConfig = () => {
                             </div>
                           )}
                         </div>
-                        <div className="gap-3 col-span-2 flex justify-center">
-                          <div className="items-center flex">
+                        <div className="gap-3 col-span-2 flex justify-end">
+
+                          {res.active && (
+                            <div className="items-center  col-start-1 flex ">
+                              <div
+                                onClick={() =>
+                                  onClickIcon(res._id, "FINISHED", res.name)
+                                }
+                                className="bg-green-700 border-2 border-green-900 hover:bg-green-800 transition-all py-1 px-2 cursor-pointer rounded-sm shadow-sm"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth="3"
+                                  stroke="currentColor"
+                                  className="size-5 text-white  "
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="m4.5 12.75 6 6 9-13.5"
+                                  />
+                                </svg>
+                              </div>
+                            </div>
+                          )}
+                          <div className="items-center  col-start-2 flex">
                             <div
                               onClick={() =>
                                 onClickIcon(res._id, "DOWNLOAD", res.name)
@@ -483,32 +509,6 @@ const CallfilesConfig = () => {
                               </svg>
                             </div>
                           </div>
-
-                          {res.active && (
-                            <div className="items-center flex ">
-                              <div
-                                onClick={() =>
-                                  onClickIcon(res._id, "DELETE", res.name)
-                                }
-                                className="bg-green-700 border-2 border-green-900 hover:bg-green-800 transition-all py-1 px-2 cursor-pointer rounded-sm shadow-sm"
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  strokeWidth="3"
-                                  stroke="currentColor"
-                                  className="size-5 text-white  "
-                                >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="m4.5 12.75 6 6 9-13.5"
-                                  />
-                                </svg>
-                              </div>
-                            </div>
-                          )}
 
                           <div className="items-center flex ">
                             <div

@@ -23,6 +23,7 @@ import { debounce } from "lodash";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import animationData from "../Animations/Phone Call.json";
+import axios from "axios";
 
 const DESELECT_TASK = gql`
   mutation deselectTask($id: ID!) {
@@ -90,6 +91,12 @@ const SEARCH = gql`
         dst_fee_os
         waive_fee_os
         total_os
+        writeoff_balance
+        overall_balance
+        cf
+        mo_balance
+        pastdue_amount
+        mo_amort
       }
       grass_details {
         grass_region
@@ -184,8 +191,8 @@ const SearchResult = memo(
     onClick,
   }: {
     data: Search[];
-    search: string;
     onClick: (c: Search) => void;
+    search: string;
   }) => {
     const [selectedIndex, setSelectedIndex] = useState(0);
     const refs = useRef<(HTMLDivElement | null)[]>([]);
@@ -221,6 +228,10 @@ const SearchResult = memo(
       }
     }, [selectedIndex]);
 
+    function escapeRegExp(str: string) {
+      return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    }
+
     return (
       <>
         {data.slice(0, 50).map((customer, index) => (
@@ -239,11 +250,12 @@ const SearchResult = memo(
                 className="px-2 font-medium text-slate-600 uppercase block"
                 dangerouslySetInnerHTML={{
                   __html: customer.customer_info.fullName.replace(
-                    new RegExp(search, "gi"),
+                    new RegExp(escapeRegExp(search), "gi"),
                     (match) => `<mark>${match}</mark> - <span>`
                   ),
                 }}
               />
+
               <p className="px-2 text-slate-500 text-xs font-bold">
                 Balance:{" "}
                 {customer?.balance?.toLocaleString("en-PH", {
@@ -336,7 +348,6 @@ const CustomerDisposition = () => {
   const containerRef = useRef(null);
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-
   const [isRPC, setIsRPC] = useState<boolean>(false);
   const [isUpdate, setIsUpdate] = useState<boolean>(false);
   const [search, setSearch] = useState<string>("");
@@ -346,6 +357,7 @@ const CustomerDisposition = () => {
     fetchPolicy: "network-only",
     notifyOnNetworkStatusChange: true,
   });
+  const [loading2, setLoading2] = useState(false);
 
   const { data: dispotypes } = useQuery<{ getDispositionTypes: Dispotype[] }>(
     DISPOTYPES
@@ -363,6 +375,13 @@ const CustomerDisposition = () => {
       }
     }, 500);
   }, [refetch]);
+
+  useEffect(() => {
+    const defaultSearchTerm = "096";
+    setSearch(search);
+    setIsSearch(false);
+    debouncedSearch(defaultSearchTerm);
+  }, []);
 
   const handleSearchChange = (val: string) => {
     setIsSearch(false);
@@ -472,56 +491,26 @@ const CustomerDisposition = () => {
     },
   });
 
-  // useEffect(() => {
-  //   const handleKeyDown = async (e: KeyboardEvent) => {
-  //     if (!selectedCustomer) {
-  //       const key = e.key.toLowerCase();
-  //       if (["a", "b", "c"].includes(key)) {
-  //         await handleSearchAndSelectByFirstLetter(key);
-  //       }
-  //     }
-  //   };
-
-  //   window.addEventListener("keydown", handleKeyDown);
-  //   return () => window.removeEventListener("keydown", handleKeyDown);
-  // }, [selectedCustomer]);
-
-  const handleRandomCustomerSelect = async () => {
+  const handleRandomCustomerSelect = useCallback(async () => {
+    setLoading2(true);
     try {
-      const result = await refetch(); // No search filter
-
+      const result = await refetch({ search: "096" });
       const list = result?.data?.search || [];
 
       if (list.length > 0) {
         const randomIndex = Math.floor(Math.random() * list.length);
         const randomCustomer = list[randomIndex];
-
         await selectTask({ variables: { id: randomCustomer._id } });
         dispatch(setSelectedCustomer(randomCustomer));
+        setSearch("");
       } else {
-        console.log("No customers found");
       }
     } catch (error) {
-      console.error("Random select error:", error);
+      dispatch(setServerError(true));
+    } finally {
+      setLoading2(false);
     }
-  };
-
-  const handleRandomCustomer = async () => {
-    if (isSearch) {
-      setIsSearch(false);
-      await refetch();
-    }
-
-    const list = searchData?.search || [];
-
-    if (list.length > 0) {
-      const randomIndex = Math.floor(Math.random() * list.length);
-      const random = list[randomIndex];
-
-      setRandomCustomer(random);
-      dispatch(setSelectedCustomer(random));
-    }
-  };
+  }, [setLoading2, selectTask, dispatch, refetch, setSearch]);
 
   const callbackUpdateRPC = useCallback(async () => {
     await updateRPC({ variables: { id: selectedCustomer?.customer_info._id } });
@@ -551,20 +540,54 @@ const CustomerDisposition = () => {
       : selectedCustomer.customer_info?.gender.toLowerCase()
     : "";
 
-  useEffect(() => {
-    if (
-      searchData &&
-      Array.isArray(searchData.search) &&
-      searchData.search.length > 0
-    ) {
-      console.log("Search results updated", searchData.search);
-    }
-  }, [searchData]);
+  // useEffect(() => {
+  //   if (
+  //     searchData &&
+  //     Array.isArray(searchData.search) &&
+  //     searchData.search.length > 0
+  //   ) {
+  //     console.log("Search results updated", searchData.search);
+  //   }
+  // }, [searchData]);
 
-  return userLogged ? (
+  async function callGSM(phoneNumber: string) {
+    try {
+      const response = await axios.post(
+        `http://172.20.21.143:80/api/send_sms`,
+        {
+          sim_id: "1",
+          mobile: phoneNumber,
+          content: "Test message from Node.js",
+        },
+        {
+          auth: {
+            username: "admin",
+            password: "admin",
+          },
+          headers: { "Content-Type": "application/json" },
+          timeout: 5000,
+        }
+      );
+      console.log("Call response:", response.data);
+    } catch (err) {
+      console.error("Error maij:", err);
+    }
+  }
+
+  // useEffect(() => {
+  //   if (selectedCustomer) {
+  //     callGSM("09126448847");
+  //   }
+  // }, [selectedCustomer]);
+
+  if (!userLogged) {
+    return <Navigate to="/" />;
+  }
+
+  return (
     <div
       ref={containerRef}
-      className="h-screen w-full relative outline-none overflow-auto"
+      className="h-screen w-full outline-none overflow-auto"
       onMouseDown={(e) => {
         if (!childrenDivRef.current?.divElement?.contains(e.target as Node)) {
           childrenDivRef?.current?.showButtonToFalse();
@@ -572,14 +595,14 @@ const CustomerDisposition = () => {
       }}
     >
       {(isRPCToday || isRPC) && <Confirmation {...modalProps} />}
-      <div>
+      <div className="w-full">
         <div className="">
-          {userLogged.type === "AGENT" && <AgentTimer />}
+          {userLogged?.type === "AGENT" && <AgentTimer />}
           <MyTaskSection />
         </div>
-        <div className="w-full flex gap-5 px-5 py-5 h-full overflow-hidden ">
+        <div className="w-full flex  flex-col lg:flex-row gap-5 px-5 pb-5 h-full items-center justify-center overflow-hidden ">
           <motion.div
-            className="flex flex-col  items-center w-full"
+            className="flex flex-col justify-center w-[83%] lg:w-[40%]"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 1, type: "spring" }}
@@ -589,11 +612,11 @@ const CustomerDisposition = () => {
             </h1>
             <div
               className={`" ${
-                selectedCustomer ? "w-full px-5" : "w-[40%] px-5"
-              } border bg-gray-100 flex flex-col shadow-md shadow-black/20 rounded-xl justify-center items-center  border-slate-400 h-full py-10 relative "`}
+                selectedCustomer ? "w-full px-5" : "w-full px-5"
+              } border bg-gray-100 transition-all flex flex-col shadow-md shadow-black/20 rounded-xl justify-center items-center  border-slate-400 h-full py-10 relative "`}
             >
               <div
-                className={`flex w-full  h-full ${
+                className={`flex w-full ${
                   selectedCustomer?.customer_info.isRPC
                     ? "justify-start"
                     : "justify-end"
@@ -601,7 +624,7 @@ const CustomerDisposition = () => {
               >
                 {selectedCustomer && !selectedCustomer?.customer_info.isRPC && (
                   <button
-                    className={` px-10 py-1.5 rounded text-white font-bold bg-orange-400 hover:bg-orange-600 cursor-pointer ${
+                    className={` px-10 py-1.5 rounded text-white font-black bg-orange-500 transition-all border-orange-700 border-2 shadow-md hover:shadow-none hover:bg-orange-600 cursor-pointer ${
                       isUpdate ? "2xl:absolute top-5 right-5" : ""
                     } `}
                     onClick={handleClickRPC}
@@ -628,7 +651,6 @@ const CustomerDisposition = () => {
                     className=" w-full p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
                   />
                   <div
-                  
                     className={`${
                       length > 0 && search ? "" : "hidden"
                     } absolute max-h-96 border border-slate-400 w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-md top-10`}
@@ -741,19 +763,19 @@ const CustomerDisposition = () => {
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
-                className=" cursor-pointer z-30 absolute top-0 left-0 bg-black/30 backdrop-blur-sm w-full h-full"
+                className=" cursor-pointer z-30 absolute top-0 left-0 bg-black/30  backdrop-blur-sm w-full h-full"
               ></motion.div>
               <motion.div
-                className="flex flex-col  items-center relative z-40"
+                className="flex flex-col bg-gray-100 overflow-auto border-slate-400 items-center rounded-md border relative z-40"
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
               >
-                <h1 className="text-center font-black uppercase text-white text-shadow-md text-2xl mb-4">
+                <h1 className="text-center font-black uppercase text-slate-800 px-5 pt-4 text-shadow-md text-2xl mb-4">
                   Customer Update Information
                 </h1>
                 <div
-                  className={`border bg-gray-100 shadow-md shadow-black/20 w-full flex justify-center h-full border-slate-400 rounded-xl relative ${
+                  className={` shadow-md shadow-black/20 w-full flex justify-center h-full overflow-auto  rounded-xl relative ${
                     !isUpdate && "flex items-center justify-center"
                   }`}
                 >
@@ -768,14 +790,17 @@ const CustomerDisposition = () => {
               </motion.div>
             </div>
           )}
-          <div className="h-full l ">
-            <div>
-              <AccountInfo ref={childrenDivRef} />
-            </div>
-            <div className="flex items-end h-full w-full justify-end">
-              {selectedCustomer && selectedCustomer.balance > 0 && (
-                <DispositionForm updateOf={() => setIsUpdate(false)} />
-              )}
+
+          <div>
+            <div className="h-full flex flex-col w-full items-end justify-between ">
+              <div className="w-full">
+                <AccountInfo ref={childrenDivRef} />
+              </div>
+              <div className="flex items-end h-full w-full justify-end">
+                {selectedCustomer && selectedCustomer.balance > 0 && (
+                  <DispositionForm updateOf={() => setIsUpdate(false)} />
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -800,10 +825,18 @@ const CustomerDisposition = () => {
               transition={{ type: "spring", delay: 0.4 }}
             >
               <div
-                onClick={handleRandomCustomerSelect}
-                className="bg-green-500 transition-all hover:scale-110 hover:bg-green-600 px-3 py-1 cursor-pointer rounded-full border-2 border-green-900"
+                onClick={!loading2 ? handleRandomCustomerSelect : undefined}
+                className={`" ${
+                  loading2
+                    ? "bg-gray-400 border-gray-500 cursor-not-allowed "
+                    : " hover:scale-110 cursor-pointer bg-green-500 hover:bg-green-600 border-green-900 "
+                }  transition-all items-center justify-center flex w-10 h-10  rounded-full border-2 "`}
               >
-                A
+                {loading2 ? (
+                  <div className="border-t-2 border-white w-6 h-6 rounded-full animate-spin "></div>
+                ) : (
+                  <div>A</div>
+                )}
               </div>
             </motion.div>
             <motion.div
@@ -811,7 +844,7 @@ const CustomerDisposition = () => {
               initial={{ x: -40, y: 40, opacity: 0 }}
               animate={{ x: 0, y: 0, opacity: 1 }}
               transition={{ type: "spring", delay: 0.6 }}
-              onClick={() => setSearch("639")}
+              onClick={() => setSearch("096")}
             >
               <div className="bg-green-500 transition-all hover:scale-110 hover:bg-green-600 px-3 py-1 cursor-pointer rounded-full border-2 border-green-900">
                 b
@@ -832,8 +865,6 @@ const CustomerDisposition = () => {
         </motion.div>
       )} */}
     </div>
-  ) : (
-    <Navigate to="/" />
   );
 };
 
