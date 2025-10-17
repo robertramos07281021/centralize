@@ -26,7 +26,7 @@ import BreakView from "./pages/agent/BreakView";
 import AgentView from "./pages/tl/AgentView";
 import AgentRecordingView from "./pages/tl/AgentRecordingView";
 import DispositionConfigurationView from "./pages/admin/DispositionConfigurationView";
-import QASupervisorView from "./pages/qa/QASupervisorView.tsx";
+import AgentMonitoring from "./pages/tl/AgentMonitoring.tsx";
 
 import {
   Chart,
@@ -48,6 +48,7 @@ import QADashboard from "./pages/qa/QADashboard.tsx";
 import CallfilesConfig from "./pages/admin/CallfilesConfig.tsx";
 import QASVRoute from "./routes/QASVRoute.tsx";
 import QASVSupervisor from "./pages/qasupervisor/QASVSupervisor.tsx";
+import QASupervisorDashboard from "./pages/qasupervisor/QASupervisorDashboard.tsx";
 
 Chart.register(
   ...registerables,
@@ -108,6 +109,8 @@ function App() {
           <Route path="/tl-task-manager" element={<TaskManagerView />} />
           <Route path="/tl-cip" element={<CustomerDisposition />} />
           <Route path="/tl-reports" element={<BacklogManagementView />} />
+          <Route path="/tl-monitoring" element={<AgentMonitoring />} />
+          
         </Route>
         <Route element={<CeoRoute />}>
           <Route path="/ceo-dashboard" element={<CeoDashboard />} />
@@ -115,10 +118,11 @@ function App() {
         <Route element={<QARoute />}>
           <Route path="/qa-agents-dashboard" element={<QAAgentViews />} />
           <Route path="/qa-dashboard" element={<QADashboard />} />
-          <Route path="/qa-supervisor" element={<QASupervisorView />} />
         </Route>
         <Route element={<QASVRoute />}>
-          <Route path="/qasv-dashboard" element={<QASVSupervisor />} />
+          <Route path="/qasv-accounts" element={<QASVSupervisor />} />
+          <Route path="/qasv-dashboard" element={<QASupervisorDashboard />} />
+          
         </Route>
       </Routes>
     </BrowserRouter>

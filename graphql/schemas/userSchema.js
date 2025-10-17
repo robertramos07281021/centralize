@@ -5,6 +5,10 @@ const userTypeDefs = gql`
 
   type Success {
     user: Users
+    url: String
+    start: DateTime
+    success: Boolean!
+    message: String!
   }
 
   enum Break {

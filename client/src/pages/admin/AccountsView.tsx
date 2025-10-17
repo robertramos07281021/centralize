@@ -133,6 +133,8 @@ const AccountsView = () => {
   const isAccounts = location.pathname.includes("accounts");
   const [create, setCreate] = useState(false);
   const [updateModal, setUpdateModal] = useState(false);
+  const [width, setWidth] = useState(50);
+  const [option, setOption] = useState(0);
 
   const { data: getDeptData, refetch: deptRefetch } = useQuery<{
     getDepts: Department[];
@@ -280,6 +282,43 @@ const AccountsView = () => {
     [setModalProps, setConfirm, unlockUser]
   );
 
+  const filteredUsers =
+    users
+      ?.filter((user) => {
+        if (option === 50) return user.isOnline;
+        if (option === 95) return !user.isOnline;
+        return true;
+      })
+      ?.filter((user) => {
+        if (!search.trim()) return true;
+
+        const searchText = search.toLowerCase();
+
+        const nameMatch = user.name.toLowerCase().includes(searchText);
+        const usernameMatch = user.username.toLowerCase().includes(searchText);
+        const typeMatch = user.type.toLowerCase().includes(searchText);
+        const branchMatch = branchObject[user.branch]
+          ?.toLowerCase()
+          .includes(searchText);
+
+        const deptMatch = user.departments
+          .map((id) => deptObject[id]?.toLowerCase() || "")
+          .some((dept) => dept.includes(searchText));
+
+        const bucketMatch = user.buckets
+          .map((id) => bucketObject[id]?.toLowerCase() || "")
+          .some((bucket) => bucket.includes(searchText));
+
+        return (
+          nameMatch ||
+          usernameMatch ||
+          typeMatch ||
+          branchMatch ||
+          deptMatch ||
+          bucketMatch
+        );
+      }) || [];
+
   return (
     <>
       <div className="h-full relative flex flex-col overflow-hidden pt-2 px-2">
@@ -287,7 +326,85 @@ const AccountsView = () => {
           <h1 className="text-2xl text-gray-500 uppercase font-black">
             Accounts
           </h1>
-          <div className="flex gap-3 h-full">
+          <div className="flex items-center gap-3 h-full">
+            <div className="">
+              <motion.div
+                className="bg-white flex-row relative border-2 z-10 border-gray-500 overflow-hidden px-4 py-1 rounded-full flex gap-6 text-gray-400 font-black uppercase items-center"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+              >
+                <div
+                  onClick={() => {
+                    setOption(0);
+                    setWidth(50);
+                  }}
+                  className={`" ${
+                    option === 0 ? "text-gray-500" : " text-gray-400"
+                  } transition-all text-xs z-20  cursor-pointer "`}
+                >
+                  ALL
+                </div>
+                <div
+                  onClick={() => {
+                    setOption(50);
+                    setWidth(45);
+                  }}
+                  className={`"  ${
+                    option === 50 ? "text-green-600" : " text-gray-400"
+                  } transition-all cursor-pointer  z-20 text-green-500 "`}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="size-5"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z"
+                      clipRule="evenodd"
+                    />
+                    <path d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
+                  </svg>
+                </div>
+                <div
+                  onClick={() => {
+                    setOption(95);
+                    setWidth(50);
+                  }}
+                  className={`" ${
+                    option === 95 ? "text-red-600" : " text-red-500"
+                  } transition-all cursor-pointer z-20  "`}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="size-5"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z"
+                      clipRule="evenodd"
+                    />
+                    <path d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
+                  </svg>
+                </div>
+                <motion.div
+                  className={`" ${
+                    option === 50
+                      ? "bg-green-200"
+                      : option === 95
+                      ? "bg-red-200"
+                      : "bg-gray-200"
+                  } absolute z-10 top-0 overflow-hidden left-0 h-full flex items-center justify-center "`}
+                  initial={{ x: 0, width: 50 }}
+                  animate={{ x: option, width: width }}
+                  transition={{ duration: 0.6, type: "spring" }}
+                ></motion.div>
+              </motion.div>
+            </div>
+
             <motion.div
               className="h-full flex rounded-md shadow-md"
               initial={{ opacity: 0, y: 10 }}
@@ -321,7 +438,7 @@ const AccountsView = () => {
                 setCreate(true);
                 setCancel(false);
               }}
-              className="focus:outline-none shadow-md font-black text-white bg-green-500   hover:bg-green-600 focus:ring-4 focus:ring-green-300 uppercase rounded-lg text-sm px-5 py-2.5 me-2  dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 border-2 border-green-800 cursor-pointer"
+              className="focus:outline-none shadow-md font-black text-white bg-green-500   hover:bg-green-600 focus:ring-4 focus:ring-green-300 uppercase rounded-md text-sm px-5 py-2.5 me-2  dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800 border-2 border-green-800 cursor-pointer"
               initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: "spring", duration: 0.6, delay: 0.1 }}
@@ -352,136 +469,171 @@ const AccountsView = () => {
             <div></div>
           </div>
           <div className="overflow-y-auto">
-            {users?.map((user, index) => (
-              <motion.div
-                key={user._id}
-                className="grid grid-cols-12 py-2 hover:bg-gray-200 even:bg-gray-100 cursor-default items-center"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div
-                  className="font-medium px-2 text-gray-700 whitespace-nowrap dark:text-white truncate col-span-2"
-                  title={user.name.toUpperCase()}
+            {filteredUsers.length > 0 ? (
+              filteredUsers.map((user, index) => (
+                <motion.div
+                  key={user._id}
+                  className="grid grid-cols-12 py-2 hover:bg-gray-200 even:bg-gray-100 cursor-default items-center"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: index * 0.1 }}
                 >
-                  {user.name.toUpperCase()}
-                </div>
-                <div className="truncate pr-1" title={user.username} >{user.username}</div>
-                <div>{user.user_id || <div className="text-xs italic text-gray-400" >No SIP ID</div>}</div>
-                <div className="truncate pr-1" >{user.type || "-"}</div>
-                <div>{branchObject[user.branch] || <div className="text-xs italic text-gray-400" >No branch</div>}</div>
-                <div
-                  className="pr-5 truncate"
-                  title={user.departments
-                    ?.map((e) => deptObject[e]?.toString())
-                    .join(", ")}
-                >
-                  {user.departments
-                    ?.map((e) => deptObject[e]?.toString())
-                    .join(", ") || <div className="text-xs italic text-gray-400" >No campaign</div>}
-                </div>
-                <div
-                  className="pr-5 truncate"
-                  title={user.buckets
-                    ?.map((b) => bucketObject[b]?.toString())
-                    .join(", ")}
-                >
-                  {user.buckets
-                    ?.map((b) => bucketObject[b]?.toString())
-                    .join(", ") || <div className="text-xs italic text-gray-400" >No bucket</div>}
-                </div>
-                <div className="flex items-center justify-center h-full">
-                  <FaCircle
-                    className={`${
-                      user.active
-                        ? "text-green-500 w-5 h-5 animate-pulse"
-                        : "text-red-700 w-5 h-5 "
-                    } `}
-                  />
-                </div>
-                <div className="flex items-center justify-center h-full">
-                  {user.isOnline ? (
-                    <div className=" shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"></div>
-                  ) : (
-                    <div className=" shadow-md bg-red-600 w-5 rounded-full h-5"></div>
-                  )}
-                </div>
-                <div className="flex items-center justify-center h-full">
-                  {user.isLock ? (
-                    <div
-                      className=" bg-red-700 cursor-pointer hover:bg-red-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-red-900 text-white"
-                      onClick={() => handleUnlockUser(user._id)}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="3"
-                        stroke="currentColor"
-                        className="size-5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-                        />
-                      </svg>
-                    </div>
-                  ) : (
-                    <div className="bg-gray-300 px-2 border-2 rounded-sm border-gray-400 transition-all text-gray-400 py-1">
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="3"
-                        stroke="currentColor"
-                        className="size-5"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-                        />
-                      </svg>
-                    </div>
-                  )}
-                </div>
-                <div className="flex justify-center items-center gap-2 overflow-hidden  ">
-                  <Link
-                    to="/user-account"
-                    state={user}
-                    className="font-medium bg-blue-700 hover:bg-blue-800 border-2 border-blue-900 rounded-sm px-2 py-1 text-blue-600 dark:text-blue-500 hover:underline relative"
+                  <div
+                    className="font-medium px-2 text-gray-700 whitespace-nowrap dark:text-white truncate col-span-2"
+                    title={user.name.toUpperCase()}
                   >
-                    <FaUserGear className="text-xl text-white " title="View" />
-                  </Link>
-
-                  <div className="items-center flex ">
-                    <div
-                      onClick={() => onClickDelete(user)}
-                      className="bg-red-700 border-2 border-red-900  hover:bg-red-800 transition-all py-1 px-2 cursor-pointer  rounded-sm shadow-sm"
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="2"
-                        stroke="currentColor"
-                        className="size-5 text-white  "
+                    {user.name.toUpperCase()}
+                  </div>
+                  <div className="truncate pr-1" title={user.username}>
+                    {user.username}
+                  </div>
+                  <div>
+                    {user.user_id || (
+                      <div className="text-xs italic text-gray-400">
+                        No SIP ID
+                      </div>
+                    )}
+                  </div>
+                  <div className="truncate pr-1">{user.type || "-"}</div>
+                  <div>
+                    {branchObject[user.branch] || (
+                      <div className="text-xs italic text-gray-400">
+                        No branch
+                      </div>
+                    )}
+                  </div>
+                  <div
+                    className="pr-5 truncate"
+                    title={user.departments
+                      ?.map((e) => deptObject[e]?.toString())
+                      .join(", ")}
+                  >
+                    {user.departments
+                      ?.map((e) => deptObject[e]?.toString())
+                      .join(", ") || (
+                      <div className="text-xs italic text-gray-400">
+                        No campaign
+                      </div>
+                    )}
+                  </div>
+                  <div
+                    className="pr-5 truncate"
+                    title={user.buckets
+                      ?.map((b) => bucketObject[b]?.toString())
+                      .join(", ")}
+                  >
+                    {user.buckets
+                      ?.map((b) => bucketObject[b]?.toString())
+                      .join(", ") || (
+                      <div className="text-xs italic text-gray-400">
+                        No bucket
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-center h-full">
+                    <FaCircle
+                      className={`${
+                        user.active
+                          ? "text-green-500 w-5 h-5 animate-pulse"
+                          : "text-red-700 w-5 h-5 "
+                      } `}
+                    />
+                  </div>
+                  <div className="flex items-center justify-center h-full">
+                    {user.isOnline ? (
+                      <div className=" shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"></div>
+                    ) : (
+                      <div className=" shadow-md bg-red-600 w-5 rounded-full h-5"></div>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-center h-full">
+                    {user.isLock ? (
+                      <div
+                        className=" bg-red-700 cursor-pointer hover:bg-red-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-red-900 text-white"
+                        onClick={() => handleUnlockUser(user._id)}
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                        />
-                      </svg>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="3"
+                          stroke="currentColor"
+                          className="size-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                          />
+                        </svg>
+                      </div>
+                    ) : (
+                      <div className="bg-gray-300 px-2 border-2 rounded-sm border-gray-400 transition-all text-gray-400 py-1">
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="3"
+                          stroke="currentColor"
+                          className="size-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                          />
+                        </svg>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex justify-center items-center gap-2 overflow-hidden  ">
+                    <Link
+                      to="/user-account"
+                      state={user}
+                      className="font-medium bg-blue-700 hover:bg-blue-800 border-2 border-blue-900 rounded-sm px-2 py-1 text-blue-600 dark:text-blue-500 hover:underline relative"
+                    >
+                      <FaUserGear
+                        className="text-xl text-white "
+                        title="View"
+                      />
+                    </Link>
+
+                    <div className="items-center flex ">
+                      <div
+                        onClick={() => onClickDelete(user)}
+                        className="bg-red-700 border-2 border-red-900  hover:bg-red-800 transition-all py-1 px-2 cursor-pointer  rounded-sm shadow-sm"
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="2"
+                          stroke="currentColor"
+                          className="size-5 text-white  "
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                          />
+                        </svg>
+                      </div>
                     </div>
                   </div>
-                </div>
+                </motion.div>
+              ))
+            ) : (
+              <motion.div
+                className="flex justify-center italic items-center text-gray-300 font-bold h-[200px] text-xl"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                No accounts found.
               </motion.div>
-            ))}
+            )}
           </div>
         </motion.div>
-  
+
         <Pagination
           value={page}
           onChangeValue={(e) => setPage(e)}
@@ -491,7 +643,7 @@ const AccountsView = () => {
         />
 
         <AnimatePresence>
-          {create && (
+          { create && (
             <div className="absolute flex z-10 top-0 justify-center items-center left-0 w-full h-full">
               <motion.div
                 onClick={() => setCreate(false)}
@@ -516,33 +668,33 @@ const AccountsView = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
               >
-                <RegisterView setCancel={setCancel} cancel={cancel} />
+                <RegisterView setCancel={()=> setCreate(false)} cancel={cancel} />
               </motion.div>
             </div>
           )}
         </AnimatePresence>
 
-        <AnimatePresence>
+        {/* <AnimatePresence>
           {updateModal && (
             <div className="absolute flex z-10 top-0 justify-center items-center left-0 w-full h-full">
               <motion.div
                 onClick={() => setCreate(false)}
-                className="bg-[#00000050] cursor-default relative flex z-10 backdrop-blur-sm w-full h-full"
+                className="bg-[#00000050] cursor-default relative flex z-20 backdrop-blur-sm w-full h-full"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 exit={{ opacity: 0 }}
               ></motion.div>
               <motion.div
-                className="absolute flex justify-center items-center z-20 bg-[#fff] p-2 rounded-md  "
+                className="absolute flex justify-center items-center  w-full z-30  p-2 rounded-md  "
                 initial={{ scale: 0.8, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
               >
-                <RegisterView cancel={cancel} setCancel={setCancel} />
+                <RegisterView cancel={cancel} setCancel={()=> setCancel(false)} />
               </motion.div>
             </div>
           )}
-        </AnimatePresence>
+        </AnimatePresence> */}
       </div>
       <AnimatePresence>
         {confirm && <Confirmation {...modalProps} />}

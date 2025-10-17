@@ -117,6 +117,8 @@ const QASupervisorView = () => {
     departments: [],
     buckets: [],
   });
+  const [option, setOption] = useState(0);
+  const [width, setWidth] = useState(50);
 
   const { data: deptData } = useQuery<{
     getDepts: { id: string; name: string; branch: string }[];
@@ -136,7 +138,7 @@ const QASupervisorView = () => {
         }));
       }
     }
-  }, [userId]);
+  }, [userId?.userId]);
 
   const {
     data: deptBucketData,
@@ -148,7 +150,7 @@ const QASupervisorView = () => {
     variables: {
       depts: userId.departments,
     },
-    skip: userId?.departments?.length < 1,
+    skip: userId?.departments?.length <= 0,
     notifyOnNetworkStatusChange: true,
   });
 
@@ -313,6 +315,31 @@ const QASupervisorView = () => {
 
   if (usersLoading || updateLoading) return <Loading />;
 
+  const filteredUsers =
+    usersData?.getQAUsers?.users
+      ?.filter((user) => {
+        if (option === 50) return user.isOnline;
+        if (option === 95) return !user.isOnline;
+        return true;
+      })
+      ?.filter((user) => {
+        if (!searchTerm.trim()) return true;
+
+        const lowerSearch = searchTerm.toLowerCase();
+
+        const nameMatch = user.name.toLowerCase().includes(lowerSearch);
+
+        const departmentMatch = user.departments
+          .map((deptId) => newDeptMap[deptId]?.toLowerCase() || "")
+          .some((deptName) => deptName.includes(lowerSearch));
+
+        const bucketMatch = user.buckets
+          .map((bucketId) => newBucketMap[bucketId]?.toLowerCase() || "")
+          .some((bucketName) => bucketName.includes(lowerSearch));
+
+        return nameMatch || departmentMatch || bucketMatch;
+      }) || [];
+
   return (
     <div className="h-full relative">
       <div className=" w-full h-full p-5">
@@ -326,34 +353,118 @@ const QASupervisorView = () => {
           <option>dsa</option>
         </select>
       </div> */}
-        <div className="flex px-5 justify-between">
-          <div className="uppercase text-2xl font-black" >QA Dashboard</div>
-          <div className="flex px-2 py-1 rounded-md shadow-md items-center border">
-            <div>
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                fill="none"
-                viewBox="0 0 24 24"
-                strokeWidth="1.5"
-                stroke="currentColor"
-                className="size-5"
+        <div className="flex justify-between">
+          <div className="uppercase text-2xl font-black">QA Account</div>
+          <div className="flex items-center gap-3">
+            <div className="">
+              <motion.div
+                className="bg-white flex-row relative border-2 border-gray-500 overflow-hidden px-4 py-1 rounded-full flex gap-6 text-gray-400 font-black uppercase items-center"
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
               >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
-                />
-              </svg>
+                <div
+                  onClick={() => {
+                    setOption(0);
+                    setWidth(50);
+                  }}
+                  className={`" ${
+                    option === 0 ? "text-gray-500" : " text-gray-400"
+                  } transition-all text-xs z-20  cursor-pointer "`}
+                >
+                  ALL
+                </div>
+                <div
+                  onClick={() => {
+                    setOption(50);
+                    setWidth(45);
+                  }}
+                  className={`"  ${
+                    option === 50 ? "text-green-600" : " text-gray-400"
+                  } transition-all cursor-pointer  z-20 text-green-500 "`}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="size-5"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z"
+                      clipRule="evenodd"
+                    />
+                    <path d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
+                  </svg>
+                </div>
+                <div
+                  onClick={() => {
+                    setOption(95);
+                    setWidth(50);
+                  }}
+                  className={`" ${
+                    option === 95 ? "text-red-600" : " text-red-500"
+                  } transition-all cursor-pointer z-20  "`}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 24 24"
+                    fill="currentColor"
+                    className="size-5"
+                  >
+                    <path
+                      fillRule="evenodd"
+                      d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z"
+                      clipRule="evenodd"
+                    />
+                    <path d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
+                  </svg>
+                </div>
+                <motion.div
+                  className={`" ${
+                    option === 50
+                      ? "bg-green-200"
+                      : option === 95
+                      ? "bg-red-200"
+                      : "bg-gray-200"
+                  } absolute z-10 top-0 overflow-hidden left-0 h-full flex items-center justify-center "`}
+                  initial={{ x: 0, width: 50 }}
+                  animate={{ x: option, width: width }}
+                  transition={{ duration: 0.6, type: "spring" }}
+                ></motion.div>
+              </motion.div>
             </div>
-            <input
-              className="px-3 py-1 focus:outline-none"
-              placeholder="Search..."
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
+            <div className="flex px-2 py-1 rounded-md shadow-md items-center border">
+              <div>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  className="size-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                  />
+                </svg>
+              </div>
+              <input
+                className="px-3 py-1 focus:outline-none"
+                placeholder="Search..."
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+              />
+            </div>
           </div>
         </div>
-        <div className="rounded-md border-gray-300 mt-3  overflow-hidden">
+        <motion.div
+          className=" rounded-md border-gray-300 mt-3  overflow-hidden"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ delay: 0.2 }}
+        >
           <div className="grid grid-cols-7 gap-3 px-2 py-2  font-black uppercase bg-gray-300">
             <div
               className="
@@ -368,24 +479,17 @@ const QASupervisorView = () => {
             <div className="flex justify-center">lock</div>
             <div className="flex justify-center"></div>
           </div>
-          <div className="flex  flex-col overflow-auto h-[76vh] rounded-b-md">
-            {usersData?.getQAUsers?.users
-              ?.filter((user) => {
-                const term = searchTerm.toLowerCase();
-
-                const nameMatch = user.name.toLowerCase().includes(term);
-
-                const deptMatch = user.departments
-                  .map((id) => newDeptMap[id]?.toLowerCase() || "")
-                  .some((dept) => dept.includes(term));
-
-                const bucketMatch = user.buckets
-                  .map((id) => newBucketMap[id]?.toLowerCase() || "")
-                  .some((bucket) => bucket.includes(term));
-
-                return nameMatch || deptMatch || bucketMatch;
-              })
-              .map((user, index) => (
+          <div className="flex  flex-col overflow-auto h-[72vh] rounded-b-md">
+            {filteredUsers?.length === 0 ? (
+              <motion.div
+                className="flex justify-center italic items-center text-gray-300 font-bold h-[200px] text-xl"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+              >
+                No accounts found.
+              </motion.div>
+            ) : (
+              filteredUsers.map((user, index) => (
                 <motion.div
                   key={user._id}
                   className="grid grid-cols-7 gap-3 items-center bg-gray-100 py-2 pl-2 text-sm even:bg-gray-200"
@@ -394,28 +498,28 @@ const QASupervisorView = () => {
                   transition={{ delay: index * 0.1 }}
                 >
                   <div className=" first-letter:uppercase">{user.name}</div>
-                  <div className="">
+                  <div>
                     {user.departments
                       .map((dept) => newDeptMap[dept])
                       .join(", ")}
                   </div>
-                  <div className="">
+                  <div>
                     {user.buckets
                       .map((bucket) => newBucketMap[bucket])
                       .join(", ")}
                   </div>
                   <div className="justify-center flex">
                     {user.active ? (
-                      <div className=" shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"></div>
+                      <div className="shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"></div>
                     ) : (
-                      <div className=" shadow-md bg-red-600 w-5 rounded-full h-5"></div>
+                      <div className="shadow-md bg-red-600 w-5 rounded-full h-5"></div>
                     )}
                   </div>
-                  <div className=" flex justify-center">
+                  <div className="flex justify-center">
                     {user.isOnline ? (
-                      <div className=" shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"></div>
+                      <div className="shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"></div>
                     ) : (
-                      <div className=" shadow-md bg-red-600 w-5 rounded-full h-5"></div>
+                      <div className="shadow-md bg-red-600 w-5 rounded-full h-5"></div>
                     )}
                   </div>
                   <div className="justify-center flex">
@@ -484,9 +588,10 @@ const QASupervisorView = () => {
                     </div>
                   </div>
                 </motion.div>
-              ))}
+              ))
+            )}
           </div>
-        </div>
+        </motion.div>
         <AnimatePresence>
           {update && (
             <div className="absolute top-0  left-0 flex justify-center items-center w-full h-full overflow-hidden">
@@ -538,6 +643,7 @@ const QASupervisorView = () => {
                   <div className="grid grid-cols-2 gap-3 text-sm lg:text-lg h-full overflow-hidden">
                     <div className="overflow-auto flex flex-col gap-0">
                       {deptData?.getDepts?.map((dept) => {
+
                         return (
                           dept.name !== "ADMIN" && (
                             <label

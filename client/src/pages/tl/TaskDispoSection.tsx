@@ -398,6 +398,8 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
     parseInt(taskManagerPage) > pages ? pages.toString() : taskManagerPage;
 
   if (loading) return <Loading />;
+
+  console.log(CustomerAccountsData);
   return (
     <>
       <motion.div
@@ -443,7 +445,7 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
           </div>
         )}
 
-        <div className="text-sm text-gray-800 py-3 gap-8 px-6 border-b border-gray-400  items-center uppercase bg-gray-300 rounded-t-md dark:bg-gray-700 dark:text-gray-400 grid grid-cols-8 font-black mt-2">
+        <div className="text-sm text-gray-800 py-3 gap-8 px-6 items-center uppercase bg-gray-300 rounded-t-md dark:bg-gray-700 dark:text-gray-400 grid grid-cols-8 font-black mt-2">
           <div className=" col-span-2">Customer Name</div>
           <div className=" col-span-2">Current Disposition</div>
           <div className="">Bucket</div>
@@ -467,47 +469,68 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
               </label>
             </div>
           )}
-          {CustomerAccountsData?.findCustomerAccount?.CustomerAccounts.map(
-            (ca, index) => (
-              <motion.div
-                key={ca._id}
-                className="even:bg-gray-100 cursor-default gap-10 bg-gray-200 hover:bg-gray-300 transition-all grid grid-cols-8 py-2 items-center text-sm px-6"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                <div
-                  className="font-medium col-span-2 truncate text-gray-900 whitespace-nowrap dark:text-white uppercase"
-                  title={ca.customer_info.fullName}
-                >
-                  {ca.customer_info.fullName}
-                </div>
-                <div className="  col-span-2">
-                  {ca.dispoType
-                    ? ca.dispoType.code === "PAID"
-                      ? `${ca.dispoType.code}`
-                      : ca.dispoType.code
-                    : "New Endorsed"}
-                </div>
-                <div className="">{ca.account_bucket.name}</div>
-                <div className="">{ca.dpd|| <div className="italic font-sans text-gray-400 text-xs" >No DPD</div>}</div>
-                <div className="">{ca.assigned?.name || <div className="italic font-sans text-gray-400 text-xs" >No name assigned </div>}</div>
-                <div className="flex items-center justify-end">
-                  {(selectedGroup || selectedAgent) && (
-                    <input
-                      type="checkbox"
-                      name={ca.customer_info.fullName}
-                      id={ca.customer_info.fullName}
-                      onChange={(e) => handleCheckBox(ca._id, e)}
-                      checked={taskToAdd.includes(ca._id)}
-                      className={`${
-                        taskFilter === "assigned" && "accent-red-600"
-                      }`}
-                    />
-                  )}
-                </div>
-              </motion.div>
-            )
+          {CustomerAccountsData?.findCustomerAccount?.CustomerAccounts
+            ?.length === 0 ? (
+            <div className="italic font-sans flex text-center justify-center w-full py-2 rounded-b-md bg-gray-100">
+              No customer found.
+            </div>
+          ) : (
+            <div>
+              {CustomerAccountsData?.findCustomerAccount?.CustomerAccounts.map(
+                (ca, index) => (
+                  <motion.div
+                    key={ca._id}
+                    className="even:bg-gray-100 cursor-default gap-10 bg-gray-200 hover:bg-gray-300 transition-all grid grid-cols-8 py-2 items-center text-sm px-6"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <div
+                      className="font-medium col-span-2 truncate text-gray-900 whitespace-nowrap dark:text-white uppercase"
+                      title={ca.customer_info.fullName}
+                    >
+                      {ca.customer_info.fullName}dsa
+                    </div>
+                    <div className="  col-span-2">
+                      {ca.dispoType
+                        ? ca.dispoType.code === "PAID"
+                          ? `${ca.dispoType.code}`
+                          : ca.dispoType.code
+                        : "New Endorsed"}
+                    </div>
+                    <div className="">{ca.account_bucket.name}</div>
+                    <div className="">
+                      {ca.dpd || (
+                        <div className="italic font-sans text-gray-400 text-xs">
+                          No DPD
+                        </div>
+                      )}
+                    </div>
+                    <div className="">
+                      {ca.assigned?.name || (
+                        <div className="italic font-sans text-gray-400 text-xs">
+                          No name assigned{" "}
+                        </div>
+                      )}
+                    </div>
+                    <div className="flex items-center justify-end">
+                      {(selectedGroup || selectedAgent) && (
+                        <input
+                          type="checkbox"
+                          name={ca.customer_info.fullName}
+                          id={ca.customer_info.fullName}
+                          onChange={(e) => handleCheckBox(ca._id, e)}
+                          checked={taskToAdd.includes(ca._id)}
+                          className={`${
+                            taskFilter === "assigned" && "accent-red-600"
+                          }`}
+                        />
+                      )}
+                    </div>
+                  </motion.div>
+                )
+              )}
+            </div>
           )}
         </div>
         <Pagination

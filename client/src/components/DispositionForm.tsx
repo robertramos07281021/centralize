@@ -8,7 +8,7 @@ import {
   setServerError,
   setSuccess,
 } from "../redux/slices/authSlice";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 type Data = {
   amount: string | null;
@@ -178,11 +178,11 @@ type Props = {
 
 const IFBANK = ({ label }: { label: string }) => {
   return (
-    <div className="flex flex-col 2xl:flex-row items-center">
-      <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
-        {label}
+    <div className="flex flex-col items-start">
+      <p className="text-gray-800 whitespace-nowrap font-bold text-start w-full  2xl:text-sm text-xs leading-4 ">
+        {label}:
       </p>
-      <div className=" rounded-lg bg-slate-400 border border-gray-400 text-xs 2xl:text-sm p-4 w-full"></div>
+      <div className=" rounded-lg bg-slate-400 border border-gray-400 text-xs 2xl:text-sm 2xl:p-4.5 p-4 w-full"></div>
     </div>
   );
 };
@@ -587,16 +587,24 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
 
   return (
     canProceed(selectedCustomer, userLogged, ptpDispoType, paidDispoType) && (
-      <motion.div
-        className="h-full w-full flex"
-        initial={{ x: 50, opacity: 0 }}
-        animate={{ opacity: 1, x: 0 }}
-        transition={{ delay: 0.2 }}
-      >
+      <AnimatePresence>
         {escalateTo && (
-          <div className="absolute top-0 left-0 w-full h-full bg-white/10 backdrop-blur-[1px] z-50 flex items-center justify-center ">
-            <div className="w-2/8 h-1/3 border bg-white rounded-lg border-slate-300 shadow-md shadow-black/50 overflow-hidden flex flex-col">
-              <h1 className="p-2 bg-red-500 xl:text-sm 2xl:text-base text-white font-bold">
+          <div className="absolute top-0 left-0 w-full h-full z-50 flex items-center justify-center ">
+            <motion.div
+              onClick={() => setEscalateTo(false)}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="w-full h-full absolute top-0 left-0 bg-black/40 backdrop-blur-sm cursor-pointer z-10"
+            ></motion.div>
+            <motion.div
+              className="w-auto h-1/3 bg-white z-20 rounded-lg border-slate-300 shadow-md overflow-hidden flex flex-col"
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ delay: 0.2 }}
+            >
+              <h1 className="px-10 py-3 bg-red-500  uppercase text-4xl text-white font-black text-center">
                 Escalate To
               </h1>
               <div className="w-full h-full flex flex-col items-center justify-center gap-10">
@@ -623,40 +631,43 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                     </option>
                   ))}
                 </select>
-                <div className="flex gap-10">
+                <div className="flex gap-2">
                   <button
-                    className="rounded-md border py-2 px-4 bg-red-500 text-white font-medium hover:bg-red-700 xl:text-sm 2xl:text-lg "
+                    className="rounded-md cursor-pointer border py-2 px-4 bg-red-500 text-white font-medium hover:bg-red-700 xl:text-sm 2xl:text-lg "
                     onClick={handleSubmitEscalation}
                   >
                     Submit
                   </button>
                   <button
-                    className="rounded-md border py-2 px-4 bg-slate-500 text-white font-medium hover:bg-slate-700 xl:text-sm 2xl:text-lg "
+                    className="rounded-md cursor-pointer border py-2 px-4 bg-slate-500 text-white font-medium hover:bg-slate-700 xl:text-sm 2xl:text-lg "
                     onClick={() => setEscalateTo(false)}
                   >
                     Cancel
                   </button>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
         )}
 
-        <form
+        <motion.form
           ref={Form}
           className="flex flex-col h-full justify-end w-full"
           noValidate
           onSubmit={handleSubmitForm}
+          initial={{x: 20, opacity: 0}}
+          animate={{x: 0, opacity: 1}}
+          transition={{delay: 0.1}}
         >
           <h1 className="text-center d uppercase font-black text-slate-600 text-2xl my-2">
             Customer Disposition
           </h1>
           {selectedCustomer?._id && (
             <div className="flex bg-gray-100 uppercase w-full h-full p-5 rounded-md border border-slate-400 shadow-md xl:gap-2 gap-2 justify-center select-none">
-              <div className="flex flex-col gap-2 w-full">
-                <label className="flex flex-col 2xl:flex-row items-center">
-                  <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs  leading-4">
-                    Disposition
+              <div className="flex flex-col gap-1 w-full">
+                <label className="flex flex-col gap-0.5">
+                  <p className="text-gray-800 font-bold text-start  mr-2 2xl:text-sm text-xs leading-4">
+                    Disposition:
                   </p>
                   <select
                     name="disposition"
@@ -709,9 +720,9 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                 <div className="flex w-full gap-2">
                   <div className="w-full">
                     {anabledDispo.includes(selectedDispo) ? (
-                      <label className="flex flex-col w-full 2xl:flex-row items-center">
+                      <label className="flex flex-col w-full items-center">
                         <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4">
-                          Amount
+                          Amount:
                         </p>
                         <div
                           className={`flex border items-center rounded-lg w-full ${
@@ -742,9 +753,9 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
 
                   <div className="w-full">
                     {anabledDispo.includes(selectedDispo) ? (
-                      <label className="flex flex-col w-full 2xl:flex-row items-center">
-                        <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4">
-                          Payment
+                      <label className="flex flex-col w-full items-center">
+                        <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs leading-4">
+                          Payment:
                         </p>
                         <select
                           name="payment"
@@ -792,9 +803,9 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                   </div>
                 </div>
 
-                <label className="flex flex-col 2xl:flex-row items-center">
-                  <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
-                    Contact Method
+                <label className="flex flex-col items-center gap-0.5">
+                  <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs  leading-4 ">
+                    Contact Method:
                   </p>
                   <select
                     name="contact_method"
@@ -834,8 +845,8 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                   </select>
                 </label>
                 {data.contact_method === AccountType.CALLS && (
-                  <label className="flex flex-col 2xl:flex-row items-center">
-                    <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4">
+                  <label className="flex flex-col  items-center gap-0.5">
+                    <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4">
                       Dialer
                     </p>
                     <select
@@ -877,8 +888,8 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                   </label>
                 )}
                 {data.contact_method === AccountType.SMS && (
-                  <label className="flex flex-col 2xl:flex-row items-center">
-                    <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs 2xl:w-2/6 leading-4">
+                  <label className="flex flex-col items-center gap-0.5">
+                    <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4">
                       SMS Collector
                     </p>
                     <select
@@ -919,8 +930,8 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                   </label>
                 )}
                 {data.contact_method === AccountType.SKIP && (
-                  <label className="flex flex-col 2xl:flex-row items-center">
-                    <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs 2xl:w-2/6 leading-4">
+                  <label className="flex flex-col items-center gap-0.5">
+                    <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs  leading-4">
                       Chat App
                     </p>
                     <select
@@ -960,9 +971,9 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                     </select>
                   </label>
                 )}
-                <label className="flex flex-col 2xl:flex-row items-center">
-                  <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4">
-                    RFD
+                <label className="flex flex-col gap-0.5">
+                  <p className="text-gray-800 font-bold text-start mr-2 2xl:text-sm text-xs leading-4">
+                    RFD:
                   </p>
                   <select
                     name="sms_collector"
@@ -983,12 +994,12 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                   </select>
                 </label>
               </div>
-              <div className="flex gap-2 w-full flex-col">
-                <div className="w-full flex flex-col gap-2">
+              <div className="flex gap-1.5 w-full flex-col">
+               
                   {anabledDispo.includes(selectedDispo) ? (
-                    <label className="flex flex-col 2xl:flex-row items-center">
+                    <label className="flex flex-col items-center">
                       <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4">
-                        Payment Date
+                        Payment Date:
                       </p>
                       <input
                         type="date"
@@ -1015,7 +1026,7 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                   {anabledDispo.includes(selectedDispo) ? (
                     <label className="flex flex-col mt-1 2xl:flex-row items-center">
                       <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
-                        Payment Method
+                        Payment Method:
                       </p>
                       <select
                         name="payment_method"
@@ -1039,13 +1050,13 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                   ) : (
                     <IFBANK label="Payment Method" />
                   )}
-                </div>
+             
 
-                <div className="w-full ">
+                
                   {anabledDispo.includes(selectedDispo) ? (
                     <label className="flex flex-col 2xl:flex-row items-center">
                       <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
-                        Ref. No
+                        Ref. No:
                       </p>
                       <input
                         type="text"
@@ -1063,9 +1074,9 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                   ) : (
                     <IFBANK label="Ref. No" />
                   )}
-                  <label className="flex flex-col mt-1 2xl:flex-row items-center">
-                    <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
-                      Comment
+                  <label className="flex flex-col items-start">
+                    <p className="text-gray-800 mr-2 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
+                      Comment:
                     </p>
                     <textarea
                       name="comment"
@@ -1075,38 +1086,45 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                       onChange={(e) =>
                         handleDataChange("comment", e.target.value)
                       }
-                      className="bg-gray-50 h-11 border border-gray-500 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2 resize-none"
+                      className="bg-gray-50 min-h-10 border border-gray-500 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2 resize-none"
                     ></textarea>
                   </label>
-                </div>
+                  <div className="flex justify-end gap-2 mt-2">
+                    {data.disposition && (
+                      <motion.button
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        accessKey="q"
+                        type="submit"
+                        className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-black shadow-md rounded-sm uppercase px-5 py-3 cursor-pointer 2xl:text-sm text-xs`}
+                      >
+                        Submit
+                      </motion.button>
+                    )}
+                    {data.disposition && userLogged?.type === "AGENT" && (
+                      <motion.button
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        type="button"
+                        className="bg-red-500 hover:bg-red-600 focus:outline-none text-white uppercase  focus:ring-4 focus:ring-red-400 font-black rounded-sm shadow-md px-5 py-3 cursor-pointer 2xl:text-sm text-xs"
+                        onClick={() =>
+                          handleSubmitEscalationToTl(
+                            selectedCustomer?._id || ""
+                          )
+                        }
+                      >
+                        TL Escalation
+                      </motion.button>
+                    )}
+                  </div>
+                
               </div>
             </div>
           )}
-          <div className=" flex justify-end mt-5 gap-5">
-            {data.disposition && (
-              <button
-                accessKey="q"
-                type="submit"
-                className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-medium rounded-lg px-5 py-4 2xl:px-5 2xl:py-2.5 2xl:me-2l 2xl:mb-2 cursor-pointer 2xl:text-sm text-xs`}
-              >
-                Submit
-              </button>
-            )}
-            {data.disposition && userLogged?.type === "AGENT" && (
-              <button
-                type="button"
-                className="bg-red-500 hover:bg-red-600 focus:outline-none text-white  focus:ring-4 focus:ring-red-400 font-medium rounded-lg px-5 py-4 2xl:px-5 2xl:py-2.5 xl:me-2 2xl:mb-2 cursor-pointer 2xl:text-sm text-xs"
-                onClick={() =>
-                  handleSubmitEscalationToTl(selectedCustomer?._id || "")
-                }
-              >
-                TL Escalation
-              </button>
-            )}
-          </div>
-        </form>
+          <div className=" flex justify-end mt-5 gap-5"></div>
+        </motion.form>
         {confirm && <Confirmation {...modalProps} />}
-      </motion.div>
+      </AnimatePresence>
     )
   );
 };

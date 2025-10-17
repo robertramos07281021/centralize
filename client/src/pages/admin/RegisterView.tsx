@@ -100,7 +100,7 @@ const validForCampaignAndBucket = ["TL", "AGENT", "MIS", "QA"];
 
 type RegisterProps = {
   cancel?: boolean;
-  setCancel?: React.Dispatch<React.SetStateAction<boolean>>;
+  setCancel: () => void;
 };
 
 const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
@@ -302,7 +302,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
           }
         }}
       >
-        <div className="p-5 text-2xl font-black uppercase text-slate-800 ">
+        <div className="p-5 w-full flex text-2xl font-black uppercase text-slate-800 ">
           Create Account
         </div>
         <form className=" px-5 w-full py-2 flex flex-col gap-2 items-center justify-center ">
@@ -324,12 +324,12 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                   e.target.value === "" ? null : (e.target.value as Type);
                 setData((prev) => ({ ...prev, type: value }));
               }}
-              onClick={() => {
-                if (!cancel) {
-                  setCancel?.(true);
-                }
-              }}
-              className={`bg-slate-50 border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              // onClick={() => {
+              //   if (!cancel) {
+              //     setCancel?.(true);
+              //   }
+              // }}
+              className={`bg-slate-50  border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
               <option value="">Choose a type</option>
               {Object.entries(Type).map(([key, value]) => (
@@ -434,73 +434,75 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
             </label>
           </div>
 
-          <label className="w-full">
-            <p className="w-full text-base font-black uppercase text-slate-800">
-              Account Type:
-            </p>
-            <select
-              id="account_type"
-              name="account"
-              disabled={!data.type}
-              onChange={(e) => {
-                const value =
-                  e.target.value === ""
-                    ? null
-                    : (e.target.value as AccountType);
-                setData((prev) => ({ ...prev, account_type: value }));
-              }}
-              onClick={() => setCancel?.(true)}
-              className={`${
-                !data.type ? "bg-gray-200" : "bg-gray-50"
-              } border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
-            >
-              <option value="">Choose a account type</option>
-              <option value={AccountType.CALLER}>Caller</option>
-              <option value={AccountType.FIELD}>Field</option>
-              <option value={AccountType.SKIPER}>Skipper</option>
-            </select>
-          </label>
+          <div className="flex flex-col w-full gap-3">
+            <label className="w-full">
+              <p className="w-full text-base font-black uppercase text-slate-800">
+                Account Type:
+              </p>
+              <select
+                id="account_type"
+                name="account"
+                disabled={!data.type}
+                onChange={(e) => {
+                  const value =
+                    e.target.value === ""
+                      ? null
+                      : (e.target.value as AccountType);
+                  setData((prev) => ({ ...prev, account_type: value }));
+                }}
+                // onClick={() => setCancel?.(true)}
+                className={`${
+                  !data.type ? "bg-gray-200" : "bg-gray-50"
+                } border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              >
+                <option value="">Choose a account type</option>
+                <option value={AccountType.CALLER}>Caller</option>
+                <option value={AccountType.FIELD}>Field</option>
+                <option value={AccountType.SKIPER}>Skipper</option>
+              </select>
+            </label>
 
-          <label className="w-full">
-            <p className="w-full text-base font-black uppercase text-slate-800">
-              Branch:
-            </p>
-            <select
-              id="branch"
-              name="branch"
-              value={
-                data.branch
-                  ? Object.keys(branchObject).find(
-                      (key) => branchObject[key] === data.branch
-                    )
-                  : ""
-              }
-              onChange={(e) =>
-                setData((prev) => ({
-                  ...prev,
-                  branch: branchObject[e.target.value],
-                }))
-              }
-              onClick={() => setCancel?.(true)}
-              disabled={
-                !data.type ||
-                !validForCampaignAndBucket.toString().includes(data.type)
-              }
-              className={`${
-                !data.type ||
-                !validForCampaignAndBucket.toString().includes(data.type)
-                  ? "bg-gray-200"
-                  : "bg-gray-50"
-              } border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
-            >
-              <option value="">Choose a branch</option>
-              {branchQuery?.getBranches.map((branch) => (
-                <option key={branch.id} value={branch.name}>
-                  {branch.name.toUpperCase()}
-                </option>
-              ))}
-            </select>
-          </label>
+            <label className="w-full">
+              <p className="w-full text-base font-black uppercase text-slate-800">
+                Branch:
+              </p>
+              <select
+                id="branch"
+                name="branch"
+                value={
+                  data.branch
+                    ? Object.keys(branchObject).find(
+                        (key) => branchObject[key] === data.branch
+                      )
+                    : ""
+                }
+                onChange={(e) =>
+                  setData((prev) => ({
+                    ...prev,
+                    branch: branchObject[e.target.value],
+                  }))
+                }
+                // onClick={() => setCancel?.(true)}
+                disabled={
+                  !data.type ||
+                  !validForCampaignAndBucket.toString().includes(data.type)
+                }
+                className={`${
+                  !data.type ||
+                  !validForCampaignAndBucket.toString().includes(data.type)
+                    ? "bg-gray-200"
+                    : "bg-gray-50"
+                } border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              >
+                <option value="">Choose a branch</option>
+                {branchQuery?.getBranches.map((branch) => (
+                  <option key={branch.id} value={branch.name}>
+                    {branch.name.toUpperCase()}
+                  </option>
+                ))}
+              </select>
+            </label>
+          </div>
 
           <div className="w-full relative" ref={campaignDiv}>
             <p className="w-full text-base font-black uppercase text-slate-800">
@@ -513,14 +515,14 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                     .toString()
                     .includes(data.type as Type)) &&
                 "bg-gray-200"
-              } w-full text-sm border  rounded-lg flex justify-between ${
+              } max-w-full text-sm border  rounded-lg flex justify-between ${
                 selectDept && data.branch
                   ? "border-blue-500"
                   : "border-slate-300"
               }`}
             >
               <div
-                className="w-full p-2.5 text-nowrap truncate cursor-default capitalize"
+                className="w-full p-2.5 max-w-[350px] text-nowrap truncate cursor-default capitalize"
                 title={data.departments
                   .map(
                     (deptId) =>
@@ -538,7 +540,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                       .includes(data.type as Type)
                   ) {
                     setSelectDept(!selectDept);
-                    setCancel?.(true);
+                    // setCancel?.(true);
                   }
                 }}
               >
@@ -585,9 +587,12 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
               data.branch &&
               branchDeptData &&
               branchDeptData?.getBranchDept?.length > 0 && (
-                <div className="w-full absolute left-0 h-36 top-16.5 bg-white border-slate-300 p-1.5 max-h- rounded-md mt-1 shadow-md overflow-y-auto border z-40">
+                <div className="w-full absolute  left-0 h-36 top-16.5 bg-white border-slate-300 gap-1 grid grid-cols-2 p-1.5 rounded-md mt-1 shadow-md overflow-y-auto border z-40">
                   {branchDeptData?.getBranchDept.map((e) => (
-                    <label key={e.id} className="flex gap-2">
+                    <label
+                      key={e.id}
+                      className="flex bg-gray-100 items-center px-2 py-1 rounded-md shadow-sm border border-gray-500 cursor-pointer hover:bg-gray-200 gap-2 text-base "
+                    >
                       <input
                         type="checkbox"
                         name={e.name}
@@ -595,6 +600,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                         value={e.name}
                         onChange={(e) => handleCheckedDept(e, e.target.value)}
                         checked={data.departments.toString().includes(e.id)}
+                        className="w-5 h-5"
                       />
                       <span>{e.name.replace(/_/g, " ")}</span>
                     </label>
@@ -616,7 +622,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
               }`}
             >
               <div
-                className="w-full p-2.5 text-nowrap truncate cursor-default"
+                className="w-full p-2.5 max-w-[350px] text-nowrap truncate cursor-default"
                 title={data.buckets
                   .map(
                     (bucketId) =>
@@ -633,7 +639,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                       .includes(data.type as Type)
                   )
                     setSelectBucket((prev) => !prev);
-                  setCancel?.(true);
+                  // setCancel?.(true);
                 }}
               >
                 {data.buckets.length < 1
@@ -661,13 +667,19 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
               />
             </div>
             {selectBucket && data.departments.length > 0 && (
-              <div className="w-full absolute left-0 top-16.5 bg-white border-slate-300 p-1.5 max-h-20 rounded-b-md overflow-y-auto border z-40">
+              <div className="w-full  absolute left-0 top-[70px] bg-white border-slate-300 p-1.5 max-h-28 rounded-b-md overflow-y-auto border z-40">
                 {getDeptBucketData?.getBuckets.map((e, index) => (
-                  <div key={index} className="py-0.5">
-                    <div className="uppercase text-sm">{e.dept}</div>
+                  <div
+                    key={index}
+                    className="py-0.5 grid grid-cols-2 gap-1 items-center justify-center"
+                  >
                     {e.buckets.map((e) => (
-                      <label key={e._id} className="flex gap-2 text-xs">
+                      <label
+                        key={e._id}
+                        className=" flex bg-gray-200 border border-gray-500 gap-2 pl-2 cursor-pointer hover:bg-gray-300 transition-all py-1 rounded-sm items-center text-base "
+                      >
                         <input
+                          className="w-5 h-5"
                           type="checkbox"
                           name={e.name}
                           id={e.name}
@@ -688,9 +700,9 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
             )}
           </div>
           <div className="flex justify-end w-full">
-            <div className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-md uppercase text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5">
+            <button className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-md uppercase text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5" onClick={setCancel}>
               Cancel
-            </div>
+            </button>
             <button
               type="button"
               className="bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-medium rounded-md uppercase text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"

@@ -2,6 +2,8 @@ import { gql } from "graphql-tag";
 
 const deptTypeDefs = gql`
 
+
+
   type Department {
     id: ID
     name: String
@@ -27,13 +29,8 @@ const deptTypeDefs = gql`
     aom: Aom
   }
 
-  type Success {
-    success: Boolean!
-    message: String!
-  }
-
   type Query {
-    getDepts: [Dept]
+    getDepts: [Department]
     getDept(name: String): Department
     getBranchDept(branch:String) : [Department]
     getAomDept: [Department]

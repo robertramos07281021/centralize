@@ -1,21 +1,19 @@
-import gql from "graphql-tag"
-import { useQuery } from "@apollo/client"
-import { useEffect } from "react"
-import { RootState } from "../../redux/store"
-import { useSelector } from "react-redux"
-import { useLocation } from "react-router-dom"
+import gql from "graphql-tag";
+import { useQuery } from "@apollo/client";
+import { useEffect } from "react";
+import { RootState } from "../../redux/store";
+import { useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
+import { motion } from "framer-motion";
 
-
- type ToolsProduction = {
-    contact_method: string
-    rpc: number
-    ptp: number
-    kept: number
-    paid: number
-  }
-
-
+type ToolsProduction = {
+  contact_method: string;
+  rpc: number;
+  ptp: number;
+  kept: number;
+  paid: number;
+};
 
 const TOOLS_PRODUCTION = gql`
   query getToolsProduction($bucket: ID, $interval: String) {
@@ -27,80 +25,148 @@ const TOOLS_PRODUCTION = gql`
       paid
     }
   }
-`
-
-
+`;
 
 const ToolsProductionMonitoringTable = () => {
-  const { intervalTypes, selectedBucket } = useSelector((state:RootState)=> state.auth)
-  const location = useLocation()
-  const pathName = location.pathname.slice(1)
-  const isTLDashboard = ['tl-dashboard','aom-dashboard']?.includes(pathName)
+  const { intervalTypes, selectedBucket } = useSelector(
+    (state: RootState) => state.auth
+  );
+  const location = useLocation();
+  const pathName = location.pathname.slice(1);
+  const isTLDashboard = ["tl-dashboard", "aom-dashboard"]?.includes(pathName);
 
+  const { data, refetch, loading } = useQuery<{
+    getToolsProduction: ToolsProduction[];
+  }>(TOOLS_PRODUCTION, {
+    variables: { bucket: selectedBucket, interval: intervalTypes },
+    skip: !isTLDashboard,
+    notifyOnNetworkStatusChange: true,
+  });
+  const toolsData = data?.getToolsProduction || [];
 
-  const {data, refetch, loading} = useQuery<{getToolsProduction:ToolsProduction[]}>(TOOLS_PRODUCTION,{variables: {bucket: selectedBucket, interval: intervalTypes},skip:!isTLDashboard, notifyOnNetworkStatusChange: true})
-  const toolsData = data?.getToolsProduction || []
+  useEffect(() => {
+    const refetching = async () => {
+      await refetch();
+    };
+    refetching();
+  }, [intervalTypes, selectedBucket]);
 
-  useEffect(()=> {
-    const refetching = async() => {
-      await refetch()
-    }
-    refetching()
-  },[intervalTypes, selectedBucket])
+  const tools = ["calls", "sms", "email", "skip", "field"];
 
-  const tools = ['calls','sms','email','skip','field']
-
-  const totalRPC = toolsData.length > 0 ? toolsData.map(rpc => rpc.rpc).reduce((t,v)=> t + v) : 0
-  const totalPtp = toolsData.length > 0 ? toolsData.map(rpc => rpc.ptp).reduce((t,v)=> t + v) : 0
-  const totalKept = toolsData.length > 0 ? toolsData.map(rpc => rpc.kept).reduce((t,v)=> t + v) : 0
-  const totalPaid = toolsData.length > 0 ? toolsData.map(rpc => rpc.paid).reduce((t,v)=> t + v) : 0
+  const totalRPC =
+    toolsData.length > 0
+      ? toolsData.map((rpc) => rpc.rpc).reduce((t, v) => t + v)
+      : 0;
+  const totalPtp =
+    toolsData.length > 0
+      ? toolsData.map((rpc) => rpc.ptp).reduce((t, v) => t + v)
+      : 0;
+  const totalKept =
+    toolsData.length > 0
+      ? toolsData.map((rpc) => rpc.kept).reduce((t, v) => t + v)
+      : 0;
+  const totalPaid =
+    toolsData.length > 0
+      ? toolsData.map((rpc) => rpc.paid).reduce((t, v) => t + v)
+      : 0;
 
   return (
-    <div className="w-full h-full flex lg:text-xs 2xl:text-base flex-col">
-      <h1 className="font-medium lg:text-sm 2xl:text-lg text-gray-800 bg-blue-200 px-2 py-1.5 text-center mt-2">Tools Production Monitoring</h1>
-      {
-        loading ? 
+    <motion.div className="w-full h-full shadow-md relative flex border border-gray-500 my-2 rounded-md lg:text-xs 2xl:text-base flex-col"
+      initial={{y: 20, opacity: 0}}
+      animate={{y: 0, opacity: 1}}
+      transition={{delay: 0.4}}
+    >
+      <h1 className="font-black  uppercase lg:text-sm 2xl:text-lg text-gray-800 bg-gray-400 px-2 py-1.5 text-center rounded-t-sm">
+        Tools Production Monitoring
+      </h1>
+      {loading ? (
         <div className="flex h-full w-full items-center justify-center">
           <AiOutlineLoading3Quarters className="animate-spin text-4xl" />
-        </div> :
-        <table className="w-full h-full text-gray-600 table-fixed">
-          <thead className="bg-slate-200 sticky top-0 left-0 border-4 border-white">
-            <tr className="border-t border-white">
-              <th></th>
-              <th className="py-1.5">RPC</th>
-              <th>PTP</th>
-              <th>Kept</th>
-              <th>Amount Collected</th>
-            </tr>
-          </thead>
-          <tbody className="text-center">
-            {
-              tools.map((tool,index) => {
-                const findTools = data?.getToolsProduction?.find(t=> t.contact_method === tool) || null
-                return (
-                  <tr key={index} className="border-t border-white odd:bg-blue-50">
-                    <td className="text-left px-5 capitalize">{tool}</td>
-                    <td>{findTools?.rpc || 0}</td>
-                    <td>{findTools?.ptp.toLocaleString('en-PH',{style: "currency", currency: "PHP"}) || (0).toLocaleString('en-PH',{style: "currency", currency: "PHP"})}</td>
-                    <td>{findTools?.kept.toLocaleString('en-PH',{style: "currency", currency: "PHP"}) || (0).toLocaleString('en-PH',{style: "currency", currency: "PHP"})}</td>
-                    <td>{findTools?.paid.toLocaleString('en-PH',{style: "currency", currency: "PHP"}) || (0).toLocaleString('en-PH',{style: "currency", currency: "PHP"})}</td>
-                  </tr>
-                )
-              })
-            }
-            <tr className="border-t border-white">
-              <th className="text-left px-5">Total</th>
+        </div>
+      ) : (
+        <div className="w-full flex flex-col h-full text-gray-600 table-fixed">
+          <div className="bg-gray-300 sticky border-white">
+            <div className="grid border-y border-gray-500 grid-cols-5 justify-center text-center items-center font-black uppercase">
+              <div></div>
+              <div className="py-1.5">RPC</div>
+              <div>PTP</div>
+              <div>Kept</div>
+              <div>Amount Collected</div>
+            </div>
+          </div>
+          <div className="text-center grid grid-rows-6 h-full">
+            {tools.map((tool, index) => {
+              const findTools =
+                data?.getToolsProduction?.find(
+                  (t) => t.contact_method === tool
+                ) || null;
+              return (
+                <div
+                  key={index}
+                  className="even:bg-gray-100 hover:bg-gray-200 items-center h-full uppercase border-white grid grid-cols-5"
+                >
+                  <div className="text-left px-5 uppercase">{tool}</div>
+                  <div className="uppercase">{findTools?.rpc || 0}</div>
+                  <div className="uppercase">
+                    {findTools?.ptp.toLocaleString("en-PH", {
+                      style: "currency",
+                      currency: "PHP",
+                    }) ||
+                      (0).toLocaleString("en-PH", {
+                        style: "currency",
+                        currency: "PHP",
+                      })}
+                  </div>
+                  <div className="uppercase">
+                    {findTools?.kept.toLocaleString("en-PH", {
+                      style: "currency",
+                      currency: "PHP",
+                    }) ||
+                      (0).toLocaleString("en-PH", {
+                        style: "currency",
+                        currency: "PHP",
+                      })}
+                  </div>
+                  <div className="uppercase">
+                    {findTools?.paid.toLocaleString("en-PH", {
+                      style: "currency",
+                      currency: "PHP",
+                    }) ||
+                      (0).toLocaleString("en-PH", {
+                        style: "currency",
+                        currency: "PHP",
+                      })}
+                  </div>
+                </div>
+              );
+            })}
+            <tr className="bg-gray-200 rounded-b-md border-gray-500 grid grid-cols-5 items-center border-t">
+              <th className="text-left px-5 font-black uppercase ">Total</th>
               <th>{totalRPC}</th>
-              <th>{totalPtp?.toLocaleString('en-PH',{style: "currency", currency: "PHP"})}</th>
-              <th>{totalKept?.toLocaleString('en-PH',{style: "currency", currency: "PHP"})}</th>
-              <th>{totalPaid.toLocaleString('en-PH',{style: "currency", currency: "PHP"})}</th>
+              <th>
+                {totalPtp?.toLocaleString("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                })}
+              </th>
+              <th>
+                {totalKept?.toLocaleString("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                })}
+              </th>
+              <th>
+                {totalPaid.toLocaleString("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                })}
+              </th>
             </tr>
-          </tbody>
-        </table>
+          </div>
+        </div>
+      )}
+    </motion.div>
+  );
+};
 
-      }
-    </div>
-  )
-}
-
-export default ToolsProductionMonitoringTable
+export default ToolsProductionMonitoringTable;

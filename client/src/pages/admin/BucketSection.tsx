@@ -22,13 +22,15 @@ const DEPARTMENT_QUERY = gql`
       id
       name
       branch
-      aom {
-        _id
-        name
-      }
+      
     }
   }
 `;
+
+// aom {
+//         _id
+//         name
+//       }
 
 const DEPARTMENT_BUCKET = gql`
   query findDeptBucket($dept: ID) {
@@ -110,6 +112,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
   const [viciIp, setViciIp] = useState<string>("");
   const [confirm, setConfirm] = useState<boolean>(false);
   const [bucket, setBucket] = useState<string>("");
+  const [selected, setSelected] = useState("")
 
   useEffect(() => {
     if (newDepts.length > 0 && deptSelected === null) {
@@ -404,12 +407,13 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                   <motion.div
                     key={index}
                     className={`${
-                      nd === deptSelected && "bg-slate-200"
-                    } text-sm flex flex-col uppercase font-black w-full text-slate-800 shadow-sm rounded-md even:bg-gray-200 bg-gray-300 p-2 border-b border-slate-300 last:border-b-0 hover:bg-gray-400 cursor-pointer`}
+                      nd === deptSelected ? "bg-gray-400" :"even:bg-gray-200 bg-gray-100"
+                    } text-sm flex flex-col uppercase font-black w-full text-slate-800 shadow-sm rounded-md even: p-2 border-b border-slate-300 last:border-b-0 hover:bg-gray-400 cursor-pointer`}
                     onClick={() => handleSelectDept(nd)}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
+                  
                   >
                     <p className="text-xs truncate py-1">
                       {deptObject[nd]?.replace(/_/g, " ")}-{" "}
@@ -430,6 +434,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: index * 0.1 }}
                     className="bg-gray-200 even:bg-gray-100 rounded-md shadow-sm"
+                    onClick={() => {}}
                   >
                     <div className="text-xs overflow-hidden items-center font-black hover:shadow-md transition-all uppercase text-slate-800 px-5 py-2 hover:bg-gray-200 rounded-md cursor-pointer">
                       <div className="grid py-1 grid-rows-3 gap-1">

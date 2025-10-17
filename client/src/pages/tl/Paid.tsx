@@ -40,17 +40,17 @@ const Paid = () => {
   const paidSelected = paidData?.getTLPaidTotals || null
 
   return (
-    <div className='border-blue-400 border bg-blue-200 rounded-xl p-2 text-blue-500 flex flex-col'>
-      <div className='text-xs 2xl:text-lg font-black '>
+    <div className='border-blue-500 border shadow-md bg-white rounded-sm text-blue-800 flex flex-col'>
+      <div className='text-xs items-center bg-blue-400 border-b  border-blue-500 flex-col  2xl:text-lg font-black  text-center justify-center flex h-[50%]'>
         <h1>Total Amount Collected  </h1>
         <p className="text-[0.6rem] 2xl:text-xs font-medium capitalize ">{`(${intervalTypes})`}</p>
       </div>
-      <div className='h-full w-full flex justify-between items-center  text-base  2xl:text-xl'>
+      <div className='h-[50%] w-full flex justify-between items-center relative text-lg  2xl:text-xl'>
         {
           !loading ?
           <>
-            <div className="font-bold text-center ">{paidSelected ? paidSelected?.count : 0}</div>
-            <div className="font-medium flex justify-end items-center gap-2">
+            <div className="font-bold text-center absolute -top-4 bg-blue-100  px-2.5 border rounded-full shadow-md right-2">{paidSelected ? paidSelected?.count : 0}</div>
+            <div className="font-black flex justify-center w-full items-center gap-2">
               <p>{paidSelected ? paidSelected?.amount.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</p>
             </div>
           </> :

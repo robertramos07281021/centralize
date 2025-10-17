@@ -156,9 +156,7 @@ const TlDashboard = () => {
 
       <motion.div
         className="col-span-full grid grid-cols-8 row-span-11 gap-2"
-        initial={{ opacity: 0, y: 10 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", duration: 1, delay: 0.2 }}
+        transition={{ type: "spring", duration: 1 }}
       >
         <TLAgentProduction />
         <Targets />

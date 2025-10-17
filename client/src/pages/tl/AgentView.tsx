@@ -127,6 +127,8 @@ const AgentView = () => {
     notifyOnNetworkStatusChange: true,
   });
   const [agentProduction, setAgentProduction] = useState<TLAgent[]>([]);
+  const [option, setOption] = useState(0);
+  const [width, setWidth] = useState(50);
 
   useEffect(() => {
     const refetching = async () => {
@@ -154,14 +156,33 @@ const AgentView = () => {
       }
     },
   });
+  const [search, setSearch] = useState<string>("");
 
   useEffect(() => {
-    if (tlAgentData) {
-      setAgentProduction(tlAgentData.findDeptAgents);
-    }
-  }, [tlAgentData]);
+    if (!tlAgentData?.findDeptAgents) return;
 
-  const [search, setSearch] = useState<string>("");
+    let filtered = tlAgentData.findDeptAgents;
+    if (search.trim() !== "") {
+      filtered = filtered.filter(
+        (e) =>
+          e.user_id.includes(search) ||
+          e.name.toLowerCase().includes(search.toLowerCase()) ||
+          e.buckets.some((bucket) =>
+            bucket.name.toLowerCase().includes(search.toLowerCase())
+          ) ||
+          e.departments.some((dept) =>
+            dept.name.toLowerCase().includes(search.toLowerCase())
+          )
+      );
+    }
+    if (option === 50) {
+      filtered = filtered.filter((e) => e.isOnline);
+    } else if (option === 95) {
+      filtered = filtered.filter((e) => !e.isOnline);
+    }
+
+    setAgentProduction(filtered);
+  }, [search, tlAgentData, option]);
 
   useEffect(() => {
     const filteredData = tlAgentData?.findDeptAgents?.filter(
@@ -306,40 +327,135 @@ const AgentView = () => {
         />
       )}
       <div className="h-full w-full flex flex-col overflow-hidden p-2">
-        <h1 className="py-5 pt-6 px-6 uppercase font-black text-2xl  text-gray-500">
-          Agent Production
-        </h1>
-        <div className="flex justify-end items-end gap-3 px-5 relative">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.2 }}
-            className="h-full"
-          >
-            <input
-              type="search"
-              name="search"
-              id="search"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="border w-full h-full shadow-md px-3 rounded-md text-gray-500 py-1 text-sm"
-              placeholder="Enter Agent ID here..."
-              autoComplete="off"
-            />
-          </motion.div>
-          <motion.button
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.4 }}
-            className="shadow-md"
-            onClick={() =>
-              onClickAction(null, false, ButtonType.SET_TARGETS, 0)
-            }
-          >
-            <div className="right-5 px-5 py-2 text-sm bg-orange-500 transition-all rounded-md text-orange-900 border-2 cursor-pointer font-black uppercase  border-orange-800 hover:bg-orange-600">
-              Set Targets
+        <div className="flex justify-between">
+          <h1 className="py-5 pt-6 px-6 uppercase font-black text-2xl  text-gray-500">
+            Agent Production
+          </h1>
+          <div className="flex justify-end gap-3 px-5 items-center relative">
+            <motion.div
+              className="bg-white  relative border-2 border-gray-500 overflow-hidden px-4 py-1 rounded-full flex gap-6 text-gray-400 font-black uppercase items-center"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <div
+                onClick={() => {
+                  setOption(0);
+                  setWidth(50);
+                }}
+                className={`" ${
+                  option === 0 ? "text-gray-500" : " text-gray-400"
+                } transition-all text-xs z-20  cursor-pointer "`}
+              >
+                ALL
+              </div>
+              <div
+                onClick={() => {
+                  setOption(50);
+                  setWidth(45);
+                }}
+                className={`"  ${
+                  option === 50 ? "text-green-600" : " text-gray-400"
+                } transition-all cursor-pointer  z-20 text-green-500 "`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="size-5"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z"
+                    clip-rule="evenodd"
+                  />
+                  <path d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
+                </svg>
+              </div>
+              <div
+                onClick={() => {
+                  setOption(95);
+                  setWidth(50);
+                }}
+                className={`" ${
+                  option === 95 ? "text-red-600" : " text-red-500"
+                } transition-all cursor-pointer z-20  "`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="size-5"
+                >
+                  <path
+                    fill-rule="evenodd"
+                    d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z"
+                    clip-rule="evenodd"
+                  />
+                  <path d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
+                </svg>
+              </div>
+              <motion.div
+                className={`" ${
+                  option === 50
+                    ? "bg-green-200"
+                    : option === 95
+                    ? "bg-red-200"
+                    : "bg-gray-200"
+                } absolute z-10 top-0 overflow-hidden left-0 h-full flex items-center justify-center "`}
+                initial={{ x: 0, width: 50 }}
+                animate={{ x: option, width: width }}
+                transition={{ duration: 0.6, type: "spring" }}
+              ></motion.div>
+            </motion.div>
+            <div className="flex">
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+                className="h-full border flex pl-2 rounded-md shadow-md items-center gap-2"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  className="size-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"
+                  />
+                </svg>
+
+                <input
+                  type="search"
+                  name="search"
+                  id="search"
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  className=" py-2.5 w-full focus:outline-none h-full px-3 text-gray-500 text-sm"
+                  placeholder="Enter Agent ID here..."
+                  autoComplete="off"
+                />
+              </motion.div>
             </div>
-          </motion.button>
+            <motion.button
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              className="shadow-md"
+              onClick={() =>
+                onClickAction(null, false, ButtonType.SET_TARGETS, 0)
+              }
+            >
+              <div className="right-5 px-5 py-2 text-sm bg-orange-500 transition-all rounded-md text-orange-900 border-2 cursor-pointer font-black uppercase  border-orange-800 hover:bg-orange-600">
+                Set Targets
+              </div>
+            </motion.button>
+          </div>
         </div>
 
         <motion.div
@@ -371,261 +487,271 @@ const AgentView = () => {
             </div>
             <div className="py-1 truncate flex items-center">Action</div>
           </div>
-          <div className="h-full overflow-y-auto">
-            {agentProduction.map((e, index) => {
-              const findAgentProd = agentProdData?.getAgentProductions.find(
-                (y) => y.user === e._id
-              );
-              const findExsitingStatus = findAgentProd?.prod_history.find(
-                (x) => x.existing === true
-              );
-              return (
-                e.type === "AGENT" &&
-                e.active && (
-                  <motion.div
-                    key={e._id}
-                    className="cursor-default bg-gray-100  even:bg-gray-200    "
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ delay: index * 0.1 }}
-                  >
-                    <div className="items-center hover:bg-gray-300 transition-all gap-2 px-2 py-2 grid grid-cols-11 lg:text-xs 2xl:text-sm text-gray-800 font-normal">
-                      <div className="capitalize truncate">{e.name}</div>
-                      <div>
-                        {e.user_id || (
-                          <div className="text-gray-400 italic text-xs">
-                            No agent ID
-                          </div>
-                        )}
-                      </div>
-                      <div className="truncate">
-                        {e.callfile_id || (
-                          <div className="text-gray-400 italic text-xs">
-                            No callfile ID
-                          </div>
-                        )}
-                      </div>
-                      <div
-                        className=" truncate pr-6"
-                        title={e.buckets.map((e) => e.name).join(", ")}
+          <div className="h-[93%] overflow-y-auto">
+            {agentProduction.length !== 0 ? (
+              <div>
+                {agentProduction.map((e, index) => {
+                  const findAgentProd = agentProdData?.getAgentProductions.find(
+                    (y) => y.user === e._id
+                  );
+                  const findExsitingStatus = findAgentProd?.prod_history.find(
+                    (x) => x.existing === true
+                  );
+                  return (
+                    e.type === "AGENT" &&
+                    e.active && (
+                      <motion.div
+                        key={e._id}
+                        className="cursor-default bg-gray-100  even:bg-gray-200    "
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        transition={{ delay: index * 0.1 }}
                       >
-                        {e.buckets.map((e) => e.name).join(", ") || (
-                          <div className="text-gray-400 italic text-xs">
-                            No bucket
+                        <div className="items-center hover:bg-gray-300 transition-all gap-2 px-2 py-2 grid grid-cols-11 lg:text-xs 2xl:text-sm text-gray-800 font-normal">
+                          <div className="capitalize truncate">{e.name}</div>
+                          <div>
+                            {e.user_id || (
+                              <div className="text-gray-400 italic text-xs">
+                                No agent ID
+                              </div>
+                            )}
                           </div>
-                        )}
-                      </div>
-                      <div className=" truncate pr-2">
-                        {e.departments.map((e) => e.name).join(", ") || (
-                          <div className="text-gray-400 italic text-xs">
-                            No campaign
+                          <div className="truncate">
+                            {e.callfile_id || (
+                              <div className="text-gray-400 italic text-xs">
+                                No callfile ID
+                              </div>
+                            )}
                           </div>
-                        ) }
-                      </div>
-                      <div className="text-center flex justify-center">
-                        {e.isOnline ? (
-                          <div className=" shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"></div>
-                        ) : (
-                          <div className=" shadow-md bg-red-600 w-5 rounded-full h-5"></div>
-                        )}
-                      </div>
-                      <div className=" flex  text-center justify-center">
-                        {e.isLock ? (
-                          <div className=" bg-red-700 cursor-pointer hover:bg-red-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-red-900 text-white">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth="3"
-                              stroke="currentColor"
-                              className="size-5"
+                          <div
+                            className=" truncate pr-6"
+                            title={e.buckets.map((e) => e.name).join(", ")}
+                          >
+                            {e.buckets.map((e) => e.name).join(", ") || (
+                              <div className="text-gray-400 italic text-xs">
+                                No bucket
+                              </div>
+                            )}
+                          </div>
+                          <div className=" truncate pr-2">
+                            {e.departments.map((e) => e.name).join(", ") || (
+                              <div className="text-gray-400 italic text-xs">
+                                No campaign
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-center flex justify-center">
+                            {e.isOnline ? (
+                              <div className=" shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"></div>
+                            ) : (
+                              <div className=" shadow-md bg-red-600 w-5 rounded-full h-5"></div>
+                            )}
+                          </div>
+                          <div className=" flex  text-center justify-center">
+                            {e.isLock ? (
+                              <div className=" bg-red-700 cursor-pointer hover:bg-red-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-red-900 text-white">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth="3"
+                                  stroke="currentColor"
+                                  className="size-5"
+                                >
+                                  <path
+                                    stroke-linecap="round"
+                                    stroke-linejoin="round"
+                                    d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                                  />
+                                </svg>
+                              </div>
+                            ) : (
+                              <div className="bg-gray-300 px-2 border-2 rounded-sm border-gray-400 transition-all text-gray-400 py-1">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth="3"
+                                  stroke="currentColor"
+                                  className="size-5"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
+                                  />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center ">
+                            {findExsitingStatus ? (
+                              findExsitingStatus?.type
+                            ) : (
+                              <div className="text-gray-400 italic text-xs">
+                                No status
+                              </div>
+                            )}
+                          </div>
+                          <div className="col-span-2 ">
+                            <div className="w-full grid grid-cols-3">
+                              <div
+                                title={
+                                  e.targets?.daily.toLocaleString("en-PH", {
+                                    style: "currency",
+                                    currency: "PHP",
+                                  }) ||
+                                  (0).toLocaleString("en-PH", {
+                                    style: "currency",
+                                    currency: "PHP",
+                                  })
+                                }
+                              >
+                                {e.targets?.daily.toLocaleString("en-PH", {
+                                  style: "currency",
+                                  currency: "PHP",
+                                }) ||
+                                  (0).toLocaleString("en-PH", {
+                                    style: "currency",
+                                    currency: "PHP",
+                                  })}
+                              </div>
+                              <div
+                                title={
+                                  e.targets?.weekly.toLocaleString("en-PH", {
+                                    style: "currency",
+                                    currency: "PHP",
+                                  }) ||
+                                  (0).toLocaleString("en-PH", {
+                                    style: "currency",
+                                    currency: "PHP",
+                                  })
+                                }
+                              >
+                                {e.targets?.weekly.toLocaleString("en-PH", {
+                                  style: "currency",
+                                  currency: "PHP",
+                                }) ||
+                                  (0).toLocaleString("en-PH", {
+                                    style: "currency",
+                                    currency: "PHP",
+                                  })}
+                              </div>
+                              <div
+                                title={
+                                  e.targets?.monthly.toLocaleString("en-PH", {
+                                    style: "currency",
+                                    currency: "PHP",
+                                  }) ||
+                                  (0).toLocaleString("en-PH", {
+                                    style: "currency",
+                                    currency: "PHP",
+                                  })
+                                }
+                              >
+                                {e.targets?.monthly.toLocaleString("en-PH", {
+                                  style: "currency",
+                                  currency: "PHP",
+                                }) ||
+                                  (0).toLocaleString("en-PH", {
+                                    style: "currency",
+                                    currency: "PHP",
+                                  })}
+                              </div>
+                            </div>
+                          </div>
+                          <div className="grid grid-cols-3 text-white gap-1">
+                            <div
+                              onClick={() =>
+                                onClickAction(
+                                  e._id,
+                                  e.isLock,
+                                  ButtonType.UNLOCK,
+                                  e.attempt_login
+                                )
+                              }
+                              className=" w-hull flex justify-center hover:bg-blue-700 transition-all items-center border-2 border-blue-800 bg-blue-600 cursor-pointer rounded-sm h-full py-1"
                             >
-                              <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
-                                d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-                              />
-                            </svg>
-                          </div>
-                        ) : (
-                          <div className="bg-gray-300 px-2 border-2 rounded-sm border-gray-400 transition-all text-gray-400 py-1">
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth="3"
-                              stroke="currentColor"
-                              className="size-5"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-                              />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                      <div className="flex items-center ">
-                        {findExsitingStatus ? findExsitingStatus?.type : (
-                          <div className="text-gray-400 italic text-xs">
-                            No status
-                          </div>
-                        )}
-                      </div>
-                      <div className="col-span-2 ">
-                        <div className="w-full grid grid-cols-3">
-                          <div
-                            title={
-                              e.targets?.daily.toLocaleString("en-PH", {
-                                style: "currency",
-                                currency: "PHP",
-                              }) ||
-                              (0).toLocaleString("en-PH", {
-                                style: "currency",
-                                currency: "PHP",
-                              })
-                            }
-                          >
-                            {e.targets?.daily.toLocaleString("en-PH", {
-                              style: "currency",
-                              currency: "PHP",
-                            }) ||
-                              (0).toLocaleString("en-PH", {
-                                style: "currency",
-                                currency: "PHP",
-                              })}
-                          </div>
-                          <div
-                            title={
-                              e.targets?.weekly.toLocaleString("en-PH", {
-                                style: "currency",
-                                currency: "PHP",
-                              }) ||
-                              (0).toLocaleString("en-PH", {
-                                style: "currency",
-                                currency: "PHP",
-                              })
-                            }
-                          >
-                            {e.targets?.weekly.toLocaleString("en-PH", {
-                              style: "currency",
-                              currency: "PHP",
-                            }) ||
-                              (0).toLocaleString("en-PH", {
-                                style: "currency",
-                                currency: "PHP",
-                              })}
-                          </div>
-                          <div
-                            title={
-                              e.targets?.monthly.toLocaleString("en-PH", {
-                                style: "currency",
-                                currency: "PHP",
-                              }) ||
-                              (0).toLocaleString("en-PH", {
-                                style: "currency",
-                                currency: "PHP",
-                              })
-                            }
-                          >
-                            {e.targets?.monthly.toLocaleString("en-PH", {
-                              style: "currency",
-                              currency: "PHP",
-                            }) ||
-                              (0).toLocaleString("en-PH", {
-                                style: "currency",
-                                currency: "PHP",
-                              })}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="grid grid-cols-3 text-white gap-1">
-                        <div
-                          onClick={() =>
-                            onClickAction(
-                              e._id,
-                              e.isLock,
-                              ButtonType.UNLOCK,
-                              e.attempt_login
-                            )
-                          }
-                          className=" w-hull flex justify-center hover:bg-blue-700 transition-all items-center border-2 border-blue-800 bg-blue-600 cursor-pointer rounded-sm h-full py-1"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="2"
-                            stroke="currentColor"
-                            className="size-4"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"
-                            />
-                          </svg>
-                        </div>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth="2"
+                                stroke="currentColor"
+                                className="size-4"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"
+                                />
+                              </svg>
+                            </div>
 
-                        <div
-                          onClick={() =>
-                            onClickAction(
-                              e._id,
-                              e.isLock,
-                              ButtonType.SET,
-                              e.attempt_login
-                            )
-                          }
-                          className=" w-hull flex justify-center hover:bg-orange-700 transition-all items-center border-2 border-orange-800 bg-orange-600 cursor-pointer rounded-sm h-full py-1"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="2"
-                            stroke="currentColor"
-                            className="size-4"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z"
-                            />
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
-                            />
-                          </svg>
-                        </div>
-                        <Link to="/agent-recordings" state={e._id}>
-                          <div
-                            className=" w-hull flex justify-center hover:bg-green-700 transition-all items-center border-2 border-green-800 bg-green-600 cursor-pointer rounded-sm h-full py-1"
-                            title="Agent Recordings"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth="2.5"
-                              stroke="currentColor"
-                              className="size-4"
+                            <div
+                              onClick={() =>
+                                onClickAction(
+                                  e._id,
+                                  e.isLock,
+                                  ButtonType.SET,
+                                  e.attempt_login
+                                )
+                              }
+                              className=" w-hull flex justify-center hover:bg-orange-700 transition-all items-center border-2 border-orange-800 bg-orange-600 cursor-pointer rounded-sm h-full py-1"
                             >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"
-                              />
-                            </svg>
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth="2"
+                                stroke="currentColor"
+                                className="size-4"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z"
+                                />
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                                />
+                              </svg>
+                            </div>
+                            <Link to="/agent-recordings" state={e._id}>
+                              <div
+                                className=" w-hull flex justify-center hover:bg-green-700 transition-all items-center border-2 border-green-800 bg-green-600 cursor-pointer rounded-sm h-full py-1"
+                                title="Agent Recordings"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth="2.5"
+                                  stroke="currentColor"
+                                  className="size-4"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"
+                                  />
+                                </svg>
+                              </div>
+                            </Link>
                           </div>
-                        </Link>
-                      </div>
-                    </div>
-                  </motion.div>
-                )
-              );
-            })}
+                        </div>
+                      </motion.div>
+                    )
+                  );
+                })}
+              </div>
+            ) : (
+              <div className="italic font-sans bg-gray-100 py-2 rounded-b-md text-center text-gray-400 text-base">
+                No agent found
+              </div>
+            )}
           </div>
         </motion.div>
       </div>

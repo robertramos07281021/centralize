@@ -20,6 +20,7 @@
     "@graphql-tools/merge": "^9.0.24",
     "@graphql-tools/schema": "^10.0.23",
     "asterisk-manager": "^0.2.0",
+    "axios": "^1.12.2",
     "basic-ftp": "^5.0.5",
     "bcryptjs": "^3.0.2",
     "body-parser": "^1.20.3",

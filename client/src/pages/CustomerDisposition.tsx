@@ -21,9 +21,7 @@ import { IoRibbon } from "react-icons/io5";
 import Confirmation from "../components/Confirmation";
 import { debounce } from "lodash";
 import { motion } from "framer-motion";
-import Lottie from "lottie-react";
-import animationData from "../Animations/Phone Call.json";
-import axios from "axios";
+// import axios from "axios";
 
 const DESELECT_TASK = gql`
   mutation deselectTask($id: ID!) {
@@ -33,6 +31,115 @@ const DESELECT_TASK = gql`
     }
   }
 `;
+
+const PICK_RANDOM = gql`
+  query randomCustomer {
+    randomCustomer {
+      _id
+      case_id
+      account_id
+      endorsement_date
+      credit_customer_id
+      bill_due_date
+      max_dpd
+      dpd
+      balance
+      paid_amount
+      isRPCToday
+      month_pd
+      assigned
+      assigned_date
+      batch_no
+      emergency_contact {
+        name
+        mobile
+      }
+      dispo_history {
+        _id
+        amount
+        disposition
+        payment_date
+        ref_no
+        existing
+        comment
+        payment
+        payment_method
+        user
+        dialer
+        createdAt
+        contact_method
+        chatApp
+        sms
+        RFD
+        selectivesDispo
+      }
+      account_update_history {
+        principal_os
+        total_os
+        balance
+        updated_date
+        updated_by
+      }
+      out_standing_details {
+        principal_os
+        interest_os
+        admin_fee_os
+        txn_fee_os
+        late_charge_os
+        dst_fee_os
+        waive_fee_os
+        total_os
+        writeoff_balance
+        overall_balance
+        cf
+        mo_balance
+        pastdue_amount
+        mo_amort
+      }
+      grass_details {
+        grass_region
+        vendor_endorsement
+        grass_date
+      }
+      account_bucket {
+        name
+        dept
+        _id
+        can_update_ca
+      }
+      customer_info {
+        fullName
+        dob
+        gender
+        contact_no
+        emails
+        addresses
+        _id
+        isRPC
+      }
+      current_disposition {
+        _id
+        amount
+        disposition
+        payment_date
+        ref_no
+        existing
+        comment
+        payment
+        payment_method
+        user
+        RFD
+        dialer
+        createdAt
+        contact_method
+        chatApp
+        sms
+        selectivesDispo
+      }
+    }
+  }
+`
+
 
 const SEARCH = gql`
   query Search($search: String) {
@@ -169,6 +276,7 @@ const UPDATE_RPC = gql`
     }
   }
 `;
+
 const DISPOTYPES = gql`
   query getDispositionTypes {
     getDispositionTypes {
@@ -178,11 +286,18 @@ const DISPOTYPES = gql`
     }
   }
 `;
+
 type Dispotype = {
   id: string;
   code: string;
   name: string;
 };
+
+const MAKING_CALL = gql`
+  mutation makeCall($phoneNumber: String!) {
+    makeCall(phoneNumber: $phoneNumber)
+  }
+`;
 
 const SearchResult = memo(
   ({
@@ -446,8 +561,8 @@ const CustomerDisposition = () => {
 
   useEffect(() => {
     if (selectedCustomer) {
-      if (selectedCustomer.isRPCToday) {
-        setIsRPCToday(selectedCustomer.isRPCToday);
+      if (selectedCustomer?.isRPCToday) {
+        setIsRPCToday(selectedCustomer?.isRPCToday);
         setModalProps({
           message: "Client already called today!",
           toggle: "RPCTODAY",
@@ -463,6 +578,12 @@ const CustomerDisposition = () => {
       setIsRPCToday(false);
     }
   }, [selectedCustomer]);
+  
+  const {data:randomCustomerData} = useQuery<{randomCustomer:Search}>(PICK_RANDOM, {notifyOnNetworkStatusChange: true}) 
+
+
+  /// hello here Sample data for candom ====================================================
+  // console.log(randomCustomerData?.randomCustomer)
 
   const [updateRPC] = useMutation<{
     updateRPC: {
@@ -532,8 +653,6 @@ const CustomerDisposition = () => {
 
   const childrenDivRef = useRef<ChildHandle>(null);
 
-  if (loading) return <Loading />;
-
   const gender = selectedCustomer?.customer_info?.gender
     ? selectedCustomer.customer_info?.gender.length > 1
       ? selectedCustomer.customer_info?.gender.charAt(0).toLowerCase()
@@ -550,35 +669,22 @@ const CustomerDisposition = () => {
   //   }
   // }, [searchData]);
 
-  async function callGSM(phoneNumber: string) {
-    try {
-      const response = await axios.post(
-        `http://172.20.21.143:80/api/send_sms`,
-        {
-          sim_id: "1",
-          mobile: phoneNumber,
-          content: "Test message from Node.js",
-        },
-        {
-          auth: {
-            username: "admin",
-            password: "admin",
-          },
-          headers: { "Content-Type": "application/json" },
-          timeout: 5000,
-        }
-      );
-      console.log("Call response:", response.data);
-    } catch (err) {
-      console.error("Error maij:", err);
-    }
-  }
+  // const [makeCall] = useMutation<string>(MAKING_CALL, {
+  //   onCompleted: (data) => {
+  //     console.log(data);
+  //   },
+  // });
 
   // useEffect(() => {
   //   if (selectedCustomer) {
-  //     callGSM("09126448847");
+  //     const timer = setTimeout(async () => {
+  //       await makeCall({ variables: { phoneNumber: "09126448847" } });
+  //     });
+  //     return () => clearTimeout(timer);
   //   }
   // }, [selectedCustomer]);
+
+  if (loading) return <Loading />;
 
   if (!userLogged) {
     return <Navigate to="/" />;
@@ -595,8 +701,9 @@ const CustomerDisposition = () => {
       }}
     >
       {(isRPCToday || isRPC) && <Confirmation {...modalProps} />}
-      <div className="w-full">
-        <div className="">
+
+      <div className={`" ${!selectedCustomer && "pt-5"} w-full "`}>
+        <div className="flex">
           {userLogged?.type === "AGENT" && <AgentTimer />}
           <MyTaskSection />
         </div>
@@ -687,10 +794,10 @@ const CustomerDisposition = () => {
                   }
                 })()}
               />
+              
               <FieldListDisplay
                 label="Mobile No."
                 values={selectedCustomer?.customer_info?.contact_no}
-                fallbackHeight="h-10"
               />
               <FieldListDisplay
                 label="Email"
@@ -757,7 +864,7 @@ const CustomerDisposition = () => {
             </div>
           </motion.div>
           {isUpdate && (
-            <div className="absolute z-100 top-0 justify-center items-center left-0 w-full flex h-full">
+            <div className="absolute z-50 top-0 justify-center items-center left-0 w-full overflow-hidden flex h-full">
               <motion.div
                 onClick={() => setIsUpdate(false)}
                 initial={{ opacity: 0 }}
@@ -766,26 +873,19 @@ const CustomerDisposition = () => {
                 className=" cursor-pointer z-30 absolute top-0 left-0 bg-black/30  backdrop-blur-sm w-full h-full"
               ></motion.div>
               <motion.div
-                className="flex flex-col bg-gray-100 overflow-auto border-slate-400 items-center rounded-md border relative z-40"
+                className="flex flex-col bg-gray-100 overflow-auto border-gray-600 items-center rounded-md max-h-full relative z-40"
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
               >
-                <h1 className="text-center font-black uppercase text-slate-800 px-5 pt-4 text-shadow-md text-2xl mb-4">
+                <h1 className="text-center bg-gray-400 border-b-2 border-gray-600 font-black uppercase text-slate-800 px-5 py-4 text-shadow-md text-2xl">
                   Customer Update Information
                 </h1>
                 <div
-                  className={` shadow-md shadow-black/20 w-full flex justify-center h-full overflow-auto  rounded-xl relative ${
-                    !isUpdate && "flex items-center justify-center"
-                  }`}
+                  className={`w-full flex flex-col justify-center h-full overflow-hidden  rounded-xl relative`}
                 >
-                  {isUpdate ? (
-                    <CustomerUpdateForm cancel={() => setIsUpdate(false)} />
-                  ) : (
-                    <p className="w- 2xl:text-2xl font-light text-slate-500 select-none">
-                      For Updating Customer Info Only
-                    </p>
-                  )}
+                  <CustomerUpdateForm cancel={() => setIsUpdate(false)} />
+                 
                 </div>
               </motion.div>
             </div>

@@ -49,22 +49,22 @@ const TLDailyCollected= () => {
   const paidSelected = dailyCollected?.getTLDailyCollected || null
 
   return (
-    <div className='border-yellow-400 border bg-yellow-200 rounded-xl p-2 text-yellow-500 flex flex-col'>
-      <div className='lg:text-xs 2xl:text-lg font-black '>
+    <div className='border-yellow-500 border rounded-sm shadow-md  text-yellow-800 font-black uppercase flex flex-col'>
+      <div className='lg:text-xs 2xl:text-lg font-black text-yellow-800 flex text-center bg-yellow-400 border-b border-yellow-500 rounded-t-xs justify-center items-center h-[50%] '>
         <h1>
           RPC {
             !bucketData?.selectedBucket?.principal &&
-            <span className="text-[0.6rem] 2xl:text-xs font-medium capitalize">{`(${intervalTypes})`}</span> 
+            <span className="text-[0.6rem] 2xl:text-xs capitalize">{`(${intervalTypes})`}</span> 
           }
         </h1>
       </div>
-      <div className='h-full w-full flex font-medium justify-between gap-2 items-center text-base 2xl:text-xl'>
+      <div className='w-full flex justify-between relative h-[50%] bg-white rounded-b-sm gap-2 items-center text-base 2xl:text-xl'>
         {
           !loading ? 
-          <>
-            <p>Total</p>
-            <p>{paidSelected ? paidSelected?.isRPC : 0}</p>
-          </>
+          <div className="flex justify-center items-center w-full" >
+            {/* <div className="absolute top-0 left-0 text-xs">Total</div> */}
+            <p className="text-4xl" >{paidSelected ? paidSelected?.isRPC : 0}</p>
+          </div>
           :
           <div className="flex justify-end w-full">
             <AiOutlineLoading3Quarters className="animate-spin" />

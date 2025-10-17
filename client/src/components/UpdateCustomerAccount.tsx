@@ -37,6 +37,12 @@ const UPDATE_ACCOUNT_INFO = gql`
           dst_fee_os
           waive_fee_os
           total_os
+          writeoff_balance
+          overall_balance
+          cf
+          mo_balance
+          pastdue_amount
+         mo_amort
         }
         account_update_history {
           principal_os
@@ -59,6 +65,12 @@ type outStandingDetails = {
   total_os: number;
   waive_fee_os: number;
   late_charge_waive_fee_os: number;
+  writeoff_balance: number
+  overall_balance: number
+  cf:number
+  mo_balance: number
+  pastdue_amount: number
+  mo_amort: number
 };
 
 type CustomerAccount = {
@@ -99,7 +111,7 @@ const UpdateCustomerAccount: React.FC<CustomerProps> = ({ cancel }) => {
             ...selectedCustomer,
             balance: data.updateCustomerAccount.customerAccount.balance,
             out_standing_details:
-              data.updateCustomerAccount.customerAccount.out_standing_details,
+            data.updateCustomerAccount.customerAccount.out_standing_details,
             account_update_history:
               data.updateCustomerAccount.customerAccount.account_update_history,
           })

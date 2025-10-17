@@ -90,41 +90,99 @@ const WithoutTargetDiv = ({
   color: string;
 }) => {
   const colorMap = {
-    red: "border-red-600 text-red-600 bg-red-300",
-    pink: "border-pink-500 text-pink-500 bg-pink-200",
+    red: "border-red-500 text-red-500",
+    pink: "border-pink-500 text-pink-500",
   };
+
+  const colorMapLabel = {
+    red: "bg-red-200",
+    pink: "bg-pink-200",
+  };
+
   return (
-    <div
+    <motion.div
       className={`border ${
         colorMap[color as keyof typeof colorMap]
-      }  rounded-md shadow shadow-black/50 flex flex-col p-1 2xl:p-2`}
+      } uppercase bg-white font-black rounded-sm shadow-md flex flex-col`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
     >
-      <h1 className="lg:text-xs 2xl:text-base font-bold">
-        Total PTP{" "}
+      <div
+        className={`lg:text-xs flex-col h-full rounded-t-sm border-b flex items-center justify-center font-black  2xl:text-base ${
+          colorMapLabel[color as keyof typeof colorMapLabel]
+        } `}
+      >
+        TOTAL PTP
+        <span className="lg:text-[0.7em] ml-1 2xl:text-xs font-normal">
+          ({interval})
+        </span>
+      </div>
+      <div className="text-xs 2xl:text-base relative h-full flex items-center justify-center">
+        <p className="text-center absolute truncate -top-3 bg-red-100 px-2 right-4 rounded-full border text-base">
+          {count}
+        </p>
+
+        <div className="text-[0.6rem] 2xl:text-base absolute font-normal bottom-0.5 ">
+          AMT
+        </div>
+
+        <div>
+          {amount.toLocaleString("en-PH", {
+            style: "currency",
+            currency: "PHP",
+          })}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+
+const forRPCDiv = ({
+  interval,
+  count,
+  color,
+}: {
+  interval: string;
+  count: number;
+  color: string;
+}) => {
+  
+  const colorMap = {
+    yellow: "border-yellow-500 text-yellow-500",
+    orange: "border-orange-500 text-orange-500",
+  };
+  const colorMapLabel = {
+    yellow: "bg-yellow-200",
+    orange: "bg-orange-200",
+  };
+
+  return (
+    <motion.div
+      className={`border border-yellow-500 ${
+        colorMap[color as keyof typeof colorMap]
+      } bg-white font-black text-yellow-500  rounded-sm shadow-md flex flex-col`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+    >
+      <div
+        className={`lg:text-xs flex-col h-[50%] rounded-t-sm border-b flex items-center justify-center font-black bg-yellow-200 2xl:text-base ${
+          colorMapLabel[color as keyof typeof colorMapLabel]
+        }`}
+      >
+        RPC
         <span className="lg:text-[0.7em] 2xl:text-xs font-normal">
           ({interval})
         </span>
-      </h1>
-      <div className=" h-full flex items-end flex-col justify-center lg:text-base 2xl:text-2xl">
-        <div className="flex justify-between items-center w-full">
-          <p className="text-[0.6rem] 2xl:text-xs">Count</p>
-          <p className="text-base 2xl:text-xl font-black">{count}</p>
-        </div>
-        <div className="flex justify-between items-center w-full">
-          <p className="text-[0.6rem] 2xl:text-xs 2xl:block hidden">Amount</p>
-          <p className="text-[0.6rem] 2xl:hidden block">AMT</p>
-          <p className="lg:text-[0.6rem] 2xl:text-base font-medium">
-            {" "}
-            {amount.toLocaleString("en-PH", {
-              style: "currency",
-              currency: "PHP",
-            })}
-          </p>
-        </div>
       </div>
-    </div>
+      <div className="text-4xl 2xl:text-5xl h-[50%] flex items-center justify-center">
+        <p className="text-center">{count}</p>
+      </div>
+    </motion.div>
   );
 };
+
 
 const WithTargetDiv = ({
   count,
@@ -132,78 +190,85 @@ const WithTargetDiv = ({
   collected,
   color,
   interval,
-  title,
 }: {
   count: number;
   target: number;
   collected: number;
   color: string;
   interval: string;
-  title: string;
 }) => {
   const colorMap = {
-    blue: "border-blue-500 text-blue-500 bg-blue-200",
-    sky: "border-sky-500 text-sky-500 bg-sky-200",
-    teal: "border-teal-500 text-teal-500 bg-teal-200",
+    blue: "border-blue-500 text-blue-500",
+    sky: "border-sky-500 text-sky-500",
+    teal: "border-teal-500 text-teal-500",
   };
+  const colorMapLabel = {
+    blue: "bg-blue-200",
+    sky: "bg-sky-200",
+    teal: "bg-teal-200",
+  };
+
   const variance = target - collected;
-  const titleCss = "2xl:block hidden text-[0.6rem] font-medium";
-  const valueCss = "text-xs 2xl:text-[0.8rem] font-medium";
-  const abbreCss = "2xl:hidden block text-[0.6rem]";
 
   return (
-    <div
+    <motion.div
       className={`border ${
         colorMap[color as keyof typeof colorMap]
-      } rounded-md shadow shadow-black/50 flex flex-col p-1 2xl:p-2 ${
-        interval === "Monthly" ? "w-1/2" : ""
-      }`}
+      } uppercase bg-white font-black rounded-sm shadow-md flex flex-col`}
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: 0.2 }}
     >
-      <h1 className="lg:text-xs 2xl:text-base font-bold">
-        {title}{" "}
+      <div
+        className={`lg:text-xs flex-col py-0.5 2xl:h-1/2 rounded-t-sm border-b flex items-center justify-center font-black ${
+          colorMapLabel[color as keyof typeof colorMapLabel]
+        } 2xl:text-base`}
+      >
+        KEPT
         <span className="lg:text-[0.7em] 2xl:text-xs font-normal">
           ({interval})
         </span>
-      </h1>
-      <div className=" h-full flex items-end flex-col justify-center lg:text-sm 2xl:text-base">
-        <div className="flex justify-between items-center w-full">
-          <p className="text-[0.6rem] 2xl:text-xs font-medium">Count</p>
-          <p className="text-sm 2xl:text-[1rem] font-black">{count}</p>
-        </div>
-        <div className="flex justify-between items-center w-full lg:text-[0.6rem] 2xl:text-xs">
-          <p className={titleCss}>Target</p>
-          <p className={abbreCss}>TGT</p>
-          <p className={valueCss}>
+      </div>
+      <div className="2xl:text-xs flex-col relative h-full flex px-2 justify-center">
+        <p className="text-center absolute truncate -top-4 bg-blue-100 px-2 right-4 rounded-full border text-base">
+          {count}
+        </p>
+
+        <div className="text-sm relative flex flex-row 2xl:justify-between items-center gap-1">
+          <div className="text-[0.5rem] 2xl:text-sm w-5 font-normal">TGT</div>
+          <div className="text-[0.7rem] 2xl:text-sm">
             {target.toLocaleString("en-PH", {
               style: "currency",
               currency: "PHP",
             })}
-          </p>
+          </div>
         </div>
-        <div className="flex justify-between items-center w-full lg:text-[0.6rem] 2xl:text-xs">
-          <p className={titleCss}>Collected</p>
-          <p className={abbreCss}>COLL</p>
-          <p className={valueCss}>
+
+        <div className="text-sm relative flex flex-row 2xl:justify-between items-center gap-1">
+          <div className=" text-[0.5rem] 2xl:text-sm w-5 font-normal">COLL</div>
+          <div className="text-[0.7rem] 2xl:text-sm">
             {collected.toLocaleString("en-PH", {
               style: "currency",
               currency: "PHP",
             })}
-          </p>
+          </div>
         </div>
-        <div className="flex justify-between items-center w-full text-xs">
-          <p className={titleCss}>Variance</p>
-          <p className={abbreCss}>VAR</p>
-          <p className={valueCss}>
+
+        <div className="text-sm relative flex flex-row 2xl:justify-between items-center gap-1">
+          <div className="text-[0.5rem] 2xl:text-sm w-5 font-normal">VAR</div>
+          <div className="text-[0.7rem] 2xl:text-sm">
             {variance.toLocaleString("en-PH", {
               style: "currency",
               currency: "PHP",
             })}
-          </p>
+          </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 };
+
+
 
 const DashboardMinis = () => {
   const { userLogged } = useSelector((state: RootState) => state.auth);
@@ -248,112 +313,138 @@ const DashboardMinis = () => {
   }, []);
 
   return (
-    <motion.div
-      className="lg:row-span-2 lg:col-span-3 grid grid-rows-3 grid-cols-3 gap-2"
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-    >
-      <div className="border border-yellow-500 text-yellow-500 bg-yellow-200  rounded-md shadow shadow-black/50 flex flex-col p-1 2xl:p-2">
-        <div className="lg:text-xs 2xl:text-base font-bold">
+    <motion.div className="lg:row-span-2 lg:col-span-3 grid grid-rows-3 grid-cols-3 gap-2">
+
+
+
+      <motion.div
+        className="border border-yellow-500 bg-white font-black text-yellow-500  rounded-sm shadow-md flex flex-col"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+      >
+        <div className="lg:text-xs flex-col h-[50%] rounded-t-sm border-b flex items-center justify-center font-black bg-yellow-200 2xl:text-base ">
           RPC{" "}
           <span className="lg:text-[0.7em] 2xl:text-xs font-normal">
             (Daily)
           </span>
         </div>
-        <div className="text-4xl 2xl:text-5xl h-full flex items-center justify-center">
+        <div className="text-4xl 2xl:text-5xl h-[50%] flex items-center justify-center">
           <p className="text-center">
             {rpcCountData?.getAgentRPCCount?.dailyCount || 0}
           </p>
         </div>
-      </div>
+      </motion.div>
+
+        {/* <forRPCDiv 
+            interval="daily"
+        count={rpcCountData?.getAgentRPCCount?.dailyCount ?? 0}
+        color="yellow"
+        /> */}
+
       <WithoutTargetDiv
+        interval="Daily"
         count={data?.getAgentDailyCollection?.ptp_count || 0}
         amount={data?.getAgentDailyCollection?.ptp_amount || 0}
-        interval="Daily"
         color="red"
       />
 
       <WithTargetDiv
-        count={Number(data?.getAgentDailyCollection?.ptp_kept_count) || 0}
-        interval="Daily"
-        target={Number(userLogged?.targets?.daily) || 0}
-        collected={data?.getAgentDailyCollection?.ptp_kept_amount || 0}
+        count={data?.getAgentDailyCollection?.ptp_kept_count ?? 0}
+        target={userLogged?.targets?.daily ?? 0}
+        collected={data?.getAgentDailyCollection?.ptp_kept_amount ?? 0}
         color="blue"
-        title="KEPT"
+        interval="Daily"
       />
 
-      <div className="border border-orange-500 text-orange-500 bg-orange-200  rounded-md shadow shadow-black/50 flex flex-col p-2">
-        <h1 className="lg:text-xs 2xl:text-base font-bold">
-          Total RPC{" "}
-          <span className="lg:text-[0.7em] 2xl:text-xs font-normal">
-            (Monthly)
+      <motion.div
+        className="border border-orange-500 bg-white font-black text-orange-500  rounded-sm shadow-md flex flex-col"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.3 }}
+      >
+        <div className="lg:text-xs flex-col h-[50%] rounded-t-sm border-b flex items-center justify-center font-black bg-orange-200 2xl:text-base ">
+          TOTAL RPC{" "}
+          <span className="lg:text-[0.7em] ml-1 2xl:text-xs font-normal">
+            (Daily)
           </span>
-        </h1>
-        <div className="text-4xl 2xl:text-5xl h-full flex items-center justify-center">
+        </div>
+        <div className="text-4xl 2xl:text-5xl h-[50%] flex items-center justify-center">
           <p>{rpcCountData?.getAgentRPCCount?.totalCount || 0}</p>
         </div>
-      </div>
+      </motion.div>
+
       <WithoutTargetDiv
+        interval="Monthly"
         count={prod?.totalCountPTP || 0}
         amount={prod?.totalAmountPTP || 0}
-        interval="Monthly"
         color="pink"
       />
 
       <WithTargetDiv
-        count={
-          Number(collectionsData?.monthlyWeeklyCollected?.weeklyCount) || 0
-        }
-        interval="Weekly"
-        target={Number(userLogged?.targets?.weekly) || 0}
-        collected={collectionsData?.monthlyWeeklyCollected?.weekly || 0}
+        count={collectionsData?.monthlyWeeklyCollected?.weeklyCount ?? 0}
+        target={userLogged?.targets?.weekly ?? 0}
+        collected={collectionsData?.monthlyWeeklyCollected?.weekly ?? 0}
         color="sky"
-        title="KEPT"
+        interval="Weekly"
       />
 
-      <div className="col-span-3 flex gap-2 justify-center">
-        <WithTargetDiv
-          count={
-            Number(collectionsData?.monthlyWeeklyCollected?.monthlyCount) || 0
-          }
-          interval="Monthly"
-          target={Number(userLogged?.targets?.monthly) || 0}
-          collected={collectionsData?.monthlyWeeklyCollected?.monthly || 0}
-          color="teal"
-          title="KEPT"
-        />
+      <motion.div
+        className="border col-span-3 border-teal-500 uppercase bg-white font-black text-teal-600 rounded-sm shadow-md flex flex-col"
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.7 }}
+      >
+        <div className="flex flex-col h-[50%] rounded-t-sm border-b border-teal-500 bg-teal-200 items-center justify-center">
+          <div className="lg:text-xs   flex items-center justify-center font-black  2xl:text-base">
+            KEPT
+          </div>
+          <div className="lg:text-[0.5em] 2xl:text-xs font-normal">
+            (monthly)
+          </div>
+        </div>
+        <div className="text-3xl flex-row w-full gap-5 relative 2xl:text-5xl h-[50%] flex items-center text-center">
+          <p className="text-center absolute truncate -top-3 bg-teal-100 border-teal-500 px-2 right-4 rounded-full border text-base">
+            {collectionsData?.monthlyWeeklyCollected?.monthlyCount || 0}
+          </p>
 
-        {/* <div className="border border-teal-500 text-teal-500 bg-teal-200  rounded-md shadow shadow-black/50 flex flex-col p-1 2xl:p-2 w-1/2">
-          <h1 className="lg:text-xs 2xl:text-base font-bold">KEPT <span className="lg:text-[0.7em] 2xl:text-xs font-normal">(Monthly)</span></h1>
-          <div className=" h-full flex items-end flex-col justify-center lg:text-base 2xl:text-2xl">
-            <div className="flex justify-between items-center w-full">
-              <p className="text-[0.6rem] 2xl:text-xs">Count</p>
-              <p className="text-base 2xl:text-xl font-black">
-                {collectionsData?.monthlyWeeklyCollected?.monthlyCount || 0 }
-              </p>
+          <div className="text-base w-full justify-center relative flex flex-row items-center gap-2">
+            <div className="text-[0.8rem] w-5 font-normal">TGT</div>
+            {(userLogged?.targets?.monthly ?? 0).toLocaleString("en-PH", {
+              style: "currency",
+              currency: "PHP",
+            })}
+          </div>
+
+          <div className="text-base w-full justify-center relative flex flex-row items-c.enter gap-2">
+            <div className="text-[0.8rem] w-5 font-normal items-center flex mr-2 ">
+              COLL
             </div>
-            <div className="flex justify-between items-center w-full lg:text-[0.6rem] 2xl:text-xs">
-              <p className="2xl:block hidden">Target</p>
-              <p className="2xl:hidden block text-[0.6rem]">TGT</p>
-              <p className="lg:text-[0.6rem] 2xl:text-base font-medium">{ userLogged?.targets?.monthly?.toLocaleString('en-PH',{style: "currency",currency: "PHP"}) || (0).toLocaleString('en-PH',{style: "currency",currency: "PHP"}) }</p>
-            </div>
-            <div className="flex justify-between items-center w-full lg:text-[0.6rem] 2xl:text-xs">
-              <p className="2xl:block hidden">Collected</p>
-              <p className="2xl:hidden block text-[0.6rem]">COLL</p>
-              <p className="lg:text-[0.6rem] 2xl:text-base font-medium">{collectionsData?.monthlyWeeklyCollected?.monthly?.toLocaleString('en-PH',{style: "currency",currency: "PHP"}) || (0)?.toLocaleString('en-PH',{style: "currency",currency: "PHP"})}</p>
-            </div>
-            <div className="flex justify-between items-center w-full text-xs">
-              <p className="2xl:block hidden">Variance</p>
-              <p className="2xl:hidden block text-[0.6rem]">VAR</p>
-              <p className="lg:text-[0.6rem] 2xl:text-base font-medium">
-                {
-                  !isNaN(Number(userLogged?.targets?.monthly) -  Number(collectionsData?.monthlyWeeklyCollected?.monthly)) ? (Number(userLogged?.targets?.monthly) - Number(collectionsData?.monthlyWeeklyCollected?.monthly)).toLocaleString('en-PH',{style: "currency",currency: "PHP"}) : (0).toLocaleString('en-PH',{style: "currency",currency: "PHP"}) 
-                }
-              </p>
+            {(
+              collectionsData?.monthlyWeeklyCollected?.monthly ?? 0
+            ).toLocaleString("en-PH", {
+              style: "currency",
+              currency: "PHP",
+            })}
+          </div>
+
+          <div className="text-base w-full justify-center relative flex flex-row items-center gap-2">
+            <div className="text-[0.8rem] w-5 font-normal">VAR</div>
+            <div className="">
+              {(() => {
+                const tgt = userLogged?.targets?.monthly ?? 0;
+                const coll =
+                  collectionsData?.monthlyWeeklyCollected?.monthly ?? 0;
+                const varAmt = tgt - coll;
+
+                return varAmt.toLocaleString("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                });
+              })()}
             </div>
           </div>
-      </div> */}
-      </div>
+        </div>
+      </motion.div>
     </motion.div>
   );
 };

@@ -256,328 +256,321 @@ const CustomerUpdateForm: React.FC<CustomerUpdateFormProps> = ({ cancel }) => {
     <AnimatePresence>
       <motion.form
         ref={updateForm}
-        className="flex pb-5 flex-col gap-3 w-full h-[70vh]  items-center justify-center p-5 lg:text-xs text-[0.8em]"
+        className="flex pb-5 flex-col gap-3 w-full h-full  items-center justify-center lg:text-xs text-[0.8em] overflow-auto"
         onSubmit={(e) => handleSubmitUpdateForm(e)}
         noValidate
         exit={{ opacity: 0 }}
       >
-        {!selectedCustomer?.customer_info.isRPC && (
-          <label className="flex gap-2 w-full">
+        <div className="overflow-y-auto flex flex-col w-full h-full p-5">
+          {!selectedCustomer?.customer_info.isRPC && (
+            <label className="flex gap-2 w-full">
+              <input
+                type="checkbox"
+                name="rpc"
+                id="rpc"
+                checked={formState.isRPC}
+                onChange={(e) => {
+                  setFormState((prev) => ({ ...prev, isRPC: e.target.checked }));
+                }}
+              />
+              <h1>RPC</h1>
+            </label>
+          )}
+
+          <label className="text-slate-800 dark:text-white w-full">
+            <p className="font-black uppercase lg:text-sm text-[0.9rem]">
+              Full Name:
+            </p>
             <input
-              type="checkbox"
-              name="rpc"
-              id="rpc"
-              checked={formState.isRPC}
-              onChange={(e) => {
-                setFormState((prev) => ({ ...prev, isRPC: e.target.checked }));
-              }}
+              type="text"
+              id="fullName"
+              name="fullName"
+              autoComplete="off"
+              value={formState.fullName}
+              onChange={(e) =>
+                setFormState({ ...formState, fullName: e.target.value })
+              }
+              required
+              className={`${
+                required && !formState.fullName
+                  ? "bg-red-100 border-red-300"
+                  : "bg-gray-50 border-gray-300"
+              }  border rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              placeholder="Enter Full Name"
             />
-            <h1>RPC</h1>
           </label>
-        )}
 
-        <label className="text-slate-800 dark:text-white w-full">
-          <p className="font-black uppercase lg:text-sm text-[0.9rem]">
-            Full Name:
-          </p>
-          <input
-            type="text"
-            id="fullName"
-            name="fullName"
-            autoComplete="off"
-            value={formState.fullName}
-            onChange={(e) =>
-              setFormState({ ...formState, fullName: e.target.value })
-            }
-            required
-            className={`${
-              required && !formState.fullName
-                ? "bg-red-100 border-red-300"
-                : "bg-gray-50 border-gray-300"
-            }  border rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
-            placeholder="Enter Full Name"
-          />
-        </label>
+          <label className="text-xs lg:text-sm text-slate-800 dark:text-white w-full ">
+            <p className="font-black uppercase lg:text-sm text-[0.9rem]">
+              Date Of Birth:
+            </p>
+            <input
+              type="date"
+              name="dob"
+              value={formState.dob}
+              onChange={(e) =>
+                setFormState({ ...formState, dob: e.target.value })
+              }
+              id="dob"
+              className={` bg-gray-50 border-gray-300  border  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 `}
+            />
+          </label>
 
-        <label className="text-xs lg:text-sm text-slate-800 dark:text-white w-full ">
-          <p className="font-black uppercase lg:text-sm text-[0.9rem]">
-            Date Of Birth:
-          </p>
-          <input
-            type="date"
-            name="dob"
-            value={formState.dob}
-            onChange={(e) =>
-              setFormState({ ...formState, dob: e.target.value })
-            }
-            id="dob"
-            className={` bg-gray-50 border-gray-300  border  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5  dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 `}
-          />
-        </label>
+          <label className="text-xs lg:text-sm text-slate-800 dark:text-white 2 w-full ">
+            <p className="font-black uppercase lg:text-sm text-[0.9rem]">
+              Gender:
+            </p>
+            <select
+              id="gender"
+              name="gender"
+              value={formState.gender}
+              onChange={(e) =>
+                setFormState({ ...formState, gender: e.target.value })
+              }
+              className={` border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+            >
+              <option value={Gender.NULL}>Choose a gender</option>
+              <option value={Gender.MALE}>Male</option>
+              <option value={Gender.FEMALE}>Female</option>
+              <option value={Gender.OTHERS}>Others</option>
+            </select>
+          </label>
 
-        <label className="text-xs lg:text-sm text-slate-800 dark:text-white 2 w-full ">
-          <p className="font-black uppercase lg:text-sm text-[0.9rem]">
-            Gender:
-          </p>
-          <select
-            id="gender"
-            name="gender"
-            value={formState.gender}
-            onChange={(e) =>
-              setFormState({ ...formState, gender: e.target.value })
-            }
-            className={`${
-              required && !formState.gender
-                ? "bg-red-100 border-red-300"
-                : "bg-gray-50 border-gray-300"
-            } border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
-          >
-            <option value={Gender.NULL}>Choose a gender</option>
-            <option value={Gender.MALE}>Male</option>
-            <option value={Gender.FEMALE}>Female</option>
-            <option value={Gender.OTHERS}>Others</option>
-          </select>
-        </label>
-
-        <div className="text-xs lg:text-sm text-slate-800 dark:text-white w-full pr-2 overflow-auto h-full">
-          <p className="font-black uppercase lg:text-sm text-[0.9rem]">
-            Mobile No:
-          </p>
-          <div className="flex flex-col gap-2">
-            {formState.mobiles.map((m, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <input
-                  type="text"
-                  id={`contact_${index}`}
-                  name={`contact_${index}`}
-                  pattern="^09\d{9}$"
-                  value={m}
-                  onChange={(e) => handleMobileOnchange(index, e.target.value)}
-                  className={`${
-                    required &&
-                    (!formState.mobiles[index] ||
-                      !validatePhone(formState.mobiles[index]))
-                      ? "bg-red-100 border-red-300"
-                      : "bg-gray-50 border-gray-300"
-                  }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
-                  placeholder="Enter Mobile No."
-                />
-                {index === 0 && (
-                  <div
-                    className="p-2 bg-green-500 cursor-pointer shadow-md border-2 border-green-800 hover:bg-green-600 transition-all rounded-md text-white"
-                    onClick={handleAddMobile}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="2"
-                      stroke="currentColor"
-                      className="size-5"
+          <div className="text-xs lg:text-sm text-slate-800 dark:text-white w-full ">
+            <p className="font-black uppercase lg:text-sm text-[0.9rem]">
+              Mobile No:
+            </p>
+            <div className="flex flex-col h-full gap-2 pr-2">
+              {formState.mobiles.map((m, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    type="text"
+                    id={`contact_${index}`}
+                    name={`contact_${index}`}
+                    pattern="^09\d{9}$"
+                    value={m}
+                    required
+                    onChange={(e) => handleMobileOnchange(index, e.target.value)}
+                    className={`${
+                      required &&
+                      (formState.mobiles[index].trim() === "" ||
+                        !validatePhone(formState.mobiles[index]))
+                        ? "bg-red-100 border-red-300"
+                        : "bg-gray-50 border-gray-300"
+                    }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+                    placeholder="Enter Mobile No."
+                  />
+                  {index === 0 && (
+                    <div
+                      className="p-2 bg-green-500 cursor-pointer shadow-md border-2 border-green-800 hover:bg-green-600 transition-all rounded-md text-white"
+                      onClick={handleAddMobile}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 4.5v15m7.5-7.5h-15"
-                      />
-                    </svg>
-                  </div>
-                  // <CiSquarePlus
-                  //   className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out"
-                  //   onClick={handleAddMobile}
-                  // />
-                )}
-                {index !== 0 && (
-                  <div
-                    className="p-2 bg-red-500 cursor-pointer shadow-md border-2 border-red-800 hover:bg-red-600 transition-all rounded-md text-white"
-                    onClick={() => handleMinusMobile(index)}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="3"
-                      stroke="currentColor"
-                      className="size-5"
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="2"
+                        stroke="currentColor"
+                        className="size-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 4.5v15m7.5-7.5h-15"
+                        />
+                      </svg>
+                    </div>
+                    // <CiSquarePlus
+                    //   className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out"
+                    //   onClick={handleAddMobile}
+                    // />
+                  )}
+                  {index !== 0 && (
+                    <div
+                      className="p-2 bg-red-500 cursor-pointer shadow-md border-2 border-red-800 hover:bg-red-600 transition-all rounded-md text-white"
+                      onClick={() => handleMinusMobile(index)}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 12h14"
-                      />
-                    </svg>
-                  </div>
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="3"
+                        stroke="currentColor"
+                        className="size-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 12h14"
+                        />
+                      </svg>
+                    </div>
 
-                  // <CiSquareMinus
-                  //   className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out"
-                  //   onClick={() => handleMinusMobile(index)}
-                  // />
-                )}
-              </div>
-            ))}
+                    // <CiSquareMinus
+                    //   className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out"
+                    //   onClick={() => handleMinusMobile(index)}
+                    // />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="text-xs lg:text-sm text-slate-800 dark:text-white w-full">
+            <p className="font-black uppercase lg:text-sm text-[0.9rem]">
+              Email Address:
+            </p>
+            <div className="flex flex-col gap-2 pr-2">
+              {formState.emails.map((email, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <input
+                    type="email"
+                    id={`email_${index}`}
+                    name={`email_${index}`}
+                    value={email}
+                    onChange={(e) => handleEmailOnchange(index, e.target.value)}
+                    className={` border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+                    placeholder="Enter Email Address"
+                  />
+                  {index === 0 && (
+                    <div
+                      className="p-2 bg-green-500 cursor-pointer shadow-md border-2 border-green-800 hover:bg-green-600 transition-all rounded-md text-white"
+                      onClick={handleAddEmail}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="2"
+                        stroke="currentColor"
+                        className="size-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 4.5v15m7.5-7.5h-15"
+                        />
+                      </svg>
+                    </div>
+                    // <CiSquarePlus
+                    //   className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out"
+                    //   onClick={handleAddEmail}
+                    // />
+                  )}
+                  {index !== 0 && (
+                    <div
+                      className="p-2 bg-red-500 cursor-pointer shadow-md border-2 border-red-800 hover:bg-red-600 transition-all rounded-md text-white"
+                      onClick={() => handleMinusEmail(index)}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="3"
+                        stroke="currentColor"
+                        className="size-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 12h14"
+                        />
+                      </svg>
+                    </div>
+                    // <CiSquareMinus
+                    //   className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out"
+                    //   onClick={() => handleMinusEmail(index)}
+                    // />
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="text-xs lg:text-sm text-slate-800 dark:text-white w-full ">
+            <p className="font-black uppercase lg:text-sm text-[0.9rem]">
+              Address:
+            </p>
+            <div className="flex flex-col gap-2 pr-2">
+              {formState.addresses.map((a, index) => (
+                <div key={index} className="flex items-center gap-2">
+                  <textarea
+                    id={`address_${index}`}
+                    name={`address_${index}`}
+                    value={a}
+                    onChange={(e) => handleAddressOnchange(index, e.target.value)}
+                    className={`${
+                      required && !formState.addresses[index]
+                        ? "bg-red-100 border-red-300"
+                        : "bg-gray-50 border-gray-300"
+                    } border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+                    placeholder="Enter Email Address"
+                  ></textarea>
+                  {index === 0 && (
+                    <div
+                      className="p-2 bg-green-500 cursor-pointer shadow-md border-2 border-green-800 hover:bg-green-600 transition-all rounded-md text-white"
+                      onClick={handleAddAddress}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="2"
+                        stroke="currentColor"
+                        className="size-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M12 4.5v15m7.5-7.5h-15"
+                        />
+                      </svg>
+                    </div>
+                    // <CiSquarePlus
+                    //   className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out"
+                    //   onClick={handleAddAddress}
+                    // />
+                  )}
+                  {index !== 0 && (
+                    <div
+                      className="p-2 bg-red-500 cursor-pointer shadow-md border-2 border-red-800 hover:bg-red-600 transition-all rounded-md text-white"
+                      onClick={() => handleMinusAddress(index)}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="3"
+                        stroke="currentColor"
+                        className="size-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M5 12h14"
+                        />
+                      </svg>
+                    </div>
+                    // <CiSquareMinus
+                    //   className="text-3xl cursor-pointer shadow-md hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out"
+                    //   onClick={() => handleMinusAddress(index)}
+                    // />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
         </div>
-
-        <div className="text-xs lg:text-sm text-slate-800 dark:text-white w-full  overflow-auto pr-2 h-full">
-          <p className="font-black uppercase lg:text-sm text-[0.9rem]">
-            Email Address:
-          </p>
-          <div className="flex flex-col gap-2">
-            {formState.emails.map((email, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <input
-                  type="email"
-                  id={`email_${index}`}
-                  name={`email_${index}`}
-                  value={email}
-                  onChange={(e) => handleEmailOnchange(index, e.target.value)}
-                  className={`${
-                    required &&
-                    (!formState.emails[index] ||
-                      !validateEmail(formState.emails[index]))
-                      ? "bg-red-100 border-red-300"
-                      : "bg-gray-50 border-gray-300"
-                  }  border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
-                  placeholder="Enter Email Address"
-                />
-                {index === 0 && (
-                  <div
-                    className="p-2 bg-green-500 cursor-pointer shadow-md border-2 border-green-800 hover:bg-green-600 transition-all rounded-md text-white"
-                    onClick={handleAddEmail}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="2"
-                      stroke="currentColor"
-                      className="size-5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 4.5v15m7.5-7.5h-15"
-                      />
-                    </svg>
-                  </div>
-                  // <CiSquarePlus
-                  //   className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out"
-                  //   onClick={handleAddEmail}
-                  // />
-                )}
-                {index !== 0 && (
-                  <div
-                    className="p-2 bg-red-500 cursor-pointer shadow-md border-2 border-red-800 hover:bg-red-600 transition-all rounded-md text-white"
-                    onClick={() => handleMinusEmail(index)}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="3"
-                      stroke="currentColor"
-                      className="size-5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 12h14"
-                      />
-                    </svg>
-                  </div>
-                  // <CiSquareMinus
-                  //   className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out"
-                  //   onClick={() => handleMinusEmail(index)}
-                  // />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="text-xs lg:text-sm text-slate-800 dark:text-white w-full pr-2 overflow-auto h-full ">
-          <p className="font-black uppercase lg:text-sm text-[0.9rem]">
-            Address:
-          </p>
-          <div className="flex flex-col gap-2">
-            {formState.addresses.map((a, index) => (
-              <div key={index} className="flex items-center gap-2">
-                <textarea
-                  id={`address_${index}`}
-                  name={`address_${index}`}
-                  value={a}
-                  onChange={(e) => handleAddressOnchange(index, e.target.value)}
-                  className={`${
-                    required && !formState.addresses[index]
-                      ? "bg-red-100 border-red-300"
-                      : "bg-gray-50 border-gray-300"
-                  } border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white resize-none dark:focus:ring-blue-500 dark:focus:border-blue-500`}
-                  placeholder="Enter Email Address"
-                ></textarea>
-                {index === 0 && (
-                  <div
-                    className="p-2 bg-green-500 cursor-pointer shadow-md border-2 border-green-800 hover:bg-green-600 transition-all rounded-md text-white"
-                    onClick={handleAddAddress}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="2"
-                      stroke="currentColor"
-                      className="size-5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M12 4.5v15m7.5-7.5h-15"
-                      />
-                    </svg>
-                  </div>
-                  // <CiSquarePlus
-                  //   className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out"
-                  //   onClick={handleAddAddress}
-                  // />
-                )}
-                {index !== 0 && (
-                  <div
-                    className="p-2 bg-red-500 cursor-pointer shadow-md border-2 border-red-800 hover:bg-red-600 transition-all rounded-md text-white"
-                    onClick={() => handleMinusAddress(index)}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="3"
-                      stroke="currentColor"
-                      className="size-5"
-                    >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M5 12h14"
-                      />
-                    </svg>
-                  </div>
-                  // <CiSquareMinus
-                  //   className="text-3xl cursor-pointer shadow-md hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out"
-                  //   onClick={() => handleMinusAddress(index)}
-                  // />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-        <div className="flex justify-center gap-5">
+        <div className="flex justify-center">
           <button
             type="submit"
-            className={`bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-500 font-medium rounded-lg text-sm w-24 py-2.5 me-2  cursor-pointer`}
+            className={`bg-orange-500 hover:bg-orange-600 focus:outline-none text-white font-black uppercase rounded-sm shadow-md transition-all text-sm w-24 py-2.5 me-2  cursor-pointer`}
           >
             Save
           </button>
           <button
             type="button"
             onClick={cancel}
-            className={` bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg text-sm w-24 py-2.5 me-2 cursor-pointer`}
+            className={` bg-slate-500 hover:bg-slate-600 transition-all shadow-md focus:outline-none text-white font-black uppercase rounded-sm text-sm w-24 py-2.5 me-2 cursor-pointer`}
           >
             Cancel
           </button>

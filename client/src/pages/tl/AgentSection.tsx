@@ -1,18 +1,16 @@
-import { useQuery } from '@apollo/client'
-import gql from 'graphql-tag'
-import { useEffect, useMemo, useState } from 'react'
-import { useAppDispatch } from '../../redux/store'
-import { setAgent } from '../../redux/slices/authSlice'
-
-
+import { useQuery } from "@apollo/client";
+import gql from "graphql-tag";
+import { useEffect, useMemo, useState } from "react";
+import { useAppDispatch } from "../../redux/store";
+import { setAgent } from "../../redux/slices/authSlice";
+import { motion } from "framer-motion";
 
 type Agent = {
-  _id:string
-  name: string
-  user_id: string
-  buckets: string[]
-}
-
+  _id: string;
+  name: string;
+  user_id: string;
+  buckets: string[];
+};
 
 const FIND_AGENT = gql`
   query FindAgents {
@@ -20,17 +18,16 @@ const FIND_AGENT = gql`
       _id
       name
       user_id
-      buckets 
+      buckets
     }
   }
-
-`
+`;
 
 type Bucket = {
-  _id:string
-  name: string
-  dept: string
-}
+  _id: string;
+  name: string;
+  dept: string;
+};
 
 const GET_DEPT_BUCKETS = gql`
   query Query {
@@ -40,55 +37,74 @@ const GET_DEPT_BUCKETS = gql`
       dept
     }
   }
-`
+`;
 type ComponentProps = {
-  bucket: string
-}
+  bucket: string;
+};
 
-const AgentSection:React.FC<ComponentProps> = ({bucket}) => {
-  const {data:AgentsData} = useQuery<{findAgents:Agent[]}>(FIND_AGENT)
-  const [selectedAgent, setSelectedAgent] = useState<string>("")
-  const dispatch = useAppDispatch()
+const AgentSection: React.FC<ComponentProps> = ({ bucket }) => {
+  const { data: AgentsData } = useQuery<{ findAgents: Agent[] }>(FIND_AGENT);
+  const [selectedAgent, setSelectedAgent] = useState<string>("");
+  const dispatch = useAppDispatch();
 
-  const selectedBucketAgent = AgentsData?.findAgents.filter(x=> x.buckets.includes(bucket))
-  
+  const selectedBucketAgent = AgentsData?.findAgents.filter((x) =>
+    x.buckets.includes(bucket)
+  );
 
-  const {data:deptBucketData} = useQuery<{getDeptBucket:Bucket[]}>(GET_DEPT_BUCKETS)
+  const { data: deptBucketData } = useQuery<{ getDeptBucket: Bucket[] }>(
+    GET_DEPT_BUCKETS
+  );
 
-  const agentsNewObject:{[key:string]:string} = useMemo(()=> {
-    const ad = AgentsData?.findAgents || []
-    return Object.fromEntries(ad.map(e=> [e.name, e._id]))
-  },[AgentsData])
-  
-  const bucketObject:{[key:string]:string} = useMemo(()=> {
-    const ad = deptBucketData?.getDeptBucket || []
-    return Object.fromEntries(ad.map(e=> [e._id, e.name]))
-  },[deptBucketData])
+  const agentsNewObject: { [key: string]: string } = useMemo(() => {
+    const ad = AgentsData?.findAgents || [];
+    return Object.fromEntries(ad.map((e) => [e.name, e._id]));
+  }, [AgentsData]);
 
+  const bucketObject: { [key: string]: string } = useMemo(() => {
+    const ad = deptBucketData?.getDeptBucket || [];
+    return Object.fromEntries(ad.map((e) => [e._id, e.name]));
+  }, [deptBucketData]);
 
-  useEffect(()=> {
-    dispatch(setAgent(agentsNewObject[selectedAgent]))
-  },[selectedAgent,dispatch, agentsNewObject])
+  useEffect(() => {
+    dispatch(setAgent(agentsNewObject[selectedAgent]));
+  }, [selectedAgent, dispatch, agentsNewObject]);
+
+  const [dropdown, setDropdown] = useState(false);
 
   return (
     <div className="w-full flex justify-end items-center text-xs">
-      <select 
-      id="agent" 
-      name="agent" 
-      className={`bg-gray-50 border-gray-300 border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 block lg:w-50 2xl:w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}   
-      onChange={(e)=> setSelectedAgent(e.target.value)}    
+      {/* <div className="flex flex-col  relative">
+        <div
+          className="px-5 rounded-md cursor-pointer bg-white z-20 border py-2"
+          onClick={() => setDropdown(true)}
+        >
+          Select Agent
+        </div>
+
+        <motion.div  className="bg-black z-10 w-full h-10 absolute " 
+          initial={{y: -10}}
+          animate={{y: dropdown ? 35 : 0}}
+        >
+          <div></div>
+        </motion.div>
+      </div> */}
+
+      <select
+        id="agent"
+        name="agent"
+        className={`bg-gray-50 border-gray-300 border text-gray-900 rounded-sm focus:ring-blue-500 focus:border-blue-500 block lg:w-50 2xl:w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+        onChange={(e) => setSelectedAgent(e.target.value)}
       >
         <option value="">Select Agent</option>
-        {
-          selectedBucketAgent?.map((a)=> (
-            <option key={a._id} value={a.name} className='uppercase'>
-              {a.user_id} - {a.name.toUpperCase()} - {a.buckets.map((b)=> bucketObject[b]).join(", ")}
-            </option>
-          ))
-        }
+        {selectedBucketAgent?.map((a) => (
+          <option key={a._id} value={a.name}>
+            {a.user_id} - {a.name.toUpperCase()} -{" "}
+            {a.buckets.map((b) => bucketObject[b]).join(", ")}
+          </option>
+        ))}
       </select>
     </div>
-  )
-}
+  );
+};
 
-export default AgentSection
+export default AgentSection;

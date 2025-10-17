@@ -516,6 +516,9 @@ const GroupSection = () => {
               <div className="bg-white z-10 lg:w-50 2xl:w-96 absolute border -translate-x-full -left-2 h-96 top-0 rounded-lg border-slate-300 shadow-lg shadow-black/15 p-3 flex flex-col">
                 <p className="font-bold text-slate-700">Agent</p>
                 <div className="h-full overflow-y-auto mt-2 text-slate-700">
+                  {deptAgentData?.findAgents.length > 0 (
+                    <div>dsadasdas</div>
+                  )}
                   {deptAgentData?.findAgents.map((da) => (
                     <div
                       key={da._id}

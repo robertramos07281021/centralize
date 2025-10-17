@@ -5,6 +5,7 @@ import { Navigate, useLocation } from "react-router-dom";
 import { RootState, useAppDispatch } from "../../redux/store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RiArrowDropDownFill } from "react-icons/ri";
+import Loading from "../Loading.tsx";
 import {
   setAgentRecordingPage,
   setServerError,
@@ -211,14 +212,16 @@ const AgentRecordingView = () => {
   }, [location.pathname]);
 
   useEffect(() => {
-    if (recordings) {
-      setLoading2(true);
-      const totalPage = Math.ceil(
-        recordings?.getAgentDispositionRecords?.total / limit
-      );
-      setTotalPage(totalPage);
+    try {
+      if (recordings) {
+        const totalPage = Math.ceil(
+          recordings?.getAgentDispositionRecords?.total / limit
+        );
+        setTotalPage(totalPage);
+      }
+    } catch (error) {
+    } finally {
     }
-    setLoading2(false);
   }, [recordings]);
 
   const [deleteRecordings] = useMutation(DELETE_RECORDING, {
@@ -319,8 +322,6 @@ const AgentRecordingView = () => {
 
   // if (recordingsLoading) return <Loading />;
 
-  const [loading2, setLoading2] = useState(false);
-
   return ["QA", "TL", "MIS"].includes(userLogged?.type || "") ? (
     <Wrapper>
       <Navbar />
@@ -406,6 +407,7 @@ const AgentRecordingView = () => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.2 }}
+            className="flex flex-col xl:block"
           >
             <span className="text-gray-800 font-black uppercase text-sm">
               From:{" "}
@@ -425,6 +427,7 @@ const AgentRecordingView = () => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
+            className="flex flex-col xl:block"
           >
             <span className="text-gray-800 uppercase font-black text-sm">
               To:{" "}
@@ -453,15 +456,15 @@ const AgentRecordingView = () => {
         </div>
         <div className="h-full w-full px-5 flex flex-col overflow-hidden">
           <motion.div
-            className="w-full h-full rounded-md overflow-hidden"
+            className="w-full relative pb-10 flex flex-col h-full rounded-md overflow-hidden"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            <div className="lg:text-sm font-black uppercase 2xl:text-lg sticky top-0 z-20 bg-gray-300 text-gray-800">
+            <div className="lg:text-sm flex font-black uppercase 2xl:text-lg sticky top-0 z-20 bg-gray-300 text-gray-800">
               <div className="text-left justify-center px-4 grid grid-cols-10 gap-3 items-center py-3">
                 <div className="">Name</div>
-                <div>Contact No</div>
+                <div className="truncate">Contact No</div>
                 <div>Dialer</div>
                 <div>Amount</div>
                 <div className="text-nowrap truncate">Payment Date</div>
@@ -472,11 +475,17 @@ const AgentRecordingView = () => {
                 <div className="text-center flex justify-center">Actions</div>
               </div>
             </div>
-            <div className=" overflow-auto h-full">
-              {loading2 ? (
-                <div>loading</div>
+            <div className=" h-full flex justify-center items-center">
+              {recordingsLoading ? (
+                <div className="flex flex-col relative justify-center items-center ">
+                  <div className="border-t-2 rounded-full z-20 w-20 h-20 border-gray-800 animate-spin "></div>
+                  <div className="border-2 absolute top-0 left-0 rounded-full z-10 w-20 h-20 border-gray-200 "></div>
+                  <div className="absolute  z-10 text-xs text-gray-400">
+                    Loading...
+                  </div>
+                </div>
               ) : (
-                <div>
+                <div className="overflow-auto h-full">
                   {recordings?.getAgentDispositionRecords.dispositions.map(
                     (e, index) => {
                       const callRecord =
@@ -491,7 +500,9 @@ const AgentRecordingView = () => {
                           animate={{ opacity: 1 }}
                           transition={{ delay: index * 0.1 }}
                         >
-                          <div className=" truncate">{e.customer_name}</div>
+                          <div className=" truncate" title={e.customer_name}>
+                            {e.customer_name}
+                          </div>
                           <div
                             className="truncate pr-2"
                             title={e.contact_no.join(", ")}
@@ -515,7 +526,7 @@ const AgentRecordingView = () => {
                             {e.payment_date ? (
                               new Date(e.payment_date).toLocaleDateString()
                             ) : (
-                              <div className="text-gray-400 italic text-left">
+                              <div className="text-gray-400 truncate italic text-left">
                                 No payment date
                               </div>
                             )}

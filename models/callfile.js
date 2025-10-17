@@ -48,6 +48,10 @@ const callFileSchema = new Schema(
       type: Boolean,
       default: true,
     },
+    autoDial: {
+      type: Boolean,
+      default: false
+    },
     target: {
       type: Number,
       default: 0,

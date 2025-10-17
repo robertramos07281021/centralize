@@ -98,7 +98,16 @@ const Uploader: React.FC<modalProps> = ({
         const workbook = read(binaryString, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const jsonData: ExcelData[] = utils.sheet_to_json(sheet);
+        const jsonDataRaw = utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
+        const jsonData = jsonDataRaw.map((row) => {
+          const cleanRow: Record<string, any> = {};
+          for (const key in row) {
+            const cleanKey = key.trim().replace(/\s+/g, "_");
+            cleanRow[cleanKey] = row[key];
+          }
+          return cleanRow;
+        });
+
         const dateConverting = jsonData.map((row) => {
           const {
             interest_os,

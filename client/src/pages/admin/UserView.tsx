@@ -2,8 +2,6 @@ import { useLocation } from "react-router-dom";
 import UpdateUserForm from "./UpdateUserForm";
 import { gql, useQuery } from "@apollo/client";
 import { useEffect } from "react";
-import { useAppDispatch } from "../../redux/store";
-import { setServerError } from "../../redux/slices/authSlice";
 import { motion, AnimatePresence } from "framer-motion";
 
 const MODIFY_RECORD_QUERY = gql`
@@ -27,27 +25,27 @@ const UserView = () => {
   const state = location.state;
   const { data, refetch } = useQuery<{ getModifyReport: ModifyRecords[] }>(
     MODIFY_RECORD_QUERY,
-    { variables: { id: state?._id }, skip: !state?._id }
+    {
+      variables: { id: state?._id },
+      skip: !state?._id,
+      notifyOnNetworkStatusChange: true,
+    }
   );
-  const dispatch = useAppDispatch();
 
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      try {
-        await refetch();
-      } catch (error) {
-        dispatch(setServerError(true));
-      }
-    });
-    return () => clearTimeout(timer);
+    const timer = async () => {
+      await refetch();
+    };
+    timer()
   }, [state, refetch]);
 
   return (
     <AnimatePresence>
       <div className="h-full flex flex-col px-10 overflow-hidden justify-center items-center ">
-        <motion.div className="bg-black/40  w-full h-full top-0 left-0 absolute z-10 "
-          initial={{opacity: 0}}
-          animate={{opacity: 1}}
+        <motion.div
+          className="bg-black/40  w-full h-full top-0 left-0 absolute z-10 "
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
         >
           {" "}
         </motion.div>
@@ -56,9 +54,6 @@ const UserView = () => {
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
         >
-          <h1 className="text-2xl  font-black uppercase text-slate-800">
-            {state.name}
-          </h1>
           <div className="h-full flex items-center overflow-hidden relative ">
             <div className="h-full w-full flex flex-row relative ">
               <UpdateUserForm state={state} />

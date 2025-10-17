@@ -220,54 +220,22 @@ const FieldsDiv = ({
   }
 
   return (
-    <div className="flex flex-col items-center 2xl:flex-row w-full ">
-      <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-5/10 leading-4 select-none">
+    <div className="flex flex-col items-center w-full gap-0.5">
+      <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs leading-4 select-none">
         {label} :
       </p>
       <div
         className={`${
-          newValue || null ? "p-2" : "p-4"
-        } 2xl:ml-2 text-xs 2xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}
+          newValue || null ? "p-2" : "2xl:p-4.5 p-4"
+        } text-xs 2xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}
       >
         {newValue || ""}
       </div>
     </div>
   );
 };
-const colorObject: { [key: string]: string } = {
-  blue: "bg-blue-400 hover:bg-blue-600",
-  green: "bg-green-400 hover:bg-green-600",
-  yellow: "bg-yellow-400 hover:bg-yellow-600",
-  cyan: "bg-cyan-400 hover:bg-cyan-600",
-};
 
-const Buttons = ({
-  label,
-  onClick,
-  length,
-  color,
-}: {
-  label: string;
-  onClick: () => void;
-  length: number;
-  color: keyof typeof colorObject;
-}) => {
-  return (
-    <button
-      className={` px-2 py-1.5 rounded-md relative bg-blue-400 ${colorObject[color]} text-slate-800 font-medium cursor-pointer  hover:text-white`}
-      onClick={onClick}
-    >
-      <span>{label}</span>
-      <div
-        className={`absolute -top-5.5 -right-4 rounded min-w-5 min-h-5 text-xs px-2 ${
-          length > 0 && !isNaN(length) ? "bg-red-500" : "bg-green-500"
-        } text-white flex items-center justify-center `}
-      >
-        {length}
-      </div>
-    </button>
-  );
-};
+
 
 export type ChildHandle = {
   showButtonToFalse: () => void;
@@ -610,76 +578,72 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
             </div>
             {!updateCustomerAccounts ? (
               <div className="flex flex-col pt-2 bg-gray-100 border-x border-gray-400 border-b rounded-b-xl shadow-md px-5 pb-5 items-end justify-center gap-1 text-slate-800 uppercase font-medium">
-                {selectedCustomer.out_standing_details.mo_balance != 0 &&
-                  selectedCustomer.out_standing_details.mo_balance != 0 &&
-                  selectedCustomer.out_standing_details.mo_balance != 0 &&
-                  selectedCustomer.out_standing_details.mo_balance != 0 && (
-                    <div className=" w-full flex flex-col lg:ml-3 gap-5 text-slate-800">
-                      <div className="bg-gray-100 w-full gap-2 flex flex-row rounded-md">
-                        <div>
-                          <h1 className="font-medium 2xl:text-sm text-xs">
-                            Write Off Balance
-                          </h1>
-                          <div className="min-w-32 p-1 pl-2 border border-slate-500 rounded-md">
-                            {(
-                              selectedCustomer?.out_standing_details
-                                ?.mo_balance ?? 0
-                            ).toLocaleString("en-PH", {
-                              style: "currency",
-                              currency: "PHP",
-                            })}
-                          </div>
+                {selectedCustomer && (
+                  <div className="w-full flex flex-col lg:ml-3 gap-5 text-slate-800">
+                    <div className="bg-gray-100 w-full gap-2 flex flex-col mb-1 md:mb-0 md:flex-row rounded-md">
+                      <div>
+                        <h1 className="font-medium 2xl:text-sm text-xs">
+                          Write Off Balance
+                        </h1>
+                        <div className="min-w-32 p-1 pl-2 border border-slate-500 rounded-md">
+                          {(
+                            selectedCustomer?.out_standing_details
+                              ?.mo_balance ?? 0
+                          ).toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })}
                         </div>
+                      </div>
 
-                        <div>
-                          <h1 className="font-medium 2xl:text-sm text-xs">
-                            Past Due Amount
-                          </h1>
-                          <div className="min-w-32 p-1 pl-2 border border-slate-500 rounded-md">
-                            {(
-                              selectedCustomer?.out_standing_details
-                                ?.pastdue_amount ?? 0
-                            ).toLocaleString("en-PH", {
-                              style: "currency",
-                              currency: "PHP",
-                            })}
-                          </div>
+                      <div>
+                        <h1 className="font-medium 2xl:text-sm text-xs">
+                          Past Due Amount
+                        </h1>
+                        <div className="min-w-32 p-1 pl-2 border border-slate-500 rounded-md">
+                          {(
+                            selectedCustomer?.out_standing_details
+                              ?.pastdue_amount ?? 0
+                          ).toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })}
                         </div>
+                      </div>
 
-                        <div>
-                          <h1 className="font-medium 2xl:text-sm text-xs">
-                            MO_Amort
-                          </h1>
-                          <div className="min-w-32 pl-2 p-1 border border-slate-500 rounded-md">
-                            {(
-                              selectedCustomer?.out_standing_details
-                                ?.mo_amort ?? 0
-                            ).toLocaleString("en-PH", {
-                              style: "currency",
-                              currency: "PHP",
-                            })}
-                          </div>
+                      <div>
+                        <h1 className="font-medium 2xl:text-sm text-xs">
+                          MO_Amort
+                        </h1>
+                        <div className="min-w-32 pl-2 p-1 border border-slate-500 rounded-md">
+                          {(
+                            selectedCustomer?.out_standing_details?.mo_amort ??
+                            0
+                          ).toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })}
                         </div>
-                        <div>
-                          <h1 className="font-medium 2xl:text-sm text-xs">
-                            CF
-                          </h1>
-                          <div className="min-w-32 pl-2 p-1 border border-slate-500 rounded-md">
-                            {(
-                              selectedCustomer?.out_standing_details?.cf ?? 0
-                            ).toLocaleString("en-PH", {
-                              style: "currency",
-                              currency: "PHP",
-                            })}
-                          </div>
+                      </div>
+
+                      <div>
+                        <h1 className="font-medium 2xl:text-sm text-xs">CF</h1>
+                        <div className="min-w-32 pl-2 p-1 border border-slate-500 rounded-md">
+                          {(
+                            selectedCustomer?.out_standing_details?.cf ?? 0
+                          ).toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })}
                         </div>
                       </div>
                     </div>
-                  )}
+                  </div>
+                )}
 
                 <div className="flex w-full gap-2 items-end">
                   <div className="w-full">
-                    <p className="font-medium whitespace-nowrap min-w-40 w-full text-xs 2xl:text-sm ">
+                    <p className="font-medium whitespace-nowrap min-w-40 2xl:min-w-auto w-full text-xs 2xl:text-sm ">
                       Outstanding Balance
                     </p>
                     <div className="w-full  border p-2 rounded-lg border-slate-500 bg-gray-100 2xl:text-sm lg:text-base">

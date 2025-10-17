@@ -674,21 +674,21 @@ const DispositionConfigurationView = () => {
                           isUpdate
                             ? "border-orange-500 bg-orange-500 hover:bg-orange-700"
                             : "hover:bg-blue-700 bg-blue-500 border-blue-500"
-                        } border   rounded-lg px-5 py-1.5 text-white  font-bold`}
+                        } border   rounded-lg px-5 cursor-pointer py-1.5 text-white  font-bold`}
                       >
                         {isUpdate ? "Update" : "Submit"}
                       </button>
                       {isUpdate && (
-                        <button
-                          type="submit"
-                          className={` border border-slate-500 bg-slate-500 hover:bg-slate-700   rounded-lg px-5 py-1.5 text-white  font-bold`}
+                        <div
+                          className={` cursor-pointer border border-slate-500 bg-slate-500 hover:bg-slate-700   rounded-lg px-5 py-1.5 text-white  font-bold`}
                           onClick={() => {
-                            setToUpdateDispo(null);
                             setIsUpdate(false);
+                            setOpenDisposition(false);
+                            setToUpdateDispo(null);
                           }}
                         >
                           Cancel
-                        </button>
+                        </div>
                       )}
                     </div>
                   </form>

@@ -67,7 +67,9 @@ const customerResolver = {
     },
     search: async(_,{search},{user}) => {
       try {
+
         if(!search) {return []}
+
         const regexSearch = { $regex: search, $options: "i" };
         const startOfTheDay = new Date()
         startOfTheDay.setHours(0,0,0,0)
@@ -199,7 +201,7 @@ const customerResolver = {
               account_id: "$ca.account_id",
               endorsement_date: "$ca.endorsement_date",
               credit_customer_id: "$ca.credit_customer_id",
-              bill_due_date: "$bill_due_date",
+              bill_due_date: "$ca.bill_due_date",
               max_dpd: "$ca.max_dpd",
               dpd: "$ca.dpd",
               batch_no: "$ca.batch_no",
@@ -463,7 +465,6 @@ const customerResolver = {
           const camp = dispo.filter(x=> x.campaign === com.campaign).map(y => y.rate)
           const sumOfCamp =camp.length > 0 ? camp.reduce((t,v) => { return t + v }) : 0
           
-
           return {
             ...com,
             campaign: findDept ? findDept._id.toString() : com.campaign,

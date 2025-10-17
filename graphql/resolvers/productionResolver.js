@@ -1344,7 +1344,7 @@ const productionResolver = {
               name: fileInfo.name,
               size: fileInfo.size
             }));
-  
+            
             function getClosestFile(files, createdAt) {
               let closest = null;
               let smallestDiff = Infinity;

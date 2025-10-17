@@ -20,7 +20,8 @@ const taskResolver = {
             $match:
               {
                 assigned: new mongoose.Types.ObjectId(user._id),
-                on_hands: false
+                on_hands: false,
+                bucket: {$in: user.buckets.map(x => new mongoose.Types.ObjectId(x))}
               }
           }, 
           {
@@ -55,6 +56,11 @@ const taskResolver = {
           },
           { 
             $unwind: { path: "$account_callfile", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $match: {
+              "account_callfile.active": true
+            }
           },
           {
             $lookup: {
@@ -119,11 +125,13 @@ const taskResolver = {
               assigned: "$assigned",
               current_disposition: "$cd",
               account_update_history: '$account_update_history',
+              assignedModel: "$assignedModel",
               assigned_date: "$assigned_date",
               emergency_contact: "$emergency_contact"
             }
           }
         ])
+
         return myTask
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -175,6 +183,11 @@ const taskResolver = {
           },
           { 
             $unwind: { path: "$account_callfile", preserveNullAndEmptyArrays: true } 
+          },
+          {
+            $match: {
+              "account_callfile.active": true
+            }
           },
           {
             $lookup: {

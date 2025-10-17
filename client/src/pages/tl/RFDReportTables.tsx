@@ -1,49 +1,73 @@
-
 type RFD = {
-  _id: string
-  count: number
-}
+  _id: string;
+  count: number;
+};
 
 type ComponentProp = {
-  RFD: RFD[]
-}
+  RFD: RFD[];
+};
 
-const RFDReportTables:React.FC<ComponentProp> = ({RFD}) => {
+const RFDReportTables: React.FC<ComponentProp> = ({ RFD }) => {
   return (
-     <table className="w-1/2 2xl:text-base text-xs">
-      <thead>
-        <tr>
-          <th colSpan={3} className="border border-black bg-blue-600 text-white">EOD</th>
-        </tr>
-      </thead>
-      <tbody className="text-center">
-        <tr className="text-gray-700">
-          <th className="border border-black">Reason For Delay</th>
-          <th className="border border-black">Count</th>
-          <th className="border border-black">Percentage</th>
-        </tr>
-          {
-            RFD.map((x,index)=> {
-              const filter = RFD.filter(x=> x._id !== null)
-              const totals = filter.length > 0 ? filter.map(x=> x.count).reduce((t,v)=> t + v) : 0
-              const percents = (x.count / totals) * 100
-              return x._id && (
-                <tr key={index} className="text-gray-700 text-center">
-                  <td className="border border-black">{x._id}</td>
-                  <td className="border border-black">{x.count}</td>
-                  <td className="border border-black">{percents.toFixed(2)}%</td>
-                </tr> 
-              )
-            })
-          }
-          <tr className="font-medium">
-            <td className="border border-black bg-green-600 text-white">Total</td>
-            <td className="border border-black">{RFD.length > 1 ?  RFD?.filter(x=> x._id !== null)?.map(x=> x.count)?.reduce((t,v)=> t + v) : 0}</td>
-            <td className="border border-black">100%</td>
-          </tr>
-      </tbody>
-    </table>
-  )
-}
+    <div className="w-full 2xl:text-base shadow-md text-xs">
+      <div>
+        <div>
+          <div
+            colSpan={3}
+            className="border border-blue-800 rounded-t-md text-sm text-black font-black text-center w-full py-2 bg-blue-500"
+          >
+            EOD
+          </div>
+        </div>
+      </div>
+      <div className="text-center">
+        <div className=" font-black uppercase items-center justify-center text-black border-x border-blue-800  grid grid-cols-3 bg-blue-400">
+          <div className="border-r border-blue-800 items-center flex justify-center h-full">
+            Reason For Delay
+          </div>
+          <div className="border-r border-blue-800 items-center flex justify-center h-full">
+            Count
+          </div>
+          <div className="py-1">Percentage</div>
+        </div>
+        {RFD.map((x, index) => {
+          const filter = RFD.filter((x) => x._id !== null);
+          const totals =
+            filter.length > 0
+              ? filter.map((x) => x.count).reduce((t, v) => t + v)
+              : 0;
+          const percents = (x.count / totals) * 100;
+          return (
+            x._id && (
+              <div
+                key={index}
+                className="font-black uppercase border-x border-blue-800 border-y grid bg-blue-300 text-black grid-cols-3 text-center"
+              >
+                <div className="border-r border-blue-800 items-center flex justify-center h-full">{x._id}</div>
+                <div className="border-r border-blue-800 items-center flex justify-center h-full">{x.count}</div>
+                <div className="py-1">
+                  {percents.toFixed(2)}%
+                </div>
+              </div>
+            )
+          );
+        })}
+        <div className={`" border-t grid grid-cols-3 border-x border-b border-blue-800 rounded-b-md  bg-blue-200 font-black uppercase "`}>
+          <div className="border-r text-green-700 text-shadow-sm border-blue-800 items-center flex justify-center h-full">
+            Total
+          </div>
+          <div className="border-r border-blue-800 items-center flex justify-center h-full">
+            {RFD.length > 1
+              ? RFD?.filter((x) => x._id !== null)
+                  ?.map((x) => x.count)
+                  ?.reduce((t, v) => t + v)
+              : 0}
+          </div>
+          <div className="py-1">100%</div>
+        </div>
+      </div>
+    </div>
+  );
+};
 
-export default RFDReportTables
+export default RFDReportTables;

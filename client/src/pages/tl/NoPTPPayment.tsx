@@ -36,20 +36,20 @@ const NoPTPPayment = () => {
   const paidSelected = noPTPCollection?.noPTPCollection || null
 
   return (
-    <div className='border-indigo-400 border bg-indigo-200 text-indigo-500 rounded-xl p-2 flex flex-col'>
-      <div className='lg:text-xs 2xl:text-lg font-black '>
+    <div className='border-purple-500 shadow-md border bg-white text-purple-800 rounded-sm flex flex-col'>
+      <div className='lg:text-xs bg-purple-400 2xl:text-lg font-black h-[50%] flex items-center justify-center border-b border-purple-500 '>
         <h1>
-          No PTP Payment <span className="text-[0.6rem] 2xl:text-xs font-medium capitalize">{`(${intervalTypes})`}</span> 
+          No PTP Payment <span className="text-[0.6rem] 2xl:text-xs font- capitalize">{`(${intervalTypes})`}</span> 
         </h1>
       </div>
-      <div className='h-full w-full flex justify-between items-center  text-base  2xl:text-xl'>
+      <div className='h-[50%] w-full flex relative justify-between items-center  text-lg  2xl:text-xl'>
         {
           !loading ? 
           <>
-            <div className="font-bold text-center ">
+            <div className="font-bold text-center px-2.5  absolute -top-3 right-2 bg-purple-100 border-purple-600 shadow-md border rounded-full">
               {paidSelected ? paidSelected.count : 0}
             </div>
-            <div className="font-medium flex justify-end items-center gap-2">
+            <div className="font-black flex w-full justify-center items-center gap-2 ">
               <p>{paidSelected ? paidSelected.amount?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</p>
             </div>
           </>

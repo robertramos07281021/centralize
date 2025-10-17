@@ -8,6 +8,7 @@ import { useSelector } from "react-redux";
 import { RootState } from "../../redux/store";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { useLocation } from "react-router-dom";
+import { motion } from "framer-motion";
 
 type AgentProdPerDay = {
   total: number;
@@ -200,22 +201,26 @@ const MixedChartView = () => {
   };
 
   return (
-    <div className="border flex rounded-lg border-slate-200 lg:col-span-6 lg:row-span-2 p-2 shadow-md shadow-black/20 bg-white">
+    <motion.div className="border border-gray-600 flex rounded-sm lg:col-span-6 lg:row-span-2 p-2 shadow-md 0 bg-white"
+      initial={{y: 20, opacity: 0}}
+      animate={{y:0, opacity: 1}}
+      transition={{delay: 0.1}}
+    >
       {loading ? (
         <div className="flex justify-center items-center w-full">
           <AiOutlineLoading3Quarters className="animate-spin text-7xl" />
         </div>
       ) : (
-      
-        <Chart
-          type="bar"
-          data={dataPerDay}
-          options={optionPerDay}
-          plugins={[customGridLinePlugi]}
-        />
-        
+        <div className="w-full" >
+          <Chart
+            type="bar"
+            data={dataPerDay}
+            options={optionPerDay}
+            plugins={[customGridLinePlugi]}
+          />
+        </div>
       )}
-    </div>
+    </motion.div>
   );
 };
 

@@ -80,13 +80,15 @@ const DEPARTMENT_QUERY = gql`
       id
       name
       branch
-      aom {
-        _id
-        name
-      }
+      
     }
   }
 `;
+
+// aom {
+//         _id
+//         name
+//       }
 
 type BranchSectionProps = {
   campaign: boolean;

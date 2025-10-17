@@ -2,6 +2,7 @@ import { gql, useQuery } from "@apollo/client"
 import { useEffect } from "react"
 import { month } from "../../middleware/exports"
 import { useLocation } from "react-router-dom"
+import { motion } from "framer-motion"
 
 type AgentTotalDispo = {
   count: number
@@ -50,8 +51,12 @@ export default function OverallPerformance () {
   },[])
 
   return (
-    <div className="border rounded-lg border-slate-200 lg:col-span-2 lg:row-span-2 shadow-md shadow-black/20 p-2 bg-white flex flex-col">
-      <h1 className="text-slate-500 font-bold text-[0.8em] py-1">Overall Performance Month of {month[Month]}</h1>
+    <motion.div className="border rounded-sm  border-gray-700 lg:col-span-2 lg:row-span-2 shadow-md shadow-black/20 bg-white flex flex-col"
+      initial={{y: 20, opacity: 0}}
+      animate={{y: 0, opacity: 1}}
+      transition={{delay: 0.4}}
+    >
+      <h1 className="text-slate-800 bg-gray-400 font-black p-2 rounded-t-x uppercase text-[1em] text-center py-1">Overall Performance Month of {month[Month]}</h1>
       <div className="grid grid-cols-4 text-xs font-bold px-2 text-gray-500 bg-blue-50 py-2">
         <div className="col-span-2">Name</div>
         <div className="pl-3">Code</div>
@@ -79,7 +84,7 @@ export default function OverallPerformance () {
         }
 
       </div>  
-    </div>
+    </motion.div>
   )
 }
 

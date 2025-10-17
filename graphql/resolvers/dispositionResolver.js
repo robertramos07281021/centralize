@@ -1553,7 +1553,7 @@ const dispositionResolver = {
     },
     getTargetPerCampaign: async(_,{bucket, interval}) => {
       try {
-      
+        
         const buckets = await Bucket.findById(bucket)
         const callfile = await Callfile.findOne({bucket:buckets._id, active: {$eq: true}})  
 
@@ -1584,15 +1584,15 @@ const dispositionResolver = {
         
         let selectedInterval = {}
         let newDataCollected = {}
-        if(interval === "daily") {
+        if(interval === "daily" || buckets.principal) {
           selectedInterval['$gt'] = todayStart
           selectedInterval['$lte'] = todayEnd
           newDataCollected['target'] = (Number(callfile.target) / 4) / 6
-        } else if (interval === "weekly") {
+        } else if (interval === "weekly" && !buckets.principal) {
           selectedInterval['$gt'] = startOfWeek
           selectedInterval['$lte'] = endOfWeek
           newDataCollected['target'] = Number(callfile.target) / 4
-        } else if (interval === "monthly") {
+        } else if (interval === "monthly" && !buckets.principal) {
           selectedInterval['$gt'] = startOfMonth
           selectedInterval['$lte'] = endOfMonth
           newDataCollected['target'] = Number(callfile.target)
@@ -1601,7 +1601,7 @@ const dispositionResolver = {
         let result = {}
 
         if(buckets.principal) {
-          
+      
           const customerAccount = await CustomerAccount.aggregate([
             {
               $lookup: {
@@ -1635,7 +1635,7 @@ const dispositionResolver = {
             },
             {
               $match: {
-                callfile: {$eq: callfile._id},
+                callfile: {$eq: new mongoose.Types.ObjectId(callfile._id) },
                 current_disposition: { $exists: true },
                 createdAt: selectedInterval
               }
@@ -1661,21 +1661,21 @@ const dispositionResolver = {
               }
             }
           ])
+
           result = customerAccount.map(x=> {
             return {
               ...x,
-              totalPrincipal: callfile.totalPrincipal,
-              target: callfile.target
+              totalPrincipal: callfile.totalPrincipal || 0,
+              target: callfile.target || 0
             }
-          })
-          
+          })[0]
+
+
         } else {
           const existingCallfile = await Callfile.findOne({bucket:buckets._id,active: {$eq: true}}).lean()
 
-
           const AllBucketCallfile = (await Callfile.find({bucket:buckets._id}).lean()).map(bucket => bucket._id)
 
-         
           const findDisposition = await Disposition.aggregate([
             {
               $match: {
@@ -1744,7 +1744,6 @@ const dispositionResolver = {
             },
           ])
           
-       
           const collected = findDisposition[0]?.allCallfile?.length > 0 ? findDisposition[0].allCallfile[0].collected : 0
           
           const totalPrincipal = findDisposition[0].activeCallfile?.length > 0 ? callfile.totalPrincipal + (findDisposition[0].activeCallfile[0].collected || 0) : callfile.totalPrincipal
@@ -1753,10 +1752,14 @@ const dispositionResolver = {
             collected: collected,
             target: newDataCollected.target,
             totalPrincipal: totalPrincipal
-
           }
         }
-        return result
+      
+        return result ? result : {
+          collected: 0,
+          target: callfile?.target || 0,
+          totalPrincipal: callfile?.totalPrincipal || 0
+        }
       } catch (error) {
         throw new CustomError(error.message, 500)        
       }

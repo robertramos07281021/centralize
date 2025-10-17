@@ -36,10 +36,6 @@ const productionTypeDefs = gql`
     count: Int
   }
 
-  type Success {
-    start: DateTime
-  }
-
   type DailyCollection {
     ptp_amount: Float
     ptp_count: Int

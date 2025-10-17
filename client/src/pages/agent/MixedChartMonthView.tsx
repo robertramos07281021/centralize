@@ -7,6 +7,7 @@ import { Chart } from "react-chartjs-2"
 import { useSelector } from "react-redux"
 import { RootState } from "../../redux/store"
 import { useLocation } from "react-router-dom"
+import { motion } from "framer-motion"
 
 type AgentProdPerMonth = {
     total: number
@@ -177,9 +178,13 @@ export default function MixedChartMonthView() {
   },[])
 
   return (
-    <div className="border rounded-lg col-span-1 border-slate-200 lg:col-span-7 lg:row-span-2 p-2 shadow-md shadow-black/20 bg-white">
+    <motion.div className="border border-gray-700 rounded-sm col-span-1 lg:col-span-7 lg:row-span-2 p-2 shadow-md bg-white"
+      initial={{y: 20, opacity: 0}}
+      animate={{y: 0, opacity: 1}}
+      transition={{delay: 0.3}}
+    >
       <Chart type="bar" data={dataPerMonth} options={optionPerMonth} plugins={[customGridLinePlugi]}/>
-    </div>
+    </motion.div>
   )
 }
 

@@ -28,7 +28,6 @@ const dispositionTypeDefs = gql`
     selectivesDispo: Boolean
   }
   
-
   type Agent {
     _id: ID
     name: String
@@ -37,8 +36,6 @@ const dispositionTypeDefs = gql`
     user_id: String
     buckets: [ID]
   }
-
-
 
   type DispoData {
     _id: String

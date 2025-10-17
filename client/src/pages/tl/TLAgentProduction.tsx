@@ -44,8 +44,8 @@ const TLAgentProduction = () => {
   },[tlBucketData])
 
   return (
-    <div className='col-span-6 border border-slate-400 flex flex-col bg-white rounded-xl p-2 overflow-hidden'>
-      <div className=' bg-white  text-slate-700 flex items-end gap-2 justify-between'>
+    <div className='col-span-6 flex flex-col overflow-hidden'>
+      <div className='   text-slate-700 flex items-end gap-2 justify-between'>
         <h1 className="font-bold lg:text-lg 2xl:text-3xl">
           {bucketObject[selectedBucket as keyof typeof bucketObject]}
           {
