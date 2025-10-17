@@ -1,5 +1,5 @@
 import { useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 const color = {
   CREATE: {
@@ -97,7 +97,6 @@ const Confirmation: React.FC<modalProps> = ({ yes, no, message, toggle }) => {
       className="fixed w-screen h-screen top-0 left-0 z-50 flex items-center justify-center"
     >
       <motion.div
-        div
         onClick={no}
         className="absolute top-0 left-0 w-full h-full bg-black/20 backdrop-blur-sm cursor-pointer z-10"
         initial={{opacity: 0}}

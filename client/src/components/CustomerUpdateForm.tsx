@@ -347,7 +347,6 @@ const CustomerUpdateForm: React.FC<CustomerUpdateFormProps> = ({ cancel }) => {
                     type="text"
                     id={`contact_${index}`}
                     name={`contact_${index}`}
-                    pattern="^09\d{9}$"
                     value={m}
                     required
                     onChange={(e) => handleMobileOnchange(index, e.target.value)}
