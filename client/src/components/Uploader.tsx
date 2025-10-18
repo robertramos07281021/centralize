@@ -6,53 +6,54 @@ import Loading from "../pages/Loading";
 import { useAppDispatch } from "../redux/store";
 import { setServerError, setSuccess } from "../redux/slices/authSlice";
 
-type ExcelData = {
-  address: string;
-  address_2: string;
-  address_3: string;
-  admin_fee_os: number;
-  bill_due_date: string;
-  birthday: string;
-  endorsement_date: string;
-  grass_date: string;
-  case_id: string;
-  contact: string;
-  contact_2: string;
-  contact_3: string;
-  platform_user_id: string;
-  credit_user_id: string;
-  customer_name: string;
-  dpd_grp: string;
-  dst_fee_os: number;
-  balance: number;
-  email: string;
-  email_2: string;
-  email_3: string;
-  gender: string;
-  grass_region: string;
-  interest_os: number;
-  late_charge_os: number;
-  max_dpd: number;
-  penalty_interest_os: number;
-  principal_os: number;
-  tagging: string;
-  total_os: number;
-  collectorID: string;
-  txn_fee_os: number;
-  late_charge_waive_fee_os: number;
-  vendor_endorsement: string;
-  emergencyContactName: string;
-  emergencyContactMobile: string;
-  dpd: number;
-  mpd: number;
-  batch_no: string;
-  cf: number;
-  pastdue_amount: number;
-  mo_amort: number;  
-  writeoff_balance: number;
-  overall_balance: number;
-  mo_balance: number;
-};
+// type ExcelData = {
+//   address: string;
+//   address_2: string;
+//   address_3: string;
+//   admin_fee_os: number;
+//   bill_due_date: string;
+//   birthday: string;
+//   endorsement_date: string;
+//   grass_date: string;
+//   case_id: string;
+//   contact: string;
+//   contact_2: string;
+//   contact_3: string;
+//   platform_user_id: string;
+//   credit_user_id: string;
+//   customer_name: string;
+//   dpd_grp: string;
+//   dst_fee_os: number;
+//   balance: number;
+//   email: string;
+//   email_2: string;
+//   email_3: string;
+//   gender: string;
+//   grass_region: string;
+//   interest_os: number;
+//   late_charge_os: number;
+//   max_dpd: number;
+//   penalty_interest_os: number;
+//   principal_os: number;
+//   tagging: string;
+//   total_os: number;
+//   collectorID: string;
+//   txn_fee_os: number;
+//   late_charge_waive_fee_os: number;
+//   vendor_endorsement: string;
+//   emergencyContactName: number;
+//   emergencyContactMobile: string;
+//   dpd: number;
+//   mpd: number;
+//   batch_no: string;
+//   cf: number;
+//   pastdue_amount: number;
+//   mo_amort: number;  
+//   writeoff_balance: number;
+//   overall_balance: number;
+//   mo_balance: number;
+  
+// };
 
 const CREATE_CUSTOMER = gql`
   mutation createCustomer(
@@ -192,17 +193,17 @@ const Uploader: React.FC<modalProps> = ({
             contact: [],
             email: [],
             address: [],
-            principal_os: Number(principal_os) || Number(total_os),
+            principal_os: isNaN(principal_os) ? 0 : Number(principal_os) || Number(total_os),
             writeoff_balance: Number(writeoff_balance) || 0,
             mo_amort: Number(mo_amort) || 0,
             cf: Number(cf) || 0,
             pastdue_amount: Number(pastdue_amount) || 0,
-            interest_os: Number(interest_os) || 0,
-            admin_fee_os: Number(admin_fee_os) || 0,
-            txn_fee_os: Number(txn_fee_os) || 0,
-            late_charge_os: Number(late_charge_os) || 0,
-            penalty_interest_os: Number(penalty_interest_os) || 0,
-            dst_fee_os: Number(dst_fee_os) || 0,
+            interest_os: isNaN(interest_os) ? 0 :  Number(interest_os) || 0,
+            admin_fee_os: isNaN(admin_fee_os) ? 0 : Number(admin_fee_os) || 0,
+            txn_fee_os: isNaN(txn_fee_os) ? 0 : Number(txn_fee_os) || 0,
+            late_charge_os: isNaN(late_charge_os) ? 0 : Number(late_charge_os) || 0,
+            penalty_interest_os: isNaN(penalty_interest_os) ? 0 : Number(penalty_interest_os) || 0,
+            dst_fee_os: isNaN(dst_fee_os) ? 0 : Number(dst_fee_os) || 0,
             balance: Number(balance) || Number(total_os),
             total_os: Number(total_os),
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
@@ -317,6 +318,7 @@ const Uploader: React.FC<modalProps> = ({
       };
       reader.readAsBinaryString(file);
     } catch (error) {
+      console.log(error)
       dispatch(setServerError(true));
     }
   }, []);

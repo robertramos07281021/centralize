@@ -81,10 +81,13 @@ const AgentReport = () => {
         <h1 className="px-5 py-3 uppercase  text-2xl font-black text-gray-800">
           Report
         </h1>
-        <div className="flex justify-center gap-2">
-          <div className="  h-10 w-2/12 max-w-3/12 relative" ref={modalRef}>
+        <div className="flex flex-col lg:flex-row items-center justify-center gap-2">
+          <div
+            className="  h-10 w-full lg:w-auto justify-center items-center flex  relative"
+            ref={modalRef}
+          >
             <motion.div
-              className="h-full border-2 border-slate-500 rounded-md flex items-center px-2 cursor-default"
+              className="h-full border-2 text-center justify-center  border-slate-500 rounded-md flex items-center px-2 cursor-default"
               onClick={onClickPopUpDispoType}
               title={selectedDispoAgent
                 .map((e) => dispotypeObject[e])
@@ -97,13 +100,15 @@ const AgentReport = () => {
                   {selectedDispoAgent.map((e) => dispotypeObject[e]).join(", ")}
                 </div>
               ) : (
-                <div className="w-full  text-sm">Disposition Types Filter</div>
+                <div className="w-full  text-sm whitespace-nowrap">
+                  Disposition Types Filter
+                </div>
               )}
               <IoMdArrowDropdown className="text-2xl" />
             </motion.div>
             {popUpDispo && (
               <div className="w-full h-96 overflow-y-auto border absolute top-10 bg-white left-0 flex flex-col p-2 border-slate-300 shadow-lg shadow-black/30">
-                <label className="flex gap-2 px-2 py-1.5 text-sm">
+                <label className="flex gap-2  text-sm">
                   <input
                     type="checkbox"
                     name="all"
@@ -128,7 +133,7 @@ const AgentReport = () => {
                 {dispotypeData?.getDispositionTypes.map((dispotype) => (
                   <label
                     key={dispotype.id}
-                    className="flex gap-2 px-2 py-1.5 text-sm"
+                    className="flex gap-2 text-sm"
                   >
                     <input
                       type="checkbox"
@@ -147,14 +152,14 @@ const AgentReport = () => {
               </div>
             )}
           </div>
-          <div className="flex flex-col lg:flex-row gap-5 items-center">
+          <div className="flex flex-col lg:flex-row gap-2 lg:gap-5 lg:justify-center lg:items-center items-end">
             <motion.label
-              className="flex gap-2 ml-5 items-center"
+              className="flex gap-2 lg:ml-5 items-center"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
             >
-              <span className="font-black uppercase">From :</span>
+              <span className="font-black uppercase whitespace-nowrap">From :</span>
               <input
                 type="date"
                 name="from"
@@ -164,19 +169,21 @@ const AgentReport = () => {
               />
             </motion.label>
             <motion.label
-              className="flex gap-2 ml-2 items-center"
+              className="flex gap-2 lg:ml-2 items-center justify-between w-full"
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.2 }}
             >
-              <span className="font-black uppercase">To :</span>
-              <input
-                type="date"
-                name="to"
-                id="to"
-                onChange={(e) => setDate({ ...date, to: e.target.value })}
-                className="border-2 border-slate-500 text-base px-2 py-1 rounded-md w-60"
-              />
+              <div className="font-black uppercase">To :</div>
+              <div>
+                <input
+                  type="date"
+                  name="to"
+                  id="to"
+                  onChange={(e) => setDate({ ...date, to: e.target.value })}
+                  className="border-2 border-slate-500 text-base px-2 py-1 rounded-md w-60"
+                />
+              </div>
             </motion.label>
             <motion.button
               initial={{ y: 20, opacity: 0 }}

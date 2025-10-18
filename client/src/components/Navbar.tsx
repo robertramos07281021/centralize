@@ -460,44 +460,45 @@ const Navbar = () => {
                             Breaks
                           </h1>
                           <AnimatePresence>
-
-
-                          {popUpBreak && (
-                            <motion.div className="absolute -left-[200px] shadow-md border-blue-800  border-2 rounded-xl w-auto bg-white h-auto flex flex-col -top-1 p-2"
-                              initial={{x: 20, opacity: 0}}
-                              animate={{x: 0, opacity: 1}}
-                              exit={{x: 20, opacity: 0}}
-                            >
-                              {breaks.map((e, index) => (
-                                <label
-                                  className={`pl-2 hover:bg-blue-300 rounded-md cursor-pointer duration-200 py-2 ease-in-out ${
-                                    index === 0 ? "rounded-t-lg" : ""
-                                  } ${
-                                    index === breaks.length - 1
-                                      ? "rounded-b-lg"
-                                      : ""
-                                  } flex items-center gap-2`}
-                                  key={index}
-                                >
-                                  <input
-                                    type="radio"
-                                    name="break"
-                                    id={e.value}
-                                    value={
-                                      BreakEnum[
-                                        e.value as keyof typeof BreakEnum
-                                      ]
-                                    }
-                                    onChange={(e) =>
-                                      onClickBreakSelection(e.target.value, e)
-                                    }
-                                    checked={breakValue === BreakEnum[e.value]}
-                                  />
-                                  <span>{e.name}</span>
-                                </label>
-                              ))}
-                            </motion.div>
-                          )}
+                            {popUpBreak && (
+                              <motion.div
+                                className="absolute -left-[180px]  shadow-md border-blue-800  border-2 rounded-xl w-auto bg-white h-auto flex flex-col -top-1 "
+                                initial={{ x: 20, opacity: 0 }}
+                                animate={{ x: 0, opacity: 1 }}
+                                exit={{ x: 20, opacity: 0 }}
+                              >
+                                {breaks.map((e, index) => (
+                                  <label
+                                    className={`pl-2 hover:bg-blue-200 border-b border-gray-200 odd:bg-gray-100  pr-2 cursor-pointer duration-200 py-2 ease-in-out ${
+                                      index === 0 ? "rounded-t-xl" : ""
+                                    } ${
+                                      index === breaks.length - 1
+                                        ? "rounded-b-xl"
+                                        : ""
+                                    } flex items-center gap-2`}
+                                    key={index}
+                                  >
+                                    <input
+                                      type="radio"
+                                      name="break"
+                                      id={e.value}
+                                      value={
+                                        BreakEnum[
+                                          e.value as keyof typeof BreakEnum
+                                        ]
+                                      }
+                                      onChange={(e) =>
+                                        onClickBreakSelection(e.target.value, e)
+                                      }
+                                      checked={
+                                        breakValue === BreakEnum[e.value]
+                                      }
+                                    />
+                                    <span>{e.name}</span>
+                                  </label>
+                                ))}
+                              </motion.div>
+                            )}
                           </AnimatePresence>
                         </div>
                       )}

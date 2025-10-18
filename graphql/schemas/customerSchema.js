@@ -42,6 +42,7 @@ const customerTypeDefs = gql`
     mo_balance: Float
     pastdue_amount: Float
     mo_amort: Float
+    branch: String
   }
 
   type CustomerInfo {

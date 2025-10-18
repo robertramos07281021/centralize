@@ -72,6 +72,11 @@ const customerAccountSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    features: {
+      branch: {
+        type: String
+      }
+    },
     account_update_history: [
       {
         principal_os: {

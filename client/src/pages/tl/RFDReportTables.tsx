@@ -21,7 +21,7 @@ const RFDReportTables: React.FC<ComponentProp> = ({ RFD }) => {
         </div>
       </div>
       <div className="text-center">
-        <div className=" font-black uppercase items-center justify-center text-black border-x border-blue-800  grid grid-cols-3 bg-blue-400">
+        <div className=" text-[10px] md:text-sm font-semibold md:font-black border-b uppercase items-center justify-center text-black border-x border-blue-800  grid grid-cols-3 bg-blue-400">
           <div className="border-r border-blue-800 items-center flex justify-center h-full">
             Reason For Delay
           </div>
@@ -41,7 +41,7 @@ const RFDReportTables: React.FC<ComponentProp> = ({ RFD }) => {
             x._id && (
               <div
                 key={index}
-                className="font-black uppercase border-x border-blue-800 border-y grid bg-blue-300 text-black grid-cols-3 text-center"
+                className=" text-[10px] md:text-sm font-semibold md:font-black uppercase border-x border-blue-800 border-b grid bg-blue-300 text-black grid-cols-3 text-center"
               >
                 <div className="border-r border-blue-800 items-center flex justify-center h-full">{x._id}</div>
                 <div className="border-r border-blue-800 items-center flex justify-center h-full">{x.count}</div>
@@ -52,7 +52,7 @@ const RFDReportTables: React.FC<ComponentProp> = ({ RFD }) => {
             )
           );
         })}
-        <div className={`" border-t grid grid-cols-3 border-x border-b border-blue-800 rounded-b-md  bg-blue-200 font-black uppercase "`}>
+        <div className={`" grid grid-cols-3 border-x border-b border-blue-800 rounded-b-md text-[10px] md:text-sm font-semibold md:font-black  bg-blue-200 uppercase "`}>
           <div className="border-r text-green-700 text-shadow-sm border-blue-800 items-center flex justify-center h-full">
             Total
           </div>

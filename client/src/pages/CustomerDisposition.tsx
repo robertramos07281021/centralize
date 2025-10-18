@@ -411,7 +411,7 @@ const FieldListDisplay = memo(
         <div className="flex flex-col gap-2">
           {isEmpty ? (
             <div
-              className={`w-full border border-gray-300 ${fallbackHeight}  rounded-lg bg-gray-50 text-slate-500 text-wrap`}
+              className={`w-full border-2 border-gray-600 ${fallbackHeight}  rounded-lg bg-gray-50 text-slate-500 text-wrap`}
             />
           ) : (
             values.map((val, index) => (
@@ -419,7 +419,7 @@ const FieldListDisplay = memo(
                 key={index}
                 className={`w-full ${
                   label.toLowerCase() === "address" ? "min-h-36" : ""
-                } border border-gray-300 p-2.5 rounded-lg bg-gray-50 text-slate-500 flex flex-wrap`}
+                }  border-gray-300 p-2.5 rounded-lg bg-gray-50 text-slate-500 flex flex-wrap`}
               >
                 {val}
               </div>
@@ -446,7 +446,7 @@ const FieldDisplay = memo(
       <div
         className={`${
           value ? "p-2.5" : "p-5"
-        } w-full border border-gray-300 rounded-lg  bg-gray-50 text-slate-500 text-wrap`}
+        } w-full border-2 border-gray-600 rounded-lg  bg-gray-50 text-slate-500 text-wrap`}
       >
         {value}
       </div>
@@ -713,6 +713,7 @@ const CustomerDisposition = () => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ duration: 1, type: "spring" }}
+            layout
           >
             <h1 className="text-center uppercase  font-black text-slate-600 text-2xl mb-4">
               Customer Information
@@ -720,7 +721,7 @@ const CustomerDisposition = () => {
             <div
               className={`" ${
                 selectedCustomer ? "w-full px-5" : "w-full px-5"
-              } border bg-gray-100 transition-all flex flex-col shadow-md shadow-black/20 rounded-xl justify-center items-center  border-slate-400 h-full py-10 relative "`}
+              } border-2 bg-gray-100 transition-all flex flex-col shadow-md shadow-black/20 rounded-xl justify-center items-center  border-gray-600 h-full py-10 relative "`}
             >
               <div
                 className={`flex w-full ${
@@ -755,12 +756,12 @@ const CustomerDisposition = () => {
                     onChange={(e) => handleSearchChange(e.target.value)}
                     id="search"
                     placeholder="Search"
-                    className=" w-full p-2 text-sm text-gray-900 border border-gray-300 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
+                    className=" w-full p-2 text-sm text-gray-900 border-2 border-gray-600 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
                   />
                   <div
                     className={`${
                       length > 0 && search ? "" : "hidden"
-                    } absolute max-h-96 border border-slate-400 w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-md top-10`}
+                    } absolute max-h-96 border-2 border-gray-600 w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-md top-10`}
                   >
                     <SearchResult
                       data={searchData?.search || []}

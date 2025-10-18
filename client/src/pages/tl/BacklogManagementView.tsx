@@ -224,19 +224,19 @@ const BacklogManagementView = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
         >
-          <h1 className="text-2xl text-slate-700 text-center font-black uppercase py-2">
+          <h1 className=" text-sm md:text-2xl text-slate-700 text-center font-black uppercase md:py-2">
             Select Report
           </h1>
-          <div className="p-5 flex flex-col gap-2 justify-center">
+          <div className="p-5 flex  flex-col gap-2 justify-center">
             {yourBucket && (
               <div
-                className="grid grid-cols-4 select-none cursor-default"
+                className="flex select-none  flex-col md:flex-row cursor-default"
                 ref={bucketRef}
               >
-                <div className="flex font-black uppercase items-center text-sm text-slate-500">
+                <div className="flex  font-black mr-2 uppercase items-center text-sm text-slate-500">
                   Bucket:
                 </div>
-                <div className="col-span-3 shadow-sm relative border flex items-center border-slate-400 rounded-md">
+                <div className="col-span-3 w-full shadow-sm relative border flex items-center border-slate-400 rounded-md">
                   <input
                     type="text"
                     name="search_bucket"
@@ -287,14 +287,14 @@ const BacklogManagementView = () => {
               </div>
             )}
 
-            <label className="grid grid-cols-4 relative items-center">
-              <div className="flex font-black uppercase items-center text-sm text-slate-500">
+            <label className="flex mr-2 w-full  flex-col md:flex-row relative items-start md:items-center">
+              <div className="flex font-black mr-2 uppercase text-left text-sm text-slate-500">
                 Callfile:
               </div>
               <select
                 name="callfile"
                 id="callfile"
-                className="col-span-3 relative shadow-sm border flex items-center border-slate-400 rounded-md px-2 py-2 lg:text-xs 2xl:text-sm font-medium text-slate-500"
+                className=" w-full shadow-sm border flex items-center border-slate-400 rounded-md px-2 py-2 lg:text-xs 2xl:text-sm font-medium text-slate-500"
                 value={selectedCallfile}
                 onChange={(e) => {
                   setSelectedCallfile(e.target.value);
@@ -314,11 +314,11 @@ const BacklogManagementView = () => {
               </select>
             </label>
 
-            <div className="grid grid-cols-4 relative" ref={userRef}>
-              <div className="flex font-black uppercase items-center text-sm text-slate-500">
+            <div className="flex  flex-col md:flex-row relative" ref={userRef}>
+              <div className="flex font-black mr-2 uppercase items-center text-sm text-slate-500">
                 Agent:
               </div>
-              <div className="col-span-3 shadow-sm relative border flex items-center border-slate-400 rounded-md">
+              <div className="col-span-3 shadow-sm w-full relative border flex items-center border-slate-400 rounded-md">
                 <input
                   type="text"
                   name="search_agent"
@@ -373,7 +373,7 @@ const BacklogManagementView = () => {
               <div className="flex font-black uppercase items-center text-sm text-slate-500 py-2 text-center justify-center">
                 Disposition
               </div>
-              <div className="grid grid-cols-2 md:grid-cols-2  max-h-50 items-center text-slate-500 gap-y-2 border-slate-400 rounded-sm shadow-sm p-2 justify-center border overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2  max-h-50 items-center text-slate-500 gap-y-2 border-slate-400 rounded-sm shadow-sm p-2 justify-center border overflow-y-auto">
                 {disposition?.getDispositionTypes?.map((dispoTypes) => (
                   <label
                     key={dispoTypes.id}
@@ -419,7 +419,7 @@ const BacklogManagementView = () => {
               </div>
             </div>
             <div className="flex flex-col gap-2 mt-3">
-              <label className="flex text-sm">
+              <label className="flex  flex-col lg:flex-row text-sm">
                 <div className="flex items-center uppercase mr-2 whitespace-nowrap font-black  text-slate-500">
                   Date From :
                 </div>
@@ -436,7 +436,7 @@ const BacklogManagementView = () => {
                   />
                 </div>
               </label>
-              <label className="flex text-sm">
+              <label className="flex flex-col lg:flex-row text-sm">
                 <div className="mr-2 flex items-center uppercase whitespace-nowrap font-black text-slate-500">
                   Date To :
                 </div>
@@ -454,7 +454,7 @@ const BacklogManagementView = () => {
                 </div>
               </label>
             </div>
-            <h1 className="lg:text-xs 2xl:text-sm text-slate-600">
+            <h1 className="text-xs 2xl:text-sm text-slate-600">
               <span className=" font-medium">Note: </span>Report can be
               generated by Daily, Weekly and Monthly
             </h1>

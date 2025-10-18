@@ -46,25 +46,25 @@ const ReportsTables: React.FC<ComponentProp> = ({
           {firstTitle}
         </div>
         <div className="text-center grid grid-rows-2 w-full">
-          <div className="grid grid-cols-2 items-center border-x border-indigo-700 uppercase bg-indigo-400 w-full">
+          <div className="grid grid-cols-2 items-center border-x  text-[10px] md:text-sm font-semibold md:font-black border-indigo-700 uppercase bg-indigo-400 w-full">
             <div
               className={`w-full border-r border-indigo-700 py-1 h-full
-               font-black`}
+               `}
             >
               Response Count
             </div>
             <div
-              className={`w-full font-black  
+              className={`w-full  
               `}
             >
               Not Responded
             </div>
           </div>
-          <div className="grid grid-cols-2 bg-indigo-300 border-y rounded-b-md items-center border-b border-indigo-700 border-x">
-            <div className="h-full items-center flex justify-center border-r border-indigo-700 font-black">
+          <div className="grid grid-cols-2 bg-indigo-300 border-y rounded-b-md items-center  text-[10px] md:text-sm font-semibold md:font-black border-b border-indigo-700 border-x">
+            <div className="h-full items-center flex justify-center border-r border-indigo-700 ">
               {totalCount}
             </div>
-            <div className=" font-black">
+            <div className="">
               {totalAccounts - Number(totalCount)}
             </div>
           </div>
@@ -84,12 +84,12 @@ const ReportsTables: React.FC<ComponentProp> = ({
           </div>
         </div>
         <div className="w-full" >
-          <div className="text-black font-black items-center justify-center text-center bg-indigo-400 border-x border-indigo-700 text-xs px-3 uppercase grid grid-cols-5 w-full ">
+          <div className="text-black border-b text-[10px] md:text-sm font-semibold md:font-black items-center justify-center text-center bg-indigo-400 border-x border-indigo-700 text-xs px-3 uppercase grid grid-cols-5 w-full ">
             <div className="border-r h-full items-center flex justify-center border-indigo-700">Disposition</div>
             <div className="border-r h-full items-center flex justify-center border-indigo-700">Count</div>
             <div className="truncate border-r h-full items-center flex justify-center border-indigo-700" title="Count Percentage">Count Percentage</div>
             <div className="truncate border-r h-full items-center flex justify-center  border-indigo-700" title="Total Principal" >Total Principal</div>
-            <div className="truncate py-2 text-center" title="Principal Percentage" >Principal Percentage</div>
+            <div className="truncate py-2 text-center px-2" title="Principal Percentage" >Principal Percentage</div>
           </div>
           {sortedDispo.map((x, index) => {
             const totalAmount =
@@ -97,7 +97,7 @@ const ReportsTables: React.FC<ComponentProp> = ({
                 sortedDispo.map((x) => x.amount).reduce((t, v) => t + v)) *
               100;
             return (
-              <div key={index} className="text-center font-black border-y text-xs bg-indigo-200 px-3 border-x border-indigo-700 grid grid-cols-5 ">
+              <div key={index} className="text-center text-[10px] md:text-sm font-semibold md:font-black border-b text-xs bg-indigo-200 px-3 border-x border-indigo-700 grid grid-cols-5 ">
                 <div className="border-r h-full items-center flex justify-center border-indigo-700">{x.name}</div>
                 <div className="border-r h-full items-center flex justify-center border-indigo-700">{x.count}</div>
                 <div className="border-r h-full items-center flex justify-center border-indigo-700">
@@ -115,7 +115,7 @@ const ReportsTables: React.FC<ComponentProp> = ({
               </div>
             );
           })}
-          <div className="text-center font-black text-xs border-x border-b border-indigo-700 rounded-b-md uppercase items-center  justify-center px-3 bg-indigo-100 grid grid-cols-5">
+          <div className="text-center text-[10px] md:text-sm font-semibold md:font-black border-x border-b border-indigo-700 rounded-b-md uppercase items-center  justify-center px-3 bg-indigo-100 grid grid-cols-5">
             <div className="border-r text-green-700 text-shadow-2xs h-full items-center flex justify-center border-indigo-700">
               Total
             </div>

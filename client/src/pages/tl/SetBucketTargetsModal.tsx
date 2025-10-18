@@ -7,14 +7,14 @@ import { setServerError, setSuccess } from "../../redux/slices/authSlice"
 const BUCKETS = gql`
   query GetTLBucket {
     getTLBucket {
-      id
+      _id
       name
     }
   }
 `
 
 type Bucket = {
-  id: string
+  _id: string
   name: string
 }
 
@@ -60,7 +60,7 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
 
   useEffect(()=> {
     if(!length && data) {
-      setBucket(data?.getTLBucket[0].id)
+      setBucket(data?.getTLBucket[0]._id)
     }
   },[length,data])
   useEffect(()=> {
@@ -68,11 +68,12 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
       try {
         await tlBucketRefetch()
       } catch (error) {
-        dispatch(setServerError(true))
+        console.log(error)
+        // dispatch(setServerError(true))
       }
     })
     return ()=> clearTimeout(timer)
-  },[tlBucketRefetch])
+  },[])
 
 
   const [required, setRequired] = useState<boolean>(false)
@@ -85,7 +86,7 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
 
   const handleSuccess = useCallback(async()=> {
     if(bucket) {
-      await setBucketTargets({variables: {bucketId: length ? bucket : data?.getTLBucket[0].id , targets}})
+      await setBucketTargets({variables: {bucketId: length ? bucket : data?.getTLBucket[0]._id , targets}})
       setRequired(false)
     } else {
       setRequired(true)
@@ -106,7 +107,7 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
                 id="bucket" 
                 onChange={(e)=> {
                   const selected = data?.getTLBucket.find((y)=> y.name === e.target.value)
-                  setBucket(selected?.id || "")
+                  setBucket(selected?._id || "")
                 }}
                 className={`border ${required && !bucket ? "border-red-500 bg-red-50 text-red-500" : " border-slate-500"} w-full rounded-md  px-2 py-1 text-gray-500 outline-none`}>
                 {
@@ -115,7 +116,7 @@ const SetBucketTargetsModal:React.FC<Modal> = ({cancel, refetch}) => {
                 }
                 {
                   data?.getTLBucket.map((e)=> 
-                    <option key={e.id} id={e.name} value={e.name}>{e.name}</option>
+                    <option key={e._id} id={e.name} value={e.name}>{e.name}</option>
                   )
                 }
               </select>

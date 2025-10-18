@@ -18,7 +18,18 @@ import Wrapper from "../../components/Wrapper.tsx";
 import Navbar from "../../components/Navbar.tsx";
 import NavbarExtn from "../../components/NavbarExtn.tsx";
 import animationData from "../../Animations/_Dancing_ dog.json";
+import clinic from "../../Animations/3D Doctor Dancing.json";
+import coffee from "../../Animations/Coffee Time.json";
 import Lottie from "lottie-react";
+import cr from "../../Animations/pepe poo poo.json";
+import nego from "../../Animations/nego.json"
+import technical from "../../Animations/No Connection.json"
+import eating from "../../Animations/Couple eating.json"
+import meeting from "../../Animations/Meeting.json"
+import skiptracing from "../../Animations/searching for profile.json"
+import hrmeeting from "../../Animations/Business Meeting Animation.json"
+import coaching from "../../Animations/Online Teaching.json"
+import welcome from "../../Animations/Welcome.json"
 
 type UpdateProduction = {
   message: string;
@@ -97,7 +108,8 @@ const BreakView = () => {
     }
   );
 
-  const OnSubmit = async () => {
+  const OnSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
     if (password) {
       await loginToProd({ variables: { password: password } });
     } else {
@@ -120,17 +132,17 @@ const BreakView = () => {
 
   const content = breaks.find((e) => e.value === breakValue);
 
-  const images: { [key: string]: string } = {
-    LUNCH: "/lunchIcon.png",
-    COFFEE: "/coffeeIcon.png",
-    MEETING: "/meetingIcon.png",
-    TECHSUPP: "/techSuppIcon.png",
-    CRBREAK: "/crBreakIcon.png",
-    COACHING: "/coachingIcon.png",
-    HRMEETING: "/hrMeetingIcon.png",
-    HANDSETNEGO: "/handsetNegoIcon.png",
-    SKIPTRACING: "skipTracingIcon.png",
-    CLINIC: "/clinicIcon.png",
+  const images: Record<string, string | object> = {
+    LUNCH: eating,
+    COFFEE: coffee,
+    MEETING: meeting,
+    TECHSUPP: technical,
+    CRBREAK: cr,
+    COACHING: coaching,
+    HRMEETING: hrmeeting,
+    HANDSETNEGO: nego,
+    SKIPTRACING: skiptracing,
+    CLINIC: clinic,
     WELCOME: "/welcomeIcon.png",
   };
 
@@ -170,6 +182,8 @@ const BreakView = () => {
     }
   };
 
+  const currentMedia = images[breakValue];
+
   return userLogged && ["AGENT", "QA"].includes(userLogged?.type) ? (
     <Wrapper>
       <Navbar />
@@ -181,18 +195,33 @@ const BreakView = () => {
         <div className="flex h-full w-full flex-col items-center justify-center">
           {breakValue !== BreakEnum.WELCOME && (
             <>
-              <img
+              {/* <img
                 src={images[breakValue]}
                 alt={`${content?.name} icon`}
                 className="w-80 animate-[bounce_20s_ease-in-out_infinite]"
-              />
+              /> */}
+
+              {typeof currentMedia === "string" ? (
+                <img
+                  src={currentMedia}
+                  alt={`${content?.name} icon`}
+                  className="w-80 animate-[bounce_20s_ease-in-out_infinite]"
+                />
+              ) : (
+                <Lottie
+                  animationData={currentMedia}
+                  className="w-96"
+                  loop
+                  autoplay
+                />
+              )}
               <h1 className="text-2xl font-bold text-gray-500 ">
                 {formatTime(breakTimer)}
               </h1>
-              <h1 className="text-5xl font-bold text-gray-600 text-shadow-sm text-shadow-black">
+              <h1 className="text-5xl font-black uppercase text-gray-600 text-shadow-sm ">
                 {content?.name}
               </h1>
-              <div className="mt-10 flex flex-col gap-2">
+              <div className="mt-2 flex flex-col gap-2">
                 {incorrect && (
                   <h1 className="text-sm text-red-500 text-center">
                     Password is incorrect
@@ -203,33 +232,38 @@ const BreakView = () => {
                     Password is required
                   </h1>
                 )}
-                <div className="border-2 flex items-center rounded-md border-slate-500">
-                  <input
-                    type={`${eye ? "text" : "password"}`}
-                    name="password"
-                    id="password"
-                    autoComplete="off"
-                    className="text-sm py-1 outline-0 px-2 w-65"
-                    placeholder="Enter your password"
-                    onChange={(e) => setPassword(e.target.value)}
-                  />
-                  {eye ? (
-                    <div className="px-2" onClick={() => setEye(false)}>
-                      <FaEyeSlash className=" top-9.5 text-xl" />
-                    </div>
-                  ) : (
-                    <div className="px-2" onClick={() => setEye(true)}>
-                      <FaEye className=" top-9.5 text-xl " />
-                    </div>
-                  )}
-                </div>
+                <form
+                  onSubmit={OnSubmit}
+                  className="text-center flex jutify-center flex-col"
+                >
+                  <div className="border-2 py-1 flex items-center rounded-sm border-slate-500">
+                    <input
+                      type={`${eye ? "text" : "password"}`}
+                      name="password"
+                      id="password"
+                      autoComplete="off"
+                      className="text-sm py-1 outline-0 px-2 w-65"
+                      placeholder="Enter your password"
+                      onChange={(e) => setPassword(e.target.value)}
+                    />
+                    {eye ? (
+                      <div className="px-2" onClick={() => setEye(false)}>
+                        <FaEyeSlash className=" top-9.5 text-xl" />
+                      </div>
+                    ) : (
+                      <div className="px-2" onClick={() => setEye(true)}>
+                        <FaEye className=" top-9.5 text-xl " />
+                      </div>
+                    )}
+                  </div>
+                  <button
+                    type="submit"
+                    className=" border-2 border-blue-800 py-2 shadow-md  hover:shadow-none cursor-pointer mt-2 bg-blue-500 hover:bg-blue-600 transition-all rounded px-10 text-white font-bold active:ring-8 ring-blue-200"
+                  >
+                    Login
+                  </button>
+                </form>
               </div>
-              <button
-                onClick={OnSubmit}
-                className="py-2 mt-5 bg-blue-700 rounded px-10 text-white font-bold active:ring-8 hover:scale-110 ring-blue-200"
-              >
-                Login
-              </button>
             </>
           )}
           {breakValue === BreakEnum.WELCOME && (
@@ -246,12 +280,10 @@ const BreakView = () => {
                   Let's hit those goals!
                 </h1>
               </div>
-              <div className=" flex flex-col items-center">
+              <form className=" flex flex-col items-center">
                 {/* <img src={images[breakValue]} alt="Welcome Icon" className="w-80 animate-[bounce_20s_ease-in-out_infinite]" /> */}
-                <div className="max-w-96" >
-
-                <Lottie animationData={animationData} loop={true} />
-
+                <div className="max-w-96">
+                  <Lottie animationData={animationData} loop={true} />
                 </div>
 
                 <button
@@ -260,7 +292,7 @@ const BreakView = () => {
                 >
                   Start
                 </button>
-              </div>
+              </form>
             </div>
           )}
         </div>

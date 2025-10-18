@@ -1,8 +1,6 @@
 import { useMutation, useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { useCallback, useEffect, useState } from "react";
-import { useAppDispatch } from "../../redux/store";
-import { setServerError } from "../../redux/slices/authSlice";
 import { motion, AnimatePresence } from "framer-motion";
 
 type Props = {
@@ -42,7 +40,6 @@ const SetTargetsModal: React.FC<Props> = ({
   cancel,
   success,
 }) => {
-  const dispatch = useAppDispatch();
   const { data: agentData, refetch } = useQuery<{
     getUser: { targets: Target };
   }>(AGENT, { variables: { id: agentToUpdate } });
@@ -54,23 +51,19 @@ const SetTargetsModal: React.FC<Props> = ({
   });
 
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      try {
-        await refetch();
-      } catch (error) {
-        dispatch(setServerError(true));
-      }
-    });
+    const timer = async () => {
+      await refetch();
+    };
 
-    return () => clearTimeout(timer);
-  }, [refetch]);
+    timer();
+  }, []);
 
   useEffect(() => {
     if (agentData?.getUser?.targets) {
       setTarget({
-        daily: agentData?.getUser.targets.daily?.toString() || "0",
-        weekly: agentData?.getUser.targets.weekly.toString() || "0",
-        monthly: agentData?.getUser.targets.monthly.toString() || "0",
+        daily: agentData?.getUser?.targets?.daily?.toString() || "0",
+        weekly: agentData?.getUser?.targets?.weekly.toString() || "0",
+        monthly: agentData?.getUser?.targets?.monthly.toString() || "0",
       });
     }
   }, [agentData]);
