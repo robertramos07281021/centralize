@@ -129,11 +129,11 @@ const OFFLINE_USER = gql`
   }
 `;
 
-const CHECK_USER_ONLINE_ON_VICI = gql`
-  query checkUserIsOnlineOnVici {
-    checkUserIsOnlineOnVici
-  }
-`;
+// const CHECK_USER_ONLINE_ON_VICI = gql`
+//   query checkUserIsOnlineOnVici {
+//     checkUserIsOnlineOnVici
+//   }
+// `;
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -147,20 +147,20 @@ const Navbar = () => {
   });
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
 
-  const { data: userIsOnlineOnVici } = useQuery<{
-    checkUserIsOnlineOnVici: boolean;
-  }>(CHECK_USER_ONLINE_ON_VICI, {
-    notifyOnNetworkStatusChange: true,
-    skip:
-      userLogged?.type !== "AGENT" && !location.pathname.includes("/agent-cip"),
-    pollInterval: 3000
-  });
+  // const { data: userIsOnlineOnVici } = useQuery<{
+  //   checkUserIsOnlineOnVici: boolean;
+  // }>(CHECK_USER_ONLINE_ON_VICI, {
+  //   notifyOnNetworkStatusChange: true,
+  //   skip:
+  //     userLogged?.type !== "AGENT" && !location.pathname.includes("/agent-cip"),
+  //   pollInterval: 3000
+  // });
 
-  useEffect(() => {
-    if (userIsOnlineOnVici) {
-      dispatch(setIsOnlineOnVici(userIsOnlineOnVici?.checkUserIsOnlineOnVici));
-    }
-  }, [userIsOnlineOnVici]);
+  // useEffect(() => {
+  //   if (userIsOnlineOnVici) {
+  //     dispatch(setIsOnlineOnVici(userIsOnlineOnVici?.checkUserIsOnlineOnVici));
+  //   }
+  // }, [userIsOnlineOnVici]);
 
   const [deselectTask] = useMutation(DESELECT_TASK, {
     onCompleted: () => {

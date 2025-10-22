@@ -696,7 +696,7 @@ const CustomerDisposition = () => {
 
   if (!userLogged) return <Navigate to="/" />;
 
-  if(!isOnlineOnVici && userLogged?.type === "AGENT") return <NeedToLoginVici/>
+  // if(!isOnlineOnVici && userLogged?.type === "AGENT") return <NeedToLoginVici/>
 
   return  (
     <div
