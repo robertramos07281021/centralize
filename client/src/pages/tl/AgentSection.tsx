@@ -3,7 +3,6 @@ import gql from "graphql-tag";
 import { useEffect, useMemo, useState } from "react";
 import { useAppDispatch } from "../../redux/store";
 import { setAgent } from "../../redux/slices/authSlice";
-import { motion } from "framer-motion";
 
 type Agent = {
   _id: string;
@@ -69,25 +68,9 @@ const AgentSection: React.FC<ComponentProps> = ({ bucket }) => {
     dispatch(setAgent(agentsNewObject[selectedAgent]));
   }, [selectedAgent, dispatch, agentsNewObject]);
 
-  const [dropdown, setDropdown] = useState(false);
 
   return (
     <div className="w-full flex justify-end items-center text-xs">
-      {/* <div className="flex flex-col  relative">
-        <div
-          className="px-5 rounded-md cursor-pointer bg-white z-20 border py-2"
-          onClick={() => setDropdown(true)}
-        >
-          Select Agent
-        </div>
-
-        <motion.div  className="bg-black z-10 w-full h-10 absolute " 
-          initial={{y: -10}}
-          animate={{y: dropdown ? 35 : 0}}
-        >
-          <div></div>
-        </motion.div>
-      </div> */}
 
       <select
         id="agent"

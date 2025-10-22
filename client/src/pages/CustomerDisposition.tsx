@@ -20,7 +20,13 @@ import Loading from "./Loading";
 import { IoRibbon } from "react-icons/io5";
 import Confirmation from "../components/Confirmation";
 import { debounce } from "lodash";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
+import Lottie from "lottie-react";
+import animationData from "../Animations/Spider.json";
+import pumpkin from "../Animations/Spooky Pumpkin.json";
+import phone from "../Animations/Phone Call.json"
+import NeedToLoginVici from "./agent/NeedToLoginVici.tsx";
+
 // import axios from "axios";
 
 const DESELECT_TASK = gql`
@@ -138,8 +144,7 @@ const PICK_RANDOM = gql`
       }
     }
   }
-`
-
+`;
 
 const SEARCH = gql`
   query Search($search: String) {
@@ -404,14 +409,14 @@ const FieldListDisplay = memo(
     const isEmpty = !values || values.length === 0;
 
     return (
-      <div className="2xl:w-1/2 w-full  lg:w-8/10 lg:text-xs text-[0.8rem] ">
+      <div className="w-full  lg:text-xs text-[0.8rem] ">
         <div className="font-bold text-slate-500 lg:text-sm text-[0.9rem] uppercase">
           {label}
         </div>
         <div className="flex flex-col gap-2">
           {isEmpty ? (
             <div
-              className={`w-full border-2 border-gray-600 ${fallbackHeight}  rounded-lg bg-gray-50 text-slate-500 text-wrap`}
+              className={`w-full border border-gray-600 ${fallbackHeight}  rounded-sm bg-gray-50 text-slate-500 text-wrap`}
             />
           ) : (
             values.map((val, index) => (
@@ -419,7 +424,7 @@ const FieldListDisplay = memo(
                 key={index}
                 className={`w-full ${
                   label.toLowerCase() === "address" ? "min-h-36" : ""
-                }  border-gray-300 p-2.5 rounded-lg bg-gray-50 text-slate-500 flex flex-wrap`}
+                }  border border-gray-600 p-2.5 rounded-lg bg-gray-50 text-slate-500 flex flex-wrap`}
               >
                 {val}
               </div>
@@ -439,14 +444,14 @@ const FieldDisplay = memo(
     label: string;
     value: string | number | null | undefined | [];
   }) => (
-    <div className="2xl:w-1/2 w-full lg:w-8/10 mt-1 lg:text-xs text-[0.8em] ">
+    <div className=" w-full  mt-1 lg:text-xs text-[0.8em] ">
       <div className="font-bold text-slate-500 uppercase lg:text-sm text-[0.9rem]">
         {label}
       </div>
       <div
         className={`${
           value ? "p-2.5" : "p-5"
-        } w-full border-2 border-gray-600 rounded-lg  bg-gray-50 text-slate-500 text-wrap`}
+        } w-full border border-gray-600 rounded-sm  bg-gray-50 text-slate-500 text-wrap`}
       >
         {value}
       </div>
@@ -455,10 +460,10 @@ const FieldDisplay = memo(
 );
 
 const CustomerDisposition = () => {
-  const { userLogged, selectedCustomer, breakValue } = useSelector(
+  const { userLogged, selectedCustomer, breakValue, isOnlineOnVici } = useSelector(
     (state: RootState) => state.auth
   );
-  const [randomCustomer, setRandomCustomer] = useState<any>(null);
+  const [randomCustomer, setRandomCustomer] = useState<Search | null>(null);
   const [floatDial, setFloatDial] = useState(true);
   const containerRef = useRef(null);
   const navigate = useNavigate();
@@ -503,6 +508,7 @@ const CustomerDisposition = () => {
     setSearch(val);
     debouncedSearch(val);
   };
+
 
   useEffect(() => {
     return () => {
@@ -578,9 +584,11 @@ const CustomerDisposition = () => {
       setIsRPCToday(false);
     }
   }, [selectedCustomer]);
-  
-  const {data:randomCustomerData} = useQuery<{randomCustomer:Search}>(PICK_RANDOM, {notifyOnNetworkStatusChange: true}) 
 
+  const { data: randomCustomerData } = useQuery<{ randomCustomer: Search }>(
+    PICK_RANDOM,
+    { notifyOnNetworkStatusChange: true }
+  );
 
   /// hello here Sample data for candom ====================================================
   // console.log(randomCustomerData?.randomCustomer)
@@ -686,184 +694,209 @@ const CustomerDisposition = () => {
 
   if (loading) return <Loading />;
 
-  if (!userLogged) {
-    return <Navigate to="/" />;
-  }
+  if (!userLogged) return <Navigate to="/" />;
 
-  return (
+  if(!isOnlineOnVici && userLogged?.type === "AGENT") return <NeedToLoginVici/>
+
+  return  (
     <div
       ref={containerRef}
-      className="h-screen w-full outline-none overflow-auto"
+      className={`h-full w-full overflow-auto outline-none flex flex-col gap-2`}
       onMouseDown={(e) => {
         if (!childrenDivRef.current?.divElement?.contains(e.target as Node)) {
           childrenDivRef?.current?.showButtonToFalse();
         }
       }}
     >
+
+      {/* <div className={`absolute w-60  top-0 left-10 z-0`}>
+        <Lottie animationData={animationData} loop={false} autoplay={true} />
+      </div>
+      <div className={`absolute w-96  top-0 left-[300px] z-0`}>
+        <Lottie animationData={animationData} loop={false} autoplay={true} />
+      </div>
+      <div className={`absolute w-52  top-0 left-[600px] z-0`}>
+        <Lottie animationData={animationData} loop={false} autoplay={true} />
+      </div>
+      <div className={`absolute w-72  top-0 left-[1000px]`}>
+        <Lottie animationData={animationData} loop={false} autoplay={true} />
+      </div>
+      <div className={`absolute w-60  top-0 left-[1300px]`}>
+        <Lottie animationData={animationData} loop={false} autoplay={true} />
+      </div>
+      <div className={`absolute w-80  top-0 left-[1600px] `}>
+        <Lottie animationData={animationData} loop={false} autoplay={true} />
+      </div> */}
+
       {(isRPCToday || isRPC) && <Confirmation {...modalProps} />}
 
-      <div className={`" ${!selectedCustomer && "pt-5"} w-full "`}>
-        <div className="flex">
-          {userLogged?.type === "AGENT" && <AgentTimer />}
-          <MyTaskSection />
-        </div>
-        <div className="w-full flex  flex-col lg:flex-row gap-5 px-5 pb-5 h-full items-center justify-center overflow-hidden ">
-          <motion.div
-            className="flex flex-col justify-center w-[83%] lg:w-[40%]"
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ duration: 1, type: "spring" }}
-            layout
+      <div className="flex w-full p-1.5">
+        {userLogged?.type === "AGENT" && <AgentTimer />}
+        <MyTaskSection />
+      </div>
+      
+      <div className="flex w-full items-center justify-center gap-5 py-5 ">
+        <motion.div
+          className="border bg-gray-100 w-full lg:w-2/3 2xl:w-1/3 transition-all flex flex-col shadow-md shadow-black/20 rounded-xl items-center border-gray-600 z-40"
+          initial={{ y: 20, opacity: 0 }}
+          animate={{ y: 0, opacity: 1 }}
+          transition={{ duration: 1, type: "spring" }}
+          layout
+        >
+
+
+
+ 
+          <h1 className="text-center px-10 w-full py-3 rounded-t-[9px] border-b bg-gray-400 uppercase font-black text-slate-600 text-2xl mb-1 ">
+            Customer Information
+          </h1>
+          <div
+            className={`flex  w-full ${
+              selectedCustomer?.customer_info.isRPC
+                ? "justify-start"
+                : "justify-end px-5 py-2"
+            } `}
           >
-            <h1 className="text-center uppercase  font-black text-slate-600 text-2xl mb-4">
-              Customer Information
-            </h1>
-            <div
-              className={`" ${
-                selectedCustomer ? "w-full px-5" : "w-full px-5"
-              } border-2 bg-gray-100 transition-all flex flex-col shadow-md shadow-black/20 rounded-xl justify-center items-center  border-gray-600 h-full py-10 relative "`}
-            >
-              <div
-                className={`flex w-full ${
-                  selectedCustomer?.customer_info.isRPC
-                    ? "justify-start"
-                    : "justify-end"
+            {selectedCustomer && !selectedCustomer?.customer_info.isRPC && (
+              <button
+                className={` px-10 py-1.5 rounded text-white font-black bg-orange-500 transition-all border-orange-700 border-2 shadow-md hover:shadow-none hover:bg-orange-600 cursor-pointer ${
+                  isUpdate ? "2xl:absolute top-5 right-5" : ""
                 } `}
+                onClick={handleClickRPC}
               >
-                {selectedCustomer && !selectedCustomer?.customer_info.isRPC && (
-                  <button
-                    className={` px-10 py-1.5 rounded text-white font-black bg-orange-500 transition-all border-orange-700 border-2 shadow-md hover:shadow-none hover:bg-orange-600 cursor-pointer ${
-                      isUpdate ? "2xl:absolute top-5 right-5" : ""
-                    } `}
-                    onClick={handleClickRPC}
-                  >
-                    RPC
-                  </button>
-                )}
-                {selectedCustomer?._id &&
-                  selectedCustomer?.customer_info?.isRPC && (
-                    <IoRibbon className=" text-5xl text-blue-500" />
-                  )}
-              </div>
-              {!selectedCustomer?._id && (
-                <div className="relative 2xl:w-1/2 w-full lg:w-8/10 flex justify-center">
-                  <input
-                    accessKey="z"
-                    type="text"
-                    name="search"
-                    autoComplete="off"
-                    value={search}
-                    onChange={(e) => handleSearchChange(e.target.value)}
-                    id="search"
-                    placeholder="Search"
-                    className=" w-full p-2 text-sm text-gray-900 border-2 border-gray-600 rounded-lg bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
+                RPC
+              </button>
+            )}
+            {selectedCustomer?._id &&
+              selectedCustomer?.customer_info?.isRPC && (
+                <IoRibbon className=" text-5xl text-blue-500" />
+              )}
+          </div>
+
+          <div className="px-5 flex flex-col w-full py-5">
+            {!selectedCustomer?._id && (
+              <div className="relative w-full flex justify-center">
+                <input
+                  accessKey="z"
+                  type="text"
+                  name="search"
+                  autoComplete="off"
+                  value={search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                  id="search"
+                  placeholder="Search"
+                  className=" w-full p-2 text-sm  text-gray-900 border border-gray-600 rounded-sm bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
+                />
+                <div
+                  className={`${
+                    length > 0 && search ? "" : "hidden"
+                  } absolute max-h-96 border border-gray-600 w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-sm top-10`}
+                >
+                  <SearchResult
+                    data={searchData?.search || []}
+                    search={search}
+                    onClick={onClickSearch}
                   />
-                  <div
-                    className={`${
-                      length > 0 && search ? "" : "hidden"
-                    } absolute max-h-96 border-2 border-gray-600 w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-md top-10`}
-                  >
-                    <SearchResult
-                      data={searchData?.search || []}
-                      search={search}
-                      onClick={onClickSearch}
-                    />
-                  </div>
                 </div>
-              )}
-              <FieldDisplay
-                label="Full Name"
-                value={
-                  (randomCustomer || selectedCustomer)?.customer_info?.fullName
+              </div>
+            )}
+            <FieldDisplay
+              label="Full Name"
+              value={
+                (randomCustomer || selectedCustomer)?.customer_info
+                  ?.fullName
+              }
+            />
+            <FieldDisplay
+              label="Date Of Birth (yyyy-mm-dd)"
+              value={selectedCustomer?.customer_info?.dob}
+            />
+            <FieldDisplay
+              label="Gender"
+              value={(() => {
+                if (gender === "f") {
+                  return "Female";
+                } else if (gender === "m") {
+                  return "Male";
+                } else if (gender === "o") {
+                  return "Other";
+                } else {
+                  return "";
                 }
-              />
-              <FieldDisplay
-                label="Date Of Birth (yyyy-mm-dd)"
-                value={selectedCustomer?.customer_info?.dob}
-              />
-              <FieldDisplay
-                label="Gender"
-                value={(() => {
-                  if (gender === "f") {
-                    return "Female";
-                  } else if (gender === "m") {
-                    return "Male";
-                  } else if (gender === "o") {
-                    return "Other";
-                  } else {
-                    return "";
-                  }
-                })()}
-              />
-              
-              <FieldListDisplay
-                label="Mobile No."
-                values={selectedCustomer?.customer_info?.contact_no}
-              />
-              <FieldListDisplay
-                label="Email"
-                values={selectedCustomer?.customer_info?.emails}
-                fallbackHeight="h-10"
-              />
-              <FieldListDisplay
-                label="Address"
-                values={selectedCustomer?.customer_info?.addresses}
-                fallbackHeight="h-36"
-              />
-              {selectedCustomer && selectedCustomer.emergency_contact && (
-                <div className="2xl:w-1/2 w-full lg:w-8/10 mt-1 ">
-                  <p className="font-bold text-slate-500 uppercase lg:text-sm text-[0.9rem]">
-                    Emergency Contact Person :
-                  </p>
-                  <div className="flex gap-2  flex-col lg:flex-row">
-                    <FieldDisplay
-                      label="Name"
-                      value={selectedCustomer.emergency_contact.name}
-                    />
-                    <FieldDisplay
-                      label="Contact"
-                      value={selectedCustomer.emergency_contact.mobile}
-                    />
-                  </div>
+              })()}
+            />
+
+            <FieldListDisplay
+              label="Mobile No."
+              values={selectedCustomer?.customer_info?.contact_no}
+            />
+            <FieldListDisplay
+              label="Email"
+              values={selectedCustomer?.customer_info?.emails}
+              fallbackHeight="h-10"
+            />
+            <FieldListDisplay
+              label="Address"
+              values={selectedCustomer?.customer_info?.addresses}
+              fallbackHeight="h-36"
+            />
+            {selectedCustomer && selectedCustomer.emergency_contact && (
+              <div className="2xl:w-1/2 w-full lg:w-8/10 mt-1 ">
+                <p className="font-bold text-slate-500 uppercase lg:text-sm text-[0.9rem]">
+                  Emergency Contact Person :
+                </p>
+                <div className="flex gap-2  flex-col lg:flex-row">
+                  <FieldDisplay
+                    label="Name"
+                    value={selectedCustomer.emergency_contact.name}
+                  />
+                  <FieldDisplay
+                    label="Contact"
+                    value={selectedCustomer.emergency_contact.mobile}
+                  />
                 </div>
-              )}
-              {!isUpdate && (
-                <div className=" 2xl:text-sm lg:text-xs mt-5 flex gap-5">
-                  {selectedCustomer && (
-                    <>
-                      {((selectedCustomer?.current_disposition &&
-                        findPaid?.id ===
-                          selectedCustomer?.current_disposition?.disposition &&
+              </div>
+            )}
+            {!isUpdate && (
+              <div className=" 2xl:text-sm lg:text-xs mt-5 flex justify-end">
+                {selectedCustomer && (
+                  <>
+                    {((selectedCustomer?.current_disposition &&
+                      findPaid?.id ===
                         selectedCustomer?.current_disposition
-                          .selectivesDispo) ||
-                        !selectedCustomer?.current_disposition ||
-                        (selectedCustomer.assigned &&
-                          selectedCustomer.assigned === userLogged._id) ||
-                        (!selectedCustomer.assigned &&
-                          findPaid?.id !==
-                            selectedCustomer?.current_disposition
-                              ?.disposition)) && (
-                        <button
-                          type="button"
-                          onClick={() => setIsUpdate(true)}
-                          className={`bg-orange-400 font-black hover:bg-orange-500 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 transition-all uppercase rounded-md shadow-md  w-24 py-2.5 me-2 mb-2 cursor-pointer`}
-                        >
-                          Update
-                        </button>
-                      )}
+                          ?.disposition &&
+                      selectedCustomer?.current_disposition
+                        .selectivesDispo) ||
+                      !selectedCustomer?.current_disposition ||
+                      (selectedCustomer.assigned &&
+                        selectedCustomer.assigned === userLogged._id) ||
+                      (!selectedCustomer.assigned &&
+                        findPaid?.id !==
+                          selectedCustomer?.current_disposition
+                            ?.disposition)) && (
                       <button
                         type="button"
-                        onClick={clearSelectedCustomer}
-                        className={`bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-black transition-all uppercase shadow-md rounded-md  w-24 py-2.5 me-2 mb-2 cursor-pointer`}
+                        onClick={() => setIsUpdate(true)}
+                        className={`  bg-orange-500 border-2 border-orange-800  font-black hover:bg-orange-600 focus:outline-none text-white  focus:ring-4 focus:ring-orange-300 transition-all uppercase rounded-md shadow-md  w-24 py-2.5 me-2 mb-2 cursor-pointer`}
                       >
-                        Cancel
+                        Update
                       </button>
-                    </>
-                  )}
-                </div>
-              )}
-            </div>
-          </motion.div>
+                    )}
+                    <button
+                      type="button"
+                      onClick={clearSelectedCustomer}
+                      className={`bg-gray-500 border-2 border-gray-800 hover:bg-gray-600 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-black transition-all uppercase shadow-md rounded-md  w-24 py-2.5 me-2 mb-2 cursor-pointer`}
+                    >
+                      Cancel
+                    </button>
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+               
+        </motion.div>
+        <AnimatePresence>
           {isUpdate && (
             <div className="absolute z-50 top-0 justify-center items-center left-0 w-full overflow-hidden flex h-full">
               <motion.div
@@ -874,39 +907,39 @@ const CustomerDisposition = () => {
                 className=" cursor-pointer z-30 absolute top-0 left-0 bg-black/30  backdrop-blur-sm w-full h-full"
               ></motion.div>
               <motion.div
-                className="flex flex-col bg-gray-100 overflow-auto border-gray-600 items-center rounded-md max-h-full relative z-40"
+                className="flex flex-col bg-gray-100 border-2  overflow-auto border-gray-600 items-center rounded-md max-h-full relative z-40"
                 initial={{ opacity: 0, scale: 0 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0 }}
               >
-                <h1 className="text-center bg-gray-400 border-b-2 border-gray-600 font-black uppercase text-slate-800 px-5 py-4 text-shadow-md text-2xl">
+                <h1 className="text-center bg-gray-400 border-b border-gray-600 font-black uppercase text-slate-800 px-5 py-4 text-shadow-md text-2xl">
                   Customer Update Information
                 </h1>
                 <div
                   className={`w-full flex flex-col justify-center h-full overflow-hidden  rounded-xl relative`}
                 >
                   <CustomerUpdateForm cancel={() => setIsUpdate(false)} />
-                 
                 </div>
               </motion.div>
             </div>
           )}
+        </AnimatePresence>
 
-          <div>
-            <div className="h-full flex flex-col w-full items-end justify-between ">
-              <div className="w-full">
-                <AccountInfo ref={childrenDivRef} />
-              </div>
-              <div className="flex items-end h-full w-full justify-end">
-                {selectedCustomer && selectedCustomer.balance > 0 && (
-                  <DispositionForm updateOf={() => setIsUpdate(false)} />
-                )}
-              </div>
+        {
+          selectedCustomer &&
+          <div className="flex flex-col w-full lg:w-2/3 2xl:w-1/3 items-end justify-between z-50 gap-5 ">
+            <div className="w-full">
+              <AccountInfo ref={childrenDivRef} />
+            </div>
+            <div className="flex items-end h-full w-full justify-end">
+              {selectedCustomer && selectedCustomer.balance > 0 && (
+                <DispositionForm updateOf={() => setIsUpdate(false)} />
+              )}
             </div>
           </div>
-        </div>
+        }
       </div>
-
+        
       {/* {floatDial && (
         <motion.div
           drag
@@ -941,7 +974,7 @@ const CustomerDisposition = () => {
               </div>
             </motion.div>
             <motion.div
-              className=" absolute -right-3 top-5   transition-al "
+              className=" absolute -right-3 top-5   transition-all "
               initial={{ x: -40, y: 40, opacity: 0 }}
               animate={{ x: 0, y: 0, opacity: 1 }}
               transition={{ type: "spring", delay: 0.6 }}
@@ -962,7 +995,7 @@ const CustomerDisposition = () => {
               </div>
             </motion.div>
           </div>
-          <Lottie animationData={animationData} loop={false} />
+          <Lottie animationData={phone} loop={false} />
         </motion.div>
       )} */}
     </div>

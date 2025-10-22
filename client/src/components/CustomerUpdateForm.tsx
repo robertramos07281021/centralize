@@ -111,8 +111,8 @@ const CustomerUpdateForm: React.FC<CustomerUpdateFormProps> = ({ cancel }) => {
       emails: [...prev.emails, ""],
     }));
   };
-  const validateEmail = (email: string): boolean =>
-    /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim());
+  // const validateEmail = (email: string): boolean =>
+  //   /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim());
 
   const handleEmailOnchange = (index: number, value: string) => {
     setFormState((prev) => ({
@@ -379,10 +379,6 @@ const CustomerUpdateForm: React.FC<CustomerUpdateFormProps> = ({ cancel }) => {
                         />
                       </svg>
                     </div>
-                    // <CiSquarePlus
-                    //   className="text-3xl cursor-pointer bg-green-400 text-white hover:bg-white hover:text-green-500 rounded-md duration-200 ease-in-out"
-                    //   onClick={handleAddMobile}
-                    // />
                   )}
                   {index !== 0 && (
                     <div
@@ -404,11 +400,6 @@ const CustomerUpdateForm: React.FC<CustomerUpdateFormProps> = ({ cancel }) => {
                         />
                       </svg>
                     </div>
-
-                    // <CiSquareMinus
-                    //   className="text-3xl cursor-pointer hover:text-red-400 text-white bg-red-400 hover:bg-white rounded-md duration-200 ease-in-out"
-                    //   onClick={() => handleMinusMobile(index)}
-                    // />
                   )}
                 </div>
               ))}

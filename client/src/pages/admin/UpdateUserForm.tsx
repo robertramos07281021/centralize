@@ -6,7 +6,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 import { MdKeyboardArrowDown } from "react-icons/md";
 import UserOptionSettings from "./UserOptionSettings";
-import {useAppDispatch } from "../../redux/store";
+import { useAppDispatch } from "../../redux/store";
 import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 // import { useSelector } from "react-redux";
 
@@ -247,12 +247,11 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
   const dispatch = useAppDispatch();
   const validForCampaignAndBucket = ["AGENT", "TL", "MIS"];
 
-  const { data: branchesData , refetch:branchRefetch} = useQuery<{ getBranches: Branch[] }>(
-    BRANCH_QUERY,
-    {
-      notifyOnNetworkStatusChange: true,
-    }
-  );
+  const { data: branchesData, refetch: branchRefetch } = useQuery<{
+    getBranches: Branch[];
+  }>(BRANCH_QUERY, {
+    notifyOnNetworkStatusChange: true,
+  });
   const [isUpdate, setIsUpdate] = useState(false);
   const [required, setRequired] = useState(false);
   const [confirm, setConfirm] = useState(false);
@@ -319,7 +318,10 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
     return Object.fromEntries(branchArray.map((ba) => [ba.id, ba.name]));
   }, [branchesData]);
 
-  const { data: branchDeptData, refetch: branchDeptRefetch, error } = useQuery<{
+  const {
+    data: branchDeptData,
+    refetch: branchDeptRefetch,
+  } = useQuery<{
     getBranchDept: Dept[];
   }>(BRANCH_DEPARTMENT_QUERY, {
     variables: { branch: branchObject[data.branch] },
@@ -599,7 +601,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
   useEffect(() => {
     const timer = async () => {
       await branchDeptRefetch();
-      await branchRefetch()
+      await branchRefetch();
     };
     timer();
   }, [data.branch]);
@@ -793,7 +795,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
             <div
               className={`${
                 data?.departments?.length === 0 && "bg-gray-200"
-              } w-full text-sm border rounded-lg flex justify-between ${
+              } w-full text-sm border rounded-lg max-w-[450px] flex justify-between ${
                 selectionDept && data.departments.length > 0
                   ? "border-blue-500"
                   : "border-slate-300"
@@ -846,18 +848,24 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
               />
             </div>
             {selectionDept && data.branch && (
-              <div className="w-full absolute left-0 bottom-11 bg-white border-slate-300 p-1.5 max-h-70 overflow-y-auto border z-40">
+              <div className="w-full absolute left-0 grid grid-cols-2 gap-1 bottom-11 bg-white rounded-md border-gray-600 p-1.5 max-h-[400px] overflow-y-auto border z-40">
                 {branchDeptData?.getBranchDept.map((e) => {
+                  const isSelected = data.departments.includes(e.id);
                   return (
                     e.name !== "ADMIN" && (
-                      <label key={e.id} className="flex gap-2">
+                      <label
+                        key={e.id}
+                        className={`flex gap-2 cursor-pointer px-3 py-1 rounded-sm shadow border border-gray-600 ${
+                          isSelected ? "bg-gray-300" : "bg-gray-200"
+                        }`}
+                      >
                         <input
                           type="checkbox"
                           name={e.name}
                           id={e.name}
                           value={e.name}
-                          onChange={(e) => handleCheckedDept(e, e.target.value)}
-                          checked={data.departments.toString().includes(e.id)}
+                          onChange={(event) => handleCheckedDept(event, e.name)}
+                          checked={isSelected}
                         />
                         <span>{e.name.replace(/_/g, " ")}</span>
                       </label>
@@ -925,27 +933,35 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
               />
             </div>
             {selectionBucket && data.departments.length > 0 && (
-              <div className="w-full absolute left-0 bottom-11 bg-white border-slate-300 p-1.5 max-h-50 overflow-y-auto border z-40">
-                {deptBucket?.getBuckets.map((e, index) => (
+              <div className="w-full absolute left-0 bottom-11 grid grid-cols-2  gap-1 bg-white border-slate-300 p-1.5 max-h-50 overflow-y-auto border z-40">
+                {deptBucket?.getBuckets.map((dept, index) => (
                   <div key={index} className="py-0.5">
-                    <div className="uppercase text-sm">{e.dept}</div>
-                    {e.buckets.map((e) => (
-                      <label key={e._id} className="flex gap-2 text-xs">
-                        <input
-                          type="checkbox"
-                          name={e.name}
-                          id={e.name}
-                          value={e.name}
-                          onChange={(e) =>
-                            handleCheckedBucket(e, e.target.value)
-                          }
-                          checked={data.buckets.toString().includes(e._id)}
-                        />
-                        <span className="uppercase">
-                          {e.name.replace(/_/g, " ")}
-                        </span>
-                      </label>
-                    ))}
+                    <div className="uppercase text-sm">{dept.dept}</div>
+                    {dept.buckets.map((bucket) => {
+                      const isSelected = data.buckets.includes(bucket._id);
+                      return (
+                        <label
+                          key={bucket._id}
+                          className={`flex mb-1 gap-2 cursor-pointer px-3 py-1 rounded-sm shadow border border-gray-600 ${
+                            isSelected ? "bg-gray-300" : "bg-gray-200"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            name={bucket.name}
+                            id={bucket.name}
+                            value={bucket.name}
+                            onChange={(e) =>
+                              handleCheckedBucket(e, e.target.value)
+                            }
+                            checked={isSelected}
+                          />
+                          <span className="uppercase">
+                            {bucket.name.replace(/_/g, " ")}
+                          </span>
+                        </label>
+                      );
+                    })}
                   </div>
                 ))}
               </div>
@@ -957,14 +973,14 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
               <div className="flex">
                 <button
                   type="button"
-                  className="bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
+                  className="bg-orange-500  border-2 border-orange-800 transition-all hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-black uppercase rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
                   onClick={() => handleSubmit("UPDATE", false)}
                 >
                   Submit
                 </button>
                 <button
                   type="button"
-                  className="bg-slate-500 hover:bg-slate-600 focus:outline-none text-white focus:ring-4 focus:ring-slate-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
+                  className="bg-slate-500   border-2 border-gray-800 transition-all hover:bg-slate-600 focus:outline-none text-white focus:ring-4 focus:ring-slate-400 font-black uppercase rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
                   onClick={handleCancel}
                 >
                   Cancel
@@ -973,7 +989,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
             ) : (
               <button
                 type="button"
-                className="bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
+                className="bg-orange-500 border-2 border-orange-800 font-black uppercase hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 shadow-md transition-all rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
                 onClick={() => setIsUpdate(true)}
               >
                 Update

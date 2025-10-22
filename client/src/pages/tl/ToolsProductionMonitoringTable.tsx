@@ -140,28 +140,28 @@ const ToolsProductionMonitoringTable = () => {
                 </div>
               );
             })}
-            <tr className="bg-gray-200 rounded-b-md border-gray-500 grid grid-cols-5 items-center border-t">
-              <th className="text-left px-5 font-black uppercase ">Total</th>
-              <th>{totalRPC}</th>
-              <th>
+            <div className="bg-gray-200 rounded-b-md border-gray-500 grid grid-cols-5 items-center border-t">
+              <div className="text-left px-5 font-black uppercase ">Total</div>
+              <div>{totalRPC}</div>
+              <div>
                 {totalPtp?.toLocaleString("en-PH", {
                   style: "currency",
                   currency: "PHP",
                 })}
-              </th>
-              <th>
+              </div>
+              <div>
                 {totalKept?.toLocaleString("en-PH", {
                   style: "currency",
                   currency: "PHP",
                 })}
-              </th>
-              <th>
+              </div>
+              <div>
                 {totalPaid.toLocaleString("en-PH", {
                   style: "currency",
                   currency: "PHP",
                 })}
-              </th>
-            </tr>
+              </div>
+            </div>
           </div>
         </div>
       )}

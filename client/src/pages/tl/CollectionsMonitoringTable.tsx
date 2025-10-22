@@ -67,17 +67,17 @@ const CollectionsMonitoringTable = () => {
         </div>
       ) : (
         <div className="w-full flex flex-col bg-gray-100 rounded-b-sm border-t text-gray-600 py-2 text-center font-black table-fixed">
-          <thead className="w-full">
-            <tr className="grid grid-cols-4 w-full">
-              <th className="font-black uppercase ">Target</th>
-              <th className="font-black uppercase ">Collection</th>
-              <th className="font-black uppercase">Variance</th>
-              <th className="font-black uppercase">Collection %</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr className="grid grid-cols-4 even:bg-gray-200">
-              <td className="">
+          <div className="w-full">
+            <div className="grid grid-cols-4 w-full">
+              <div className="font-black uppercase ">Target</div>
+              <div className="font-black uppercase ">Collection</div>
+              <div className="font-black uppercase">Variance</div>
+              <div className="font-black uppercase">Collection %</div>
+            </div>
+          </div>
+          <div>
+            <div className="grid grid-cols-4 even:bg-gray-200">
+              <div className="">
                 {newData
                   ? newData?.target?.toLocaleString("en-PH", {
                       style: "currency",
@@ -87,8 +87,8 @@ const CollectionsMonitoringTable = () => {
                       style: "currency",
                       currency: "PHP",
                     })}
-              </td>
-              <td>
+              </div>
+              <div>
                 {newData
                   ? newData?.collected?.toLocaleString("en-PH", {
                       style: "currency",
@@ -98,16 +98,16 @@ const CollectionsMonitoringTable = () => {
                       style: "currency",
                       currency: "PHP",
                     })}
-              </td>
-              <td>
+              </div>
+              <div>
                 {theVariance?.toLocaleString("en-PH", {
                   style: "currency",
                   currency: "PHP",
                 })}
-              </td>
-              <td>{isNaN(collectionPercent) ? (0).toFixed(2) : collectionPercent?.toFixed(2)}%</td>
-            </tr>
-          </tbody>
+              </div>
+              <div>{isNaN(collectionPercent) ? (0).toFixed(2) : collectionPercent?.toFixed(2)}%</div>
+            </div>
+          </div>
         </div>
       )}
     </motion.div>

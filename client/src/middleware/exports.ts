@@ -135,10 +135,10 @@ export const accountsNavbar: { [key: string]: links[] } = {
       name: "Reports",
       link: "/tl-reports",
     },
-    {
-      name: "Monitoring",
-      link: "/tl-monitoring",
-    },
+    // {
+    //   name: "Monitoring",
+    //   link: "/tl-monitoring",
+    // },
   ],
   MIS: [
     {

@@ -6,7 +6,7 @@ type WrapperProps = {
 
 const Wrapper:React.FC<WrapperProps> = ({children}) => {
   return (
-    <div className="w-full h-screen flex flex-col relative" >
+    <div className="w-screen h-screen flex flex-col relative overflow-hidden" >
       {children}     
     </div>
   )

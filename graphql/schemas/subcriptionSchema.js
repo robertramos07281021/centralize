@@ -17,18 +17,8 @@ const subscriptionTypeDefs = gql`
     members: [ID]
   }
 
-  type BucketSubscribeSuccess {
-    bucket: ID
-    message: String
-  }
-
   type UpdateCAllfile {
     bucket: ID
-    message: String
-  }
-
-  type MessageBucket {
-    bucket: ID,
     message: String
   }
 
@@ -40,12 +30,11 @@ const subscriptionTypeDefs = gql`
     dispositionUpdated: SubsribeSuccess
     somethingChanged: SubsribeSuccess
     taskChanging: SubsribeSuccess
-    newCallfile: BucketSubscribeSuccess,
+    newCallfile: UpdateCAllfile
     updateOnCallfiles: UpdateCAllfile
-    newBucketMessage:MessageBucket
+    newBucketMessage:UpdateCAllfile
     accountOffline:AgentLockSubsribeSuccess
   }
-
 `
 
 export default subscriptionTypeDefs

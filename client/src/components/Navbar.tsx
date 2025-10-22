@@ -1,6 +1,4 @@
 import { gql, useMutation, useQuery, useSubscription } from "@apollo/client";
-import { BsFillPersonVcardFill } from "react-icons/bs";
-import { IoMdLogOut } from "react-icons/io";
 import { useCallback, useEffect, useRef, useState } from "react";
 import Confirmation from "./Confirmation";
 import Loading from "../pages/Loading";
@@ -9,6 +7,7 @@ import { RootState, useAppDispatch } from "../redux/store";
 import {
   setBreakValue,
   setDeselectCustomer,
+  setIsOnlineOnVici,
   setLogout,
   setServerError,
   setStart,
@@ -130,6 +129,12 @@ const OFFLINE_USER = gql`
   }
 `;
 
+const CHECK_USER_ONLINE_ON_VICI = gql`
+  query checkUserIsOnlineOnVici {
+    checkUserIsOnlineOnVici
+  }
+`;
+
 const Navbar = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -141,6 +146,21 @@ const Navbar = () => {
     notifyOnNetworkStatusChange: true,
   });
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
+
+  const { data: userIsOnlineOnVici } = useQuery<{
+    checkUserIsOnlineOnVici: boolean;
+  }>(CHECK_USER_ONLINE_ON_VICI, {
+    notifyOnNetworkStatusChange: true,
+    skip:
+      userLogged?.type !== "AGENT" && !location.pathname.includes("/agent-cip"),
+    pollInterval: 3000
+  });
+
+  useEffect(() => {
+    if (userIsOnlineOnVici) {
+      dispatch(setIsOnlineOnVici(userIsOnlineOnVici?.checkUserIsOnlineOnVici));
+    }
+  }, [userIsOnlineOnVici]);
 
   const [deselectTask] = useMutation(DESELECT_TASK, {
     onCompleted: () => {
@@ -462,14 +482,14 @@ const Navbar = () => {
                           <AnimatePresence>
                             {popUpBreak && (
                               <motion.div
-                                className="absolute -left-[180px]  shadow-md border-blue-800  border-2 rounded-xl w-auto bg-white h-auto flex flex-col -top-1 "
+                                className="absolute -left-[180px] z-50  shadow-md border-blue-800  border-2 rounded-xl w-auto bg-white h-auto flex flex-col -top-1 "
                                 initial={{ x: 20, opacity: 0 }}
                                 animate={{ x: 0, opacity: 1 }}
                                 exit={{ x: 20, opacity: 0 }}
                               >
                                 {breaks.map((e, index) => (
                                   <label
-                                    className={`pl-2 hover:bg-blue-200 border-b border-gray-200 odd:bg-gray-100  pr-2 cursor-pointer duration-200 py-2 ease-in-out ${
+                                    className={`pl-2  hover:bg-blue-200 border-b border-gray-200 odd:bg-gray-100  pr-2 cursor-pointer duration-200 py-2 ease-in-out ${
                                       index === 0 ? "rounded-t-xl" : ""
                                     } ${
                                       index === breaks.length - 1

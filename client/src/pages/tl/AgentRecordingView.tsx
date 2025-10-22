@@ -5,7 +5,6 @@ import { Navigate, useLocation } from "react-router-dom";
 import { RootState, useAppDispatch } from "../../redux/store";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { RiArrowDropDownFill } from "react-icons/ri";
-import Loading from "../Loading.tsx";
 import {
   setAgentRecordingPage,
   setServerError,
@@ -236,6 +235,7 @@ const AgentRecordingView = () => {
     onCompleted: async (res) => {
       const url = res.findRecordings.url;
       setIsLoading("");
+
       if (url) {
         try {
           const response = await fetch(url);
@@ -485,168 +485,188 @@ const AgentRecordingView = () => {
                   </div>
                 </div>
               ) : (
-                <div className="overflow-auto h-full">
-                  {recordings?.getAgentDispositionRecords.dispositions.map(
-                    (e, index) => {
-                      const callRecord =
-                        e.recordings?.length > 0
-                          ? [...e.recordings].sort((a, b) => b.size - a.size)
-                          : [];
-                      return (
-                        <motion.div
-                          key={e._id}
-                          className="lg:text-xs 2xl:text-sm  items-center py-3 gap-3 pl-4 pr-2 grid grid-cols-10 cursor-default bg-gray-100 even:bg-gray-200 text-slate-800"
-                          initial={{ opacity: 0 }}
-                          animate={{ opacity: 1 }}
-                          transition={{ delay: index * 0.1 }}
-                        >
-                          <div className=" truncate" title={e.customer_name}>
-                            {e.customer_name}
-                          </div>
-                          <div
-                            className="truncate pr-2"
-                            title={e.contact_no.join(", ")}
-                          >
-                            {e.contact_no.join(", ")}
-                          </div>
-                          <div>{e.dialer}</div>
-                          <div>
-                            {e.amount ? (
-                              e.amount.toLocaleString("en-PH", {
-                                style: "currency",
-                                currency: "PHP",
-                              })
-                            ) : (
-                              <div className="text-gray-400 italic text-left  ">
-                                No amount
-                              </div>
-                            )}
-                          </div>
-                          <div>
-                            {e.payment_date ? (
-                              new Date(e.payment_date).toLocaleDateString()
-                            ) : (
-                              <div className="text-gray-400 truncate italic text-left">
-                                No payment date
-                              </div>
-                            )}
-                          </div>
-                          <div title={e.ref_no}>
-                            {e.ref_no || (
+                <div className="overflow-auto h-full w-full">
+                  {(recordings?.getAgentDispositionRecords.dispositions
+                    .length || 0) === 0 ? (
+                    <div className="bg-gray-200 w-full py-2 text-center rounded-b-md shadow-md italic font-sans text-gray-400  text-sm">
+                      No account found
+                    </div>
+                  ) : (
+                    <div>
+                      {recordings?.getAgentDispositionRecords.dispositions.map(
+                        (e, index) => {
+                          const callRecord =
+                            e.recordings?.length > 0
+                              ? [...e.recordings].sort(
+                                  (a, b) => b.size - a.size
+                                )
+                              : [];
+                          return (
+                            <motion.div
+                              key={e._id}
+                              className="lg:text-xs 2xl:text-sm  items-center py-3 gap-3 pl-4 pr-2 grid grid-cols-10 cursor-default bg-gray-100 even:bg-gray-200 text-slate-800"
+                              initial={{ opacity: 0 }}
+                              animate={{ opacity: 1 }}
+                              transition={{ delay: index * 0.1 }}
+                            >
                               <div
-                                className="text-gray-400 italic text-left truncate"
-                                title="
-                            No reference number"
+                                className=" truncate"
+                                title={e.customer_name}
                               >
-                                No reference number
+                                {e.customer_name}
                               </div>
-                            )}
-                          </div>
-                          <div className="truncate" title={e.comment}>
-                            {e.comment || (
-                              <div className="text-gray-400 italic text-left">
-                                No comment
+                              <div
+                                className="truncate pr-2"
+                                title={e.contact_no.join(", ")}
+                              >
+                                {e.contact_no.join(", ")}
                               </div>
-                            )}
-                          </div>
-                          <div>
-                            {new Date(e.createdAt).toLocaleDateString()}
-                          </div>
-                          <div>{e.dispotype}</div>
-                          <div>
-                            {isLoading === e._id && loading ? (
-                              <div className="cursor-progress">
-                                <CgSpinner className="text-xl animate-spin" />
-                              </div>
-                            ) : (
-                              <div className="">
-                                {e.recordings?.length > 0 ? (
-                                  <div className="flex gap-1 ">
-                                    {callRecord?.length > 1 &&
-                                      (() => {
-                                        const others = callRecord.slice(1);
-                                        return (
-                                          <div className="flex justify-end w-full ">
-                                            <div
-                                              onClick={() => {
-                                                if (
-                                                  openRecordingsBox === e._id
-                                                ) {
-                                                  setOpenRecordingsBox(null);
-                                                } else {
-                                                  setOpenRecordingsBox(e._id);
-                                                }
-                                              }}
-                                              className=" bg-fuchsia-700 items-center flex shadow-md cursor-pointer border-fuchsia-900 hover:bg-fuchsia-800 transition-all border rounded-sm px-3 py-1"
-                                            >
-                                              <FaBoxArchive
-                                                className="text-white peer"
-                                                title="Others"
-                                              />
-                                            </div>
-                                            {openRecordingsBox === e._id && (
-                                              <div
-                                                className="absolute border border-slate-500 text-gray-700 right-full w-auto mr-2 shadow shadow-black/40 bg-white"
-                                                ref={recordingsRef}
-                                              >
-                                                {others.map((o, index) => (
-                                                  <div
-                                                    key={index}
-                                                    onClick={() =>
-                                                      onDLRecordings(
-                                                        e._id,
-                                                        o.name
-                                                      )
-                                                    }
-                                                    className="text-nowrap flex p-2 bg-white rouned items-center cursor-pointer gap-2"
-                                                  >
-                                                    <p className="mr-">
-                                                      {fileSizeToDuration(
-                                                        o.size
-                                                      )}{" "}
-                                                    </p>
-                                                    <div>{o.name}</div>
-                                                    <FaDownload />
-                                                  </div>
-                                                ))}
-                                              </div>
-                                            )}
-                                          </div>
-                                        );
-                                      })()}
-                                    <div
-                                      title={callRecord[0]?.name}
-                                      className="flex justify-end items-center w-full"
-                                    >
-                                      <div
-                                        onClick={() =>
-                                          onDLRecordings(
-                                            e._id,
-                                            callRecord[0]?.name
-                                          )
-                                        }
-                                        className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
-                                      >
-                                        <FaDownload color="white" />
-                                        <p className="text-white">
-                                          {fileSizeToDuration(
-                                            callRecord[0]?.size
-                                          )}{" "}
-                                        </p>
-                                      </div>
-                                    </div>
-                                  </div>
+                              <div>{e.dialer}</div>
+                              <div>
+                                {e.amount ? (
+                                  e.amount.toLocaleString("en-PH", {
+                                    style: "currency",
+                                    currency: "PHP",
+                                  })
                                 ) : (
-                                  <div className="text-gray-400 italic text-center">
-                                    No Recordings
+                                  <div className="text-gray-400 italic text-left  ">
+                                    No amount
                                   </div>
                                 )}
                               </div>
-                            )}
-                          </div>
-                        </motion.div>
-                      );
-                    }
+                              <div>
+                                {e.payment_date ? (
+                                  new Date(e.payment_date).toLocaleDateString()
+                                ) : (
+                                  <div className="text-gray-400 truncate italic text-left">
+                                    No payment date
+                                  </div>
+                                )}
+                              </div>
+                              <div title={e.ref_no}>
+                                {e.ref_no || (
+                                  <div
+                                    className="text-gray-400 italic text-left truncate"
+                                    title="
+                                  No reference number"
+                                  >
+                                    No reference number
+                                  </div>
+                                )}
+                              </div>
+                              <div className="truncate" title={e.comment}>
+                                {e.comment || (
+                                  <div className="text-gray-400 italic text-left">
+                                    No comment
+                                  </div>
+                                )}
+                              </div>
+                              <div>
+                                {new Date(e.createdAt).toLocaleDateString()}
+                              </div>
+                              <div>{e.dispotype}</div>
+                              <div>
+                                {isLoading === e._id && loading ? (
+                                  <div className="cursor-progress">
+                                    <CgSpinner className="text-xl animate-spin" />
+                                  </div>
+                                ) : (
+                                  <div className="">
+                                    {e.recordings?.length > 0 ? (
+                                      <div className="flex gap-1 ">
+                                        {callRecord?.length > 1 &&
+                                          (() => {
+                                            const others = callRecord.slice(1);
+                                            return (
+                                              <div className="flex justify-end w-full ">
+                                                <div
+                                                  onClick={() => {
+                                                    if (
+                                                      openRecordingsBox ===
+                                                      e._id
+                                                    ) {
+                                                      setOpenRecordingsBox(
+                                                        null
+                                                      );
+                                                    } else {
+                                                      setOpenRecordingsBox(
+                                                        e._id
+                                                      );
+                                                    }
+                                                  }}
+                                                  className=" bg-fuchsia-700 items-center flex shadow-md cursor-pointer border-fuchsia-900 hover:bg-fuchsia-800 transition-all border rounded-sm px-3 py-1"
+                                                >
+                                                  <FaBoxArchive
+                                                    className="text-white peer"
+                                                    title="Others"
+                                                  />
+                                                </div>
+                                                {openRecordingsBox ===
+                                                  e._id && (
+                                                  <div
+                                                    className="absolute border border-slate-500 text-gray-700 right-full w-auto mr-2 shadow shadow-black/40 bg-white"
+                                                    ref={recordingsRef}
+                                                  >
+                                                    {others.map((o, index) => (
+                                                      <div
+                                                        key={index}
+                                                        onClick={() =>
+                                                          onDLRecordings(
+                                                            e._id,
+                                                            o.name
+                                                          )
+                                                        }
+                                                        className="text-nowrap flex p-2 bg-white rouned items-center cursor-pointer gap-2"
+                                                      >
+                                                        <p className="mr-">
+                                                          {fileSizeToDuration(
+                                                            o.size
+                                                          )}{" "}
+                                                        </p>
+                                                        <div>{o.name}</div>
+                                                        <FaDownload />
+                                                      </div>
+                                                    ))}
+                                                  </div>
+                                                )}
+                                              </div>
+                                            );
+                                          })()}
+                                        <div
+                                          title={callRecord[0]?.name}
+                                          className="flex justify-end items-center w-full"
+                                        >
+                                          <div
+                                            onClick={() =>
+                                              onDLRecordings(
+                                                e._id,
+                                                callRecord[0]?.name
+                                              )
+                                            }
+                                            className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
+                                          >
+                                            <FaDownload color="white" />
+                                            <p className="text-white">
+                                              {fileSizeToDuration(
+                                                callRecord[0]?.size
+                                              )}{" "}
+                                            </p>
+                                          </div>
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <div className="text-gray-400 italic text-center">
+                                        No Recordings
+                                      </div>
+                                    )}
+                                  </div>
+                                )}
+                              </div>
+                            </motion.div>
+                          );
+                        }
+                      )}
+                    </div>
                   )}
                 </div>
               )}

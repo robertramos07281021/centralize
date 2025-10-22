@@ -57,8 +57,8 @@ const UserView = () => {
           <div className="h-full flex items-center overflow-hidden relative ">
             <div className="h-full w-full flex flex-row relative ">
               <UpdateUserForm state={state} />
-              <div className="rounded-lg border  w-5/8 border-slate-300 flex flex-col overflow-y-auto">
-                <div className="grid grid-cols-2 py-1.5 font-black uppercase px-2 odd:bg-slate-100">
+              <div className="rounded-lg border  w-5/8 border-gray-600 shadow-md mb-1 flex flex-col overflow-y-auto">
+                <div className="grid grid-cols-2 border-b border-gray-600 py-1.5 font-black uppercase px-2 bg-gray-200">
                   <div>Name</div>
                   <div>Date</div>
                 </div>

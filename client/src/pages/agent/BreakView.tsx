@@ -17,7 +17,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Wrapper from "../../components/Wrapper.tsx";
 import Navbar from "../../components/Navbar.tsx";
 import NavbarExtn from "../../components/NavbarExtn.tsx";
-import animationData from "../../Animations/_Dancing_ dog.json";
+import animationData from "../../Animations/Spooky Ghost.json";
 import clinic from "../../Animations/3D Doctor Dancing.json";
 import coffee from "../../Animations/Coffee Time.json";
 import Lottie from "lottie-react";
@@ -29,7 +29,6 @@ import meeting from "../../Animations/Meeting.json"
 import skiptracing from "../../Animations/searching for profile.json"
 import hrmeeting from "../../Animations/Business Meeting Animation.json"
 import coaching from "../../Animations/Online Teaching.json"
-import welcome from "../../Animations/Welcome.json"
 
 type UpdateProduction = {
   message: string;

@@ -75,20 +75,19 @@ const AOM_USER = gql`
 `;
 
 const DEPARTMENT_QUERY = gql`
-  query departmentQuery {
+  query getDepts {
     getDepts {
       id
       name
       branch
-      
+      aom {
+        _id
+        name
+      }
     }
   }
 `;
 
-// aom {
-//         _id
-//         name
-//       }
 
 type BranchSectionProps = {
   campaign: boolean;
@@ -119,6 +118,7 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
       name: "",
     },
   });
+
 
   const { data: aomUsers, refetch: aomRefetch } = useQuery<{
     getAomUser: UserInfo[];
@@ -410,7 +410,7 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
 
   return (
     <div className=" h-full overflow-hidden">
-      <div className="h-full">
+      <div className="h-full flex flex-col overflow-hidden">
         <div className=" items-center my-5 justify-center w-full">
           <div className="px-4 bg-white">
             <motion.h1
@@ -423,14 +423,14 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
             </motion.h1>
           </div>
         </div>
-        <div className="flex gap-5 h-[60vh] justify-center">
+        <div className="flex gap-5 h-full justify-center overflow-hidden">
           <div className="h-full  flex flex-col gap-3 pr-1 overflow-y-auto">
             {dept?.getDepts.map((d, index) => {
               return (
                 d.name !== "ADMIN" && (
                   <motion.div
                     key={d.id}
-                    className="justify-between shadow-sm font-black rounded-md bg-gray-200 even:bg-gray-300  px-5 py-2 hover:bg-gray-400  text-slate-800 grid grid-cols-5 gap-5 text-center items-center"
+                    className="justify-between border shadow-sm font-black rounded-md bg-gray-200 even:bg-gray-300  px-5 py-2 hover:bg-gray-400  text-slate-800 grid grid-cols-5 gap-5 text-center items-center"
                     initial={{ y: 20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     transition={{ delay: index * 0.1 }}
@@ -490,14 +490,7 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
                           />
                         </svg>
                       </div>
-                      {/* <PiNotePencilBold
-                        className="text-green-400 cursor-pointer hover:text-green-600"
-                        onClick={() => handleUpdateDept(d)}
-                      />
-                      <PiTrashFill
-                        className="text-red-400 hover:text-red-600 cursor-pointer"
-                        onClick={() => handleSubmitDelete(d, "DELETE")}
-                      /> */}
+      
                     </div>
                   </motion.div>
                 )
@@ -523,12 +516,12 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
               className="bg-black/40 backdrop-blur-sm z-10 cursor-pointer w-full h-full absolute top-0 left-0"
             ></motion.div>
             <motion.div
-              className=" bg-gray-100 border-yellow-900 z-20 border-2 rounded-md overflow-hidden shadow-md"
+              className={`${isUpdate? "border-orange-500": "border-yellow-900"} bg-gray-100   z-20 border-2 rounded-md overflow-hidden shadow-md`}
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.5, opacity: 0 }}
             >
-              <h1 className="bg-yellow-700 px-10 font-black text-2xl uppercase text-center text-white py-2">
+              <h1 className={`${isUpdate ? "bg-orange-500" : "bg-yellow-700"}  px-10 font-black text-2xl uppercase text-center text-white py-2`}>
                 {isUpdate ? "update campaign" : "create campaign"}
               </h1>
 
@@ -592,7 +585,7 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
                 {!isUpdate ? (
                   <button
                     type="button"
-                    className={`bg-blue-600 hover:bg-blue-700 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
+                    className={`bg-yellow-700 hover:bg-yellow-800 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
                     onClick={() => handleSubmitCreate("CREATE")}
                   >
                     Create

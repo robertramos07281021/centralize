@@ -83,6 +83,7 @@ const GET_CALLFILES = gql`
           endo
           totalPrincipal
           target
+          autoDial
           finished_by {
             name
           }
@@ -105,6 +106,17 @@ const GET_CSV_FILES = gql`
     downloadCallfiles(callfile: $callfile)
   }
 `;
+
+
+const SET_CALLFILE_AUTO_DIAL = gql`
+  mutation setCallfileToAutoDial($callfileId: ID!) {
+    setCallfileToAutoDial(callfileId: $callfileId) {
+      message
+      success
+    }
+  }
+`
+
 
 type Props = {
   bucket: string;
@@ -200,6 +212,7 @@ const CallfilesViews: React.FC<Props> = ({
     skip: isProductionManager,
     notifyOnNetworkStatusChange: true,
   });
+  console.log(data)
 
   useEffect(() => {
     if (bucket) {
@@ -245,6 +258,19 @@ const CallfilesViews: React.FC<Props> = ({
   const [downloadCallfiles, { loading: downloadCallfilesLoading }] =
     useLazyQuery(GET_CSV_FILES);
 
+
+  const [setCallfileToAutoDial] = useMutation<{setCallfileToAutoDial:Success}>(SET_CALLFILE_AUTO_DIAL, {
+    onCompleted: async(data) => {
+      setConfirm(false);
+      dispatch(setSuccess({
+        success: data.setCallfileToAutoDial.success,
+        message: data.setCallfileToAutoDial.message,
+        isMessage: false
+      }))
+      await refetch()
+    }
+  })
+
   useSubscription<{ newCallfile: SubSuccess }>(NEW_UPLOADED_CALLFILE, {
     onData: async ({ data }) => {
       if (data) {
@@ -279,7 +305,7 @@ const CallfilesViews: React.FC<Props> = ({
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "FINISHED" as "FINISHED" | "DELETE" | "DOWNLOAD" | "SET",
+    toggle: "FINISHED" as "FINISHED" | "DELETE" | "DOWNLOAD" | "SET" | "AUTO",
     yes: () => {},
     no: () => {},
   });
@@ -370,7 +396,7 @@ const CallfilesViews: React.FC<Props> = ({
 
   const onClickIcon = (
     id: string,
-    action: "FINISHED" | "DELETE" | "DOWNLOAD" | "SET",
+    action: "FINISHED" | "DELETE" | "DOWNLOAD" | "SET" | "AUTO" ,
     name: string
   ) => {
     setConfirm(true);
@@ -378,7 +404,8 @@ const CallfilesViews: React.FC<Props> = ({
       FINISHED: `Are you sure this ${name.toUpperCase()} callfile are finished?`,
       DELETE: `Are you sure you want to delete ${name.toUpperCase()} callfile?`,
       DOWNLOAD: `Are you sure you want to download ${name.toUpperCase()} callfile?`,
-      SET: `Are you sure you want to set the target ${name.toLocaleLowerCase()} callfile?`,
+      SET: `Are you sure you want to set the target ${name.toUpperCase()} callfile?`,
+      AUTO: `Are you sure you want to set ${name.toUpperCase()} to auto dial?`
     };
 
     const fn = {
@@ -423,6 +450,9 @@ const CallfilesViews: React.FC<Props> = ({
           variables: { callfile: id, target: callfileTarget },
         });
       },
+      AUTO: async() => {
+        await setCallfileToAutoDial({variables: {callfileId: id}})
+      }
     };
 
     setModalProps({
@@ -719,6 +749,7 @@ const CallfilesViews: React.FC<Props> = ({
                         <>
                           <div
                             className="rounded-sm shadow-sm flex justify-center hover:bg-purple-800 transition-all px-1 py-1 cursor-pointer bg-purple-700 text-white border border-purple-800"
+                            title="Add Selectives"
                             onClick={() => {
                               setAddSelectiveModal((prev) => !prev);
                               setCallfile(res.callfile._id);
@@ -738,6 +769,21 @@ const CallfilesViews: React.FC<Props> = ({
                                 d="M12 4.5v15m7.5-7.5h-15"
                               />
                             </svg>
+                          </div>
+
+                          <div
+                            className="rounded-sm shadow-sm flex justify-center hover:bg-yellow-800 transition-all px-1 py-1 cursor-pointer bg-yellow-700 text-white border border-yellow-800"
+                            title="Auto Dial"
+                            onClick={() => {
+                              // setAddSelectiveModal((prev) => !prev);
+                              // setCallfile(res.callfile._id);
+                              onClickIcon(res.callfile._id, "AUTO",res.callfile.name)
+                            }}
+                          >
+                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
+                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
+                            </svg>
+
                           </div>
 
                           <div
@@ -770,6 +816,7 @@ const CallfilesViews: React.FC<Props> = ({
                               setModalTarget(true);
                               setCallfileId(res.callfile);
                             }}
+                            title=""
                             className="rounded-sm flex shadow-sm justify-center hover:bg-orange-800 px-1 py-1 cursor-pointer bg-orange-700 text-white border border-orange-800"
                           >
                             <svg

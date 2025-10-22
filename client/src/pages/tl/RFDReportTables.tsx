@@ -13,7 +13,6 @@ const RFDReportTables: React.FC<ComponentProp> = ({ RFD }) => {
       <div>
         <div>
           <div
-            colSpan={3}
             className="border border-blue-800 rounded-t-md text-sm text-black font-black text-center w-full py-2 bg-blue-500"
           >
             EOD

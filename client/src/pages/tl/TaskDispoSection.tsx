@@ -399,7 +399,6 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
 
   if (loading) return <Loading />;
 
-  console.log(CustomerAccountsData);
   return (
     <>
       <motion.div

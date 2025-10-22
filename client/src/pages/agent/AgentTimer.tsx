@@ -47,7 +47,7 @@ const AgentTimer = () => {
   const formattedTime = time.toLocaleTimeString("en-US", { hour: "2-digit", minute: "2-digit", second: "2-digit", hour12: true }); 
 
   return (
-    <div className="w-full font-black uppercase flex justify-between  text-slate-600 text-sm px-4 pt-1">
+    <div className="w-full left-0 font-black uppercase flex justify-between  text-slate-600 text-sm px-4 pt-1">
       <div>
         Bucket: {userLogged?.buckets.map((e)=> bucketObject[e]).join(", ")}
       </div>

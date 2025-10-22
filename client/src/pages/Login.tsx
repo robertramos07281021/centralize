@@ -3,7 +3,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { gql, useMutation } from "@apollo/client";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import {
   setBreakValue,
   setDeselectCustomer,
@@ -17,6 +17,9 @@ import Loading from "./Loading";
 import { useSelector } from "react-redux";
 import { BreakEnum } from "../middleware/exports";
 import { persistor } from "../redux/store";
+import Lottie from "lottie-react";
+import animationData from "../Animations/Spider.json";
+import pumpkin from "../Animations/Spooky Pumpkin.json";
 
 const LOGIN = gql`
   mutation login($username: String!, $password: String!) {
@@ -124,6 +127,7 @@ const Login = () => {
   const [already, setAlready] = useState<boolean>(false);
   const [lock, setLock] = useState<boolean>(false);
   const [invalid, setInvalid] = useState<boolean>(false);
+  const [hide, setHide] = useState(false);
 
   const [deselectTask] = useMutation(DESELECT_TASK, {
     onCompleted: () => {
@@ -248,21 +252,105 @@ const Login = () => {
     }
   }, [dispatch, userLogged, logout, selectedCustomer, deselectTask]);
 
+  const lottieRefs = [
+    useRef(),
+    useRef(),
+    useRef(),
+    useRef(),
+    useRef(),
+    useRef(),
+  ];
+
+  useEffect(() => {
+    const delays = [0, 1000, 500, 1500, 2000, 700];
+
+    const timers = lottieRefs.map((ref, index) => {
+      return setTimeout(() => {
+        ref.current?.stop(); 
+        ref.current?.play();
+      }, delays[index]);
+    });
+
+    return () => timers.forEach(clearTimeout);
+  }, [hide]);
+
+  const positions = [
+    "left-10",
+    "left-[300px]",
+    "left-[600px]",
+    "left-[1000px]",
+    "left-[1300px]",
+    "left-[1600px]",
+  ];
+
+  const widths = ["w-60", "w-96", "w-52", "w-72", "w-60", "w-80"];
+
   if (loading) return <Loading />;
 
   return (
-    <div className="h-screen w-screen flex items-center justify-center bg-[url(/login_bg.jpg)] bg-fixed bg-no-repeat bg-cover relative ">
+    <div className="h-screen  w-screen flex items-center justify-center bg-[url(/login_bg.jpg)] bg-fixed bg-no-repeat bg-cover relative ">
       <div className="w-full h-full absolute bg-blue-500/50 backdrop-blur-[4px]"></div>
+      <AnimatePresence>
+        {!hide && (
+          <motion.div
+            initial={{ opacity: 1 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            {lottieRefs.map((ref, index) => (
+              <div
+                key={index}
+                className={`absolute ${widths[index]} top-0 ${positions[index]}`}
+              >
+                <Lottie
+                  lottieRef={ref}
+                  animationData={animationData}
+                  loop={false}
+                  autoplay={false}
+                />
+              </div>
+            ))}
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <motion.div className="absolute bg-black border-2 border-white shadow-md p-4 rounded-md uppercase text-white font-black text-xl bottom-10 right-10"
+        initial={{scale: 0.5, opacity: 0}}
+        animate={{scale: 1, opacity: 1}}
+        layout
+      >
+        <div className=" mb-1 text-base text-center ">Too scary?</div>
+        <div className="flex text-center cursor-pointer hover:bg-gray-300 transition-all justify-center bg-white rounded-full text-black text-base px-2 gap-2 ">
+          {!hide ? (
+            <div className="px-6" onClick={() => setHide(true)}>hide</div>
+          ) : (
+            <div className="px-6" onClick={() => setHide(false)}>Show</div>
+          )}
+        </div>
+      </motion.div>
 
       <motion.form
         ref={loginForm}
         onSubmit={handleSubmitLogin}
-        className="bg-white/70 backdrop-blur-lg border-2 border-gray-900 w-96 min-h-96 py-10 rounded-xl z-50 flex items-center justify-center flex-col gap-10 shadow-2xl shadow-black/80"
+        className="bg-white/70 backdrop-blur-lg relative border-2 border-gray-900 w-96 min-h-96 py-10 rounded-xl z-50 flex items-center justify-center flex-col gap-10 shadow-2xl shadow-black/80"
         noValidate
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring" }}
       >
+        <AnimatePresence>
+          {!hide && (
+            <motion.div
+              className="absolute  -top-[250px] left-0"
+              initial={{y: 30, scale: 0.5, opacity: 0}}
+              animate={{y: 0, scale: 1, opacity: 1}}
+              
+              exit={{y: 30,  scale: 0.8, opacity: 0 }}
+            >
+              <Lottie animationData={pumpkin} loop={true} />
+            </motion.div>
+          )}
+        </AnimatePresence>
         <div className="flex flex-col text-center text-blue-500">
           <h1 className="text-2xl font-black italic text-shadow-sm">
             Bernales & Associates

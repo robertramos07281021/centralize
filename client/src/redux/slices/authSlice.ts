@@ -71,6 +71,7 @@ type UserState = {
   intervalTypes: IntervalsTypes
   selectedBucket: string | null,
   callfilesPages: number
+  isOnlineOnVici: boolean
 }
 
 const initialState:UserState = {
@@ -105,7 +106,8 @@ const initialState:UserState = {
   selectedCustomer: null,
   selectedCampaign: null,
   intervalTypes: IntervalsTypes.DAILY,
-  selectedBucket: null
+  selectedBucket: null,
+  isOnlineOnVici: false
 };
 
 const authSlice = createSlice({
@@ -184,6 +186,9 @@ const authSlice = createSlice({
     },
     setCallfilesPages: (state,action:PayloadAction<number>)=> {
       state.callfilesPages = action.payload
+    },
+    setIsOnlineOnVici: (state, action:PayloadAction<boolean>) => {
+      state.isOnlineOnVici = action.payload
     }
   },
 });
@@ -213,6 +218,7 @@ export const {
   setSelectedCampaign,
   setIntervalTypes,
   setSelectedBucket,
-  setCallfilesPages
+  setCallfilesPages,
+  setIsOnlineOnVici
 } = authSlice.actions;
 export default authSlice.reducer;

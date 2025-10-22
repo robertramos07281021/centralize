@@ -18,6 +18,7 @@ const callfileTypeDefs = gql`
     totalPrincipal: Float
     totalAccounts: Int
     target: Float
+    autoDial: Boolean
     totalOB: Float
   }
 
@@ -26,6 +27,7 @@ const callfileTypeDefs = gql`
     uncontactable: Int
     accounts: Int
     connected: Int
+   
     target: Float
     principal: Float
     collected: Float
@@ -76,6 +78,7 @@ const callfileTypeDefs = gql`
     getBucketCallfile(bucketId:[ID]):[Callfile]
     getToolsProduction(bucket:ID,interval:String):[ToolsProduction]
     getCollectionMonitoring(bucket:ID, interval:String):Collection
+    getAgentCallfileAutoDial:Boolean
   }
 
   type Mutation {

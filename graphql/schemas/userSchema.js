@@ -113,7 +113,7 @@ const userTypeDefs = gql`
     getMe: Users
     getBucketUser(bucketId: ID): [Users]
     getAomUser: [Users]
-    findUsers(search: String!, page: Int!, limit: Int!): PaginatedUsers!
+    findUsers(search: String!, page: Int!, limit: Int!, filter: String!): PaginatedUsers!
     findDeptAgents: [DeptUser]
     findAgents: [Users]
     getCampaignAssigned: [CampaignUser]
@@ -132,6 +132,7 @@ const userTypeDefs = gql`
     buckets: [ID]
     account_type: String
     callfile_id: String
+    vici_id: String
   }
 
   input UpdateAccount {

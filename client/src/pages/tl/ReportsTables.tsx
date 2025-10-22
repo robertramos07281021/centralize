@@ -41,7 +41,6 @@ const ReportsTables: React.FC<ComponentProp> = ({
           className={`w-full py-0.5 ${
             colorObject[color as keyof typeof colorObject]
           } font-black uppercase rounded-t-md text-center py-2 border-indigo-700 border`}
-          rowSpan={2}
         >
           {firstTitle}
         </div>
@@ -74,7 +73,6 @@ const ReportsTables: React.FC<ComponentProp> = ({
         <div>
           <div>
             <div
-              colSpan={5}
               className={`border font-black text-center border-indigo-700 uppercase py-2 rounded-t-md ${
                 colorObject[color as keyof typeof colorObject]
               }`}

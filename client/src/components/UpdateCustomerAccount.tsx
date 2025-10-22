@@ -183,8 +183,6 @@ const UpdateCustomerAccount: React.FC<CustomerProps> = ({ cancel }) => {
     });
   }, [setModalProps, setConfirm, updateCustomerAccount, formData]);
 
-  const open = useState(true)
-
   return (
     <AnimatePresence>
       

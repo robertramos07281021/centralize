@@ -234,7 +234,7 @@ const BranchSection: React.FC<BranchSectionProps> = ({ branch, setBranch }) => {
   );
 
   return (
-    <div className="z-50 w-full h-full overflow-hidden">
+    <div className=" w-full h-full overflow-hidden">
       <div className=" h-full w-full">
         <div className="flex items-center justify-center my-5 w-full">
           <div className=" px-4  bg-white  dark:bg-gray-900">
@@ -255,7 +255,7 @@ const BranchSection: React.FC<BranchSectionProps> = ({ branch, setBranch }) => {
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: index * 0.1 }}
-                className="even:bg-gray-200 bg-gray-300 rounded-md"
+                className="even:bg-gray-200 border bg-gray-300 rounded-md"
               >
                 <div className="flex flex-row justify-between items-center px-4 shadow-sm py-2 gap-10  hover:bg-gray-400 hover:shadow-lg transition-all rounded-md">
                   <p className="uppercase text-slate-800 font-black  ">

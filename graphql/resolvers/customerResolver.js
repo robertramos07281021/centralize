@@ -80,6 +80,17 @@ const customerResolver = {
 
         const accounts = await Customer.aggregate([
           {
+            $match: {
+              $or: [
+                { fullName: { $regex: search, $options: "i" } },
+                { contact_no: { $elemMatch: { $regex: search, $options: "i" } } },
+                { emails: { $elemMatch: { $regex: search, $options: "i" } } },
+                { addresses: { $elemMatch: { $regex: search, $options: "i" } } },
+              ],
+            },
+          },
+          { $limit: 50 },
+          {
             $lookup: {
               from: "customeraccounts",
               localField: "customer_account",
@@ -118,12 +129,6 @@ const customerResolver = {
               "ca.on_hands": false,
               "account_callfile.active": {$eq: true},
               "account_callfile.endo": {$exists: false},
-              $or: [
-                { fullName: regexSearch },
-                { contact_no: { $elemMatch: regexSearch } },
-                { emails: { $elemMatch: regexSearch } },
-                { addresses: { $elemMatch: regexSearch } },
-              ],
             },
           },
           {

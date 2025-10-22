@@ -650,277 +650,345 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
           </div>
         )}
 
-        <motion.form
-          ref={Form}
-          className="flex flex-col h-full justify-end w-full"
-          noValidate
-          onSubmit={handleSubmitForm}
-          initial={{x: 20, opacity: 0}}
-          animate={{x: 0, opacity: 1}}
-          transition={{delay: 0.1}}
-        >
-          <h1 className="text-center d uppercase font-black text-slate-600 text-2xl my-2">
-            Customer Disposition
-          </h1>
           {selectedCustomer?._id && (
-            <div className="flex bg-gray-100 uppercase w-full h-full p-5 rounded-md border border-slate-400 shadow-md xl:gap-2 gap-2 justify-center select-none">
-              <div className="flex flex-col gap-1 w-full">
-                <label className="flex flex-col gap-0.5">
-                  <p className="text-gray-800 font-bold text-start  mr-2 2xl:text-sm text-xs leading-4">
-                    Disposition:
-                  </p>
-                  <select
-                    name="disposition"
-                    id="disposition"
-                    value={
-                      disposition?.getDispositionTypes.find(
-                        (x) => x.id === data.disposition
-                      )?.code ?? ""
-                    }
-                    required
-                    onChange={(e) => {
-                      handleDataChange(
-                        "disposition",
-                        dispoObject[e.target.value]
-                      );
-                    }}
-                    className={`${
-                      required && !data.disposition
-                        ? "bg-red-100 border-red-500"
-                        : "bg-gray-50  border-gray-500"
-                    }  w-full border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm p-2 `}
-                  >
-                    <option value="" aria-keyshortcuts=";">
-                      Select Disposition
-                    </option>
-                    {Object.entries(dispoObject).map(([key, value]) => {
-                      const findDispoName =
-                        disposition?.getDispositionTypes.find(
-                          (x) => x.id === value
-                        );
-
-                      return (
-                        findDispoName?.active && (
-                          <option
-                            value={key}
-                            key={key}
-                            accessKey={
-                              Code[findDispoName?.code as keyof typeof Code]
-                            }
-                          >
-                            {`${findDispoName?.name} - ${key} - "${
-                              dispoKeyCode[key] || ""
-                            }"`}
-                          </option>
-                        )
-                      );
-                    })}
-                  </select>
-                </label>
-                <div className="flex w-full gap-2">
-                  <div className="w-full">
-                    {anabledDispo.includes(selectedDispo) ? (
-                      <label className="flex flex-col w-full items-center">
-                        <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4">
-                          Amount:
-                        </p>
-                        <div
-                          className={`flex border items-center rounded-lg w-full ${
-                            required && (!data.amount || data.amount === "0")
-                              ? "bg-red-100 border-red-500"
-                              : "bg-gray-50  border-gray-500"
-                          } `}
-                        >
-                          <p className="px-2">&#x20B1;</p>
-                          <input
-                            type="text"
-                            name="amount"
-                            id="amount"
-                            autoComplete="off"
-                            value={data.amount ?? 0}
-                            onChange={handleOnChangeAmount}
-                            pattern="^\d+(\.\d{1,2})?$"
-                            placeholder="Enter amount"
-                            required={requiredDispo.includes(selectedDispo)}
-                            className={`w-full text-xs 2xl:text-sm  text-gray-900 p-2 outline-none`}
-                          />
-                        </div>
-                      </label>
-                    ) : (
-                      <IFBANK label="Amount" />
-                    )}
-                  </div>
-
-                  <div className="w-full">
-                    {anabledDispo.includes(selectedDispo) ? (
-                      <label className="flex flex-col w-full items-center">
-                        <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs leading-4">
-                          Payment:
-                        </p>
-                        <select
-                          name="payment"
-                          id="payment"
-                          required={requiredDispo.includes(selectedDispo)}
-                          value={data.payment ?? ""}
-                          onChange={(e) => {
-                            if (e.target.value === Payment.FULL) {
-                              setData((prev) => ({
-                                ...prev,
-                                amount: selectedCustomer.balance.toFixed(2),
-                              }));
-                            }
-                            handleDataChange("payment", e.target.value);
-                          }}
-                          className={`${
-                            required && !data.payment
-                              ? "bg-red-100 border-red-500"
-                              : "bg-gray-50  border-gray-500"
-                          } border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
-                        >
-                          <option value="" accessKey="8">
-                            Select Payment
-                          </option>
-                          {Object.entries(Payment).map(
-                            ([key, value], index) => {
-                              return (
-                                <option
-                                  value={value}
-                                  key={key}
-                                  className="capitalize"
-                                  accessKey={index > 0 ? "0" : "9"}
-                                >
-                                  {value.charAt(0).toUpperCase() +
-                                    value.slice(1, value.length)}
-                                </option>
-                              );
-                            }
-                          )}
-                        </select>
-                      </label>
-                    ) : (
-                      <IFBANK label="Payment" />
-                    )}
-                  </div>
-                </div>
-
-                <label className="flex flex-col items-center gap-0.5">
-                  <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs  leading-4 ">
-                    Contact Method:
-                  </p>
-                  <select
-                    name="contact_method"
-                    id="contact_method"
-                    required
-                    value={data.contact_method ?? ""}
-                    onChange={(e) =>
-                      handleDataChange(
-                        "contact_method",
-                        checkIfChangeContactMethod &&
-                          !selectedCustomer.current_disposition?.selectivesDispo
-                          ? existingDispo?.contact_method
-                          : e.target.value
-                      )
-                    }
-                    className={`${
-                      required && !data.contact_method
-                        ? "bg-red-100 border-red-500"
-                        : "bg-gray-50  border-gray-500"
-                    }  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
-                  >
-                    <option value="">Select Contact Method</option>
-                    {Object.entries(AccountType).map(([key, value], index) => {
-                      return (
-                        <option
-                          value={value}
-                          key={key}
-                          className="capitalize"
-                          accessKey={(index + 1).toString()}
-                        >
-                          {value.charAt(0).toUpperCase() +
-                            value.slice(1, value.length)}{" "}
-                          - {index + 1}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </label>
-                {data.contact_method === AccountType.CALLS && (
-                  <label className="flex flex-col  items-center gap-0.5">
-                    <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4">
-                      Dialer
+            <motion.form 
+            ref={Form}
+            noValidate
+            onSubmit={handleSubmitForm}
+            initial={{ x: 20, opacity: 0 }}
+            animate={{ x: 0, opacity: 1 }}
+            transition={{ delay: 0.1 }}
+            
+            className="flex flex-col bg-gray-100 overflow-hidden uppercase w-full h-full rounded-xl border-2 border-gray-600 shadow-md justify-center select-none">
+              <h1 className="text-center py-3 bg-gray-400 d uppercase border-b font-black text-slate-600 text-2xl">
+                Customer Disposition
+              </h1>
+              <div className="flex gap-2 p-5">
+                <div className="flex flex-col gap-1 w-full">
+                  <label className="flex flex-col gap-0.5">
+                    <p className="text-gray-800 font-bold text-start  mr-2 2xl:text-sm text-xs leading-4">
+                      Disposition:
                     </p>
                     <select
-                      name="dialer"
-                      id="dialer"
-                      required={data.contact_method === AccountType.CALLS}
-                      value={data.dialer ?? ""}
-                      onChange={(e) =>
-                        handleDataChange(
-                          "dialer",
-                          checkIfChangeContactMethod &&
-                            !selectedCustomer.current_disposition
-                              ?.selectivesDispo
-                            ? existingDispo?.dialer
-                            : e.target.value
-                        )
+                      name="disposition"
+                      id="disposition"
+                      value={
+                        disposition?.getDispositionTypes.find(
+                          (x) => x.id === data.disposition
+                        )?.code ?? ""
                       }
+                      required
+                      onChange={(e) => {
+                        handleDataChange(
+                          "disposition",
+                          dispoObject[e.target.value]
+                        );
+                      }}
                       className={`${
-                        required && !data.dialer
+                        required && !data.disposition
                           ? "bg-red-100 border-red-500"
                           : "bg-gray-50  border-gray-500"
-                      }  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                      }  w-full border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm p-2 `}
                     >
-                      <option value="">Select Dialer</option>
-                      {Object.entries(Dialer).map(([key, value]) => {
+                      <option value="" aria-keyshortcuts=";">
+                        Select Disposition
+                      </option>
+                      {Object.entries(dispoObject).map(([key, value]) => {
+                        const findDispoName =
+                          disposition?.getDispositionTypes.find(
+                            (x) => x.id === value
+                          );
+
                         return (
-                          <option
-                            value={value}
-                            key={key}
-                            className="capitalize"
-                            accessKey={DialerCode[value]}
-                          >
-                            {value.charAt(0).toUpperCase() +
-                              value.slice(1, value.length)}
-                          </option>
+                          findDispoName?.active && (
+                            <option
+                              value={key}
+                              key={key}
+                              accessKey={
+                                Code[findDispoName?.code as keyof typeof Code]
+                              }
+                            >
+                              {`${findDispoName?.name} - ${key} - "${
+                                dispoKeyCode[key] || ""
+                              }"`}
+                            </option>
+                          )
                         );
                       })}
                     </select>
                   </label>
-                )}
-                {data.contact_method === AccountType.SMS && (
+                  <div className="flex w-full gap-2">
+                    <div className="w-full">
+                      {anabledDispo.includes(selectedDispo) ? (
+                        <label className="flex flex-col w-full items-center">
+                          <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4">
+                            Amount:
+                          </p>
+                          <div
+                            className={`flex border items-center rounded-lg w-full ${
+                              required && (!data.amount || data.amount === "0")
+                                ? "bg-red-100 border-red-500"
+                                : "bg-gray-50  border-gray-500"
+                            } `}
+                          >
+                            <p className="px-2">&#x20B1;</p>
+                            <input
+                              type="text"
+                              name="amount"
+                              id="amount"
+                              autoComplete="off"
+                              value={data.amount ?? 0}
+                              onChange={handleOnChangeAmount}
+                              pattern="^\d+(\.\d{1,2})?$"
+                              placeholder="Enter amount"
+                              required={requiredDispo.includes(selectedDispo)}
+                              className={`w-full text-xs 2xl:text-sm  text-gray-900 p-2 outline-none`}
+                            />
+                          </div>
+                        </label>
+                      ) : (
+                        <IFBANK label="Amount" />
+                      )}
+                    </div>
+
+                    <div className="w-full">
+                      {anabledDispo.includes(selectedDispo) ? (
+                        <label className="flex flex-col w-full items-center">
+                          <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs leading-4">
+                            Payment:
+                          </p>
+                          <select
+                            name="payment"
+                            id="payment"
+                            required={requiredDispo.includes(selectedDispo)}
+                            value={data.payment ?? ""}
+                            onChange={(e) => {
+                              if (e.target.value === Payment.FULL) {
+                                setData((prev) => ({
+                                  ...prev,
+                                  amount: selectedCustomer.balance.toFixed(2),
+                                }));
+                              }
+                              handleDataChange("payment", e.target.value);
+                            }}
+                            className={`${
+                              required && !data.payment
+                                ? "bg-red-100 border-red-500"
+                                : "bg-gray-50  border-gray-500"
+                            } border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                          >
+                            <option value="" accessKey="8">
+                              Select Payment
+                            </option>
+                            {Object.entries(Payment).map(
+                              ([key, value], index) => {
+                                return (
+                                  <option
+                                    value={value}
+                                    key={key}
+                                    className="capitalize"
+                                    accessKey={index > 0 ? "0" : "9"}
+                                  >
+                                    {value.charAt(0).toUpperCase() +
+                                      value.slice(1, value.length)}
+                                  </option>
+                                );
+                              }
+                            )}
+                          </select>
+                        </label>
+                      ) : (
+                        <IFBANK label="Payment" />
+                      )}
+                    </div>
+                  </div>
+
                   <label className="flex flex-col items-center gap-0.5">
-                    <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4">
-                      SMS Collector
+                    <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs  leading-4 ">
+                      Contact Method:
+                    </p>
+                    <select
+                      name="contact_method"
+                      id="contact_method"
+                      required
+                      value={data.contact_method ?? ""}
+                      onChange={(e) =>
+                        handleDataChange(
+                          "contact_method",
+                          checkIfChangeContactMethod &&
+                            !selectedCustomer.current_disposition
+                              ?.selectivesDispo
+                            ? existingDispo?.contact_method
+                            : e.target.value
+                        )
+                      }
+                      className={`${
+                        required && !data.contact_method
+                          ? "bg-red-100 border-red-500"
+                          : "bg-gray-50  border-gray-500"
+                      }  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                    >
+                      <option value="">Select Contact Method</option>
+                      {Object.entries(AccountType).map(
+                        ([key, value], index) => {
+                          return (
+                            <option
+                              value={value}
+                              key={key}
+                              className="capitalize"
+                              accessKey={(index + 1).toString()}
+                            >
+                              {value.charAt(0).toUpperCase() +
+                                value.slice(1, value.length)}{" "}
+                              - {index + 1}
+                            </option>
+                          );
+                        }
+                      )}
+                    </select>
+                  </label>
+                  {data.contact_method === AccountType.CALLS && (
+                    <label className="flex flex-col  items-center gap-0.5">
+                      <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4">
+                        Dialer
+                      </p>
+                      <select
+                        name="dialer"
+                        id="dialer"
+                        required={data.contact_method === AccountType.CALLS}
+                        value={data.dialer ?? ""}
+                        onChange={(e) =>
+                          handleDataChange(
+                            "dialer",
+                            checkIfChangeContactMethod &&
+                              !selectedCustomer.current_disposition
+                                ?.selectivesDispo
+                              ? existingDispo?.dialer
+                              : e.target.value
+                          )
+                        }
+                        className={`${
+                          required && !data.dialer
+                            ? "bg-red-100 border-red-500"
+                            : "bg-gray-50  border-gray-500"
+                        }  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                      >
+                        <option value="">Select Dialer</option>
+                        {Object.entries(Dialer).map(([key, value]) => {
+                          return (
+                            <option
+                              value={value}
+                              key={key}
+                              className="capitalize"
+                              accessKey={DialerCode[value]}
+                            >
+                              {value.charAt(0).toUpperCase() +
+                                value.slice(1, value.length)}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </label>
+                  )}
+                  {data.contact_method === AccountType.SMS && (
+                    <label className="flex flex-col items-center gap-0.5">
+                      <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4">
+                        SMS Collector
+                      </p>
+                      <select
+                        name="sms_collector"
+                        id="sms_collector"
+                        required={data.contact_method === AccountType.SMS}
+                        value={data.sms ?? ""}
+                        onChange={(e) =>
+                          handleDataChange(
+                            "sms",
+                            checkIfChangeContactMethod &&
+                              !selectedCustomer.current_disposition
+                                ?.selectivesDispo
+                              ? existingDispo?.sms
+                              : e.target.value
+                          )
+                        }
+                        className={`${
+                          required && !data.dialer
+                            ? "bg-red-100 border-red-500"
+                            : "bg-gray-50  border-gray-500"
+                        }  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                      >
+                        <option value="">Select SMS Collector</option>
+                        {Object.entries(SMSCollector).map(([key, value]) => {
+                          return (
+                            <option
+                              value={value}
+                              key={key}
+                              className="capitalize"
+                            >
+                              {value.charAt(0).toUpperCase() +
+                                value.slice(1, value.length)}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </label>
+                  )}
+                  {data.contact_method === AccountType.SKIP && (
+                    <label className="flex flex-col items-center gap-0.5">
+                      <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs  leading-4">
+                        Chat App
+                      </p>
+                      <select
+                        name="chat_app"
+                        id="chat_app"
+                        value={data.chatApp ?? ""}
+                        required={data.contact_method === AccountType.SKIP}
+                        onChange={(e) =>
+                          handleDataChange(
+                            "chatApp",
+                            checkIfChangeContactMethod &&
+                              !selectedCustomer.current_disposition
+                                ?.selectivesDispo
+                              ? existingDispo?.chatApp
+                              : e.target.value
+                          )
+                        }
+                        className={`${
+                          required && !data.chatApp
+                            ? "bg-red-100 border-red-500"
+                            : "bg-gray-50  border-gray-500"
+                        } border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                      >
+                        <option value="">Select Chat App</option>
+                        {Object.entries(SkipCollector).map(([key, value]) => {
+                          return (
+                            <option
+                              value={value}
+                              key={key}
+                              className="capitalize"
+                            >
+                              {value.charAt(0).toUpperCase() +
+                                value.slice(1, value.length)}
+                            </option>
+                          );
+                        })}
+                      </select>
+                    </label>
+                  )}
+                  <label className="flex flex-col gap-0.5">
+                    <p className="text-gray-800 font-bold text-start mr-2 2xl:text-sm text-xs leading-4">
+                      RFD:
                     </p>
                     <select
                       name="sms_collector"
                       id="sms_collector"
-                      required={data.contact_method === AccountType.SMS}
-                      value={data.sms ?? ""}
-                      onChange={(e) =>
-                        handleDataChange(
-                          "sms",
-                          checkIfChangeContactMethod &&
-                            !selectedCustomer.current_disposition
-                              ?.selectivesDispo
-                            ? existingDispo?.sms
-                            : e.target.value
-                        )
-                      }
-                      className={`${
-                        required && !data.dialer
-                          ? "bg-red-100 border-red-500"
-                          : "bg-gray-50  border-gray-500"
-                      }  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                      value={data.RFD ?? ""}
+                      onChange={(e) => handleDataChange("RFD", e.target.value)}
+                      className={` bg-gray-50  border-gray-500  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                     >
-                      <option value="">Select SMS Collector</option>
-                      {Object.entries(SMSCollector).map(([key, value]) => {
+                      <option value="">Select RFD Reason</option>
+                      {Object.entries(RFD).map(([key, value]) => {
                         return (
-                          <option
-                            value={value}
-                            key={key}
-                            className="capitalize"
-                          >
+                          <option value={value} key={key}>
                             {value.charAt(0).toUpperCase() +
                               value.slice(1, value.length)}
                           </option>
@@ -928,77 +996,11 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                       })}
                     </select>
                   </label>
-                )}
-                {data.contact_method === AccountType.SKIP && (
-                  <label className="flex flex-col items-center gap-0.5">
-                    <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs  leading-4">
-                      Chat App
-                    </p>
-                    <select
-                      name="chat_app"
-                      id="chat_app"
-                      value={data.chatApp ?? ""}
-                      required={data.contact_method === AccountType.SKIP}
-                      onChange={(e) =>
-                        handleDataChange(
-                          "chatApp",
-                          checkIfChangeContactMethod &&
-                            !selectedCustomer.current_disposition
-                              ?.selectivesDispo
-                            ? existingDispo?.chatApp
-                            : e.target.value
-                        )
-                      }
-                      className={`${
-                        required && !data.chatApp
-                          ? "bg-red-100 border-red-500"
-                          : "bg-gray-50  border-gray-500"
-                      } border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
-                    >
-                      <option value="">Select Chat App</option>
-                      {Object.entries(SkipCollector).map(([key, value]) => {
-                        return (
-                          <option
-                            value={value}
-                            key={key}
-                            className="capitalize"
-                          >
-                            {value.charAt(0).toUpperCase() +
-                              value.slice(1, value.length)}
-                          </option>
-                        );
-                      })}
-                    </select>
-                  </label>
-                )}
-                <label className="flex flex-col gap-0.5">
-                  <p className="text-gray-800 font-bold text-start mr-2 2xl:text-sm text-xs leading-4">
-                    RFD:
-                  </p>
-                  <select
-                    name="sms_collector"
-                    id="sms_collector"
-                    value={data.RFD ?? ""}
-                    onChange={(e) => handleDataChange("RFD", e.target.value)}
-                    className={` bg-gray-50  border-gray-500  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
-                  >
-                    <option value="">Select RFD Reason</option>
-                    {Object.entries(RFD).map(([key, value]) => {
-                      return (
-                        <option value={value} key={key}>
-                          {value.charAt(0).toUpperCase() +
-                            value.slice(1, value.length)}
-                        </option>
-                      );
-                    })}
-                  </select>
-                </label>
-              </div>
-              <div className="flex gap-1.5 w-full flex-col">
-               
+                </div>
+                <div className="flex w-full flex-col gap-1">
                   {anabledDispo.includes(selectedDispo) ? (
-                    <label className="flex flex-col items-center">
-                      <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4">
+                    <label className="flex flex-col items-center gap-0.5">
+                      <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs  leading-4">
                         Payment Date:
                       </p>
                       <input
@@ -1024,8 +1026,8 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                     <IFBANK label="Payment Date" />
                   )}
                   {anabledDispo.includes(selectedDispo) ? (
-                    <label className="flex flex-col mt-1 2xl:flex-row items-center">
-                      <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
+                    <label className="flex flex-col items-center gap-0.5">
+                      <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4 ">
                         Payment Method:
                       </p>
                       <select
@@ -1050,12 +1052,10 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                   ) : (
                     <IFBANK label="Payment Method" />
                   )}
-             
 
-                
                   {anabledDispo.includes(selectedDispo) ? (
-                    <label className="flex flex-col 2xl:flex-row items-center">
-                      <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
+                    <label className="flex flex-col items-center gap-0.5">
+                      <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs  leading-4 ">
                         Ref. No:
                       </p>
                       <input
@@ -1074,7 +1074,7 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                   ) : (
                     <IFBANK label="Ref. No" />
                   )}
-                  <label className="flex flex-col items-start">
+                  <label className="flex flex-col items-start gap-0.5">
                     <p className="text-gray-800 mr-2 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
                       Comment:
                     </p>
@@ -1117,12 +1117,12 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                       </motion.button>
                     )}
                   </div>
-                
+                </div>
               </div>
-            </div>
+            </motion.form>
           )}
-          <div className=" flex justify-end mt-5 gap-5"></div>
-        </motion.form>
+     
+   
         {confirm && <Confirmation {...modalProps} />}
       </AnimatePresence>
     )

@@ -172,34 +172,38 @@ const ReportsComponents: React.FC<ReportsComponents> = ({
   const labels = ["Name", "Code", "Count"];
 
   return (
-    <div className="h-full flex p-5 overflow-hidden mt-2 gap-5">
+    <div className="h-full flex p-5 overflow-hidden mt-2 gap-2">
       <motion.div
         className=" bg-gray-100 border-2 rounded-md shadow-md border-gray-700 h-full flex flex-col w-1/2"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.4 }}
+        layout
       >
-        <h1 className="text-center text-xl uppercase text-black rounded-t-sm border-b-2 py-3 bg-gray-400 font-black ">
+        <h1 className="text-center text-xl uppercase text-black rounded-t-sm border-b py-3 bg-gray-300 font-black ">
           Dispositions
         </h1>
-        <div className="grid grid-cols-3 bg-gray-300 border-b-2 lg:text-sm 2xl:text-lg md:px-3 ">
+        <div className="grid grid-cols-3 bg-gray-200 border-b lg:text-sm 2xl:text-lg md:px-3 ">
           {labels.map((e, index) => (
-            <div key={index} className="text-black border-r-2 gap-2 p-0 pl-1 md:p-2 last:border-0 font-black uppercase ">
+            <div
+              key={index}
+              className="text-black border-r gap-2 p-0 pl-1 md:p-2 last:border-0 font-black uppercase "
+            >
               {e}
             </div>
           ))}
         </div>
         <div className="h-full overflow-y-auto">
-          {productionReportData?.ProductionReport.dispotypes.length < 0 ? (
+          {productionReportData && productionReportData?.ProductionReport?.dispotypes?.length < 0 ? (
             <div>
-              {productionReportData?.ProductionReport.dispotypes.map((e) => {
+              {productionReportData?.ProductionReport?.dispotypes?.map((e) => {
                 return (
                   <div
                     key={e.dispotype._id}
                     className="grid grid-cols-3 lg:text-xs 2xl:text-sm text-black "
                   >
                     <div className="flex gap-5 justify-between pr-3">
-                      <div className="" >{e.dispotype.name}</div>
+                      <div className="">{e.dispotype.name}</div>
                       <div
                         style={{
                           backgroundColor: colorDispo[e.dispotype.code],
@@ -220,9 +224,15 @@ const ReportsComponents: React.FC<ReportsComponents> = ({
           )}
         </div>
       </motion.div>
-      <div className="p-20 w-1/2 h-full">
+      <motion.div
+        className="p-20 w-1/2 border-2 bg-gray-100 rounded-md h-full shadow-md border-gray-700"
+        initial={{y: 20, opacity: 0}}
+        animate={{y: 0, opacity: 1}}
+        transition={{delay: 0.5}}
+        layout
+      >
         <Doughnut data={data} options={options} />
-      </div>
+      </motion.div>
     </div>
   );
 };

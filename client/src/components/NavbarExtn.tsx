@@ -6,6 +6,7 @@ import gql from "graphql-tag"
 import {  useMutation, useQuery, useSubscription } from "@apollo/client"
 import { setDeselectCustomer, setServerError, setSuccess } from "../redux/slices/authSlice.ts"
 import { useEffect } from "react"
+import client from "../apollo/client.ts"
 
 type MyTask = {
   case_id: string
@@ -88,6 +89,13 @@ const NavbarExtn = () => {
 
   const { refetch:messageRefetch } = useQuery<{selectedBucket:{message: string}}>(SELECTED_BUCKET_MESSAGE,{skip: !success.success, notifyOnNetworkStatusChange: true})
 
+
+  client.subscribe<{somethingEscalating:{members:[string],message:string}}>({query: SOMETHING_ESCALATING}).subscribe({
+    next(data) {
+      console.log(data)
+    }
+  })
+
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_ESCALATING, {
     onData: async({data})=> {
       if(!userLogged) return
@@ -128,6 +136,9 @@ const NavbarExtn = () => {
     }
 
   })
+
+  
+
 
   const [deselectTask] = useMutation<{deselectTask:{message: string, success: boolean}}>(DESELECT_TASK,{
     onCompleted: ()=> {

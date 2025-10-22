@@ -1,31 +1,47 @@
 import { Query } from "mongoose";
 import CustomError from "../../middlewares/errors.js";
-import { callViaVicidial } from "../../middlewares/vicidial.js";
+import {
+  callViaVicidial,
+  checkIfAgentIsOnline,
+} from "../../middlewares/vicidial.js";
 import Callfile from "../../models/callfile.js";
 import CustomerAccount from "../../models/customerAccount.js";
 
-
 const callResolver = {
-  
   Query: {
-    randomCustomer: async(_,__,{user})=> {
+    randomCustomer: async (_, __, { user }) => {
       try {
-        
-        const findCallfile = await Callfile.findOne({ bucket: { $in: user.buckets }, active: true})
-  
-        const startOfTheDay = new Date()
-        startOfTheDay.setHours(0,0,0,0)
-        const endOfTheDay = new Date()
-        endOfTheDay.setHours(23,59,59,999)
-        const success = ['PTP','UNEG','FFUP','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP','PAID']
+        const findCallfile = await Callfile.findOne({
+          bucket: { $in: user.buckets },
+          active: true,
+        });
 
+        const startOfTheDay = new Date();
+        startOfTheDay.setHours(0, 0, 0, 0);
+        const endOfTheDay = new Date();
+        endOfTheDay.setHours(23, 59, 59, 999);
+        const success = [
+          "PTP",
+          "UNEG",
+          "FFUP",
+          "KOR",
+          "NOA",
+          "FV",
+          "HUP",
+          "LM",
+          "ANSM",
+          "DEC",
+          "RTP",
+          "ITP",
+          "PAID",
+        ];
 
         const randomCustomer = await CustomerAccount.aggregate([
           {
             $match: {
               on_hands: false,
-              callfile: findCallfile._id
-            }
+              callfile: findCallfile._id,
+            },
           },
           {
             $lookup: {
@@ -35,8 +51,11 @@ const callResolver = {
               as: "customer_info",
             },
           },
-          { 
-            $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$customer_info",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -46,8 +65,11 @@ const callResolver = {
               as: "dispotype",
             },
           },
-          { 
-            $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$customer_info",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -57,8 +79,11 @@ const callResolver = {
               as: "account_bucket",
             },
           },
-          { 
-            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$account_bucket",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -68,8 +93,11 @@ const callResolver = {
               as: "current_disposition",
             },
           },
-          { 
-            $unwind: { path: "$current_disposition", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$current_disposition",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -87,40 +115,63 @@ const callResolver = {
                     $and: [
                       { $in: ["$dispotype.code", success] },
                       { $gte: ["$createdAt", startOfTheDay] },
-                      { $lte: ["$createdAt", endOfTheDay] }
-                    ]
+                      { $lte: ["$createdAt", endOfTheDay] },
+                    ],
                   },
                   then: true,
-                  else: false
-                }
-              }
-            }
+                  else: false,
+                },
+              },
+            },
           },
-          { $sample: { size: 1} }
-        ])
-  
-        return randomCustomer[0]
+          { $sample: { size: 1 } },
+        ]);
+
+        return randomCustomer[0];
       } catch (error) {
-        throw new CustomError('Failed to initiate call',500);
+        throw new CustomError("Failed to initiate call", 500);
       }
-    }
+    },
+    checkUserIsOnlineOnVici: async (_, __, { user }) => {
+      try {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
+        const chechIfOnline = await checkIfAgentIsOnline(user.vici_id);
+
+        return !chechIfOnline.includes("not logged in");
+      } catch (error) {
+        throw new CustomError("Failed to initiate call", 500);
+      }
+    },
   },
 
   Mutation: {
-    makeCall: async(_, { phoneNumber }, {user}) => {
+    makeCall: async (_, { phoneNumber }, { user }) => {
       try {
-        if(!user) throw new CustomError("Unauthorized",401)
-        const res = await callViaVicidial(user.vici_id, phoneNumber)
+        if (!user) throw new CustomError("Unauthorized", 401);
+        const res = await callViaVicidial(user.vici_id, phoneNumber);
         return `Call initiated successfully: ${JSON.stringify(res)}`;
       } catch (err) {
-        throw new CustomError('Failed to initiate call',500);
+        throw new CustomError("Failed to initiate call", 500);
       }
     },
-  }
-}
+    setCallfileToAutoDial: async (_, { callfileId }) => {
+      try {
+        const callfileUpdate = await Callfile.findByIdAndUpdate(
+          callfileId,
+          [{ $set: { autoDial: { $not: "$autoDial" } } }],
+          { new: true }
+        );
 
-export default callResolver
+        if (!callfileUpdate) throw new CustomError("Callfile not found", 401);
 
+        return {
+          success: true,
+          message: "Callfile successfully updated",
+        };
+      } catch (error) {}
+    },
+  },
+};
 
-
-
+export default callResolver;

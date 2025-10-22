@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { Department } from "../../middleware/types";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import Confirmation from "../../components/Confirmation";
-import { PiNotePencilBold, PiTrashFill } from "react-icons/pi";
 import { useAppDispatch } from "../../redux/store";
 import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import { motion, AnimatePresence } from "framer-motion";
@@ -27,10 +25,7 @@ const DEPARTMENT_QUERY = gql`
   }
 `;
 
-// aom {
-//         _id
-//         name
-//       }
+
 
 const DEPARTMENT_BUCKET = gql`
   query findDeptBucket($dept: ID) {
@@ -112,7 +107,6 @@ const BucketSection: React.FC<BranchSectionProps> = ({
   const [viciIp, setViciIp] = useState<string>("");
   const [confirm, setConfirm] = useState<boolean>(false);
   const [bucket, setBucket] = useState<string>("");
-  const [selected, setSelected] = useState("")
 
   useEffect(() => {
     if (newDepts.length > 0 && deptSelected === null) {
@@ -384,8 +378,8 @@ const BucketSection: React.FC<BranchSectionProps> = ({
   );
 
   return (
-    <div className="">
-      <div className="px-4 z-20">
+    <div className="flex overflow-hidden">
+      <div className="px-4 w-full flex flex-col overflow-hidden h-full">
         <div className="my-5 items-center justify-center w-full">
           <div className=" px-4  bg-white  dark:bg-gray-900">
             <motion.h1
@@ -398,8 +392,8 @@ const BucketSection: React.FC<BranchSectionProps> = ({
             </motion.h1>
           </div>
         </div>
-        <div className="flex gap-2  justify-center">
-          <div className=" h-[60vh] w-full flex flex-col gap-2 pr-1 overflow-y-auto">
+        <div className="flex gap-2 justify-center overflow-hidden ">
+          <div className=" h-full w-full flex flex-col gap-2 pr-1 overflow-y-auto">
             {newDepts.map((nd, index) => {
               const findBucket = dept?.getDepts.find((x) => x.id === nd);
               return (
@@ -408,7 +402,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                     key={index}
                     className={`${
                       nd === deptSelected ? "bg-gray-400" :"even:bg-gray-200 bg-gray-100"
-                    } text-sm flex flex-col uppercase font-black w-full text-slate-800 shadow-sm rounded-md even: p-2 border-b border-slate-300 last:border-b-0 hover:bg-gray-400 cursor-pointer`}
+                    } text-sm flex flex-col border uppercase font-black w-full text-slate-800 shadow-sm rounded-md even: p-2 border-black hover:bg-gray-400 cursor-pointer`}
                     onClick={() => handleSelectDept(nd)}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -424,7 +418,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
               );
             })}
           </div>
-          <div className="rounded-xl gap-2 h-[60vh] flex flex-col px-1 overflow-x-hidden w-full overflow-y-auto">
+          <div className="rounded-xl gap-2 h-full flex flex-col px-1 overflow-x-hidden w-full overflow-y-auto">
             {(bucketData?.findDeptBucket ?? []).length > 0 ? (
               <div className="gap-2 flex flex-col">
                 {bucketData?.findDeptBucket.map((b, index) => (
@@ -433,7 +427,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                     initial={{ x: 20, opacity: 0 }}
                     animate={{ x: 0, opacity: 1 }}
                     transition={{ delay: index * 0.1 }}
-                    className="bg-gray-200 even:bg-gray-100 rounded-md shadow-sm"
+                    className="bg-gray-200 border even:bg-gray-100 rounded-md shadow-sm"
                     onClick={() => {}}
                   >
                     <div className="text-xs overflow-hidden items-center font-black hover:shadow-md transition-all uppercase text-slate-800 px-5 py-2 hover:bg-gray-200 rounded-md cursor-pointer">
@@ -507,14 +501,13 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                               className="size-5"
                             >
                               <path
-                                stroke-linecap="round"
-                                stroke-linejoin="round"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
                                 d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
                               />
                             </svg>
                           </div>
                         </div>
-                        {/* <PiTrashFill className="text-red-400 hover:text-red-600 cursor-pointer" /> */}
                       </div>
                     </div>
                   </motion.div>
@@ -543,12 +536,12 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                   className="bg-black/40 backdrop-blur-sm z-10 cursor-pointer w-full h-full absolute top-0 left-0"
                 ></motion.div>
                 <motion.div
-                  className="z-20 flex flex-col border-2 border-green-900 rounded-md "
+                  className={`z-20 flex flex-col border-2 ${isUpdate ? "border-orange-600" : "border-green-900"} rounded-md `}
                   initial={{ opacity: 0, scale: 0.5 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.5 }}
                 >
-                  <h1 className="bg-green-700 px-20 font-black text-2xl uppercase text-center rounded-t-sm text-white py-2">
+                  <h1 className={`${isUpdate ? "bg-orange-500" : "bg-green-700"}  px-20 font-black text-2xl uppercase text-center rounded-t-sm text-white py-2 `}>
                     {isUpdate ? "update bucket" : "create bucket"}
                   </h1>
                   <div className="flex flex-col gap-2 bg-gray-100 rounded-b-sm py-10 px-10">
@@ -599,7 +592,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                         {!isUpdate ? (
                           <button
                             type="button"
-                            className={`bg-blue-600 hover:bg-blue-700 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
+                            className={`bg-green-700 hover:bg-green-800 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
                             onClick={() => handleSubmit("CREATE", null)}
                           >
                             Create

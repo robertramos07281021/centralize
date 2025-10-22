@@ -48,7 +48,7 @@ const SetupView = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 h-full">
+      <div className="grid grid-cols-3 h-full overflow-hidden">
         <BranchSection branch={branch} setBranch={setBranch} />
         <DepartmentSection campaign={campaign} setCampaign={setCampaign} />
         <BucketSection buckets={buckets} setBuckets={setBuckets} />

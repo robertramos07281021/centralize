@@ -221,7 +221,7 @@ const FieldsDiv = ({
 
   return (
     <div className="flex flex-col items-center w-full gap-0.5">
-      <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs leading-4 select-none">
+      <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4 select-none">
         {label} :
       </p>
       <div
@@ -234,8 +234,6 @@ const FieldsDiv = ({
     </div>
   );
 };
-
-
 
 export type ChildHandle = {
   showButtonToFalse: () => void;
@@ -297,7 +295,7 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
       : 0;
 
   return (
-    selectedCustomer && (
+    
       <div className="flex flex-col w-full">
         {showAccounts && (
           <motion.div
@@ -379,23 +377,12 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
             <AnimatePresence>
               {showButton && (
                 <motion.div
-                  className="border whitespace-nowrap absolute mt-1 flex flex-col gap-8 p-8 rounded-md border-slate-400 bg-white shadow  "
+                  className="border whitespace-nowrap absolute mt-1 flex flex-col gap-8 p-8 rounded-md border-slate-400 bg-white shadow"
                   ref={divRef}
                   initial={{ y: -20, opacity: 0 }}
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ y: -20, opacity: 0 }}
                 >
-                  {/* <Buttons
-                  label="Account History"
-                  onClick={() => setShowDispoHistory(true)}
-                  length={
-                    selectedCustomer &&
-                    selectedCustomer?.dispo_history?.length > 0
-                      ? selectedCustomer?.dispo_history?.length
-                      : 0
-                  }
-                  color="blue"
-                /> */}
                   <div
                     className="relative cursor-pointer"
                     onClick={() => setShowDispoHistory(true)}
@@ -405,7 +392,7 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                     </div>
                     <div
                       className={`${
-                        selectedCustomer?.dispo_history?.length > 0
+                        selectedCustomer && selectedCustomer?.dispo_history?.length > 0
                           ? "bg-red-600 border-red-900"
                           : "bg-green-600 border-green-900"
                       } absolute -top-2 rounded-full border-2 border-green-900 shadow-md px-2 font-black text-white -right-2`}
@@ -416,17 +403,7 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                         : 0}
                     </div>
                   </div>
-                  {/* <Buttons
-                  label="Other Accounts"
-                  onClick={() => setShowAccounts(true)}
-                  length={
-                    data && data?.customerOtherAccounts?.length > 0
-                      ? data?.customerOtherAccounts?.length
-                      : 0
-                  }
-                  color="green"
-                /> */}
-
+        
                   <div
                     className="relative cursor-pointer"
                     onClick={() => setShowAccounts(true)}
@@ -446,18 +423,6 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                         : 0}
                     </div>
                   </div>
-                  {/* <Buttons
-                  label="Past Callfile History"
-                  onClick={() => setShowAccountHistory(true)}
-                  length={
-                    accountHistory &&
-                    accountHistory.findAccountHistories?.length > 0
-                      ? accountHistory?.findAccountHistories?.length
-                      : 0
-                  }
-                  color="yellow"
-                /> */}
-
                   <div
                     className="relative cursor-pointer"
                     onClick={() => setShowAccountHistory(true)}
@@ -473,12 +438,12 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                       } absolute -top-2 rounded-full border-2 border-green-900 shadow-md px-2 font-black text-white -right-2`}
                     >
                       {accountHistory &&
-                      accountHistory.findAccountHistories?.length > 0
+                      accountHistory?.findAccountHistories?.length > 0
                         ? accountHistory?.findAccountHistories?.length
                         : 0}
                     </div>
                   </div>
-                  {selectedCustomer.account_bucket.can_update_ca && (
+                  {selectedCustomer?.account_bucket?.can_update_ca && (
                     <div
                       className="relative cursor-pointer"
                       onClick={() => setShowAccountHistory(true)}
@@ -499,33 +464,23 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                           : 0}
                       </div>
                     </div>
-                    // <Buttons
-                    //   label="Update Account History"
-                    //   onClick={() => setShowUpdateOnCA(true)}
-                    //   length={
-                    //     UpdateAccountHistory && UpdateAccountHistory?.length > 0
-                    //       ? UpdateAccountHistory?.length
-                    //       : 0
-                    //   }
-                    //   color="cyan"
-                    // />
                   )}
                 </motion.div>
               )}
             </AnimatePresence>
           </motion.div>
         </div>
-        <motion.div
-          className="w-full flex lg:flex-row flex-col"
-          initial={{ x: 50, opacity: 0 }}
+
+
+        <motion.div 
+           initial={{ x: 50, opacity: 0 }}
           animate={{ opacity: 1, x: 0 }}
-        >
-          <div className="w-full">
-            <h1 className="text-center font-black uppercase text-slate-600 text-2xl py-4">
+          className="flex flex-col w-full overflow-hidden 2xl:gap-2 gap-2 bg-gray-100 border-t-2 border-x-2 border-gray-600 rounded-t-xl  justify-center">
+            <h1 className="text-center font-black bg-gray-400 border-b uppercase text-slate-600 text-2xl py-3">
               Account Information
             </h1>
 
-            {selectedCustomer.batch_no && (
+            {selectedCustomer?.batch_no && (
               <div className=" flex items-center justify-center text-gray-600">
                 <div className="w-1/4 flex flex-col text-center">
                   <div className="font-bold text-gray-800 text-sm">
@@ -537,8 +492,9 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                 </div>
               </div>
             )}
+              <div className="flex gap-2 px-5 " >
 
-            <div className="flex w-full xl:gap-2 gap-2 bg-gray-100 border-t border-x border-slate-400 rounded-t-xl px-5 pt-5 justify-center">
+
               <div className="flex flex-col uppercase gap-2  w-full">
                 <FieldsDiv
                   label="Bucket"
@@ -572,17 +528,19 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                 <FieldsDiv
                   label="DPD Due Date"
                   value={selectedCustomer?.max_dpd}
-                  endorsementDate={selectedCustomer?.endorsement_date}
+                  endorsementDate={selectedCustomer?.endorsement_date || ""}
                 />
               </div>
-            </div>
+              </div>
+              
+           
             {!updateCustomerAccounts ? (
-              <div className="flex flex-col pt-2 bg-gray-100 border-x border-gray-400 border-b rounded-b-xl shadow-md px-5 pb-5 items-end justify-center gap-1 text-slate-800 uppercase font-medium">
+              <div className="flex flex-col pt-2 bg-gray-100 border-gray-600 border-b-2 rounded-b-xl shadow-md px-5 pb-5 items-end justify-center gap-1 text-slate-800 uppercase font-medium">
                 {selectedCustomer && (
                   <div className="w-full flex flex-col lg:ml-3 gap-5 text-slate-800">
                     <div className="bg-gray-100 w-full gap-2 flex flex-col mb-1 md:mb-0 md:flex-row rounded-md">
                       <div>
-                        <h1 className="font-medium 2xl:text-sm text-xs">
+                        <h1 className="font-medium  text-sm text-nowrap">
                           Write Off Balance
                         </h1>
                         <div className="min-w-32 p-1 pl-2 border border-slate-500 rounded-md">
@@ -597,7 +555,7 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                       </div>
 
                       <div>
-                        <h1 className="font-medium 2xl:text-sm text-xs">
+                        <h1 className="font-medium text-sm text-nowrap">
                           Past Due Amount
                         </h1>
                         <div className="min-w-32 p-1 pl-2 border border-slate-500 rounded-md">
@@ -674,10 +632,10 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                     </div>
                   </div>
                   <div className="flex justify-end h-full items-end">
-                    {userLogged?.type !== "AGENT" &&
-                      !updateCustomerAccounts &&
-                      Math.ceil(selectedCustomer.balance) > 0 &&
-                      selectedCustomer.account_bucket.can_update_ca && (
+                    {(selectedCustomer && userLogged?.type !== "AGENT") &&
+                       !updateCustomerAccounts &&
+                      Math.ceil(selectedCustomer?.balance) > 0 &&
+                      selectedCustomer?.account_bucket.can_update_ca && (
                         <button
                           className=" hover:bg-orange-600 bg-orange-500 transition-all shadow-md hover:shadow-none font-black uppercase rounded-md py-3 flex text-sm cursor-pointer px-5 text-white"
                           onClick={() =>
@@ -697,8 +655,8 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                 />
               </div>
             )}
-          </div>
-          {data &&
+          </motion.div>
+          {selectedCustomer && data &&
             data?.customerOtherAccounts?.length > 0 &&
             (() => {
               const sumofOtherOB =
@@ -720,7 +678,7 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                   animate={{ x: 0, opacity: 1 }}
                   transition={{ delay: 0.1 }}
                 >
-                  <div className="bg-gray-100 w-full shadow-md px-3 py-4 border gap-1 flex flex-col border-slate-400 rounded-md">
+                  <div className="bg-gray-100 w-full shadow-md px-3 py-4 border-2 gap-1 flex flex-col border-gray-600 rounded-md">
                     <div>
                       <h1 className="font-medium 2xl:text-lg lg:text-base">
                         Customer Total OB
@@ -747,10 +705,10 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                 </motion.div>
               );
             })()}
-        </motion.div>
+       
       </div>
     )
-  );
+ 
 });
 
 export default AccountInfo;

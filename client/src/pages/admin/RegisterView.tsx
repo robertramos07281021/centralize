@@ -54,6 +54,7 @@ type Data = {
   buckets: string[];
   account_type: AccountType | null;
   callfile_id: string;
+  vici_id: string;
 };
 
 const CREATE_ACCOUNT = gql`
@@ -116,6 +117,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
     buckets: [],
     callfile_id: "",
     account_type: null,
+    vici_id: "",
   });
   const dispatch = useAppDispatch();
 
@@ -166,28 +168,42 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
       buckets: [],
       callfile_id: "",
       account_type: null,
+      vici_id: "",
     });
   }, [setData]);
 
   const [createUser] = useMutation(CREATE_ACCOUNT, {
-    onCompleted: () => {
-      reset();
-      dispatch(
-        setSuccess({
-          success: true,
-          message: "Account created",
-          isMessage: false,
-        })
-      );
-      setConfirm(false);
+    onCompleted: (res) => {
+      console.log("Mutation completed:", res);
+
+      if (res?.createUser?.success) {
+        reset();
+        dispatch(
+          setSuccess({
+            success: true,
+            message: res.createUser.message || "Account created",
+            isMessage: false,
+          })
+        );
+        setConfirm(false);
+      } else {
+        dispatch(
+          setSuccess({
+            success: false,
+            message: res?.createUser?.message || "Failed to create user",
+            isMessage: false,
+          })
+        );
+      }
     },
     onError: (error) => {
+      console.error("Mutation error:", error);
       const errorMessage = error?.message;
       if (errorMessage?.includes("E11000")) {
         reset();
         dispatch(
           setSuccess({
-            success: true,
+            success: false,
             message: "Username already exists",
             isMessage: false,
           })
@@ -214,7 +230,14 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
   const validateOther = () => data.name && data.username;
 
   const handleCreateUser = useCallback(async () => {
-    await createUser({ variables: { createInput: data } });
+    
+    console.log("Creating user with input:", data);
+    try {
+      const res = await createUser({ variables: { createInput: data } });
+      console.log("createUser mutation result:", res);
+    } catch (err) {
+      console.error("createUser mutation failed:", err);
+    }
   }, [data, createUser]);
 
   const submitForm = useCallback(() => {
@@ -263,7 +286,8 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
         data.username ||
         data.branch ||
         data.departments.length > 0 ||
-        data.user_id)
+        data.user_id ||
+        data.vici_id)
     ) {
       setData((prev) => ({
         ...prev,
@@ -275,6 +299,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
         user_id: "",
         callfile_id: "",
         account_type: null,
+        vici_id: "",
       }));
     }
   }, [data.type, data]);
@@ -339,7 +364,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
               ))}
             </select>
           </label>
-          <div className="flex gap-3">
+          <div className="flex gap-3 w-full">
             <label className="w-full">
               <p className="w-full text-base font-black uppercase text-slate-800">
                 Name:
@@ -376,11 +401,11 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                 disabled={!data.type}
                 className={`${
                   !data.type ? "bg-gray-200" : "bg-gray-50"
-                } bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+                } bg-gray-50 w-full border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500  p-2.5`}
               />
             </label>
           </div>
-          <div className="flex gap-3">
+          <div className="flex gap-3 w-full">
             <label className="w-full">
               <p className="w-full text-base font-black uppercase text-slate-800">
                 SIP Id:
@@ -435,32 +460,53 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
           </div>
 
           <div className="flex flex-col w-full gap-3">
-            <label className="w-full">
-              <p className="w-full text-base font-black uppercase text-slate-800">
-                Account Type:
-              </p>
-              <select
-                id="account_type"
-                name="account"
-                disabled={!data.type}
-                onChange={(e) => {
-                  const value =
-                    e.target.value === ""
-                      ? null
-                      : (e.target.value as AccountType);
-                  setData((prev) => ({ ...prev, account_type: value }));
-                }}
-                // onClick={() => setCancel?.(true)}
-                className={`${
-                  !data.type ? "bg-gray-200" : "bg-gray-50"
-                } border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
-              >
-                <option value="">Choose a account type</option>
-                <option value={AccountType.CALLER}>Caller</option>
-                <option value={AccountType.FIELD}>Field</option>
-                <option value={AccountType.SKIPER}>Skipper</option>
-              </select>
-            </label>
+            <div className="flex gap-2 ">
+              <label className="w-full">
+                <p className="w-full text-base font-black uppercase text-slate-800">
+                  Account Type:
+                </p>
+                <select
+                  id="account_type"
+                  name="account"
+                  disabled={!data.type}
+                  onChange={(e) => {
+                    const value =
+                      e.target.value === ""
+                        ? null
+                        : (e.target.value as AccountType);
+                    setData((prev) => ({ ...prev, account_type: value }));
+                  }}
+                  // onClick={() => setCancel?.(true)}
+                  className={`${
+                    !data.type ? "bg-gray-200" : "bg-gray-50"
+                  } border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+                >
+                  <option value="">Choose a account type</option>
+                  <option value={AccountType.CALLER}>Caller</option>
+                  <option value={AccountType.FIELD}>Field</option>
+                  <option value={AccountType.SKIPER}>Skipper</option>
+                </select>
+              </label>
+              <div className="flex flex-col">
+                <div className="font-black text-slate-800 ">VICI ID:</div>
+                <div className="flex border border-slate-300  rounded-md ">
+                  <input
+                    id="vici_id"
+                    disabled={!data.type}
+                    className={`" ${
+                      !data.type ||
+                      !validForCampaignAndBucket.toString().includes(data.type)
+                        ? "bg-gray-200"
+                        : "bg-gray-50"
+                    } w-full bg-gray-100 px-5 py-2 pr-1 rounded-sm focus:outline-none "`}
+                    value={data.vici_id}
+                    onChange={(e) =>
+                      setData((prev) => ({ ...prev, vici_id: e.target.value }))
+                    }
+                  />
+                </div>
+              </div>
+            </div>
 
             <label className="w-full">
               <p className="w-full text-base font-black uppercase text-slate-800">
@@ -533,7 +579,6 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                   .join(", ")
                   .replace(/_/g, " ")}
                 onClick={() => {
-                  console.log(selectDept, cancel);
                   if (
                     validForCampaignAndBucket
                       .toString()
@@ -700,7 +745,10 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
             )}
           </div>
           <div className="flex justify-end w-full">
-            <button className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-md uppercase text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5" onClick={setCancel}>
+            <button
+              className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-md uppercase text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
+              onClick={setCancel}
+            >
               Cancel
             </button>
             <button

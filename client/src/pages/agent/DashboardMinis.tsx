@@ -106,7 +106,7 @@ const WithoutTargetDiv = ({
       } uppercase bg-white font-black rounded-sm shadow-md flex flex-col`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
+      transition={{ delay: interval === "Daily"? 0.2 : 0.4 }}
     >
       <div
         className={`lg:text-xs flex-col h-full rounded-t-sm border-b flex items-center justify-center font-black  2xl:text-base ${
@@ -114,7 +114,7 @@ const WithoutTargetDiv = ({
         } `}
       >
         TOTAL PTP
-        <span className="lg:text-[0.7em] ml-1 2xl:text-xs font-normal">
+        <span className="lg:text-[0.7em] 2xl:text-xs font-normal">
           ({interval})
         </span>
       </div>
@@ -123,7 +123,7 @@ const WithoutTargetDiv = ({
           {count}
         </p>
 
-        <div className="text-[0.6rem] 2xl:text-base absolute font-normal bottom-0.5 ">
+        <div className="text-[0.6rem] 2xl:text-sm absolute font-normal bottom-0.5 ">
           AMT
         </div>
 
@@ -139,7 +139,7 @@ const WithoutTargetDiv = ({
 };
 
 
-const forRPCDiv = ({
+const ForRPCDiv = ({
   interval,
   count,
   color,
@@ -160,14 +160,14 @@ const forRPCDiv = ({
 
   return (
     <motion.div
-      className={`border border-yellow-500 ${
+      className={`border  ${
         colorMap[color as keyof typeof colorMap]
-      } bg-white font-black text-yellow-500  rounded-sm shadow-md flex flex-col`}
+      } bg-white font-black rounded-sm shadow-md flex flex-col`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
     >
       <div
-        className={`lg:text-xs flex-col h-[50%] rounded-t-sm border-b flex items-center justify-center font-black bg-yellow-200 2xl:text-base ${
+        className={`lg:text-xs flex-col h-[50%] rounded-t-sm border-b flex items-center justify-center font-black 2xl:text-base ${
           colorMapLabel[color as keyof typeof colorMapLabel]
         }`}
       >
@@ -217,7 +217,7 @@ const WithTargetDiv = ({
       } uppercase bg-white font-black rounded-sm shadow-md flex flex-col`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: 0.2 }}
+      transition={{ delay: interval === "Daily" ? 0.3 : 0.5 }}
     >
       <div
         className={`lg:text-xs flex-col py-0.5 2xl:h-1/2 rounded-t-sm border-b flex items-center justify-center font-black ${
@@ -234,9 +234,9 @@ const WithTargetDiv = ({
           {count}
         </p>
 
-        <div className="text-sm relative flex flex-row 2xl:justify-between items-center gap-1">
-          <div className="text-[0.5rem] 2xl:text-sm w-5 font-normal">TGT</div>
-          <div className="text-[0.7rem] 2xl:text-sm">
+        <div className=" relative flex flex-row 2xl:justify-between items-center gap-1">
+          <div className="text-[0.5rem] 2xl:text-xs w-5 font-normal">TGT</div>
+          <div className="text-[0.7rem] 2xl:text-xs">
             {target.toLocaleString("en-PH", {
               style: "currency",
               currency: "PHP",
@@ -244,9 +244,9 @@ const WithTargetDiv = ({
           </div>
         </div>
 
-        <div className="text-sm relative flex flex-row 2xl:justify-between items-center gap-1">
-          <div className=" text-[0.5rem] 2xl:text-sm w-5 font-normal">COLL</div>
-          <div className="text-[0.7rem] 2xl:text-sm">
+        <div className="relative flex flex-row 2xl:justify-between items-center gap-1">
+          <div className="text-[0.5rem] 2xl:text-xs w-5 font-normal">COLL</div>
+          <div className="text-[0.7rem] 2xl:text-xs">
             {collected.toLocaleString("en-PH", {
               style: "currency",
               currency: "PHP",
@@ -254,9 +254,9 @@ const WithTargetDiv = ({
           </div>
         </div>
 
-        <div className="text-sm relative flex flex-row 2xl:justify-between items-center gap-1">
-          <div className="text-[0.5rem] 2xl:text-sm w-5 font-normal">VAR</div>
-          <div className="text-[0.7rem] 2xl:text-sm">
+        <div className="relative flex flex-row 2xl:justify-between items-center gap-1">
+          <div className="text-[0.5rem] 2xl:text-xs w-5 font-normal">VAR</div>
+          <div className="text-[0.7rem] 2xl:text-xs">
             {variance.toLocaleString("en-PH", {
               style: "currency",
               currency: "PHP",
@@ -267,8 +267,6 @@ const WithTargetDiv = ({
     </motion.div>
   );
 };
-
-
 
 const DashboardMinis = () => {
   const { userLogged } = useSelector((state: RootState) => state.auth);
@@ -314,32 +312,11 @@ const DashboardMinis = () => {
 
   return (
     <motion.div className="lg:row-span-2 lg:col-span-3 grid grid-rows-3 grid-cols-3 gap-2">
-
-
-
-      <motion.div
-        className="border border-yellow-500 bg-white font-black text-yellow-500  rounded-sm shadow-md flex flex-col"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-      >
-        <div className="lg:text-xs flex-col h-[50%] rounded-t-sm border-b flex items-center justify-center font-black bg-yellow-200 2xl:text-base ">
-          RPC{" "}
-          <span className="lg:text-[0.7em] 2xl:text-xs font-normal">
-            (Daily)
-          </span>
-        </div>
-        <div className="text-4xl 2xl:text-5xl h-[50%] flex items-center justify-center">
-          <p className="text-center">
-            {rpcCountData?.getAgentRPCCount?.dailyCount || 0}
-          </p>
-        </div>
-      </motion.div>
-
-        {/* <forRPCDiv 
-            interval="daily"
+      <ForRPCDiv 
+        interval="daily"
         count={rpcCountData?.getAgentRPCCount?.dailyCount ?? 0}
         color="yellow"
-        /> */}
+      />
 
       <WithoutTargetDiv
         interval="Daily"
@@ -356,22 +333,11 @@ const DashboardMinis = () => {
         interval="Daily"
       />
 
-      <motion.div
-        className="border border-orange-500 bg-white font-black text-orange-500  rounded-sm shadow-md flex flex-col"
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.3 }}
-      >
-        <div className="lg:text-xs flex-col h-[50%] rounded-t-sm border-b flex items-center justify-center font-black bg-orange-200 2xl:text-base ">
-          TOTAL RPC{" "}
-          <span className="lg:text-[0.7em] ml-1 2xl:text-xs font-normal">
-            (Daily)
-          </span>
-        </div>
-        <div className="text-4xl 2xl:text-5xl h-[50%] flex items-center justify-center">
-          <p>{rpcCountData?.getAgentRPCCount?.totalCount || 0}</p>
-        </div>
-      </motion.div>
+      <ForRPCDiv 
+        interval="monthly"
+        count={rpcCountData?.getAgentRPCCount?.totalCount ?? 0}
+        color="orange"
+      />
 
       <WithoutTargetDiv
         interval="Monthly"
@@ -388,48 +354,57 @@ const DashboardMinis = () => {
         interval="Weekly"
       />
 
+
       <motion.div
         className="border col-span-3 border-teal-500 uppercase bg-white font-black text-teal-600 rounded-sm shadow-md flex flex-col"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
       >
-        <div className="flex flex-col h-[50%] rounded-t-sm border-b border-teal-500 bg-teal-200 items-center justify-center">
-          <div className="lg:text-xs   flex items-center justify-center font-black  2xl:text-base">
+        <div className="flex flex-col h-1/3 2xl:h-1/2 rounded-t-sm border-b border-teal-500 bg-teal-200 items-center justify-center py-2">
+
+          <div className="lg:text-xs flex items-center justify-center font-black 2xl:text-base">
             KEPT
           </div>
           <div className="lg:text-[0.5em] 2xl:text-xs font-normal">
             (monthly)
           </div>
         </div>
-        <div className="text-3xl flex-row w-full gap-5 relative 2xl:text-5xl h-[50%] flex items-center text-center">
-          <p className="text-center absolute truncate -top-3 bg-teal-100 border-teal-500 px-2 right-4 rounded-full border text-base">
+        <div className="text-xs flex-col 2xl:flex-row w-full 2xl:gap-5 relative 2xl:text-base 2xl:h-1/2 
+         flex items-center text-center 2xl:px-0 px-10 justify-center h-full">
+          <p className="text-center absolute truncate -top-4 bg-teal-100 border-teal-500 px-2 right-4 rounded-full border text-base">
             {collectionsData?.monthlyWeeklyCollected?.monthlyCount || 0}
           </p>
 
-          <div className="text-base w-full justify-center relative flex flex-row items-center gap-2">
-            <div className="text-[0.8rem] w-5 font-normal">TGT</div>
-            {(userLogged?.targets?.monthly ?? 0).toLocaleString("en-PH", {
-              style: "currency",
-              currency: "PHP",
-            })}
+          <div className="w-full justify-between 2xl:justify-center relative flex flex-row items-center gap-2">
+            <div className="text-[0.5rem] 2xl:text-sm 2xl:w-5 font-normal items-center flex 2xl:mr-2">TGT</div>
+            <div className="text-[0.7rem] 2xl:text-sm">
+              {(userLogged?.targets?.monthly ?? 0).toLocaleString("en-PH", {
+                style: "currency",
+                currency: "PHP",
+              })}
+
+            </div>
           </div>
 
-          <div className="text-base w-full justify-center relative flex flex-row items-c.enter gap-2">
-            <div className="text-[0.8rem] w-5 font-normal items-center flex mr-2 ">
+          <div className="w-full justify-between 2xl:justify-center relative flex flex-row items-center gap-2">
+            <div className="text-[0.5rem] 2xl:text-sm 2xl:w-5 font-normal items-center flex 2xl:mr-2 ">
               COLL
             </div>
-            {(
-              collectionsData?.monthlyWeeklyCollected?.monthly ?? 0
-            ).toLocaleString("en-PH", {
-              style: "currency",
-              currency: "PHP",
-            })}
+            <div className="text-[0.7rem] 2xl:text-sm">
+              {(
+                collectionsData?.monthlyWeeklyCollected?.monthly ?? 0
+              ).toLocaleString("en-PH", {
+                style: "currency",
+                currency: "PHP",
+              })}
+
+            </div>
           </div>
 
-          <div className="text-base w-full justify-center relative flex flex-row items-center gap-2">
-            <div className="text-[0.8rem] w-5 font-normal">VAR</div>
-            <div className="">
+          <div className="w-full justify-between 2xl:justify-center relative flex flex-row items-center gap-2">
+            <div className="text-[0.5rem] 2xl:text-xs 2xl:w-5 font-normal items-center flex 2xl:mr-2">VAR</div>
+            <div className="text-[0.7rem] 2xl:text-sm">
               {(() => {
                 const tgt = userLogged?.targets?.monthly ?? 0;
                 const coll =

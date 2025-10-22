@@ -145,10 +145,13 @@ const taskResolver = {
           _id: null,
           task: []
         }
-        const customerAccounts = await CustomerAccount.aggregate(
+       
+        const customerAccounts = await CustomerAccount.aggregate([
           {
             $match: {
-              $and: [{assigned: myGroup._id},{on_hands: false}]
+              assignedModel: "Group",
+              assigned: new mongoose.Types.ObjectId(myGroup._id),
+              on_hands: false
             }
           },
           {
@@ -256,7 +259,8 @@ const taskResolver = {
               emergency_contact: "$emergency_contact"
             }
           }
-        )
+        ])
+
 
         return {
           _id: myGroup._id,

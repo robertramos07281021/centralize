@@ -30,7 +30,7 @@ const deptTypeDefs = gql`
   }
 
   type Query {
-    getDepts: [Department]
+    getDepts: [Dept]
     getDept(name: String): Department
     getBranchDept(branch:String) : [Department]
     getAomDept: [Department]

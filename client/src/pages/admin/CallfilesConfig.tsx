@@ -139,6 +139,7 @@ const CallfilesConfig = () => {
     notifyOnNetworkStatusChange: true,
   });
 
+
   useEffect(() => {
     setPage(callfilesPages.toString());
   }, [callfilesPages]);
@@ -183,7 +184,9 @@ const CallfilesConfig = () => {
         const res = await refetch();
         if (res.data) {
           if (res.data?.getCF?.result?.length <= 0) {
-            dispatch(setCallfilesPages(callfilesPages - 1));
+            if(callfilesPages > 1) {
+              dispatch(setCallfilesPages(callfilesPages - 1));
+            }
           }
           dispatch(
             setSuccess({
@@ -214,7 +217,9 @@ const CallfilesConfig = () => {
         const res = await refetch();
         if (res?.data) {
           if (res?.data?.getCF?.result?.length <= 0) {
-            dispatch(setCallfilesPages(callfilesPages - 1));
+            if(callfilesPages > 1) {
+              dispatch(setCallfilesPages(callfilesPages - 1));
+            }
           }
 
           const searchExistingPages = Math.ceil(
@@ -326,7 +331,7 @@ const CallfilesConfig = () => {
             </div>
             <div className="flex gap-3">
               <motion.div
-                className="border-blue-800 py-2 font-black shadow-md text-white cursor-pointer rounded-md border px-3 bg-blue-500 hover:bg-blue-600 "
+                className="border-blue-800 font-black shadow-md text-white cursor-pointer rounded-md border bg-blue-500 hover:bg-blue-600 "
                 initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, type: "spring" }}
@@ -335,7 +340,7 @@ const CallfilesConfig = () => {
                   id="dropdown"
                   value={selectedOption || "SELECT A BUCKET"}
                   onChange={handleChange}
-                  className=" focus:outline-none  cursor-pointer rounded-md items-center flex h-full"
+                  className=" focus:outline-none py-2 px-3  cursor-pointer rounded-md items-center flex h-full"
                 >
                   <option className="uppercase" value="">
                     SELECT A BUCKET
@@ -554,7 +559,7 @@ const CallfilesConfig = () => {
           <Pagination
             value={page}
             onChangeValue={(e) => setPage(e)}
-            onKeyDownValue={(e) => dispatch(setCallfilesPages(e))}
+            onKeyDownValue={(e) => dispatch(setCallfilesPages(e || 1))}
             totalPage={totalPage}
             currentPage={callfilesPages}
           />

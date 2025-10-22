@@ -2,8 +2,8 @@ import { gql } from "graphql-tag";
 
 const branchTypeDefs = gql`
   type Branch {
-    id:ID!
-    name: String!
+    id:ID
+    name: String
   }
   
   type Success {

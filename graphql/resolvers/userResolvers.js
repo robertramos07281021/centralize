@@ -68,7 +68,7 @@ const userResolvers = {
         throw new CustomError(error.message, 500);
       }
     },
-    findUsers: async (_, { search, page, limit }) => {
+    findUsers: async (_, { search, page, limit, filter }) => {
       try {
         const searchFilter = { $regex: search, $options: "i" };
         const res = await User.aggregate([
@@ -101,6 +101,12 @@ const userResolvers = {
           },
           {
             $match: {
+              ...(filter === "online"
+                ? { isOnline: true }
+                : []),
+              ...(filter === "offline"
+                ? { isOnline: false }
+                : []),
               $or: [
                 { name: searchFilter },
                 { username: searchFilter },
@@ -114,12 +120,6 @@ const userResolvers = {
                   : []),
                 ...(search.toLowerCase() === "inactive"
                   ? [{ active: false }]
-                  : []),
-                ...(search.toLowerCase() === "online"
-                  ? [{ isOnline: true }]
-                  : []),
-                ...(search.toLowerCase() === "offline"
-                  ? [{ isOnline: false }]
                   : []),
                 ...(search.toLowerCase() === "islock"
                   ? [{ isLock: true }]
@@ -137,7 +137,6 @@ const userResolvers = {
             },
           },
         ]);
-
         const users = res[0]?.users || [];
         const total = res[0]?.total[0]?.totalUser || 0;
 
@@ -416,6 +415,7 @@ const userResolvers = {
           buckets,
           account_type,
           callfile_id,
+          vici_id,
         } = createInput;
 
         if (type === "AGENT") {
@@ -454,6 +454,7 @@ const userResolvers = {
           user_id,
           account_type,
           buckets,
+          vici_id,
         });
 
         await newUser.save();
@@ -843,29 +844,28 @@ const userResolvers = {
         throw new CustomError(error.message, 500);
       }
     },
-    updateQAUser: async(_,{input},{user}) => {
+    updateQAUser: async (_, { input }, { user }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
-        const {userId, departments, buckets} = input
+        const { userId, departments, buckets } = input;
 
-        const updatedUser = await User.findByIdAndUpdate(userId,{ 
-          $set: { 
-            departments: departments, 
-            buckets: buckets
-          } 
-        })
+        const updatedUser = await User.findByIdAndUpdate(userId, {
+          $set: {
+            departments: departments,
+            buckets: buckets,
+          },
+        });
 
-        if(!updatedUser) throw new CustomError("User not found",401);
+        if (!updatedUser) throw new CustomError("User not found", 401);
 
         return {
           success: true,
-          message: "User successfully updated"
-        }
-
+          message: "User successfully updated",
+        };
       } catch (error) {
         throw new CustomError(error.message, 500);
       }
-    }
+    },
   },
 };
 

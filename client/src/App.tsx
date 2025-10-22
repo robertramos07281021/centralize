@@ -26,7 +26,6 @@ import BreakView from "./pages/agent/BreakView";
 import AgentView from "./pages/tl/AgentView";
 import AgentRecordingView from "./pages/tl/AgentRecordingView";
 import DispositionConfigurationView from "./pages/admin/DispositionConfigurationView";
-import AgentMonitoring from "./pages/tl/AgentMonitoring.tsx";
 
 import {
   Chart,
@@ -109,7 +108,6 @@ function App() {
           <Route path="/tl-task-manager" element={<TaskManagerView />} />
           <Route path="/tl-cip" element={<CustomerDisposition />} />
           <Route path="/tl-reports" element={<BacklogManagementView />} />
-          <Route path="/tl-monitoring" element={<AgentMonitoring />} />
           
         </Route>
         <Route element={<CeoRoute />}>

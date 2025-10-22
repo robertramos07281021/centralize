@@ -39,17 +39,19 @@ export async function callViaVicidial(agentUser, phoneNumber) {
   }
 }
 
-export async function checkIfAgentFree(agentUser) {
-  const params = {
-    ...credentials,
-    function: "calls_in_queue_count",
-    agent_user: agentUser,
-  }
-  const res = await axios.get(VICIDIAL_API, { params })
-  return res.data.includes("|0|")
-}
+// export async function checkIfAgentFree(agentUser) {
+//   const params = {
+//     ...credentials,
+//     function: "calls_in_queue_count",
+//     agent_user: agentUser,
+//   }
+//   const {data} = await axios.get(VICIDIAL_API, { params })
+
+//   return data.includes("|0|")
+// }
 
 export async function setDisposition(value, agent_user) {
+
   return axios.get(VICIDIAL_API, {
     params: {
       ...credentials,
@@ -58,4 +60,19 @@ export async function setDisposition(value, agent_user) {
       value,
     },
   });
+
+}
+
+export async function checkIfAgentIsOnline(agentUser) {
+
+  const { data } = await axios.get(VICIDIAL_API, {
+    params: {
+      ...credentials,
+      agent_user: agentUser,
+      function: "calls_in_queue_count ",
+      value:"DISPLAY"
+    },
+  });
+
+  return data
 }

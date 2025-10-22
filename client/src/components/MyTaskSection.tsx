@@ -413,6 +413,8 @@ const MyTaskSection = () => {
     userLogged?.buckets.toString().includes(e.account_bucket?._id)
   ).length;
   
+
+
   useEffect(() => {
     if (selection.trim() === "my_task") {
       setData(
@@ -483,7 +485,7 @@ const MyTaskSection = () => {
   };
 
   return (
-    <div className={`mt-3 absolute right-0 top-28 z-20 gap-5 px-5`}>
+    <div className={`mt-3 z-20 gap-5 px-5`}>
       {
         taskLength !== undefined && taskLength > 0 &&
         <div className="flex flex-col justify-between w-full relative">

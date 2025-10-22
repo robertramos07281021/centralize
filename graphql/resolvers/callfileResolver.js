@@ -281,7 +281,7 @@ const callfileResolver = {
           const match = files.find(y => y._id.toString() === x.callfile.toString())
           return {
             ...x,
-            target: match.target ?? 0
+            target: match.target ?? 0,
           }
         })
 
@@ -1205,7 +1205,8 @@ const callfileResolver = {
     },
     getCF: async(_,{bucket,limit,page}) => {
       try {
-        const skip = (page - 1) * limit
+        const newpage = page > 0 ? page : 1
+        const skip = (newpage - 1) * limit
         const callfile = await Callfile.aggregate([
           {
             $match: {
@@ -1245,6 +1246,7 @@ const callfileResolver = {
           total: totals
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message,500) 
       }
     }
@@ -1269,7 +1271,8 @@ const callfileResolver = {
           $set: {
             active: false,
             endo: new Date(),
-            finished_by: user._id
+            finished_by: user._id,
+            autoDial: false
           }
         },{new: true})
 

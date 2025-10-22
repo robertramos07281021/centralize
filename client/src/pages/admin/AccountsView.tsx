@@ -40,6 +40,11 @@ const GET_BRANCHES = gql`
   }
 `;
 
+type Branch = {
+  id: string
+  name: string
+}
+
 const GET_ALL_BUCKET = gql`
   query getAllBucket {
     getAllBucket {
@@ -65,8 +70,8 @@ type SuccessUpdate = {
 };
 
 const FIND_QUERY = gql`
-  query findUsers($search: String!, $page: Int!, $limit: Int!) {
-    findUsers(search: $search, page: $page, limit: $limit) {
+  query findUsers($search: String!, $page: Int!, $limit: Int!, $filter: String!) {
+    findUsers(search: $search, page: $page, limit: $limit, filter:$filter) {
       total
       users {
         _id
@@ -102,6 +107,8 @@ const UNLOCK_USER = gql`
   }
 `;
 
+type filter = "online" | "all" | "offline"
+
 type Users = {
   _id: string;
   type: "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" | "MIS";
@@ -132,18 +139,20 @@ const AccountsView = () => {
   const location = useLocation();
   const isAccounts = location.pathname.includes("accounts");
   const [create, setCreate] = useState(false);
-  const [updateModal, setUpdateModal] = useState(false);
-  const [width, setWidth] = useState(50);
-  const [option, setOption] = useState(0);
+
+  const [width, setWidth] = useState<number>(50);
+  const [option, setOption] = useState<number>(0);
+  const [filter,setFilter] = useState<filter>('all')
+
+
 
   const { data: getDeptData, refetch: deptRefetch } = useQuery<{
     getDepts: Department[];
   }>(GET_DEPTS, { skip: !isAccounts, notifyOnNetworkStatusChange: true });
 
   const { data: getBranchData, refetch: branchRefetch } = useQuery<{
-    getBranches: DeptBranchBucket[];
+    getBranches: Branch[];
   }>(GET_BRANCHES, { skip: !isAccounts, notifyOnNetworkStatusChange: true });
-
   const { data: getAllBucketsData, refetch: bucketRefetch } = useQuery<{
     getAllBucket: DeptBranchBucket[];
   }>(GET_ALL_BUCKET, { skip: !isAccounts, notifyOnNetworkStatusChange: true });
@@ -160,20 +169,28 @@ const AccountsView = () => {
     return Object.fromEntries(allBucketData.map((adb) => [adb._id, adb.name]));
   }, [getAllBucketsData]);
 
-  const branchObject: { [key: string]: string } = useMemo(() => {
+  const branchObject= useMemo(() => {
     const branchData = getBranchData?.getBranches || [];
-    return Object.fromEntries(branchData.map((bd) => [bd._id, bd.name]));
+    return Object.fromEntries(branchData.map((bd) => [bd.id, bd.name]));
   }, [getBranchData]);
 
   const { data: searchData, refetch } = useQuery<{
     findUsers: { users: Users[]; total: number };
   }>(FIND_QUERY, {
-    variables: { search, page: adminUsersPage, limit },
+    variables: { search, page: adminUsersPage, limit , filter},
     skip: !isAccounts,
     notifyOnNetworkStatusChange: true,
   });
 
-  const users = searchData?.findUsers.users || [];
+  useEffect(()=> {
+    const refetching = async() => {
+      await refetch()
+    }
+    refetching()
+  },[filter])
+
+  const users = searchData?.findUsers?.users || [];
+
 
   const [confirm, setConfirm] = useState<boolean>(false);
 
@@ -282,42 +299,44 @@ const AccountsView = () => {
     [setModalProps, setConfirm, unlockUser]
   );
 
-  const filteredUsers =
-    users
-      ?.filter((user) => {
-        if (option === 50) return user.isOnline;
-        if (option === 95) return !user.isOnline;
-        return true;
-      })
-      ?.filter((user) => {
-        if (!search.trim()) return true;
+  // const filteredUsers =
+  //   users
+  //     ?.filter((user) => {
+  //       if (option === 50) return user.isOnline;
+  //       if (option === 95) return !user.isOnline;
+  //       return true;
+  //     })
+  //     ?.filter((user) => {
+  //       if (!search.trim()) return true;
 
-        const searchText = search.toLowerCase();
+  //       const searchText = search.toLowerCase();
 
-        const nameMatch = user.name.toLowerCase().includes(searchText);
-        const usernameMatch = user.username.toLowerCase().includes(searchText);
-        const typeMatch = user.type.toLowerCase().includes(searchText);
-        const branchMatch = branchObject[user.branch]
-          ?.toLowerCase()
-          .includes(searchText);
+  //       const nameMatch = user.name.toLowerCase().includes(searchText);
+  //       const usernameMatch = user.username.toLowerCase().includes(searchText);
+  //       const typeMatch = user.type.toLowerCase().includes(searchText);
+  //       const branchMatch = branchObject[user.branch]
+  //         ?.toLowerCase()
+  //         .includes(searchText);
 
-        const deptMatch = user.departments
-          .map((id) => deptObject[id]?.toLowerCase() || "")
-          .some((dept) => dept.includes(searchText));
+  //       const deptMatch = user.departments
+  //         .map((id) => deptObject[id]?.toLowerCase() || "")
+  //         .some((dept) => dept.includes(searchText));
 
-        const bucketMatch = user.buckets
-          .map((id) => bucketObject[id]?.toLowerCase() || "")
-          .some((bucket) => bucket.includes(searchText));
+  //       const bucketMatch = user.buckets
+  //         .map((id) => bucketObject[id]?.toLowerCase() || "")
+  //         .some((bucket) => bucket.includes(searchText));
 
-        return (
-          nameMatch ||
-          usernameMatch ||
-          typeMatch ||
-          branchMatch ||
-          deptMatch ||
-          bucketMatch
-        );
-      }) || [];
+  //       return (
+  //         nameMatch ||
+  //         usernameMatch ||
+  //         typeMatch ||
+  //         branchMatch ||
+  //         deptMatch ||
+  //         bucketMatch
+  //       );
+  //     }) || [];
+
+
 
   return (
     <>
@@ -337,6 +356,7 @@ const AccountsView = () => {
                   onClick={() => {
                     setOption(0);
                     setWidth(50);
+                    setFilter("all")
                   }}
                   className={`" ${
                     option === 0 ? "text-gray-500" : " text-gray-400"
@@ -348,6 +368,7 @@ const AccountsView = () => {
                   onClick={() => {
                     setOption(50);
                     setWidth(45);
+                    setFilter('online')
                   }}
                   className={`"  ${
                     option === 50 ? "text-green-600" : " text-gray-400"
@@ -371,6 +392,7 @@ const AccountsView = () => {
                   onClick={() => {
                     setOption(95);
                     setWidth(50);
+                    setFilter('offline')
                   }}
                   className={`" ${
                     option === 95 ? "text-red-600" : " text-red-500"
@@ -455,7 +477,7 @@ const AccountsView = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <div className=" rounded-t-md pr-3 bg-gray-200 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-12 py-2 font-black uppercase">
+          <div className=" rounded-t-sm pr-3 bg-gray-200 border dark:bg-gray-700 dark:text-gray-400 grid grid-cols-12 py-2 font-black uppercase">
             <div className="col-span-2 px-2">Name</div>
             <div>Username</div>
             <div>SIP ID</div>
@@ -469,11 +491,11 @@ const AccountsView = () => {
             <div></div>
           </div>
           <div className="overflow-y-auto">
-            {filteredUsers.length > 0 ? (
-              filteredUsers.map((user, index) => (
+            {users?.length > 0 ? (
+              users?.map((user, index) => (
                 <motion.div
                   key={user._id}
-                  className="grid grid-cols-12 py-2 hover:bg-gray-200 even:bg-gray-100 cursor-default items-center"
+                  className="grid grid-cols-12 border-x border-b last:rounded-b-md last:shadow-md py-2 hover:bg-gray-200 even:bg-gray-100 cursor-default items-center"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
@@ -495,8 +517,9 @@ const AccountsView = () => {
                     )}
                   </div>
                   <div className="truncate pr-1">{user.type || "-"}</div>
-                  <div>
-                    {branchObject[user.branch] || (
+                  <div className="uppercase">
+                    
+                    { branchObject[user.branch] || (
                       <div className="text-xs italic text-gray-400">
                         No branch
                       </div>

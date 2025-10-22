@@ -67,7 +67,7 @@ const CallReportTables: React.FC<ComponentsProps> = ({
     <>
       <div className=" w-full text-xs 2xl:text-base">
         <div className=" w-full shadow-md">
-          <div className="grid bg-orange-500 border-t border-x border-orange-800 items-center text-center  rounded-t-md uppercase  grid-cols-3 font-black uppercase">
+          <div className="grid bg-orange-500 border-t border-x border-orange-800 items-center text-center  rounded-t-md uppercase  grid-cols-3 font-black ">
             <div className="w-full border-r py-1 border-orange-800 ">
               Total Endorsement
             </div>
@@ -76,7 +76,7 @@ const CallReportTables: React.FC<ComponentsProps> = ({
             </div>
             <div className="w-full py-1 ">Contactable Rate</div>
           </div>
-          <div className="grid bg-orange-400 border border-orange-800 items-center text-center  rounded-b-md uppercase  grid-cols-3 font-black uppercase">
+          <div className="grid bg-orange-400 border border-orange-800 items-center text-center  rounded-b-md uppercase  grid-cols-3 font-black">
             <div className="w-full border-r flex justify-center border-orange-800 h-full text-center items-center">
               {totalAccounts ?? 0}
             </div>
@@ -258,11 +258,11 @@ const CallReportTables: React.FC<ComponentsProps> = ({
               ).toFixed(2)}
               %
             </div>
-            <td className="border-r  items-center justify-center flex border-blue-800">
+            <div className="border-r  items-center justify-center flex border-blue-800">
               {(
                 callfile.totalPrincipal - Number(allAccountsReportDataAmount)
               ).toLocaleString("en-PH", { style: "currency", currency: "PHP" })}
-            </td>
+            </div>
             <div className=" py-1 items-center justify-center flex">
               {(
                 ((callfile.totalPrincipal -
