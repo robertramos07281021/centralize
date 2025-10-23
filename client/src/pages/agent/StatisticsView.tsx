@@ -77,7 +77,7 @@ const StatisticsView = () => {
 
  
   return (
-    <div className="flex flex-col lg:h-full bg-slate-200 relative lg:overflow-hidden ">
+    <div className="flex flex-col lg:h-full bg-slate-200 relative overflow-y-auto lg:overflow-hidden ">
       {
         !userLogged?.vici_id &&
         <div className="absolute top-16 right-6 flex items-center justify-center">

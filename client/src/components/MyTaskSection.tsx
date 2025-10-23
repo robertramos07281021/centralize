@@ -485,7 +485,7 @@ const MyTaskSection = () => {
   };
 
   return (
-    <div className={`mt-3 z-20 gap-5 px-5`}>
+    <div className={`mt-3 z-20 gap-5 px-5 absolute right-5 top-8`} >
       {
         taskLength !== undefined && taskLength > 0 &&
         <div className="flex flex-col justify-between w-full relative">
@@ -530,12 +530,12 @@ const MyTaskSection = () => {
       <AnimatePresence>
         {selection.trim() !== "" && (
           <motion.div
-            className="absolute z-10 border-2 border-slate-500 rounded-lg shadow-md shadow-black/20 rounded-t-md w-[600px] h-96 translate-y-1/2 -bottom-50 right-5 text-slate-500 flex flex-col bg-white"
+            className="absolute z-80 border-2 border-slate-500 rounded-lg shadow-md shadow-black/20 rounded-t-md w-[600px] h-96 translate-y-1/2 -bottom-50 right-5 text-slate-500 flex flex-col bg-white"
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{y: -20, opacity: 0}}
           >
-            <div className="py-3 2xl:text-xs text-sm font-black gap-2 uppercase bg-slate-200 rounded-t-sm grid grid-cols-4 px-2 items-center">
+            <div className="py-3 2xl:text-xs text-sm font-black gap-2 uppercase bg-slate-200 rounded-t-sm grid grid-cols-4 px-2 items-center ">
               <div className=" text-nowrap truncate">Customer Name</div>
               <div>Disposition</div>
               <div>Date Assigned</div>
@@ -569,7 +569,8 @@ const MyTaskSection = () => {
                 </div>
               ))}
 
-              {/* {data?.map((d) => (
+            {/* {
+              data?.map((d) => (
               <div
                 key={d._id}
                 className="py-1.5 2xl:text-xs lg:text-[0.6em] hover:bg-blue-100 even:bg-slate-100 grid grid-cols-4 px-5 items-center"

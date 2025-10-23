@@ -14,10 +14,13 @@ const credentials = {
   user: process.env.VICIDIAL_ADMIN_USER,
   pass: process.env.VICIDIAL_ADMIN_PASS,
 };
-const VICIDIAL_API = `http://${process.env.VICI_IP}/agc/api.php`;
 
 
-export async function callViaVicidial(agentUser, phoneNumber) {
+
+export async function callViaVicidial(agentUser, phoneNumber,vici_id) {
+
+  const VICIDIAL_API = `http://${vici_id}/agc/api.php`;
+
   const params = {
     ...credentials,
     function: 'external_dial',
@@ -60,19 +63,31 @@ export async function setDisposition(value, agent_user) {
       value,
     },
   });
-
 }
 
-export async function checkIfAgentIsOnline(agentUser) {
+export async function checkIfAgentIsOnline(agentUser,vici_id) {
+
+  if (!agentUser || agentUser.trim() === "") {
+    throw new Error("Agent user is required");
+  }
+
+  const VICIDIAL_API = `http://${vici_id}/agc/api.php`;
 
   const { data } = await axios.get(VICIDIAL_API, {
     params: {
       ...credentials,
-      agent_user: agentUser,
-      function: "calls_in_queue_count ",
-      value:"DISPLAY"
+      agent_user: agentUser.trim(),
+      function: "calls_in_queue_count", // ✅ removed trailing space
+      value: "DISPLAY",
     },
   });
 
-  return data
+
+  const response = data.trim().toLowerCase();
+
+  // ✅ return only boolean
+  if (response.includes("not logged in")) return false;
+  if (response.includes("success")) return true;
+
+  return false;
 }

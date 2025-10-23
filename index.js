@@ -193,10 +193,15 @@ const wsServer = new WebSocketServer({
 
 useServer({ schema,
   context: async (ctx, msg, args) => {
-    const cookieHeader  = ctx.connectionParams.authorization.split(" ")[1] || '';
-    let user = null
-    const token = cookieHeader
-    if (!token) throw new CustomError('Missing Token', 401)
+    const authHeader = ctx.connectionParams?.authorization;
+
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      throw new CustomError('Missing Token', 401);
+    }
+
+    const token = authHeader.split(" ")[1];
+    let user = null;
+
     try {
       const decoded = jwt.verify(token, process.env.SECRET);
       user = await User.findById(decoded.id);
@@ -246,7 +251,7 @@ useServer({ schema,
             },
           });
         }
-      }, 600000);
+      }, 120000);
     }
   },
 
@@ -255,6 +260,8 @@ useServer({ schema,
   },
   keepAlive: 12000,
  }, wsServer);
+
+ wsServer.setMaxListeners(50)
 
 const startServer = async() => {
   const server = new ApolloServer({

@@ -288,7 +288,7 @@ const Login = () => {
   if (loading) return <Loading />;
 
   return (
-    <div className="h-screen  w-screen flex items-center justify-center bg-[url(/login_bg.jpg)] bg-fixed bg-no-repeat bg-cover relative ">
+    <div className="h-screen  w-screen overflow-hidden flex items-center justify-center bg-[url(/login_bg.jpg)] bg-fixed bg-no-repeat bg-cover relative ">
       <div className="w-full h-full absolute bg-blue-500/50 backdrop-blur-[4px]"></div>
       <AnimatePresence>
         {!hide && (
@@ -344,7 +344,6 @@ const Login = () => {
               className="absolute  -top-[250px] left-0"
               initial={{y: 30, scale: 0.5, opacity: 0}}
               animate={{y: 0, scale: 1, opacity: 1}}
-              
               exit={{y: 30,  scale: 0.8, opacity: 0 }}
             >
               <Lottie animationData={pumpkin} loop={true} />

@@ -101,6 +101,10 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
     MESSAGE: {
       toast: "bg-green-400",
       close: "text-green-400"
+    },
+    VICI: {
+      toast: "bg-red-400",
+      close: "text-red-400"
     }
   } as const;
   useEffect(()=> {
@@ -135,9 +139,10 @@ const SuccessToast:React.FC<modalProps> = ({successObject, close}) => {
   if (messageText.includes("NO ACTIVE CALLFILE")) successType = "NO ACTIVE CALLFILE";
   if (messageText.includes("SET")) successType = "SET";
   if (messageText.includes("MESSAGE")) successType = "MESSAGE";
+  if (messageText.includes("VICI")) successType = "VICI";
 
   return (
-    <div className={`${toastColor[successType].toast} min-w-96 min-h-13 max-h-13 rounded-xl border-slate-100 shadow shadow-black/20 border fixed right-5 top-20 z-50 flex items-center px-4 font-medium ${successObject?.isMessage ? "text-black" : "text-white"}  justify-between gap-10`} >
+    <div className={`${toastColor[successType].toast} min-w-96 min-h-13 max-h-13 rounded-xl border-slate-100 shadow shadow-black/20 border fixed right-5 top-20 z-60 flex items-center px-4 font-medium ${successObject?.isMessage ? "text-black" : "text-white"}  justify-between gap-10`} >
       <p>
         {successObject?.message}
       </p>

@@ -22,13 +22,13 @@ import clinic from "../../Animations/3D Doctor Dancing.json";
 import coffee from "../../Animations/Coffee Time.json";
 import Lottie from "lottie-react";
 import cr from "../../Animations/pepe poo poo.json";
-import nego from "../../Animations/nego.json"
-import technical from "../../Animations/No Connection.json"
-import eating from "../../Animations/Couple eating.json"
-import meeting from "../../Animations/Meeting.json"
-import skiptracing from "../../Animations/searching for profile.json"
-import hrmeeting from "../../Animations/Business Meeting Animation.json"
-import coaching from "../../Animations/Online Teaching.json"
+import nego from "../../Animations/nego.json";
+import technical from "../../Animations/No Connection.json";
+import eating from "../../Animations/Couple eating.json";
+import meeting from "../../Animations/Meeting.json";
+import skiptracing from "../../Animations/searching for profile.json";
+import hrmeeting from "../../Animations/Business Meeting Animation.json";
+import coaching from "../../Animations/Online Teaching.json";
 
 type UpdateProduction = {
   message: string;
@@ -153,7 +153,8 @@ const BreakView = () => {
   }, [dispatch]);
 
   if (
-    (breakValue === BreakEnum.PROD || userLogged?.type !== "AGENT") &&
+    (breakValue === BreakEnum.PROD ||
+      (userLogged?.type !== "AGENT" && userLogged?.type !== "TL")) &&
     userLogged
   ) {
     return <Navigate to={accountsNavbar[userLogged?.type][0]?.link} />;
@@ -266,7 +267,7 @@ const BreakView = () => {
             </>
           )}
           {breakValue === BreakEnum.WELCOME && (
-            <div className="flex flex-col gap-2 items-center">
+            <div className="flex absolute z-101 flex-col gap-2 items-center">
               <div className="text-center text-shadow-2xs text-shadow-black">
                 <h1 className="text-5xl font-black text-blue-700">
                   Shine bright today,
@@ -280,10 +281,13 @@ const BreakView = () => {
                 </h1>
               </div>
               <form className=" flex flex-col items-center">
-                {/* <img src={images[breakValue]} alt="Welcome Icon" className="w-80 animate-[bounce_20s_ease-in-out_infinite]" /> */}
-                <div className="max-w-96">
-                  <Lottie animationData={animationData} loop={true} />
-                </div>
+                {typeof currentMedia === "string" && (
+                  <img
+                    src={currentMedia}
+                    alt="Welcome Icon"
+                    className="w-80 animate-[bounce_20s_ease-in-out_infinite]"
+                  />
+                )}
 
                 <button
                   className="shadow-md px-10 py-2 rounded-md uppercase bg-blue-500 border-2 border-blue-800 text-white font-black animate-bounce hover:bg-blue-600 duration-300 ease-in-out cursor-pointer"

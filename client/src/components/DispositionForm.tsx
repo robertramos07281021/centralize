@@ -302,6 +302,7 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
     disposition?.getDispositionTypes?.find((x) => x.id === data.disposition)
       ?.code ?? "";
 
+  
   const { contact_method, dialer, chatApp, sms } = data;
 
   useEffect(() => {
@@ -382,8 +383,9 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
       await deselectTask({ variables: { id: selectedCustomer?._id } });
     },
     onError: async () => {
+     
       await deselectTask({ variables: { id: selectedCustomer?._id } });
-      dispatch(setServerError(true));
+      // dispatch(setServerError(true));
     },
   });
 
@@ -464,19 +466,26 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
       if (!Form.current?.checkValidity()) {
         setRequired(true);
       } else {
-        if (selectedDispo === "PAID" && data.payment_date) {
-          const paymentDate = new Date(data.payment_date?.toString());
-          paymentDate.setHours(23, 59, 59, 999);
-          const currentDate = new Date().setHours(23, 59, 59, 999);
+  
+      if (selectedDispo === "PAID" && data.payment_date) {
+        const paymentDate = new Date(data.payment_date);
 
-          if (Number(paymentDate) > Number(currentDate)) {
-            return setRequired(true);
-          }
-        }
-
-        if (Number(data.amount) === 0 && anabledDispo.includes(selectedDispo)) {
+        if (isNaN(paymentDate.getTime())) {
           return setRequired(true);
         }
+
+        paymentDate.setHours(23, 59, 59, 999);
+        const currentDate = new Date();
+        currentDate.setHours(23, 59, 59, 999);
+
+        if (paymentDate > currentDate) {
+          return setRequired(true);
+        }
+      }
+
+      if (Number(data.amount) === 0 && requiredDispo.includes(selectedDispo)) {
+        return setRequired(true);
+      }
 
         setRequired(false);
         setConfirm(true);
@@ -492,10 +501,14 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
   );
 
   const tlEscalationCallback = useCallback(async () => {
+    const checkSelectedTl = selectedTL.trim() === "" ?  tlData?.getBucketTL[0]._id : selectedTL
+
+
     await tlEscalation({
-      variables: { id: caToEscalate, tlUserId: selectedTL },
+      variables: { id: caToEscalate, tlUserId: checkSelectedTl },
     });
-  }, [caToEscalate, selectedTL]);
+  }, [caToEscalate, selectedTL,tlData]);
+
 
   const handleSubmitEscalation = useCallback(() => {
     setConfirm(true);
@@ -588,9 +601,10 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
   return (
     canProceed(selectedCustomer, userLogged, ptpDispoType, paidDispoType) && (
       <AnimatePresence>
-        {escalateTo && (
+        { escalateTo && (
           <div className="absolute top-0 left-0 w-full h-full z-50 flex items-center justify-center ">
             <motion.div
+              key="escalate-backdrop"
               onClick={() => setEscalateTo(false)}
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -598,6 +612,7 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
               className="w-full h-full absolute top-0 left-0 bg-black/40 backdrop-blur-sm cursor-pointer z-10"
             ></motion.div>
             <motion.div
+              key="escalate-modal"
               className="w-auto h-1/3 bg-white z-20 rounded-lg border-slate-300 shadow-md overflow-hidden flex flex-col"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -625,11 +640,12 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                   <option value="" className="">
                     Select TL
                   </option>
-                  {tlData?.getBucketTL.map((e) => (
-                    <option key={e._id} value={e.name} className="capitalize">
+                  {tlData?.getBucketTL.map((e, index) =>{ 
+                    return(
+                    <option key={index} value={e.name} className="capitalize">
                       {e.name}
                     </option>
-                  ))}
+                  )})}
                 </select>
                 <div className="flex gap-2">
                   <button
@@ -654,6 +670,7 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
             <motion.form 
             ref={Form}
             noValidate
+            key="dispo-form" 
             onSubmit={handleSubmitForm}
             initial={{ x: 20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
@@ -693,17 +710,16 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                       <option value="" aria-keyshortcuts=";">
                         Select Disposition
                       </option>
-                      {Object.entries(dispoObject).map(([key, value]) => {
+                      {Object.entries(dispoObject).map(([key, value],index) => {
                         const findDispoName =
                           disposition?.getDispositionTypes.find(
                             (x) => x.id === value
                           );
-
                         return (
                           findDispoName?.active && (
                             <option
                               value={key}
-                              key={key}
+                              key={index}
                               accessKey={
                                 Code[findDispoName?.code as keyof typeof Code]
                               }
@@ -739,7 +755,6 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                               autoComplete="off"
                               value={data.amount ?? 0}
                               onChange={handleOnChangeAmount}
-                              pattern="^\d+(\.\d{1,2})?$"
                               placeholder="Enter amount"
                               required={requiredDispo.includes(selectedDispo)}
                               className={`w-full text-xs 2xl:text-sm  text-gray-900 p-2 outline-none`}
@@ -781,11 +796,11 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                               Select Payment
                             </option>
                             {Object.entries(Payment).map(
-                              ([key, value], index) => {
+                              ([_, value], index) => {
                                 return (
                                   <option
                                     value={value}
-                                    key={key}
+                                    key={index}
                                     className="capitalize"
                                     accessKey={index > 0 ? "0" : "9"}
                                   >
@@ -810,7 +825,7 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                     <select
                       name="contact_method"
                       id="contact_method"
-                      required
+                      required={requiredDispo.includes(selectedDispo)}
                       value={data.contact_method ?? ""}
                       onChange={(e) =>
                         handleDataChange(
@@ -830,11 +845,13 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                     >
                       <option value="">Select Contact Method</option>
                       {Object.entries(AccountType).map(
-                        ([key, value], index) => {
+                        ([_, value], index) => {
+
+                  
                           return (
                             <option
                               value={value}
-                              key={key}
+                              key={index}
                               className="capitalize"
                               accessKey={(index + 1).toString()}
                             >
@@ -874,11 +891,11 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                         }  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                       >
                         <option value="">Select Dialer</option>
-                        {Object.entries(Dialer).map(([key, value]) => {
+                        {Object.entries(Dialer).map(([_, value],index) => {
                           return (
                             <option
                               value={value}
-                              key={key}
+                              key={index}
                               className="capitalize"
                               accessKey={DialerCode[value]}
                             >
@@ -917,11 +934,11 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                         }  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                       >
                         <option value="">Select SMS Collector</option>
-                        {Object.entries(SMSCollector).map(([key, value]) => {
+                        {Object.entries(SMSCollector).map(([_, value],index) => {
                           return (
                             <option
                               value={value}
-                              key={key}
+                              key={index}
                               className="capitalize"
                             >
                               {value.charAt(0).toUpperCase() +
@@ -959,11 +976,11 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                         } border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                       >
                         <option value="">Select Chat App</option>
-                        {Object.entries(SkipCollector).map(([key, value]) => {
+                        {Object.entries(SkipCollector).map(([_, value],index) => {
                           return (
                             <option
                               value={value}
-                              key={key}
+                              key={index}
                               className="capitalize"
                             >
                               {value.charAt(0).toUpperCase() +
@@ -986,9 +1003,9 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                       className={` bg-gray-50  border-gray-500  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                     >
                       <option value="">Select RFD Reason</option>
-                      {Object.entries(RFD).map(([key, value]) => {
+                      {Object.entries(RFD).map(([_, value],index) => {
                         return (
-                          <option value={value} key={key}>
+                          <option value={value} key={index}>
                             {value.charAt(0).toUpperCase() +
                               value.slice(1, value.length)}
                           </option>
@@ -1040,9 +1057,9 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                         className={` bg-gray-50  border-gray-500 border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2`}
                       >
                         <option value="">Select Method</option>
-                        {Object.entries(PaymentMethod).map(([key, value]) => {
+                        {Object.entries(PaymentMethod).map(([_, value],index) => {
                           return (
-                            <option value={value} key={key}>
+                            <option value={value} key={index}>
                               {value}
                             </option>
                           );

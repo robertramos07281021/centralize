@@ -103,7 +103,7 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
 
   return (
     <AnimatePresence>
-      <div className="w-full h-full z-40 gap-5 absolute px-10 top-0 left-0 bg-black/50 backdrop-blur-[2px] p-10 overflow-hidden">
+      <div className=" z-80 gap-5 absolute top-0 p-5 h-full w-full left-0 bg-black/50 backdrop-blur-[2px] overflow-hidden">
         <div className="w-full h-full border rounded-md border-slate-500 bg-white p-5 flex flex-col">
           <div className="flex justify-between items-start">
             <h1 className="lg:text-lg 2xl:text-5xl font-medium text-gray-600 pb-5">

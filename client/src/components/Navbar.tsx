@@ -147,7 +147,7 @@ const Navbar = () => {
   });
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
 
-  // const { data: userIsOnlineOnVici } = useQuery<{
+  // const { data: userIsOnlineOnVici , error:viciDialError} = useQuery<{
   //   checkUserIsOnlineOnVici: boolean;
   // }>(CHECK_USER_ONLINE_ON_VICI, {
   //   notifyOnNetworkStatusChange: true,
@@ -155,6 +155,16 @@ const Navbar = () => {
   //     userLogged?.type !== "AGENT" && !location.pathname.includes("/agent-cip"),
   //   pollInterval: 3000
   // });
+
+  // useEffect(()=>{ 
+  //   if(viciDialError) {
+  //     dispatch(setSuccess({
+  //       isMessage: true,
+  //       success: true,
+  //       message: "Please tell you admin to add you Vici Dial ID!"
+  //     }))
+  //   }
+  // },[viciDialError])
 
   // useEffect(() => {
   //   if (userIsOnlineOnVici) {
@@ -404,7 +414,7 @@ const Navbar = () => {
             }
           />
         )}
-        <div className="sticky top-0 z-40 print:hidden">
+        <div className="sticky top-0 z-50 print:hidden">
           <div className="py-2 px-5 bg-blue-500 flex justify-between items-center ">
             <div className="flex text-2xl gap-2 font-medium items-center text-white italic">
               <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
@@ -444,7 +454,7 @@ const Navbar = () => {
                 {poPupUser && (
                   <motion.div
                     ref={modalRef}
-                    className="w-auto h-auto border-2  border-blue-800  shadow-xl shadow-black/8 rounded-xl top-13 end-5 bg-white absolute flex flex-col text-blue-800 uppercase font-black"
+                    className="w-auto h-auto border-2 z-50  border-blue-800  shadow-xl shadow-black/8 rounded-xl top-13 end-5 bg-white absolute flex flex-col text-blue-800 uppercase font-black"
                     initial={{ y: -20, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -5, opacity: 0 }}
@@ -482,7 +492,7 @@ const Navbar = () => {
                           <AnimatePresence>
                             {popUpBreak && (
                               <motion.div
-                                className="absolute -left-[180px] z-50  shadow-md border-blue-800  border-2 rounded-xl w-auto bg-white h-auto flex flex-col -top-1 "
+                                className="absolute -left-[180px] z-40  shadow-md border-blue-800  border-2 rounded-xl w-auto bg-white h-auto flex flex-col -top-1 "
                                 initial={{ x: 20, opacity: 0 }}
                                 animate={{ x: 0, opacity: 1 }}
                                 exit={{ x: 20, opacity: 0 }}

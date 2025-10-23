@@ -5,6 +5,7 @@ const callTypeDefs = gql`
   type Query {
     randomCustomer:Search
     checkUserIsOnlineOnVici:Boolean
+    getCallfileAutoDialStatus:Boolean
   }  
 
   type Mutation {

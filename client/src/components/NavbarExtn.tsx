@@ -90,11 +90,11 @@ const NavbarExtn = () => {
   const { refetch:messageRefetch } = useQuery<{selectedBucket:{message: string}}>(SELECTED_BUCKET_MESSAGE,{skip: !success.success, notifyOnNetworkStatusChange: true})
 
 
-  client.subscribe<{somethingEscalating:{members:[string],message:string}}>({query: SOMETHING_ESCALATING}).subscribe({
-    next(data) {
-      console.log(data)
-    }
-  })
+  // client.subscribe<{somethingEscalating:{members:[string],message:string}}>({query: SOMETHING_ESCALATING}).subscribe({
+  //   next(data) {
+  //     console.log(data)
+  //   }
+  // })
 
   useSubscription<{somethingChanged:SubSuccess}>(SOMETHING_ESCALATING, {
     onData: async({data})=> {

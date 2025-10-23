@@ -6,6 +6,7 @@ import {
 } from "../../middlewares/vicidial.js";
 import Callfile from "../../models/callfile.js";
 import CustomerAccount from "../../models/customerAccount.js";
+import User from "../../models/user.js";
 
 const callResolver = {
   Query: {
@@ -135,10 +136,24 @@ const callResolver = {
     checkUserIsOnlineOnVici: async (_, __, { user }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
+        const findUser = await User.findById(user._id).populate("buckets")  
+     
+        if(findUser.vici_id.trim() === "" ) throw new CustomError('Please',401)
 
-        const chechIfOnline = await checkIfAgentIsOnline(user.vici_id);
+        const bucket = findUser?.buckets?.length > 0 ? new Array(...new Set(findUser?.buckets?.map(x=> x.viciIp))) : []
 
-        return !chechIfOnline.includes("not logged in");
+        const chechIfOnline = await checkIfAgentIsOnline(findUser.vici_id,bucket[0]);
+
+        return chechIfOnline;
+      } catch (error) {
+        throw new CustomError("Failed to initiate call", 500);
+      }
+    },
+    getCallfileAutoDialStatus: async(_,__,{user})=> {
+      try {
+        if (!user) throw new CustomError("Unauthorized", 401);
+        
+
       } catch (error) {
         throw new CustomError("Failed to initiate call", 500);
       }
