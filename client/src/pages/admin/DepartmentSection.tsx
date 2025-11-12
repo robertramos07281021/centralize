@@ -25,6 +25,8 @@ const CREATEDEPT = gql`
     }
   }
 `;
+
+
 const UPDATEDEPT = gql`
   mutation updateDept(
     $name: String!
@@ -88,7 +90,6 @@ const DEPARTMENT_QUERY = gql`
   }
 `;
 
-
 type BranchSectionProps = {
   campaign: boolean;
   setCampaign: React.Dispatch<React.SetStateAction<boolean>>;
@@ -118,7 +119,6 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
       name: "",
     },
   });
-
 
   const { data: aomUsers, refetch: aomRefetch } = useQuery<{
     getAomUser: UserInfo[];
@@ -191,6 +191,7 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
           isMessage: false,
         })
       );
+      setCampaign(false);
       setName("");
       setBranch("");
       setAom("");
@@ -452,20 +453,20 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
                           setCampaign(true);
                         }}
                         title="UPDATE"
-                        className="bg-blue-600 shadow-md cursor-pointer hover:bg-blue-700 transition-all p-1 text-white rounded-sm border border-blue-800 "
+                        className={`" bg-blue-600  shadow-md cursor-pointer hover:bg-blue-700 transition-all p-1 text-white rounded-sm border border-blue-800 "`}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
                           viewBox="0 0 24 24"
-                          strokeWidth="2"
-                          stroke="currentColor"
-                          className="size-5"
+                          fill="currentColor"
+                          className={`" ${
+                            index === index ? "hover:rotate-90" : ""
+                          } transition-all size-5.5  "`}
                         >
                           <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+                            fillRule="evenodd"
+                            d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 0 0-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 0 0-2.282.819l-.922 1.597a1.875 1.875 0 0 0 .432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 0 0 0 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 0 0-.432 2.385l.922 1.597a1.875 1.875 0 0 0 2.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 0 0 2.28-.819l.923-1.597a1.875 1.875 0 0 0-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 0 0 0-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 0 0-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 0 0-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 0 0-1.85-1.567h-1.843ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z"
+                            clipRule="evenodd"
                           />
                         </svg>
                       </div>
@@ -490,7 +491,6 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
                           />
                         </svg>
                       </div>
-      
                     </div>
                   </motion.div>
                 )
@@ -516,12 +516,18 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
               className="bg-black/40 backdrop-blur-sm z-10 cursor-pointer w-full h-full absolute top-0 left-0"
             ></motion.div>
             <motion.div
-              className={`${isUpdate? "border-orange-500": "border-yellow-900"} bg-gray-100   z-20 border-2 rounded-md overflow-hidden shadow-md`}
+              className={`${
+                isUpdate ? "border-orange-500" : "border-yellow-900"
+              } bg-gray-100   z-20 border-2 rounded-md overflow-hidden shadow-md`}
               initial={{ scale: 0.5, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.5, opacity: 0 }}
             >
-              <h1 className={`${isUpdate ? "bg-orange-500" : "bg-yellow-700"}  px-10 font-black text-2xl uppercase text-center text-white py-2`}>
+              <h1
+                className={`${
+                  isUpdate ? "bg-orange-500" : "bg-yellow-700"
+                }  px-10 font-black text-2xl uppercase text-center text-white py-2`}
+              >
                 {isUpdate ? "update campaign" : "create campaign"}
               </h1>
 
@@ -585,7 +591,7 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
                 {!isUpdate ? (
                   <button
                     type="button"
-                    className={`bg-yellow-700 hover:bg-yellow-800 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
+                    className={`bg-yellow-500 hover:bg-yellow-600 border-2 border-yellow-800 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-black uppercase transition-all rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
                     onClick={() => handleSubmitCreate("CREATE")}
                   >
                     Create
@@ -594,14 +600,7 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
                   <>
                     <button
                       type="button"
-                      className="bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer"
-                      onClick={() => handleSubmitUpdate("UPDATE")}
-                    >
-                      Update
-                    </button>
-                    <button
-                      type="button"
-                      className="bg-slate-500 hover:bg-slate-600 focus:outline-none text-white focus:ring-4 focus:ring-slate-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer"
+                      className="bg-slate-500 transition-all font-black uppercase hover:bg-slate-600 focus:outline-none text-white focus:ring-4 focus:ring-slate-400 border-gray-800 border-2 rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer"
                       onClick={() => {
                         handleCancelUpdate;
                         setCampaign(false);
@@ -611,6 +610,13 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
                       }}
                     >
                       Cancel
+                    </button>
+                    <button
+                      type="button"
+                      className="bg-orange-500 transition-all border-2 border-orange-800 uppercase hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-black rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer"
+                      onClick={() => handleSubmitUpdate("UPDATE")}
+                    >
+                      Update
                     </button>
                   </>
                 )}

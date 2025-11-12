@@ -68,9 +68,15 @@ export const color = [
   "oklch(0.75 0.15 342)",
 ];
 
+type tabs = {
+  name: string;
+  link: string;
+};
+
 type links = {
   name: string;
   link: string;
+  tabs: tabs[] | null;
 };
 
 export const accountsNavbar: { [key: string]: links[] } = {
@@ -78,126 +84,167 @@ export const accountsNavbar: { [key: string]: links[] } = {
     {
       name: "Dashboard",
       link: "/admin-dashboard",
+      tabs: null,
     },
     {
       name: "Accounts",
       link: "/accounts",
+      tabs: null,
     },
     {
       name: "Branch & Depts",
       link: "/setup",
+      tabs: null,
     },
     {
       name: "Disposition Configuration",
       link: "/disposition-settings",
+      tabs: null,
     },
     {
       name: "Callfile Configuration",
       link: "/callfile-configurations",
+      tabs: null,
     },
+    {
+      name: "Logs",
+      link: "/all-call-logs",
+      tabs: [{
+        name: 'Agent Logs',
+        link: '/agent-attendance-logs'
+      }],
+    },
+    // {
+    //   name: "Agent Logs",
+    //   link: "/agent-attendance-logs",
+    //   tabs: null,
+    // },
   ],
   AGENT: [
     {
       name: "Dashboard",
       link: "/agent-dashboard",
+      tabs: null,
     },
     {
       name: "Customer Interaction Panel",
       link: "/agent-cip",
+      tabs: null,
     },
     {
       name: "Report",
       link: "/agent-report",
+      tabs: null,
     },
   ],
   TL: [
     {
       name: "Dashboard",
       link: "/tl-dashboard",
+      tabs: null,
     },
     {
       name: "Customer Interaction Panel",
       link: "/tl-cip",
+      tabs: null,
     },
     {
       name: "Task Manager",
       link: "/tl-task-manager",
+      tabs: null,
     },
     {
       name: "Production Manager",
       link: "/tl-production-manager",
+      tabs: null,
     },
     {
       name: "Agent Production",
       link: "/agent-production",
+      tabs: null,
     },
     {
       name: "Reports",
       link: "/tl-reports",
+      tabs: null,
     },
-    // {
-    //   name: "Monitoring",
-    //   link: "/tl-monitoring",
-    // },
+    {
+      name: "Call Logs",
+      link: "/call-agents-logs",
+      tabs: null,
+    },
   ],
   MIS: [
     {
       name: "Dashboard",
       link: "/mis-dashboard",
+      tabs: null,
     },
     {
       name: "Customer Interaction Panel",
       link: "/tl-cip",
+      tabs: null,
     },
     {
       name: "Task Manager",
       link: "/tl-task-manager",
+      tabs: null,
     },
     {
       name: "Production Manager",
       link: "/tl-production-manager",
+      tabs: null,
     },
     {
       name: "Agent Production",
       link: "/agent-production",
+      tabs: null,
     },
     {
       name: "Reports",
       link: "/tl-reports",
+      tabs: null,
     },
   ],
   AOM: [
     {
       name: "Dashboard",
       link: "/aom-dashboard",
+      tabs: null,
     },
     {
       name: "Full Time Employee",
       link: "/aom-fte-user",
+      tabs: null,
     },
     {
       name: "Report",
       link: "/aom-reports",
+      tabs: null,
     },
   ],
   QA: [
     {
       name: "Agents Dashboard",
       link: "/qa-dashboard",
+      tabs: null,
     },
     {
       name: "Agents Recordings",
       link: "/qa-agents-dashboard",
+      tabs: null,
     },
   ],
   QASUPERVISOR: [
     {
       name: "QA Dashboard",
       link: "/qasv-dashboard",
+      tabs: null,
     },
     {
       name: "QA Accounts",
       link: "/qasv-accounts",
+      tabs: null,
     },
   ],
 };

@@ -16,76 +16,96 @@ import Production from "../../models/production.js";
 const customerResolver = {
   DateTime,
   Query: {
-    getModifyReport: async(_,{id}) => {
+    getModifyReport: async (_, { id }) => {
       try {
-        return await ModifyRecord.find({user: id}) 
+        return await ModifyRecord.find({ user: id });
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        throw new CustomError(error.message, 500);
       }
     },
-    findCustomer: async(_,{fullName, dob, email, contact_no}) => {
+    findCustomer: async (_, { fullName, dob, email, contact_no }) => {
       {
         try {
           const searchQuery = await Customer.aggregate([
             {
               $match: [
-                {fullName : {$regex: fullName, $options: "i"}},
-                {dob : {$regex: dob, $options: "i"}},
-                {email : { $elemMatch : { $regex: email, $options: "i"} }},
-                {contact_no :{ $elemMatch: {$regex: contact_no, $options: "i"}} },
-              ]
-            }
-          ])
-          return searchQuery
+                { fullName: { $regex: fullName, $options: "i" } },
+                { dob: { $regex: dob, $options: "i" } },
+                { email: { $elemMatch: { $regex: email, $options: "i" } } },
+                {
+                  contact_no: {
+                    $elemMatch: { $regex: contact_no, $options: "i" },
+                  },
+                },
+              ],
+            },
+          ]);
+          return searchQuery;
         } catch (error) {
-          throw new CustomError(error.message, 500)
+          throw new CustomError(error.message, 500);
         }
       }
     },
-    getCustomers: async(_,{page}) => {
+    getCustomers: async (_, { page }) => {
       try {
         const customers = await Customer.aggregate([
           {
             $facet: {
-              customers: [
-                { $skip: (page - 1) * 20 },
-                { $limit: 20 }
-              ],
-              total: [
-                {$count: "totalCustomers"}
-              ]
-            }
-          }
-        ])
+              customers: [{ $skip: (page - 1) * 20 }, { $limit: 20 }],
+              total: [{ $count: "totalCustomers" }],
+            },
+          },
+        ]);
         return {
           customers: customers[0].customers ?? [],
-          total: customers[0].total.length > 0 ? customers[0].total[0].totalCustomers : 0,
-        }
+          total:
+            customers[0].total.length > 0
+              ? customers[0].total[0].totalCustomers
+              : 0,
+        };
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        throw new CustomError(error.message, 500);
       }
     },
-    search: async(_,{search},{user}) => {
+    search: async (_, { search }, { user }) => {
       try {
-
-        if(!search) {return []}
+        if (!search) {
+          return [];
+        }
 
         const regexSearch = { $regex: search, $options: "i" };
-        const startOfTheDay = new Date()
-        startOfTheDay.setHours(0,0,0,0)
-        const endOfTheDay = new Date()
-        endOfTheDay.setHours(23,59,59,999)
-        const success = ['PTP','UNEG','FFUP','KOR','NOA','FV','HUP','LM','ANSM','DEC','RTP','ITP','PAID']
-
+        const startOfTheDay = new Date();
+        startOfTheDay.setHours(0, 0, 0, 0);
+        const endOfTheDay = new Date();
+        endOfTheDay.setHours(23, 59, 59, 999);
+        const success = [
+          "PTP",
+          "UNEG",
+          "FFUP",
+          "KOR",
+          "NOA",
+          "FV",
+          "HUP",
+          "LM",
+          "ANSM",
+          "DEC",
+          "RTP",
+          "ITP",
+          "PAID",
+        ];
 
         const accounts = await Customer.aggregate([
           {
             $match: {
               $or: [
                 { fullName: { $regex: search, $options: "i" } },
-                { contact_no: { $elemMatch: { $regex: search, $options: "i" } } },
+                {
+                  contact_no: { $elemMatch: { $regex: search, $options: "i" } },
+                },
                 { emails: { $elemMatch: { $regex: search, $options: "i" } } },
-                { addresses: { $elemMatch: { $regex: search, $options: "i" } } },
+                {
+                  addresses: { $elemMatch: { $regex: search, $options: "i" } },
+                },
               ],
             },
           },
@@ -98,8 +118,8 @@ const customerResolver = {
               as: "ca",
             },
           },
-          { 
-            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true },
           },
           {
             $lookup: {
@@ -109,8 +129,11 @@ const customerResolver = {
               as: "account_bucket",
             },
           },
-          { 
-            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$account_bucket",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -120,15 +143,18 @@ const customerResolver = {
               as: "account_callfile",
             },
           },
-          { 
-            $unwind: { path: "$account_callfile", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$account_callfile",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $match: {
-              "account_bucket._id": {$in: user.buckets},
+              "account_bucket._id": { $in: user.buckets },
               "ca.on_hands": false,
-              "account_callfile.active": {$eq: true},
-              "account_callfile.endo": {$exists: false},
+              "account_callfile.active": { $eq: true },
+              "account_callfile.endo": { $exists: false },
             },
           },
           {
@@ -139,8 +165,8 @@ const customerResolver = {
               as: "cd",
             },
           },
-          { 
-            $unwind: { path: "$cd", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$cd", preserveNullAndEmptyArrays: true },
           },
           {
             $lookup: {
@@ -150,8 +176,8 @@ const customerResolver = {
               as: "dispotype",
             },
           },
-          { 
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
           },
           {
             $lookup: {
@@ -161,8 +187,8 @@ const customerResolver = {
               as: "user",
             },
           },
-          { 
-            $unwind: { path: "$user", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$user", preserveNullAndEmptyArrays: true },
           },
           {
             $lookup: {
@@ -180,14 +206,14 @@ const customerResolver = {
                     $and: [
                       { $in: ["$dispotype.code", success] },
                       { $gte: ["$cd.createdAt", startOfTheDay] },
-                      { $lte: ["$cd.createdAt", endOfTheDay] }
-                    ]
+                      { $lte: ["$cd.createdAt", endOfTheDay] },
+                    ],
                   },
                   then: true,
-                  else: false
-                }
-              }
-            }
+                  else: false,
+                },
+              },
+            },
           },
           {
             $project: {
@@ -200,7 +226,7 @@ const customerResolver = {
                 emails: "$emails",
                 addresses: "$addresses",
                 isRPC: "$isRPC",
-                _id: "$_id"
+                _id: "$_id",
               },
               case_id: "$ca.case_id",
               account_id: "$ca.account_id",
@@ -210,9 +236,14 @@ const customerResolver = {
               max_dpd: "$ca.max_dpd",
               dpd: "$ca.dpd",
               batch_no: "$ca.batch_no",
-              account_update_history: '$ca.account_update_history',
+              account_update_history: "$ca.account_update_history",
               month_pd: "$ca.month_pd",
               balance: "$ca.balance",
+              partial_payment_w_service_fee:
+                "$ca.out_standing_details.partial_payment_w_service_fee",
+              new_tad_with_sf: "$ca.out_standing_details.new_tad_with_sf",
+              new_pay_off: "$ca.out_standing_details.new_pay_off",
+              service_fee: "$ca.out_standing_details.service_fee",
               paid_amount: "$ca.paid_amount",
               isRPCToday: 1,
               assigned: "$ca.assigned",
@@ -222,35 +253,37 @@ const customerResolver = {
               out_standing_details: "$ca.out_standing_details",
               grass_details: "$ca.grass_details",
               account_bucket: "$account_bucket",
-              emergency_contact: "$ca.emergency_contact"
-            }
-          }
-        ])
+              emergency_contact: "$ca.emergency_contact",
+            },
+          },
+        ]);
 
-        return accounts
+        return accounts;
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
-    getMonthlyPerformance: async(_,__,{user}) => {
+    getMonthlyPerformance: async (_, __, { user }) => {
       try {
-        const year = new Date().getFullYear()
+        const year = new Date().getFullYear();
         const month = new Date().getMonth();
-        const thisDay = new Date()
-        thisDay.setHours(0,0,0,0)
-        const firstDay = new Date(year,month, 1)
-        const lastDay = new Date(year,month + 1,0)
-        const aomCampaign = await Department.find({aom: user._id}).lean()
-        const aomCampaignNameArray = aomCampaign.map(e => e.name)
-        const campaignBucket = await Bucket.find({dept: {$in: aomCampaignNameArray}}).lean()
-        const newArrayCampaignBucket = campaignBucket.map(e=> e._id)
-
+        const thisDay = new Date();
+        thisDay.setHours(0, 0, 0, 0);
+        const firstDay = new Date(year, month, 1);
+        const lastDay = new Date(year, month + 1, 0);
+        const aomCampaign = await Department.find({ aom: user._id }).lean();
+        const aomCampaignNameArray = aomCampaign.map((e) => e.name);
+        const campaignBucket = await Bucket.find({
+          dept: { $in: aomCampaignNameArray },
+        }).lean();
+        const newArrayCampaignBucket = campaignBucket.map((e) => e._id);
 
         const dispositionCheck = await Disposition.aggregate([
           {
             $match: {
-              createdAt: { $gte:firstDay , $lt:lastDay },
-            }
+              createdAt: { $gte: firstDay, $lt: lastDay },
+            },
           },
           {
             $lookup: {
@@ -260,8 +293,8 @@ const customerResolver = {
               as: "ca",
             },
           },
-          { 
-            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true },
           },
           {
             $lookup: {
@@ -271,13 +304,13 @@ const customerResolver = {
               as: "bucket",
             },
           },
-          { 
-            $unwind: { path: "$bucket", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$bucket", preserveNullAndEmptyArrays: true },
           },
           {
             $match: {
-              "bucket.dept": {$in: aomCampaignNameArray}
-            }
+              "bucket.dept": { $in: aomCampaignNameArray },
+            },
           },
           {
             $group: {
@@ -285,12 +318,12 @@ const customerResolver = {
                 campaign: "$bucket.dept",
                 day: { $dayOfMonth: "$createdAt" },
                 month: { $month: "$createdAt" },
-                year: { $year: "$createdAt" }
+                year: { $year: "$createdAt" },
               },
               users: {
-                $addToSet: "$user"
-              }
-            }
+                $addToSet: "$user",
+              },
+            },
           },
           {
             $project: {
@@ -300,22 +333,21 @@ const customerResolver = {
                 $dateFromParts: {
                   year: "$_id.year",
                   month: "$_id.month",
-                  day: "$_id.day"
-                }
+                  day: "$_id.day",
+                },
               },
-              users:{ $size: "$users" }
-            }
-          }
-        ])
+              users: { $size: "$users" },
+            },
+          },
+        ]);
 
         const dispo = await Promise.all(
-          dispositionCheck.map(async(e)=> 
-          {
-             const users = await User.aggregate([
+          dispositionCheck.map(async (e) => {
+            const users = await User.aggregate([
               {
                 $match: {
-                  type: "AGENT"
-                }
+                  type: "AGENT",
+                },
               },
               {
                 $lookup: {
@@ -323,32 +355,46 @@ const customerResolver = {
                   localField: "departments",
                   foreignField: "_id",
                   as: "department",
-                }
+                },
               },
-              { 
-                $unwind: { path: "$department", preserveNullAndEmptyArrays: true } 
+              {
+                $unwind: {
+                  path: "$department",
+                  preserveNullAndEmptyArrays: true,
+                },
               },
               {
                 $match: {
-                  "department.name": e.campaign 
-                }
+                  "department.name": e.campaign,
+                },
               },
-            ])
+            ]);
             return {
               campaign: e.campaign,
-              rate: users.length === 0 ? 0 : (e.users / users.length * 100)
-            }
-          }
-          )
-        )
+              rate: users.length === 0 ? 0 : (e.users / users.length) * 100,
+            };
+          })
+        );
 
-        const connectedDispo = ['FFUP','PAID','PRC','RPCCB','FV','LM','PTP','UNEG','DEC','ITP','RTP']
+        const connectedDispo = [
+          "FFUP",
+          "PAID",
+          "PRC",
+          "RPCCB",
+          "FV",
+          "LM",
+          "PTP",
+          "UNEG",
+          "DEC",
+          "ITP",
+          "RTP",
+        ];
 
         const accounts = await CustomerAccount.aggregate([
           {
             $match: {
-              createdAt: { $gte:firstDay , $lt:lastDay },
-            }
+              createdAt: { $gte: firstDay, $lt: lastDay },
+            },
           },
           {
             $lookup: {
@@ -358,13 +404,16 @@ const customerResolver = {
               as: "account_bucket",
             },
           },
-          { 
-            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$account_bucket",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $match: {
-              "account_bucket._id": { $in: newArrayCampaignBucket }
-            }
+              "account_bucket._id": { $in: newArrayCampaignBucket },
+            },
           },
           {
             $lookup: {
@@ -372,10 +421,13 @@ const customerResolver = {
               localField: "current_disposition",
               foreignField: "_id",
               as: "currentDisposition",
-            }
+            },
           },
-          { 
-            $unwind: { path: "$currentDisposition", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$currentDisposition",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -383,52 +435,52 @@ const customerResolver = {
               localField: "currentDisposition.disposition",
               foreignField: "_id",
               as: "dispotype",
-            }
+            },
           },
-          { 
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
           },
           {
             $group: {
               _id: "$account_bucket.dept",
               totalAccounts: {
-                $sum: 1
+                $sum: 1,
               },
               connectedAccounts: {
                 $sum: {
                   $cond: [
                     {
-                      $in: ["$dispotype.code",connectedDispo]
-                    }
-                    ,1
-                    ,0
-                  ]
-                }
+                      $in: ["$dispotype.code", connectedDispo],
+                    },
+                    1,
+                    0,
+                  ],
+                },
               },
               targetAmount: {
-                $sum: "$out_standing_details.total_os"
+                $sum: "$out_standing_details.total_os",
               },
               collectedAmount: {
-                $sum: "$paid_amount"
+                $sum: "$paid_amount",
               },
-     
+
               ptpKeptAccount: {
                 $sum: {
                   $cond: [
                     {
                       $and: [
                         {
-                          $eq: ["$dispotype.code","PAID"]
+                          $eq: ["$dispotype.code", "PAID"],
                         },
                         {
-                          $eq: ['$dispotype.ptp',true]
-                        }
-                      ]
+                          $eq: ["$dispotype.ptp", true],
+                        },
+                      ],
                     },
                     1,
-                    0
-                  ]
-                }
+                    0,
+                  ],
+                },
               },
               paidAccount: {
                 $sum: {
@@ -436,19 +488,19 @@ const customerResolver = {
                     {
                       $and: [
                         {
-                          $eq: ["$dispotype.code","PAID"]
+                          $eq: ["$dispotype.code", "PAID"],
                         },
                         {
-                          $eq: ['$currentDisposition.ptp',false]
-                        }
-                      ]
+                          $eq: ["$currentDisposition.ptp", false],
+                        },
+                      ],
                     },
                     1,
-                    0
-                  ]
-                }
-              }
-            }
+                    0,
+                  ],
+                },
+              },
+            },
           },
           {
             $project: {
@@ -460,60 +512,77 @@ const customerResolver = {
               collectedAmount: 1,
               ptpKeptAccount: 1,
               paidAccount: 1,
-            }
-          }
-        ])
+            },
+          },
+        ]);
 
+        const newResult = accounts.map((com) => {
+          const findDept = aomCampaign.find((e) => e.name === com.campaign);
+          const camp = dispo
+            .filter((x) => x.campaign === com.campaign)
+            .map((y) => y.rate);
+          const sumOfCamp =
+            camp.length > 0
+              ? camp.reduce((t, v) => {
+                  return t + v;
+                })
+              : 0;
 
-        const newResult = accounts.map((com)=> {
-          const findDept = aomCampaign.find(e => e.name === com.campaign)
-          const camp = dispo.filter(x=> x.campaign === com.campaign).map(y => y.rate)
-          const sumOfCamp =camp.length > 0 ? camp.reduce((t,v) => { return t + v }) : 0
-          
           return {
             ...com,
             campaign: findDept ? findDept._id.toString() : com.campaign,
-            attendanceRate: camp.length > 0 ? sumOfCamp/camp.length : 0
-          }
-        })
-        
-        return newResult
+            attendanceRate: camp.length > 0 ? sumOfCamp / camp.length : 0,
+          };
+        });
+
+        return newResult;
       } catch (error) {
-        throw new CustomError(error.message, 500)        
+        throw new CustomError(error.message, 500);
       }
     },
-    findCustomerAccount: async(_,{query}, {user}) => {
+    findCustomerAccount: async (_, { query }, { user }) => {
       try {
-        if(!user) throw new CustomError("Unauthorized",401)
+        if (!user) throw new CustomError("Unauthorized", 401);
 
-        const {disposition, groupId ,page, assigned, limit, selectedBucket, dpd} = query
+        const {
+          disposition,
+          groupId,
+          page,
+          assigned,
+          limit,
+          selectedBucket,
+          dpd,
+        } = query;
 
-        let selected = ''
+        let selected = "";
         if (groupId) {
           const [group, userSelected] = await Promise.all([
             Group.findById(groupId).lean(),
-            User.findById(groupId).lean()
+            User.findById(groupId).lean(),
           ]);
-     
+
           selected = group?._id || userSelected?._id || null;
-        } 
-        const activeCallfile = await Callfile.findOne({bucket: new mongoose.Types.ObjectId(selectedBucket),active: {$eq: true}})
-        
-        if(!activeCallfile) return null
+        }
+        const activeCallfile = await Callfile.findOne({
+          bucket: new mongoose.Types.ObjectId(selectedBucket),
+          active: { $eq: true },
+        });
+
+        if (!activeCallfile) return null;
 
         const search = [
-          { "existingDispo.code" : { $ne: 'DNC' } },
-          {balance: {$ne: 0}}
+          { "existingDispo.code": { $ne: "DNC" } },
+          { balance: { $ne: 0 } },
         ];
-     
-        if(dpd) {
-          search.push({max_dpd: {$eq: dpd}})
+
+        if (dpd) {
+          search.push({ max_dpd: { $eq: dpd } });
         }
 
         if (disposition && disposition.length > 0) {
           search.push({ "dispotype.code": { $in: disposition } });
         }
-        
+
         if (assigned === "assigned") {
           if (selected) {
             search.push({ assigned: new mongoose.Types.ObjectId(selected) });
@@ -527,8 +596,8 @@ const customerResolver = {
         const accounts = await CustomerAccount.aggregate([
           {
             $match: {
-              callfile: activeCallfile?._id
-            }
+              callfile: activeCallfile?._id,
+            },
           },
           {
             $lookup: {
@@ -538,8 +607,11 @@ const customerResolver = {
               as: "customer_info",
             },
           },
-          { 
-            $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$customer_info",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -549,36 +621,42 @@ const customerResolver = {
               as: "account_bucket",
             },
           },
-          { 
-            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$account_bucket",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
               from: "dispositions",
               localField: "current_disposition",
               foreignField: "_id",
-              as: "cd"
-            }
+              as: "cd",
+            },
           },
           {
-            $unwind: { path: "$ca_disposition", preserveNullAndEmptyArrays: true } 
+            $unwind: {
+              path: "$ca_disposition",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
               from: "dispotypes",
               localField: "cd.disposition",
               foreignField: "_id",
-              as: "dispotype"
-            }
+              as: "dispotype",
+            },
           },
           {
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
           },
 
           {
             $match: {
-              $and: search
-            }
+              $and: search,
+            },
           },
           {
             $project: {
@@ -586,86 +664,94 @@ const customerResolver = {
               customer_info: "$customer_info",
               dispoType: "$dispotype",
               account_bucket: "$account_bucket",
-              max_dpd:  "$max_dpd",
+              max_dpd: "$max_dpd",
               assigned: "$assigned",
-            }
+            },
           },
           {
             $facet: {
               FindCustomerAccount: [
                 { $skip: (page - 1) * limit },
-                { $limit: limit }
+                { $limit: limit },
               ],
               AllCustomerAccounts: [
                 {
                   $group: {
                     _id: null,
-                    ids: { $push: "$_id" }
-                  }
+                    ids: { $push: "$_id" },
+                  },
                 },
                 {
                   $project: {
                     _id: 0,
-                    ids: 1
-                  }
-                }
-              ]
-            }
+                    ids: 1,
+                  },
+                },
+              ],
+            },
           },
-        ])
-
+        ]);
 
         const allAccounts = accounts[0]?.AllCustomerAccounts[0]?.ids || [];
 
         return {
           CustomerAccounts: accounts[0]?.FindCustomerAccount || [],
-          totalCountCustomerAccounts: allAccounts ,
-        }
+          totalCountCustomerAccounts: allAccounts,
+        };
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        throw new CustomError(error.message, 500);
       }
     },
-    accountsCount: async(_,__,{user}) => {
+    accountsCount: async (_, __, { user }) => {
       try {
-        const aomDept = (await Department.find({aom: user._id}).lean()).map(dept=> dept.name)
+        const aomDept = (await Department.find({ aom: user._id }).lean()).map(
+          (dept) => dept.name
+        );
 
-        const deptBuckets = (await Bucket.find({dept: {$in:aomDept}}).lean()).map((e)=> e._id)
+        const deptBuckets = (
+          await Bucket.find({ dept: { $in: aomDept } }).lean()
+        ).map((e) => e._id);
 
-        return  await CustomerAccount.countDocuments({ bucket: { $in: deptBuckets } }) || 0
+        return (
+          (await CustomerAccount.countDocuments({
+            bucket: { $in: deptBuckets },
+          })) || 0
+        );
       } catch (error) {
-        throw new CustomError(error.message, 500)        
+        throw new CustomError(error.message, 500);
       }
     },
-    getMonthlyTarget: async(_,__,{user}) => {
+    getMonthlyTarget: async (_, __, { user }) => {
       try {
-        const [aomCampaign,dispoType] = await Promise.all([
-          Department.find({aom: user._id}).lean(),
-          DispoType.find().lean()
-        ])
+        const [aomCampaign, dispoType] = await Promise.all([
+          Department.find({ aom: user._id }).lean(),
+          DispoType.find().lean(),
+        ]);
 
-        
-        const aomCampaignNameArray = aomCampaign.map(e => e.name)
-        const campaignBucket = await Bucket.find({dept: {$in: aomCampaignNameArray}}).lean()
-        const newArrayCampaignBucket = campaignBucket.map(e=> new mongoose.Types.ObjectId(e._id))
-        const {_id} = dispoType.find(x => 
-          x.code === 'PAID'
-        )
-        const ptp = dispoType.find(x=> x.code === 'PTP')
+        const aomCampaignNameArray = aomCampaign.map((e) => e.name);
+        const campaignBucket = await Bucket.find({
+          dept: { $in: aomCampaignNameArray },
+        }).lean();
+        const newArrayCampaignBucket = campaignBucket.map(
+          (e) => new mongoose.Types.ObjectId(e._id)
+        );
+        const { _id } = dispoType.find((x) => x.code === "PAID");
+        const ptp = dispoType.find((x) => x.code === "PTP");
 
-        
         const findActiveCallfile = await Callfile.find({
           $and: [
             {
-              bucket: {$in: newArrayCampaignBucket}
+              bucket: { $in: newArrayCampaignBucket },
             },
             {
-              active: {$eq: true}
-            }
-          ]
-        }).lean()
-        
+              active: { $eq: true },
+            },
+          ],
+        }).lean();
 
-        const newMapCallfile = findActiveCallfile.map(x=> new mongoose.Types.ObjectId(x._id))
+        const newMapCallfile = findActiveCallfile.map(
+          (x) => new mongoose.Types.ObjectId(x._id)
+        );
 
         const monthlyTarget = await CustomerAccount.aggregate([
           {
@@ -676,8 +762,11 @@ const customerResolver = {
               as: "account_bucket",
             },
           },
-          { 
-            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$account_bucket",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -685,10 +774,13 @@ const customerResolver = {
               localField: "current_disposition",
               foreignField: "_id",
               as: "currentDisposition",
-            }
+            },
           },
-          { 
-            $unwind: { path: "$currentDisposition", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$currentDisposition",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -696,10 +788,10 @@ const customerResolver = {
               localField: "currentDisposition.disposition",
               foreignField: "_id",
               as: "dispoType",
-            }
+            },
           },
-          { 
-            $unwind: { path: "$dispoType", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$dispoType", preserveNullAndEmptyArrays: true },
           },
           {
             $lookup: {
@@ -707,12 +799,12 @@ const customerResolver = {
               localField: "history",
               foreignField: "_id",
               as: "account_history",
-            }
+            },
           },
           {
             $match: {
-              callfile : {$in: newMapCallfile}
-            }
+              callfile: { $in: newMapCallfile },
+            },
           },
           {
             $addFields: {
@@ -722,12 +814,17 @@ const customerResolver = {
                   as: "h",
                   cond: {
                     $and: [
-                      { $eq: [ "$$h.disposition", new mongoose.Types.ObjectId(_id) ] },
-                      { $eq: [ "$$h.ptp", true ] },
-                      { $eq: [ '$$h.exists',true ] },
-                    ]
-                  }
-                }
+                      {
+                        $eq: [
+                          "$$h.disposition",
+                          new mongoose.Types.ObjectId(_id),
+                        ],
+                      },
+                      { $eq: ["$$h.ptp", true] },
+                      { $eq: ["$$h.exists", true] },
+                    ],
+                  },
+                },
               },
               historyPaidOnly: {
                 $filter: {
@@ -735,11 +832,16 @@ const customerResolver = {
                   as: "h",
                   cond: {
                     $and: [
-                      { $eq: [ "$$h.disposition", new mongoose.Types.ObjectId(_id) ] },
-                      { $eq: [ "$$h.ptp", false ] }
-                    ]
-                  }
-                }
+                      {
+                        $eq: [
+                          "$$h.disposition",
+                          new mongoose.Types.ObjectId(_id),
+                        ],
+                      },
+                      { $eq: ["$$h.ptp", false] },
+                    ],
+                  },
+                },
               },
               hasPTP: {
                 $anyElementTrue: {
@@ -748,13 +850,18 @@ const customerResolver = {
                     as: "h",
                     in: {
                       $and: [
-                        { $eq: [ "$$h.ptp", true ] },
-                        { $eq: [ "$$h.disposition", new mongoose.Types.ObjectId(ptp._id) ] }
+                        { $eq: ["$$h.ptp", true] },
+                        {
+                          $eq: [
+                            "$$h.disposition",
+                            new mongoose.Types.ObjectId(ptp._id),
+                          ],
+                        },
                       ],
-                    }
-                  }
-                }
-              }
+                    },
+                  },
+                },
+              },
             },
           },
           {
@@ -765,9 +872,9 @@ const customerResolver = {
                   $map: {
                     input: "$historyPTPKept",
                     as: "item",
-                    in: "$$item.amount"
-                  }
-                }
+                    in: "$$item.amount",
+                  },
+                },
               },
               paidHistoryCount: { $size: "$historyPaidOnly" },
               paidHistoryAmount: {
@@ -775,11 +882,11 @@ const customerResolver = {
                   $map: {
                     input: "$historyPaidOnly",
                     as: "item",
-                    in: "$$item.amount"
-                  }
-                }
-              }
-            }
+                    in: "$$item.amount",
+                  },
+                },
+              },
+            },
           },
           {
             $group: {
@@ -788,12 +895,12 @@ const customerResolver = {
                 $sum: {
                   $cond: [
                     {
-                      $eq: ['$dispoType.code','PTP']
+                      $eq: ["$dispoType.code", "PTP"],
                     },
                     1,
-                    0
-                  ]
-                }
+                    0,
+                  ],
+                },
               },
               pkCount: {
                 $sum: {
@@ -801,17 +908,17 @@ const customerResolver = {
                     {
                       $and: [
                         {
-                          $eq: ['$dispoType.code','PAID']
+                          $eq: ["$dispoType.code", "PAID"],
                         },
                         {
-                          $eq: ["$currentDisposition.ptp", true]
-                        }
-                      ]
+                          $eq: ["$currentDisposition.ptp", true],
+                        },
+                      ],
                     },
                     1,
-                    0
-                  ]
-                }
+                    0,
+                  ],
+                },
               },
               pCount: {
                 $sum: {
@@ -819,43 +926,44 @@ const customerResolver = {
                     {
                       $and: [
                         {
-                          $eq: ['$dispoType.code','PAID']
+                          $eq: ["$dispoType.code", "PAID"],
                         },
                         {
-                          $eq: ["$currentDisposition.ptp", false]
-                        }
-                      ]
+                          $eq: ["$currentDisposition.ptp", false],
+                        },
+                      ],
                     },
                     1,
-                    0
-                  ]
-                }
+                    0,
+                  ],
+                },
               },
               ptp: {
                 $sum: {
                   $cond: [
                     {
-                      $eq: ['$dispoType.code','PTP']
-                    }
-                    ,
+                      $eq: ["$dispoType.code", "PTP"],
+                    },
                     "$currentDisposition.amount",
-                    0
-                  ]
-                }
+                    0,
+                  ],
+                },
               },
-              pk: {$sum: "$ptpKeptAmount"},
-              paid: {$sum: "$paidHistoryAmount"},
-              collected: {$sum: "$paid_amount"},
-              target: {$sum: "$out_standing_details.total_os"},
-              isPTP: {$sum: {
-                $cond: [
-                  {
-                    $eq: ['$hasPTP', true]
-                  },
-                  1,
-                  0
-                ],
-              }}
+              pk: { $sum: "$ptpKeptAmount" },
+              paid: { $sum: "$paidHistoryAmount" },
+              collected: { $sum: "$paid_amount" },
+              target: { $sum: "$out_standing_details.total_os" },
+              isPTP: {
+                $sum: {
+                  $cond: [
+                    {
+                      $eq: ["$hasPTP", true],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
             },
           },
           {
@@ -871,35 +979,33 @@ const customerResolver = {
               pCount: 1,
               collected: 1,
               target: 1,
-              isPTP: 1
-            }
-          }
-        ])
+              isPTP: 1,
+            },
+          },
+        ]);
 
-        const newMonthlyTarget = monthlyTarget.map(e=> {
-          const campagin = aomCampaign.find(ac => e.campaign === ac.name)
+        const newMonthlyTarget = monthlyTarget.map((e) => {
+          const campagin = aomCampaign.find((ac) => e.campaign === ac.name);
           return {
             ...e,
-            campaign: campagin ? campagin._id : null
-          }
-        })
+            campaign: campagin ? campagin._id : null,
+          };
+        });
 
-        return newMonthlyTarget
+        return newMonthlyTarget;
       } catch (error) {
-        throw new CustomError(error.message, 500)             
+        throw new CustomError(error.message, 500);
       }
     },
-    customerOtherAccounts: async(_,{caId})=> {
-  
+    customerOtherAccounts: async (_, { caId }) => {
       try {
-     
-        if(!caId) return null
+        if (!caId) return null;
 
         const findCustomerAccount = await CustomerAccount.aggregate([
           {
             $match: {
-              _id: new mongoose.Types.ObjectId(caId)
-            }
+              _id: new mongoose.Types.ObjectId(caId),
+            },
           },
           {
             $lookup: {
@@ -907,21 +1013,21 @@ const customerResolver = {
               localField: "customer",
               foreignField: "_id",
               as: "ac",
-            }
+            },
           },
-          { 
-            $unwind: { path: "$ac", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$ac", preserveNullAndEmptyArrays: true },
           },
-        ])
+        ]);
 
-        const {callfile, ac, _id } = findCustomerAccount[0]
+        const { callfile, ac, _id } = findCustomerAccount[0];
 
         const otherCustomer = await CustomerAccount.aggregate([
           {
             $match: {
               callfile: callfile,
-              _id: {$ne: _id}
-            }
+              _id: { $ne: _id },
+            },
           },
           {
             $lookup: {
@@ -929,10 +1035,13 @@ const customerResolver = {
               localField: "customer",
               foreignField: "_id",
               as: "customer_info",
-            }
+            },
           },
-          { 
-            $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$customer_info",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -942,13 +1051,18 @@ const customerResolver = {
               as: "account_bucket",
             },
           },
-          { 
-            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$account_bucket",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $match: {
-              "customer_info.platform_customer_id": {$eq: ac.platform_customer_id}
-            }
+              "customer_info.platform_customer_id": {
+                $eq: ac.platform_customer_id,
+              },
+            },
           },
           {
             $lookup: {
@@ -956,226 +1070,297 @@ const customerResolver = {
               localField: "history",
               foreignField: "_id",
               as: "dispo_history",
-            }
-          }
-        ])
+            },
+          },
+        ]);
 
-        return otherCustomer
-
+        return otherCustomer;
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        throw new CustomError(error.message, 500);
       }
-    }
+    },
   },
   CustomerAccount: {
-    assigned: async(parent)=> {
+    assigned: async (parent) => {
       try {
         const group = await Group.aggregate([
           {
             $match: {
-              _id: new mongoose.Types.ObjectId(parent.assigned) 
-            }
+              _id: new mongoose.Types.ObjectId(parent.assigned),
+            },
           },
           {
             $lookup: {
               from: "users",
               localField: "members",
               foreignField: "_id",
-              as: "members"
-            }
-          }
-        ])
+              as: "members",
+            },
+          },
+        ]);
 
-        if (group.length > 0) return group[0]
+        if (group.length > 0) return group[0];
 
-        const user = await User.findById(parent.assigned)
-        return user
-
+        const user = await User.findById(parent.assigned);
+        return user;
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        throw new CustomError(error.message, 500);
       }
     },
   },
 
   Assigned: {
     __resolveType(obj) {
-      if('members' in obj) {
-        return 'Group'
-      } else if ('username'in obj){
-        return 'User'
+      if ("members" in obj) {
+        return "Group";
+      } else if ("username" in obj) {
+        return "User";
       } else {
-        return null
+        return null;
       }
-    }
+    },
   },
-  
+
   Mutation: {
-    createCustomer: async(_,{input, callfile, bucket},{user, pubsub, PUBSUB_EVENTS}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
+    createCustomer: async (
+      _,
+      { input, callfile, bucket },
+      { user, pubsub, PUBSUB_EVENTS }
+    ) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
       try {
-        const findBucket = await Bucket.findById(bucket)
-        if(!findBucket) throw new CustomError('Bucket not found',404)
-        const callfilePrincipal = input.map(x=> x.principal_os).reduce((t,v)=> t+v)
-        const callfileOB = input.map(x=> x.total_os).reduce((t,v)=> t+v)
+        const findBucket = await Bucket.findById(bucket);
+        if (!findBucket) throw new CustomError("Bucket not found", 404);
+        const callfilePrincipal = input
+          .map((x) => x.principal_os)
+          .reduce((t, v) => t + v);
+        const callfileOB = input.map((x) => x.total_os).reduce((t, v) => t + v);
 
-        const newCallfile = new Callfile({name: callfile, bucket: findBucket._id, totalAccounts: input.length || 0,totalPrincipal: callfilePrincipal || 0,totalOB: callfileOB})
+        let newCallfile = await Callfile.findOne({ name: callfile });
 
-        await Promise.all(input.map(async (element) => {
-        
-          const customer = new Customer({
-            fullName: element.customer_name,
-            platform_customer_id: element.platform_user_id || null,
-            gender: element.gender || null,
-            dob: element.birthday || null,
-            addresses: element.address,
-            emails: element.email,
-            contact_no: element.contact,
-          });
-          
-          const paid_amount = element.total_os - element.balance 
-          let agent = null
-          if(element.collectorID) {
-            agent = await User.findOne({callfile_id: {$eq: element.collectorID}})
-            const findAgentProduction = await Production.findOne({user: agent._id}).lean()
-            if(!findAgentProduction) {
-              await Production.create({user:findAgent, assignedAccount: 1})
-            } else {
-              await Production.findByIdAndUpdate(findAgentProduction._id,{$inc: {assignedAccount: 1 }})
-            }
-          }
-          
-          const createCA = {
-            customer: customer._id,
+        const today = new Date()
+        today.setHours(0,0,0,0)
+
+        if (!newCallfile) {
+          newCallfile = new Callfile({
+            name: callfile,
             bucket: findBucket._id,
-            case_id: element.case_id,
-            callfile: newCallfile._id,
-            credit_customer_id: element.credit_user_id ,
-            endorsement_date: element.endorsement_date,
-            bill_due_day: element.bill_due_day,
-            max_dpd: element.max_dpd,
-            dpd: element.dpd,
-            balance : element.balance,
-            month_pd: element.mpd,
-            paid_amount,
-            bill_due_date: element.bill_due_date,
-            account_id: element.account_id ,
-            batch_no: element.batch_no,
-            features: {
-              branch: element.branch
-            },
-            out_standing_details: {
-              principal_os: element.principal_os,
-              interest_os: element.interest_os,
-              admin_fee_os: element.admin_fee_os,
-              txn_fee_os: element.txn_fee_os,
-              late_charge_os: element.late_charge_os,
-              dst_fee_os: element.dst_fee_os,
-              waive_fee_os: element.late_charge_waive_fee_os,
-              total_os: element.total_os,
-              total_balance: element.balance,
-              writeoff_balance: element.writeoff_balance,
-              overall_balance: element.overall_balance,
-              cf: element.cf,
-              mo_balance: element.mo_balance,
-              pastdue_amount: element.pastdue_amount,
-              mo_amort: element.mo_amort,
-            },
-            emergency_contact: {
-              name:element.emergencyContactName,
-              mobile:element.emergencyContactMobile
-            },
-            grass_details: {
-              grass_region: element.grass_region,
-              vendor_endorsement: element.vendor_endorsement,
-              grass_date: element.grass_date,
-            }
-          }
-          if(agent) {
-            createCA['assigned'] = agent._id
-            createCA['assignedModel'] = 'User'
-            createCA['assigned_date'] = new Date()
-          }
-          const caResult = await CustomerAccount.create(createCA);
-          customer.customer_account = caResult._id
-          await customer.save()
-        }));
+            totalAccounts: input.length || 0,
+            totalPrincipal: callfilePrincipal || 0,
+            totalOB: callfileOB,
+          });
+        } 
 
-        await newCallfile.save()
+        if(newCallfile.createdAt < today) throw new CustomError('E11000',401)
+
+        const res = await Promise.all(
+          input.map(async (element) => {
+            try {
+              
+              const customer = new Customer({
+                fullName: element.customer_name,
+                platform_customer_id: element.platform_user_id || null,
+                gender: element.gender || null,
+                dob: element.birthday || null,
+                addresses: element.address,
+                emails: element.email,
+                contact_no: element.contact,
+              });
+  
+              const paid_amount = element.total_os - element.balance;
+              let agent = null;
+  
+              if (element.collectorID) {
+                agent = await User.findOne({
+                  callfile_id: { $eq: element.collectorID },
+                });
+                const findAgentProduction = await Production.findOne({
+                  user: agent._id,
+                }).lean();
+                if (!findAgentProduction) {
+                  await Production.create({
+                    user: findAgent,
+                    assignedAccount: 1,
+                  });
+                } else {
+                  await Production.findByIdAndUpdate(findAgentProduction._id, {
+                    $inc: { assignedAccount: 1 },
+                  });
+                }
+              }
+  
+              const createCA = {
+                customer: customer._id,
+                bucket: findBucket._id,
+                case_id: element.case_id,
+                callfile: newCallfile._id,
+                credit_customer_id: element.credit_user_id,
+                endorsement_date: element.endorsement_date,
+                bill_due_day: element.bill_due_day,
+                max_dpd: element.max_dpd,
+                dpd: element.dpd,
+                balance: element.balance,
+                month_pd: element.mpd,
+                paid_amount,
+                bill_due_date: element.bill_due_date,
+                account_id: element.account_id,
+                batch_no: element.batch_no,
+                features: {
+                  branch: element.branch,
+                },
+                out_standing_details: {
+                  principal_os: element.principal_os,
+                  interest_os: element.interest_os,
+                  admin_fee_os: element.admin_fee_os,
+                  txn_fee_os: element.txn_fee_os,
+                  late_charge_os: element.late_charge_os,
+                  dst_fee_os: element.dst_fee_os,
+                  waive_fee_os: element.late_charge_waive_fee_os,
+                  total_os: element.total_os,
+                  total_balance: element.balance,
+                  writeoff_balance: element.writeoff_balance,
+                  overall_balance: element.overall_balance,
+                  cf: element.cf,
+                  mo_balance: element.mo_balance,
+                  pastdue_amount: element.pastdue_amount,
+                  mo_amort: element.mo_amort,
+                  partial_payment_w_service_fee:
+                    element.partial_payment_w_service_fee,
+                  new_tad_with_sf: element.new_tad_with_sf,
+                  new_pay_off: element.new_pay_off,
+                  service_fee: element.service_fee,
+                },
+                emergency_contact: {
+                  name: element.emergencyContactName,
+                  mobile: element.emergencyContactMobile,
+                },
+                grass_details: {
+                  grass_region: element.grass_region,
+                  vendor_endorsement: element.vendor_endorsement,
+                  grass_date: element.grass_date,
+                },
+              };
+  
+              if (agent) {
+                createCA["assigned"] = agent._id;
+                createCA["assignedModel"] = "User";
+                createCA["assigned_date"] = new Date();
+              }
+              const caResult = await CustomerAccount.create(createCA);
+              customer.customer_account = caResult._id;
+              await customer.save();
+            } catch (error) {
+              console.log(error)
+            }
+          })
+        );
+
+
+        if (newCallfile.isNew) {
+          await newCallfile.save();
+        } else {
+          await Callfile.findByIdAndUpdate(newCallfile._id, {
+            $inc: {
+              totalAccounts: input.length || 0,
+              totalPrincipal: callfilePrincipal || 0,
+              totalOB: callfileOB || 0,
+            },
+          },{new: true});
+        }
 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
           newCallfile: {
             bucket: bucket,
-            message: PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE
+            message: PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE,
           },
         });
-        
+
         return {
           success: true,
-          message: "Callfile successfully created"
-        }
+          message: "Callfile successfully created",
+        };
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        throw new CustomError(error.message, 500);
       }
     },
-    updateCustomer: async(_,{fullName, dob, gender, addresses, mobiles, emails, id, isRPC},{user}) => {
-
+    updateCustomer: async (
+      _,
+      { fullName, dob, gender, addresses, mobiles, emails, id, isRPC },
+      { user }
+    ) => {
       try {
-
-        if(!user) throw new CustomError("Unauthorized",401)
-        const filtersEmail = emails.filter(x=> x.trim() !== "")
-        const filtersMobile = mobiles.filter(x=> x.trim() !== "")
-        const findCustomer = await Customer.findById(id)
+        if (!user) throw new CustomError("Unauthorized", 401);
+        const filtersEmail = emails.filter((x) => x.trim() !== "");
+        const filtersMobile = mobiles.filter((x) => x.trim() !== "");
+        const findCustomer = await Customer.findById(id);
         const ToUpdate = {
-          fullName, 
-          dob, 
-          gender, 
-          addresses, 
-          emails: filtersEmail.length > 0 ? filtersEmail : [], contact_no: filtersMobile.length > 0 ? filtersMobile : [], 
-          isRPC
+          fullName,
+          dob,
+          gender,
+          addresses,
+          emails: filtersEmail.length > 0 ? filtersEmail : [],
+          contact_no: filtersMobile.length > 0 ? filtersMobile : [],
+          isRPC,
+        };
+
+        if (findCustomer.isRPC !== isRPC && isRPC === true) {
+          ToUpdate["RPC_date"] = new Date();
         }
 
-        if( findCustomer.isRPC !== isRPC && isRPC === true ) {
-          ToUpdate['RPC_date'] = new Date()
-        }
+        const customer = await Customer.findByIdAndUpdate(
+          findCustomer._id,
+          {
+            $set: ToUpdate,
+            $push: {
+              updatedBy: {
+                user: user._id,
+                updatedType: "Update Customer Info",
+              },
+            },
+          },
+          { new: true }
+        );
 
-        const customer = await Customer.findByIdAndUpdate(findCustomer._id,{
-          $set:ToUpdate,
-          $push: {
-            updatedBy: {
-              user: user._id,
-              updatedType: 'Update Customer Info'
-            }
-          }
-        }, {new: true})
-
-        if(!customer) throw new CustomError("Customer not found",404)
-        return {success: true, message: "Customer successfully updated", customer }
+        if (!customer) throw new CustomError("Customer not found", 404);
+        return {
+          success: true,
+          message: "Customer successfully updated",
+          customer,
+        };
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        throw new CustomError(error.message, 500);
       }
     },
-    updateRPC: async(_,{id},{user}) => {
+    updateRPC: async (_, { id }, { user }) => {
       try {
-        if(!user) throw new CustomError("Unauthorized",401)
-        const customer = await Customer.findByIdAndUpdate(id, {
-          $set: {
-            isRPC: true,
-            RPC_date: new Date()
+        if (!user) throw new CustomError("Unauthorized", 401);
+        const customer = await Customer.findByIdAndUpdate(
+          id,
+          {
+            $set: {
+              isRPC: true,
+              RPC_date: new Date(),
+            },
+            $push: {
+              updatedBy: {
+                user: user._id,
+                updatedType: "ISRPC",
+              },
+            },
           },
-          $push: {
-            updatedBy: {
-              user: user._id,
-              updatedType: 'ISRPC'
-            }
-          }
-        },{new: true})
-        if(!customer)throw new CustomError("Customer not found",404)
-          return {success: true, message: "Customer successfully updated", customer}
+          { new: true }
+        );
+        if (!customer) throw new CustomError("Customer not found", 404);
+        return {
+          success: true,
+          message: "Customer successfully updated",
+          customer,
+        };
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        throw new CustomError(error.message, 500);
       }
-    }
+    },
   },
-}
+};
 
-export default customerResolver
+export default customerResolver;

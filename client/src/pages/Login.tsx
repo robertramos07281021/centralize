@@ -1,9 +1,16 @@
+import {
+  // CSSProperties,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 import { RootState, useAppDispatch } from "../redux/store";
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
 import { gql, useMutation } from "@apollo/client";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import {
   setBreakValue,
   setDeselectCustomer,
@@ -17,9 +24,9 @@ import Loading from "./Loading";
 import { useSelector } from "react-redux";
 import { BreakEnum } from "../middleware/exports";
 import { persistor } from "../redux/store";
-import Lottie from "lottie-react";
-import animationData from "../Animations/Spider.json";
-import pumpkin from "../Animations/Spooky Pumpkin.json";
+// import Lottie from "lottie-react";
+// import santa from "../Animations/Merry Christmas.json";
+// import tree from "../Animations/Christmas tree.json";
 
 const LOGIN = gql`
   mutation login($username: String!, $password: String!) {
@@ -127,7 +134,12 @@ const Login = () => {
   const [already, setAlready] = useState<boolean>(false);
   const [lock, setLock] = useState<boolean>(false);
   const [invalid, setInvalid] = useState<boolean>(false);
-  const [hide, setHide] = useState(false);
+  // const [currentTime, setCurrentTime] = useState(() => new Date());
+  // const [countdown, setCountdown] = useState({
+  //   hours: 0,
+  //   minutes: 0,
+  //   seconds: 0,
+  // });
 
   const [deselectTask] = useMutation(DESELECT_TASK, {
     onCompleted: () => {
@@ -137,6 +149,69 @@ const Login = () => {
       dispatch(setServerError(true));
     },
   });
+
+  // type Snowflake = {
+  //   id: string;
+  //   style: CSSProperties &
+  //     Record<
+  //       | "--flake-size"
+  //       | "--flake-scale"
+  //       | "--flake-opacity"
+  //       | "--drift-start"
+  //       | "--drift-end",
+  //       string
+  //     >;
+  // };
+
+  // const snowStyles = `
+  //   .snow-layer {
+  //     position: absolute;
+  //     inset: 0;
+  //     overflow: hidden;
+  //     pointer-events: none;
+  //     z-index: 5;
+  //   }
+  //   .snowflake {
+  //     position: absolute;
+  //     top: -12vh;
+  //     width: var(--flake-size);
+  //     height: var(--flake-size);
+  //     border-radius: 50%;
+  //     background: radial-gradient(circle, rgba(255,255,255,var(--flake-opacity)) 0%, rgba(255,255,255,0) 100%);
+  //     transform: translate3d(var(--drift-start), -12vh, 0) scale(var(--flake-scale));
+  //     animation-name: snow-fall;
+  //     animation-timing-function: linear;
+  //     animation-iteration-count: infinite;
+  //   }
+  //   @keyframes snow-fall {
+  //     to {
+  //       transform: translate3d(var(--drift-end), 110vh, 0) scale(var(--flake-scale));
+  //     }
+  //   }
+  // `;
+  // const snowflakes = useMemo<Snowflake[]>(
+  //   () =>
+  //     Array.from({ length: 120 }, (_, index) => {
+  //       const size = (4 + Math.random() * 8).toFixed(1);
+  //       const scale = (0.6 + Math.random() * 0.9).toFixed(2);
+  //       const opacity = (0.25 + Math.random() * 0.75).toFixed(2);
+  //       const driftStart = (Math.random() * 2 - 1) * 6;
+  //       const driftEnd = driftStart + (Math.random() * 2 - 1) * 14;
+  //       const style = {
+  //         left: `${Math.random() * 100}%`,
+  //         animationDelay: `${Math.random() * -20}s`,
+  //         animationDuration: `${14 + Math.random() * 12}s`,
+  //         opacity,
+  //         ["--flake-size"]: `${size}px`,
+  //         ["--flake-scale"]: scale,
+  //         ["--flake-opacity"]: opacity,
+  //         ["--drift-start"]: `${driftStart.toFixed(2)}vw`,
+  //         ["--drift-end"]: `${driftEnd.toFixed(2)}vw`,
+  //       } as Snowflake["style"];
+  //       return { id: `flake-${index}`, style };
+  //     }),
+  //   []
+  // );
 
   const [logout] = useMutation(LOGOUT, {
     onCompleted: async () => {
@@ -252,82 +327,75 @@ const Login = () => {
     }
   }, [dispatch, userLogged, logout, selectedCustomer, deselectTask]);
 
-  const lottieRefs = [
-    useRef(),
-    useRef(),
-    useRef(),
-    useRef(),
-    useRef(),
-    useRef(),
-  ];
+  // useEffect(() => {
+  //   const updateCountdown = () => {
+  //     const now = new Date();
+  //     setCurrentTime(now);
+  //     const currentYear = now.getFullYear();
+  //     let christmas = new Date(currentYear, 11, 25, 0, 0, 0, 0);
+  //     if (now > christmas) {
+  //       christmas = new Date(currentYear + 1, 11, 25, 0, 0, 0, 0);
+  //     }
+  //     const diff = Math.max(0, christmas.getTime() - now.getTime());
+  //     const totalSeconds = Math.floor(diff / 1000);
+  //     setCountdown({
+  //       hours: Math.floor(totalSeconds / 3600),
+  //       minutes: Math.floor((totalSeconds % 3600) / 60),
+  //       seconds: totalSeconds % 60,
+  //     });
+  //   };
 
-  useEffect(() => {
-    const delays = [0, 1000, 500, 1500, 2000, 700];
+  //   // updateCountdown();
+  //   const intervalId = setInterval(updateCountdown, 1000);
+  //   return () => clearInterval(intervalId);
+  // }, []);
 
-    const timers = lottieRefs.map((ref, index) => {
-      return setTimeout(() => {
-        ref.current?.stop(); 
-        ref.current?.play();
-      }, delays[index]);
-    });
-
-    return () => timers.forEach(clearTimeout);
-  }, [hide]);
-
-  const positions = [
-    "left-10",
-    "left-[300px]",
-    "left-[600px]",
-    "left-[1000px]",
-    "left-[1300px]",
-    "left-[1600px]",
-  ];
-
-  const widths = ["w-60", "w-96", "w-52", "w-72", "w-60", "w-80"];
+  // const formattedDate = useMemo(
+  //   () =>
+  //     currentTime.toLocaleDateString(undefined, {
+  //       month: "long",
+  //       day: "numeric",
+  //       year: "numeric",
+  //     }),
+  //   [currentTime]
+  // );
+  // const formattedCountdown = useMemo(
+  //   () =>
+  //     `${countdown.hours} hrs ${countdown.minutes} mins ${countdown.seconds} secs`,
+  //   [countdown]
+  // );
 
   if (loading) return <Loading />;
 
   return (
-    <div className="h-screen  w-screen overflow-hidden flex items-center justify-center bg-[url(/login_bg.jpg)] bg-fixed bg-no-repeat bg-cover relative ">
-      <div className="w-full h-full absolute bg-blue-500/50 backdrop-blur-[4px]"></div>
-      <AnimatePresence>
-        {!hide && (
-          <motion.div
-            initial={{ opacity: 1 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-          >
-            {lottieRefs.map((ref, index) => (
-              <div
-                key={index}
-                className={`absolute ${widths[index]} top-0 ${positions[index]}`}
-              >
-                <Lottie
-                  lottieRef={ref}
-                  animationData={animationData}
-                  loop={false}
-                  autoplay={false}
-                />
-              </div>
-            ))}
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <motion.div className="absolute bg-black border-2 border-white shadow-md p-4 rounded-md uppercase text-white font-black text-xl bottom-10 right-10"
-        initial={{scale: 0.5, opacity: 0}}
-        animate={{scale: 1, opacity: 1}}
+    <div className="h-screen w-screen overflow-hidden flex items-center justify-center bg-[url(/login_bg.jpg)] bg-fixed bg-no-repeat bg-cover relative ">
+      {/* <style>{snowStyles}</style> */}
+      <div className="w-full h-full absolute bg-blue-500/70 backdrop-blur-[4px]"></div>
+      {/* <div className="snow-layer z " aria-hidden="true">
+        {snowflakes.map((flake) => (
+          <span key={flake.id} className="snowflake" style={flake.style} />
+        ))}
+      </div> */}
+      {/* <motion.div
+        className=" absolute hidden md:flex bottom-5 justify-center  right-5  "
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring" }}
         layout
       >
-        <div className=" mb-1 text-base text-center ">Too scary?</div>
-        <div className="flex text-center cursor-pointer hover:bg-gray-300 transition-all justify-center bg-white rounded-full text-black text-base px-2 gap-2 ">
-          {!hide ? (
-            <div className="px-6" onClick={() => setHide(true)}>hide</div>
-          ) : (
-            <div className="px-6" onClick={() => setHide(false)}>Show</div>
-          )}
+        <div className=" absolute z-20 -top-[145px] w-[90%] h-20">
+          <Lottie animationData={tree} />
         </div>
-      </motion.div>
+        <motion.div
+          layout
+          className="bg-blue-600 z-10 text-white font-black px-5 pb-2 pt-8 border-2 border-blue-900 rounded-md text-center space-y-1"
+        >
+          <div className="text-xs tracking-wide uppercase ">
+            {formattedDate}
+          </div>
+          <div className="text-sm">{formattedCountdown}</div>
+        </motion.div>
+      </motion.div> */}
 
       <motion.form
         ref={loginForm}
@@ -338,18 +406,10 @@ const Login = () => {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring" }}
       >
-        <AnimatePresence>
-          {!hide && (
-            <motion.div
-              className="absolute  -top-[250px] left-0"
-              initial={{y: 30, scale: 0.5, opacity: 0}}
-              animate={{y: 0, scale: 1, opacity: 1}}
-              exit={{y: 30,  scale: 0.8, opacity: 0 }}
-            >
-              <Lottie animationData={pumpkin} loop={true} />
-            </motion.div>
-          )}
-        </AnimatePresence>
+        {/* <div className="w-52 h-52 absolute -top-45">
+          <Lottie animationData={santa} autoPlay={true} loop={true} />
+        </div> */}
+
         <div className="flex flex-col text-center text-blue-500">
           <h1 className="text-2xl font-black italic text-shadow-sm">
             Bernales & Associates
@@ -392,7 +452,7 @@ const Login = () => {
                 placeholder="Ex. JohnDoe"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                className="bg-gray-50 focus:outline-none border shadow-md text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                 required
               />
             </label>
@@ -409,7 +469,10 @@ const Login = () => {
                 autoComplete="off"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500"
+                className="bg-gray-50 border focus:outline-none shadow-md  text-gray-900 text-sm rounded-lg focus:ring-blue-500
+                
+                
+                block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                 required
               />
               {eye ? (
@@ -428,7 +491,7 @@ const Login = () => {
           <div className="flex justify-center">
             <button
               type="submit"
-              className="text-white transition-all cursor-pointer border-2 border-blue-800 bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-md px-8 py-2.5 text-center me-2 mb-2 dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+              className="text-white w-full transition-all cursor-pointer border-2 border-blue-800 bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-md px-8 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
             >
               Login
             </button>

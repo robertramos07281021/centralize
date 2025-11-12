@@ -10,6 +10,7 @@ import { DateTime } from "../../middlewares/dateTime.js";
 import Production from "../../models/production.js";
 import Bucket from "../../models/bucket.js";
 import mongoose from "mongoose";
+import { logoutVici } from "../../middlewares/vicidial.js";
 
 const userResolvers = {
   DateTime,
@@ -101,12 +102,8 @@ const userResolvers = {
           },
           {
             $match: {
-              ...(filter === "online"
-                ? { isOnline: true }
-                : []),
-              ...(filter === "offline"
-                ? { isOnline: false }
-                : []),
+              ...(filter === "online" ? { isOnline: true } : []),
+              ...(filter === "offline" ? { isOnline: false } : []),
               $or: [
                 { name: searchFilter },
                 { username: searchFilter },
@@ -607,15 +604,29 @@ const userResolvers = {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
 
-        const findUser = await User.findByIdAndUpdate(user._id, {
-          $set: { isOnline: false },
-        });
+        const findUser = await User.findByIdAndUpdate(
+          user._id,
+          {
+            $set: { isOnline: false },
+          },
+          { new: true }
+        ).populate("buckets");
 
         if (!findUser) {
           throw CustomError("User not found", 404);
         }
+
         res.clearCookie("connect.sid");
         res.clearCookie("token");
+
+        const bucket =
+          findUser?.buckets?.length > 0
+            ? new Array(...new Set(findUser?.buckets?.map((x) => x.viciIp)))
+            : [];
+
+        if (user.type !== "admin") {
+          await logoutVici(findUser.vici_id, bucket[0]);
+        }
 
         return { success: true, message: "Successfully logout" };
       } catch (error) {
@@ -777,7 +788,20 @@ const userResolvers = {
           { new: true }
         );
 
+        const userBuckets = await Bucket.find({
+          _id: {
+            $in: logoutUser.buckets.map((x) => new mongoose.Types.ObjectId(x)),
+          },
+        });
+
         if (!logoutUser) throw new CustomError("User not found", 404);
+
+        const bucket =
+          userBuckets > 0
+            ? new Array(...new Set(userBuckets.map((x) => x.viciIp)))
+            : [];
+
+        await logoutVici(logoutUser.vici_id, bucket[0]);
 
         await ModifyRecord.create({ name: "Logout", user: logoutUser._id });
 
@@ -787,6 +811,7 @@ const userResolvers = {
           user: logoutUser,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

@@ -459,12 +459,12 @@ const AgentView = () => {
         </div>
 
         <motion.div
-          className="h-full overflow-hidden m-5 text-sm rounded-md"
+          className="h-full overflow-hidden m-5 text-sm"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0 }}
         >
-          <div className="grid px-2 gap-2 grid-cols-11 font-black uppercase  text-slate-800 bg-gray-300 ">
+          <div className="grid px-2 border rounded-t-md gap-2 border-gray-600 grid-cols-11 font-black uppercase  text-slate-800 bg-gray-300 ">
             <div className=" py-1 flex items-center">Name</div>
             <div className="py-1 truncate flex items-center">Agent ID</div>
             <div className="py-1 truncate flex items-center">Callfile ID</div>
@@ -502,7 +502,7 @@ const AgentView = () => {
                     e.active && (
                       <motion.div
                         key={e._id}
-                        className="cursor-default bg-gray-100  even:bg-gray-200    "
+                        className="cursor-default border-x border-b border-gray-600 last:rounded-b-md last:shadow-md bg-gray-100  odd:bg-gray-200    "
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: index * 0.1 }}
@@ -756,7 +756,7 @@ const AgentView = () => {
                 })}
               </div>
             ) : (
-              <div className="italic font-sans bg-gray-100 py-2 rounded-b-md text-center text-gray-400 text-base">
+              <div className="italic font-sans border-x border-b border-gray-700 bg-gray-100 py-2 rounded-b-md text-center text-gray-400 text-base">
                 No agent found
               </div>
             )}

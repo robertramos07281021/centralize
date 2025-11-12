@@ -106,6 +106,9 @@ const userSchema = new Schema(
         default: 0
       },
     },
+    phone_login: {
+      type: String,
+    },
     isLock: {
       type: Boolean,
       default: false

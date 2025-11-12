@@ -3,8 +3,7 @@ import { RootState } from "../redux/store";
 import { useQuery, gql } from "@apollo/client";
 import { useEffect, useMemo } from "react";
 import { CurrentDispo } from "../middleware/types";
-import { IoMdCloseCircleOutline } from "react-icons/io";
-import { motion, AnimatePresence } from "framer-motion";
+import { AnimatePresence, motion } from "framer-motion";
 
 type Agent = {
   _id: string;
@@ -103,110 +102,117 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
 
   return (
     <AnimatePresence>
-      <div className=" z-80 gap-5 absolute top-0 p-5 h-full w-full left-0 bg-black/50 backdrop-blur-[2px] overflow-hidden">
-        <div className="w-full h-full border rounded-md border-slate-500 bg-white p-5 flex flex-col">
+      <div className=" z-100 absolute gap-5 top-0 p-5 h-full items-center justify-center flex w-full left-0 bg-black/50 backdrop-blur-[2px] overflow-hidden">
+        <motion.div
+          className="w-full h-full border rounded-md border-slate-500 bg-white p-5 flex flex-col"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          exit={{ scale: 0.8, opacity: 0 }}
+        >
           <div className="flex justify-between items-start">
-            <h1 className="lg:text-lg 2xl:text-5xl font-medium text-gray-600 pb-5">
+            <h1 className="text-[0.7rem] md:text-base 2xl:text-xl pb-5  font-black text-black uppercase">
               Account History - {selectedCustomer?.case_id}
             </h1>
-            <IoMdCloseCircleOutline
+            <div
+              className="p-1 bg-red-500 hover:bg-red-600 transition-all shadow-md cursor-pointer rounded-full border-2 border-red-800 text-white  "
+              onClick={() => close()}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="2.5"
+                stroke="currentColor"
+                className="size-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18 18 6M6 6l12 12"
+                />
+              </svg>
+            </div>
+            {/* <IoMdCloseCircleOutline
               className="lg:text-4xl 2xl:text-5xl m-3 absolute top-10 right-10 hover:scale-110 cursor-pointer hover:text-gray-400"
               onClick={close}
-            />
+            /> */}
           </div>
           <div className="h-full overflow-y-auto">
-            <table className="w-full table-auto">
-              <thead className="sticky top-0">
-                <tr className=" text-gray-600 lg:text-sm 2xl:text-lg text-left select-none bg-blue-100">
-                  <th className="pl-5">Status</th>
-                  <th className="lg:pl-2 2xl:pl-5">User</th>
-                  <th className="lg:pl-2 2xl:pl-5">Date</th>
-                  <th className="lg:pl-2 2xl:pl-5 py-2 ">Disposition</th>
-                  <th className="lg:pl-2 2xl:pl-5 py-2 text-nowrap">CM</th>
-                  <th className="lg:pl-2 2xl:pl-5 py-2 ">Amount</th>
-                  <th className="lg:pl-2 2xl:pl-5 py-2 text-nowrap">Ref No.</th>
-                  <th className="lg:pl-2 2xl:pl-5 py-2 ">Payment</th>
-                  <th className="lg:pl-2 2xl:pl-5 py-2 text-nowrap">
+            <div className="w-full table-auto">
+              <div className="sticky top-0">
+                <div className=" text-black py-2 font-black uppercase items-center gap-2 px-2 border grid grid-cols-13 rounded-t-md text-sm text-left select-none bg-gray-300">
+                  <div className="">Status</div>
+                  <div className="">User</div>
+                  <div className="">Date</div>
+                  <div className=" ">Disposition</div>
+                  <div className=" text-nowrap">CM</div>
+                  <div className=" ">Amount</div>
+                  <div className=" text-nowrap">Ref No.</div>
+                  <div className=" ">Payment</div>
+                  <div className="truncate" title="Payment Date">
                     Payment Date
-                  </th>
-                  <th className="lg:pl-2 2xl:pl-5 py-2 text-nowrap">
-                    Comm App
-                  </th>
-                  <th className="lg:pl-2 2xl:pl-5 py-2 ">Comments</th>
-                  <th className="lg:pl-2 2xl:pl-5 py-2 ">RFD</th>
-                  <th className="lg:pl-2 2xl:pl-5 py-2 ">Selectives</th>
-                </tr>
-              </thead>
-              <tbody>
+                  </div>
+                  <div className=" text-nowrap">Comm App</div>
+                  <div className=" ">Comments</div>
+                  <div className=" ">RFD</div>
+                  <div className=" ">Selectives</div>
+                </div>
+              </div>
+              <div>
                 {findExisting && (
-                  <tr>
-                    <td
-                      className="py-1.5 px-5 text-blue-500 font-medium "
-                      colSpan={9}
-                    >
+                  <div className="bg-gray-100 border-x">
+                    <div className="pt-1.5 px-5 text-gray-800 font-medium ">
                       Exsiting Disposition
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 )}
 
                 {findExisting && (
-                  <tr className="text-gray-600 text-left select-none bg-slate-100 lg:text-xs 2xl:text-sm">
-                    <td className="pl-5 capitalize text-nowrap">
+                  <div className="text-gray-600 border-b border-x border-black shadow-md gap-2 items-center text-left select-none grid grid-cols-13 bg-gray-100 lg:text-xs 2xl:text-sm">
+                    <div className="pl-5 capitalize text-nowrap">
                       Current{" "}
                       {checkIfExistingIsLatest && <span> - Latest</span>}
-                    </td>
-                    <td className="lg:pl-2 2xl:pl-5 capitalize text-nowrap truncate pr-1">
+                    </div>
+                    <div className=" capitalize text-nowrap truncate pr-1">
                       {agentObject[findExisting.user]}
-                    </td>
-                    <td className="lg:pl-2 2xl:pl-5 text-nowrap truncate">
+                    </div>
+                    <div className=" ">
                       {date(findExisting.createdAt)}
-                    </td>
-                    <td className="lg:pl-2 2xl:pl-5 text-nowrap truncate pr-1">
+                    </div>
+                    <div className=" text-nowrap truncate pr-1">
                       {dispotypeObject[findExisting.disposition]}
-                    </td>
-                    <td className="lg:pl-2 2xl:pl-5">
-                      {findExisting.contact_method}
-                    </td>
-                    <td className="lg:pl-2 2xl:pl-5">
+                    </div>
+                    <div className="">{findExisting.contact_method}</div>
+                    <div className="">
                       {findExisting.amount > 0
                         ? findExisting.amount.toLocaleString("en-PH", {
                             style: "currency",
                             currency: "PHP",
                           })
                         : null}
-                    </td>
-                    <td className="lg:pl-2 2xl:pl-5 py-1.5 text-nowrap truncate">
-                      {findExisting.ref_no}
-                    </td>
-                    <td className="lg:pl-2 2xl:pl-5 py-1.5">
-                      {findExisting.payment}
-                    </td>
-                    <td className="lg:pl-2 2xl:pl-5 py-1.5">
-                      {findExisting.payment_date}
-                    </td>
-                    {findExisting.selectivesDispo && <td></td>}
+                    </div>
+                    <div className=" py-1.5 text-nowrap truncate">
+                      {findExisting.ref_no || <div className="text-gray-400 italic" >No ref no.</div>}
+                    </div>
+                    <div className=" py-1.5">{findExisting.payment}</div>
+                    <div className=" py-1.5">{findExisting.payment_date}</div>
+                    {findExisting.selectivesDispo && <div></div>}
                     {findExisting.contact_method === "calls" &&
                       findExisting.dialer && (
-                        <td className="lg:pl-2 2xl:pl-5 py-1.5">
-                          {findExisting.dialer}
-                        </td>
+                        <div className=" py-1.5">{findExisting.dialer}</div>
                       )}
                     {findExisting.contact_method === "sms" && (
-                      <td className="lg:pl-2 2xl:pl-5 py-1.5">
-                        {findExisting.sms}
-                      </td>
+                      <div className=" py-1.5">{findExisting.sms}</div>
                     )}
                     {findExisting.contact_method === "email" ||
                       (findExisting.contact_method === "field" && (
-                        <td className="lg:pl-2 2xl:pl-5 py-1.5">-</td>
+                        <div className=" py-1.5">-</div>
                       ))}
                     {findExisting.contact_method === "skip" && (
-                      <td className="lg:pl-2 2xl:pl-5 py-1.5">
-                        {findExisting.chatApp}
-                      </td>
+                      <div className=" py-1.5">{findExisting.chatApp}</div>
                     )}
-                    <td
-                      className="truncate lg:pl-2 2xl:pl-5 py-1.5 max-w-30"
+                    <div
+                      className="truncate  py-1.5 max-w-30"
                       title={
                         findExisting.comment
                           ? findExisting.comment.toString()
@@ -214,38 +220,43 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
                       }
                     >
                       {findExisting.comment}
-                    </td>
-                    <td
-                      className="truncate lg:pl-2 2xl:pl-5 py-1.5 max-w-30 pr-2"
+                    </div>
+                    <div
+                      className="truncate  py-1.5 max-w-30 pr-2"
                       title={
                         findExisting.RFD ? findExisting.RFD.toString() : ""
                       }
                     >
                       {findExisting.RFD}
-                    </td>
-                    <td className="lg:pl-2 2xl:pl-5 py-1.5 max-w-30 pr-2">
+                    </div>
+                    <div className=" py-1.5 max-w-30 pr-2">
                       {findExisting.selectivesDispo ? "Yes" : "No"}
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 )}
 
                 {notExisting.length > 0 && (
-                  <tr>
-                    <td
-                      className="py-1.5 px-5 text-slate-600 font-medium "
-                      colSpan={9}
-                    >
+                  <div className="">
+                    <div className="py-1.5 bg-gray-100 px-5 text-gray-800 border-x border-b font-medium ">
                       History
-                    </td>
-                  </tr>
+                    </div>
+                  </div>
                 )}
+                {((dispo_historySorted?.length ||
+                  (dispo_historySorted?.length === 0)) && (
+                    <div className="py-1.5 bg-gray-100 px-5 text-gray-800 border-x border-b font-medium ">
+                      No history
+                    </div>
+                  ))}
                 {dispo_historySorted?.map((ne, index) => {
+                  
                   return (
-                    <tr
+                    <div
                       key={ne._id}
-                      className="text-gray-600 text-left select-none even:bg-gray-50  lg:text-xs 2xl:text-sm"
+                      className="text-gray-600 last:rounded-b-md last:shadow-m items-center border-x border-b grid grid-cols-13 gap-2 text-left select-none even:bg-gray-50  lg:text-xs 2xl:text-sm"
                     >
-                      <td className="pl-5">
+
+                      <div className="pl-5">
                         {" "}
                         {index + 1 === 1
                           ? !checkIfExistingIsLatest
@@ -256,67 +267,61 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
                             ? "Previous"
                             : "Past"
                           : "Past"}
-                      </td>
-                      <td className="lg:pl-2 2xl:pl-5 capitalize">
-                        {agentObject[ne.user]}
-                      </td>
-                      <td className="lg:pl-2 2xl:pl-5">{date(ne.createdAt)}</td>
-                      <td className="lg:pl-2 2xl:pl-5 text-nowrap truncate pr-1">
+                      </div>
+                      <div className=" capitalize">{agentObject[ne.user]}</div>
+                      <div className="">{date(ne.createdAt)}</div>
+                      <div className=" text-nowrap truncate pr-1">
                         {dispotypeObject[ne.disposition]}
-                      </td>
-                      <td className="lg:pl-2 2xl:pl-5">{ne.contact_method}</td>
-                      <td className="lg:pl-2 2xl:pl-5">
+                      </div>
+                      <div className="">{ne.contact_method}</div>
+                      <div className="">
                         {ne.amount > 0
                           ? ne.amount.toLocaleString("en-PH", {
                               style: "currency",
                               currency: "PHP",
                             })
                           : null}
-                      </td>
-                      <td className="lg:pl-2 2xl:pl-5 py-1.5 text-nowrap truncate">
+                      </div>
+                      <div className=" py-1.5 text-nowrap truncate">
                         {ne.ref_no}
-                      </td>
-                      <td className="lg:pl-2 2xl:pl-5 py-1.5">{ne.payment}</td>
-                      <td className="lg:pl-2 2xl:pl-5 py-1.5">
-                        {ne.payment_date}
-                      </td>
+                      </div>
+                      <div className=" py-1.5">{ne.payment}</div>
+                      <div className=" py-1.5">{ne.payment_date}</div>
                       {ne.contact_method === "calls" && (
-                        <td className="lg:pl-2 2xl:pl-5 py-1.5">{ne.dialer}</td>
+                        <div className=" py-1.5">{ne.dialer}</div>
                       )}
                       {ne.contact_method === "sms" && (
-                        <td className="lg:pl-2 2xl:pl-5 py-1.5">{ne.sms}</td>
+                        <div className=" py-1.5">{ne.sms}</div>
                       )}
                       {ne.contact_method === "email" ||
                         (ne.contact_method === "field" && (
-                          <td className="lg:pl-2 2xl:pl-5 py-1.5">-</td>
+                          <div className=" py-1.5">-</div>
                         ))}
                       {ne.contact_method === "skip" && (
-                        <td className="lg:pl-2 2xl:pl-5 py-1.5">
-                          {ne.chatApp}
-                        </td>
+                        <div className=" py-1.5">{ne.chatApp}</div>
                       )}
-                      <td
-                        className="truncate lg:pl-2 2xl:pl-5 py-1.5 max-w-30 pr-2"
+                      <div
+                        className="truncate  py-1.5 max-w-30 pr-2"
                         title={ne.comment ? ne.comment.toString() : ""}
                       >
                         {ne.comment}
-                      </td>
-                      <td
-                        className="truncate lg:pl-2 2xl:pl-5 py-1.5 max-w-30 pr-2"
+                      </div>
+                      <div
+                        className="truncate  py-1.5 max-w-30 pr-2"
                         title={ne.RFD ? ne.RFD.toString() : ""}
                       >
                         {ne.RFD}
-                      </td>
-                      <td className="lg:pl-2 2xl:pl-5 py-1.5 max-w-30 pr-2">
+                      </div>
+                      <div className=" py-1.5 max-w-30 pr-2">
                         {ne.selectivesDispo ? "Yes" : "No"}
-                      </td>
-                    </tr>
+                      </div>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </AnimatePresence>
   );

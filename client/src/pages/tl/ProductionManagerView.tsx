@@ -6,7 +6,6 @@ import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../redux/store";
 import {
   setProductionManagerPage,
-  setServerError,
 } from "../../redux/slices/authSlice";
 import { motion } from "framer-motion";
 
@@ -15,6 +14,7 @@ import CallfilesViews from "./CallfilesViews";
 
 type Bucket = {
   _id: string;
+  canCall: string;
   name: string;
 };
 
@@ -27,7 +27,7 @@ const BUCKETS = gql`
   }
 `;
 
-enum Status {
+export enum Status {
   all = "all",
   active = "active",
   finished = "finished",
@@ -41,7 +41,8 @@ const ProductionManagerView = () => {
   const { data: bucketData, refetch } = useQuery<{ getTLBucket: Bucket[] }>(
     BUCKETS
   );
-  const [callfileBucket, setCallfileBucket] = useState<string>("");
+
+  const [callfileBucket, setCallfileBucket] = useState<string | null>(null);
   const [required, setRequired] = useState(false);
   const [page, setPage] = useState<string>("1");
   const [status, setStatus] = useState<Status>(Status.active);
@@ -51,29 +52,26 @@ const ProductionManagerView = () => {
 
   const bucketObject: { [key: string]: string } = useMemo(() => {
     const tlBuckets = bucketData?.getTLBucket || [];
-    return Object.fromEntries(tlBuckets.map((e) => [e.name, e._id]));
+    return Object.fromEntries(tlBuckets.map((e) => [e._id, e.name]));
   }, [bucketData]);
+
 
   useEffect(() => {
     setPage(productionManagerPage.toString());
   }, [productionManagerPage]);
 
   useEffect(() => {
-    const timer = setTimeout(async () => {
-      try {
-        await refetch();
-      } catch (error) {
-        dispatch(setServerError(true));
-      }
-    });
-    return () => clearTimeout(timer);
-  }, [refetch]);
+    const timer = async () => {
+      await refetch();
+    };
+    timer()
+  }, []);
 
   useEffect(() => {
-    if (bucketData) {
-      setCallfileBucket(bucketData.getTLBucket[0].name);
+    if (bucketData && !callfileBucket) {
+      setCallfileBucket(bucketData?.getTLBucket[0]._id);
     }
-  }, [bucketData]);
+  }, [bucketData,callfileBucket]);
 
   return (
     <div className="p-2 h-full overflow-hidden">
@@ -81,7 +79,7 @@ const ProductionManagerView = () => {
         <div className="p-5 flex gap-20 ">
           <div className="w-1/2 flex flex-col gap-2">
             <h1 className=" font-black uppercase text-2xl text-gray-600">
-              Call files
+              Call files { bucketObject[callfileBucket as keyof typeof bucketObject]}
             </h1>
             <div className="flex gap-5 h-full items-end">
               <motion.label
@@ -90,27 +88,27 @@ const ProductionManagerView = () => {
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
               >
-                {/* <p className="text-sm font-black uppercase text-gray-400">
-                  Bucket
-                </p> */}
                 <select
                   name="bucket"
                   id="bucket"
-                  onChange={(e) => setCallfileBucket(e.target.value)}
-                  value={callfileBucket}
+                  onChange={(e) => {
+                    const value = e.target.value.trim() === "" ? null : e.target.value
+                    setCallfileBucket(value)
+                  }}
+                  value={callfileBucket || ""}
                   className={`${
-                    required ? "bg-red-50 border-red-500" : "border-slate-400"
-                  } text-sm font-black w-full p-2 mt-3 h-full  border rounded-lg`}
+                    required ? "bg-red-50 border-red-500" : "border-black"
+                  } text-sm font-black w-full p-2 mt-3 h-full  border rounded-md`}
                 >
                   {bucketData?.getTLBucket.map((e) => (
-                    <option key={e._id} value={e.name}>
+                    <option key={e._id} value={e._id}>
                       {e.name.toUpperCase()}
                     </option>
                   ))}
                 </select>
               </motion.label>
               <motion.fieldset
-                className="flex border rounded-xl p-2 px-5 gap-5 border-slate-400 "
+                className="flex border rounded-md p-2 px-5 gap-5 border-black "
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.6 }}
@@ -161,12 +159,12 @@ const ProductionManagerView = () => {
             <div className=" h-full flex items-end">
               <Uploader
                 width="w-full"
-                bucket={bucketObject[callfileBucket]}
+                bucket={callfileBucket}
                 bucketRequired={(e: boolean) => setRequired(e)}
                 onSuccess={() =>
                   setCallfileBucket(
                     bucketData && bucketData?.getTLBucket?.length > 0
-                      ? bucketData?.getTLBucket[0].name.toUpperCase()
+                      ? bucketData?.getTLBucket[0]._id
                       : ""
                   )
                 }
@@ -178,7 +176,7 @@ const ProductionManagerView = () => {
         </div>
 
         <CallfilesViews
-          bucket={bucketObject[callfileBucket]}
+          bucket={callfileBucket}
           status={status}
           setTotalPage={(e) => setTotalPage(e)}
           setCanUpload={(e) => setCanUpload(e)}

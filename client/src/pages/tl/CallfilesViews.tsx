@@ -11,9 +11,10 @@ import React, { useCallback, useEffect, useState } from "react";
 import Confirmation from "../../components/Confirmation";
 import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import { useLocation } from "react-router-dom";
-import Loading from "../Loading";
+import Loading from "../Loading.tsx";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
+import Status from "./ProductionManagerView.tsx";
 
 type Finished = {
   name: string;
@@ -29,6 +30,8 @@ type Callfile = {
   finished_by: Finished;
   totalPrincipal: number;
   target: number;
+  autoDial: boolean;
+  roundCount: number;
 };
 
 type Result = {
@@ -84,6 +87,7 @@ const GET_CALLFILES = gql`
           totalPrincipal
           target
           autoDial
+          roundCount
           finished_by {
             name
           }
@@ -101,26 +105,38 @@ const GET_CALLFILES = gql`
   }
 `;
 
+const CHECK_IF_AUTODIAL_FINISHED = gql`
+  query checkIfCallfileAutoIsDone($callfile: ID) {
+    checkIfCallfileAutoIsDone(callfile: $callfile)
+  }
+`;
+
 const GET_CSV_FILES = gql`
   query downloadCallfiles($callfile: ID!) {
     downloadCallfiles(callfile: $callfile)
   }
 `;
 
-
 const SET_CALLFILE_AUTO_DIAL = gql`
-  mutation setCallfileToAutoDial($callfileId: ID!) {
-    setCallfileToAutoDial(callfileId: $callfileId) {
+  mutation setCallfileToAutoDial(
+    $callfileId: ID!
+    $roundCount: Int!
+    $finished: Boolean!
+  ) {
+    setCallfileToAutoDial(
+      callfileId: $callfileId
+      roundCount: $roundCount
+      finished: $finished
+    ) {
       message
       success
     }
   }
-`
-
+`;
 
 type Props = {
-  bucket: string;
-  status: string;
+  bucket: string | null;
+  status: keyof typeof Status;
   successUpload: boolean;
   setTotalPage: (e: number) => void;
   setCanUpload: (e: boolean) => void;
@@ -199,6 +215,11 @@ const CallfilesViews: React.FC<Props> = ({
   const [callfileId, setCallfileId] = useState<Callfile | null>(null);
   const [addSelectiveModal, setAddSelectiveModal] = useState<boolean>(false);
   const [file, setFile] = useState<File[]>([]);
+  const [autoDial, setAutoDial] = useState<{
+    id: string;
+    name: string;
+  } | null>(null);
+  const [count, setCount] = useState<number>(1);
 
   const { data, refetch, loading } = useQuery<{
     getCallfiles: CallFilesResult;
@@ -212,7 +233,6 @@ const CallfilesViews: React.FC<Props> = ({
     skip: isProductionManager,
     notifyOnNetworkStatusChange: true,
   });
-  console.log(data)
 
   useEffect(() => {
     if (bucket) {
@@ -239,6 +259,7 @@ const CallfilesViews: React.FC<Props> = ({
             setUploading();
           }
         } catch (error) {
+          console.log(error);
           dispatch(setServerError(true));
         }
       });
@@ -254,22 +275,6 @@ const CallfilesViews: React.FC<Props> = ({
       return () => clearTimeout(timer);
     }
   }, [status]);
-
-  const [downloadCallfiles, { loading: downloadCallfilesLoading }] =
-    useLazyQuery(GET_CSV_FILES);
-
-
-  const [setCallfileToAutoDial] = useMutation<{setCallfileToAutoDial:Success}>(SET_CALLFILE_AUTO_DIAL, {
-    onCompleted: async(data) => {
-      setConfirm(false);
-      dispatch(setSuccess({
-        success: data.setCallfileToAutoDial.success,
-        message: data.setCallfileToAutoDial.message,
-        isMessage: false
-      }))
-      await refetch()
-    }
-  })
 
   useSubscription<{ newCallfile: SubSuccess }>(NEW_UPLOADED_CALLFILE, {
     onData: async ({ data }) => {
@@ -308,6 +313,36 @@ const CallfilesViews: React.FC<Props> = ({
     toggle: "FINISHED" as "FINISHED" | "DELETE" | "DOWNLOAD" | "SET" | "AUTO",
     yes: () => {},
     no: () => {},
+  });
+
+  const item = data?.getCallfiles?.result?.[0];
+
+  const [downloadCallfiles, { loading: downloadCallfilesLoading }] =
+    useLazyQuery(GET_CSV_FILES);
+
+  const [setCallfileToAutoDial, { loading: autodialLoading }] = useMutation<{
+    setCallfileToAutoDial: Success;
+  }>(SET_CALLFILE_AUTO_DIAL, {
+    onCompleted: async (data) => {
+      setConfirm(false);
+      setAutoDial(null);
+      if (!item?.callfile?.autoDial) {
+        dispatch(
+          setSuccess({
+            success: data.setCallfileToAutoDial.success,
+            message: data.setCallfileToAutoDial.message,
+            isMessage: false,
+          })
+        );
+      }
+
+      await refetch();
+    },
+    onError: () => {
+      setConfirm(false);
+      setAutoDial(null);
+      dispatch(setServerError(true));
+    },
   });
 
   const [finishedCallfile, { loading: finishingLoading }] = useMutation<{
@@ -396,7 +431,7 @@ const CallfilesViews: React.FC<Props> = ({
 
   const onClickIcon = (
     id: string,
-    action: "FINISHED" | "DELETE" | "DOWNLOAD" | "SET" | "AUTO" ,
+    action: "FINISHED" | "DELETE" | "DOWNLOAD" | "SET" | "AUTO",
     name: string
   ) => {
     setConfirm(true);
@@ -405,7 +440,9 @@ const CallfilesViews: React.FC<Props> = ({
       DELETE: `Are you sure you want to delete ${name.toUpperCase()} callfile?`,
       DOWNLOAD: `Are you sure you want to download ${name.toUpperCase()} callfile?`,
       SET: `Are you sure you want to set the target ${name.toUpperCase()} callfile?`,
-      AUTO: `Are you sure you want to set ${name.toUpperCase()} to auto dial?`
+      AUTO: `Are you sure you want to ${
+        autoDial ? "set auto dial" : "stop auto dial"
+      } ${name.toUpperCase()} callfile?`,
     };
 
     const fn = {
@@ -450,9 +487,11 @@ const CallfilesViews: React.FC<Props> = ({
           variables: { callfile: id, target: callfileTarget },
         });
       },
-      AUTO: async() => {
-        await setCallfileToAutoDial({variables: {callfileId: id}})
-      }
+      AUTO: async () => {
+        await setCallfileToAutoDial({
+          variables: { callfileId: id, roundCount: count, finished: false },
+        });
+      },
     };
 
     setModalProps({
@@ -598,12 +637,46 @@ const CallfilesViews: React.FC<Props> = ({
     }
   }, [setRequired, file, callfile, addSelective, setModalProps, excelData]);
 
+  const { data: isAutoDialFinished, refetch: IADFRefetching } = useQuery<{
+    checkIfCallfileAutoIsDone: boolean;
+  }>(CHECK_IF_AUTODIAL_FINISHED, {
+    variables: { callfile: item?.callfile?._id },
+    notifyOnNetworkStatusChange: true,
+    skip: status !== "active",
+  });
+
+  const isFinishedAuto = isAutoDialFinished?.checkIfCallfileAutoIsDone;
+
+  useEffect(() => {
+    const refetching = async () => {
+      await IADFRefetching();
+    };
+    refetching();
+  }, []);
+
+  useEffect(() => {
+    setTimeout(async () => {
+      if (isFinishedAuto) {
+        if (item?.callfile?.autoDial) {
+          await setCallfileToAutoDial({
+            variables: {
+              callfileId: data?.getCallfiles?.result[0]?.callfile?._id,
+              roundCount: 0,
+              finished: true,
+            },
+          });
+        }
+      }
+    });
+  }, [isFinishedAuto]);
+
   const isLoading =
     downloadCallfilesLoading ||
     deleteLoading ||
     finishingLoading ||
     loading ||
-    setCallfileTargetLoading;
+    setCallfileTargetLoading ||
+    autodialLoading;
 
   if (isLoading) return <Loading />;
 
@@ -633,7 +706,7 @@ const CallfilesViews: React.FC<Props> = ({
       >
         <div className="w-full h-full rounded-b-sm overflow-hidden flex flex-col text-left">
           <div className="w-full">
-            <div className=" w-full px-2 py-2 uppercase rounded-t-md truncate bg-gray-300 grid grid-cols-[repeat(14,_minmax(0,_1fr))] gap-2 font-black text-black text-xs">
+            <div className=" w-full border border-gray-600 px-2 py-2 uppercase rounded-t-md truncate bg-gray-300 grid grid-cols-[repeat(14,_minmax(0,_1fr))] gap-2 font-black text-black text-xs">
               {labels.map((x, index) => (
                 <div
                   className="w-full text-ellipsis cursor-default truncate"
@@ -654,9 +727,14 @@ const CallfilesViews: React.FC<Props> = ({
               const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
               const checkStatus = res.callfile.active && !res.callfile.endo;
               const status = checkStatus ? "Active" : "Finished";
-              const finishedBy = res.callfile.finished_by
-                ? res.callfile.finished_by.name
-                : "-";
+              const finishedBy = res.callfile.finished_by ? (
+                <div>{res.callfile.finished_by.name}</div>
+              ) : (
+                <div className="text-gray-500 italic" title="Incompletete">
+                  {" "}
+                  Incomplete{" "}
+                </div>
+              );
               return (
                 <motion.div
                   key={index}
@@ -665,8 +743,11 @@ const CallfilesViews: React.FC<Props> = ({
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <div className="text-[0.7rem] hover:bg-gray-300 transition-all items-center py-2 px-3 bg-gray-100 even:bg-gray-200 2xl:text-xs gap-2 text-gray-800 grid grid-cols-[repeat(14,_minmax(0,_1fr))] w-full ">
-                    <div className="truncate pr-2" title={res.callfile.name}>
+                  <div className="text-[0.7rem] border-x border-b border-gray-600 last:rounded-b-md last:shadow-md hover:bg-gray-300 transition-all items-center py-2 px-3 bg-gray-100 even:bg-gray-200 2xl:text-xs gap-2 text-gray-800 grid grid-cols-[repeat(14,_minmax(0,_1fr))] w-full ">
+                    <div
+                      className="overflow-hidden pr-2"
+                      title={res.callfile.name}
+                    >
                       {res.callfile.name}
                     </div>
                     <div>
@@ -735,9 +816,7 @@ const CallfilesViews: React.FC<Props> = ({
                     </div>
 
                     <div>{status}</div>
-                    <div className="truncate" title={finishedBy}>
-                      {finishedBy}
-                    </div>
+                    <div className="truncate">{finishedBy}</div>
                     <div
                       className={`" ${
                         checkStatus
@@ -748,7 +827,7 @@ const CallfilesViews: React.FC<Props> = ({
                       {checkStatus && (
                         <>
                           <div
-                            className="rounded-sm shadow-sm flex justify-center hover:bg-purple-800 transition-all px-1 py-1 cursor-pointer bg-purple-700 text-white border border-purple-800"
+                            className="rounded-sm shadow-sm flex justify-center hover:bg-purple-800 transition-all px-1 py-1 cursor-pointer bg-purple-700 text-white border-2 border-purple-900"
                             title="Add Selectives"
                             onClick={() => {
                               setAddSelectiveModal((prev) => !prev);
@@ -772,22 +851,77 @@ const CallfilesViews: React.FC<Props> = ({
                           </div>
 
                           <div
-                            className="rounded-sm shadow-sm flex justify-center hover:bg-yellow-800 transition-all px-1 py-1 cursor-pointer bg-yellow-700 text-white border border-yellow-800"
-                            title="Auto Dial"
+                            className="rounded-sm relative h-full w-full items-center shadow-sm flex justify-center hover:bg-yellow-800 transition-all px-1 py-1 cursor-pointer bg-yellow-700 text-white border-2 border-yellow-900"
                             onClick={() => {
-                              // setAddSelectiveModal((prev) => !prev);
-                              // setCallfile(res.callfile._id);
-                              onClickIcon(res.callfile._id, "AUTO",res.callfile.name)
+                              if (!res.callfile.autoDial) {
+                                setAutoDial({
+                                  id: res.callfile._id,
+                                  name: res.callfile.name,
+                                });
+                                setCount(1);
+                              } else {
+                                onClickIcon(
+                                  res.callfile._id,
+                                  "AUTO",
+                                  res.callfile.name
+                                );
+                              }
                             }}
                           >
-                            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth="1.5" stroke="currentColor" className="size-6">
-                              <path strokeLinecap="round" strokeLinejoin="round" d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z" />
-                            </svg>
+                            {!item?.callfile?.autoDial ? (
+                              <div title="Turn on Auto Dial">
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  viewBox="0 0 24 24"
+                                  fill="currentColor"
+                                  className="size-4 "
+                                >
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z"
+                                    clipRule="evenodd"
+                                  />
+                                </svg>
+                              </div>
+                            ) : (
+                              <div title="Turn off Auto Dial">
+                                <div className="absolute text-yellow-900 z-10 top-[0px] left-[5px]">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth="1.5"
+                                    stroke="currentColor"
+                                    className="size-7"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"
+                                    />
+                                  </svg>
+                                </div>
 
+                                <div className="z-20">
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    viewBox="0 0 24 24"
+                                    fill="currentColor"
+                                    className="size-4"
+                                  >
+                                    <path
+                                      fillRule="evenodd"
+                                      d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z"
+                                      clipRule="evenodd"
+                                    />
+                                  </svg>
+                                </div>
+                              </div>
+                            )}
                           </div>
 
                           <div
-                            className="rounded-sm flex shadow-sm justify-center hover:bg-green-800 px-1 py-1 cursor-pointer bg-green-700 text-white border border-green-800"
+                            className="rounded-sm flex shadow-sm justify-center hover:bg-green-800 px-1 py-1 cursor-pointer bg-green-700 text-white border-2 border-green-900"
                             onClick={() =>
                               onClickIcon(
                                 res.callfile._id,
@@ -817,25 +951,18 @@ const CallfilesViews: React.FC<Props> = ({
                               setCallfileId(res.callfile);
                             }}
                             title=""
-                            className="rounded-sm flex shadow-sm justify-center hover:bg-orange-800 px-1 py-1 cursor-pointer bg-orange-700 text-white border border-orange-800"
+                            className="rounded-sm border-2 flex shadow-sm justify-center hover:bg-orange-800 px-1 py-1 cursor-pointer bg-orange-700 text-white  border-orange-900"
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
                               viewBox="0 0 24 24"
-                              strokeWidth="2"
-                              stroke="currentColor"
+                              fill="currentColor"
                               className="size-5"
                             >
                               <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M10.343 3.94c.09-.542.56-.94 1.11-.94h1.093c.55 0 1.02.398 1.11.94l.149.894c.07.424.384.764.78.93.398.164.855.142 1.205-.108l.737-.527a1.125 1.125 0 0 1 1.45.12l.773.774c.39.389.44 1.002.12 1.45l-.527.737c-.25.35-.272.806-.107 1.204.165.397.505.71.93.78l.893.15c.543.09.94.559.94 1.109v1.094c0 .55-.397 1.02-.94 1.11l-.894.149c-.424.07-.764.383-.929.78-.165.398-.143.854.107 1.204l.527.738c.32.447.269 1.06-.12 1.45l-.774.773a1.125 1.125 0 0 1-1.449.12l-.738-.527c-.35-.25-.806-.272-1.203-.107-.398.165-.71.505-.781.929l-.149.894c-.09.542-.56.94-1.11.94h-1.094c-.55 0-1.019-.398-1.11-.94l-.148-.894c-.071-.424-.384-.764-.781-.93-.398-.164-.854-.142-1.204.108l-.738.527c-.447.32-1.06.269-1.45-.12l-.773-.774a1.125 1.125 0 0 1-.12-1.45l.527-.737c.25-.35.272-.806.108-1.204-.165-.397-.506-.71-.93-.78l-.894-.15c-.542-.09-.94-.56-.94-1.109v-1.094c0-.55.398-1.02.94-1.11l.894-.149c.424-.07.765-.383.93-.78.165-.398.143-.854-.108-1.204l-.526-.738a1.125 1.125 0 0 1 .12-1.45l.773-.773a1.125 1.125 0 0 1 1.45-.12l.737.527c.35.25.807.272 1.204.107.397-.165.71-.505.78-.929l.15-.894Z"
-                              />
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"
+                                fillRule="evenodd"
+                                d="M11.828 2.25c-.916 0-1.699.663-1.85 1.567l-.091.549a.798.798 0 0 1-.517.608 7.45 7.45 0 0 0-.478.198.798.798 0 0 1-.796-.064l-.453-.324a1.875 1.875 0 0 0-2.416.2l-.243.243a1.875 1.875 0 0 0-.2 2.416l.324.453a.798.798 0 0 1 .064.796 7.448 7.448 0 0 0-.198.478.798.798 0 0 1-.608.517l-.55.092a1.875 1.875 0 0 0-1.566 1.849v.344c0 .916.663 1.699 1.567 1.85l.549.091c.281.047.508.25.608.517.06.162.127.321.198.478a.798.798 0 0 1-.064.796l-.324.453a1.875 1.875 0 0 0 .2 2.416l.243.243c.648.648 1.67.733 2.416.2l.453-.324a.798.798 0 0 1 .796-.064c.157.071.316.137.478.198.267.1.47.327.517.608l.092.55c.15.903.932 1.566 1.849 1.566h.344c.916 0 1.699-.663 1.85-1.567l.091-.549a.798.798 0 0 1 .517-.608 7.52 7.52 0 0 0 .478-.198.798.798 0 0 1 .796.064l.453.324a1.875 1.875 0 0 0 2.416-.2l.243-.243c.648-.648.733-1.67.2-2.416l-.324-.453a.798.798 0 0 1-.064-.796c.071-.157.137-.316.198-.478.1-.267.327-.47.608-.517l.55-.091a1.875 1.875 0 0 0 1.566-1.85v-.344c0-.916-.663-1.699-1.567-1.85l-.549-.091a.798.798 0 0 1-.608-.517 7.507 7.507 0 0 0-.198-.478.798.798 0 0 1 .064-.796l.324-.453a1.875 1.875 0 0 0-.2-2.416l-.243-.243a1.875 1.875 0 0 0-2.416-.2l-.453.324a.798.798 0 0 1-.796.064 7.462 7.462 0 0 0-.478-.198.798.798 0 0 1-.517-.608l-.091-.55a1.875 1.875 0 0 0-1.85-1.566h-.344ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z"
+                                clipRule="evenodd"
                               />
                             </svg>
                           </div>
@@ -852,21 +979,15 @@ const CallfilesViews: React.FC<Props> = ({
                         }
                         className={`" ${
                           checkStatus ? "" : "  col-start-2 "
-                        } rounded-sm flex shadow-sm justify-center hover:bg-blue-800 py-1 cursor-pointer bg-blue-700 text-white border border-blue-800 "`}
+                        } rounded-sm flex shadow-sm justify-center hover:bg-blue-800 py-1 cursor-pointer bg-blue-700 text-white border-2 border-blue-900 "`}
                       >
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
                           viewBox="0 0 24 24"
-                          strokeWidth="2"
-                          stroke="currentColor"
+                          fill="currentColor"
                           className="size-5"
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"
-                          />
+                          <path d="M12 1.5a.75.75 0 0 1 .75.75V7.5h-1.5V2.25A.75.75 0 0 1 12 1.5ZM11.25 7.5v5.69l-1.72-1.72a.75.75 0 0 0-1.06 1.06l3 3a.75.75 0 0 0 1.06 0l3-3a.75.75 0 1 0-1.06-1.06l-1.72 1.72V7.5h3.75a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h3.75Z" />
                         </svg>
                       </div>
                     </div>
@@ -909,9 +1030,9 @@ const CallfilesViews: React.FC<Props> = ({
                     onChange={handleOnChangeAmount}
                   />
                 </label>
-                <div className="flex gap-5">
+                <div className="flex gap-2">
                   <button
-                    className="w-30 bg-orange-500 py-2 rounded text-white hover:bg-orange-700 cursor-pointer"
+                    className="w-30 bg-orange-500 font-black uppercase border-2 border-orange-800 py-2 rounded-sm text-white hover:bg-orange-600 transition-all cursor-pointer"
                     onClick={() =>
                       onClickIcon(callfileId._id, "SET", callfileId.name)
                     }
@@ -919,7 +1040,7 @@ const CallfilesViews: React.FC<Props> = ({
                     Submit
                   </button>
                   <button
-                    className="w-30 bg-slate-500 py-2 rounded text-white hover:bg-slate-700 cursor-pointer"
+                    className="w-30 bg-gray-500 py-2 rounded text-white transition-all font-black uppercase border-2 border-gray-800 cursor-pointer hover:bg-gray-600"
                     onClick={() => {
                       setModalTarget(false);
                       setCallfileId(null);
@@ -934,6 +1055,65 @@ const CallfilesViews: React.FC<Props> = ({
           </div>
         )}
       </AnimatePresence>
+      <AnimatePresence>
+        {autoDial && (
+          <div className="absolute w-full h-full top-0 right-0 z-50 flex items-center justify-center">
+            <motion.div
+              onClick={() => setAutoDial(null)}
+              className="absolute cursor-pointer top-0 left-0 bg-black/40 backdrop-blur-sm w-full h-full"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+            ></motion.div>
+            <motion.div
+              className=" border bg-white z-20 rounded-sm "
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+            >
+              <div className="bg-yellow-900 px-10 py-2 text-white font-black uppercase text-2xl ">
+                Number of round
+              </div>
+
+              <div className=" p-5 flex flex-col w-full gap-4">
+                <input
+                  type="number"
+                  name="count"
+                  min={1}
+                  id="count"
+                  className={`${
+                    count < 1 ? "  bg-red-200 border-red-500" : ""
+                  } border w-full px-3 py-1 rounded-sm shadow-md `}
+                  value={count}
+                  onChange={(e) => {
+                    setCount(Number(e.target.value));
+                  }}
+                />
+
+                <div className="flex gap-2 justify-center">
+                  <button
+                    onClick={() => {
+                      if (count > 0) {
+                        onClickIcon(autoDial.id, "AUTO", autoDial.name);
+                      }
+                    }}
+                    className="px-3 font-black uppercase text-white cursor-pointer  border-2 border-yellow-950 hover:bg-yellow-950 transition-all py-2 bg-yellow-900 rounded-sm"
+                  >
+                    Submit
+                  </button>
+                  <button
+                    className=" px-3 py-2 bg-gray-600 cursor-pointer hover:bg-gray-700 transition-all font-black uppercase text-white border-2 border-gray-900 rounded-sm "
+                    onClick={() => setAutoDial(null)}
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
       <AnimatePresence>
         {addSelectiveModal && (
           <div className="absolute top-0 left-0 w-full h-full z-40 flex items-center justify-center">
@@ -987,13 +1167,13 @@ const CallfilesViews: React.FC<Props> = ({
                 </div>
                 <div className="flex gap-5">
                   <button
-                    className="w-30 bg-purple-700 py-2 rounded text-white hover:bg-purple-800 cursor-pointer"
+                    className="w-30 bg-purple-500 hover:bg-purple-600 transition-all font-black uppercase border-2  py-2 rounded text-white border-purple-800 shadow-md cursor-pointer"
                     onClick={submitSetSelective}
                   >
                     Submit
                   </button>
                   <button
-                    className="w-30 bg-slate-500 py-2 rounded text-white hover:bg-slate-700 cursor-pointer"
+                    className="w-30 bg-gray-500 py-2 rounded text-white hover:bg-gray-600 font-black uppercase transition-all border-2 border-gray-800 shadow-md cursor-pointer"
                     onClick={() => {
                       setAddSelectiveModal((prev) => !prev);
                       setFile([]);

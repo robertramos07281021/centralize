@@ -1,57 +1,24 @@
-import net from 'net'
+import axios from "axios";
 
-// --- Configuration ---
-const GATEWAY_IP = '172.20.21.143'; 
-const API_PORT = 8080; 
-const API_PASSWORD = 'd41d8cd98f00b204e9800998ecf8427e'; // Use the password you set in the web interface
-const CALL_DETAILS = {
-  port: 1,           
-  number: '09126448847',  
-};
-// --- End Configuration ---
+const UC2000_IP = "172.20.21.87"; // change to your gateway IP
+const UC_USER = "admin";           // your API username
+const UC_PASS = "admin";           // your API password
 
-const client = new net.Socket();
+export async function getPortInfo(port) {
+  try {
+    const res = await axios.post(
+      `http://${UC2000_IP}/api`,
+      { action: "GetPortInfo", port },
+      {
+        auth: { username: UC_USER, password: UC_PASS },
+        headers: { "Content-Type": "application/json" },
+        timeout: 3000,
+      }
+    );
 
-client.connect(API_PORT, GATEWAY_IP, () => {
-  console.log('Connected to Dinstar gateway.');
-  
-  // 1. Authenticate with the API password
-  const authCommand = `Password:${API_PASSWORD}\r\n`;
-  client.write(authCommand);
-});
-
-client.on('data', (data) => {
-  const response = data.toString().trim();
-  console.log(`Received from gateway: "${response}"`);
-
-  if (response === 'OK') {
-    // If authentication or port selection was successful, proceed with the next command
-    if (!client.portSelected) {
-      console.log('Authentication successful. Sending port selection command...');
-      const portCommand = `Port:${CALL_DETAILS.port}\r\n`;
-      client.write(portCommand);
-      client.portSelected = true;
-    } else {
-      console.log('Port selected. Sending dial command...');
-      const dialCommand = `ATD${CALL_DETAILS.number};\r\n`;
-      client.write(dialCommand);
-      // Wait for the final OK or FAIL response before closing
-    }
-  } else if (response.includes('FAIL')) {
-    console.error(`Error from gateway: ${response}. Closing connection.`);
-    client.end();
-  } else if (response === 'RING') {
-      console.log('Call is ringing...');
-  } else if (response === 'NO CARRIER') {
-      console.log('Call ended or failed.');
-      client.end();
+    return res.data; // returns JSON from the UC2000
+  } catch (err) {
+    console.error(`❌ UC2000 port ${port} error:`, err.message);
+    return null;
   }
-});
-
-client.on('close', () => {
-  console.log('Connection to gateway closed.');
-});
-
-client.on('error', (err) => {
-  console.error('Connection error:', err);
-});
+}

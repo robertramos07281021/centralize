@@ -8,6 +8,7 @@ import { MdKeyboardArrowDown } from "react-icons/md";
 import UserOptionSettings from "./UserOptionSettings";
 import { useAppDispatch } from "../../redux/store";
 import { setServerError, setSuccess } from "../../redux/slices/authSlice";
+import Loading from "../Loading.tsx";
 // import { useSelector } from "react-redux";
 
 type modalProps = {
@@ -136,13 +137,19 @@ const STATUS_UPDATE = gql`
         type
         departments
         branch
-        active
-        account_type
         isLock
-        callfile_id
+        account_type
         change_password
+        active
+        callfile_id
+        isOnline
         buckets
-        _id
+        targets {
+          daily
+          weekly
+          monthly
+        }
+        createdAt
         user_id
         vici_id
       }
@@ -162,16 +169,20 @@ const UNLOCK_USER = gql`
         type
         departments
         branch
-        change_password
-        buckets
-        isOnline
-        callfile_id
-        active
         isLock
+        account_type
+        change_password
+        active
+        callfile_id
+        isOnline
+        buckets
+        targets {
+          daily
+          weekly
+          monthly
+        }
         createdAt
         user_id
-        group
-        account_type
         vici_id
       }
     }
@@ -190,16 +201,20 @@ const LOGOUT_USER = gql`
         type
         departments
         branch
+        isLock
+        account_type
         change_password
-        buckets
-        isOnline
         active
         callfile_id
-        isLock
+        isOnline
+        buckets
+        targets {
+          daily
+          weekly
+          monthly
+        }
         createdAt
         user_id
-        group
-        account_type
         vici_id
       }
     }
@@ -245,7 +260,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const validForCampaignAndBucket = ["AGENT", "TL", "MIS"];
+  const validForCampaignAndBucket = ["AGENT", "TL", "MIS",'ADMIN'];
 
   const { data: branchesData, refetch: branchRefetch } = useQuery<{
     getBranches: Branch[];
@@ -318,10 +333,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
     return Object.fromEntries(branchArray.map((ba) => [ba.id, ba.name]));
   }, [branchesData]);
 
-  const {
-    data: branchDeptData,
-    refetch: branchDeptRefetch,
-  } = useQuery<{
+  const { data: branchDeptData, refetch: branchDeptRefetch } = useQuery<{
     getBranchDept: Dept[];
   }>(BRANCH_DEPARTMENT_QUERY, {
     variables: { branch: branchObject[data.branch] },
@@ -356,7 +368,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
   }, [deptBucket]);
 
   // ================ mutations ===================================
-  const [updateUser] = useMutation<{ updateUser: SuccessUpdate }>(UPDATE_USER, {
+  const [updateUser,{loading:updateUserLoading}] = useMutation<{ updateUser: SuccessUpdate }>(UPDATE_USER, {
     onCompleted: (res) => {
       navigate(location.pathname, {
         state: { ...res.updateUser.user, newKey: "newKey" },
@@ -375,7 +387,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
     },
   });
 
-  const [resetPassword] = useMutation<{ resetPassword: SuccessUpdate }>(
+  const [resetPassword,{loading:resetPassLoading}] = useMutation<{ resetPassword: SuccessUpdate }>(
     RESET_PASSWORD,
     {
       onCompleted: (res) => {
@@ -396,7 +408,8 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
     }
   );
 
-  const [updateActiveStatus] = useMutation<{
+  
+  const [updateActiveStatus,{loading:updateActiveStatusLoading}] = useMutation<{
     updateActiveStatus: SuccessUpdate;
   }>(STATUS_UPDATE, {
     onCompleted: (res) => {
@@ -416,7 +429,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
     },
   });
 
-  const [unlockUser] = useMutation<{ unlockUser: SuccessUpdate }>(UNLOCK_USER, {
+  const [unlockUser, {loading:unlockUserLoading}] = useMutation<{ unlockUser: SuccessUpdate }>(UNLOCK_USER, {
     onCompleted: (res) => {
       navigate(location.pathname, {
         state: { ...res.unlockUser.user, newKey: "newKey" },
@@ -434,7 +447,8 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
     },
   });
 
-  const [adminLogout] = useMutation<{ adminLogout: SuccessUpdate }>(
+
+  const [adminLogout,{loading:adminLogoutLoading}] = useMutation<{ adminLogout: SuccessUpdate }>(
     LOGOUT_USER,
     {
       onCompleted: (res) => {
@@ -449,7 +463,8 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
           })
         );
       },
-      onError: () => {
+      onError: (err) => {
+        console.log(err);
         dispatch(setServerError(true));
       },
     }
@@ -608,6 +623,10 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
 
   const campaignDiv = useRef<HTMLDivElement | null>(null);
   const bucketDiv = useRef<HTMLDivElement | null>(null);
+
+  const isLoading = updateUserLoading || resetPassLoading || updateActiveStatusLoading || unlockUserLoading || adminLogoutLoading
+
+  if(isLoading) return <Loading/>
 
   return (
     <>

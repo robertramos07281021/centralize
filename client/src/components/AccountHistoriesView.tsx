@@ -3,6 +3,7 @@ import { CurrentDispo } from "../middleware/types";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
+import { motion } from "framer-motion";
 
 type OSD = {
   principal_os: number;
@@ -112,12 +113,13 @@ const AccountHistoriesView: React.FC<ComponentProps> = ({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [setShowMore, close, showMore]);
 
+
   return (
-    <>
+    <div className="w-full h-full">
       {showMore && (
         <div className="absolute top-0 left-0 bg-black/20 backdrop-blur-xs w-full h-full z-50 flex justify-center p-5">
           <IoMdCloseCircleOutline
-            className="text-5xl  absolute top-4 right-5 hover:scale-110 cursor-pointer hover:text-black text-white hidden lg:block"
+            className="text-5xl absolute top-4 right-5 hover:scale-110 cursor-pointer hover:text-black text-white hidden lg:block"
             onClick={() => {
               setShowMore(false);
               setSelectedHistory(null);
@@ -245,34 +247,61 @@ const AccountHistoriesView: React.FC<ComponentProps> = ({
         </div>
       )}
 
-      <div className="w-full h-full z-40 gap-5 absolute px-10 top-0 left-0 bg-black/50 backdrop-blur-[2px] p-10">
-        <div className="w-full h-full border rounded-md border-slate-500 bg-white p-5 flex flex-col">
+      <div className="w-full h-full z-50 gap-5 absolute top-0 left-0 bg-black/50 backdrop-blur-[2px] p-5">
+        <motion.div
+          className="w-full h-full border rounded-md border-slate-500 bg-white p-5 flex flex-col"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+        >
           <div className="flex justify-between items-start">
-            <h1 className="2xl:text-5xl font-medium text-gray-600 pb-5">
+            <h1 className="text-[0.7rem] md:text-base 2xl:text-xl font-black uppercase text-black pb-5">
               Past Callfile History - {selectedCustomer?.customer_info.fullName}
             </h1>
-            <IoMdCloseCircleOutline
-              className="text-5xl m-3 absolute top-10 right-10 hover:scale-110 cursor-pointer hover:text-gray-400"
+
+            <div
+              className="p-1 bg-red-500 hover:bg-red-600 transition-all shadow-md cursor-pointer rounded-full border-2 border-red-800 text-white  "
+              onClick={() => close()}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="2.5"
+                stroke="currentColor"
+                className="size-6"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M6 18 18 6M6 6l12 12"
+                />
+              </svg>
+            </div>
+            {/* <IoMdCloseCircleOutline
+              className="text-3xl m-3 absolute top-10 right-10 hover:scale-110 cursor-pointer hover:text-gray-400"
               onClick={close}
-            />
+            /> */}
           </div>
           <div className="h-full overflow-y-auto">
-            <table className="w-full table-auto">
-              <thead className="sticky top-0">
-                <tr className=" text-gray-600 text-lg text-left select-none bg-blue-100">
-                  <th className="pl-5">Callfile</th>
-                  <th className="pl-5">Case ID / PN / Account ID</th>
-                  <th className="pl-5 py-2 ">Principal</th>
-                  <th className="pl-5 py-2 ">OB</th>
-                  <th className="pl-5 py-2 ">Balance</th>
-                  <th className="pl-5 py-2 ">Status</th>
-                  <th className="pl-5 py-2 ">Concat Method</th>
-                  <th className="pl-5 py-2 ">Communication App</th>
-                  <th className="pl-5 py-2 ">User</th>
-                  <th className="pl-5 py-2 ">Action</th>
-                </tr>
-              </thead>
-              <tbody>
+            <div className="w-full table-auto">
+              <div className=" text-black py-2 font-black uppercase items-center gap-2 px-2 border grid grid-cols-10 rounded-t-md text-sm text-left select-none bg-gray-300">
+                <div className="">Callfile</div>
+                <div className="truncate">Case ID / PN / Account ID</div>
+                <div className=" ">Principal</div>
+                <div className=" ">OB</div>
+                <div className=" ">Balance</div>
+                <div className="">Status</div>
+                <div className="truncate">Concat Method</div>
+                <div className="truncate">Communication App</div>
+                <div className=" ">User</div>
+                <div className="">Action</div>
+              </div>
+              <div>
+                {(!histories?.length || histories?.length === 0) && (
+                  <div className="py-3 bg-gray-200 italic border-black text-gray-400 text-center border-x border-b rounded-b-md">
+                    No callfile found
+                  </div>
+                )}
                 {histories?.map((oa) => {
                   const daysExisting = oa.max_dpd - oa.dpd;
                   const date = new Date();
@@ -280,49 +309,48 @@ const AccountHistoriesView: React.FC<ComponentProps> = ({
                   newDate.setDate(
                     Number(newDate.getDate()) + Number(daysExisting)
                   );
-
                   return (
-                    <tr
+                    <div
                       key={oa._id}
                       className="text-gray-600 text-left select-none even:bg-gray-50  text-sm"
                     >
-                      <td className="pl-5">{oa.account_callfile.name}</td>
-                      <td className="pl-5">{oa.case_id}</td>
-                      <td className="pl-5">
+                      <div className="pl-5">{oa.account_callfile.name}</div>
+                      <div className="pl-5">{oa.case_id}</div>
+                      <div className="pl-5">
                         {oa.out_standing_details.principal_os.toLocaleString(
                           "en-PH",
                           { style: "currency", currency: "PHP" }
                         )}
-                      </td>
-                      <td className="pl-5">
+                      </div>
+                      <div className="pl-5">
                         {oa.out_standing_details.total_os.toLocaleString(
                           "en-PH",
                           { style: "currency", currency: "PHP" }
                         )}
-                      </td>
-                      <td className="pl-5">
+                      </div>
+                      <div className="pl-5">
                         {oa.balance.toLocaleString("en-PH", {
                           style: "currency",
                           currency: "PHP",
                         })}
-                      </td>
-                      <td className="pl-5 py-1.5">{oa.dispotype.name}</td>
-                      <td className="pl-5 py-1.5">{oa.cd.contact_method}</td>
+                      </div>
+                      <div className="pl-5 py-1.5">{oa.dispotype.name}</div>
+                      <div className="pl-5 py-1.5">{oa.cd.contact_method}</div>
                       {oa.cd.contact_method === "calls" && (
-                        <td className="pl-5 py-1.5">{oa.cd.dialer}</td>
+                        <div className="pl-5 py-1.5">{oa.cd.dialer}</div>
                       )}
                       {oa.cd.contact_method === "sms" && (
-                        <td className="pl-5 py-1.5">{oa.cd.sms}</td>
+                        <div className="pl-5 py-1.5">{oa.cd.sms}</div>
                       )}
                       {oa.cd.contact_method === "email" ||
                         (oa.cd.contact_method === "field" && (
-                          <td className="pl-5 py-1.5">-</td>
+                          <div className="pl-5 py-1.5">-</div>
                         ))}
                       {oa.cd.contact_method === "skip" && (
-                        <td className="pl-5 py-1.5">{oa.cd.chatApp}</td>
+                        <div className="pl-5 py-1.5">{oa.cd.chatApp}</div>
                       )}
-                      <td className="capitalize">{oa.user.name}</td>
-                      <td className="py-1.5">
+                      <div className="capitalize">{oa.user.name}</div>
+                      <div className="py-1.5">
                         <button
                           className="px-7 py-2 text-sm lg:text-base font-medium bg-orange-500 text-white rounded-md hover:bg-orange-700 cursor-pointer"
                           onClick={() => {
@@ -332,16 +360,16 @@ const AccountHistoriesView: React.FC<ComponentProps> = ({
                         >
                           View
                         </button>
-                      </td>
-                    </tr>
+                      </div>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
+              </div>
+            </div>
           </div>
-        </div>
+        </motion.div>
       </div>
-    </>
+    </div>
   );
 };
 

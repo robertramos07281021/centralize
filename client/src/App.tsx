@@ -48,6 +48,9 @@ import CallfilesConfig from "./pages/admin/CallfilesConfig.tsx";
 import QASVRoute from "./routes/QASVRoute.tsx";
 import QASVSupervisor from "./pages/qasupervisor/QASVSupervisor.tsx";
 import QASupervisorDashboard from "./pages/qasupervisor/QASupervisorDashboard.tsx";
+import CallLogs from "./pages/tl/CallLogs.tsx";
+import CallAllAgentLogs from "./pages/admin/CallAllAgentLogs.tsx"
+import AgentAttendanceLogs from "./pages/admin/AgentAttendanceLogs.tsx";
 
 Chart.register(
   ...registerables,
@@ -74,6 +77,8 @@ function App() {
           <Route path="/setup" element={<SetupView />} />
           <Route path="/accounts" element={<AccountsView />} />
           <Route path="/user-account" element={<UserView />} />
+          <Route path="/all-call-logs" element={<CallAllAgentLogs />} />
+          <Route path="/agent-attendance-logs" element={<AgentAttendanceLogs />} />
           <Route
             path="/callfile-configurations"
             element={<CallfilesConfig />}
@@ -108,6 +113,7 @@ function App() {
           <Route path="/tl-task-manager" element={<TaskManagerView />} />
           <Route path="/tl-cip" element={<CustomerDisposition />} />
           <Route path="/tl-reports" element={<BacklogManagementView />} />
+          <Route path="/call-agents-logs" element={<CallLogs/>} />
           
         </Route>
         <Route element={<CeoRoute />}>
@@ -120,7 +126,6 @@ function App() {
         <Route element={<QASVRoute />}>
           <Route path="/qasv-accounts" element={<QASVSupervisor />} />
           <Route path="/qasv-dashboard" element={<QASupervisorDashboard />} />
-          
         </Route>
       </Routes>
     </BrowserRouter>

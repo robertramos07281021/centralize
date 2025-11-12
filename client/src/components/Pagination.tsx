@@ -22,11 +22,13 @@ const Pagination: React.FC<modalProps> = ({
   currentPage,
 }) => {
   return (
-    <div className="flex justify-end p-2">
+    <div className="flex justify-end p-2 select-none">
       <div className="flex items-center gap-2 lg:text-[0.6em] 2xl:text-[0.6em] font-bold text-gray-600">
         <MdKeyboardDoubleArrowLeft
-          className={`text-lg ${
-            currentPage === 1 ? "text-slate-300" : "text-slate-500"
+          className={`text-lg  ${
+            currentPage === 1
+              ? "text-slate-300 "
+              : "text-slate-500 cursor-pointer hover:bg-blue-300"
           } `}
           onClick={() => {
             if (currentPage <= totalPage) {
@@ -36,7 +38,9 @@ const Pagination: React.FC<modalProps> = ({
         />
         <MdOutlineKeyboardArrowLeft
           className={`text-lg ${
-            currentPage === 1 ? "text-slate-300" : "text-slate-500"
+            currentPage === 1
+              ? "text-slate-300"
+              : "text-slate-500 cursor-pointer hover:bg-blue-300"
           } `}
           onClick={() => {
             if (currentPage > 1) {
@@ -67,12 +71,14 @@ const Pagination: React.FC<modalProps> = ({
               onKeyDownValue(newValue);
             }
           }}
-          className="border max-w-8  py-0.5 px-1.5 rounded-md focus:outline-0"
+          className="border max-w-8  py-0.5 px-1.5 rounded-md focus:outline-0 "
         />
         <span>of {totalPage}</span>
         <MdOutlineKeyboardArrowRight
           className={`text-lg ${
-            currentPage === totalPage ? "text-slate-300" : "text-slate-500"
+            currentPage === totalPage
+              ? "text-slate-300"
+              : "text-slate-500 cursor-pointer hover:bg-blue-300"
           } `}
           onClick={() => {
             if (totalPage > currentPage) {
@@ -82,7 +88,9 @@ const Pagination: React.FC<modalProps> = ({
         />
         <MdOutlineKeyboardDoubleArrowRight
           className={`text-lg ${
-            currentPage === totalPage ? "text-slate-300" : "text-slate-500"
+            currentPage === totalPage
+              ? "text-slate-300"
+              : "text-slate-500 cursor-pointer hover:bg-blue-300"
           } `}
           onClick={() => {
             if (totalPage >= currentPage) {

@@ -154,7 +154,7 @@ const Targets = () => {
                   currency: "PHP",
                 })
               : 0
-          } - ${callfileVariance?.toFixed(2)}%`,
+          } - ${isNaN(callfileVariance) ? (0).toFixed(2) : callfileVariance?.toFixed(2)}%`,
 
           `Target - ${
             newTargetdata

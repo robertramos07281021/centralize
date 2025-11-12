@@ -5,8 +5,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { FaDownload } from "react-icons/fa6";
 import ReportsView, { Search } from "./ReportsView";
 import { useSelector } from "react-redux";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { RootState } from "../../redux/store";
+import ReportsViewPage from "./ReportsViewPage";
 
 type DispositionType = {
   id: string;
@@ -70,7 +71,9 @@ type Callfile = {
 };
 
 const BacklogManagementView = () => {
-  const { userLogged } = useSelector((state: RootState) => state.auth);
+  const { userLogged, isReport } = useSelector(
+    (state: RootState) => state.auth
+  );
   const { data: agentSelector } = useQuery<{ findAgents: Users[] }>(
     GET_DEPARTMENT_AGENT
   );
@@ -87,6 +90,7 @@ const BacklogManagementView = () => {
   const [searchAgent, setSearchAgent] = useState<string>("");
   const userRef = useRef<HTMLDivElement | null>(null);
   const bucketRef = useRef<HTMLDivElement | null>(null);
+  const [reportView, setReportView] = useState<boolean>(false);
   const { data: disposition } = useQuery<{
     getDispositionTypes: DispositionType[];
   }>(GET_DISPOSITION_TYPES);
@@ -207,7 +211,7 @@ const BacklogManagementView = () => {
 
   return (
     <div
-      className="grid grid-cols-3 grid-rows-1 h-full items-center overflow-hidden"
+      className="grid grid-cols-3 relative grid-rows-1 h-full items-center overflow-hidden"
       onMouseDown={(e) => {
         if (!bucketRef.current?.contains(e.target as Node)) {
           setBucketDropdown(false);
@@ -305,7 +309,9 @@ const BacklogManagementView = () => {
                     <option
                       key={x._id}
                       value={x.name}
-                      className={`${x.active ? "bg-slate-200" : ""} relative cursor-pointer `}
+                      className={`${
+                        x.active ? "bg-slate-200" : ""
+                      } relative cursor-pointer `}
                     >
                       {x.name}
                     </option>
@@ -370,14 +376,14 @@ const BacklogManagementView = () => {
             </div>
 
             <div className="flex flex-col">
-              <div className="flex font-black uppercase items-center text-sm text-slate-500 py-2 text-center justify-center">
+              <div className="flex font-black uppercase items-center text-slate-500 py-2 text-center justify-center">
                 Disposition
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2  max-h-50 items-center text-slate-500 gap-y-2 border-slate-400 rounded-sm shadow-sm p-2 justify-center border overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1 max-h-50 items-center text-slate-500 gap-y-1 border-black rounded-sm shadow-sm p-2 justify-center border overflow-y-auto">
                 {disposition?.getDispositionTypes?.map((dispoTypes) => (
                   <label
                     key={dispoTypes.id}
-                    className="w-2/10 text-[8px] lg:whitespace-nowrap font-black items-center flex gap-2"
+                    className=" text-[0.6rem] bg-gray-300 hover:bg-gray-400 h-full overflow-hidden transition-all cursor-pointer p-2 rounded-sm border hover:text-white border-black lg:text-lg lg:whitespace-nowrap font-black items-center flex gap-2"
                   >
                     <input
                       type="checkbox"
@@ -392,7 +398,7 @@ const BacklogManagementView = () => {
                     </span>
                   </label>
                 ))}
-                <label className="w-2/10 2xl:text-xs lg:text-[.45rem] items-center flex gap-2">
+                <label className=" h-full border border-black p-2 rounded-sm cursor-pointer hover:text-white bg-gray-300 text-[0.6rem] hover:bg-gray-400 transition-all 2xl:text-xs lg:text-[.45rem] items-center flex gap-2">
                   <input
                     type="checkbox"
                     name="all"
@@ -412,7 +418,7 @@ const BacklogManagementView = () => {
                       }
                     }}
                   />
-                  <span className="uppercase font-black text-[8px] whitespace-nowrap">
+                  <span className="uppercase font-black text-[0.6rem] lg:text-xl whitespace-nowrap">
                     Select All
                   </span>
                 </label>
@@ -471,6 +477,18 @@ const BacklogManagementView = () => {
         </motion.div>
       </div>
       <ReportsView search={SearchFilter} />
+      <AnimatePresence>
+        {isReport && (
+          <motion.div
+            className="absolute p-5 z-50 bg-white top-0 left-0 w-full h-full"
+            initial={{ scale: 0.8, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={{ scale: 0.9, opacity: 0 }}
+          >
+            <ReportsViewPage search={SearchFilter} />
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

@@ -9,6 +9,7 @@ const userTypeDefs = gql`
     start: DateTime
     success: Boolean!
     message: String!
+    dispoId: ID
   }
 
   enum Break {

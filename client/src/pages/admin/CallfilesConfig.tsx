@@ -326,7 +326,7 @@ const CallfilesConfig = () => {
       <div className=" h-full w-full flex flex-col overflow-hidden">
         <div className="px-5 flex h-full flex-col w-full overflow-hidden">
           <div className="w-full mt-4 justify-between my-2 items-center flex">
-            <div className="font-black uppercase text-2xl text-gray-500">
+            <div className="font-black uppercase text-2xl text-black">
               CallFile Configuration
             </div>
             <div className="flex gap-3">
@@ -357,15 +357,15 @@ const CallfilesConfig = () => {
                       </option>
                     ))
                   ) : (
-                    <option disabled>No buckets available</option>
+                    <option disabled>No callfile available</option>
                   )}
                 </select>
               </motion.div>
             </div>
           </div>
-          <div className="flex bg-gray-200 rounded-t-md">
-            <div className="grid w-full grid-cols-11 gap-3  px-3  py-2 font-black uppercase">
-              <div>Name</div>
+          <div className="flex">
+            <div className="grid  bg-gray-300 border-gray-600 w-full border rounded-t-md grid-cols-11 gap-3  px-3  py-2 font-black uppercase">
+              <div className="col-span-2" >Name</div>
               <div>Created At</div>
               <div>Endo</div>
               <div>Work Days</div>
@@ -374,7 +374,7 @@ const CallfilesConfig = () => {
               <div>Total OB</div>
               <div className="whitespace-nowrap truncate" title="Total Principal">Total Principal</div>
               <div>Activity</div>
-              <div className="col-span-2"></div>
+              <div className=""></div>
             </div>
           </div>
 
@@ -395,14 +395,14 @@ const CallfilesConfig = () => {
                   return (
                     <motion.div
                       key={res._id}
-                      className="flex flex-row w-full bg-gray-100 px-3"
+                      className="flex flex-row w-full hover:bg-gray-300 transition-all bg-gray-100 border-gray-600 odd:bg-gray-200 last:rounded-b-md last:shadow-md border-x border-b  px-3"
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: index * 0.1 }}
                     >
-                      <div className="grid gap-3 py-2 w-full items-center grid-cols-11">
+                      <div className="grid gap-3   py-2 w-full items-center grid-cols-11">
                         <div
-                          className="whitespace-nowrap truncate"
+                          className="whitespace-nowrap col-span-2  truncate"
                           title={res.name}
                         >
                           {res.name}
@@ -465,7 +465,7 @@ const CallfilesConfig = () => {
                             </div>
                           )}
                         </div>
-                        <div className="gap-3 col-span-2 flex justify-end">
+                        <div className="gap-3 flex justify-end">
 
                           {res.active && (
                             <div className="items-center  col-start-1 flex ">
@@ -546,10 +546,10 @@ const CallfilesConfig = () => {
                 })
               ) : (
                 <option
-                  className="flex justify-center px-3 py-2 bg-gray-100"
+                  className="flex italic justify-center border-x border-b rounded-b-md px-3 py-2 bg-gray-100"
                   disabled
                 >
-                  No buckets available
+                  No callfile available
                 </option>
               )}
             </motion.div>

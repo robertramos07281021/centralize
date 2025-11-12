@@ -34,6 +34,7 @@ const subscriptionTypeDefs = gql`
     updateOnCallfiles: UpdateCAllfile
     newBucketMessage:UpdateCAllfile
     accountOffline:AgentLockSubsribeSuccess
+    newUpdateOnBucket:UpdateCAllfile
   }
 `
 

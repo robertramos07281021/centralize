@@ -18,6 +18,7 @@ const deptResolver = {
     getDept: async(_,{name}) => {
       try {
         const res = await Department.findOne({name})
+        console.log(res)
         if(!res) throw new CustomError("Department not exists",404)
           return res
       } catch (error) {

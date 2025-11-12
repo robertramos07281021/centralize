@@ -20,6 +20,7 @@ const callfileTypeDefs = gql`
     target: Float
     autoDial: Boolean
     totalOB: Float
+    roundCount: Int
   }
 
   type Result {
@@ -78,7 +79,6 @@ const callfileTypeDefs = gql`
     getBucketCallfile(bucketId:[ID]):[Callfile]
     getToolsProduction(bucket:ID,interval:String):[ToolsProduction]
     getCollectionMonitoring(bucket:ID, interval:String):Collection
-    getAgentCallfileAutoDial:Boolean
   }
 
   type Mutation {

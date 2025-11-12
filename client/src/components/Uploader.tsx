@@ -5,6 +5,7 @@ import Confirmation from "../components/Confirmation";
 import Loading from "../pages/Loading";
 import { useAppDispatch } from "../redux/store";
 import { setServerError, setSuccess } from "../redux/slices/authSlice";
+import { chunk } from "lodash";
 
 // type ExcelData = {
 //   address: string;
@@ -48,18 +49,22 @@ import { setServerError, setSuccess } from "../redux/slices/authSlice";
 //   batch_no: string;
 //   cf: number;
 //   pastdue_amount: number;
-//   mo_amort: number;  
+//   mo_amort: number;
 //   writeoff_balance: number;
 //   overall_balance: number;
 //   mo_balance: number;
-  
+//  partial_payment_w_service_fee;
+// new_tad_with_sf;
+// new_pay_off;
+// service_fee;
+
 // };
 
 const CREATE_CUSTOMER = gql`
   mutation createCustomer(
     $input: [CustomerData]
-    $callfile: String!
-    $bucket: ID!
+    $callfile: String
+    $bucket: ID
   ) {
     createCustomer(input: $input, callfile: $callfile, bucket: $bucket) {
       success
@@ -70,7 +75,7 @@ const CREATE_CUSTOMER = gql`
 
 type modalProps = {
   width: string;
-  bucket: string;
+  bucket: string | null;
   bucketRequired: (e: boolean) => void;
   onSuccess: () => void;
   canUpload: boolean;
@@ -91,6 +96,7 @@ const Uploader: React.FC<modalProps> = ({
 
   const handleFileUpload = useCallback(async (file: File) => {
     try {
+      setLoading(true)
       const { read, utils, SSF } = await import("xlsx");
       const reader = new FileReader();
 
@@ -99,7 +105,9 @@ const Uploader: React.FC<modalProps> = ({
         const workbook = read(binaryString, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const jsonDataRaw = utils.sheet_to_json<Record<string, any>>(sheet, { defval: "" });
+        const jsonDataRaw = utils.sheet_to_json<Record<string, any>>(sheet, {
+          defval: "",
+        });
         const jsonData = jsonDataRaw.map((row) => {
           const cleanRow: Record<string, any> = {};
           for (const key in row) {
@@ -146,11 +154,15 @@ const Uploader: React.FC<modalProps> = ({
             overall_balance,
             mo_balance,
             batch_no,
+            partial_payment_w_service_fee,
+            new_tad_with_sf,
+            new_pay_off,
+            service_fee,
+            gender,
             ...others
           } = row;
 
           function normalizeContact(contact: string) {
-
             if (!contact) return "";
 
             const cleaned = contact
@@ -187,28 +199,41 @@ const Uploader: React.FC<modalProps> = ({
             }
           };
 
-     
           const rows = {
             ...others,
             contact: [],
             email: [],
             address: [],
-            principal_os: isNaN(principal_os) ? 0 : Number(principal_os) || Number(total_os),
+            principal_os: isNaN(principal_os)
+              ? isNaN(Number(total_os))
+                ? 0
+                : Number(total_os)
+              : Number(principal_os) || Number(total_os),
             writeoff_balance: Number(writeoff_balance) || 0,
             mo_amort: Number(mo_amort) || 0,
             cf: Number(cf) || 0,
             pastdue_amount: Number(pastdue_amount) || 0,
-            interest_os: isNaN(interest_os) ? 0 :  Number(interest_os) || 0,
+            interest_os: isNaN(interest_os) ? 0 : Number(interest_os) || 0,
             admin_fee_os: isNaN(admin_fee_os) ? 0 : Number(admin_fee_os) || 0,
             txn_fee_os: isNaN(txn_fee_os) ? 0 : Number(txn_fee_os) || 0,
-            late_charge_os: isNaN(late_charge_os) ? 0 : Number(late_charge_os) || 0,
-            penalty_interest_os: isNaN(penalty_interest_os) ? 0 : Number(penalty_interest_os) || 0,
+            late_charge_os: isNaN(late_charge_os)
+              ? 0
+              : Number(late_charge_os) || 0,
+            penalty_interest_os: isNaN(penalty_interest_os)
+              ? 0
+              : Number(penalty_interest_os) || 0,
             dst_fee_os: isNaN(dst_fee_os) ? 0 : Number(dst_fee_os) || 0,
             balance: Number(balance) || Number(total_os),
             total_os: Number(total_os),
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
             overall_balance: Number(overall_balance) || 0,
             mo_balance: Number(mo_balance) || 0,
+            partial_payment_w_service_fee:
+              Number(partial_payment_w_service_fee) || 0,
+            new_tad_with_sf: Number(new_tad_with_sf) || 0,
+            new_pay_off: Number(new_pay_off) || 0,
+            service_fee: Number(service_fee) || 0,
+            gender: isNaN(gender) ? gender : "O"
           } as Record<string, any>;
 
           if (emergencyContactMobile) {
@@ -222,7 +247,7 @@ const Uploader: React.FC<modalProps> = ({
           }
 
           if (case_id) {
-            rows["case_id"] = String(case_id).trim();
+            rows["case_id"] = String(case_id).trim().replace(/^-/, "");
           }
 
           if (!isNaN(Number(dpd))) {
@@ -318,11 +343,11 @@ const Uploader: React.FC<modalProps> = ({
       };
       reader.readAsBinaryString(file);
     } catch (error) {
-      console.log(error)
       dispatch(setServerError(true));
+    } finally {
+      setLoading(false)
     }
   }, []);
-  console.log(excelData);
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -337,13 +362,7 @@ const Uploader: React.FC<modalProps> = ({
     },
   });
 
-  const [createCustomer, { loading }] = useMutation(CREATE_CUSTOMER, {
-    onCompleted: () => {
-      successUpload();
-      setExcelData([]);
-      setFile([]);
-      onSuccess();
-    },
+  const [createCustomer] = useMutation(CREATE_CUSTOMER, {
     onError: (error) => {
       const errorMessage = error.message;
       if (errorMessage?.includes("Not Included")) {
@@ -368,13 +387,13 @@ const Uploader: React.FC<modalProps> = ({
         setExcelData([]);
         setFile([]);
       } else {
-        console.log(errorMessage);
         dispatch(setServerError(true));
       }
+      setLoading(false)
     },
   });
 
-  const [confirm, setConfirm] = useState(false);
+  const [confirm, setConfirm] = useState<boolean>(false);
 
   const [modalProps, setModalProps] = useState({
     message: "",
@@ -383,19 +402,41 @@ const Uploader: React.FC<modalProps> = ({
     no: () => {},
   });
 
-  const [required, setRequired] = useState(false);
+  const [required, setRequired] = useState<boolean>(false);
+
+  const [loading, setLoading] = useState<boolean>(false);
 
   const creatingCustomer = useCallback(async () => {
-    await createCustomer({
-      variables: {
-        input: excelData,
-        callfile: file[0].name.split(".")[0],
-        bucket: bucket,
-      },
-    });
-    setConfirm(false);
-  }, [createCustomer, excelData, file, setConfirm, bucket]);
+    const CHUNK_SIZE = 2000;
+    const chunks = chunk(excelData, CHUNK_SIZE);
 
+    setLoading(true);
+    try {
+      for (let i = 0; i < chunks.length; i++) {
+        await createCustomer({
+          variables: {
+            input: chunks[i],
+            callfile: file[0].name.split(".")[0],
+            bucket: bucket ?? "",
+          },
+        });
+      }
+
+      setConfirm(false);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      successUpload();
+      setExcelData([]);
+      setFile([]);
+      onSuccess();
+      setConfirm(false)
+      setRequired(false)
+      setLoading(false);
+      bucketRequired(false);
+    }
+  }, [createCustomer, excelData, file, setConfirm, bucket]);
+ 
   const submitUpload = () => {
     if (file.length === 0 || !bucket) {
       if (file.length === 0) {

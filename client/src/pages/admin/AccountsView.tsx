@@ -13,7 +13,7 @@ import {
 } from "../../redux/slices/authSlice";
 import { FaUserGear } from "react-icons/fa6";
 import Confirmation from "../../components/Confirmation";
-import { Department } from "../../middleware/types.ts";
+import { Department, Users } from "../../middleware/types.ts";
 import { motion, AnimatePresence } from "framer-motion";
 import RegisterView from "./RegisterView.tsx";
 
@@ -41,9 +41,9 @@ const GET_BRANCHES = gql`
 `;
 
 type Branch = {
-  id: string
-  name: string
-}
+  id: string;
+  name: string;
+};
 
 const GET_ALL_BUCKET = gql`
   query getAllBucket {
@@ -70,8 +70,13 @@ type SuccessUpdate = {
 };
 
 const FIND_QUERY = gql`
-  query findUsers($search: String!, $page: Int!, $limit: Int!, $filter: String!) {
-    findUsers(search: $search, page: $page, limit: $limit, filter:$filter) {
+  query findUsers(
+    $search: String!
+    $page: Int!
+    $limit: Int!
+    $filter: String!
+  ) {
+    findUsers(search: $search, page: $page, limit: $limit, filter: $filter) {
       total
       users {
         _id
@@ -87,6 +92,11 @@ const FIND_QUERY = gql`
         callfile_id
         isOnline
         buckets
+        targets {
+          daily
+          weekly
+          monthly
+        }
         createdAt
         user_id
         vici_id
@@ -107,26 +117,26 @@ const UNLOCK_USER = gql`
   }
 `;
 
-type filter = "online" | "all" | "offline"
+type filter = "online" | "all" | "offline";
 
-type Users = {
-  _id: string;
-  type: "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" | "MIS";
-  branch: string;
-  username: string;
-  name: string;
-  change_password: boolean;
-  departments: string[];
-  buckets: string[];
-  isOnline: boolean;
-  isLock: boolean;
-  callfile_id: string;
-  active: boolean;
-  account_type: string;
-  createdAt: string;
-  user_id: string;
-  vici_id: string;
-};
+// type Users = {
+//   _id: string;
+//   name: string;
+//   username: string;
+//   type: "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" | "MIS";
+//   departments: string[];
+//   branch: string;
+//   isLock: boolean;
+//   account_type: string;
+//   change_password: boolean;
+//   active: boolean;
+//   callfile_id: string;
+//   isOnline: boolean;
+//   buckets: string[];
+//   createdAt: string;
+//   user_id: string;
+//   vici_id: string;
+// };
 
 const AccountsView = () => {
   const [page, setPage] = useState<string>("1");
@@ -142,9 +152,7 @@ const AccountsView = () => {
 
   const [width, setWidth] = useState<number>(50);
   const [option, setOption] = useState<number>(0);
-  const [filter,setFilter] = useState<filter>('all')
-
-
+  const [filter, setFilter] = useState<filter>("all");
 
   const { data: getDeptData, refetch: deptRefetch } = useQuery<{
     getDepts: Department[];
@@ -169,7 +177,7 @@ const AccountsView = () => {
     return Object.fromEntries(allBucketData.map((adb) => [adb._id, adb.name]));
   }, [getAllBucketsData]);
 
-  const branchObject= useMemo(() => {
+  const branchObject = useMemo(() => {
     const branchData = getBranchData?.getBranches || [];
     return Object.fromEntries(branchData.map((bd) => [bd.id, bd.name]));
   }, [getBranchData]);
@@ -177,20 +185,19 @@ const AccountsView = () => {
   const { data: searchData, refetch } = useQuery<{
     findUsers: { users: Users[]; total: number };
   }>(FIND_QUERY, {
-    variables: { search, page: adminUsersPage, limit , filter},
+    variables: { search, page: adminUsersPage, limit, filter },
     skip: !isAccounts,
     notifyOnNetworkStatusChange: true,
   });
 
-  useEffect(()=> {
-    const refetching = async() => {
-      await refetch()
-    }
-    refetching()
-  },[filter])
+  useEffect(() => {
+    const refetching = async () => {
+      await refetch();
+    };
+    refetching();
+  }, [filter]);
 
   const users = searchData?.findUsers?.users || [];
-
 
   const [confirm, setConfirm] = useState<boolean>(false);
 
@@ -336,15 +343,11 @@ const AccountsView = () => {
   //       );
   //     }) || [];
 
-
-
   return (
     <>
       <div className="h-full relative flex flex-col overflow-hidden pt-2 px-2">
         <div className=" flex justify-between  items-center p-3">
-          <h1 className="text-2xl text-gray-500 uppercase font-black">
-            Accounts
-          </h1>
+          <h1 className="text-2xl text-black uppercase font-black">Accounts</h1>
           <div className="flex items-center gap-3 h-full">
             <div className="">
               <motion.div
@@ -356,7 +359,7 @@ const AccountsView = () => {
                   onClick={() => {
                     setOption(0);
                     setWidth(50);
-                    setFilter("all")
+                    setFilter("all");
                   }}
                   className={`" ${
                     option === 0 ? "text-gray-500" : " text-gray-400"
@@ -368,7 +371,7 @@ const AccountsView = () => {
                   onClick={() => {
                     setOption(50);
                     setWidth(45);
-                    setFilter('online')
+                    setFilter("online");
                   }}
                   className={`"  ${
                     option === 50 ? "text-green-600" : " text-gray-400"
@@ -392,7 +395,7 @@ const AccountsView = () => {
                   onClick={() => {
                     setOption(95);
                     setWidth(50);
-                    setFilter('offline')
+                    setFilter("offline");
                   }}
                   className={`" ${
                     option === 95 ? "text-red-600" : " text-red-500"
@@ -477,7 +480,7 @@ const AccountsView = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <div className=" rounded-t-sm pr-3 bg-gray-200 border dark:bg-gray-700 dark:text-gray-400 grid grid-cols-12 py-2 font-black uppercase">
+          <div className=" rounded-t-sm pr-3 bg-gray-200 border border-gray-500 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-12 py-2 font-black uppercase">
             <div className="col-span-2 px-2">Name</div>
             <div>Username</div>
             <div>SIP ID</div>
@@ -495,13 +498,13 @@ const AccountsView = () => {
               users?.map((user, index) => (
                 <motion.div
                   key={user._id}
-                  className="grid grid-cols-12 border-x border-b last:rounded-b-md last:shadow-md py-2 hover:bg-gray-200 even:bg-gray-100 cursor-default items-center"
+                  className="grid grid-cols-12 border-x border-gray-500 border-b last:rounded-b-md last:shadow-md py-2 hover:bg-gray-200 odd:bg-gray-100 cursor-default items-center"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
                 >
                   <div
-                    className="font-medium px-2 text-gray-700 whitespace-nowrap dark:text-white truncate col-span-2"
+                    className="font-medium px-2 text-black whitespace-nowrap dark:text-white truncate col-span-2"
                     title={user.name.toUpperCase()}
                   >
                     {user.name.toUpperCase()}
@@ -517,9 +520,8 @@ const AccountsView = () => {
                     )}
                   </div>
                   <div className="truncate pr-1">{user.type || "-"}</div>
-                  <div className="uppercase">
-                    
-                    { branchObject[user.branch] || (
+                  <div className="">
+                    {branchObject[user.branch] || (
                       <div className="text-xs italic text-gray-400">
                         No branch
                       </div>
@@ -557,14 +559,18 @@ const AccountsView = () => {
                     <FaCircle
                       className={`${
                         user.active
-                          ? "text-green-500 w-5 h-5 animate-pulse"
-                          : "text-red-700 w-5 h-5 "
+                          ? "text-green-500 animate-pulse w-5 h-5"
+                          : "text-red-700 w-5 h-5"
                       } `}
+                      style={{ animationDelay: `${index * 100}ms` }}
                     />
                   </div>
                   <div className="flex items-center justify-center h-full">
                     {user.isOnline ? (
-                      <div className=" shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"></div>
+                      <div
+                        className=" shadow-md bg-green-600 w-5 rounded-full animate-pulse h-5"
+                        style={{ animationDelay: `${index * 100}ms` }}
+                      ></div>
                     ) : (
                       <div className=" shadow-md bg-red-600 w-5 rounded-full h-5"></div>
                     )}
@@ -591,7 +597,7 @@ const AccountsView = () => {
                         </svg>
                       </div>
                     ) : (
-                      <div className="bg-gray-300 px-2 border-2 rounded-sm border-gray-400 transition-all text-gray-400 py-1">
+                      <div className="bg-gray-300 px-2 border-2 rounded-sm border-gray-400 transition-all text-gray-400 py-1 ">
                         <svg
                           xmlns="http://www.w3.org/2000/svg"
                           fill="none"
@@ -666,7 +672,7 @@ const AccountsView = () => {
         />
 
         <AnimatePresence>
-          { create && (
+          {create && (
             <div className="absolute flex z-10 top-0 justify-center items-center left-0 w-full h-full">
               <motion.div
                 onClick={() => setCreate(false)}
@@ -691,7 +697,10 @@ const AccountsView = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
               >
-                <RegisterView setCancel={()=> setCreate(false)} cancel={cancel} />
+                <RegisterView
+                  setCancel={() => setCreate(false)}
+                  cancel={cancel}
+                />
               </motion.div>
             </div>
           )}

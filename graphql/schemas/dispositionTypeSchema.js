@@ -2,9 +2,11 @@ import { gql } from "graphql-tag";
 
 const dispositionTypeTypeDefs = gql`
   type CA {
-    skipper: Boolean
-    caller: Boolean
+    skip: Boolean
+    call: Boolean
     field: Boolean
+    sms: Boolean
+    email: Boolean
   }
 
   type DispositionType {
@@ -19,9 +21,11 @@ const dispositionTypeTypeDefs = gql`
   }
   
   enum Method {
-    skipper
+    skip
     field
-    caller
+    call
+    sms
+    email
   }
 
   input CreatingDispo {

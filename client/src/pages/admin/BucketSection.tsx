@@ -7,11 +7,14 @@ import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import { motion, AnimatePresence } from "framer-motion";
 
 type Bucket = {
-  name: string;
-  dept: string;
-  _id: string;
-  viciIp: string;
-  issabelIp: string;
+  name: string | null;
+  dept: string | null;
+  _id: string | null;
+  viciIp: string | null;
+  issabelIp: string | null;
+  canCall: boolean;
+  can_update_ca: boolean;
+  principal: boolean;
 };
 
 const DEPARTMENT_QUERY = gql`
@@ -20,12 +23,9 @@ const DEPARTMENT_QUERY = gql`
       id
       name
       branch
-      
     }
   }
 `;
-
-
 
 const DEPARTMENT_BUCKET = gql`
   query findDeptBucket($dept: ID) {
@@ -35,28 +35,22 @@ const DEPARTMENT_BUCKET = gql`
       dept
       issabelIp
       viciIp
+      canCall
+      can_update_ca
+      principal
     }
   }
 `;
 
 const CREATEBUCKET = gql`
-  mutation createBucket(
-    $name: String!
-    $dept: String!
-    $viciIp: String
-    $issabelIp: String
-  ) {
-    createBucket(
-      name: $name
-      dept: $dept
-      viciIp: $viciIp
-      issabelIp: $issabelIp
-    ) {
+  mutation createBucket($input: CreateBucket) {
+    createBucket(input: $input) {
       success
       message
     }
   }
 `;
+
 const UPDATEBUCKET = gql`
   mutation updateBucket($input: UpdateBucket) {
     updateBucket(input: $input) {
@@ -103,35 +97,48 @@ const BucketSection: React.FC<BranchSectionProps> = ({
     return Object.fromEntries(deptArray.map((da) => [da.id, da.name]));
   }, [dept]);
 
-  const [issabelIp, setIssabelIp] = useState<string>("");
-  const [viciIp, setViciIp] = useState<string>("");
   const [confirm, setConfirm] = useState<boolean>(false);
-  const [bucket, setBucket] = useState<string>("");
 
   useEffect(() => {
     if (newDepts.length > 0 && deptSelected === null) {
-      setDeptSelected(newDepts[0]);
+      setDeptSelected(newDepts[1]);
     }
   }, [newDepts, deptSelected]);
 
   const [required, setRequired] = useState<boolean>(false);
   const [isUpdate, setIsUpdate] = useState<boolean>(false);
   const [bucketToUpdate, setBucketToUpdate] = useState<Bucket>({
-    _id: "",
-    name: "",
-    dept: "",
-    viciIp: "",
-    issabelIp: "",
+    _id: null,
+    name: null,
+    dept: null,
+    viciIp: null,
+    issabelIp: null,
+    can_update_ca: false,
+    principal: false,
+    canCall: false,
   });
+
+  const handleResetToUpdate = useCallback(() => {
+    setBucketToUpdate({
+      _id: null,
+      name: null,
+      dept: null,
+      viciIp: null,
+      issabelIp: null,
+      can_update_ca: false,
+      principal: false,
+      canCall: false,
+    });
+  }, [setBucketToUpdate]);
 
   const handleSelectDept = useCallback(
     (dept: string) => {
       setDeptSelected(dept);
-      setBucket("");
+      handleResetToUpdate();
       setRequired(false);
       setIsUpdate(false);
     },
-    [setIsUpdate, setRequired, setBucket, setDeptSelected]
+    [setIsUpdate, setRequired, handleResetToUpdate, setDeptSelected]
   );
 
   const { data: bucketData, refetch: bucketRefetch } = useQuery<{
@@ -155,6 +162,8 @@ const BucketSection: React.FC<BranchSectionProps> = ({
     onCompleted: async (res) => {
       refetch();
       bucketRefetch();
+      setBuckets(false);
+      handleResetToUpdate();
       dispatch(
         setSuccess({
           success: res.createBucket.success,
@@ -162,9 +171,6 @@ const BucketSection: React.FC<BranchSectionProps> = ({
           isMessage: false,
         })
       );
-      setBucket("");
-      setViciIp("");
-      setIssabelIp("");
     },
     onError: (error) => {
       const errorMessage = error?.message;
@@ -174,7 +180,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
           message: "Bucket already exists",
           isMessage: false,
         });
-        setBucket("");
+        handleResetToUpdate();
       } else {
         dispatch(setServerError(true));
       }
@@ -192,17 +198,9 @@ const BucketSection: React.FC<BranchSectionProps> = ({
           isMessage: false,
         })
       );
-      setBucket("");
+      setBuckets(false);
       setIsUpdate(false);
-      setBucketToUpdate({
-        _id: "",
-        name: "",
-        dept: "",
-        viciIp: "",
-        issabelIp: "",
-      });
-      setViciIp("");
-      setIssabelIp("");
+      handleResetToUpdate();
     },
     onError: (error) => {
       const errorMessage = error?.message;
@@ -232,14 +230,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
           isMessage: false,
         })
       );
-      setBucketToUpdate({
-        _id: "",
-        name: "",
-        dept: "",
-        viciIp: "",
-        issabelIp: "",
-      });
-      setBucket("");
+      handleResetToUpdate();
       setIsUpdate(false);
       setRequired(false);
     },
@@ -253,29 +244,27 @@ const BucketSection: React.FC<BranchSectionProps> = ({
   type BucketOperation = "CREATE" | "UPDATE" | "DELETE";
 
   const creatingBucket = useCallback(async () => {
+    const { _id, dept, ...others } = bucketToUpdate;
     await createBucket({
       variables: {
-        name: bucket,
-        dept: deptObject[deptSelected || ""],
-        viciIp,
-        issabelIp,
+        input: {
+          ...others,
+          dept: deptObject[deptSelected as keyof typeof deptObject],
+        },
       },
     });
-  }, [createBucket, bucket, deptObject, deptSelected, viciIp, issabelIp]);
+  }, [createBucket, deptObject, deptSelected, bucketToUpdate]);
 
+  console.log(bucketToUpdate);
   const updatingBucket = useCallback(
     async (b: Bucket | null) => {
       if (b) {
-        const input = {
-          name: bucket,
-          id: b._id,
-          viciIp,
-          issabelIp,
-        };
-        await updateBucket({ variables: { input } });
+        const { dept, __typename, ...others } = b as any;
+
+        await updateBucket({ variables: { input: others } });
       }
     },
-    [bucket, viciIp, issabelIp, updateBucket]
+    [updateBucket]
   );
 
   const deletingBucket = useCallback(
@@ -306,17 +295,17 @@ const BucketSection: React.FC<BranchSectionProps> = ({
   const handleSubmit = useCallback(
     (action: "CREATE" | "UPDATE" | "DELETE", buck: Bucket | null) => {
       if (action !== "DELETE") {
-        if (!viciIp && !issabelIp) {
-          setRequiredIps(true);
-          return;
-        } else {
-          setRequiredIps(false);
-        }
-        if (!bucket) {
+        if (!bucketToUpdate.name) {
           setRequired(true);
           return;
         } else {
           setRequired(false);
+        }
+        if (!bucketToUpdate.viciIp && !bucketToUpdate.issabelIp) {
+          setRequiredIps(true);
+          return;
+        } else {
+          setRequiredIps(false);
         }
       }
 
@@ -352,8 +341,6 @@ const BucketSection: React.FC<BranchSectionProps> = ({
       confirmationFunction,
       setConfirm,
       setRequiredIps,
-      issabelIp,
-      viciIp,
       setRequired,
     ]
   );
@@ -362,21 +349,10 @@ const BucketSection: React.FC<BranchSectionProps> = ({
     (b: Bucket) => {
       setRequired(false);
       setIsUpdate(true);
-      setBucket(b.name);
       setBucketToUpdate(b);
-      setIssabelIp(b.issabelIp);
-      setViciIp(b.viciIp);
     },
-    [
-      setRequired,
-      setIsUpdate,
-      setBucket,
-      setBucketToUpdate,
-      setIssabelIp,
-      setViciIp,
-    ]
+    [setRequired, setIsUpdate, setBucketToUpdate]
   );
-
   return (
     <div className="flex overflow-hidden">
       <div className="px-4 w-full flex flex-col overflow-hidden h-full">
@@ -401,13 +377,14 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                   <motion.div
                     key={index}
                     className={`${
-                      nd === deptSelected ? "bg-gray-400" :"even:bg-gray-200 bg-gray-100"
+                      nd.toString() === deptSelected?.toString()
+                        ? "bg-gray-400"
+                        : "even:bg-gray-200 bg-gray-100"
                     } text-sm flex flex-col border uppercase font-black w-full text-slate-800 shadow-sm rounded-md even: p-2 border-black hover:bg-gray-400 cursor-pointer`}
                     onClick={() => handleSelectDept(nd)}
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ delay: index * 0.1 }}
-                  
                   >
                     <p className="text-xs truncate py-1">
                       {deptObject[nd]?.replace(/_/g, " ")}-{" "}
@@ -421,97 +398,121 @@ const BucketSection: React.FC<BranchSectionProps> = ({
           <div className="rounded-xl gap-2 h-full flex flex-col px-1 overflow-x-hidden w-full overflow-y-auto">
             {(bucketData?.findDeptBucket ?? []).length > 0 ? (
               <div className="gap-2 flex flex-col">
-                {bucketData?.findDeptBucket.map((b, index) => (
-                  <motion.div
-                    key={b._id}
-                    initial={{ x: 20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: index * 0.1 }}
-                    className="bg-gray-200 border even:bg-gray-100 rounded-md shadow-sm"
-                    onClick={() => {}}
-                  >
-                    <div className="text-xs overflow-hidden items-center font-black hover:shadow-md transition-all uppercase text-slate-800 px-5 py-2 hover:bg-gray-200 rounded-md cursor-pointer">
-                      <div className="grid py-1 grid-rows-3 gap-1">
-                        <div className="flex gap-2 truncate ">
-                          <div className="">Name: </div>
-                          <div className="uppercase truncate" title={b.name}>
-                            {b.name}
+                {bucketData?.findDeptBucket.map((b, index) => {
+                  console.log(b);
+                  return (
+                    <motion.div
+                      key={b._id}
+                      initial={{ x: 20, opacity: 0 }}
+                      animate={{ x: 0, opacity: 1 }}
+                      transition={{ delay: index * 0.1 }}
+                      className="bg-gray-200 border even:bg-gray-100 rounded-md shadow-sm"
+                      onClick={() => {}}
+                    >
+                      <div className="text-xs overflow-hidden items-center font-black hover:shadow-md transition-all uppercase text-slate-800 px-5 py-2 hover:bg-gray-200 rounded-md cursor-pointer">
+                        <div className="grid  py-1 grid-rows-3 gap-1">
+                          <div className="flex gap-2 truncate ">
+                            <div className="">Name: </div>
+                            <div
+                              className="uppercase truncate"
+                              title={b.name || ""}
+                            >
+                              {b.name || ""}
+                            </div>
+                          </div>
+
+                          <div className="flex gap-2 ">
+                            <div>Vici:</div>
+                            <div title={b.viciIp || ""}>
+                              {b.viciIp || (
+                                <div className="text-gray-400  italic font-normal capitalize">
+                                  No vici IP.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 ">
+                            <div>Issabel: </div>
+                            <div title={b.issabelIp || ""}>
+                              {b.issabelIp || (
+                                <div className="text-gray-400 italic font-normal capitalize">
+                                  No issabel IP.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <div>Principal: </div>
+                            <div className="italic font-bold text-gray-400">
+                              {b.principal ? "True" : "False"}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <div>Can Update: </div>
+                            <div className="italic font-bold text-gray-400">
+                              {b.can_update_ca ? "True" : "False"}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <div>Can Call: </div>
+                            <div className="italic font-bold text-gray-400">
+                              {b.canCall ? "True" : "False"}
+                            </div>
                           </div>
                         </div>
 
-                        <div className="flex gap-2 ">
-                          <div>Vici:</div>
-                          <div title={b.viciIp}>
-                            {b.viciIp || (
-                              <div className="text-gray-400 lowercase italic font-normal first-letter:uppercase">
-                                No vici ip.
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <div className="flex gap-2 ">
-                          <div>Issabel: </div>
-                          <div title={b.issabelIp}>
-                            {b.issabelIp || (
-                              <div className="text-gray-400 lowercase italic font-normal first-letter:uppercase">
-                                No issabel.
-                              </div>
-                            )}
+                        <div className="flex gap-1 mt-2 items-center justify-end">
+                          <div className="flex gap-1">
+                            <div
+                              onClick={() => {
+                                handleUpdate(b);
+                                setBuckets(true);
+                              }}
+                              title="UPDATE"
+                              className="bg-blue-600 shadow-md cursor-pointer hover:bg-blue-700 transition-all p-1 text-white rounded-sm border border-blue-800 "
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                className={`" ${
+                                  index === index ? "hover:rotate-90" : ""
+                                } transition-all size-5.5  "`}
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 0 0-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 0 0-2.282.819l-.922 1.597a1.875 1.875 0 0 0 .432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 0 0 0 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 0 0-.432 2.385l.922 1.597a1.875 1.875 0 0 0 2.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 0 0 2.28-.819l.923-1.597a1.875 1.875 0 0 0-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 0 0 0-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 0 0-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 0 0-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 0 0-1.85-1.567h-1.843ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
+
+                            <div
+                              className="bg-red-600 cursor-pointer hover:bg-red-700 transition-all p-1 text-white rounded-sm border border-red-800 shadow-md "
+                              title="REMOVE"
+                              onClick={() => handleSubmit("DELETE", b)}
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth="2"
+                                stroke="currentColor"
+                                className="size-5"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                                />
+                              </svg>
+                            </div>
                           </div>
                         </div>
                       </div>
-
-                      <div className="flex gap-2 mt-2 items-center justify-end">
-                        <div className="flex gap-2">
-                          <div
-                            onClick={() => {
-                              handleUpdate(b);
-                              setBuckets(true);
-                            }}
-                            title="UPDATE"
-                            className="bg-blue-600 shadow-md cursor-pointer hover:bg-blue-700 transition-all p-1 text-white rounded-sm border border-blue-800 "
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth="2"
-                              stroke="currentColor"
-                              className="size-5"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-                              />
-                            </svg>
-                          </div>
-
-                          <div
-                            className="bg-red-600 cursor-pointer hover:bg-red-700 transition-all p-1 text-white rounded-sm border border-red-800 shadow-md "
-                            title="REMOVE"
-                            onClick={() => handleSubmit("DELETE", b)}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth="2"
-                              stroke="currentColor"
-                              className="size-5"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
-                              />
-                            </svg>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                ))}
+                    </motion.div>
+                  );
+                })}
               </div>
             ) : (
               <div className="italic text-center text-gray-400 py-2">
@@ -520,15 +521,13 @@ const BucketSection: React.FC<BranchSectionProps> = ({
             )}
           </div>
           <AnimatePresence>
-            {buckets && (
+            {buckets && deptSelected && (
               <div className=" z-50 absolute  top-0 left-0 justify-center items-center flex gap-5 w-full h-full flex-col">
                 <motion.div
                   onClick={() => {
                     setBuckets(false);
                     setIsUpdate(false);
-                    setIssabelIp("");
-                    setViciIp("");
-                    setBucket("");
+                    handleResetToUpdate();
                   }}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
@@ -536,98 +535,203 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                   className="bg-black/40 backdrop-blur-sm z-10 cursor-pointer w-full h-full absolute top-0 left-0"
                 ></motion.div>
                 <motion.div
-                  className={`z-20 flex flex-col border-2 ${isUpdate ? "border-orange-600" : "border-green-900"} rounded-md `}
+                  className={`z-20 flex flex-col ${
+                    isUpdate ? "border-orange-600" : "border-green-900"
+                  } rounded-md border-2  `}
                   initial={{ opacity: 0, scale: 0.5 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.5 }}
                 >
-                  <h1 className={`${isUpdate ? "bg-orange-500" : "bg-green-700"}  px-20 font-black text-2xl uppercase text-center rounded-t-sm text-white py-2 `}>
+                  <h1
+                    className={`${
+                      isUpdate
+                        ? "bg-orange-500 border-orange-800"
+                        : "bg-green-700"
+                    }  px-20 font-black text-2xl uppercase text-center rounded-t-sm text-white py-2 `}
+                  >
                     {isUpdate ? "update bucket" : "create bucket"}
                   </h1>
-                  <div className="flex flex-col gap-2 bg-gray-100 rounded-b-sm py-10 px-10">
-                    <input
-                      type="text"
-                      name="name_bucket"
-                      id="name_bucket"
-                      value={bucket}
-                      autoComplete="off"
-                      placeholder="Enter bucket name"
-                      onChange={(e) => setBucket(e.target.value)}
-                      className={`${
-                        required && !bucket
-                          ? "bg-red-50 border-red-300"
-                          : "bg-gray-50 border-gray-300"
-                      }  border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5`}
-                    />
-                    <input
-                      type="text"
-                      name="issabelIp"
-                      id="issabelIp"
-                      value={issabelIp}
-                      autoComplete="off"
-                      placeholder="Enter Issabel Ip"
-                      onChange={(e) => setIssabelIp(e.target.value)}
-                      className={`${
-                        requiredIps && !issabelIp
-                          ? "bg-red-50 border-red-300"
-                          : "bg-gray-50 border-gray-300"
-                      }  border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500  p-2.5`}
-                    />
-                    <input
-                      type="text"
-                      name="viciIp"
-                      id="viciIp"
-                      value={viciIp}
-                      autoComplete="off"
-                      placeholder="Enter Vici Ip"
-                      onChange={(e) => setViciIp(e.target.value)}
-                      className={`${
-                        requiredIps && !viciIp
-                          ? "bg-red-50 border-red-300"
-                          : "bg-gray-50 border-gray-300"
-                      }  border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5`}
-                    />
+                  <div className="flex font-black  uppercase flex-col gap-2 bg-gray-100 rounded-b-sm py-10 px-10">
+                    <label className="w-full">
+                      <p>Name:</p>
+                      <input
+                        type="text"
+                        name="name_bucket"
+                        id="name_bucket"
+                        value={bucketToUpdate.name || ""}
+                        autoComplete="off"
+                        placeholder="Enter bucket name"
+                        onChange={(e) => {
+                          const value =
+                            e.target.value.trim() === ""
+                              ? null
+                              : e.target.value;
+                          setBucketToUpdate((prev) => ({
+                            ...prev,
+                            name: value,
+                          }));
+                        }}
+                        className={`${
+                          required && !bucketToUpdate.name
+                            ? "bg-red-50 border-red-300"
+                            : "bg-gray-50 border-gray-300"
+                        }  border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full`}
+                      />
+                    </label>
+                    <label className="w-full">
+                      <p>Issabel IP:</p>
+                      <input
+                        type="text"
+                        name="issabelIp"
+                        id="issabelIp"
+                        value={bucketToUpdate.issabelIp || ""}
+                        autoComplete="off"
+                        placeholder="Enter Issabel Ip"
+                        onChange={(e) => {
+                          const value =
+                            e.target.value.trim() === ""
+                              ? null
+                              : e.target.value;
+                          setBucketToUpdate((prev) => ({
+                            ...prev,
+                            issabelIp: value,
+                          }));
+                        }}
+                        className={`${
+                          requiredIps && !bucketToUpdate.issabelIp
+                            ? "bg-red-50 border-red-300"
+                            : "bg-gray-50 border-gray-300"
+                        }  border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500  p-2.5 w-full`}
+                      />
+                    </label>
+                    <label className="w-full">
+                      <p>Vici IP:</p>
+                      <input
+                        type="text"
+                        name="viciIp"
+                        id="viciIp"
+                        value={bucketToUpdate.viciIp || ""}
+                        autoComplete="off"
+                        placeholder="Enter Vici Ip"
+                        onChange={(e) => {
+                          const value =
+                            e.target.value.trim() === ""
+                              ? null
+                              : e.target.value;
+                          setBucketToUpdate((prev) => ({
+                            ...prev,
+                            viciIp: value,
+                          }));
+                        }}
+                        className={`${
+                          requiredIps && !bucketToUpdate.viciIp
+                            ? "bg-red-50 border-red-300"
+                            : "bg-gray-50 border-gray-300"
+                        }  border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full`}
+                      />
+                    </label>
+
+                    <div className="flex gap-2 text-xs">
+                      <label
+                        className={`"  ${
+                          bucketToUpdate.principal
+                            ? "bg-gray-400"
+                            : "bg-gray-300 hover:bg-gray-400"
+                        } flex gap-2   border border-gray-600 rounded-md shadow-md cursor-pointer py-2 px-3 transition-all "`}
+                      >
+                        <input
+                          checked={bucketToUpdate.principal}
+                          type="checkbox"
+                          name="principal"
+                          id="principal"
+                          onChange={(e) => {
+                            const value = e.target.checked;
+                            setBucketToUpdate((prev) => ({
+                              ...prev,
+                              principal: value,
+                            }));
+                          }}
+                        />
+                        <p>Principal</p>
+                      </label>
+                      <label
+                        className={`" ${
+                          bucketToUpdate.can_update_ca
+                            ? "bg-gray-400"
+                            : "bg-gray-300 hover:bg-gray-400"
+                        } flex gap-2   border border-gray-600 rounded-md shadow-md cursor-pointer py-2 px-3 transition-all "`}
+                      >
+                        <input
+                          type="checkbox"
+                          name="can_update"
+                          id="can_update"
+                          checked={bucketToUpdate.can_update_ca}
+                          onChange={(e) => {
+                            const value = e.target.checked;
+                            setBucketToUpdate((prev) => ({
+                              ...prev,
+                              can_update_ca: value,
+                            }));
+                          }}
+                        />
+                        <p>Can Update</p>
+                      </label>
+                      <label
+                        className={`" ${
+                          bucketToUpdate.canCall
+                            ? "bg-gray-400"
+                            : "bg-gray-300 hover:bg-gray-400"
+                        } flex gap-2   border border-gray-600 rounded-md shadow-md cursor-pointer py-2 px-3 transition-all   "`}
+                      >
+                        <input
+                          type="checkbox"
+                          name="can_call"
+                          id="can_call"
+                          checked={bucketToUpdate.canCall}
+                          onChange={(e) => {
+                            const value = e.target.checked;
+                            setBucketToUpdate((prev) => ({
+                              ...prev,
+                              canCall: value,
+                            }));
+                          }}
+                        />
+                        <p>Can Call</p>
+                      </label>
+                    </div>
+
                     {newDepts.length > 0 && (
                       <div className="flex justify-end w-full=">
                         {!isUpdate ? (
                           <button
                             type="button"
-                            className={`bg-green-700 hover:bg-green-800 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
+                            className={`bg-green-600 hover:bg-green-700 transition-all uppercase font-black border-2 border-green-800 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
                             onClick={() => handleSubmit("CREATE", null)}
                           >
                             Create
                           </button>
                         ) : (
-                          <div className="flex justify-end">
+                          <div className="flex justify-end gap-2">
                             <button
                               type="button"
-                              className={`bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
+                              className={`bg-slate-500 transition-all font-black uppercase hover:bg-slate-600 focus:outline-none text-white focus:ring-4 focus:ring-slate-400  border-2 border-gray-800 rounded-lg text-sm px-5 py-2.5 mb-2  cursor-pointer`}
                               onClick={() => {
-                                handleSubmit("UPDATE", bucketToUpdate);
-                              }}
-                            >
-                              Update
-                            </button>
-                            <button
-                              type="button"
-                              className={`bg-slate-500 hover:bg-slate-600 focus:outline-none text-white focus:ring-4 focus:ring-slate-400 font-medium rounded-lg text-sm px-5 py-2.5 mb-2  cursor-pointer`}
-                              onClick={() => {
-                                setBucketToUpdate({
-                                  _id: "",
-                                  name: "",
-                                  dept: "",
-                                  viciIp: "",
-                                  issabelIp: "",
-                                });
-                                setIssabelIp("");
-                                setViciIp("");
-                                setBucket("");
+                                handleResetToUpdate();
                                 setRequired(false);
                                 setIsUpdate(false);
                                 setBuckets(false);
                               }}
                             >
                               Cancel
+                            </button>
+                            <button
+                              type="button"
+                              className={`bg-orange-500 border-2 border-orange-800 font-black hover:bg-orange-600 transition-all focus:outline-none text-white focus:ring-4 focus:ring-orange-400 uppercase rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
+                              onClick={() => {
+                                handleSubmit("UPDATE", bucketToUpdate);
+                              }}
+                            >
+                              Update
                             </button>
                           </div>
                         )}

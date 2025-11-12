@@ -30,6 +30,8 @@ const myUserInfos = gql`
     }
   } 
 `
+
+
 const LOGOUT = gql`
   mutation logout { 
     logout { 

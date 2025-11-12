@@ -17,18 +17,8 @@ import { FaEye, FaEyeSlash } from "react-icons/fa";
 import Wrapper from "../../components/Wrapper.tsx";
 import Navbar from "../../components/Navbar.tsx";
 import NavbarExtn from "../../components/NavbarExtn.tsx";
-import animationData from "../../Animations/Spooky Ghost.json";
-import clinic from "../../Animations/3D Doctor Dancing.json";
-import coffee from "../../Animations/Coffee Time.json";
 import Lottie from "lottie-react";
-import cr from "../../Animations/pepe poo poo.json";
-import nego from "../../Animations/nego.json";
-import technical from "../../Animations/No Connection.json";
-import eating from "../../Animations/Couple eating.json";
-import meeting from "../../Animations/Meeting.json";
-import skiptracing from "../../Animations/searching for profile.json";
-import hrmeeting from "../../Animations/Business Meeting Animation.json";
-import coaching from "../../Animations/Online Teaching.json";
+
 
 type UpdateProduction = {
   message: string;
@@ -132,16 +122,16 @@ const BreakView = () => {
   const content = breaks.find((e) => e.value === breakValue);
 
   const images: Record<string, string | object> = {
-    LUNCH: eating,
-    COFFEE: coffee,
-    MEETING: meeting,
-    TECHSUPP: technical,
-    CRBREAK: cr,
-    COACHING: coaching,
-    HRMEETING: hrmeeting,
-    HANDSETNEGO: nego,
-    SKIPTRACING: skiptracing,
-    CLINIC: clinic,
+    LUNCH: "/lunchIcon.png",
+    COFFEE: "/coffeeIcon.png",
+    MEETING: "/meetingIcon.png",
+    TECHSUPP: "/techSuppIcon.png",
+    CRBREAK: "/crBreakIcon.png",
+    COACHING: "/coachingIcon.png",
+    HRMEETING: "/hrMeetingIcon.png",
+    HANDSETNEGO: "/handsetNegoIcon.png",
+    SKIPTRACING: "/skipTracingIcon.png",
+    CLINIC: "/clinicIcon.png",
     WELCOME: "/welcomeIcon.png",
   };
 
@@ -195,12 +185,6 @@ const BreakView = () => {
         <div className="flex h-full w-full flex-col items-center justify-center">
           {breakValue !== BreakEnum.WELCOME && (
             <>
-              {/* <img
-                src={images[breakValue]}
-                alt={`${content?.name} icon`}
-                className="w-80 animate-[bounce_20s_ease-in-out_infinite]"
-              /> */}
-
               {typeof currentMedia === "string" ? (
                 <img
                   src={currentMedia}
@@ -267,8 +251,10 @@ const BreakView = () => {
             </>
           )}
           {breakValue === BreakEnum.WELCOME && (
-            <div className="flex absolute z-101 flex-col gap-2 items-center">
-              <div className="text-center text-shadow-2xs text-shadow-black">
+            <div className="flex absolute z-10 flex-col gap-2 items-center">
+              <form className=" flex flex-col items-center">
+
+              <div className="text-center text-shadow-2xs text-shadow-black animate-[bounce_8s_ease-in-out_infinite] flex flex-col items-center">
                 <h1 className="text-5xl font-black text-blue-700">
                   Shine bright today,
                 </h1>
@@ -279,18 +265,16 @@ const BreakView = () => {
                 <h1 className="text-2xl font-black text-blue-500">
                   Let's hit those goals!
                 </h1>
-              </div>
-              <form className=" flex flex-col items-center">
-                {typeof currentMedia === "string" && (
                   <img
-                    src={currentMedia}
+                    src={currentMedia as string}
                     alt="Welcome Icon"
-                    className="w-80 animate-[bounce_20s_ease-in-out_infinite]"
+                    className="w-80 "
                   />
-                )}
+              </div>
+         
 
                 <button
-                  className="shadow-md px-10 py-2 rounded-md uppercase bg-blue-500 border-2 border-blue-800 text-white font-black animate-bounce hover:bg-blue-600 duration-300 ease-in-out cursor-pointer"
+                  className="shadow-md px-10 py-2 rounded-md uppercase bg-blue-500 border-2 border-blue-800 text-white font-black hover:bg-blue-600 duration-300 ease-in-out cursor-pointer"
                   onClick={onClickStart}
                 >
                   Start

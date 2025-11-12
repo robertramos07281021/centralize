@@ -36,7 +36,7 @@ const ReportsTables: React.FC<ComponentProp> = ({
 
   return (
     <>
-      <div className=" flex-col flex shadow-md border-black w-full text-sm 2xl:text-lg">
+      <div className=" flex-col flex  border-black items-center w-full text-sm 2xl:text-lg">
         <div
           className={`w-full py-0.5 ${
             colorObject[color as keyof typeof colorObject]
@@ -44,8 +44,8 @@ const ReportsTables: React.FC<ComponentProp> = ({
         >
           {firstTitle}
         </div>
-        <div className="text-center grid grid-rows-2 w-full">
-          <div className="grid grid-cols-2 items-center border-x  text-[10px] md:text-sm font-semibold md:font-black border-indigo-700 uppercase bg-indigo-400 w-full">
+        <div className="text-center grid shadow-md grid-rows-2 w-full">
+          <div className="grid grid-cols-2  items-center border-x  text-[10px] md:text-sm font-semibold md:font-black border-indigo-700 uppercase bg-indigo-400 w-full">
             <div
               className={`w-full border-r border-indigo-700 py-1 h-full
                `}

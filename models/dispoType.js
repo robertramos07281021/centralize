@@ -32,7 +32,7 @@ const dispositionTypeSchema = new Schema(
       default: 0
     },
     contact_methods: {
-      skipper : {
+      skip: {
         type: Boolean,
         default: false
       },
@@ -40,10 +40,18 @@ const dispositionTypeSchema = new Schema(
         type: Boolean,
         default: false
       },
-      caller: {
+      call: {
         type: Boolean,
         default: false
-      }
+      },
+      sms: {
+        type: Boolean,
+        default: false
+      },
+      email: {
+        type: Boolean,
+        default: false
+      },
     },
     active: {
       type: Boolean,

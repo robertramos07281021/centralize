@@ -23,6 +23,15 @@ type Data = {
   RFD: RFD | null;
   chatApp: SkipCollector | null;
   sms: SMSCollector | null;
+  partialPayment: number | null
+};
+
+type ContactMethod = {
+  skip: boolean;
+  field: boolean;
+  call: boolean;
+  sms: boolean;
+  email: boolean;
 };
 
 type Disposition = {
@@ -30,15 +39,25 @@ type Disposition = {
   name: string;
   code: string;
   active: boolean;
+  contact_methods: ContactMethod;
+  buckets: string[];
 };
 
 const GET_DISPOSITION_TYPES = gql`
-  query Query {
+  query getDispositionTypes {
     getDispositionTypes {
       id
       name
       code
       active
+      buckets
+      contact_methods {
+        skip
+        field
+        call
+        sms
+        email
+      }
     }
   }
 `;
@@ -47,6 +66,15 @@ type Success = {
   success: boolean;
   message: string;
 };
+
+const GET_AGENT_BUCKET = gql`
+  query GetDeptBucket {
+    getDeptBucket {
+      _id
+      name
+    }
+  }
+`;
 
 const CREATE_DISPOSITION = gql`
   mutation CreateDisposition($input: CreateDispo) {
@@ -83,6 +111,11 @@ const USER_TL = gql`
     }
   }
 `;
+
+type Bucket = {
+  name: string;
+};
+
 type TL = {
   _id: string;
   name: string;
@@ -114,6 +147,15 @@ enum RFD {
   UBO = "Use by Other",
   BLS = "Bussiness Loss/Slowdown",
   BUSSCLOSURE = "Bussiness Closure",
+  NOOIC = "No Officer In Charge/No SPA In Charge For OFW",
+  SOLD = "Sold To 2nd/3rd Owner",
+  OBIS = "Occupied By Illegal Settler",
+  WAITING = "Waiting Funds",
+  DOTF = "Death Of The Family",
+  WAP = "W/Adjustment/Unposted Payment",
+  FTIC = "Family/SPA Take In Charge",
+  TBC = "Temporary Business Closed",
+  BUSSCLOSE = "Business Closed",
 }
 
 enum Payment {
@@ -128,7 +170,7 @@ enum Dialer {
 }
 
 enum AccountType {
-  CALLS = "calls",
+  CALL = "call",
   EMAIL = "email",
   SMS = "sms",
   SKIP = "skip",
@@ -174,6 +216,9 @@ type DispositionType = {
 
 type Props = {
   updateOf: () => void;
+  inlineData: string;
+  canCall: boolean;
+  onPresetAmountChange: (value: string | null) => void;
 };
 
 const IFBANK = ({ label }: { label: string }) => {
@@ -182,7 +227,7 @@ const IFBANK = ({ label }: { label: string }) => {
       <p className="text-gray-800 whitespace-nowrap font-bold text-start w-full  2xl:text-sm text-xs leading-4 ">
         {label}:
       </p>
-      <div className=" rounded-lg bg-slate-400 border border-gray-400 text-xs 2xl:text-sm 2xl:p-4.5 p-4 w-full"></div>
+      <div className=" rounded-sm bg-gray-300 border border-gray-400 text-xs 2xl:text-sm 2xl:p-4.5 p-4 w-full"></div>
     </div>
   );
 };
@@ -220,10 +265,15 @@ type Customer = {
   };
 };
 
-const DispositionForm: React.FC<Props> = ({ updateOf }) => {
-  const { selectedCustomer, userLogged } = useSelector(
-    (state: RootState) => state.auth
-  );
+const DispositionForm: React.FC<Props> = ({
+  updateOf,
+  inlineData,
+  canCall,
+  onPresetAmountChange,
+}) => {
+  const { selectedCustomer, userLogged, callUniqueId, isRing, onCall } =
+    useSelector((state: RootState) => state.auth);
+
   const dispatch = useAppDispatch();
   const Form = useRef<HTMLFormElement | null>(null);
   const { data: disposition } = useQuery<{
@@ -232,37 +282,36 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
   const { data: tlData } = useQuery<{ getBucketTL: TL[] }>(USER_TL, {
     skip: !selectedCustomer,
   });
-
   const existingDispo = selectedCustomer?.dispo_history.find(
     (x) => x.existing === true
   );
-
   const neverChangeContactMethod = ["PTP", "UNEG", "PAID", "DEC", "RTP", "ITP"];
   const dispoNeverChangeContactMethod = disposition?.getDispositionTypes
     .filter((x) => neverChangeContactMethod.includes(x.code))
     .map((x) => x.id);
-  const checkIfChangeContactMethod = dispoNeverChangeContactMethod?.includes(
-    existingDispo?.disposition || ""
-  );
 
+  const checkIfChangeContactMethod = dispoNeverChangeContactMethod?.includes(
+    existingDispo?.disposition as string
+  );
+  const { data: agentBucketData } = useQuery<{ getDeptBucket: Bucket[] }>(
+    GET_AGENT_BUCKET
+  );
   const [required, setRequired] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [escalateTo, setEscalateTo] = useState<boolean>(false);
   const [caToEscalate, setCAToEscalate] = useState<string>("");
   const [selectedTL, setSelectedTL] = useState<string>("");
-
+  const [isOpen, setIsOpen] = useState<boolean>(false);
   const dispoObject: Record<string, string> = useMemo(() => {
     const d: DispositionType[] = disposition?.getDispositionTypes || [];
     return Object.fromEntries(d.map((e) => [e.code, e.id]));
   }, [disposition]);
-
   const ptpDispoType = disposition?.getDispositionTypes.find(
     (d) => d.code === "PTP"
   );
   const paidDispoType = disposition?.getDispositionTypes.find(
     (d) => d.code === "PAID"
   );
-
   const dispoKeyCode: Record<string, string> = useMemo(() => {
     const d: DispositionType[] = disposition?.getDispositionTypes || [];
     return Object.fromEntries(
@@ -283,6 +332,7 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
     chatApp: null,
     RFD: null,
     sms: null,
+    partialPayment:null
   });
 
   useEffect(() => {
@@ -302,7 +352,6 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
     disposition?.getDispositionTypes?.find((x) => x.id === data.disposition)
       ?.code ?? "";
 
-  
   const { contact_method, dialer, chatApp, sms } = data;
 
   useEffect(() => {
@@ -310,6 +359,12 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
       setData((prev) => ({ ...prev, dialer: null, chatApp: null, sms: null }));
     }
   }, [contact_method]);
+
+  const DISPO_OPTIONS = [
+    { label: "Partial", value: 1 },
+    { label: "New Tad with SF", value: 2 },
+    { label: "New Pay Off", value: 3 },
+  ];
 
   const resetForm = useCallback(() => {
     setData({
@@ -325,8 +380,10 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
       chatApp: null,
       RFD: null,
       sms: null,
+      partialPayment: null
     });
-  }, [setData, dispatch]);
+    onPresetAmountChange(null);
+  }, [onPresetAmountChange]);
 
   useEffect(() => {
     if (!selectedCustomer) {
@@ -383,14 +440,11 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
       await deselectTask({ variables: { id: selectedCustomer?._id } });
     },
     onError: async () => {
-     
       await deselectTask({ variables: { id: selectedCustomer?._id } });
       // dispatch(setServerError(true));
     },
   });
-
   // ======================================================================================
-
   const handleDataChange = (key: keyof Data, value: any) => {
     if (key === "disposition") {
       setData((prev) => ({
@@ -402,22 +456,73 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
         payment_method: null,
         ref_no: null,
         comment: null,
-        contact_method:
-          checkIfChangeContactMethod && existingDispo
-            ? (existingDispo?.contact_method as AccountType)
-            : null,
         dialer: null,
         chatApp: null,
         RFD: null,
         sms: null,
       }));
-    } else {
-      setData((prev) => ({ ...prev, [key]: value }));
+      onPresetAmountChange(null);
+      return;
+    }
+    const nextValue =
+      key === "amount"
+        ? value === null || value === undefined || value === ""
+          ? null
+          : typeof value === "number"
+          ? value.toString()
+          : value
+        : value;
+    setData((prev) => ({ ...prev, [key]: nextValue }));
+    if (key === "amount") {
+      onPresetAmountChange(nextValue);
     }
   };
 
   const handleOnChangeAmount = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      // let inputValue = e.target.value.replace(/[^0-9.]/g, "");
+      // const parts = inputValue.split(".");
+
+      // if (parts.length > 2) {
+      //   inputValue = parts[0] + "." + parts[1];
+      // } else if (parts.length === 2) {
+      //   inputValue = parts[0] + "." + parts[1].slice(0, 2);
+      // }
+
+      // if (inputValue.startsWith("00")) {
+      //   inputValue = "0";
+      // }
+
+      // if (inputValue === "") {
+      //   handleDataChange("amount", null);
+      //   handleDataChange("payment", null);
+      //   return;
+      // }
+
+      // const numericValue = parseFloat(inputValue);
+      // console.log(numericValue)
+      // if (Number.isNaN(numericValue)) {
+      //   handleDataChange("amount", null);
+      //   handleDataChange("payment", null);
+      //   return;
+      // }
+
+      // const balance = selectedCustomer?.balance ?? 0;
+
+      // const cappedAmount =
+      //   numericValue > balance ? balance : Math.max(numericValue, 0);
+
+      // const amount =
+      //   Number.isFinite(cappedAmount) && cappedAmount > 0
+      //     ? cappedAmount.toFixed(2)
+      //     : null;
+
+      // const paymentType =
+      //   balance > 0 && cappedAmount >= balance ? Payment.FULL : Payment.PARTIAL;
+
+      // handleDataChange("amount", amount);
+      // handleDataChange("payment", amount ? paymentType : null);
+
       let inputValue = e.target.value.replace(/[^0-9.]/g, "");
       const parts = inputValue.split(".");
 
@@ -431,15 +536,46 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
         inputValue = "0";
       }
 
+      if (inputValue === "") {
+        handleDataChange("amount", null);
+        handleDataChange("payment", null);
+        return;
+      }
+
       const numericValue = parseFloat(inputValue);
       const balance = selectedCustomer?.balance ?? 0;
-      const amount = numericValue > balance ? balance.toFixed(2) : inputValue;
       const payment = numericValue >= balance ? Payment.FULL : Payment.PARTIAL;
-      handleDataChange("amount", amount);
+      handleDataChange("amount", numericValue);
       handleDataChange("payment", payment);
     },
-    [setData, selectedCustomer, handleDataChange]
+    [selectedCustomer, handleDataChange]
   );
+
+  //dating code:
+  //  const handleOnChangeAmount = useCallback(
+  //   (e: React.ChangeEvent<HTMLInputElement>) => {
+  //     let inputValue = e.target.value.replace(/[^0-9.]/g, "");
+  //     const parts = inputValue.split(".");
+
+  //     if (parts.length > 2) {
+  //       inputValue = parts[0] + "." + parts[1];
+  //     } else if (parts.length === 2) {
+  //       inputValue = parts[0] + "." + parts[1].slice(0, 2);
+  //     }
+
+  //     if (inputValue.startsWith("00")) {
+  //       inputValue = "0";
+  //     }
+
+  //     const numericValue = parseFloat(inputValue);
+  //     const balance = selectedCustomer?.balance ?? 0;
+  //     const amount = numericValue > balance ? balance.toFixed(2) : inputValue;
+  //     const payment = numericValue >= balance ? Payment.FULL : Payment.PARTIAL;
+  //     handleDataChange("amount", amount);
+  //     handleDataChange("payment", payment);
+  //   },
+  //   [setData, selectedCustomer, handleDataChange]
+  // );
 
   const [modalProps, setModalProps] = useState({
     message: "",
@@ -451,10 +587,14 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
   const creatingDispo = useCallback(async () => {
     await createDisposition({
       variables: {
-        input: { ...data, customer_account: selectedCustomer?._id },
+        input: {
+          ...data,
+          customer_account: selectedCustomer?._id,
+          callId: callUniqueId,
+        },
       },
     });
-  }, [data, selectedCustomer, createDisposition]);
+  }, [data, selectedCustomer, createDisposition, callUniqueId]);
 
   const noCallback = useCallback(() => {
     setConfirm(false);
@@ -466,26 +606,28 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
       if (!Form.current?.checkValidity()) {
         setRequired(true);
       } else {
-  
-      if (selectedDispo === "PAID" && data.payment_date) {
-        const paymentDate = new Date(data.payment_date);
+        if (selectedDispo === "PAID" && data.payment_date) {
+          const paymentDate = new Date(data.payment_date);
 
-        if (isNaN(paymentDate.getTime())) {
-          return setRequired(true);
+          if (isNaN(paymentDate.getTime())) {
+            return setRequired(true);
+          }
+
+          paymentDate.setHours(23, 59, 59, 999);
+          const currentDate = new Date();
+          currentDate.setHours(23, 59, 59, 999);
+
+          if (paymentDate > currentDate) {
+            return setRequired(true);
+          }
         }
 
-        paymentDate.setHours(23, 59, 59, 999);
-        const currentDate = new Date();
-        currentDate.setHours(23, 59, 59, 999);
-
-        if (paymentDate > currentDate) {
+        if (
+          Number(data.amount) === 0 &&
+          requiredDispo.includes(selectedDispo)
+        ) {
           return setRequired(true);
         }
-      }
-
-      if (Number(data.amount) === 0 && requiredDispo.includes(selectedDispo)) {
-        return setRequired(true);
-      }
 
         setRequired(false);
         setConfirm(true);
@@ -501,14 +643,13 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
   );
 
   const tlEscalationCallback = useCallback(async () => {
-    const checkSelectedTl = selectedTL.trim() === "" ?  tlData?.getBucketTL[0]._id : selectedTL
-
+    const checkSelectedTl =
+      selectedTL.trim() === "" ? tlData?.getBucketTL[0]._id : selectedTL;
 
     await tlEscalation({
       variables: { id: caToEscalate, tlUserId: checkSelectedTl },
     });
-  }, [caToEscalate, selectedTL,tlData]);
-
+  }, [caToEscalate, selectedTL, tlData]);
 
   const handleSubmitEscalation = useCallback(() => {
     setConfirm(true);
@@ -556,6 +697,15 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
       setCAToEscalate,
     ]
   );
+  useEffect(() => {
+    if (canCall && userLogged?.account_type === "caller") {
+      setData((prev) => ({
+        ...prev,
+        contact_method: AccountType.CALL,
+        dialer: Dialer.VICI,
+      }));
+    }
+  }, [canCall]);
 
   const anabledDispo = ["PAID", "PTP", "UNEG"];
   const requiredDispo = ["PAID", "PTP"];
@@ -580,17 +730,12 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
     const hasSelective = cd?.selectivesDispo;
     const assignedToUser = customer.assigned === user?._id;
     const notAssigned = !customer.assigned;
-
     const ptpId = ptpDispoType?.id;
     const paidId = paidDispoType?.id;
-
     const isNotPTPorPaidAndUnassigned =
-      ![ptpId, paidId].includes(dispo ?? "") && notAssigned;
-
+      ![ptpId, paidId].includes(dispo ?? "") && (notAssigned || assignedToUser);
     const isPTPAndAssignedToUser = dispo === ptpId && assignedToUser;
-
     const isPaidWithSelective = dispo === paidId && hasSelective;
-
     return !!(
       isNotPTPorPaidAndUnassigned ||
       isPTPAndAssignedToUser ||
@@ -600,139 +745,233 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
 
   return (
     canProceed(selectedCustomer, userLogged, ptpDispoType, paidDispoType) && (
-      <AnimatePresence>
-        { escalateTo && (
-          <div className="absolute top-0 left-0 w-full h-full z-50 flex items-center justify-center ">
-            <motion.div
-              key="escalate-backdrop"
-              onClick={() => setEscalateTo(false)}
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="w-full h-full absolute top-0 left-0 bg-black/40 backdrop-blur-sm cursor-pointer z-10"
-            ></motion.div>
-            <motion.div
-              key="escalate-modal"
-              className="w-auto h-1/3 bg-white z-20 rounded-lg border-slate-300 shadow-md overflow-hidden flex flex-col"
-              initial={{ scale: 0.8, opacity: 0 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ scale: 0.8, opacity: 0 }}
-              transition={{ delay: 0.2 }}
-            >
-              <h1 className="px-10 py-3 bg-red-500  uppercase text-4xl text-white font-black text-center">
-                Escalate To
-              </h1>
-              <div className="w-full h-full flex flex-col items-center justify-center gap-10">
-                <select
-                  name="tl_account"
-                  id="tl_account"
-                  onChange={(e) => {
-                    const value = e.target.value;
-                    const selectedTl: TL | { _id: ""; name: "" } =
-                      tlData?.getBucketTL.find((e) => e.name === value) || {
-                        _id: "",
-                        name: "",
-                      };
-                    setSelectedTL(selectedTl._id);
-                  }}
-                  className="capitalize border p-2  xl:text-sm 2xl:text-lg w-8/10 outline-none border-slate-500 rounded-md text-gray-500"
-                >
-                  <option value="" className="">
-                    Select TL
-                  </option>
-                  {tlData?.getBucketTL.map((e, index) =>{ 
-                    return(
-                    <option key={index} value={e.name} className="capitalize">
-                      {e.name}
+      <>
+        <AnimatePresence>
+          {escalateTo && (
+            <div className="absolute top-0 left-0 w-full h-full z-50 flex items-center justify-center ">
+              <motion.div
+                key="escalate-backdrop"
+                onClick={() => setEscalateTo(false)}
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                className="w-full h-full absolute top-0 left-0 bg-black/40 backdrop-blur-sm cursor-pointer z-10"
+              ></motion.div>
+              <motion.div
+                key="escalate-modal"
+                className="w-auto h-1/3 bg-white z-20 rounded-sm border-red-800 border-2 overflow-hidden shadow-md flex flex-col"
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <h1 className="px-10 py-3 bg-red-500 border-b-2 border-red-800 shadow-md  uppercase text-4xl text-white font-black text-center">
+                  Escalate To
+                </h1>
+                <div className="w-full h-full flex flex-col items-center justify-center gap-10">
+                  <select
+                    name="tl_account"
+                    id="tl_account"
+                    onChange={(e) => {
+                      const value = e.target.value;
+                      const selectedTl: TL | { _id: ""; name: "" } =
+                        tlData?.getBucketTL.find((e) => e.name === value) || {
+                          _id: "",
+                          name: "",
+                        };
+                      setSelectedTL(selectedTl._id);
+                    }}
+                    className="capitalize border p-2  xl:text-sm 2xl:text-lg w-8/10 outline-none border-black shadow-md rounded-md text-gray-500"
+                  >
+                    <option value="" className="">
+                      Select TL
                     </option>
-                  )})}
-                </select>
-                <div className="flex gap-2">
-                  <button
-                    className="rounded-md cursor-pointer border py-2 px-4 bg-red-500 text-white font-medium hover:bg-red-700 xl:text-sm 2xl:text-lg "
-                    onClick={handleSubmitEscalation}
-                  >
-                    Submit
-                  </button>
-                  <button
-                    className="rounded-md cursor-pointer border py-2 px-4 bg-slate-500 text-white font-medium hover:bg-slate-700 xl:text-sm 2xl:text-lg "
-                    onClick={() => setEscalateTo(false)}
-                  >
-                    Cancel
-                  </button>
+                    {tlData?.getBucketTL.map((e) => {
+                      return (
+                        <option
+                          key={e._id}
+                          value={e.name}
+                          className="capitalize"
+                        >
+                          {e.name}
+                        </option>
+                      );
+                    })}
+                  </select>
+                  <div className="flex gap-2">
+                    <button
+                      className="rounded-md border-2 cursor-pointer border-red-800 py-2 px-4 bg-red-500 text-white font-black uppercase hover:bg-red-600 transition-all xl:text-sm 2xl:text-lg "
+                      onClick={handleSubmitEscalation}
+                    >
+                      Submit
+                    </button>
+                    <button
+                      className="rounded-md cursor-pointer border-2 border-gray-800 transition-all py-2 px-4 bg-gray-500 text-white font-black uppercase hover:bg-gray-600 xl:text-sm 2xl:text-lg "
+                      onClick={() => setEscalateTo(false)}
+                    >
+                      Cancel
+                    </button>
+                  </div>
                 </div>
-              </div>
-            </motion.div>
-          </div>
-        )}
+              </motion.div>
+            </div>
+          )}
 
           {selectedCustomer?._id && (
-            <motion.form 
-            ref={Form}
-            noValidate
-            key="dispo-form" 
-            onSubmit={handleSubmitForm}
-            initial={{ x: 20, opacity: 0 }}
-            animate={{ x: 0, opacity: 1 }}
-            transition={{ delay: 0.1 }}
-            
-            className="flex flex-col bg-gray-100 overflow-hidden uppercase w-full h-full rounded-xl border-2 border-gray-600 shadow-md justify-center select-none">
-              <h1 className="text-center py-3 bg-gray-400 d uppercase border-b font-black text-slate-600 text-2xl">
+            <motion.form
+              ref={Form}
+              noValidate
+              key="dispo-form"
+              onSubmit={handleSubmitForm}
+              initial={{ x: 20, opacity: 0 }}
+              animate={{ x: 0, opacity: 1 }}
+              transition={{ delay: 0.1 }}
+              className="flex flex-col bg-gray-100 overflow-hidden uppercase w-full h-full rounded-xl border-2 border-gray-600 shadow-md justify-center select-none relative"
+            >
+              <h1 className="text-center py-3 bg-gray-400 d uppercase border-b font-black text-black text-2xl">
                 Customer Disposition
               </h1>
               <div className="flex gap-2 p-5">
                 <div className="flex flex-col gap-1 w-full">
-                  <label className="flex flex-col gap-0.5">
-                    <p className="text-gray-800 font-bold text-start  mr-2 2xl:text-sm text-xs leading-4">
-                      Disposition:
-                    </p>
-                    <select
-                      name="disposition"
-                      id="disposition"
-                      value={
-                        disposition?.getDispositionTypes.find(
-                          (x) => x.id === data.disposition
-                        )?.code ?? ""
-                      }
-                      required
-                      onChange={(e) => {
-                        handleDataChange(
-                          "disposition",
-                          dispoObject[e.target.value]
-                        );
-                      }}
-                      className={`${
-                        required && !data.disposition
-                          ? "bg-red-100 border-red-500"
-                          : "bg-gray-50  border-gray-500"
-                      }  w-full border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm p-2 `}
-                    >
-                      <option value="" aria-keyshortcuts=";">
-                        Select Disposition
-                      </option>
-                      {Object.entries(dispoObject).map(([key, value],index) => {
-                        const findDispoName =
-                          disposition?.getDispositionTypes.find(
-                            (x) => x.id === value
+                  <div className=" gap-2">
+                    <label className="flex flex-col items-center">
+                      <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs  leading-4 ">
+                        Contact Method:
+                      </p>
+                      <select
+                        name="contact_method"
+                        id="contact_method"
+                        required={requiredDispo.includes(selectedDispo)}
+                        value={data.contact_method ?? ""}
+                        onChange={(e) => {
+                          handleDataChange(
+                            "contact_method",
+                            checkIfChangeContactMethod &&
+                              !selectedCustomer.current_disposition
+                                ?.selectivesDispo
+                              ? existingDispo?.contact_method
+                              : e.target.value
                           );
-                        return (
-                          findDispoName?.active && (
-                            <option
-                              value={key}
-                              key={index}
-                              accessKey={
-                                Code[findDispoName?.code as keyof typeof Code]
-                              }
-                            >
-                              {`${findDispoName?.name} - ${key} - "${
-                                dispoKeyCode[key] || ""
-                              }"`}
-                            </option>
-                          )
-                        );
-                      })}
-                    </select>
-                  </label>
+                          handleDataChange("disposition", null);
+                        }}
+                        className={`${
+                          required && !data.contact_method
+                            ? "bg-red-100 border-red-500"
+                            : "bg-gray-50  border-black shadow-md"
+                        }  border rounded-sm focus:outline-none  p-2 text-xs 2xl:text-sm w-full`}
+                      >
+                        <option value="">Select Contact Method</option>
+                        {Object.entries(AccountType).map(
+                          ([_, value], index) => {
+                            return canCall && value === AccountType.CALL ? (
+                              <option
+                                value={value}
+                                key={value}
+                                className="capitalize"
+                                accessKey={(index + 1).toString()}
+                              >
+                                {value.charAt(0).toUpperCase() +
+                                  value.slice(1, value.length)}{" "}
+                                - {index + 1}
+                              </option>
+                            ) : (
+                              !canCall && (
+                                <option
+                                  value={value}
+                                  key={value}
+                                  className="capitalize"
+                                  accessKey={(index + 1).toString()}
+                                >
+                                  {value.charAt(0).toUpperCase() +
+                                    value.slice(1, value.length)}{" "}
+                                  - {index + 1}
+                                </option>
+                              )
+                            );
+                          }
+                        )}
+                      </select>
+                    </label>
+
+                    <label className="flex flex-col mt-1">
+                      <p className="text-gray-800 font-bold text-start  mr-2 2xl:text-sm text-xs leading-4">
+                        Disposition:
+                      </p>
+                      <select
+                        name="disposition"
+                        id="disposition"
+                        value={
+                          disposition?.getDispositionTypes?.find(
+                            (x) => x.id === data.disposition
+                          )?.code ?? ""
+                        }
+                        required
+                        onChange={(e) => {
+                          const selectedCode = e.target.value;
+
+                          handleDataChange(
+                            "disposition",
+                            dispoObject[selectedCode]
+                          );
+
+                          if (
+                            selectedCode === "UNEG" ||
+                            selectedCode === "PTP" ||
+                            selectedCode === "PAID"
+                          ) {
+                            setIsOpen(true);
+                          } else {
+                            setIsOpen(false);
+                          }
+                        }}
+                        className={`${
+                          required && !data.disposition
+                            ? "bg-red-100 border-red-500"
+                            : "bg-gray-50  border-black shadow-md"
+                        }  w-full border rounded-sm border-black focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm p-2 `}
+                      >
+                        <option value="" aria-keyshortcuts=";">
+                          Select Disposition
+                        </option>
+                        {Object.entries(dispoObject).map(
+                          ([key, value], index) => {
+                            const findDispoName =
+                              disposition?.getDispositionTypes?.find(
+                                (x) => x.id === value
+                              );
+
+                            const dispoCM =
+                              findDispoName?.contact_methods ?? {};
+
+                            return (
+                              data.contact_method &&
+                              findDispoName?.active &&
+                              findDispoName?.buckets?.includes(
+                                selectedCustomer?.account_bucket?._id
+                              ) &&
+                              dispoCM[
+                                data?.contact_method as keyof typeof dispoCM
+                              ] && (
+                                <option
+                                  value={key}
+                                  key={index}
+                                  accessKey={
+                                    Code[
+                                      findDispoName?.code as keyof typeof Code
+                                    ]
+                                  }
+                                >
+                                  {`${findDispoName?.name} - ${key} - "${
+                                    dispoKeyCode[key] || ""
+                                  }"`}
+                                </option>
+                              )
+                            );
+                          }
+                        )}
+                      </select>
+                    </label>
+                  </div>
                   <div className="flex w-full gap-2">
                     <div className="w-full">
                       {anabledDispo.includes(selectedDispo) ? (
@@ -741,10 +980,10 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                             Amount:
                           </p>
                           <div
-                            className={`flex border items-center rounded-lg w-full ${
+                            className={`flex border items-center rounded-sm w-full ${
                               required && (!data.amount || data.amount === "0")
                                 ? "bg-red-100 border-red-500"
-                                : "bg-gray-50  border-gray-500"
+                                : "bg-gray-0  border-black"
                             } `}
                           >
                             <p className="px-2">&#x20B1;</p>
@@ -767,7 +1006,10 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                     </div>
 
                     <div className="w-full">
-                      {anabledDispo.includes(selectedDispo) ? (
+                      {anabledDispo.includes(selectedDispo) &&
+                      agentBucketData?.getDeptBucket?.some(
+                        (bucket) => bucket.name !== "BPIBANK 2025"
+                      ) ? (
                         <label className="flex flex-col w-full items-center">
                           <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs leading-4">
                             Payment:
@@ -779,18 +1021,17 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                             value={data.payment ?? ""}
                             onChange={(e) => {
                               if (e.target.value === Payment.FULL) {
-                                setData((prev) => ({
-                                  ...prev,
-                                  amount: selectedCustomer.balance.toFixed(2),
-                                }));
+                                const fullAmount =
+                                  selectedCustomer.balance.toFixed(2);
+                                handleDataChange("amount", fullAmount);
                               }
                               handleDataChange("payment", e.target.value);
                             }}
                             className={`${
                               required && !data.payment
                                 ? "bg-red-100 border-red-500"
-                                : "bg-gray-50  border-gray-500"
-                            } border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                                : "bg-gray-50  border-black"
+                            } border text-gray-900  rounded-sm focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                           >
                             <option value="" accessKey="8">
                               Select Payment
@@ -818,53 +1059,7 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                     </div>
                   </div>
 
-                  <label className="flex flex-col items-center gap-0.5">
-                    <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs  leading-4 ">
-                      Contact Method:
-                    </p>
-                    <select
-                      name="contact_method"
-                      id="contact_method"
-                      required={requiredDispo.includes(selectedDispo)}
-                      value={data.contact_method ?? ""}
-                      onChange={(e) =>
-                        handleDataChange(
-                          "contact_method",
-                          checkIfChangeContactMethod &&
-                            !selectedCustomer.current_disposition
-                              ?.selectivesDispo
-                            ? existingDispo?.contact_method
-                            : e.target.value
-                        )
-                      }
-                      className={`${
-                        required && !data.contact_method
-                          ? "bg-red-100 border-red-500"
-                          : "bg-gray-50  border-gray-500"
-                      }  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
-                    >
-                      <option value="">Select Contact Method</option>
-                      {Object.entries(AccountType).map(
-                        ([_, value], index) => {
-
-                  
-                          return (
-                            <option
-                              value={value}
-                              key={index}
-                              className="capitalize"
-                              accessKey={(index + 1).toString()}
-                            >
-                              {value.charAt(0).toUpperCase() +
-                                value.slice(1, value.length)}{" "}
-                              - {index + 1}
-                            </option>
-                          );
-                        }
-                      )}
-                    </select>
-                  </label>
-                  {data.contact_method === AccountType.CALLS && (
+                  {data.contact_method === AccountType.CALL && (
                     <label className="flex flex-col  items-center gap-0.5">
                       <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4">
                         Dialer
@@ -872,7 +1067,7 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                       <select
                         name="dialer"
                         id="dialer"
-                        required={data.contact_method === AccountType.CALLS}
+                        required={data.contact_method === AccountType.CALL}
                         value={data.dialer ?? ""}
                         onChange={(e) =>
                           handleDataChange(
@@ -887,12 +1082,12 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                         className={`${
                           required && !data.dialer
                             ? "bg-red-100 border-red-500"
-                            : "bg-gray-50  border-gray-500"
-                        }  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                            : "bg-gray-50  border-black"
+                        }  border text-gray-900  rounded-sm focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                       >
                         <option value="">Select Dialer</option>
-                        {Object.entries(Dialer).map(([_, value],index) => {
-                          return (
+                        {Object.entries(Dialer).map(([_, value], index) => {
+                          return canCall && value === Dialer.VICI ? (
                             <option
                               value={value}
                               key={index}
@@ -902,6 +1097,18 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                               {value.charAt(0).toUpperCase() +
                                 value.slice(1, value.length)}
                             </option>
+                          ) : (
+                            !canCall && (
+                              <option
+                                value={value}
+                                key={index}
+                                className="capitalize"
+                                accessKey={DialerCode[value]}
+                              >
+                                {value.charAt(0).toUpperCase() +
+                                  value.slice(1, value.length)}
+                              </option>
+                            )
                           );
                         })}
                       </select>
@@ -930,22 +1137,24 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                         className={`${
                           required && !data.dialer
                             ? "bg-red-100 border-red-500"
-                            : "bg-gray-50  border-gray-500"
-                        }  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                            : "bg-gray-50  border-black"
+                        }  border text-gray-900  rounded-sm focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                       >
                         <option value="">Select SMS Collector</option>
-                        {Object.entries(SMSCollector).map(([_, value],index) => {
-                          return (
-                            <option
-                              value={value}
-                              key={index}
-                              className="capitalize"
-                            >
-                              {value.charAt(0).toUpperCase() +
-                                value.slice(1, value.length)}
-                            </option>
-                          );
-                        })}
+                        {Object.entries(SMSCollector).map(
+                          ([_, value], index) => {
+                            return (
+                              <option
+                                value={value}
+                                key={index}
+                                className="capitalize"
+                              >
+                                {value.charAt(0).toUpperCase() +
+                                  value.slice(1, value.length)}
+                              </option>
+                            );
+                          }
+                        )}
                       </select>
                     </label>
                   )}
@@ -976,18 +1185,20 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                         } border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                       >
                         <option value="">Select Chat App</option>
-                        {Object.entries(SkipCollector).map(([_, value],index) => {
-                          return (
-                            <option
-                              value={value}
-                              key={index}
-                              className="capitalize"
-                            >
-                              {value.charAt(0).toUpperCase() +
-                                value.slice(1, value.length)}
-                            </option>
-                          );
-                        })}
+                        {Object.entries(SkipCollector).map(
+                          ([_, value], index) => {
+                            return (
+                              <option
+                                value={value}
+                                key={index}
+                                className="capitalize"
+                              >
+                                {value.charAt(0).toUpperCase() +
+                                  value.slice(1, value.length)}
+                              </option>
+                            );
+                          }
+                        )}
                       </select>
                     </label>
                   )}
@@ -1000,10 +1211,10 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                       id="sms_collector"
                       value={data.RFD ?? ""}
                       onChange={(e) => handleDataChange("RFD", e.target.value)}
-                      className={` bg-gray-50  border-gray-500  border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                      className={` border bg-gray-50  border-black  shadow-md  rounded-sm focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                     >
                       <option value="">Select RFD Reason</option>
-                      {Object.entries(RFD).map(([_, value],index) => {
+                      {Object.entries(RFD).map(([_, value], index) => {
                         return (
                           <option value={value} key={index}>
                             {value.charAt(0).toUpperCase() +
@@ -1035,8 +1246,8 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                             data.payment_date &&
                             checkIfValid(data.payment_date))
                             ? "bg-red-100 border-red-500"
-                            : "bg-gray-50  border-gray-500"
-                        } border text-gray-900  rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                            : "bg-gray-50 border-black"
+                        } border text-gray-900  rounded-sm focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
                       />
                     </label>
                   ) : (
@@ -1054,16 +1265,18 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                         onChange={(e) =>
                           handleDataChange("payment_method", e.target.value)
                         }
-                        className={` bg-gray-50  border-gray-500 border text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2`}
+                        className={` bg-gray-50 border-black border text-gray-900 rounded-sm focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2`}
                       >
                         <option value="">Select Method</option>
-                        {Object.entries(PaymentMethod).map(([_, value],index) => {
-                          return (
-                            <option value={value} key={index}>
-                              {value}
-                            </option>
-                          );
-                        })}
+                        {Object.entries(PaymentMethod).map(
+                          ([_, value], index) => {
+                            return (
+                              <option value={value} key={index}>
+                                {value}
+                              </option>
+                            );
+                          }
+                        )}
                       </select>
                     </label>
                   ) : (
@@ -1085,14 +1298,14 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                         onChange={(e) =>
                           handleDataChange("ref_no", e.target.value)
                         }
-                        className={` bg-gray-50 border-gray-500 border rounded-lg text-xs 2xl:text-sm w-full p-2`}
+                        className={` bg-gray-50 border-black border rounded-sm text-xs 2xl:text-sm w-full p-2`}
                       />
                     </label>
                   ) : (
                     <IFBANK label="Ref. No" />
                   )}
                   <label className="flex flex-col items-start gap-0.5">
-                    <p className="text-gray-800 mr-2 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
+                    <p className="text-gray-800  mr-2 font-bold text-start w-full  2xl:text-sm text-xs 2xl:w-2/6 leading-4 ">
                       Comment:
                     </p>
                     <textarea
@@ -1103,45 +1316,122 @@ const DispositionForm: React.FC<Props> = ({ updateOf }) => {
                       onChange={(e) =>
                         handleDataChange("comment", e.target.value)
                       }
-                      className="bg-gray-50 min-h-10 border border-gray-500 text-gray-900 rounded-lg focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2 resize-none"
+                      className={`" border-black text-black shadow-md bg-gray-50 min-h-10 border rounded-sm focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2 resize-none "`}
                     ></textarea>
                   </label>
                   <div className="flex justify-end gap-2 mt-2">
-                    {data.disposition && (
-                      <motion.button
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        accessKey="q"
-                        type="submit"
-                        className={`bg-green-500 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-black shadow-md rounded-sm uppercase px-5 py-3 cursor-pointer 2xl:text-sm text-xs`}
-                      >
-                        Submit
-                      </motion.button>
-                    )}
-                    {data.disposition && userLogged?.type === "AGENT" && (
-                      <motion.button
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
-                        type="button"
-                        className="bg-red-500 hover:bg-red-600 focus:outline-none text-white uppercase  focus:ring-4 focus:ring-red-400 font-black rounded-sm shadow-md px-5 py-3 cursor-pointer 2xl:text-sm text-xs"
-                        onClick={() =>
-                          handleSubmitEscalationToTl(
-                            selectedCustomer?._id || ""
-                          )
-                        }
-                      >
-                        TL Escalation
-                      </motion.button>
-                    )}
+                    {(!isRing || !onCall) &&
+                      !(
+                        inlineData?.includes("PAUSED") &&
+                        inlineData?.includes("LAGGED") &&
+                        inlineData?.includes("DISPO")
+                      ) && (
+                        <>
+                          {}
+                          {data.disposition && (
+                            <motion.button
+                              initial={{ scale: 0.5, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              accessKey="q"
+                              type="submit"
+                              className={`bg-green-500 border-2 transition-a=ll border-green-800 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-black shadow-md rounded-sm uppercase px-5 py-3 cursor-pointer 2xl:text-sm text-xs`}
+                            >
+                              Submit
+                            </motion.button>
+                          )}
+                        </>
+                      )}
+                    {/* {data.disposition && userLogged?.type === "AGENT" && ( */}
+                    <motion.button
+                      initial={{ scale: 0.5, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      type="button"
+                      className="bg-red-500 border-2 transition-all border-red-800 hover:bg-red-600 focus:outline-none text-white uppercase  focus:ring-4 focus:ring-red-400 font-black rounded-sm shadow-md px-5 py-3 cursor-pointer 2xl:text-sm text-xs"
+                      onClick={() =>
+                        handleSubmitEscalationToTl(selectedCustomer?._id || "")
+                      }
+                    >
+                      TL Escalation
+                    </motion.button>
+                    {/* )} */}
                   </div>
                 </div>
               </div>
             </motion.form>
           )}
-     
-   
-        {confirm && <Confirmation {...modalProps} />}
-      </AnimatePresence>
+
+          {confirm && <Confirmation {...modalProps} />}
+        </AnimatePresence>
+
+        <AnimatePresence>
+          {isOpen &&
+            agentBucketData?.getDeptBucket?.some(
+              (bucket) => bucket.name === "BPIBANK 2025"
+            ) && (
+              <div className="absolute top-0 flex left-0 justify-center items-center z-30 w-full h-full ">
+                <motion.div
+                  key="bpibank-bg"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                  className="bg-black/40 z-10 backdrop-blur-sm w-full h-full absolute top-0 left-0"
+                ></motion.div>
+                <motion.div
+                  key="bpibank-modal"
+                  className="flex flex-col z-20 w-auto relative"
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                >
+                  <div className="bg-white border text-2xl overflow-hidden rounded-md shadow-md">
+                    <div className="bg-gray-300 py-1 px-6  text-center border-b font-black uppercase">
+                      Select Options
+                    </div>
+                    {DISPO_OPTIONS.map(({ label, value }, index) => {
+                      return (
+                        <div
+                          key={index}
+                          className="px-3 py-1 odd:bg-gray-100 even:bg-gray-200 text-xs font-black uppercase 2xl:text-sm cursor-pointer hover:bg-gray-300 transition-all"
+                          onClick={() => {
+                            let amount = 0;
+                            const details =
+                              selectedCustomer?.out_standing_details;
+
+                            if (!details) return;
+
+                            switch (label) {
+                              case "Partial":
+                                amount =
+                                  details.partial_payment_w_service_fee ?? 0;
+                                break;
+                              case "New Tad with SF":
+                                amount = details.new_tad_with_sf ?? 0;
+                                break;
+                              case "New Pay Off":
+                                amount = details.new_pay_off ?? 0;
+                                break;
+                              default:
+                                amount = 0;
+                            }
+
+                            const sanitizedAmount = Number.isFinite(amount)
+                              ? amount.toFixed(2)
+                              : null;
+                            handleDataChange("amount", sanitizedAmount);
+                            handleDataChange("partialPayment", value);
+                            setIsOpen(false);
+                          }}
+                        >
+                          {label}
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              </div>
+            )}
+        </AnimatePresence>
+      </>
     )
   );
 };

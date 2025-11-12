@@ -397,6 +397,7 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
   const valuePage =
     parseInt(taskManagerPage) > pages ? pages.toString() : taskManagerPage;
 
+
   if (loading) return <Loading />;
 
   return (
@@ -426,7 +427,7 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
               {taskFilter !== "assigned" ? (
                 <button
                   type="button"
-                  className="focus:outline-none text-white bg-blue-700 hover:bg-blue-800 focus:ring-4 focus:ring-blue-300 font-medium rounded-lg text-xs px-5 h-10 me-2 "
+                  className="focus:outline-none text-white bg-green-600 hover:bg-green-700 focus:ring-4 focus:ring-green-300 font-black uppercase border-2 border-green-900 cursor-pointer rounded-md text-xs px-5 h-10 me-2 "
                   onClick={handleAddTask}
                 >
                   Add Task
@@ -434,7 +435,7 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
               ) : (
                 <button
                   type="button"
-                  className="focus:outline-none text-white bg-red-700 hover:bg-red-800 focus:ring-4 focus:ring-red-300 font-medium rounded-lg text-xs px-5 h-10 me-2"
+                  className="focus:outline-none font-black text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-300 uppercase border-2 border-red-900 cursor-pointer rounded-md text-xs px-5 h-10 me-2"
                   onClick={handleClickDeleteGroupTaskButton}
                 >
                   Remove task
@@ -444,7 +445,7 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
           </div>
         )}
 
-        <div className="text-sm text-gray-800 py-3 gap-8 px-6 items-center uppercase bg-gray-300 rounded-t-md dark:bg-gray-700 dark:text-gray-400 grid grid-cols-8 font-black mt-2">
+        <div className="text-sm text-gray-800 border py-3 gap-8 px-6 items-center uppercase bg-gray-300 rounded-t-md dark:bg-gray-700 dark:text-gray-400 grid grid-cols-8 font-black mt-2">
           <div className=" col-span-2">Customer Name</div>
           <div className=" col-span-2">Current Disposition</div>
           <div className="">Bucket</div>
@@ -454,23 +455,23 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
         </div>
         <div className=" w-full h-full text-gray-500 flex flex-col overflow-y-auto rounded-b-md relative mb-2">
           {(selectedGroup || selectedAgent) && (
-            <div className="bg-white border-b  border-gray-200 hover:bg-blue-100 flex py-2 items-center text-xs justify-end sticky top-0">
-              <label className=" flex gap-2 justify-end px-2 w-full">
+            <div className="bg-white flex border-b border-x rounded-b-md border-black hover:bg-blue-100 py-2 items-center text-xs justify-end sticky top-0">
+              <label className=" flex cursor-pointer gap-1 justify-end px-2 ">
                 <input
                   type="checkbox"
                   name="all"
                   id="all"
                   checked={handleCheckAll}
                   onChange={(e) => handleSelectAllToAdd(e)}
-                  className={`${taskFilter === "assigned" && "accent-red-600"}`}
+                  className={`${taskFilter === "assigned" && "accent-red-600"}  `}
                 />
-                <span className="ps-2">Select All</span>
+                <span className="font-black uppercase text-black">Select All</span>
               </label>
             </div>
           )}
           {CustomerAccountsData?.findCustomerAccount?.CustomerAccounts
-            ?.length === 0 ? (
-            <div className="italic font-sans flex text-center justify-center w-full py-2 rounded-b-md bg-gray-100">
+            ?.length === 0 && (!selectedGroup || selectedAgent) ? (
+            <div className="italic font-sans border-b border-x border-black shadow-md flex text-center justify-center w-full py-2 rounded-b-md bg-gray-100">
               No customer found.
             </div>
           ) : (
@@ -479,7 +480,7 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
                 (ca, index) => (
                   <motion.div
                     key={ca._id}
-                    className="even:bg-gray-100 cursor-default gap-10 bg-gray-200 hover:bg-gray-300 transition-all grid grid-cols-8 py-2 items-center text-sm px-6"
+                    className="even:bg-gray-100 border-b last:rounded-b-md la st:shadow-md  border-x border-black cursor-default gap-10 bg-gray-200 hover:bg-gray-300 transition-all grid grid-cols-8 py-2 items-center text-sm px-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: index * 0.1 }}

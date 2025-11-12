@@ -43,6 +43,10 @@ const customerTypeDefs = gql`
     pastdue_amount: Float
     mo_amort: Float
     branch: String
+    partial_payment_w_service_fee: Float
+    new_tad_with_sf: Float
+    new_pay_off: Float
+    service_fee: Float
   }
 
   type CustomerInfo {
@@ -81,6 +85,10 @@ const customerTypeDefs = gql`
     mo_balance: Float
     pastdue_amount: Float
     mo_amort: Float
+    partial_payment_w_service_fee: Float
+    new_tad_with_sf: Float
+    new_pay_off: Float
+    service_fee: Float
   }
 
   type grassDetails {
@@ -205,6 +213,7 @@ const customerTypeDefs = gql`
     emergency_contact: EmergencyContact
     dispo_history:[CurrentDispo]
     current_disposition: CurrentDispo
+    
   }
 
   type PerformanceStatistic {
@@ -264,7 +273,7 @@ const customerTypeDefs = gql`
   }
 
   type Mutation {
-    createCustomer(input:[CustomerData], callfile: String!, bucket: ID!): Success
+    createCustomer(input:[CustomerData], callfile: String, bucket: ID): Success
     updateCustomer(fullName:String!, dob:String!, gender:String!, mobiles:[String], emails:[String], addresses:[String],id:ID!, isRPC:Boolean): Success
     updateRPC(id:ID!): Success
   }

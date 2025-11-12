@@ -10,6 +10,7 @@ import DispoType from "../../models/dispoType.js"
 import Group from "../../models/group.js"
 import Department from "../../models/department.js"
 import Callfile from "../../models/callfile.js"
+import { features } from "process"
 
 const dispositionResolver = {
   DateTime,
@@ -256,6 +257,7 @@ const dispositionResolver = {
           RFD: RFDS || 0,
           toolsDispoCount: toolsDispoCount || 0,
         }
+
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
@@ -1784,7 +1786,7 @@ const dispositionResolver = {
           }).lean(),
         ]);
 
-        const withPayment = ['PTP','PAID','UNEG']
+        const withPayment = ['PTP','PAID']
         const currentDispo = customerAccount?.current_disposition;
 
         if (!customerAccount) {
@@ -1816,7 +1818,9 @@ const dispositionResolver = {
           ...input,
           payment: withPayment.includes(dispoType.code) ? payment : null,
           amount: parseFloat(input.amount) || 0, 
-          user: user._id, 
+          user: user._id,
+          callId: input.callId,
+          "features.partialPayment": input.partialPayment,
           callfile: customerAccount.callfile
         })
 
@@ -1884,16 +1888,19 @@ const dispositionResolver = {
           {
             ...(Object.keys(updateFields).length && { $set: updateFields }),
             ...(Object.keys(unsetFields).length && { $unset: unsetFields }),
-            $push: { history: newDisposition._id }
+            $push: { history: newDisposition._id },
+            $inc: {"features.called": 1}
           },
           {new: true}
         );
         
         return {
           success: true,
-          message: "Disposition successfully created"
+          message: "Disposition successfully created",
+          dispoId: newDisposition._id
         }
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

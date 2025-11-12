@@ -65,7 +65,7 @@ const CallReportTables: React.FC<ComponentsProps> = ({
 
   return (
     <>
-      <div className=" w-full text-xs 2xl:text-base">
+      <div className=" w-full text-xs flex items-center  2xl:text-base">
         <div className=" w-full shadow-md">
           <div className="grid bg-orange-500 border-t border-x border-orange-800 items-center text-center  rounded-t-md uppercase  grid-cols-3 font-black ">
             <div className="w-full border-r py-1 border-orange-800 ">
@@ -103,9 +103,7 @@ const CallReportTables: React.FC<ComponentsProps> = ({
 
       <div className=" 2xl:text-base text-xs text-black">
         <div className="text-center ">
-          <div
-            className=" py-1 uppercase border-yellow-800  font-black text-sm  w-full bg-yellow-400  rounded-t-md border"
-          >
+          <div className=" py-1 uppercase border-yellow-800  font-black text-sm  w-full bg-yellow-400  rounded-t-md border">
             Calling Status
           </div>
           <div className=" grid grid-cols-2 border-x border-b border-yellow-800 items-center">
@@ -127,23 +125,35 @@ const CallReportTables: React.FC<ComponentsProps> = ({
         </div>
       </div>
 
-      <div className="2xl:text-base text-sm shadow-md">
-        <div className="border-collapse">
-          <div>
-            <div
-              className=" py-1 bg-blue-500 border-blue-800 font-black rounded-t-md border-t-md border uppercase  text-black text-center"
-            >
-              Positive Calls Status
-            </div>
+      <div className="2xl:text-base flex w-full flex-col items-center h-full justify-center text-sm">
+        <div className="border-collapse w-full">
+          <div className=" py-1 bg-blue-500 w-full border-blue-800 font-black rounded-t-md border-t-md border uppercase  text-black text-center">
+            Positive Calls Status
           </div>
         </div>
-        <div className="text-center">
+        <div className="text-center w-full">
           <div className="text-black border-x  border-blue-800 gap-2 text-[8px] md:text-xs md:font-black font-semibold items-center text-center justify-center bg-blue-400 uppercase grid grid-cols-5">
-            <div className="border-r truncate border-blue-800 h-full items-center flex justify-center">Disposition</div>
-            <div className="border-r truncate border-blue-800 h-full items-center flex justify-center">Count</div>
-            <div className="border-r truncate border-blue-800 h-full items-center flex justify-center whitespace-nowrap ">Count Percentage</div>
-            <div className="border-r truncate border-blue-800 h-full flex items-center justify-center ">Total Principal</div>
-            <div className="truncate py-1 items-center flex justify-center" title="Principal Percentage" >Principal Percentage</div>
+            <div className="border-r truncate border-blue-800 h-full items-center flex justify-center">
+              Disposition
+            </div>
+            <div className="border-r truncate border-blue-800 h-full items-center flex justify-center">
+              Count
+            </div>
+            <div
+              className="border-r truncate border-blue-800 h-full items-center flex justify-center whitespace-nowrap "
+              title="Count Percentage"
+            >
+              Count Percentage
+            </div>
+            <div className="border-r truncate border-blue-800 h-full flex items-center justify-center ">
+              Total Principal
+            </div>
+            <div
+              className="truncate py-1 items-center flex justify-center"
+              title="Principal Percentage"
+            >
+              Principal Percentage
+            </div>
           </div>
           {positiveCalls?.map((x, index) => {
             const reducerPositiveCallsAmount =
@@ -159,11 +169,16 @@ const CallReportTables: React.FC<ComponentsProps> = ({
             const countPersent =
               (Number(x.count) / Number(reducerPositiveCallsCount)) * 100;
             return (
-              <div key={index}
-                className="grid grid-cols-5 even:bg-blue-200 gap-2 text-[8px] md:text-xs md:font-black font-semibold border-blue-800 border-t border-x bg-blue-100"
+              <div
+                key={index}
+                className="grid w-full grid-cols-5 shadow-md even:bg-blue-200 gap-2 text-[8px] md:text-xs md:font-black font-semibold border-blue-800 border-t border-x bg-blue-100"
               >
-                <div className=" border-blue-800 border-r flex items-center justify-center">{x.name}</div>
-                <div className=" border-blue-800 border-r flex items-center justify-center">{x.count}</div>
+                <div className=" border-blue-800 border-r flex items-center justify-center">
+                  {x.name}
+                </div>
+                <div className=" border-blue-800 border-r flex items-center justify-center">
+                  {x.count}
+                </div>
                 <div className=" border-blue-800 border-r flex items-center justify-center">
                   {countPersent.toFixed(2)}%
                 </div>
@@ -173,18 +188,20 @@ const CallReportTables: React.FC<ComponentsProps> = ({
                     currency: "PHP",
                   })}
                 </div>
-                <div className=" py-1">
-                  {principalPercent.toFixed(2)}%
-                </div>
+                <div className=" py-1 ">{principalPercent.toFixed(2)}%</div>
               </div>
             );
           })}
-          <div className="rounded-b-md  text-[8px] md:text-xs md:font-black font-semibold bg-blue-200 border-x border-y uppercase gap-2 grid grid-cols-5">
+          <div className="rounded-b-md  text-[8px] md:text-xs md:font-black font-semibold bg-blue-200 border-x border-y border-blue-800 uppercase gap-2 grid grid-cols-5">
             <div className=" text-green-600 py-1 border-r border-blue-800">
               Total
             </div>
-            <div className="border-r border-blue-800 flex items-center justify-center">{filteredPositive}</div>
-            <div className="border-r border-blue-800 flex items-center justify-center">100%</div>
+            <div className="border-r border-blue-800 flex items-center justify-center">
+              {filteredPositive}
+            </div>
+            <div className="border-r border-blue-800 flex items-center justify-center">
+              100%
+            </div>
             <div className="border-r border-blue-800 flex items-center justify-center">
               {positiveCalls.length > 0
                 ? positiveCalls
@@ -204,22 +221,28 @@ const CallReportTables: React.FC<ComponentsProps> = ({
         </div>
       </div>
 
-      <div className="2xl:text-base shadow-md text-xs">
+      <div className="2xl:text-base text-xs">
         <div className="border-collapse">
           <div>
-            <div
-              className=" rounded-t-md border  border-blue-800  text-sm font-black text-center uppercase py-1  bg-blue-500 text-black"
-            >
+            <div className=" rounded-t-md border  border-blue-800  text-sm font-black text-center uppercase py-1  bg-blue-500 text-black">
               Negative Calls Status
             </div>
           </div>
         </div>
         <div className="text-center ">
           <div className="text-black  text-[8px] md:text-xs md:font-black font-semibold border-x bg-blue-400 border-blue-800 grid grid-cols-5 border-b uppercase">
-            <div className="border-r border-blue-800  flex items-center justify-center">Disposition</div>
-            <div className="border-r border-blue-800  flex items-center justify-center">Count</div>
-            <div className="border-r border-blue-800  flex items-center justify-center">Count Percentage</div>
-            <div className="border-r border-blue-800  flex items-center justify-center">Total Principal</div>
+            <div className="border-r border-blue-800  flex items-center justify-center">
+              Disposition
+            </div>
+            <div className="border-r border-blue-800  flex items-center justify-center">
+              Count
+            </div>
+            <div className="border-r border-blue-800  flex items-center justify-center">
+              Count Percentage
+            </div>
+            <div className="border-r border-blue-800  flex items-center justify-center">
+              Total Principal
+            </div>
             <div className="py-1">Principal Percentage</div>
           </div>
           {negativeCalls?.map((x, index) => {
@@ -227,9 +250,16 @@ const CallReportTables: React.FC<ComponentsProps> = ({
             const countPersent =
               (Number(x.count) / Number(totalNegativeCount)) * 100;
             return (
-              <div key={index} className="grid border-x border-b text-[8px] md:text-xs even:bg-blue-300 border-blue-800  uppercase font-semibold md:font-black bg-blue-200 grid-cols-5">
-                <div className="border-r border-blue-800  flex items-center justify-center">{x.name}</div>
-                <div className="border-r border-blue-800  flex items-center justify-center">{x.count}</div>
+              <div
+                key={index}
+                className="grid border-x border-b text-[8px] md:text-xs even:bg-blue-300 border-blue-800  uppercase font-semibold md:font-black bg-blue-200 grid-cols-5"
+              >
+                <div className="border-r border-blue-800  flex items-center justify-center">
+                  {x.name}
+                </div>
+                <div className="border-r border-blue-800  flex items-center justify-center">
+                  {x.count}
+                </div>
                 <div className="border-r border-blue-800  flex items-center justify-center">
                   {countPersent.toFixed(2)}%
                 </div>
@@ -245,8 +275,10 @@ const CallReportTables: React.FC<ComponentsProps> = ({
               </div>
             );
           })}
-          <div className="grid grid-cols-5  text-[8px] md:text-xs md:font-black font-semibold border-x bg-blue-300  " >
-            <div className="border-r border-blue-800 items-center justify-center flex">NO DISPOSITION</div>
+          <div className="grid grid-cols-5  text-[8px] md:text-xs md:font-black font-semibold border-x bg-blue-300  ">
+            <div className="border-r border-blue-800 items-center justify-center flex">
+              NO DISPOSITION
+            </div>
             <div className="border-r border-blue-800 items-center justify-center flex">
               {totalAccounts - Number(allAccountsReportDataCount)}
             </div>
@@ -277,8 +309,12 @@ const CallReportTables: React.FC<ComponentsProps> = ({
             <div className="border-r text-green-800 border-blue-800 flex justify-center items-center">
               Total
             </div>
-            <div className="border-r border-blue-800 flex justify-center items-center">{totalNegativeCount}</div>
-            <div className="border-r border-blue-800 flex justify-center items-center">100%</div>
+            <div className="border-r border-blue-800 flex justify-center items-center">
+              {totalNegativeCount}
+            </div>
+            <div className="border-r border-blue-800 flex justify-center items-center">
+              100%
+            </div>
             <div className="border-r border-blue-800 flex justify-center items-center">
               {negativeTotalPrincipal.toLocaleString("en-PH", {
                 style: "currency",

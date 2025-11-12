@@ -103,7 +103,7 @@ const AgentProductionMonitoringTable = () => {
   return (
     <motion.div
       className="h-full flex flex-col border border-gray-600 rounded-md lg:text-xs 2xl:text-base overflow-hidden"
-      initial={{ y: 20, opacity: 0}}
+      initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.6 }}
     >
@@ -128,27 +128,30 @@ const AgentProductionMonitoringTable = () => {
                 <div>Variance</div>
               </div>
             </div>
-            <div className="  overflow-auto  flex flex-col h-7/10" >
+            <div className="  overflow-auto  flex flex-col h-7/10">
               {bucketAgents?.map((x, index) => {
                 const findAgent = agentDailyProd?.agentDispoDaily
                   ? agentDailyProd?.agentDispoDaily.find(
                       (agent) => agent.user === x._id
                     )
                   : null;
+
                 const collectionPercent = findAgent
                   ? (findAgent?.kept / x.targets[intervalTypes]) * 100
                   : null;
+
                 const theVariance = findAgent
                   ? x.targets[intervalTypes] - findAgent?.kept
                   : null;
+
                 return (
                   x.active && (
                     <motion.div
                       className="text-left hover:bg-gray-200  odd:bg-gray-100 bg-white items-center gap-2 grid grid-cols-7 text-gray-600"
                       key={x._id}
-                      initial={{opacity: 0}}
-                      animate={{opacity: 1}}
-                      transition={{delay: index * 0.2}}
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      transition={{ delay: index * 0.2 }}
                     >
                       <div
                         className="truncate py-2 lg:text-xs 2xl:text-sm text-left pl-2 capitalize text-nowrap"
@@ -209,7 +212,11 @@ const AgentProductionMonitoringTable = () => {
                         {theVariance?.toLocaleString("en-PH", {
                           style: "currency",
                           currency: "PHP",
-                        }) || <div className="text-gray-400 italic">No variance</div>}
+                        }) || (
+                          <div className="text-gray-400 italic">
+                            No variance
+                          </div>
+                        )}
                       </div>
                     </motion.div>
                   )

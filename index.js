@@ -53,6 +53,7 @@ import cron from "node-cron";
 import CustomerAccount from "./models/customerAccount.js";
 import callResolver from "./graphql/resolvers/callResolver.js";
 import callTypeDefs from "./graphql/schemas/callSchema.js";
+import { logoutVici } from "./middlewares/vicidial.js";
 
 const connectedUsers = new Map();
 
@@ -72,7 +73,6 @@ app.use(cors({
     if (!origin || allowedOrigins.includes(origin)) {
       callback(null, true);
     } else {
-      console.log(origin)
       callback(new Error("Not allowed by CORS"));
     }
   },
@@ -243,7 +243,12 @@ useServer({ schema,
         const latest = connectedUsers.get(userId);
         if (!latest || latest.sockets.size === 0) {
           connectedUsers.delete(userId);
-          await User.findByIdAndUpdate(userId, { isOnline: false });
+          const res = await User.findByIdAndUpdate(userId, { isOnline: false },{new: true}).populate('buckets');
+          const bucket =
+          res?.buckets?.length > 0
+            ? new Array(...new Set(res?.buckets?.map((x) => x.viciIp)))
+            : [];
+          await logoutVici(res.vici_id, bucket[0])
           await pubsub.publish(PUBSUB_EVENTS.OFFLINE_USER, {
             accountOffline: {
               agentId: userId,
@@ -289,7 +294,7 @@ const startServer = async() => {
       })
     );
     
-    httpServer.listen(process.env.PORT, () => {
+    httpServer.listen(process.env.PORT,"0.0.0.0", () => {
       console.log(`🚀 Server running at http://localhost:${process.env.PORT}/graphql`);
       console.log("📂 Serving static files from /public");
     });

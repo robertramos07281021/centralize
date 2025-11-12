@@ -27,7 +27,6 @@ export type MessageChildren = {
   divElement: HTMLDivElement | null
 }
 
-
 const MessageModal=forwardRef<MessageChildren, ComponentProp> (
   ({bucket, closeModal},ref) => {
   const dispatch = useAppDispatch()

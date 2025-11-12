@@ -174,7 +174,7 @@ const ReportsComponents: React.FC<ReportsComponents> = ({
   return (
     <div className="h-full flex p-5 overflow-hidden mt-2 gap-2">
       <motion.div
-        className=" bg-gray-100 border-2 rounded-md shadow-md border-gray-700 h-full flex flex-col w-1/2"
+        className=" bg-gray-100 border rounded-md shadow-md border-gray-700 h-full flex flex-col w-1/2"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.4 }}
@@ -187,7 +187,7 @@ const ReportsComponents: React.FC<ReportsComponents> = ({
           {labels.map((e, index) => (
             <div
               key={index}
-              className="text-black border-r gap-2 p-0 pl-1 md:p-2 last:border-0 font-black uppercase "
+              className="text-black text-xs gap-2 p-0 pl-1 md:p-2 last:border-0 font-black uppercase "
             >
               {e}
             </div>
@@ -225,7 +225,7 @@ const ReportsComponents: React.FC<ReportsComponents> = ({
         </div>
       </motion.div>
       <motion.div
-        className="p-20 w-1/2 border-2 bg-gray-100 rounded-md h-full shadow-md border-gray-700"
+        className="p-20 w-1/2 border bg-gray-100 rounded-md h-full shadow-md border-gray-700"
         initial={{y: 20, opacity: 0}}
         animate={{y: 0, opacity: 1}}
         transition={{delay: 0.5}}

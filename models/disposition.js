@@ -43,6 +43,9 @@ const dispositionSchema = new Schema(
     RFD: {
       type: String,
     },
+    callId: {
+      type:String
+    },
     bucket: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Bucket"
@@ -86,6 +89,11 @@ const dispositionSchema = new Schema(
     paidDispo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: 'Disposition'
+    },
+    features: {
+      partialPayment: {
+        type: Number,
+      }
     }
   },
   { timestamps: true }

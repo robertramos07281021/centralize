@@ -129,11 +129,11 @@ const OFFLINE_USER = gql`
   }
 `;
 
-// const CHECK_USER_ONLINE_ON_VICI = gql`
-//   query checkUserIsOnlineOnVici {
-//     checkUserIsOnlineOnVici
-//   }
-// `;
+const CHECK_USER_ONLINE_ON_VICI = gql`
+  query checkUserIsOnlineOnVici($_id: ID!) {
+    checkUserIsOnlineOnVici(_id:$_id)
+  }
+`;
 
 const Navbar = () => {
   const navigate = useNavigate();
@@ -147,30 +147,31 @@ const Navbar = () => {
   });
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
 
-  // const { data: userIsOnlineOnVici , error:viciDialError} = useQuery<{
-  //   checkUserIsOnlineOnVici: boolean;
-  // }>(CHECK_USER_ONLINE_ON_VICI, {
-  //   notifyOnNetworkStatusChange: true,
-  //   skip:
-  //     userLogged?.type !== "AGENT" && !location.pathname.includes("/agent-cip"),
-  //   pollInterval: 3000
-  // });
+  const { data: userIsOnlineOnVici , error:viciDialError} = useQuery<{
+    checkUserIsOnlineOnVici: boolean;
+  }>(CHECK_USER_ONLINE_ON_VICI, {
+    variables: {_id: userLogged?._id},
+    notifyOnNetworkStatusChange: true,
+    skip:
+    !location.pathname.includes("cip") && !['AGENT','TL'].includes(userLogged?.type as keyof typeof String),
+    pollInterval: 3000
+  });
 
-  // useEffect(()=>{ 
-  //   if(viciDialError) {
-  //     dispatch(setSuccess({
-  //       isMessage: true,
-  //       success: true,
-  //       message: "Please tell you admin to add you Vici Dial ID!"
-  //     }))
-  //   }
-  // },[viciDialError])
+  useEffect(()=>{ 
+    if(Boolean(viciDialError)) {
+      dispatch(setSuccess({
+        isMessage: true,
+        success: true,
+        message: "Please tell you admin to add you Vici Dial ID!"
+      }))
+    }
+  },[viciDialError])
 
-  // useEffect(() => {
-  //   if (userIsOnlineOnVici) {
-  //     dispatch(setIsOnlineOnVici(userIsOnlineOnVici?.checkUserIsOnlineOnVici));
-  //   }
-  // }, [userIsOnlineOnVici]);
+  useEffect(() => {
+    if (userIsOnlineOnVici) {
+      dispatch(setIsOnlineOnVici(userIsOnlineOnVici?.checkUserIsOnlineOnVici));
+    }
+  }, [userIsOnlineOnVici]);
 
   const [deselectTask] = useMutation(DESELECT_TASK, {
     onCompleted: () => {

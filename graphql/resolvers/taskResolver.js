@@ -278,6 +278,7 @@ const taskResolver = {
         if(!user) throw new CustomError("Unauthorized",401)
     
         const ca = await CustomerAccount.findById(id)
+        
         if(!ca) throw new CustomError("Customer account not found", 404) 
       
         const findGroup = await Group.findById(ca.assigned)

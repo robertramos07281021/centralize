@@ -76,6 +76,7 @@ const bucketResolver = {
     getTLBucket: async(_,__,{user}) => {
       try {
         const res = await Bucket.find({_id: user.buckets})
+        // console.log(res)
         return res
       } catch (error) {
         throw new CustomError(error.message, 500)
@@ -130,41 +131,48 @@ const bucketResolver = {
     }
   },
   Mutation: {
-    createBucket: async(_,{ name, dept, viciIp, issabelIp },{ user }) => {
+    createBucket: async(_,{ input },{ user }) => {
       if(!user) throw new CustomError("Unauthorized",401)
       try {
-        
-        if(!viciIp && !issabelIp) throw new CustomError('Missing Ip addresses',404)
+        if(!input.viciIp && !input.issabelIp) throw new CustomError('Missing Ip addresses',404)
 
-        const checkDept = await Department.findOne({name: dept})
+        const checkDept = await Department.findOne({name: input.dept})
         if(!checkDept) throw new CustomError("Department not found",404)
 
         const checkName = await Bucket.findOne({$and: [
-          {name},
-          {dept},
+          {name: input.name},
+          {dept: input.dept},
         ]})
+
         if(checkName) throw new CustomError("Duplicate",400)
     
-        await Bucket.create({name, dept, viciIp, issabelIp})
+        await Bucket.create({...input})
         return {message: "Bucket successfully created", success: true}
       } catch (error) {
         throw new CustomError(error.message, 500)
       }
     },
-    updateBucket: async(_,{input},{user}) => {
+    updateBucket: async(_,{input},{user, pubsub, PUBSUB_EVENTS}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
 
-        const {viciIp, issabelIp, id, name} = input
+        const {viciIp, issabelIp, _id, name, ...others} = input
         if(!viciIp && !issabelIp) throw new CustomError('Missing Ip addresses',404)
 
-        const updateBucket = await Bucket.findById(id)
+        const updateBucket = await Bucket.findById(_id)
         if(!updateBucket) throw new CustomError("Bucket not found",404)
 
         const checkBucket = await Bucket.find({$and: [{name},{dept: updateBucket.dept}, {_id: {$ne: updateBucket._id}}]})
         if(checkBucket.length > 0) throw new CustomError("Duplicate", 400) 
             
-        await Bucket.findByIdAndUpdate(updateBucket._id,{$set: { name ,viciIp, issabelIp }},{new: true})
+        await Bucket.findByIdAndUpdate(updateBucket._id,{$set: { name ,viciIp, issabelIp, ...others }},{new: true})
+
+        await pubsub.publish(PUBSUB_EVENTS.NEW_UPDATE_BUCKET, {
+          newUpdateOnBucket: {
+            bucket: updateBucket._id,
+            message: PUBSUB_EVENTS.NEW_UPDATE_BUCKET
+          },
+        });
 
         return {message: "Bucket successfully updated",success: true}
       } catch (error) {

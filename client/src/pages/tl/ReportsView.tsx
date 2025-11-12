@@ -5,8 +5,11 @@ import CallDoughnut from "./CallDoughnut";
 import CallReportTables from "./CallReportTables";
 import RFDReportTables from "./RFDReportTables";
 import ReportsTables from "./ReportsTables";
-import { useLocation } from "react-router-dom";
+import { useLocation, Link } from "react-router-dom";
 import { motion } from "framer-motion";
+import { useSelector } from "react-redux";
+import { RootState, useAppDispatch } from "../../redux/store";
+import { setIsReport } from "../../redux/slices/authSlice";
 
 const GET_DISPOSITION_REPORTS = gql`
   query GetDispositionReports($reports: SearchDispoReports) {
@@ -108,8 +111,10 @@ type Props = {
 };
 
 const ReportsView: React.FC<Props> = ({ search }) => {
+  const { isReport } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
   const [searchFilter, setSearchFilter] = useState<SearchFilter>();
+  const dispatch = useAppDispatch();
 
   useEffect(() => {
     setSearchFilter({
@@ -160,14 +165,18 @@ const ReportsView: React.FC<Props> = ({ search }) => {
   };
   const RFD = reportsData?.getDispositionReports?.RFD || [];
 
+  const reportView = () => {
+    dispatch(setIsReport(true));
+  };
+
   if (reportLoading) return <Loading />;
 
   return (
     <div
       className={` col-span-2 flex flex-col overflow-auto relative h-5/6 px-5`}
     >
-      <div className="text-center border-b-2 border-gray-200 sticky bg-white top-0 uppercase font-black 2xl:text-lg lg:text-2xl  text-slate-800 flex item-center justify-center gap-5 pb-5 ">
-        <>
+      <div className="text-center border-b-2 border-gray-200 sticky bg-white top-0 uppercase font-black 2xl:text-lg lg:text-2xl  text-slate-800 flex item-center justify-center gap-5 pb-2 ">
+        <div className="flex items-center py-1 justify-center">
           {reportsData?.getDispositionReports?.bucket && (
             <span>Bucket: {reportsData.getDispositionReports.bucket}</span>
           )}
@@ -193,7 +202,14 @@ const ReportsView: React.FC<Props> = ({ search }) => {
                 Date: {search.dateDistance.from || search.dateDistance.to}
               </div>
             )}
-        </>
+          <div className="absolute text-sm items-center flex right-2">
+            <div onClick={reportView} 
+              className="bg-blue-500 hover:bg-blue-600 transition-all px-3 text-white cursor-pointer rounded-sm shadow-md py-1 border-2 border-blue-800"
+            >
+              View
+            </div>
+          </div>
+        </div>
       </div>
       <motion.div
         className="flex flex-col gap-5 "

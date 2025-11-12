@@ -7,6 +7,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { RiArrowDropDownFill } from "react-icons/ri";
 import {
   setAgentRecordingPage,
+  setCCSCall,
   setServerError,
   setSuccess,
 } from "../../redux/slices/authSlice";
@@ -27,6 +28,7 @@ const AGENT_RECORDING = gql`
     $to: String
     $search: String
     $dispotype: [String]
+    $ccsCalls: Boolean!
   ) {
     getAgentDispositionRecords(
       agentID: $agentID
@@ -36,6 +38,7 @@ const AGENT_RECORDING = gql`
       to: $to
       search: $search
       dispotype: $dispotype
+      ccsCalls: $ccsCalls
     ) {
       dispositions {
         _id
@@ -49,6 +52,7 @@ const AGENT_RECORDING = gql`
         contact_no
         createdAt
         dialer
+        callId
         recordings {
           name
           size
@@ -77,6 +81,7 @@ type Diposition = {
   contact_no: string[];
   createdAt: string;
   dialer: string;
+  callId: string;
   recordings: Recording[];
 };
 
@@ -94,6 +99,7 @@ const AGENT_INFO = gql`
     }
   }
 `;
+
 type Agent = {
   name: string;
   user_id: string;
@@ -134,7 +140,7 @@ type SearchRecordings = {
 const AgentRecordingView = () => {
   const location = useLocation();
   const dispatch = useAppDispatch();
-  const { limit, agentRecordingPage, userLogged } = useSelector(
+  const { limit, agentRecordingPage, userLogged, ccsCall } = useSelector(
     (state: RootState) => state.auth
   );
   const [page, setPage] = useState<string>("1");
@@ -170,10 +176,18 @@ const AgentRecordingView = () => {
       to: triggeredSearch.to,
       search: triggeredSearch.search,
       dispotype: triggeredSearch.dispotype,
+      ccsCalls: ccsCall,
     },
     notifyOnNetworkStatusChange: true,
     skip: !isAgentRecordings,
   });
+
+  useEffect(() => {
+    const refetching = async () => {
+      await refetch();
+    };
+    refetching();
+  }, [ccsCall]);
 
   useEffect(() => {
     const refetching = async () => {
@@ -235,7 +249,6 @@ const AgentRecordingView = () => {
     onCompleted: async (res) => {
       const url = res.findRecordings.url;
       setIsLoading("");
-
       if (url) {
         try {
           const response = await fetch(url);
@@ -294,6 +307,7 @@ const AgentRecordingView = () => {
   const dispotypeRef = useRef<HTMLDivElement | null>(null);
   const recordingsRef = useRef<HTMLDivElement | null>(null);
 
+  
   const handleOnCheck = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>, value: string) => {
       if (e.target.checked) {
@@ -320,8 +334,6 @@ const AgentRecordingView = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   }
 
-  // if (recordingsLoading) return <Loading />;
-
   return ["QA", "TL", "MIS"].includes(userLogged?.type || "") ? (
     <Wrapper>
       <Navbar />
@@ -339,10 +351,25 @@ const AgentRecordingView = () => {
         <h1 className="uppercase text-2xl px-5 font-black text-gray-800">
           {agentInfoData?.getUser?.name}
         </h1>
-        <div className=" flex justify-end px-10 gap-5">
-          <div className="w-60 relative" ref={dispotypeRef}>
+        <div className=" flex justify-end px-10 gap-5 items-center">
+          <motion.div>
+            <label className="flex gap-2 items-center justify-center">
+              <p>CCS Calls</p>
+              <input
+                type="checkbox"
+                name="ccsCalls"
+                id="ccsCalls"
+                checked={ccsCall}
+                onClick={() => {
+                  dispatch(setCCSCall());
+                }}
+              />
+            </label>
+          </motion.div>
+
+          <div className="w-60 relative h-full" ref={dispotypeRef}>
             <motion.div
-              className="w-full rounded border-slate-300 border flex items-center px-2 h-full justify-between"
+              className="w-full rounded border-gray-600 shadow-md border flex items-center px-2 h-full justify-between"
               onClick={() => {
                 setSelectingDispotype(!selectingDispotype);
               }}
@@ -368,7 +395,7 @@ const AgentRecordingView = () => {
               )}
             </motion.div>
             {selectingDispotype && triggeredSearch.dispotype.length === 0 && (
-              <div className="absolute top-9 left-0 w-full border px-2 py-1 rounded-md text-xs text-gray-500 flex flex-col max-h-80 overflow-y-auto bg-white z-50 border-slate-300 shadow-md shadow-black/20 select-none">
+              <div className="absolute top-9  left-0 w-full border px-2 py-1 rounded-md text-xs text-gray-500 flex flex-col max-h-80 overflow-y-auto bg-white z-50 border-slate-300 shadow-md shadow-black/20 select-none">
                 {recordings?.getAgentDispositionRecords.dispocodes.map(
                   (e, index) => (
                     <label key={index} className="py-1 flex gap-1 items-center">
@@ -401,7 +428,7 @@ const AgentRecordingView = () => {
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.1 }}
-            className="border rounded border-slate-300 px-2 text-sm w-50 py-1 outline-none"
+            className="border rounded border-gray-600 shadow-md px-2 text-sm w-50 py-1 outline-none"
           />
           <motion.label
             initial={{ y: 20, opacity: 0 }}
@@ -420,7 +447,7 @@ const AgentRecordingView = () => {
               onChange={(e) =>
                 setDataSearch({ ...dataSearch, from: e.target.value })
               }
-              className="border rounded h-full border-slate-300 px-2 text-sm w-50 py-1"
+              className="border rounded h-full border-gray-600 shadow-md px-2 text-sm w-50 py-1"
             />
           </motion.label>
           <motion.label
@@ -440,30 +467,33 @@ const AgentRecordingView = () => {
               onChange={(e) =>
                 setDataSearch({ ...dataSearch, to: e.target.value })
               }
-              className="border rounded h-full border-slate-300 px-2 text-sm w-50 py-1"
+              className="border rounded h-full border-gray-600 shadow-md px-2 text-sm w-50 py-1"
             />
           </motion.label>
           <motion.button
+            className="h-full"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.3 }}
             onClick={onClickSearch}
           >
-            <div className="bg-blue-500 h-full items-center flex font-black text-white cursor-pointer border-blue-800 transition-all uppercase border-2  rounded px-5 text-xs hover:bg-blue-600">
+            <div className="bg-blue-500 h-full shadow-md items-center flex font-black text-white cursor-pointer border-blue-800 transition-all uppercase border-2  rounded px-5 text-xs hover:bg-blue-600">
               Search
             </div>
           </motion.button>
         </div>
         <div className="h-full w-full px-5 flex flex-col overflow-hidden">
           <motion.div
-            className="w-full relative pb-10 flex flex-col h-full rounded-md overflow-hidden"
+            className="w-full relative flex flex-col h-full rounded-md overflow-hidden"
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            <div className="lg:text-sm flex font-black uppercase 2xl:text-lg sticky top-0 z-20 bg-gray-300 text-gray-800">
-              <div className="text-left justify-center px-4 grid grid-cols-10 gap-3 items-center py-3">
+            <div className="border rounded-t-md lg:text-sm  border-gray-600 flex font-black uppercase 2xl:text-lg sticky top-0 z-20 bg-gray-300 text-gray-800">
+              <div className="  text-left wlw  w-full justify-center px-4 grid grid-cols-12 gap-3 items-center py-3">
                 <div className="">Name</div>
+                <div className="">deadcalls </div>
+                <div className="">ccs calls </div>
                 <div className="truncate">Contact No</div>
                 <div>Dialer</div>
                 <div>Amount</div>
@@ -475,12 +505,12 @@ const AgentRecordingView = () => {
                 <div className="text-center flex justify-center">Actions</div>
               </div>
             </div>
-            <div className=" h-full flex justify-center items-center">
+            <div className="h-full bakit sila nag lalabas e wala panamang breaktime e HAHAHA tangine e wala namanag kaso dito flex justify-center items-center overflow-hidden">
               {recordingsLoading ? (
-                <div className="flex flex-col relative justify-center items-center ">
+                <div className="flex flex-col relative justify-center items-center h-full w-full">
                   <div className="border-t-2 rounded-full z-20 w-20 h-20 border-gray-800 animate-spin "></div>
-                  <div className="border-2 absolute top-0 left-0 rounded-full z-10 w-20 h-20 border-gray-200 "></div>
-                  <div className="absolute  z-10 text-xs text-gray-400">
+                  <div className="border-2 absolute rounded-full z-10 w-20 h-20 border-gray-200 "></div>
+                  <div className="absolute  z-10 text-xs text-gray-400  ">
                     Loading...
                   </div>
                 </div>
@@ -488,12 +518,12 @@ const AgentRecordingView = () => {
                 <div className="overflow-auto h-full w-full">
                   {(recordings?.getAgentDispositionRecords.dispositions
                     .length || 0) === 0 ? (
-                    <div className="bg-gray-200 w-full py-2 text-center rounded-b-md shadow-md italic font-sans text-gray-400  text-sm">
+                    <div className="bg-gray-200 w-full py-3 border-gray-600 border-x border-b  text-center rounded-b-md shadow-md italic font-sans text-gray-400  text-sm">
                       No account found
                     </div>
                   ) : (
                     <div>
-                      {recordings?.getAgentDispositionRecords.dispositions.map(
+                      {recordings?.getAgentDispositionRecords?.dispositions?.map(
                         (e, index) => {
                           const callRecord =
                             e.recordings?.length > 0
@@ -504,7 +534,7 @@ const AgentRecordingView = () => {
                           return (
                             <motion.div
                               key={e._id}
-                              className="lg:text-xs 2xl:text-sm  items-center py-3 gap-3 pl-4 pr-2 grid grid-cols-10 cursor-default bg-gray-100 even:bg-gray-200 text-slate-800"
+                              className="lg:text-xs border-b border-x hover:bg-gray-200 last:shadow-md last:rounded-b-md border-gray-600 2xl:text-sm  items-center py-3 gap-3 pl-4 pr-2 grid grid-cols-12 cursor-default bg-gray-100 even:bg-gray-200 text-slate-800"
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               transition={{ delay: index * 0.1 }}
@@ -515,11 +545,13 @@ const AgentRecordingView = () => {
                               >
                                 {e.customer_name}
                               </div>
+                              <div className="truncate pr-2">-</div>{" "}
+                              <div className="truncate pr-2">-</div>
                               <div
                                 className="truncate pr-2"
-                                title={e.contact_no.join(", ")}
+                                title={e.contact_no?.join(", ")}
                               >
-                                {e.contact_no.join(", ")}
+                                {e.contact_no?.join(", ")}
                               </div>
                               <div>{e.dialer}</div>
                               <div>
@@ -571,93 +603,118 @@ const AgentRecordingView = () => {
                                     <CgSpinner className="text-xl animate-spin" />
                                   </div>
                                 ) : (
-                                  <div className="">
-                                    {e.recordings?.length > 0 ? (
-                                      <div className="flex gap-1 ">
-                                        {callRecord?.length > 1 &&
-                                          (() => {
-                                            const others = callRecord.slice(1);
-                                            return (
-                                              <div className="flex justify-end w-full ">
-                                                <div
-                                                  onClick={() => {
-                                                    if (
-                                                      openRecordingsBox ===
-                                                      e._id
-                                                    ) {
-                                                      setOpenRecordingsBox(
-                                                        null
-                                                      );
-                                                    } else {
-                                                      setOpenRecordingsBox(
-                                                        e._id
-                                                      );
-                                                    }
-                                                  }}
-                                                  className=" bg-fuchsia-700 items-center flex shadow-md cursor-pointer border-fuchsia-900 hover:bg-fuchsia-800 transition-all border rounded-sm px-3 py-1"
-                                                >
-                                                  <FaBoxArchive
-                                                    className="text-white peer"
-                                                    title="Others"
-                                                  />
-                                                </div>
-                                                {openRecordingsBox ===
-                                                  e._id && (
-                                                  <div
-                                                    className="absolute border border-slate-500 text-gray-700 right-full w-auto mr-2 shadow shadow-black/40 bg-white"
-                                                    ref={recordingsRef}
-                                                  >
-                                                    {others.map((o, index) => (
-                                                      <div
-                                                        key={index}
-                                                        onClick={() =>
-                                                          onDLRecordings(
-                                                            e._id,
-                                                            o.name
-                                                          )
-                                                        }
-                                                        className="text-nowrap flex p-2 bg-white rouned items-center cursor-pointer gap-2"
-                                                      >
-                                                        <p className="mr-">
-                                                          {fileSizeToDuration(
-                                                            o.size
-                                                          )}{" "}
-                                                        </p>
-                                                        <div>{o.name}</div>
-                                                        <FaDownload />
-                                                      </div>
-                                                    ))}
-                                                  </div>
-                                                )}
-                                              </div>
-                                            );
-                                          })()}
+                                  <div>
+                                    {ccsCall ? (
+                                      <div className="flex justify-end items-center w-full">
                                         <div
-                                          title={callRecord[0]?.name}
-                                          className="flex justify-end items-center w-full"
+                                          onClick={() =>
+                                            onDLRecordings(e._id, e.callId)
+                                          }
+                                          className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
                                         >
-                                          <div
-                                            onClick={() =>
-                                              onDLRecordings(
-                                                e._id,
-                                                callRecord[0]?.name
-                                              )
-                                            }
-                                            className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
-                                          >
-                                            <FaDownload color="white" />
-                                            <p className="text-white">
-                                              {fileSizeToDuration(
-                                                callRecord[0]?.size
-                                              )}{" "}
-                                            </p>
-                                          </div>
+                                          <FaDownload color="white" />
+                                          <p className="text-white">
+                                            {fileSizeToDuration(
+                                              callRecord[0]?.size
+                                            )}{" "}
+                                          </p>
                                         </div>
                                       </div>
                                     ) : (
-                                      <div className="text-gray-400 italic text-center">
-                                        No Recordings
-                                      </div>
+                                      <>
+                                        {e.recordings?.length > 0 ? (
+                                          <div className="flex gap-1 ">
+                                            {callRecord?.length > 1 &&
+                                              (() => {
+                                                const others =
+                                                  callRecord.slice(1);
+                                                return (
+                                                  <div className="flex justify-end w-full ">
+                                                    <div
+                                                      onClick={() => {
+                                                        if (
+                                                          openRecordingsBox ===
+                                                          e._id
+                                                        ) {
+                                                          setOpenRecordingsBox(
+                                                            null
+                                                          );
+                                                        } else {
+                                                          setOpenRecordingsBox(
+                                                            e._id
+                                                          );
+                                                        }
+                                                      }}
+                                                      className=" bg-fuchsia-700 items-center flex shadow-md cursor-pointer border-fuchsia-900 hover:bg-fuchsia-800 transition-all border rounded-sm px-3 py-1"
+                                                    >
+                                                      <FaBoxArchive
+                                                        className="text-white peer"
+                                                        title="Others"
+                                                      />
+                                                    </div>
+                                                    {openRecordingsBox ===
+                                                      e._id && (
+                                                      <div
+                                                        className="absolute border border-slate-500 text-gray-700 right-full w-auto mr-2 shadow shadow-black/40 bg-white"
+                                                        ref={recordingsRef}
+                                                      >
+                                                        {others.map(
+                                                          (o, index) => (
+                                                            <div
+                                                              key={index}
+                                                              onClick={() =>
+                                                                onDLRecordings(
+                                                                  e._id,
+                                                                  o.name
+                                                                )
+                                                              }
+                                                              className="text-nowrap flex p-2 bg-white rouned items-center cursor-pointer gap-2"
+                                                            >
+                                                              <p className="mr-">
+                                                                {fileSizeToDuration(
+                                                                  o.size
+                                                                )}{" "}
+                                                              </p>
+                                                              <div>
+                                                                {o.name}
+                                                              </div>
+                                                              <FaDownload />
+                                                            </div>
+                                                          )
+                                                        )}
+                                                      </div>
+                                                    )}
+                                                  </div>
+                                                );
+                                              })()}
+                                            <div
+                                              title={callRecord[0]?.name}
+                                              className="flex justify-end items-center w-full"
+                                            >
+                                              <div
+                                                onClick={() =>
+                                                  onDLRecordings(
+                                                    e._id,
+                                                    callRecord[0]?.name
+                                                  )
+                                                }
+                                                className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
+                                              >
+                                                <FaDownload color="white" />
+                                                <p className="text-white">
+                                                  {fileSizeToDuration(
+                                                    callRecord[0]?.size
+                                                  )}{" "}
+                                                </p>
+                                              </div>
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          <div className="text-gray-400 italic text-center">
+                                            No Recordings
+                                          </div>
+                                        )}
+                                      </>
                                     )}
                                   </div>
                                 )}

@@ -4,7 +4,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../redux/store";
 import { dateAndTime } from "../middleware/dateAndTime";
-import { setSelectedCustomer, setServerError } from "../redux/slices/authSlice";
+import { setIsRing, setSelectedCustomer, setServerError } from "../redux/slices/authSlice";
 import { Search } from "../middleware/types";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -303,7 +303,7 @@ type Dispotypes = {
 };
 
 const MyTaskSection = () => {
-  const { userLogged, selectedCustomer } = useSelector(
+  const { userLogged, selectedCustomer, } = useSelector(
     (state: RootState) => state.auth
   );
   const dispatch = useAppDispatch();
@@ -412,8 +412,6 @@ const MyTaskSection = () => {
   const taskLength = myTasksData?.myTasks?.filter((e) =>
     userLogged?.buckets.toString().includes(e.account_bucket?._id)
   ).length;
-  
-
 
   useEffect(() => {
     if (selection.trim() === "my_task") {
@@ -471,6 +469,7 @@ const MyTaskSection = () => {
       const res = await selectTask({ variables: { id: data._id } });
       if (res.data.selectTask.success) {
         dispatch(setSelectedCustomer({ ...data, isRPCToday: false }));
+        dispatch(setIsRing(true))
       }
     },
     [deselectTask, dispatch, selectedCustomer]
@@ -485,14 +484,20 @@ const MyTaskSection = () => {
   };
 
   return (
-    <div className={`mt-3 z-20 gap-5 px-5 absolute right-5 top-8`} >
-      {
-        taskLength !== undefined && taskLength > 0 &&
-        <div className="flex flex-col justify-between w-full relative">
+    <div className={`mt-3 z-20 gap-5 px-5 absolute right-5 top-10`}>
+      {taskLength !== undefined && taskLength > 0 && (
+        <motion.div
+          className="flex flex-col justify-between w-full relative"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 1 }}
+        >
           <p
-            className={`" ${
-              selection.trim() === "my_task" ? "hidden" : ""
-            } ${taskLength === 0 ? "bg-green-500 text-green-800 border-green-800" : "bg-red-500 text-red-800 border-red-800"} text-sm   w-7 h-7 border-2 focus:ring-none rounded-full font-bold absolute -top-2 -right-2 flex justify-center items-center text-center "`}
+            className={`" ${selection.trim() === "my_task" ? "hidden" : ""} ${
+              taskLength === 0
+                ? "bg-green-500 text-green-800 border-green-800"
+                : "bg-red-500 text-red-800 border-red-800"
+            } text-sm   w-7 h-7 border-2 focus:ring-none rounded-full font-bold absolute -top-2 -right-2 flex justify-center items-center text-center "`}
           >
             {taskLength?.toLocaleString()}
           </p>
@@ -507,25 +512,41 @@ const MyTaskSection = () => {
           >
             {selection.trim() !== "my_task" ? "My Tasks" : "Close"}
           </button>
-        </div>
-      }
+        </motion.div>
+      )}
+
       {groupLength && groupLength > 0 && (
-        <div className="flex flex-col gap-2 relative z-20 justify-between w-1/15">
+        <motion.div
+          className="flex w-full mt-5 flex-col gap-2 relative z-20 justify-between"
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          transition={{ delay: 1 }}
+        >
           <p className="lg:text-[0.6em] 2xl:text-xs font-bold flex justify-between">
             <span>Task:</span> <span>{groupLength?.toLocaleString()}</span>
+          </p>
+
+          <p
+            className={`" ${selection.trim() === "my_task" ? "hidden" : ""} ${
+              groupLength === 0
+                ? "bg-green-500 text-green-800 border-green-800"
+                : "bg-red-500 text-red-800 border-red-800"
+            } text-sm   w-7 h-7 border-2 focus:ring-none rounded-full font-bold absolute -top-2 -right-2 flex justify-center items-center text-center "`}
+          >
+            {groupLength?.toLocaleString() || 0}
           </p>
           <button
             type="button"
             className={`${
               selection.trim() !== "group_task"
                 ? "bg-blue-500 hover:bg-blue-700"
-                : "bg-gray-700 hover:bg-gray-900"
-            } text-white bg-blue-500 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg lg:text-[0.6em] 2xl:text-xs px-5 py-2.5`}
+                : "bg-gray-400 hover:bg-gray-500  border-gray-600"
+            } text-white bg-blue-500 hover:bg-blue-600 transition-all font-black uppercase w-full border-2 border-blue-800 cursor-pointer text-sm focus:outline-none rounded-lg px-5 py-2`}
             onClick={handleClickGroupTask}
           >
             {selection.trim() !== "group_task" ? "Group Tasks" : "Close"}
           </button>
-        </div>
+        </motion.div>
       )}
       <AnimatePresence>
         {selection.trim() !== "" && (
@@ -533,7 +554,7 @@ const MyTaskSection = () => {
             className="absolute z-80 border-2 border-slate-500 rounded-lg shadow-md shadow-black/20 rounded-t-md w-[600px] h-96 translate-y-1/2 -bottom-50 right-5 text-slate-500 flex flex-col bg-white"
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
-            exit={{y: -20, opacity: 0}}
+            exit={{ y: -20, opacity: 0 }}
           >
             <div className="py-3 2xl:text-xs text-sm font-black gap-2 uppercase bg-slate-200 rounded-t-sm grid grid-cols-4 px-2 items-center ">
               <div className=" text-nowrap truncate">Customer Name</div>
@@ -559,17 +580,19 @@ const MyTaskSection = () => {
                     {dateAndTime(d.assigned_date)}
                   </div>
                   <div className="flex justify-end">
-                    <div className="bg-green-500 border-2 border-green-800 rounded-sm px-3 py-1 text-white uppercase font-black cursor-pointer hover:bg-green-600" 
-                    onClick={() => { 
-                      handleClickSelect(d)
-                    }}>
+                    <div
+                      className="bg-green-500 border-2 border-green-800 rounded-sm px-3 py-1 text-white uppercase font-black cursor-pointer hover:bg-green-600"
+                      onClick={() => {
+                        handleClickSelect(d);
+                      }}
+                    >
                       Select
                     </div>
                   </div>
                 </div>
               ))}
 
-            {/* {
+              {/* {
               data?.map((d) => (
               <div
                 key={d._id}

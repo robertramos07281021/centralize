@@ -99,6 +99,7 @@ const productionTypeDefs = gql`
     contact_no: [String]
     createdAt: DateTime
     dialer: String
+    callId: String
     recordings: [Recording]
     selectivesDispo: Boolean
   }
@@ -145,7 +146,7 @@ const productionTypeDefs = gql`
     ProductionReport(dispositions:[ID],from:String,to:String):ProductionReport
     getAgentProductions:[AgentProduction]
     agentProduction:MyProduction
-    getAgentDispositionRecords(agentID:ID, limit:Int, page:Int, from:String, to:String, search: String, dispotype: [String]):AgentDispo
+    getAgentDispositionRecords(agentID:ID, limit:Int, page:Int, from:String, to:String, search: String, dispotype: [String], ccsCalls: Boolean!):AgentDispo
     monthlyWeeklyCollected:Collected
   }
 

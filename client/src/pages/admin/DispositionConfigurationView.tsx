@@ -34,9 +34,11 @@ const CREATE_DISPO_TYPE = gql`
 `;
 
 enum Method {
-  skipper = "skipper",
-  caller = "caller",
+  skip = "skip",
+  call = "call",
   field = "field",
+  sms = 'sms',
+  email = 'email'
 }
 
 type inpuValueState = {
@@ -50,9 +52,11 @@ const GET_ALL_DISPO_TYPE = gql`
   query getDispositionTypes {
     getDispositionTypes {
       contact_methods {
-        skipper
-        caller
+        skip
+        call
         field
+        sms
+        email
       }
       rank
       status
@@ -65,9 +69,11 @@ const GET_ALL_DISPO_TYPE = gql`
   }
 `;
 type CA = {
-  skipper: boolean;
-  caller: boolean;
+  skip: boolean;
+  call: boolean;
   field: boolean;
+  sms: boolean,
+  email: boolean
 };
 
 type Dispotype = {
@@ -119,12 +125,17 @@ const DispositionConfigurationView = () => {
   useEffect(() => {
     if (dispotypeData) {
       if (search) {
-        const filterDispotype = dispotypeData?.getDispositionTypes.filter(
-          (e) =>
-            e.name.toLowerCase().includes(search.toLowerCase()) ||
-            e.code.toLowerCase().includes(search.toLowerCase())
-        );
-        setDispoData(filterDispotype);
+        let filter = null
+        if(search.toLocaleLowerCase('active')) {
+          filter = dispotypeData.getDispositionTypes.filter(x=> x.active)
+        } else {
+          filter = dispotypeData?.getDispositionTypes.filter(
+            (e) =>
+              e.name.toLowerCase().includes(search.toLowerCase()) ||
+              e.code.toLowerCase().includes(search.toLowerCase())
+          );
+        }
+        setDispoData(filter);
       } else {
         setDispoData(dispotypeData.getDispositionTypes);
       }
@@ -201,9 +212,11 @@ const DispositionConfigurationView = () => {
   // =======================
 
   const contact_methods: Method[] = [
-    Method.caller,
+    Method.call,
     Method.field,
-    Method.skipper,
+    Method.skip,
+    Method.sms,
+    Method.email
   ] as const;
 
   const [modalProps, setModalProps] = useState({
@@ -286,8 +299,12 @@ const DispositionConfigurationView = () => {
             | "UPDATE"
             | "ACTIVATE"
             | "DEACTIVATE",
-          yes: submitActions[submitToggle].yes,
+          yes: () => {
+            submitActions[submitToggle].yes();
+            setOpenDisposition(false);
+          },
           no: () => {
+            setOpenDisposition(false);
             setConfirm(false);
           },
         });
@@ -325,15 +342,22 @@ const DispositionConfigurationView = () => {
         rank: toUpdateDispo.rank ?? 0,
       });
       setSelectedBuckets(toUpdateDispo.buckets);
-      if (toUpdateDispo.contact_methods?.caller) {
-        selectedCA.push(Method.caller);
+      if (toUpdateDispo.contact_methods?.call) {
+        selectedCA.push(Method.call);
       }
       if (toUpdateDispo.contact_methods?.field) {
         selectedCA.push(Method.field);
       }
-      if (toUpdateDispo.contact_methods?.skipper) {
-        selectedCA.push(Method.skipper);
+      if (toUpdateDispo.contact_methods?.skip) {
+        selectedCA.push(Method.skip);
       }
+      if (toUpdateDispo.contact_methods?.sms) {
+        selectedCA.push(Method.sms);
+      }
+      if (toUpdateDispo.contact_methods?.email) {
+        selectedCA.push(Method.email);
+      }
+
       setSelectedContactMethod(selectedCA);
     } else {
       setInputValue({ name: "", code: "", status: 1, rank: 0 });
@@ -388,7 +412,7 @@ const DispositionConfigurationView = () => {
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.5 }}
                 >
-                  <div className="bg-green-600 px-10 text-2xl font-black  uppercase text-center py-2 text-white">
+                  <div className="bg-green-600 border-b-2 border-green-800 shadow-md px-10 text-2xl font-black  uppercase text-center py-2 text-white">
                     {isUpdate ? (
                       <h1 className="">Update Disposition</h1>
                     ) : (
@@ -424,7 +448,7 @@ const DispositionConfigurationView = () => {
                           required && !inputValue.name
                             ? "border-red-500 bg-red-50"
                             : "border-slate-500"
-                        } border px-2 py-2 rounded-md text-sm outline-none`}
+                        } border px-2 shadow-md py-2 rounded-md text-sm outline-none`}
                       />
                     </label>
 
@@ -449,12 +473,12 @@ const DispositionConfigurationView = () => {
                           required && !inputValue.code
                             ? "border-red-500 bg-red-50"
                             : "border-slate-500"
-                        } border px-2 py-2 rounded-md text-sm outline-none`}
+                        } border px-2 py-2 shadow-md rounded-md text-sm outline-none`}
                       />
                     </label>
 
                     <div className="flex gap-5">
-                      <fieldset className="border border-slate-500 text-gray-500 rounded-md py-2 px-4 flex gap-2 w-full">
+                      <fieldset className="border border-slate-500 shadow-md text-gray-500 rounded-md py-2 px-4 flex gap-2 w-full">
                         <legend className="px-1 uppercase font-black text-slate-800">
                           Status:
                         </legend>
@@ -496,7 +520,7 @@ const DispositionConfigurationView = () => {
                         <select
                           name="rank"
                           id="rank"
-                          className="border w-full p-2 rounded-md border-slate-500  text-gray-500"
+                          className="border w-full p-2 rounded-md shadow-md border-slate-500  text-gray-500"
                           value={inputValue.rank ?? ""}
                           onChange={(e) =>
                             setInputValue((prev) => ({
@@ -533,7 +557,7 @@ const DispositionConfigurationView = () => {
                           required && selectedBuckets.length < 1
                             ? "bg-red-50 border-red-500"
                             : "border-slate-500"
-                        } border py-0.5  rounded-md items-center pl-2.5 flex justify-between`}
+                        } border py-0.5 shadow-md rounded-md items-center pl-2.5 flex justify-between`}
                         onClick={() => setSelectingBuckets(!selectingBuckets)}
                       >
                         {selectedBuckets.length < 1 ? (
@@ -610,7 +634,7 @@ const DispositionConfigurationView = () => {
                           required && selectedContactMethod.length < 1
                             ? "bg-red-50 border-red-500"
                             : "border-slate-500"
-                        } border py-0.5  rounded-md items-center pl-2.5 flex justify-between`}
+                        } border py-0.5 shadow-md rounded-md items-center pl-2.5 flex justify-between`}
                         onClick={() =>
                           setSelectingContactMethod(!selectingContactMethod)
                         }
@@ -627,7 +651,7 @@ const DispositionConfigurationView = () => {
                         <RiArrowDropDownFill className="text-3xl" />
                       </div>
                       {selectingContactMethod && (
-                        <div className="absolute max-h-50 mt-3 rounded-md overflow-y-auto bg-white border w-full top-15 border-slate-500 shadow-md shadow-black/50 flex flex-col px-2 py-1">
+                        <div className="absolute max-h-50 mt-3 rounded-md overflow-y-auto bg-white border w-full -top-23 border-slate-500 shadow-md shadow-black/50 flex flex-col px-2 py-1">
                           {contact_methods.map((cm: Method, index) => {
                             const onClick = (
                               e: React.ChangeEvent<HTMLInputElement>
@@ -672,11 +696,11 @@ const DispositionConfigurationView = () => {
                         type="submit"
                         className={`${
                           isUpdate
-                            ? "border-orange-500 bg-orange-500 hover:bg-orange-700"
-                            : "hover:bg-blue-700 bg-blue-500 border-blue-500"
-                        } border   rounded-lg px-5 cursor-pointer py-1.5 text-white  font-bold`}
+                            ? "border-orange-800 bg-orange-500 hover:bg-orange-600"
+                            : "hover:bg-green-600 bg-green-500 border-green-800"
+                        } shadow-md   rounded-md  px-5 cursor-pointer py-1.5 border-2 transition-all text-white  font-black uppercase`}
                       >
-                        {isUpdate ? "Update" : "Submit"}
+                        {isUpdate ? "Update" : "Create"}
                       </button>
                       {isUpdate && (
                         <div
@@ -697,7 +721,7 @@ const DispositionConfigurationView = () => {
             )}
           </AnimatePresence>
 
-          <motion.div className="w-6/4 overflow-hidden flex items-end justify-end px-5 flex-col">
+          <motion.div className="w-6/4 overflow-hidden flex px-5 flex-col">
             <div className="flex justify-between w-full gap-2 pt-5 pb-1">
               <h1 className="text-2xl font-black uppercase px-3 ">
                 Disposition Configuration
@@ -710,7 +734,7 @@ const DispositionConfigurationView = () => {
                   initial={{ y: 10, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                 >
-                  <div className="bg-green-500 h-full px-3 items-center flex cursor-pointer hover:bg-green-600 transition-all uppercase font-black rounded-md shadow-md text-white   border-2 border-green-800">
+                  <div className="bg-green-500 h-full border-b-2 px-3 items-center flex cursor-pointer hover:bg-green-600 transition-all uppercase font-black rounded-md shadow-md text-white   border-2 border-green-800">
                     create disposition
                   </div>
                 </motion.div>
@@ -755,11 +779,11 @@ const DispositionConfigurationView = () => {
               transition={{ delay: 0.2 }}
               className="flex flex-col overflow-auto"
             >
-              <div className="grid grid-cols-9 border-b border-gray-400 gap-2 font-black uppercase bg-gray-300 px-2 py-2 text-gray-800 rounded-t-md w-full mt-2">
+              <div className="grid grid-cols-9 border shadow-md border-gray-600 gap-2 font-black uppercase bg-gray-300 px-2 py-2 text-black rounded-t-md w-full mt-2">
                 <div className="col-span-2">Name</div>
                 <div>Code</div>
-                <div>Rank</div>
-                <div>Status</div>
+                <div className="text-center">Rank</div>
+                <div className="text-center">Status</div>
                 <div>Buckets</div>
                 <div className="col-span-2">Contact Method</div>
                 <div>Action</div>
@@ -767,14 +791,20 @@ const DispositionConfigurationView = () => {
               <div className="w-full h-full rounded-b-md overflow-y-auto cursor-default select-none">
                 {dispoData.map((dispo, index) => {
                   const dispoCA = [];
-                  if (dispo.contact_methods?.caller) {
-                    dispoCA.push(Method.caller);
+                  if (dispo.contact_methods?.call) {
+                    dispoCA.push(Method.call);
                   }
                   if (dispo.contact_methods?.field) {
                     dispoCA.push(Method.field);
                   }
-                  if (dispo.contact_methods?.skipper) {
-                    dispoCA.push(Method.skipper);
+                  if (dispo.contact_methods?.skip) {
+                    dispoCA.push(Method.skip);
+                  }
+                  if (dispo.contact_methods?.sms) {
+                    dispoCA.push(Method.sms);
+                  }
+                  if (dispo.contact_methods?.email) {
+                    dispoCA.push(Method.email);
                   }
 
                   return (
@@ -783,14 +813,16 @@ const DispositionConfigurationView = () => {
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
                       transition={{ delay: index * 0.1 }}
-                      className="grid grid-cols-9 gap-2 text-sm py-2 px-2 hover:bg-gray-300 bg-gray-200 even:bg-gray-100 text-gray-600 items-center"
+                      className="grid grid-cols-9 gap-2 text-sm py-2 px-2 hover:bg-gray-300 odd:bg-gray-200 even:bg-gray-100 text-black border-x border-b border-gray-600 last:rounded-b-md items-center"
                     >
                       <div className="nowrap truncate col-span-2">
                         {dispo.name}
                       </div>
                       <div>{dispo.code}</div>
-                      <div>{dispo.rank}</div>
-                      <div>{dispo.status === 1 ? "Positive" : "Negative"}</div>
+                      <div className="flex justify-center ">{dispo.rank}</div>
+                      <div className="flex justify-center">
+                        {dispo.status === 1 ? "Positive" : "Negative"}
+                      </div>
                       <div
                         className="truncate"
                         title={dispo.buckets
@@ -813,7 +845,7 @@ const DispositionConfigurationView = () => {
                             setOpenDisposition(true);
                           }}
                           title="UPDATE"
-                          className="bg-blue-600 shadow-md cursor-pointer hover:bg-blue-700 transition-all p-1 text-white rounded-sm border border-blue-800 "
+                          className="bg-blue-600 shadow-md cursor-pointer hover:bg-blue-700 transition-all p-1 px-2 text-white rounded-sm border-2 border-blue-800 "
                         >
                           <svg
                             xmlns="http://www.w3.org/2000/svg"

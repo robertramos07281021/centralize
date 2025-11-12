@@ -12,6 +12,7 @@ const bucketTypeDefs = gql`
     message: String
     can_update_ca: Boolean
     isActive: Boolean
+    canCall: Boolean
   }
   
   type GetBuckets {
@@ -25,10 +26,23 @@ const bucketTypeDefs = gql`
   }
 
   input UpdateBucket {
-    id: ID
+    _id: ID
     name: String
     viciIp: String
     issabelIp: String
+    canCall: Boolean
+    can_update_ca: Boolean
+    principal: Boolean
+  }
+
+  input CreateBucket {
+    name: String!
+    dept: String!
+    viciIp: String
+    issabelIp: String
+    canCall: Boolean
+    can_update_ca: Boolean
+    principal: Boolean
   }
 
   type Query {
@@ -43,7 +57,7 @@ const bucketTypeDefs = gql`
   } 
 
   type Mutation {
-    createBucket(name:String!, dept: String!, viciIp: String, issabelIp: String): Success
+    createBucket(input: CreateBucket): Success
     updateBucket(input:UpdateBucket): Success
     deleteBucket(id:ID!): Success
     messageBucket(id:ID!,message:String):Success

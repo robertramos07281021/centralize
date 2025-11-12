@@ -68,6 +68,10 @@ const OTHER_ACCOUNTS = gql`
         mo_balance
         pastdue_amount
         mo_amort
+        partial_payment_w_service_fee
+        new_tad_with_sf
+        new_pay_off
+        service_fee
       }
       grass_details {
         grass_region
@@ -88,6 +92,15 @@ const OTHER_ACCOUNTS = gql`
         _id
         isRPC
       }
+    }
+  }
+`;
+
+const GET_AGENT_BUCKET = gql`
+  query GetDeptBucket {
+    getDeptBucket {
+      _id
+      name
     }
   }
 `;
@@ -181,6 +194,10 @@ type AccountHistory = {
   cd: CurrentDispo;
   dispotype: Dispotype;
   user: User;
+  partial_payment_w_service_fee: number;
+  new_tad_with_sf: number;
+  new_pay_off: number;
+  service_fee: number;
 };
 
 const FieldsDiv = ({
@@ -227,7 +244,7 @@ const FieldsDiv = ({
       <div
         className={`${
           newValue || null ? "p-2" : "2xl:p-4.5 p-4"
-        } text-xs 2xl:text-sm border rounded-lg border-slate-500 bg-gray-100 text-gray-600 w-full`}
+        } text-xs 2xl:text-sm border rounded-sm border-black bg-gray-100 text-gray-600 w-full`}
       >
         {newValue || ""}
       </div>
@@ -240,114 +257,147 @@ export type ChildHandle = {
   divElement: HTMLDivElement | null;
 };
 
-const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
-  const location = useLocation();
-  const isTLCIP = ["/tl-cip", "/agent-cip"].includes(location.pathname);
-  const { selectedCustomer, userLogged } = useSelector(
-    (state: RootState) => state.auth
-  );
-  const [showAccounts, setShowAccounts] = useState<boolean>(false);
-  const { data } = useQuery<{ customerOtherAccounts: Search[] }>(
-    OTHER_ACCOUNTS,
-    {
-      variables: { caId: selectedCustomer?._id },
-      skip: !selectedCustomer && !isTLCIP,
-    }
-  );
-
-  const [showAccountHistory, setShowAccountHistory] = useState<boolean>(false);
-  const { data: accountHistory, refetch } = useQuery<{
-    findAccountHistories: AccountHistory[];
-  }>(ACCOUNT_HISTORIES, {
-    variables: { id: selectedCustomer?._id },
-    skip: !selectedCustomer && !isTLCIP,
-  });
-  const [showButton, setShowButton] = useState<boolean>(false);
-  const divRef = useRef<HTMLDivElement | null>(null);
-  const [showDispoHistory, setShowDispoHistory] = useState<boolean>(false);
-  const [updateCustomerAccounts, setUpdateCustomerAccounts] =
-    useState<boolean>(false);
-  const UpdateAccountHistory = selectedCustomer?.account_update_history;
-  const [showUpdateOnCA, setShowUpdateOnCA] = useState<boolean>(false);
-
-  useImperativeHandle(ref, () => ({
-    showButtonToFalse: () => {
-      setShowButton(false);
-    },
-    divElement: divRef.current,
-  }));
-
-  useEffect(() => {
-    const timer = setTimeout(async () => {
-      if (selectedCustomer) {
-        await refetch();
+const AccountInfo = forwardRef<ChildHandle, { presetAmount?: string | null }>(
+  ({ presetAmount = null }, ref) => {
+    const location = useLocation();
+    const isTLCIP = ["/tl-cip", "/agent-cip"].includes(location.pathname);
+    const { selectedCustomer, userLogged } = useSelector(
+      (state: RootState) => state.auth
+    );
+    const [showAccounts, setShowAccounts] = useState<boolean>(false);
+    const { data } = useQuery<{ customerOtherAccounts: Search[] }>(
+      OTHER_ACCOUNTS,
+      {
+        variables: { caId: selectedCustomer?._id },
+        skip: !selectedCustomer && !isTLCIP,
       }
+    );
+
+    const [showAccountHistory, setShowAccountHistory] = useState<boolean>(false);
+    const { data: accountHistory, refetch } = useQuery<{
+      findAccountHistories: AccountHistory[];
+    }>(ACCOUNT_HISTORIES, {
+      variables: { id: selectedCustomer?._id },
+      skip: !selectedCustomer && !isTLCIP,
     });
-    return () => clearTimeout(timer);
-  }, [selectedCustomer]);
+    const [isClose, setIsClose] = useState(false);
+    const [showButton, setShowButton] = useState<boolean>(false);
+    const divRef = useRef<HTMLDivElement | null>(null);
+    const [showDispoHistory, setShowDispoHistory] = useState<boolean>(false);
+    const [updateCustomerAccounts, setUpdateCustomerAccounts] =
+      useState<boolean>(false);
+    const UpdateAccountHistory = selectedCustomer?.account_update_history;
+    const [showUpdateOnCA, setShowUpdateOnCA] = useState<boolean>(false);
 
-  const sumOf =
-    selectedCustomer && data && accountHistory
-      ? data?.customerOtherAccounts?.length +
-        accountHistory?.findAccountHistories?.length +
-        selectedCustomer?.dispo_history?.length +
-        selectedCustomer?.account_update_history?.length
-      : 0;
+    const { data: agentBucketData } = useQuery<{ getDeptBucket: Bucket[] }>(
+      GET_AGENT_BUCKET
+    );
 
-  return (
-    <>
-      {showAccounts && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <OtherAccountsViews
-            others={data?.customerOtherAccounts || []}
-            close={() => setShowAccounts(false)}
-          />
-        </motion.div>
-      )}
-      {showAccountHistory && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <AccountHistoriesView
-            histories={accountHistory?.findAccountHistories || []}
-            close={() => setShowAccountHistory(false)}
-          />
-        </motion.div>
-      )}
-      {showDispoHistory && (
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-        >
-          <DispositionRecords close={() => setShowDispoHistory(false)} />
-        </motion.div>
-      )}
-      {showUpdateOnCA && (
-        <UpdatedAccountHistory close={() => setShowUpdateOnCA(false)} />
-      )}
-      
+    useImperativeHandle(ref, () => ({
+      showButtonToFalse: () => {
+        setShowButton(false);
+      },
+      divElement: divRef.current,
+    }));
+
+    useEffect(() => {
+      const timer = setTimeout(async () => {
+        if (selectedCustomer) {
+          await refetch();
+        }
+      });
+      return () => clearTimeout(timer);
+    }, [selectedCustomer]);
+
+    const sumOf =
+      selectedCustomer && data && accountHistory
+        ? data?.customerOtherAccounts?.length +
+          accountHistory?.findAccountHistories?.length +
+          selectedCustomer?.dispo_history?.length +
+          selectedCustomer?.account_update_history?.length
+        : 0;
+
+    // const formattedAmount = useMemo(() => {
+    //   if (!presetAmount) return "";
+    //   const parsed = Number(presetAmount);
+    //   return Number.isNaN(parsed)
+    //     ? presetAmount
+    //     : parsed.toLocaleString("en-PH", {
+    //         style: "currency",
+    //         currency: "PHP",
+    //       });
+    // }, [presetAmount]);
+
+    return (
+      <div className="w-full h-full">
+        {isClose && (
+          <div className="absolute top-0  left-0 w-full h-full">
+            {showAccounts && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <OtherAccountsViews
+                  others={data?.customerOtherAccounts || []}
+                  close={() => {
+                    setIsClose(false);
+                    setShowAccounts(false);
+                  }}
+                />
+              </motion.div>
+            )}
+            {showAccountHistory && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <AccountHistoriesView
+                  histories={accountHistory?.findAccountHistories || []}
+                  close={() => {
+                    setIsClose(false);
+                    setShowAccountHistory(false);
+                  }}
+                />
+              </motion.div>
+            )}
+            {showDispoHistory && (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+              >
+                <DispositionRecords
+                  close={() => {
+                    setIsClose(false);
+                    setShowDispoHistory(false);
+                  }}
+                />
+              </motion.div>
+            )}
+            {showUpdateOnCA && (
+              <UpdatedAccountHistory
+                close={() => {
+                  setIsClose(false);
+                  setShowUpdateOnCA(false);
+                }}
+              />
+            )}
+          </div>
+        )}
+
         <div className="flex flex-col w-full">
-
           <div
-            className={`fixed ${
-              userLogged?.type === "AGENT" ? "top-40" : "top-30"
-            } gap-2 left-5 z-30`}
+            className="absolute top-15 left-5 z-30"
           >
-            <motion.div
-              initial={{ scale: 0.5 }}
-              animate={{ scale: 1 }}
-            >
+            <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }}>
               {selectedCustomer && (
                 <div
                   className={`text-4xl text-white shadow-md hover:bg-blue-600 transition-all p-1 bg-blue-500 border-2 rounded-md border-blue-700 cursor-pointer`}
-                  onClick={() => setShowButton((prev) => !prev)}
+                  onClick={() => {
+                    setShowButton((prev) => !prev);
+                  }}
                 >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
@@ -365,19 +415,26 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                   </svg>
                 </div>
               )}
-              {!showButton && (
-                <div
-                  className={`absolute -top-2 -right-2 min-w-5 min-h-5 text-xs px-2 flex items-center justify-center text-white rounded-full ${
-                    sumOf > 0 && !isNaN(sumOf) ? "bg-red-500" : "bg-green-500"
-                  }`}
-                >
-                  {isNaN(sumOf) ? 0 : sumOf}
-                </div>
-              )}
+              <AnimatePresence>
+                {!showButton && (
+                  <motion.div
+                    className={`absolute -top-3  font-black py-1 -right-3 min-w-5 min-h-5 border-2 text-xs px-2 flex items-center justify-center text-white rounded-full ${
+                      sumOf > 0 && !isNaN(sumOf)
+                        ? "bg-red-500 border-red-900"
+                        : "bg-green-500 border-green-900"
+                    }`}
+                    initial={{ scale: 0.1, opacity: 0 }}
+                    animate={{ opacity: 1, scale: 1 }}
+                    exit={{ opacity: 0, scale: 0.1 }}
+                  >
+                    {isNaN(sumOf) ? 0 : sumOf}
+                  </motion.div>
+                )}
+              </AnimatePresence>
               <AnimatePresence>
                 {showButton && (
                   <motion.div
-                    className="border whitespace-nowrap absolute mt-1 flex flex-col gap-8 p-8 rounded-md border-slate-400 bg-white shadow"
+                    className="border whitespace-nowrap absolute mt-1 flex flex-col gap-3 p-4 rounded-md border-black bg-white shadow-md"
                     ref={divRef}
                     initial={{ y: -20, opacity: 0 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -385,14 +442,18 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                   >
                     <div
                       className="relative cursor-pointer"
-                      onClick={() => setShowDispoHistory(true)}
+                      onClick={() => {
+                        setShowDispoHistory(true);
+                        setIsClose(true);
+                      }}
                     >
                       <div className="bg-blue-600 border-2 border-blue-900 hover:bg-blue-700 text-center py-3 text-white cursor-pointer shadow-md rounded-md uppercase font-black text-xs">
                         Account History
                       </div>
                       <div
                         className={`${
-                          selectedCustomer && selectedCustomer?.dispo_history?.length > 0
+                          selectedCustomer &&
+                          selectedCustomer?.dispo_history?.length > 0
                             ? "bg-red-600 border-red-900"
                             : "bg-green-600 border-green-900"
                         } absolute -top-2 rounded-full border-2 border-green-900 shadow-md px-2 font-black text-white -right-2`}
@@ -403,10 +464,13 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                           : 0}
                       </div>
                     </div>
-          
+
                     <div
                       className="relative cursor-pointer"
-                      onClick={() => setShowAccounts(true)}
+                      onClick={() => {
+                        setShowAccounts(true);
+                        setIsClose(true);
+                      }}
                     >
                       <div className="bg-green-600 border-2 border-green-900 hover:bg-green-700 text-center py-3 text-white cursor-pointer shadow-md rounded-md uppercase font-black text-xs">
                         other account
@@ -425,7 +489,10 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                     </div>
                     <div
                       className="relative cursor-pointer"
-                      onClick={() => setShowAccountHistory(true)}
+                      onClick={() => {
+                        setShowAccountHistory(true);
+                        setIsClose(true);
+                      }}
                     >
                       <div className="bg-orange-600 border-2 px-4 border-orange-900 hover:bg-orange-700 text-center py-3 text-white cursor-pointer shadow-md rounded-md uppercase font-black text-xs">
                         Past Callfile History
@@ -446,7 +513,10 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                     {selectedCustomer?.account_bucket?.can_update_ca && (
                       <div
                         className="relative cursor-pointer"
-                        onClick={() => setShowAccountHistory(true)}
+                        onClick={() => {
+                          setShowUpdateOnCA(true);
+                          setIsClose(true);
+                        }}
                       >
                         <div className="bg-cyan-600 border-2 px-4 border-cyan-900 hover:bg-cyan-700 text-center py-3 text-white cursor-pointer shadow-md rounded-md uppercase font-black text-xs">
                           Update Account History
@@ -471,79 +541,79 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
             </motion.div>
           </div>
 
-
-          <motion.div 
+          <motion.div
             initial={{ x: 50, opacity: 0 }}
             animate={{ opacity: 1, x: 0 }}
-            className="flex flex-col w-full overflow-hidden 2xl:gap-2 gap-2 bg-gray-100 border-t-2 border-x-2 border-gray-600 rounded-xl justify-center ">
-              <h1 className="text-center font-black bg-gray-400 border-b uppercase text-slate-600 text-2xl py-3">
-                Account Information
-              </h1>
+            className="flex flex-col z-10 w-full overflow-hidden 2xl:gap-2 gap-2 bg-gray-100 border-t-2 border-x-2 border-gray-600 rounded-xl justify-center "
+          >
+            <h1 className="text-center font-black bg-gray-400 border-b uppercase text-black text-2xl py-3">
+              Account Information{" "}
+            </h1>
 
-              {selectedCustomer?.batch_no && (
-                <div className=" flex items-center justify-center text-gray-600">
-                  <div className="w-1/4 flex flex-col text-center">
-                    <div className="font-bold text-gray-800 text-sm">
-                      Batch No.
-                    </div>
-                    <div className="border rounded-md border-slate-500 text-sm py-1.5 bg-gray-100">
-                      {selectedCustomer.batch_no}
-                    </div>
+            {selectedCustomer?.batch_no && (
+              <div className=" flex items-center justify-center text-gray-600">
+                <div className="w-1/4 flex flex-col text-center">
+                  <div className="font-bold text-gray-800 text-sm">Batch No.</div>
+                  <div className="border rounded-sm border-black text-sm py-1.5 bg-gray-100">
+                    {selectedCustomer.batch_no}
                   </div>
                 </div>
-              )}
-                <div className="flex gap-2 px-5 " >
+              </div>
+            )}
+            <div className="flex gap-2 px-5 ">
+              <div className="flex flex-col uppercase gap-2  w-full">
+                <FieldsDiv
+                  label="Bucket"
+                  value={selectedCustomer?.account_bucket?.name}
+                  endorsementDate={null}
+                />
+                <FieldsDiv
+                  label="Case ID / PN / Account ID"
+                  value={selectedCustomer?.case_id}
+                  endorsementDate={null}
+                />
+                <FieldsDiv
+                  label="Principal OS"
+                  value={
+                    selectedCustomer?.out_standing_details?.principal_os || 0
+                  }
+                  endorsementDate={null}
+                />
+              </div>
+              <div className="flex flex-col gap-2 uppercase  w-full">
+                <FieldsDiv
+                  label="DPD"
+                  value={selectedCustomer?.dpd}
+                  endorsementDate={null}
+                />
+                <FieldsDiv
+                  label="Max DPD"
+                  value={selectedCustomer?.max_dpd}
+                  endorsementDate={null}
+                />
+                <FieldsDiv
+                  label="DPD Due Date"
+                  value={selectedCustomer?.max_dpd}
+                  endorsementDate={selectedCustomer?.endorsement_date || ""}
+                />
+              </div>
+            </div>
 
-
-                <div className="flex flex-col uppercase gap-2  w-full">
-                  <FieldsDiv
-                    label="Bucket"
-                    value={selectedCustomer?.account_bucket?.name}
-                    endorsementDate={null}
-                  />
-                  <FieldsDiv
-                    label="Case ID / PN / Account ID"
-                    value={selectedCustomer?.case_id}
-                    endorsementDate={null}
-                  />
-                  <FieldsDiv
-                    label="Principal OS"
-                    value={
-                      selectedCustomer?.out_standing_details?.principal_os || 0
-                    }
-                    endorsementDate={null}
-                  />
-                </div>
-                <div className="flex flex-col gap-2 uppercase  w-full">
-                  <FieldsDiv
-                    label="DPD"
-                    value={selectedCustomer?.dpd}
-                    endorsementDate={null}
-                  />
-                  <FieldsDiv
-                    label="Max DPD"
-                    value={selectedCustomer?.max_dpd}
-                    endorsementDate={null}
-                  />
-                  <FieldsDiv
-                    label="DPD Due Date"
-                    value={selectedCustomer?.max_dpd}
-                    endorsementDate={selectedCustomer?.endorsement_date || ""}
-                  />
-                </div>
-                </div>
-                
-            
-              {!updateCustomerAccounts ? (
-                <div className="flex flex-col pt-2 bg-gray-100 border-gray-600 border-b-2 rounded-b-xl shadow-md px-5 pb-5 items-end justify-center gap-1 text-slate-800 uppercase font-medium">
-                  {selectedCustomer && (
+            {!updateCustomerAccounts ? (
+              <div className="flex flex-col pt-2 bg-gray-100 border-gray-600 border-b-2 rounded-b-xl shadow-md px-5 pb-5 items-end justify-center gap-1 text-slate-800 uppercase font-medium">
+                {selectedCustomer &&
+                  agentBucketData?.getDeptBucket &&
+                  agentBucketData.getDeptBucket.length > 0 &&
+                  agentBucketData.getDeptBucket.every(
+                    (bucket) => bucket.name !== "BPIBANK 2025"
+                  ) && (
                     <div className="w-full flex flex-col lg:ml-3 gap-5 text-slate-800">
-                      <div className="bg-gray-100 w-full gap-2 flex flex-col mb-1 md:mb-0 md:flex-row rounded-md">
-                        <div>
-                          <h1 className="font-medium  text-sm text-nowrap">
-                            Write Off Balance
+                      <div className="bg-gray-100 w-full gap-2 grid grid-cols-2 lg:flex flex-col mb-1 md:mb-0 md:flex-row rounded-md">
+                        <div className="w-full">
+                          <h1 className="font-medium truncate whitespace-nowrap 2xl:text-sm text-xs text-nowrap">
+                            Restructuring Balance
                           </h1>
-                          <div className="min-w-32 p-1 pl-2 border border-slate-500 rounded-md">
+                          <div className="w-full p-1 pl-2 border border-black rounded-sm">
                             {(
                               selectedCustomer?.out_standing_details
                                 ?.mo_balance ?? 0
@@ -554,11 +624,11 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                           </div>
                         </div>
 
-                        <div>
-                          <h1 className="font-medium text-sm text-nowrap">
+                        <div className="w-full">
+                          <h1 className="font-medium 2xl:text-sm text-xs text-nowrap">
                             Past Due Amount
                           </h1>
-                          <div className="min-w-32 p-1 pl-2 border border-slate-500 rounded-md">
+                          <div className="w-full p-1 pl-2 border border-black rounded-sm">
                             {(
                               selectedCustomer?.out_standing_details
                                 ?.pastdue_amount ?? 0
@@ -569,11 +639,11 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                           </div>
                         </div>
 
-                        <div>
+                        <div className="w-full">
                           <h1 className="font-medium 2xl:text-sm text-xs">
                             MO_Amort
                           </h1>
-                          <div className="min-w-32 pl-2 p-1 border border-slate-500 rounded-md">
+                          <div className="w-full pl-2 p-1 border border-black rounded-sm">
                             {(
                               selectedCustomer?.out_standing_details?.mo_amort ??
                               0
@@ -584,9 +654,9 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                           </div>
                         </div>
 
-                        <div>
-                          <h1 className="font-medium 2xl:text-sm text-xs">CF</h1>
-                          <div className="min-w-32 pl-2 p-1 border border-slate-500 rounded-md">
+                        <div className="w-full">
+                          <h1 className="font-medium 2xl:text-sm text-xs">DF</h1>
+                          <div className=" w-full pl-2 p-1 border border-black rounded-sm">
                             {(
                               selectedCustomer?.out_standing_details?.cf ?? 0
                             ).toLocaleString("en-PH", {
@@ -599,12 +669,99 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                     </div>
                   )}
 
-                  <div className="flex w-full gap-2 items-end">
+                {selectedCustomer &&
+                  agentBucketData?.getDeptBucket?.some(
+                    (bucket) => bucket.name === "BPIBANK 2025"
+                  ) && (
+                    <div className="w-full flex flex-col lg:ml-3 gap-5 text-slate-800">
+                      <div className="bg-gray-100 w-full gap-2 grid grid-cols-2 lg:flex flex-col mb-1 md:mb-0 md:flex-row rounded-md">
+                        <div className="w-full">
+                          <h1 className="font-medium truncate whitespace-nowrap 2xl:text-sm text-xs text-nowrap">
+                            Outstanding balance
+                          </h1>
+                          <div className="w-full p-1 pl-2 border border-black rounded-sm">
+                            {(
+                              selectedCustomer?.out_standing_details
+                                ?.mo_balance ?? 0
+                            ).toLocaleString("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="w-full">
+                          <h1 className="font-medium 2xl:text-sm text-xs text-nowrap">
+                            "PARTIAL PAYMENT W/ SRVCE FEE"
+                          </h1>
+                          <div className="w-full p-1 pl-2 border border-black rounded-sm">
+                            {(
+                              selectedCustomer?.out_standing_details
+                                ?.partial_payment_w_service_fee ?? 0
+                            ).toLocaleString("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="w-full">
+                          <h1 className="font-medium 2xl:text-sm text-xs">
+                            NEW TAD W/SF
+                          </h1>
+                          <div className="w-full pl-2 p-1 border border-black rounded-sm">
+                            {(
+                              selectedCustomer?.out_standing_details
+                                ?.new_tad_with_sf ?? 0
+                            ).toLocaleString("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            })}
+                          </div>
+                        </div>
+                        <div className="w-full">
+                          <h1 className="font-medium 2xl:text-sm text-xs">
+                            NEW PAY OFF
+                          </h1>
+                          <div className=" w-full pl-2 p-1 border border-black rounded-sm">
+                            {(
+                              selectedCustomer?.out_standing_details
+                                ?.new_pay_off ?? 0
+                            ).toLocaleString("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            })}
+                          </div>
+                        </div>
+
+                        <div className="w-full">
+                          <h1 className="font-medium 2xl:text-sm text-xs">
+                            Service FEE
+                          </h1>
+                          <div className=" w-full pl-2 p-1 border border-black rounded-sm">
+                            {(
+                              selectedCustomer?.out_standing_details
+                                ?.service_fee ?? 0
+                            ).toLocaleString("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                {selectedCustomer &&
+                agentBucketData?.getDeptBucket?.some(
+                  (bucket) => bucket.name === "BPIBANK 2025"
+                ) ? (
+                  <div className="flex w-full gap-2 justify-end items-end">
                     <div className="w-full">
                       <p className="font-medium whitespace-nowrap min-w-40 2xl:min-w-auto w-full text-xs 2xl:text-sm ">
-                        Outstanding Balance
+                       outstanding balance
                       </p>
-                      <div className="w-full  border p-2 rounded-lg border-slate-500 bg-gray-100 2xl:text-sm lg:text-base">
+                      <div className="w-full  border p-2  border-black rounded-sm bg-gray-100 2xl:text-sm lg:text-base">
                         {selectedCustomer?.out_standing_details?.total_os?.toLocaleString(
                           "en-PH",
                           { style: "currency", currency: "PHP" }
@@ -613,7 +770,7 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                     </div>
                     <div className="w-full">
                       <p className="font-medium text-xs 2xl:text-sm ">Balance</p>
-                      <div className="w-full border p-2 rounded-lg border-slate-500 bg-gray-100 2xl:text-sm lg:text-base">
+                      <div className="w-full border p-2  border-black rounded-sm bg-gray-100 2xl:text-sm lg:text-base">
                         {selectedCustomer?.balance?.toLocaleString("en-PH", {
                           style: "currency",
                           currency: "PHP",
@@ -624,92 +781,150 @@ const AccountInfo = forwardRef<ChildHandle, {}>((_, ref) => {
                       <p className="font-medium text-xs 2xl:text-sm">
                         Total Paid
                       </p>
-                      <div className="w-full border p-2 rounded-lg border-slate-500 bg-gray-100 2xl:text-sm lg:text-base">
+                      <div className="w-full border p-2 border-black rounded-sm bg-gray-100 2xl:text-sm lg:text-base">
                         {selectedCustomer?.paid_amount?.toLocaleString("en-PH", {
                           style: "currency",
                           currency: "PHP",
                         })}
                       </div>
                     </div>
-                    <div className="flex justify-end h-full items-end">
-                      {(selectedCustomer && userLogged?.type !== "AGENT") &&
-                        !updateCustomerAccounts &&
-                        Math.ceil(selectedCustomer?.balance) > 0 &&
-                        selectedCustomer?.account_bucket.can_update_ca && (
+                    {selectedCustomer &&
+                      userLogged?.type !== "AGENT" &&
+                      !updateCustomerAccounts &&
+                      Math.ceil(selectedCustomer?.balance) > 0 &&
+                      selectedCustomer?.account_bucket.can_update_ca && (
+                        <div className="flex justify-end h-full items-end">
                           <button
-                            className=" hover:bg-orange-600 bg-orange-500 transition-all shadow-md hover:shadow-none font-black uppercase rounded-md py-3 flex text-sm cursor-pointer px-5 text-white"
+                            className=" hover:bg-orange-600 border-2 border-orange-800 bg-orange-500 transition-all shadow-md hover:shadow-none font-black uppercase rounded-md py-2 flex text-sm cursor-pointer px-5 text-white"
                             onClick={() =>
                               setUpdateCustomerAccounts((prev) => !prev)
                             }
                           >
                             Update
                           </button>
+                        </div>
+                      )}
+                  </div>
+                ) : (
+                  <div className="flex w-full gap-2 justify-end items-end">
+                    <div className="w-full">
+                      <p className="font-medium whitespace-nowrap min-w-40 2xl:min-w-auto w-full text-xs 2xl:text-sm ">
+                        {selectedCustomer?.out_standing_details &&
+                        selectedCustomer.out_standing_details.mo_balance === 0 &&
+                        selectedCustomer.out_standing_details.cf !== undefined &&
+                        selectedCustomer.out_standing_details.mo_amort !==
+                          undefined
+                          ? "Outstanding Balance"
+                          : "OSB w/ CF"}
+                      </p>
+                      <div className="w-full  border p-2  border-black rounded-sm bg-gray-100 2xl:text-sm lg:text-base">
+                        {selectedCustomer?.out_standing_details?.total_os?.toLocaleString(
+                          "en-PH",
+                          { style: "currency", currency: "PHP" }
                         )}
+                      </div>
+                    </div>
+                    <div className="w-full">
+                      <p className="font-medium text-xs 2xl:text-sm ">Balance</p>
+                      <div className="w-full border p-2  border-black rounded-sm bg-gray-100 2xl:text-sm lg:text-base">
+                        {selectedCustomer?.balance?.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      </div>
+                    </div>
+                    <div className="w-full">
+                      <p className="font-medium text-xs 2xl:text-sm">
+                        Total Paid
+                      </p>
+                      <div className="w-full border p-2 border-black rounded-sm bg-gray-100 2xl:text-sm lg:text-base">
+                        {selectedCustomer?.paid_amount?.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      </div>
+                    </div>
+                    {selectedCustomer &&
+                      userLogged?.type !== "AGENT" &&
+                      !updateCustomerAccounts &&
+                      Math.ceil(selectedCustomer?.balance) > 0 &&
+                      selectedCustomer?.account_bucket.can_update_ca && (
+                        <div className="flex justify-end h-full items-end">
+                          <button
+                            className=" hover:bg-orange-600 border-2 border-orange-800 bg-orange-500 transition-all shadow-md hover:shadow-none font-black uppercase rounded-md py-2 flex text-sm cursor-pointer px-5 text-white"
+                            onClick={() =>
+                              setUpdateCustomerAccounts((prev) => !prev)
+                            }
+                          >
+                            Update
+                          </button>
+                        </div>
+                      )}
+                  </div>
+                )}
+              </div>
+            ) : (
+              <div>
+                <UpdateCustomerAccount
+                  cancel={() => setUpdateCustomerAccounts((prev) => !prev)}
+                />
+              </div>
+            )}
+          </motion.div>
+          {selectedCustomer &&
+            data &&
+            data?.customerOtherAccounts?.length > 0 &&
+            (() => {
+              const sumofOtherOB =
+                data?.customerOtherAccounts
+                  ?.map((x) => x.out_standing_details?.total_os)
+                  .reduce((t, v) => t + v) +
+                selectedCustomer?.out_standing_details?.total_os;
+
+              const sumofOtherPrincipal =
+                data?.customerOtherAccounts
+                  ?.map((x) => x.out_standing_details?.principal_os)
+                  .reduce((t, v) => t + v) +
+                selectedCustomer?.out_standing_details?.principal_os;
+
+              return (
+                <motion.div
+                  className=" w-full flex flex-col mt-2 lg:mt-0 lg:ml-3 justify-center gap-5 text-slate-800"
+                  initial={{ x: 20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.1 }}
+                >
+                  <div className="bg-gray-100 w-full shadow-md px-3 py-4 border-2 gap-1 flex flex-col border-gray-600 rounded-md">
+                    <div>
+                      <h1 className="font-medium 2xl:text-lg lg:text-base">
+                        Customer Total OB
+                      </h1>
+                      <div className="min-w-45 p-1 pl-2 border border-slate-500 rounded-md">
+                        {sumofOtherOB?.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      </div>
+                    </div>
+                    <div>
+                      <h1 className="font-medium 2xl:text-lg lg:text-base">
+                        Customer Total Principal
+                      </h1>
+                      <div className="min-w-45 p-1 pl-2 border border-slate-500 rounded-md">
+                        {sumofOtherPrincipal?.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      </div>
                     </div>
                   </div>
-                </div>
-              ) : (
-                <div>
-                  <UpdateCustomerAccount
-                    cancel={() => setUpdateCustomerAccounts((prev) => !prev)}
-                  />
-                </div>
-              )}
-            </motion.div>
-            {selectedCustomer && data &&
-              data?.customerOtherAccounts?.length > 0 &&
-              (() => {
-                const sumofOtherOB =
-                  data?.customerOtherAccounts
-                    ?.map((x) => x.out_standing_details?.total_os)
-                    .reduce((t, v) => t + v) +
-                  selectedCustomer?.out_standing_details?.total_os;
-
-                const sumofOtherPrincipal =
-                  data?.customerOtherAccounts
-                    ?.map((x) => x.out_standing_details?.principal_os)
-                    .reduce((t, v) => t + v) +
-                  selectedCustomer?.out_standing_details?.principal_os;
-
-                return (
-                  <motion.div
-                    className=" w-full flex flex-col mt-2 lg:mt-0 lg:ml-3 justify-center gap-5 text-slate-800"
-                    initial={{ x: 20, opacity: 0 }}
-                    animate={{ x: 0, opacity: 1 }}
-                    transition={{ delay: 0.1 }}
-                  >
-                    <div className="bg-gray-100 w-full shadow-md px-3 py-4 border-2 gap-1 flex flex-col border-gray-600 rounded-md">
-                      <div>
-                        <h1 className="font-medium 2xl:text-lg lg:text-base">
-                          Customer Total OB
-                        </h1>
-                        <div className="min-w-45 p-1 pl-2 border border-slate-500 rounded-md">
-                          {sumofOtherOB?.toLocaleString("en-PH", {
-                            style: "currency",
-                            currency: "PHP",
-                          })}
-                        </div>
-                      </div>
-                      <div>
-                        <h1 className="font-medium 2xl:text-lg lg:text-base">
-                          Customer Total Principal
-                        </h1>
-                        <div className="min-w-45 p-1 pl-2 border border-slate-500 rounded-md">
-                          {sumofOtherPrincipal?.toLocaleString("en-PH", {
-                            style: "currency",
-                            currency: "PHP",
-                          })}
-                        </div>
-                      </div>
-                    </div>
-                  </motion.div>
-                );
-              })()}
-        
+                </motion.div>
+              );
+            })()}
         </div>
-      </>
-    )
- 
-});
+      </div>
+    );
+  }
+);
 
 export default AccountInfo;

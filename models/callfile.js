@@ -56,6 +56,14 @@ const callFileSchema = new Schema(
       type: Number,
       default: 0,
     },
+    roundCount: {
+      type: Number,
+      default: 1
+    },
+    roundCountTotal: {
+      type: Number,
+      default: 0
+    },
     penetration_details: {
       calls: {
         vici: {

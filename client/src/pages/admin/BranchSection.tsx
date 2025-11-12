@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
 import { gql, useMutation, useQuery } from "@apollo/client";
-import { useCallback, useRef, useState} from "react";
+import { useCallback, useRef, useState } from "react";
 import Confirmation from "../../components/Confirmation";
 import { useAppDispatch } from "../../redux/store";
 import { setServerError, setSuccess } from "../../redux/slices/authSlice";
@@ -106,6 +106,7 @@ const BranchSection: React.FC<BranchSectionProps> = ({ branch, setBranch }) => {
       } catch (error) {
         dispatch(setServerError(true));
       }
+      setBranch(false);
       setName("");
       setIsUpdate(false);
       setBranchToUpdate(null);
@@ -272,16 +273,16 @@ const BranchSection: React.FC<BranchSectionProps> = ({ branch, setBranch }) => {
                     >
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
                         viewBox="0 0 24 24"
-                        strokeWidth="2"
-                        stroke="currentColor"
-                        className="size-5"
+                        fill="currentColor"
+                          className={`" ${
+                            index === index ? "hover:rotate-90" : ""
+                          } transition-all size-5.5  "`}
                       >
                         <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+                          fillRule="evenodd"
+                          d="M11.078 2.25c-.917 0-1.699.663-1.85 1.567L9.05 4.889c-.02.12-.115.26-.297.348a7.493 7.493 0 0 0-.986.57c-.166.115-.334.126-.45.083L6.3 5.508a1.875 1.875 0 0 0-2.282.819l-.922 1.597a1.875 1.875 0 0 0 .432 2.385l.84.692c.095.078.17.229.154.43a7.598 7.598 0 0 0 0 1.139c.015.2-.059.352-.153.43l-.841.692a1.875 1.875 0 0 0-.432 2.385l.922 1.597a1.875 1.875 0 0 0 2.282.818l1.019-.382c.115-.043.283-.031.45.082.312.214.641.405.985.57.182.088.277.228.297.35l.178 1.071c.151.904.933 1.567 1.85 1.567h1.844c.916 0 1.699-.663 1.85-1.567l.178-1.072c.02-.12.114-.26.297-.349.344-.165.673-.356.985-.57.167-.114.335-.125.45-.082l1.02.382a1.875 1.875 0 0 0 2.28-.819l.923-1.597a1.875 1.875 0 0 0-.432-2.385l-.84-.692c-.095-.078-.17-.229-.154-.43a7.614 7.614 0 0 0 0-1.139c-.016-.2.059-.352.153-.43l.84-.692c.708-.582.891-1.59.433-2.385l-.922-1.597a1.875 1.875 0 0 0-2.282-.818l-1.02.382c-.114.043-.282.031-.449-.083a7.49 7.49 0 0 0-.985-.57c-.183-.087-.277-.227-.297-.348l-.179-1.072a1.875 1.875 0 0 0-1.85-1.567h-1.843ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z"
+                          clipRule="evenodd"
                         />
                       </svg>
                     </div>
@@ -381,20 +382,10 @@ const BranchSection: React.FC<BranchSectionProps> = ({ branch, setBranch }) => {
                   </div>
 
                   <div className="flex justify-end px-3 mb-2 ">
-                    <button
-                      type="submit"
-                      className={`${
-                        isUpdate
-                          ? "bg-orange-400 hover:bg-orange-500"
-                          : " bg-blue-700 hover:bg-blue-800"
-                      } focus:outline-none text-white  focus:ring-4 focus:ring-blue-300 shadow-md font-medium rounded-md text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
-                    >
-                      {!isUpdate ? "Create" : "Update"}
-                    </button>
                     {isUpdate && (
                       <button
                         type="button"
-                        className={` bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-medium rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
+                        className={` bg-slate-400 hover:bg-slate-500 focus:outline-none text-white  focus:ring-4 focus:ring-slate-300 font-black uppercase border-gray-800 border-2 transition-all rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
                         onClick={() => {
                           setIsUpdate(false);
                           setName("");
@@ -404,6 +395,16 @@ const BranchSection: React.FC<BranchSectionProps> = ({ branch, setBranch }) => {
                         Cancel
                       </button>
                     )}
+                    <button
+                      type="submit"
+                      className={`${
+                        isUpdate
+                          ? "bg-purple-500 border-purple-800 hover:bg-purple-600"
+                          : " bg-purple-500 hover:bg-purple-600 border-purple-800"
+                      } focus:outline-none text-white border-2 focus:ring-4 focus:ring-blue-300 shadow-md font-black uppercase transition-all rounded-md text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer`}
+                    >
+                      {!isUpdate ? "Create" : "Update"}
+                    </button>
                   </div>
                 </motion.div>
               </form>

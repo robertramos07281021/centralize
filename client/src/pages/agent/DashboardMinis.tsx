@@ -165,6 +165,7 @@ const ForRPCDiv = ({
       } bg-white font-black rounded-sm shadow-md flex flex-col`}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
+      transition={{delay: interval === "daily" ? 0 : 0.3}}
     >
       <div
         className={`lg:text-xs flex-col h-[50%] rounded-t-sm border-b flex items-center justify-center font-black 2xl:text-base ${
@@ -361,7 +362,7 @@ const DashboardMinis = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.7 }}
       >
-        <div className="flex flex-col h-1/3 2xl:h-1/2 rounded-t-sm border-b border-teal-500 bg-teal-200 items-center justify-center py-2">
+        <div className="flex gap-2 lg:gap-0 lg:flex-col h-1/3 2xl:h-1/2 rounded-t-sm border-b border-teal-500 bg-teal-200 items-center justify-center py-2">
 
           <div className="lg:text-xs flex items-center justify-center font-black 2xl:text-base">
             KEPT
@@ -377,8 +378,8 @@ const DashboardMinis = () => {
           </p>
 
           <div className="w-full justify-between 2xl:justify-center relative flex flex-row items-center gap-2">
-            <div className="text-[0.5rem] 2xl:text-sm 2xl:w-5 font-normal items-center flex 2xl:mr-2">TGT</div>
-            <div className="text-[0.7rem] 2xl:text-sm">
+            <div className="text-[0.8rem] 2xl:text-sm 2xl:w-5 font-normal items-center flex 2xl:mr-2">TGT</div>
+            <div className="text-[0.8rem] 2xl:text-sm">
               {(userLogged?.targets?.monthly ?? 0).toLocaleString("en-PH", {
                 style: "currency",
                 currency: "PHP",
@@ -388,10 +389,10 @@ const DashboardMinis = () => {
           </div>
 
           <div className="w-full justify-between 2xl:justify-center relative flex flex-row items-center gap-2">
-            <div className="text-[0.5rem] 2xl:text-sm 2xl:w-5 font-normal items-center flex 2xl:mr-2 ">
+            <div className="text-[0.8rem] 2xl:text-sm 2xl:w-5 font-normal items-center flex 2xl:mr-2 ">
               COLL
             </div>
-            <div className="text-[0.7rem] 2xl:text-sm">
+            <div className="text-[0.8rem] 2xl:text-sm">
               {(
                 collectionsData?.monthlyWeeklyCollected?.monthly ?? 0
               ).toLocaleString("en-PH", {
@@ -403,8 +404,8 @@ const DashboardMinis = () => {
           </div>
 
           <div className="w-full justify-between 2xl:justify-center relative flex flex-row items-center gap-2">
-            <div className="text-[0.5rem] 2xl:text-xs 2xl:w-5 font-normal items-center flex 2xl:mr-2">VAR</div>
-            <div className="text-[0.7rem] 2xl:text-sm">
+            <div className="text-[0.8rem] 2xl:text-xs 2xl:w-5 font-normal items-center flex 2xl:mr-2">VAR</div>
+            <div className="text-[0.8rem] 2xl:text-sm">
               {(() => {
                 const tgt = userLogged?.targets?.monthly ?? 0;
                 const coll =

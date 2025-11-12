@@ -41,7 +41,7 @@ const UserView = () => {
 
   return (
     <AnimatePresence>
-      <div className="h-full flex flex-col px-10 overflow-hidden justify-center items-center ">
+      <div className="h-full flex flex-col overflow-hidden justify-center items-center ">
         <motion.div
           className="bg-black/40  w-full h-full top-0 left-0 absolute z-10 "
           initial={{ opacity: 0 }}
@@ -50,14 +50,14 @@ const UserView = () => {
           {" "}
         </motion.div>
         <motion.div
-          className="z-20 bg-white rounded-md overflow-hidden py-5 flex flex-col relative px-20"
+          className="z-20 bg-white overflow-hidden py-5 flex flex-col relative px-20 w-full"
           initial={{ scale: 0.8 }}
           animate={{ scale: 1 }}
         >
           <div className="h-full flex items-center overflow-hidden relative ">
             <div className="h-full w-full flex flex-row relative ">
               <UpdateUserForm state={state} />
-              <div className="rounded-lg border  w-5/8 border-gray-600 shadow-md mb-1 flex flex-col overflow-y-auto">
+              <div className="rounded-lg border w-5/8 border-gray-600 shadow-md mb-1 flex flex-col overflow-y-auto">
                 <div className="grid grid-cols-2 border-b border-gray-600 py-1.5 font-black uppercase px-2 bg-gray-200">
                   <div>Name</div>
                   <div>Date</div>

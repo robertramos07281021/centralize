@@ -251,6 +251,7 @@ const CustomerUpdateForm: React.FC<CustomerUpdateFormProps> = ({ cancel }) => {
       });
     }
   }, [selectedCustomer]);
+  console.log(selectedCustomer)
 
   return (
     <AnimatePresence>

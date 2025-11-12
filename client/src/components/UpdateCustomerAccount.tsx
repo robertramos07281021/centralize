@@ -10,7 +10,7 @@ import {
 } from "../redux/slices/authSlice";
 import { useSelector } from "react-redux";
 import { AccountUpdateHistory } from "../middleware/types";
-import { motion, AnimatePresence  } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 type CustomerProps = {
   cancel: () => void;
@@ -42,7 +42,11 @@ const UPDATE_ACCOUNT_INFO = gql`
           cf
           mo_balance
           pastdue_amount
-         mo_amort
+          mo_amort
+          partial_payment_w_service_fee
+          new_tad_with_sf
+          new_pay_off
+          service_fee
         }
         account_update_history {
           principal_os
@@ -65,12 +69,16 @@ type outStandingDetails = {
   total_os: number;
   waive_fee_os: number;
   late_charge_waive_fee_os: number;
-  writeoff_balance: number
-  overall_balance: number
-  cf:number
-  mo_balance: number
-  pastdue_amount: number
-  mo_amort: number
+  writeoff_balance: number;
+  overall_balance: number;
+  cf: number;
+  mo_balance: number;
+  pastdue_amount: number;
+  mo_amort: number;
+  partial_payment_w_service_fee: number;
+  new_tad_with_sf: number;
+  new_pay_off: number;
+  service_fee: number;
 };
 
 type CustomerAccount = {
@@ -111,7 +119,7 @@ const UpdateCustomerAccount: React.FC<CustomerProps> = ({ cancel }) => {
             ...selectedCustomer,
             balance: data.updateCustomerAccount.customerAccount.balance,
             out_standing_details:
-            data.updateCustomerAccount.customerAccount.out_standing_details,
+              data.updateCustomerAccount.customerAccount.out_standing_details,
             account_update_history:
               data.updateCustomerAccount.customerAccount.account_update_history,
           })
@@ -185,64 +193,67 @@ const UpdateCustomerAccount: React.FC<CustomerProps> = ({ cancel }) => {
 
   return (
     <AnimatePresence>
-      
       <div className="absolute top-0 left-0 w-full h-full justify-center items-center flex">
         <motion.div
           onClick={() => cancel()}
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className=" cursor-pointer z-30 absolute top-0 left-0 bg-black/30 backdrop-blur-sm w-full h-full "
+          className=" cursor-pointer z-30 absolute top-0 left-0 backdrop-blur-sm w-full h-full "
         ></motion.div>
         <motion.fieldset
-          className="flex flex-col gap-5 border border-slate-500 shadow-md z-30 rounded-md overflow-hidden bg-white"
+          className="flex flex-col gap-5 border border-black shadow-md z-30 rounded-md overflow-hidden bg-white"
           initial={{ scale: 0.5, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ scale: 0.5, opacity: 0 }}
         >
-          <div className="w-full py-3  text-2xl text-center bg-gray-300 rounded-t-md font-black uppercase text-gray-600">
+          <div className="w-full py-3 border-b border-black text-2xl text-center bg-gray-300 rounded-t-md font-black uppercase text-gray-600">
             For Update
           </div>
-          <div className="flex lg:gap-2 2xl:gap-10 px-10 items-end 2xl:text-base text-xs lg:text-sm flex-col 2xl:flex-row justify-start">
-            <label className="flex items-center gap-2" >
-              <p className="font-black uppercase text-gray-600">Outstanding Balance :</p>
+          <div className="flex gap-2 lg:gap-2 2xl:gap-10 px-10 items-end 2xl:text-base text-xs lg:text-sm flex-col 2xl:flex-row justify-start">
+            <label className="flex items-center gap-2">
+              <p className="font-black uppercase text-gray-600">
+                Outstanding Balance :
+              </p>
               <input
                 type="text"
                 id="total_os"
                 name="total_os"
                 value={formData.total_os || ""}
-                className="border rounded-lg p-2 border-slate-400"
+                className="border rounded-lg p-2 border-black shadow-md"
                 onChange={(e) => handleOnChangeAmount(e, "total_os")}
               />
             </label>
-            <label className="flex items-center gap-2" >
-              <p className="font-black uppercase text-gray-600">Principal Balance :</p>
+            <label className="flex items-center gap-2">
+              <p className="font-black uppercase text-gray-600">
+                Principal Balance :
+              </p>
               <input
                 type="text"
-                className="border rounded-lg p-2 border-slate-400"
+                className="border rounded-lg p-2 border-black shadow-md"
                 value={formData.principal || ""}
                 onChange={(e) => handleOnChangeAmount(e, "principal")}
               />
             </label>
-            <label className="flex items-center gap-2" >
+            <label className="flex items-center gap-2">
               <p className="font-black uppercase text-gray-600">Balance :</p>
               <input
                 type="text"
                 value={formData.balance || ""}
-                className="border rounded-lg p-2 border-slate-400"
+                className="border rounded-lg p-2 border-black shadow-md"
                 onChange={(e) => handleOnChangeAmount(e, "balance")}
               />
             </label>
           </div>
           <div className="flex gap-2 items-center justify-center pb-5">
             <button
-              className="py-2.5 hover:bg-orange-600 bg-orange-400 font-medium rounded-lg text-sm cursor-pointer w-22 text-white"
+              className="py-2.5 hover:bg-orange-600 border-2 border-orange-800 font-black uppercase bg-orange-500 transition-all rounded-lg text-sm cursor-pointer w-22 text-white"
               onClick={onSubmit}
             >
               Save
             </button>
             <button
-              className="py-2.5 hover:bg-slate-600 bg-slate-400 font-medium rounded-lg text-sm cursor-pointer w-22 text-white"
+              className="py-2.5 hover:bg-gray-600 border-2 transition-all border-gray-800 bg-gray-500 font-black uppercase rounded-lg text-sm cursor-pointer w-22 text-white"
               onClick={() => cancel()}
             >
               Cancel

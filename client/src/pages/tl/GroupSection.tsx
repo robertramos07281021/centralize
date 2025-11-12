@@ -10,7 +10,7 @@ import {
 } from "../../redux/slices/authSlice";
 import { RootState, useAppDispatch } from "../../redux/store";
 import { useSelector } from "react-redux";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 type Member = {
   _id: string;
@@ -379,7 +379,7 @@ const GroupSection = () => {
   return (
     <>
       <div className=" flex justify-between h-full w-full gap-5 items-end flex-col">
-        <div className="flex gap-5 pt-3 w-full">
+        <div className="flex gap-2 pt-3 w-full">
           <motion.div
             initial={{ y: 20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
@@ -392,10 +392,8 @@ const GroupSection = () => {
               autoComplete="off"
               value={name}
               className={`border h-full shadow-sm  ${
-                required
-                  ? "border-red-500 bg-red-50"
-                  : "border-slate-300 bg-slate-50"
-              } rounded-md lg:py-1  2xl:py-1.5 pl-4 lg:text-sm 2xl:text-sm`}
+                required ? "border-red-500 bg-red-50" : "border-black bg-white"
+              } rounded-md lg:py-1  2xl:py-1.5 focus:outline-none pl-4 lg:text-sm 2xl:text-sm`}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter Group Name..."
             />
@@ -412,7 +410,7 @@ const GroupSection = () => {
               id="discription"
               autoComplete="off"
               value={description}
-              className="border shadow-sm h-full border-slate-300 bg-slate-50 rounded-md  lg:py-1 pl-4  2xl:py-1.5 flex  w-full text-sm "
+              className="border shadow-sm h-full border-black focus:outline-none bg-slate-50 rounded-md  lg:py-1 pl-4  2xl:py-1.5 flex  w-full text-sm "
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter Group Description..."
             />
@@ -423,23 +421,23 @@ const GroupSection = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 1.1, duration: 0.5, type: "spring" }}
               type="button"
-              className="shadow-sm text-green-900 bg-green-500 border-2 font-black uppercase whitespace-nowrap border-green-800 hover:bg-green-600 focus:ring-4 focus:ring-green-300 cursor-pointer rounded-lg text-sm px-5 h-10 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
+              className="shadow-md text-white bg-green-500 border-2 font-black uppercase whitespace-nowrap border-green-800 hover:bg-green-600 focus:ring-4 focus:ring-green-300 cursor-pointer rounded-lg text-sm px-5 h-10 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
               onClick={onSubmitCreateGroup}
             >
               Add Group
             </motion.button>
           ) : (
-            <div className="flex gap-4 ">
+            <div className="flex gap-1">
               <button
                 type="button"
-                className="focus:outline-none text-white bg-orange-700 hover:bg-orange-800 focus:ring-4 focus:ring-orange-300 font-medium rounded-lg text-xs px-5 h-10 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-green-800"
+                className="focus:outline-none border-2 border-orange-900 text-white bg-orange-600 hover:bg-orange-700 cursor-pointer transition-all font-black rounded-md uppercase text-xs px-5 py-2.5 dark:bg-orange-600 dark:hover:bg-orange-700 dark:focus:ring-green-800"
                 onClick={handleClickUpdateGroupSubmit}
               >
                 Submit
               </button>
               <button
                 type="button"
-                className="text-white bg-gray-800 hover:bg-gray-900 focus:outline-none focus:ring-4 focus:ring-gray-300 font-medium rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700"
+                className="text-white bg-gray-600 hover:bg-gray-700 focus:outline-none border-2 border-gray-800 focus:ring-4 focus:ring-gray-300 font-black uppercase cursor-pointer rounded-lg text-sm px-5 py-2.5 dark:bg-gray-800 dark:hover:bg-gray-700 dark:focus:ring-gray-700 dark:border-gray-700"
                 onClick={() => setUpdateGroup(false)}
               >
                 Cancel
@@ -447,37 +445,97 @@ const GroupSection = () => {
             </div>
           )}
         </div>
-        <div className="flex items-center gap-5 relative lg:text-[0.6em] 2xl:text-xs">
+        <div className="flex items-center gap-2 lg:text-[0.6em] 2xl:text-xs">
           {selectedGroup && (
             <>
               <div>
-                <FaPlusCircle
+                <div
+                  className="p-1 bg-green-600 border-2 cursor-pointer hover:bg-green-700 transition-all border-green-900 rounded-sm shadow-md  text-white"
+                  title="Add Member"
+                  onClick={handleAddMemberTransition}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                    className="size-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M12 4.5v15m7.5-7.5h-15"
+                    />
+                  </svg>
+                </div>
+                {/* <FaPlusCircle
                   className={`${
                     addMember && "rotate-45"
                   } peer text-3xl transition-transform hover:scale-105 cursor-pointer `}
                   onClick={handleAddMemberTransition}
-                />
-                <p className="peer-hover:block hidden absolute text-xs -translate-x-1/2 left-4 -top-5 font-bold text-slate-700 bg-white ">
+                /> */}
+                {/* <p className="peer-hover:block hidden absolute text-xs -translate-x-1/2 left-4 -top-5 font-bold text-slate-700 bg-white ">
                   {addMember ? "Close" : "Add Member"}
-                </p>
+                </p> */}
               </div>
               <div>
-                <FaEdit
+                <div
+                  className="p-1 bg-orange-500 border-2 cursor-pointer hover:bg-orange-600 transition-all border-orange-900 rounded-sm shadow-md  text-white"
+                  title="Update Group"
+                  onClick={() => setUpdateGroup(true)}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                    className="size-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10"
+                    />
+                  </svg>
+                </div>
+                {/* <FaEdit
                   className="peer w-8 h-8 border rounded-full p-1 bg-orange-400 text-white hover:scale-105 cursor-pointer "
                   onClick={() => setUpdateGroup(true)}
                 />
                 <p className="peer-hover:block hidden absolute text-xs -translate-x-1/2 left-16 -top-5 font-bold text-slate-700 bg-white">
                   Update Group
-                </p>
+                </p> */}
               </div>
               <div>
-                <FaMinusCircle
+                <div
+                  className="p-1 bg-red-600 border-2 cursor-pointer hover:bg-red-700 transition-all border-red-900 rounded-sm shadow-md  text-white"
+                  title="Delete Group"
+                  onClick={handleClickDeleteGroup}
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                    className="size-6"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"
+                    />
+                  </svg>
+                </div>
+                {/* <FaMinusCircle
                   className="peer text-3xl text-red-700 hover:scale-105 cursor-pointer"
                   onClick={handleClickDeleteGroup}
                 />
                 <p className="peer-hover:block hidden absolute text-xs translate-x-1/2 left-10 -top-5 font-bold text-slate-700 bg-white">
                   Delete Group
-                </p>
+                </p> */}
               </div>
             </>
           )}
@@ -489,15 +547,15 @@ const GroupSection = () => {
               className={`${
                 groupRequired
                   ? "border-red-500 bg-red-50"
-                  : "bg-gray-50 border-gray-300"
-              } border text-slate-500 uppercase cursor-pointer shadow-sm text-sm font-bold rounded-lg focus:ring-blue-500 focus:border-blue-500 block lg:w-50 2xl:w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+                  : "bg-gray-50 border-black "
+              } border text-black focus:outline-none uppercase cursor-pointer shadow-md text-sm font-bold rounded-lg block lg:w-50 2xl:w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
               onChange={(e) => {
                 dispatch(setSelectedGroup(e.target.value));
                 setGroupRequired(false);
               }}
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 1.5, duration: 0.5, type: "spring" }}
+              transition={{ delay: 1.5, duration:  0.5, type: "spring" }}
             >
               <option value="">Select Group</option>
               {deptGroupData?.findGroup?.map((dgd) => (
@@ -511,9 +569,184 @@ const GroupSection = () => {
               <p>{selectedGroup}</p>{" "}
             </div>
           )}
-          {addMember && (
-            <>
-              <div className="bg-white z-10 lg:w-50 2xl:w-96 absolute border -translate-x-full -left-2 h-96 top-0 rounded-lg border-slate-300 shadow-lg shadow-black/15 p-3 flex flex-col">
+          <AnimatePresence>
+            {addMember && (
+              <div className="absolute top-0 p-20 left-0 w-full h-full justify-center items-center  flex gap-2">
+                <motion.div
+                  className="bg-black/40 absolute w-full h-full z-50 backdrop-blur-sm"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  exit={{ opacity: 0 }}
+                ></motion.div>
+                <motion.div
+                  className="flex gap-2 bg-white p-3 rounded-sm border z-60 "
+                  initial={{ scale: 0.8, opacity: 0 }}
+                  animate={{ scale: 1, opacity: 1 }}
+                  exit={{ scale: 0.8, opacity: 0 }}
+                  transition={{ duration: 0.3, type: "spring" }}
+                >
+                  <AnimatePresence>
+                    <motion.div
+                      className="bg-white rounded-md h-full border overflow-hidden shadow-md z-60 "
+                      layout
+                    >
+                      <div className="grid uppercase py-2 bg-gray-300 border-b shadow-md grid-cols-5 text-center">
+                        <div>id</div>
+                        <div className="col-span-2">name</div>
+                        <div className="col-span-2">bucket</div>
+                      </div>
+                      {deptAgentData?.findAgents.map((da) => (
+                        <div
+                          key={da._id}
+                          className="grid grid-cols-5 text-sm items-center text-center px-5 py-2 odd:bg-gray-100 hover:bg-gray-200 "
+                        >
+                          <div className="cursor-default">
+                            {da.user_id || (
+                              <div className="text-xs text-gray-400 italic">
+                                No ID
+                              </div>
+                            )}
+                          </div>
+                          <div
+                            className="text-nowrap truncate uppercase cursor-default"
+                            title={da.name.toUpperCase()}
+                          >
+                            {da.name}
+                          </div>
+                          <div className="col-span-2 cursor-default">
+                            {da.buckets.map((e) => bucketObject[e]).join(", ")}
+                          </div>
+                          <div className="flex justify-end cursor-default">
+                            {da.group ? (
+                              dgdObjectName[da.group]
+                            ) : (
+                              <div
+                                className="bg-green-600 cursor-pointer hover:bg-green-700 transition-all shadow-md p-1 border-2 rounded-md text-white border-green-800"
+                                onClick={() => handleAddGroupMember(da._id)}
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth="2"
+                                  stroke="currentColor"
+                                  className="size-6"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M12 4.5v15m7.5-7.5h-15"
+                                  />
+                                </svg>
+                              </div>
+                              // <FaPlusCircle
+                              //   className="lg:text-base 2xl:text-lg text-green-500"
+                              //   onClick={() => handleAddGroupMember(da._id)}
+                              // />
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </motion.div>
+                    <motion.div
+                      className="bg-white rounded-md min-w-60 border h-full text-sm uppercase p-2 overflow-hidden shadow-md z-60 "
+                      layout
+                    >
+                      <div className="flex flex-col overflow-y-auto">
+                        <h1 className="font-black text-black">Description</h1>
+                        <div className="flex flex-col overflow-y-auto text-justify px-2">
+                          {selectedGroupData?.description}
+                        </div>
+                      </div>
+                      <div className="h-2/3 flex flex-col">
+                        <h1 className="font-black text-black">
+                          Member
+                          {selectedGroupData?.members &&
+                          selectedGroupData?.members?.length > 1
+                            ? "s"
+                            : ""}
+                        </h1>
+                        <div
+                          className={`" ${
+                            selectedGroupData?.members ? "border" : ""
+                          } max-h-40 flex flex-col rounded-sm shadow-md  overflow-y-auto "`}
+                        >
+                          {selectedGroupData?.members.length === 0 && (
+                            <p className="text-center italic lowercase text-gray-500 py-2">
+                              No members in this group.
+                            </p>
+                          )}
+                          {selectedGroupData?.members.map((m) => (
+                            <div
+                              key={m._id}
+                              className="grid grid-cols-5 items-center text-center odd:bg-gray-100 py-1"
+                            >
+                              <p className="cursor-default">{m.user_id}</p>
+                              <p
+                                className="uppercase text-nowrap truncate cursor-default"
+                                title={m.name.toUpperCase()}
+                              >
+                                {m.name}
+                              </p>
+                              <p className="col-span-2 cursor-default">
+                                {m.buckets
+                                  .map((e) => bucketObject[e])
+                                  .join(", ")}
+                              </p>
+                              <div className="flex justify-end mr-3">
+                                <div
+                                  className="p-1 bg-red-600 hover:bg-red-700 transition-all rounded-md border-2 border-red-900 text-white cursor-pointer"
+                                  onClick={() => handleDeleteMember(m._id)}
+                                >
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth="1.5"
+                                    stroke="currentColor"
+                                    className="size-6"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M5 12h14"
+                                    />
+                                  </svg>
+                                </div>
+                                {/* <FaMinusCircle
+                              className="lg:text-base 2xl:text-lg text-red-500"
+                              onClick={() => handleDeleteMember(m._id)}
+                            /> */}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                  <div className="">
+                    <div
+                      className="p-1 rounded-full text-white border-2 border-red-900 cursor-pointer shadow-md bg-red-600 hover:bg-red-700 transition-all"
+                      onClick={() => setAddMember(false)}
+                    >
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="1.5"
+                        stroke="currentColor"
+                        className="size-6"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M6 18 18 6M6 6l12 12"
+                        />
+                      </svg>
+                    </div>
+                  </div>
+                </motion.div>
+                {/* <div className="bg-white z-10  border -translate-x-full -left-2 h-96 top-0 rounded-lg border-slate-300 shadow-lg shadow-black/15 p-3 flex flex-col">
                 <p className="font-bold text-slate-700">Agent</p>
                 <div className="h-full overflow-y-auto mt-2 text-slate-700">
                   {deptAgentData && deptAgentData?.findAgents?.length > 0 && (
@@ -548,7 +781,7 @@ const GroupSection = () => {
                   ))}
                 </div>
               </div>
-              <div className="bg-white z-10 lg:w-50 2xl:w-96 absolute border right-0 h-96 top-12 rounded-lg border-slate-300 shadow-lg shadow-black/15 p-2 flex flex-col">
+              <div className="bg-white z-10 border rounded-lg border-slate-300 shadow-lg shadow-black/15 p-2 flex flex-col">
                 <div className="flex flex-col overflow-y-auto h-1/3">
                   <h1 className="font-bold text-slate-700">Description</h1>
                   <div className="indent-5 mt-2 flex flex-col overflow-y-auto text-justify px-2">
@@ -589,9 +822,10 @@ const GroupSection = () => {
                     ))}
                   </div>
                 </div>
+              </div> */}
               </div>
-            </>
-          )}
+            )}
+          </AnimatePresence>
         </div>
       </div>
       {confirm && <Confirmation {...modalProps} />}

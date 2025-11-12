@@ -170,6 +170,8 @@ const dispositionTypeDefs = gql`
     chatApp: String
     RFD: String
     sms: String
+    callId:String
+    partialPayment: Int
   }
   
   input SearchDispoReports {

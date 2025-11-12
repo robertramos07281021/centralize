@@ -1,80 +1,88 @@
-import { createSlice, PayloadAction  } from "@reduxjs/toolkit";
+import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 import { IntervalsTypes, Search } from "../../middleware/types";
 import { BreakEnum } from "../../middleware/exports";
 
 type User = {
-  _id: string,
-  change_password: boolean,
-  name: string,
-  type: string,
-  username: string,
-  branch: string,
-  departments: string[],
-  buckets: string[]
-  account_type: string
-  group: string
-  targets: Targets
-  isOnline: boolean
-  vici_id: string
-}
+  _id: string;
+  change_password: boolean;
+  name: string;
+  type: string;
+  username: string;
+  branch: string;
+  departments: string[];
+  buckets: string[];
+  account_type: string;
+  group: string;
+  targets: Targets;
+  isOnline: boolean;
+  vici_id: string;
+};
 
 type search = {
-  fullName: string,
-  contact_no: string,
-  dob: string,
-  email: string
-}
+  fullName: string;
+  contact_no: string;
+  dob: string;
+  email: string;
+};
 
 export enum Tasker {
   group = "group",
-  individual = "individual"
+  individual = "individual",
 }
 
 export enum TaskFilter {
   assigned = "assigned",
-  unassigned = "unassigned"
+  unassigned = "unassigned",
 }
 
 type Success = {
-  success: boolean,
-  message: string
-  isMessage: boolean
-}
+  success: boolean;
+  message: string;
+  isMessage: boolean;
+};
 
 export type Targets = {
-  daily: number
-  weekly: number
-  monthly: number
-}
+  daily: number;
+  weekly: number;
+  monthly: number;
+};
 
 type UserState = {
-  serverError: boolean
-  userLogged: User | null
-  search: search
-  page: number
-  selectedCustomer: Search | null
-  selectedGroup: string
-  selectedAgent: string
-  tasker: Tasker
-  taskFilter: TaskFilter
-  selectedDisposition: string[] 
-  limit: number
-  productionManagerPage: number
-  breakValue: keyof typeof BreakEnum
-  breakTimer: number
-  start: string
-  agentRecordingPage: number
-  adminUsersPage: number,
-  myToken: string | null
-  success: Success
-  selectedCampaign: string | null
-  intervalTypes: IntervalsTypes
-  selectedBucket: string | null,
-  callfilesPages: number
-  isOnlineOnVici: boolean
-}
+  serverError: boolean;
+  userLogged: User | null;
+  search: search;
+  page: number;
+  selectedCustomer: Search | null;
+  selectedGroup: string;
+  selectedAgent: string;
+  tasker: Tasker;
+  taskFilter: TaskFilter;
+  selectedDisposition: string[];
+  limit: number;
+  productionManagerPage: number;
+  breakValue: keyof typeof BreakEnum;
+  breakTimer: number;
+  start: string;
+  agentRecordingPage: number;
+  adminUsersPage: number;
+  myToken: string | null;
+  success: Success;
+  isReport: boolean;
+  selectedCampaign: string | null;
+  intervalTypes: IntervalsTypes;
+  selectedBucket: string | null;
+  callfilesPages: number;
+  isOnlineOnVici: boolean;
+  callUniqueId: string | null;
+  onCall: boolean;
+  ccsCall: boolean;
+  deadCall: boolean;
+  bucketCanCall: boolean;
+  isRing: boolean;
+  mobileToCall: string | null;
+};
 
-const initialState:UserState = {
+const initialState: UserState = {
   serverError: false,
   myToken: null,
   selectedGroup: "",
@@ -92,7 +100,7 @@ const initialState:UserState = {
   success: {
     success: false,
     message: "",
-    isMessage: false
+    isMessage: false,
   },
   callfilesPages: 1,
   breakValue: BreakEnum.WELCOME,
@@ -101,13 +109,21 @@ const initialState:UserState = {
     fullName: "",
     contact_no: "",
     dob: "",
-    email: ""
+    email: "",
   },
+  isReport: false,
   selectedCustomer: null,
   selectedCampaign: null,
   intervalTypes: IntervalsTypes.DAILY,
   selectedBucket: null,
-  isOnlineOnVici: false
+  isOnlineOnVici: false,
+  callUniqueId: null,
+  onCall: false,
+  ccsCall: true,
+  deadCall: false,
+  bucketCanCall: false,
+  isRing: false,
+  mobileToCall: null,
 };
 
 const authSlice = createSlice({
@@ -115,85 +131,113 @@ const authSlice = createSlice({
   initialState,
   reducers: {
     setServerError: (state, action: PayloadAction<boolean>) => {
-      state.serverError = action.payload
+      state.serverError = action.payload;
     },
     setUserLogged: (state, action: PayloadAction<User | null>) => {
-      state.userLogged = action.payload
+      state.userLogged = action.payload;
     },
-    setSearch: (state, action:PayloadAction<search>) => {
-      state.search = action.payload
+    setSearch: (state, action: PayloadAction<search>) => {
+      state.search = action.payload;
     },
-    setSelectedCustomer: (state, action:PayloadAction<Search | null>) => {
-      state.selectedCustomer = action.payload
+    setSelectedCustomer: (state, action: PayloadAction<Search | null>) => {
+      state.selectedCustomer = action.payload;
     },
-    setSelectedGroup: (state, action:PayloadAction<string>)=> {
-      state.selectedGroup = action.payload
+    setSelectedGroup: (state, action: PayloadAction<string>) => {
+      state.selectedGroup = action.payload;
     },
-    setAgent: (state, action:PayloadAction<string>) => {
-      state.selectedAgent = action.payload
+    setAgent: (state, action: PayloadAction<string>) => {
+      state.selectedAgent = action.payload;
     },
-    setPage: (state, action:PayloadAction<number>) => {
-      state.page = action.payload
+    setPage: (state, action: PayloadAction<number>) => {
+      state.page = action.payload;
     },
-    setTasker: (state, action:PayloadAction<string>) => { 
-      state.tasker = action.payload as Tasker
+    setTasker: (state, action: PayloadAction<string>) => {
+      state.tasker = action.payload as Tasker;
     },
-    setTaskFilter: (state, action:PayloadAction<string>) => {
-      state.taskFilter = action.payload as TaskFilter
+    setTaskFilter: (state, action: PayloadAction<string>) => {
+      state.taskFilter = action.payload as TaskFilter;
     },
-    setSelectedDisposition: (state, action:PayloadAction<string[]>) => {
-      state.selectedDisposition = action.payload 
+    setSelectedDisposition: (state, action: PayloadAction<string[]>) => {
+      state.selectedDisposition = action.payload;
     },
-    setProductionManagerPage: (state, action:PayloadAction<number>) => {
-      state.productionManagerPage = action.payload
+    setProductionManagerPage: (state, action: PayloadAction<number>) => {
+      state.productionManagerPage = action.payload;
     },
-    setAgentRecordingPage: (state, action:PayloadAction<number>) => {
-      state.agentRecordingPage = action.payload
+    setAgentRecordingPage: (state, action: PayloadAction<number>) => {
+      state.agentRecordingPage = action.payload;
     },
-    setBreakValue: (state, action:PayloadAction<keyof typeof BreakEnum>)=> {
-      state.breakValue = action.payload
+    setBreakValue: (state, action: PayloadAction<keyof typeof BreakEnum>) => {
+      state.breakValue = action.payload;
     },
-    setMyToken: (state, action:PayloadAction<string>)=> {
-      state.myToken = action.payload
+    setMyToken: (state, action: PayloadAction<string>) => {
+      state.myToken = action.payload;
     },
     setDeselectCustomer: (state) => {
-      state.selectedCustomer = null
+      state.selectedCustomer = null;
+      state.callUniqueId = null;
+      state.onCall = false;
+      state.deadCall = false;
+      state.mobileToCall = null;
+    },
+    setCallUniqueId: (state, action: PayloadAction<string | null>) => {
+      state.callUniqueId = action.payload;
     },
     increamentBreakTimer: (state) => {
-      state.breakTimer ++;
+      state.breakTimer++;
     },
-    setBreakTimer: (state,action:PayloadAction<number>)=> {
+    setBreakTimer: (state, action: PayloadAction<number>) => {
       state.breakTimer = action.payload;
     },
-    setStart: (state, action:PayloadAction<string>)=> {
-      state.start = action.payload
+    setStart: (state, action: PayloadAction<string>) => {
+      state.start = action.payload;
     },
-    setAdminUsersPage: (state, action:PayloadAction<number>) => {
-      state.adminUsersPage = action.payload
+    setAdminUsersPage: (state, action: PayloadAction<number>) => {
+      state.adminUsersPage = action.payload;
     },
     setLogout: () => initialState,
-    setSuccess: (state, action:PayloadAction<Success>) => {
-      state.success = action.payload
+    setSuccess: (state, action: PayloadAction<Success>) => {
+      state.success = action.payload;
     },
-    setSelectedCampaign: (state, action:PayloadAction<string | null>)=> {
-      state.selectedCampaign = action.payload
+    setSelectedCampaign: (state, action: PayloadAction<string | null>) => {
+      state.selectedCampaign = action.payload;
     },
-    setIntervalTypes: (state,action:PayloadAction<IntervalsTypes>)=> {
-      state.intervalTypes = action.payload
+    setIntervalTypes: (state, action: PayloadAction<IntervalsTypes>) => {
+      state.intervalTypes = action.payload;
     },
     setSelectedBucket: (state, action: PayloadAction<string | null>) => {
-      state.selectedBucket = action.payload
+      state.selectedBucket = action.payload;
     },
-    setCallfilesPages: (state,action:PayloadAction<number>)=> {
-      state.callfilesPages = action.payload
+    setCallfilesPages: (state, action: PayloadAction<number>) => {
+      state.callfilesPages = action.payload;
     },
-    setIsOnlineOnVici: (state, action:PayloadAction<boolean>) => {
-      state.isOnlineOnVici = action.payload
-    }
+    setIsOnlineOnVici: (state, action: PayloadAction<boolean>) => {
+      state.isOnlineOnVici = action.payload;
+    },
+    setOnCall: (state, action: PayloadAction<boolean>) => {
+      state.onCall = action.payload;
+    },
+    setCCSCall: (state) => {
+      state.ccsCall = !state.ccsCall;
+    },
+    setDeadCall: (state, action: PayloadAction<boolean>) => {
+      state.deadCall = action.payload;
+    },
+    setBucketCanCall: (state, action: PayloadAction<boolean>) => {
+      state.bucketCanCall = action.payload;
+    },
+    setIsRing: (state, action: PayloadAction<boolean>) => {
+      state.isRing = action.payload;
+    },
+    setIsReport: (state, action: PayloadAction<boolean>) => {
+      state.isReport = action.payload;
+    },
+    setMobileToCall: (state, action: PayloadAction<string | null>) => {
+      state.mobileToCall = action.payload;
+    },
   },
 });
 
-export const { 
+export const {
   setServerError,
   setUserLogged,
   setSearch,
@@ -210,7 +254,7 @@ export const {
   setBreakValue,
   increamentBreakTimer,
   setBreakTimer,
-  setStart, 
+  setStart,
   setAgentRecordingPage,
   setAdminUsersPage,
   setMyToken,
@@ -219,6 +263,14 @@ export const {
   setIntervalTypes,
   setSelectedBucket,
   setCallfilesPages,
-  setIsOnlineOnVici
+  setIsOnlineOnVici,
+  setCallUniqueId,
+  setOnCall,
+  setCCSCall,
+  setDeadCall,
+  setBucketCanCall,
+  setIsRing,
+  setMobileToCall,
+  setIsReport,
 } = authSlice.actions;
 export default authSlice.reducer;

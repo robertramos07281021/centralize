@@ -75,6 +75,15 @@ const customerAccountSchema = new Schema(
     features: {
       branch: {
         type: String
+      },
+      account_type: {
+        type: String,
+        enum: ['call','skip','field'],
+        default: 'call'
+      },
+      called: {
+        type: Number,
+        default: 0
       }
     },
     account_update_history: [
@@ -169,7 +178,23 @@ const customerAccountSchema = new Schema(
       mo_amort: {
         type: Number,
         default: 0
-      }
+      },
+      partial_payment_w_service_fee: {
+        type: Number,
+        default: 0, 
+      },
+      new_tad_with_sf: {
+        type: Number, 
+        default: 0,
+      },
+      new_pay_off: {
+        type: Number,
+        default: 0,
+      },
+      service_fee: {
+        type: Number,
+        default: 0,
+      },
     },
     isPTP: {  
       type: Boolean,
