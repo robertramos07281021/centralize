@@ -106,6 +106,14 @@ const UPDATE_PRODUCTION = gql`
   }
 `;
 
+const AGENT_BUCKETS = gql`
+  query getTLBucket {
+    getTLBucket {
+      canCall
+    }
+  }
+`;
+
 type AgentLock = {
   message: string;
   agentId: string;
@@ -131,7 +139,7 @@ const OFFLINE_USER = gql`
 
 const CHECK_USER_ONLINE_ON_VICI = gql`
   query checkUserIsOnlineOnVici($_id: ID!) {
-    checkUserIsOnlineOnVici(_id:$_id)
+    checkUserIsOnlineOnVici(_id: $_id)
   }
 `;
 
@@ -147,28 +155,37 @@ const Navbar = () => {
   });
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
 
-  const { data: userIsOnlineOnVici , error:viciDialError} = useQuery<{
+  const { data: userIsOnlineOnVici, error: viciDialError } = useQuery<{
     checkUserIsOnlineOnVici: boolean;
   }>(CHECK_USER_ONLINE_ON_VICI, {
-    variables: {_id: userLogged?._id},
+    variables: { _id: userLogged?._id },
     notifyOnNetworkStatusChange: true,
     skip:
-    !location.pathname.includes("cip") && !['AGENT','TL'].includes(userLogged?.type as keyof typeof String),
-    pollInterval: 3000
+      !location.pathname.includes("cip") &&
+      !["AGENT", "TL"].includes(userLogged?.type as keyof typeof String),
+    pollInterval: 3000,
   });
 
-  useEffect(()=>{ 
-    if(Boolean(viciDialError)) {
-      dispatch(setSuccess({
-        isMessage: true,
-        success: true,
-        message: "Please tell you admin to add you Vici Dial ID!"
-      }))
-    }
-  },[viciDialError])
+  const {data: agentBucketsData,refetch:agentBucketRefetch} = useQuery<{getTLBucket:{canCall:boolean}[]}>(AGENT_BUCKETS,{
+    notifyOnNetworkStatusChange: true,
+  })
+
+  const canCallMap = agentBucketsData?.getTLBucket.map(x=> x.canCall)
 
   useEffect(() => {
-    if (userIsOnlineOnVici) {
+    if (Boolean(viciDialError) && canCallMap?.includes(true)) {
+      dispatch(
+        setSuccess({
+          isMessage: true,
+          success: true,
+          message: "Please tell you admin to add you Vici Dial ID!",
+        })
+      );
+    }
+  }, [viciDialError]);
+
+  useEffect(() => {
+    if (userIsOnlineOnVici && canCallMap?.includes(true)) {
       dispatch(setIsOnlineOnVici(userIsOnlineOnVici?.checkUserIsOnlineOnVici));
     }
   }, [userIsOnlineOnVici]);
@@ -185,6 +202,7 @@ const Navbar = () => {
   useEffect(() => {
     const refetching = async () => {
       await refetch();
+      await agentBucketRefetch()
     };
     refetching();
   }, []);

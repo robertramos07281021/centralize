@@ -1,3 +1,4 @@
+import mongoose from "mongoose";
 import CustomError from "../../middlewares/errors.js";
 import Bucket from "../../models/bucket.js";
 import Department from "../../models/department.js";
@@ -75,8 +76,7 @@ const bucketResolver = {
     },
     getTLBucket: async(_,__,{user}) => {
       try {
-        const res = await Bucket.find({_id: user.buckets})
-        // console.log(res)
+        const res = await Bucket.find({_id: user.buckets.map(x=> new mongoose.Types.ObjectId(x))})
         return res
       } catch (error) {
         throw new CustomError(error.message, 500)
