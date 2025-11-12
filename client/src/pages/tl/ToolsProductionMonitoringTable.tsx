@@ -51,7 +51,7 @@ const ToolsProductionMonitoringTable = () => {
     refetching();
   }, [intervalTypes, selectedBucket]);
 
-  const tools = ["calls", "sms", "email", "skip", "field"];
+  const tools = ["call", "sms", "email", "skip", "field"];
 
   const totalRPC =
     toolsData.length > 0
