@@ -154,6 +154,12 @@ const Navbar = () => {
     notifyOnNetworkStatusChange: true,
   });
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
+   const {data: agentBucketsData,refetch:agentBucketRefetch} = useQuery<{getTLBucket:{canCall:boolean}[]}>(AGENT_BUCKETS,{
+    notifyOnNetworkStatusChange: true,
+  })
+
+  const canCallMap = agentBucketsData?.getTLBucket.map(x=> x.canCall)
+
 
   const { data: userIsOnlineOnVici, error: viciDialError } = useQuery<{
     checkUserIsOnlineOnVici: boolean;
@@ -161,16 +167,12 @@ const Navbar = () => {
     variables: { _id: userLogged?._id },
     notifyOnNetworkStatusChange: true,
     skip:
-      !location.pathname.includes("cip") &&
-      !["AGENT", "TL"].includes(userLogged?.type as keyof typeof String),
+      (!location.pathname.includes("cip") &&
+      !["AGENT", "TL"].includes(userLogged?.type as keyof typeof String)) || !canCallMap?.includes(true),
     pollInterval: 3000,
   });
 
-  const {data: agentBucketsData,refetch:agentBucketRefetch} = useQuery<{getTLBucket:{canCall:boolean}[]}>(AGENT_BUCKETS,{
-    notifyOnNetworkStatusChange: true,
-  })
-
-  const canCallMap = agentBucketsData?.getTLBucket.map(x=> x.canCall)
+ 
 
   useEffect(() => {
     if (Boolean(viciDialError) && canCallMap?.includes(true)) {

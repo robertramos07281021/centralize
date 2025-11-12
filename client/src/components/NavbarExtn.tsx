@@ -300,7 +300,9 @@ const NavbarExtn = () => {
           />
         )}
         <div className="border-b select-none border-blue-400 flex items-center justify-center text-base font-medium text-slate-500 bg-white print:hidden">
-          {accountsNavbar[userType].map((an, index) => (
+          {accountsNavbar[userType].map((an, index) => {
+            const callLogs = an.name === "Call Logs"
+            return !callLogs && (
             <div
               onClick={() => navClick(an.link)}
               key={index}
@@ -323,7 +325,7 @@ const NavbarExtn = () => {
                 </>
               )}
             </div>
-          ))}
+          )})}
         </div>
       </>
     )
