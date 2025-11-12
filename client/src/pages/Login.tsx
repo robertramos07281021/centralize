@@ -1,5 +1,5 @@
 import {
-  // CSSProperties,
+  CSSProperties,
   useCallback,
   useEffect,
   useMemo,
@@ -24,9 +24,7 @@ import Loading from "./Loading";
 import { useSelector } from "react-redux";
 import { BreakEnum } from "../middleware/exports";
 import { persistor } from "../redux/store";
-// import Lottie from "lottie-react";
-// import santa from "../Animations/Merry Christmas.json";
-// import tree from "../Animations/Christmas tree.json";
+
 
 const LOGIN = gql`
   mutation login($username: String!, $password: String!) {
@@ -134,12 +132,6 @@ const Login = () => {
   const [already, setAlready] = useState<boolean>(false);
   const [lock, setLock] = useState<boolean>(false);
   const [invalid, setInvalid] = useState<boolean>(false);
-  // const [currentTime, setCurrentTime] = useState(() => new Date());
-  // const [countdown, setCountdown] = useState({
-  //   hours: 0,
-  //   minutes: 0,
-  //   seconds: 0,
-  // });
 
   const [deselectTask] = useMutation(DESELECT_TASK, {
     onCompleted: () => {
@@ -150,68 +142,68 @@ const Login = () => {
     },
   });
 
-  // type Snowflake = {
-  //   id: string;
-  //   style: CSSProperties &
-  //     Record<
-  //       | "--flake-size"
-  //       | "--flake-scale"
-  //       | "--flake-opacity"
-  //       | "--drift-start"
-  //       | "--drift-end",
-  //       string
-  //     >;
-  // };
+  type Snowflake = {
+    id: string;
+    style: CSSProperties &
+      Record<
+        | "--flake-size"
+        | "--flake-scale"
+        | "--flake-opacity"
+        | "--drift-start"
+        | "--drift-end",
+        string
+      >;
+  };
 
-  // const snowStyles = `
-  //   .snow-layer {
-  //     position: absolute;
-  //     inset: 0;
-  //     overflow: hidden;
-  //     pointer-events: none;
-  //     z-index: 5;
-  //   }
-  //   .snowflake {
-  //     position: absolute;
-  //     top: -12vh;
-  //     width: var(--flake-size);
-  //     height: var(--flake-size);
-  //     border-radius: 50%;
-  //     background: radial-gradient(circle, rgba(255,255,255,var(--flake-opacity)) 0%, rgba(255,255,255,0) 100%);
-  //     transform: translate3d(var(--drift-start), -12vh, 0) scale(var(--flake-scale));
-  //     animation-name: snow-fall;
-  //     animation-timing-function: linear;
-  //     animation-iteration-count: infinite;
-  //   }
-  //   @keyframes snow-fall {
-  //     to {
-  //       transform: translate3d(var(--drift-end), 110vh, 0) scale(var(--flake-scale));
-  //     }
-  //   }
-  // `;
-  // const snowflakes = useMemo<Snowflake[]>(
-  //   () =>
-  //     Array.from({ length: 120 }, (_, index) => {
-  //       const size = (4 + Math.random() * 8).toFixed(1);
-  //       const scale = (0.6 + Math.random() * 0.9).toFixed(2);
-  //       const opacity = (0.25 + Math.random() * 0.75).toFixed(2);
-  //       const driftStart = (Math.random() * 2 - 1) * 6;
-  //       const driftEnd = driftStart + (Math.random() * 2 - 1) * 14;
-  //       const style = {
-  //         left: `${Math.random() * 100}%`,
-  //         animationDelay: `${Math.random() * -20}s`,
-  //         animationDuration: `${14 + Math.random() * 12}s`,
-  //         opacity,
-  //         ["--flake-size"]: `${size}px`,
-  //         ["--flake-scale"]: scale,
-  //         ["--flake-opacity"]: opacity,
-  //         ["--drift-start"]: `${driftStart.toFixed(2)}vw`,
-  //         ["--drift-end"]: `${driftEnd.toFixed(2)}vw`,
-  //       } as Snowflake["style"];
-  //       return { id: `flake-${index}`, style };
-  //     }),
-  //   []
-  // );
+  const snowStyles = `
+    .snow-layer {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
+      pointer-events: none;
+      z-index: 5;
+    }
+    .snowflake {
+      position: absolute;
+      top: -12vh;
+      width: var(--flake-size);
+      height: var(--flake-size);
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(255,255,255,var(--flake-opacity)) 0%, rgba(255,255,255,0) 100%);
+      transform: translate3d(var(--drift-start), -12vh, 0) scale(var(--flake-scale));
+      animation-name: snow-fall;
+      animation-timing-function: linear;
+      animation-iteration-count: infinite;
+    }
+    @keyframes snow-fall {
+      to {
+        transform: translate3d(var(--drift-end), 110vh, 0) scale(var(--flake-scale));
+      }
+    }
+  `;
+  const snowflakes = useMemo<Snowflake[]>(
+    () =>
+      Array.from({ length: 120 }, (_, index) => {
+        const size = (4 + Math.random() * 8).toFixed(1);
+        const scale = (0.6 + Math.random() * 0.9).toFixed(2);
+        const opacity = (0.25 + Math.random() * 0.75).toFixed(2);
+        const driftStart = (Math.random() * 2 - 1) * 6;
+        const driftEnd = driftStart + (Math.random() * 2 - 1) * 14;
+        const style = {
+          left: `${Math.random() * 100}%`,
+          animationDelay: `${Math.random() * -20}s`,
+          animationDuration: `${14 + Math.random() * 12}s`,
+          opacity,
+          ["--flake-size"]: `${size}px`,
+          ["--flake-scale"]: scale,
+          ["--flake-opacity"]: opacity,
+          ["--drift-start"]: `${driftStart.toFixed(2)}vw`,
+          ["--drift-end"]: `${driftEnd.toFixed(2)}vw`,
+        } as Snowflake["style"];
+        return { id: `flake-${index}`, style };
+      }),
+    []
+  );
 
   const [logout] = useMutation(LOGOUT, {
     onCompleted: async () => {
@@ -369,21 +361,21 @@ const Login = () => {
 
   return (
     <div className="h-screen w-screen overflow-hidden flex items-center justify-center bg-[url(/login_bg.jpg)] bg-fixed bg-no-repeat bg-cover relative ">
-      {/* <style>{snowStyles}</style> */}
+      <style>{snowStyles}</style>
       <div className="w-full h-full absolute bg-blue-500/70 backdrop-blur-[4px]"></div>
-      {/* <div className="snow-layer z " aria-hidden="true">
+      <div className="snow-layer z " aria-hidden="true">
         {snowflakes.map((flake) => (
           <span key={flake.id} className="snowflake" style={flake.style} />
         ))}
-      </div> */}
-      {/* <motion.div
+      </div>
+      <motion.div
         className=" absolute hidden md:flex bottom-5 justify-center  right-5  "
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring" }}
         layout
       >
-        <div className=" absolute z-20 -top-[145px] w-[90%] h-20">
+        {/* <div className=" absolute z-20 -top-[145px] w-[90%] h-20">
           <Lottie animationData={tree} />
         </div>
         <motion.div
@@ -394,8 +386,8 @@ const Login = () => {
             {formattedDate}
           </div>
           <div className="text-sm">{formattedCountdown}</div>
-        </motion.div>
-      </motion.div> */}
+        </motion.div> */}
+      </motion.div>
 
       <motion.form
         ref={loginForm}
@@ -406,10 +398,7 @@ const Login = () => {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring" }}
       >
-        {/* <div className="w-52 h-52 absolute -top-45">
-          <Lottie animationData={santa} autoPlay={true} loop={true} />
-        </div> */}
-
+        
         <div className="flex flex-col text-center text-blue-500">
           <h1 className="text-2xl font-black italic text-shadow-sm">
             Bernales & Associates

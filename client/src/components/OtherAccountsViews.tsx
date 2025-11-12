@@ -1,5 +1,4 @@
 import { Search } from "../middleware/types";
-import { IoMdCloseCircleOutline } from "react-icons/io";
 import { RootState, useAppDispatch } from "../redux/store";
 import { setSelectedCustomer, setServerError } from "../redux/slices/authSlice";
 import { gql, useMutation } from "@apollo/client";

@@ -258,7 +258,7 @@ export type ChildHandle = {
 };
 
 const AccountInfo = forwardRef<ChildHandle, { presetAmount?: string | null }>(
-  ({ presetAmount = null }, ref) => {
+  ({ }, ref) => {
     const location = useLocation();
     const isTLCIP = ["/tl-cip", "/agent-cip"].includes(location.pathname);
     const { selectedCustomer, userLogged } = useSelector(

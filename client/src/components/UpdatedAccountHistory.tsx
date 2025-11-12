@@ -1,6 +1,5 @@
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import { IoMdCloseCircleOutline } from "react-icons/io";
 import gql from "graphql-tag";
 import { useQuery } from "@apollo/client";
 import { useMemo } from "react";
@@ -89,7 +88,7 @@ const UpdatedAccountHistory: React.FC<ComponentProp> = ({ close }) => {
               {history.length > 0 ? (
                 history?.map((x, index) => {
                   return (
-                    <div className=" text-black py-2 font-black uppercase items-center gap-2 px-2 border grid grid-cols-5 rounded-t-md text-sm text-left select-none bg-gray-300">
+                    <div key={index} className=" text-black py-2 font-black uppercase items-center gap-2 px-2 border grid grid-cols-5 rounded-t-md text-sm text-left select-none bg-gray-300">
                       <div className="pl-5 py-1.5">
                         {x.principal_os
                           ? x.principal_os?.toLocaleString("en-PH", {
