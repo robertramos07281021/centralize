@@ -54,6 +54,8 @@ import CustomerAccount from "./models/customerAccount.js";
 import callResolver from "./graphql/resolvers/callResolver.js";
 import callTypeDefs from "./graphql/schemas/callSchema.js";
 import { logoutVici } from "./middlewares/vicidial.js";
+import selectivesResolver from "./graphql/resolvers/selectivesResolver.js";
+import selectivesTypeDefs from "./graphql/schemas/selectivesSchema.js";
 
 const connectedUsers = new Map();
 
@@ -167,9 +169,9 @@ cron.schedule("0 0 * * *", async () => {
   timezone: "Asia/Singapore"
 });
 
-const resolvers = mergeResolvers([ subscriptionResolvers, userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver,callfileResolver, recordingsResolver, CustomerExtnResolver, callResolver ]);
+const resolvers = mergeResolvers([ subscriptionResolvers, userResolvers, deptResolver, branchResolver, bucketResolver, modifyReportResolver, customerResolver, dispositionResolver, dispositionTypeResolver, groupResolver, taskResolver,productionResolver,callfileResolver, recordingsResolver, CustomerExtnResolver, callResolver, selectivesResolver ]);
 
-const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs, productionTypeDefs, callfileTypeDefs, recordingTypeDefs, subscriptionTypeDefs, CustomerExtnTypeDefs, callTypeDefs]);
+const typeDefs = mergeTypeDefs([userTypeDefs, deptTypeDefs, branchTypeDefs, bucketTypeDefs, modifyReportTypeDefs, customerTypeDefs, dispositionTypeDefs, dispositionTypeTypeDefs, groupTypeDefs, taskTypeDefs, productionTypeDefs, callfileTypeDefs, recordingTypeDefs, subscriptionTypeDefs, CustomerExtnTypeDefs, callTypeDefs, selectivesTypeDefs]);
 
 const httpServer = createServer(app);
 

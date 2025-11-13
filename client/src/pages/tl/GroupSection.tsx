@@ -1,7 +1,6 @@
 import { useMutation, useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { useEffect, useMemo, useState } from "react";
-import { FaPlusCircle, FaMinusCircle, FaEdit } from "react-icons/fa";
 import Confirmation from "../../components/Confirmation";
 import {
   setSelectedGroup,

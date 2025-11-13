@@ -18,6 +18,7 @@ import Wrapper from "../../components/Wrapper.tsx";
 import Navbar from "../../components/Navbar.tsx";
 import NavbarExtn from "../../components/NavbarExtn.tsx";
 import Lottie from "lottie-react";
+import Loading from "../Loading.tsx";
 
 
 type UpdateProduction = {
@@ -61,7 +62,7 @@ const BreakView = () => {
   const [eye, setEye] = useState<boolean>(false);
   const [incorrect, setIncorrect] = useState<boolean>(false);
 
-  const [updateProduction] = useMutation<{
+  const [updateProduction,{loading:UpdateProductionLoading}] = useMutation<{
     updateProduction: UpdateProduction;
   }>(UPDATE_PRODUCTION, {
     onCompleted: (res) => {
@@ -86,6 +87,7 @@ const BreakView = () => {
         await updateProduction({ variables: { type: BreakEnum.PROD } });
       },
       onError: (error) => {
+        console.log(error)
         const message = error.message;
         if (message.includes("Incorrect")) {
           setIncorrect(true);
@@ -133,6 +135,7 @@ const BreakView = () => {
     SKIPTRACING: "/skipTracingIcon.png",
     CLINIC: "/clinicIcon.png",
     WELCOME: "/welcomeIcon.png",
+    REPORT: "/image.png",
   };
 
   useEffect(() => {
@@ -147,7 +150,7 @@ const BreakView = () => {
       (userLogged?.type !== "AGENT" && userLogged?.type !== "TL")) &&
     userLogged
   ) {
-    return <Navigate to={accountsNavbar[userLogged?.type][0]?.link} />;
+    return <Navigate to={accountsNavbar[userLogged?.type][0]?.link as string} />;
   }
 
   const onClickStart = async () => {
@@ -173,6 +176,8 @@ const BreakView = () => {
   };
 
   const currentMedia = images[breakValue];
+
+  if(UpdateProductionLoading) return <Loading/>
 
   return userLogged && ["AGENT", "QA"].includes(userLogged?.type) ? (
     <Wrapper>

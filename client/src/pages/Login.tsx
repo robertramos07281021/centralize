@@ -25,7 +25,6 @@ import { useSelector } from "react-redux";
 import { BreakEnum } from "../middleware/exports";
 import { persistor } from "../redux/store";
 
-
 const LOGIN = gql`
   mutation login($username: String!, $password: String!) {
     login(username: $username, password: $password) {
@@ -218,10 +217,10 @@ const Login = () => {
   const [login, { loading }] = useMutation<{ login: Login }>(LOGIN, {
     onCompleted: async (res) => {
       await persistor.purge();
-      dispatch(setUserLogged(res.login.user));
-      dispatch(setMyToken(res.login.token));
-      if (!res.login.user.change_password) {
-        navigate("/change-password", { state: res.login.user });
+      dispatch(setUserLogged(res?.login?.user));
+      dispatch(setMyToken(res?.login?.token));
+      if (!res?.login?.user?.change_password) {
+        navigate("/change-password", { state: res?.login?.user });
       } else {
         if (res.login.user.type === "AGENT") {
           dispatch(setBreakValue(res.login.prodStatus));
@@ -237,6 +236,7 @@ const Login = () => {
       }
     },
     onError: async (error) => {
+      console.log(error)
       await persistor.purge();
       const errorMessage = ["Invalid", "Already", "Lock"];
       if (!errorMessage.includes(error.message)) {
@@ -319,44 +319,6 @@ const Login = () => {
     }
   }, [dispatch, userLogged, logout, selectedCustomer, deselectTask]);
 
-  // useEffect(() => {
-  //   const updateCountdown = () => {
-  //     const now = new Date();
-  //     setCurrentTime(now);
-  //     const currentYear = now.getFullYear();
-  //     let christmas = new Date(currentYear, 11, 25, 0, 0, 0, 0);
-  //     if (now > christmas) {
-  //       christmas = new Date(currentYear + 1, 11, 25, 0, 0, 0, 0);
-  //     }
-  //     const diff = Math.max(0, christmas.getTime() - now.getTime());
-  //     const totalSeconds = Math.floor(diff / 1000);
-  //     setCountdown({
-  //       hours: Math.floor(totalSeconds / 3600),
-  //       minutes: Math.floor((totalSeconds % 3600) / 60),
-  //       seconds: totalSeconds % 60,
-  //     });
-  //   };
-
-  //   // updateCountdown();
-  //   const intervalId = setInterval(updateCountdown, 1000);
-  //   return () => clearInterval(intervalId);
-  // }, []);
-
-  // const formattedDate = useMemo(
-  //   () =>
-  //     currentTime.toLocaleDateString(undefined, {
-  //       month: "long",
-  //       day: "numeric",
-  //       year: "numeric",
-  //     }),
-  //   [currentTime]
-  // );
-  // const formattedCountdown = useMemo(
-  //   () =>
-  //     `${countdown.hours} hrs ${countdown.minutes} mins ${countdown.seconds} secs`,
-  //   [countdown]
-  // );
-
   if (loading) return <Loading />;
 
   return (
@@ -368,26 +330,6 @@ const Login = () => {
           <span key={flake.id} className="snowflake" style={flake.style} />
         ))}
       </div>
-      <motion.div
-        className=" absolute hidden md:flex bottom-5 justify-center  right-5  "
-        initial={{ scale: 0.8, opacity: 0 }}
-        animate={{ scale: 1, opacity: 1 }}
-        transition={{ type: "spring" }}
-        layout
-      >
-        {/* <div className=" absolute z-20 -top-[145px] w-[90%] h-20">
-          <Lottie animationData={tree} />
-        </div>
-        <motion.div
-          layout
-          className="bg-blue-600 z-10 text-white font-black px-5 pb-2 pt-8 border-2 border-blue-900 rounded-md text-center space-y-1"
-        >
-          <div className="text-xs tracking-wide uppercase ">
-            {formattedDate}
-          </div>
-          <div className="text-sm">{formattedCountdown}</div>
-        </motion.div> */}
-      </motion.div>
 
       <motion.form
         ref={loginForm}
@@ -398,7 +340,6 @@ const Login = () => {
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring" }}
       >
-        
         <div className="flex flex-col text-center text-blue-500">
           <h1 className="text-2xl font-black italic text-shadow-sm">
             Bernales & Associates

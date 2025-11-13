@@ -56,7 +56,7 @@ const dispositionSchema = new Schema(
     },
     contact_method: {
       type: String,
-      enum: ['calls','sms','email','skip','field'],
+      enum: ['call','sms','email','skip','field'],
     },
     payment: {
       type:String,

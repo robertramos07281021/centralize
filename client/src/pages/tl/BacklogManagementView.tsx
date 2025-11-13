@@ -398,7 +398,7 @@ const BacklogManagementView = () => {
                     </span>
                   </label>
                 ))}
-                <label className=" h-full border border-black p-2 rounded-sm cursor-pointer hover:text-white bg-gray-300 text-[0.6rem] hover:bg-gray-400 transition-all 2xl:text-xs lg:text-[.45rem] items-center flex gap-2">
+                <label className=" h-full border border-black p-2 rounded-sm cursor-pointer hover:text-white bg-gray-300 text-[0.6rem] hover:bg-gray-400 transition-all lg:text-[.45rem] items-center flex gap-2">
                   <input
                     type="checkbox"
                     name="all"

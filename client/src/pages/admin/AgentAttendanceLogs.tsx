@@ -1,4 +1,3 @@
-import React from "react";
 
 const AgentAttendanceLogs = () => {
   return (
@@ -10,7 +9,6 @@ const AgentAttendanceLogs = () => {
             <div>No. Agent</div>
             <div>Agent</div>
             <div>Type</div>
-            <div>Queue</div>
             <div>Call Answered</div>
             <div>Duration</div>
             <div>Average</div>

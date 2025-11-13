@@ -9,6 +9,7 @@ import {
   setSuccess,
 } from "../redux/slices/authSlice";
 import { motion, AnimatePresence } from "framer-motion";
+import { PresetSelection } from "./AccountInfo";
 
 type Data = {
   amount: string | null;
@@ -23,7 +24,7 @@ type Data = {
   RFD: RFD | null;
   chatApp: SkipCollector | null;
   sms: SMSCollector | null;
-  partialPayment: number | null
+  partialPayment: number | null;
 };
 
 type ContactMethod = {
@@ -218,7 +219,7 @@ type Props = {
   updateOf: () => void;
   inlineData: string;
   canCall: boolean;
-  onPresetAmountChange: (value: string | null) => void;
+  onPresetAmountChange: (value: PresetSelection) => void;
 };
 
 const IFBANK = ({ label }: { label: string }) => {
@@ -332,7 +333,7 @@ const DispositionForm: React.FC<Props> = ({
     chatApp: null,
     RFD: null,
     sms: null,
-    partialPayment:null
+    partialPayment: null,
   });
 
   useEffect(() => {
@@ -380,10 +381,10 @@ const DispositionForm: React.FC<Props> = ({
       chatApp: null,
       RFD: null,
       sms: null,
-      partialPayment: null
+      partialPayment: null,
     });
-    onPresetAmountChange(null);
-  }, [onPresetAmountChange]);
+    onPresetAmountChange({ amount: null, label: null });
+  }, [onPresetAmountChange, setData]);
 
   useEffect(() => {
     if (!selectedCustomer) {
@@ -461,121 +462,43 @@ const DispositionForm: React.FC<Props> = ({
         RFD: null,
         sms: null,
       }));
-      onPresetAmountChange(null);
+      onPresetAmountChange({ amount: null, label: null });
       return;
     }
-    const nextValue =
-      key === "amount"
-        ? value === null || value === undefined || value === ""
-          ? null
-          : typeof value === "number"
-          ? value.toString()
-          : value
-        : value;
-    setData((prev) => ({ ...prev, [key]: nextValue }));
     if (key === "amount") {
-      onPresetAmountChange(nextValue);
+      const amountValue =
+        value === null || value === "" ? null : value.toString();
+      setData((prev) => ({ ...prev, amount: amountValue }));
+      onPresetAmountChange({ amount: amountValue, label: null });
+      return;
     }
+    setData((prev) => ({ ...prev, [key]: value }));
   };
 
   const handleOnChangeAmount = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
-      // let inputValue = e.target.value.replace(/[^0-9.]/g, "");
-      // const parts = inputValue.split(".");
 
-      // if (parts.length > 2) {
-      //   inputValue = parts[0] + "." + parts[1];
-      // } else if (parts.length === 2) {
-      //   inputValue = parts[0] + "." + parts[1].slice(0, 2);
-      // }
-
-      // if (inputValue.startsWith("00")) {
-      //   inputValue = "0";
-      // }
-
-      // if (inputValue === "") {
-      //   handleDataChange("amount", null);
-      //   handleDataChange("payment", null);
-      //   return;
-      // }
-
-      // const numericValue = parseFloat(inputValue);
-      // console.log(numericValue)
-      // if (Number.isNaN(numericValue)) {
-      //   handleDataChange("amount", null);
-      //   handleDataChange("payment", null);
-      //   return;
-      // }
-
-      // const balance = selectedCustomer?.balance ?? 0;
-
-      // const cappedAmount =
-      //   numericValue > balance ? balance : Math.max(numericValue, 0);
-
-      // const amount =
-      //   Number.isFinite(cappedAmount) && cappedAmount > 0
-      //     ? cappedAmount.toFixed(2)
-      //     : null;
-
-      // const paymentType =
-      //   balance > 0 && cappedAmount >= balance ? Payment.FULL : Payment.PARTIAL;
-
-      // handleDataChange("amount", amount);
-      // handleDataChange("payment", amount ? paymentType : null);
-
-      let inputValue = e.target.value.replace(/[^0-9.]/g, "");
-      const parts = inputValue.split(".");
-
-      if (parts.length > 2) {
-        inputValue = parts[0] + "." + parts[1];
-      } else if (parts.length === 2) {
-        inputValue = parts[0] + "." + parts[1].slice(0, 2);
-      }
-
-      if (inputValue.startsWith("00")) {
-        inputValue = "0";
-      }
-
-      if (inputValue === "") {
+      let {value} = e.target;
+      
+      if (value === "" || value === "0") {
         handleDataChange("amount", null);
         handleDataChange("payment", null);
+        onPresetAmountChange({ amount: null, label: null });
         return;
       }
 
-      const numericValue = parseFloat(inputValue);
+      const numericValue = parseFloat(value);
+
+      if (isNaN(numericValue)) return;
+
       const balance = selectedCustomer?.balance ?? 0;
       const payment = numericValue >= balance ? Payment.FULL : Payment.PARTIAL;
       handleDataChange("amount", numericValue);
+      onPresetAmountChange({ amount: numericValue, label: null });
       handleDataChange("payment", payment);
     },
-    [selectedCustomer, handleDataChange]
+    [selectedCustomer, handleDataChange, onPresetAmountChange]
   );
-
-  //dating code:
-  //  const handleOnChangeAmount = useCallback(
-  //   (e: React.ChangeEvent<HTMLInputElement>) => {
-  //     let inputValue = e.target.value.replace(/[^0-9.]/g, "");
-  //     const parts = inputValue.split(".");
-
-  //     if (parts.length > 2) {
-  //       inputValue = parts[0] + "." + parts[1];
-  //     } else if (parts.length === 2) {
-  //       inputValue = parts[0] + "." + parts[1].slice(0, 2);
-  //     }
-
-  //     if (inputValue.startsWith("00")) {
-  //       inputValue = "0";
-  //     }
-
-  //     const numericValue = parseFloat(inputValue);
-  //     const balance = selectedCustomer?.balance ?? 0;
-  //     const amount = numericValue > balance ? balance.toFixed(2) : inputValue;
-  //     const payment = numericValue >= balance ? Payment.FULL : Payment.PARTIAL;
-  //     handleDataChange("amount", amount);
-  //     handleDataChange("payment", payment);
-  //   },
-  //   [setData, selectedCustomer, handleDataChange]
-  // );
 
   const [modalProps, setModalProps] = useState({
     message: "",
@@ -988,15 +911,16 @@ const DispositionForm: React.FC<Props> = ({
                           >
                             <p className="px-2">&#x20B1;</p>
                             <input
-                              type="text"
+                              step="any"
+                              inputMode="decimal"
+                              type="number"
                               name="amount"
                               id="amount"
-                              autoComplete="off"
-                              value={data.amount ?? 0}
+                              value={data.amount || ""}
                               onChange={handleOnChangeAmount}
                               placeholder="Enter amount"
                               required={requiredDispo.includes(selectedDispo)}
-                              className={`w-full text-xs 2xl:text-sm  text-gray-900 p-2 outline-none`}
+                              className={`w-full text-xs 2xl:text-sm  text-gray-900 p-2 outline-none [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:m-0 appearance-none    `}
                             />
                           </div>
                         </label>
@@ -1419,6 +1343,10 @@ const DispositionForm: React.FC<Props> = ({
                               : null;
                             handleDataChange("amount", sanitizedAmount);
                             handleDataChange("partialPayment", value);
+                            onPresetAmountChange({
+                              amount: Number(sanitizedAmount),
+                              label,
+                            });
                             setIsOpen(false);
                           }}
                         >

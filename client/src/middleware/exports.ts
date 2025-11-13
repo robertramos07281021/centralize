@@ -75,7 +75,7 @@ type tabs = {
 
 type links = {
   name: string;
-  link: string;
+  link: string | null;
   tabs: tabs[] | null;
 };
 
@@ -108,17 +108,23 @@ export const accountsNavbar: { [key: string]: links[] } = {
     },
     {
       name: "Logs",
-      link: "/all-call-logs",
-      tabs: [{
-        name: 'Agent Logs',
-        link: '/agent-attendance-logs'
-      }],
+      link: null,
+      tabs: [
+        {
+          name: "Agent Logs",
+          link: "/agent-attendance-logs",
+        },
+        {
+          name: "Call Logs",
+          link: "/all-call-logs",
+        },
+      ],
     },
-    // {
-    //   name: "Agent Logs",
-    //   link: "/agent-attendance-logs",
-    //   tabs: null,
-    // },
+    {
+      name: "Selectives",
+      link: "/selectives",
+      tabs: null,
+    },
   ],
   AGENT: [
     {
@@ -262,6 +268,7 @@ export enum BreakEnum {
   CLINIC = "CLINIC",
   PROD = "PROD",
   WELCOME = "WELCOME",
+  REPORT = "REPORT",
 }
 
 type Breaks = {
@@ -309,6 +316,10 @@ export const breaks: Breaks[] = [
   {
     name: "Clinic",
     value: BreakEnum.CLINIC,
+  },
+  {
+    name: "Report",
+    value: BreakEnum.REPORT,
   },
 ];
 

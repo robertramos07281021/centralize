@@ -3,7 +3,10 @@ import CustomerUpdateForm from "../components/CustomerUpdateForm";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../redux/store";
 import { Navigate, useNavigate } from "react-router-dom";
-import AccountInfo, { ChildHandle } from "../components/AccountInfo";
+import AccountInfo, {
+  ChildHandle,
+  PresetSelection,
+} from "../components/AccountInfo";
 import DispositionForm from "../components/DispositionForm";
 import { gql, useMutation, useQuery, useSubscription } from "@apollo/client";
 import { Search, CustomerRegistered } from "../middleware/types";
@@ -447,45 +450,46 @@ const SearchResult = memo(
     return (
       <>
         {data.slice(0, 50).map((customer, index) => {
-          return(
-          <div
-            key={index}
-            ref={(el) => {
-              refs.current[index] = el;
-            }}
-            className={`flex flex-col text-sm  cursor-pointer hover:bg-slate-100 py-0.5 ${
-              Number(index) === Number(selectedIndex) ? "bg-slate-300" : ""
-            } `}
-            onClick={() => onClick(customer)}
-          >
-            <div>
-              <div
-                className="px-2 font-medium text-slate-600 uppercase block"
-                dangerouslySetInnerHTML={{
-                  __html: customer.customer_info.fullName.replace(
-                    new RegExp(escapeRegExp(search), "gi"),
-                    (match) => `<mark>${match}</mark> - <span>`
-                  ),
-                }}
-              />
+          return (
+            <div
+              key={index}
+              ref={(el) => {
+                refs.current[index] = el;
+              }}
+              className={`flex flex-col text-sm  cursor-pointer hover:bg-slate-100 py-0.5 ${
+                Number(index) === Number(selectedIndex) ? "bg-slate-300" : ""
+              } `}
+              onClick={() => onClick(customer)}
+            >
+              <div>
+                <div
+                  className="px-2 font-medium text-slate-600 uppercase block"
+                  dangerouslySetInnerHTML={{
+                    __html: customer.customer_info.fullName.replace(
+                      new RegExp(escapeRegExp(search), "gi"),
+                      (match) => `<mark>${match}</mark> - <span>`
+                    ),
+                  }}
+                />
 
-              <p className="px-2 text-slate-500 text-xs font-bold">
-                Balance:{" "}
-                {customer?.balance?.toLocaleString("en-PH", {
-                  style: "currency",
-                  currency: "PHP",
-                })}{" "}
-                - {customer?.max_dpd}(DPD)
-              </p>
+                <p className="px-2 text-slate-500 text-xs font-bold">
+                  Balance:{" "}
+                  {customer?.balance?.toLocaleString("en-PH", {
+                    style: "currency",
+                    currency: "PHP",
+                  })}{" "}
+                  - {customer?.max_dpd}(DPD)
+                </p>
+              </div>
+              <div className="text-slate-500 text-xs px-2">
+                <span>{customer.customer_info.dob}, </span>
+                <span>{customer.customer_info.contact_no.join(", ")}, </span>
+                <span>{customer.customer_info.addresses.join(", ")}, </span>
+                <span>{customer.credit_customer_id}</span>
+              </div>
             </div>
-            <div className="text-slate-500 text-xs px-2">
-              <span>{customer.customer_info.dob}, </span>
-              <span>{customer.customer_info.contact_no.join(", ")}, </span>
-              <span>{customer.customer_info.addresses.join(", ")}, </span>
-              <span>{customer.credit_customer_id}</span>
-            </div>
-          </div>
-        )})}
+          );
+        })}
       </>
     );
   }
@@ -602,6 +606,16 @@ const CustomerDisposition = () => {
   const containerRef = useRef(null);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const { data: bucketData, refetch: bucketsRefetch } = useQuery<{
+    getAllBucket: BucketCanCall[];
+  }>(ALL_BUCKET, {
+    notifyOnNetworkStatusChange: true,
+  });
+
+  const canCallBuckets = bucketData?.getAllBucket
+    ?.filter((x) => userLogged?.buckets?.includes(x._id))
+    .map((bucket) => bucket.canCall);
+
   const { data: searchData, refetch } = useQuery<{ search: Search[] }>(SEARCH, {
     skip: isSearch,
     fetchPolicy: "network-only",
@@ -615,7 +629,11 @@ const CustomerDisposition = () => {
   //   disposition: "",
   //   // add other fields if needed
   // });
-  const [presetAmount, setPresetAmount] = useState<string | null>(null);
+  // const [presetAmount, setPresetAmount] = useState<string | null>(null);
+  const [presetSelection, setPresetSelection] = useState<PresetSelection>({
+    amount: null,
+    label: null,
+  });
 
   const [updateProduction] = useMutation<{
     updateProduction: UpdateProduction;
@@ -623,8 +641,7 @@ const CustomerDisposition = () => {
     onCompleted: () => {
       dispatch(setStart(new Date().toString()));
     },
-    onError: (err) => {
-      console.log(err);
+    onError: () => {
       dispatch(setServerError(true));
     },
   });
@@ -712,7 +729,7 @@ const CustomerDisposition = () => {
     await deselectTask({ variables: { id: selectedCustomer?._id } });
     setSearch("");
     dispatch(setIsRing(false));
-    if (!data?.checkIfAgentIsInline?.includes("PAUSE")) {
+    if (!data?.checkIfAgentIsInline?.includes("PAUSE") && canCallBuckets?.includes(true)) {
       await endAndDispoCall();
     }
   }, [selectedCustomer, deselectTask]);
@@ -849,9 +866,10 @@ const CustomerDisposition = () => {
     }
   };
 
+  // =============================== need to add on skip
   const { data } = useQuery<{ checkIfAgentIsInline: string }>(CHECK_IF_INLINE, {
     notifyOnNetworkStatusChange: true,
-    skip: !location.pathname.includes("cip"),
+    skip: !location.pathname.includes("cip") || !canCallBuckets?.includes(true),
     pollInterval: 1000,
   });
 
@@ -873,17 +891,12 @@ const CustomerDisposition = () => {
     }
   );
 
-  const { data: bucketData, refetch: bucketsRefetch } = useQuery<{
-    getAllBucket: BucketCanCall[];
-  }>(ALL_BUCKET, {
-    notifyOnNetworkStatusChange: true,
-  });
-
+  // =============================== need to add on skip
   const { data: isAutoDialData, refetch: isAutodialRefetch } = useQuery<{
     isAutoDial: boolean;
   }>(IS_AUTO_DIAL, {
     notifyOnNetworkStatusChange: true,
-    skip: !location.pathname.includes("cip"),
+    skip: !location.pathname.includes("cip") || !canCallBuckets?.includes(true),
   });
 
   // ================= =================here
@@ -914,10 +927,6 @@ const CustomerDisposition = () => {
     };
     refetching();
   }, []);
-
-  const canCallBuckets = bucketData?.getAllBucket
-    ?.filter((x) => userLogged?.buckets?.includes(x._id))
-    .map((bucket) => bucket.canCall);
 
   useEffect(() => {
     setTimeout(async () => {
@@ -964,8 +973,8 @@ const CustomerDisposition = () => {
   //me 09126448847
   //christian inbound 09285191305
   //endrian 09694827149
-  const mobileNo =
-    userLogged?.username === "RRamos" ? "09126448847" : "09694827149";
+  // const mobileNo = 
+  //   userLogged?.username === "RRamos" ? "09126448847" : "09694827149"
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -977,7 +986,6 @@ const CustomerDisposition = () => {
         data?.checkIfAgentIsInline?.includes("PAUSE") &&
         isAutoDialData?.isAutoDial
       ) {
-        console.log("hello");
         let rawNumber = selectedCustomer?.customer_info?.contact_no[0];
         if (!rawNumber) return;
         let phoneNumber = rawNumber.toString().replace(/\D/g, "");
@@ -989,8 +997,8 @@ const CustomerDisposition = () => {
         if ((!onCall || !isRing) && Boolean(phoneNumber)) {
           setDial(false);
           dispatch(setMobileToCall(phoneNumber));
-          // await makeCall({ variables: { phoneNumber: phoneNumber } });
-          await makeCall({ variables: { phoneNumber: mobileNo } });
+          await makeCall({ variables: { phoneNumber: phoneNumber } });
+          // await makeCall({ variables: { phoneNumber: mobileNo } });
         }
       }
     });
@@ -1010,9 +1018,9 @@ const CustomerDisposition = () => {
     setConfirm(false);
     if (phoneNumber) {
       setTimeout(async () => {
-        // await makeCall({ variables: { newPhone } });
         dispatch(setMobileToCall(newPhone));
-        await makeCall({ variables: { phoneNumber: mobileNo } });
+        await makeCall({ variables: { newPhone } });
+        // await makeCall({ variables: { phoneNumber: mobileNo } });
       }, 1000);
     }
   }, []);
@@ -1154,7 +1162,7 @@ const CustomerDisposition = () => {
 
           <div className="flex gap-3 w-full justify-center px-5 lg:px-10 2xl:px-20 flex-col lg:flex-row items-center py-5">
             <motion.div
-              key={'customer-bg'}
+              key={"customer-bg"}
               className={`flex w-full  ${
                 selectedCustomer ? "" : "lg:w-1/2 2xl:w-1/3"
               } h-full 2xl:flex-row flex-col items-center relative  justify-center gap-5`}
@@ -1333,7 +1341,7 @@ const CustomerDisposition = () => {
               <div className="flex flex-col w-full  items-end justify-between gap-3 ">
                 <AccountInfo
                   ref={childrenDivRef}
-                  presetAmount={presetAmount}
+                  presetSelection={presetSelection}
                 />
 
                 <div className="flex items-end h-full w-full justify-end">
@@ -1342,13 +1350,14 @@ const CustomerDisposition = () => {
                       updateOf={() => setIsUpdate(false)}
                       inlineData={data?.checkIfAgentIsInline || ""}
                       canCall={isAutoDialData?.isAutoDial as boolean}
-                      onPresetAmountChange={setPresetAmount}
+                      onPresetAmountChange={setPresetSelection}
                     />
                   )}
                 </div>
               </div>
             )}
           </div>
+
 
           <AnimatePresence>
             {isUpdate && (
@@ -1380,11 +1389,13 @@ const CustomerDisposition = () => {
               </div>
             )}
           </AnimatePresence>
+          
 
+          {/* Dial Button the violet one*/}
           {canCallBuckets?.includes(true) && (
             <motion.div
               drag
-              key={'canCallBuclet-div'}
+              key={"canCallBuclet-div"}
               dragConstraints={containerRef}
               dragElastic={0.1}
               dragMomentum={false}
@@ -1411,7 +1422,7 @@ const CustomerDisposition = () => {
                     className="absolute z-50 -top-4 cursor-pointer"
                   >
                     <motion.div
-                      key={'dial-button-key'}
+                      key={"dial-button-key"}
                       initial={{ x: 0, y: 40, opacity: 0 }}
                       animate={{ x: 0, y: 0, opacity: 1 }}
                       transition={{ type: "spring", delay: isRing ? 1.4 : 0.6 }}
@@ -1423,6 +1434,7 @@ const CustomerDisposition = () => {
                   </div>
                 )}
 
+              {/* Break button on bottom */}
               {userLogged?.type === "AGENT" && !selectedCustomer && (
                 <div
                   onClick={() => {
@@ -1436,7 +1448,7 @@ const CustomerDisposition = () => {
                   className="absolute z-50 -bottom-3 cursor-pointer"
                 >
                   <motion.div
-                  key={'break-button-div'}
+                    key={"break-button-div"}
                     initial={{ x: 0, y: -40, opacity: 0 }}
                     animate={{ x: 0, y: 0, opacity: 1 }}
                     transition={{
@@ -1451,10 +1463,11 @@ const CustomerDisposition = () => {
                 </div>
               )}
 
+              {/*Break selection*/}
               <AnimatePresence>
                 {breaker && (
                   <motion.div
-                    key={'breaker-div'}
+                    key={"breaker-div"}
                     className="z-100 cursor-default bg-gray-200 shadow-md overflow-hidden border-2 rounded-md border-gray-800 -bottom-[216px] text-black absolute"
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -1480,10 +1493,12 @@ const CustomerDisposition = () => {
                 )}
               </AnimatePresence>
 
+
+                {/* Dial phone button */}
               <AnimatePresence>
                 {dial && (
                   <motion.div
-                    key={'dialer-button-div'}
+                    key={"dialer-button-div"}
                     className="bg-gray-200 z-100 cursor-default shadow-md p-2 border-2 rounded-md border-gray-800 -bottom-54 text-black absolute"
                     initial={{ scale: 0.8, opacity: 0 }}
                     animate={{ scale: 1, opacity: 1 }}
@@ -1563,7 +1578,7 @@ const CustomerDisposition = () => {
                   </motion.div>
                 )}
               </AnimatePresence>
-
+                
               <div
                 className={` ${
                   (data?.checkIfAgentIsInline?.includes("INCALL") &&
@@ -1587,7 +1602,7 @@ const CustomerDisposition = () => {
                           data?.checkIfAgentIsInline.includes("LAGGED") &&
                           data?.checkIfAgentIsInline.includes("DISPO"))) && (
                         <motion.div
-                        key={'lottie-frequency-div'}
+                          key={"lottie-frequency-div"}
                           initial={{ scale: 0.8, opacity: 0 }}
                           animate={{ scale: 1, opacity: 1 }}
                           exit={{ opacity: 0 }}
@@ -1610,7 +1625,7 @@ const CustomerDisposition = () => {
                         data?.checkIfAgentIsInline.includes("LAGGED") &&
                         data?.checkIfAgentIsInline.includes("DISPO"))) && (
                       <motion.div
-                      key={''}
+                        key={""}
                         className="absolute -left-5 top-14.5 transition-al"
                         initial={{ x: 40, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}

@@ -127,15 +127,15 @@ const NavbarExtn = () => {
   const [confirm, setConfirm] = useState(false);
   const [targetPath, setTargetPath] = useState<string | null>(null);
   const navigate = useNavigate();
+  const [openIndex, setOpenIndex] = useState<number | null>(null);
+  const isDuplicate = useSingleTabGuard();
 
-  const isDuplicate = useSingleTabGuard()
-  
   useEffect(() => {
-  if (isDuplicate) {
-    alert("You already have this app open. Redirecting...");
-    window.location.href = "about:blank";
-  }
-}, [isDuplicate]);  
+    if (isDuplicate) {
+      alert("You already have this app open. Redirecting...");
+      window.location.href = "about:blank";
+    }
+  }, [isDuplicate]);
 
   useEffect(() => {
     const refetching = async () => {
@@ -150,7 +150,6 @@ const NavbarExtn = () => {
     skip: !success.success,
     notifyOnNetworkStatusChange: true,
   });
-
 
   useSubscription<{ somethingChanged: SubSuccess }>(SOMETHING_ESCALATING, {
     onData: async ({ data }) => {
@@ -207,8 +206,6 @@ const NavbarExtn = () => {
     },
   });
 
-
-
   const userType = userLogged?.type as keyof typeof accountsNavbar;
   if (!userType || !accountsNavbar[userType]) return null;
   const length = myTask?.myTasks.length || 0;
@@ -240,27 +237,39 @@ const NavbarExtn = () => {
     },
   });
 
-  useSubscription<{updateOnCallfiles:{bucket:string , message:string}}>(NEW_UPDATE_ONCALLFILE, {
-    onData: async({data}) => {
-      if(data) {
-        if(userLogged?.buckets.includes(data.data?.updateOnCallfiles.bucket as string) && data.data?.updateOnCallfiles.message === 'NEW_UPDATE_CALLFILE' ) {
-          await isAutoDialRefetch()
+  useSubscription<{ updateOnCallfiles: { bucket: string; message: string } }>(
+    NEW_UPDATE_ONCALLFILE,
+    {
+      onData: async ({ data }) => {
+        if (data) {
+          if (
+            userLogged?.buckets.includes(
+              data.data?.updateOnCallfiles.bucket as string
+            ) &&
+            data.data?.updateOnCallfiles.message === "NEW_UPDATE_CALLFILE"
+          ) {
+            await isAutoDialRefetch();
+          }
         }
-
-      }
+      },
     }
-  }) 
+  );
 
-  const {data:isAutoDialData, refetch:isAutoDialRefetch} = useQuery<{isAutoDial:boolean}>(IS_AUTO_DIAL,{
+  const { data: isAutoDialData, refetch: isAutoDialRefetch } = useQuery<{
+    isAutoDial: boolean;
+  }>(IS_AUTO_DIAL, {
     notifyOnNetworkStatusChange: true,
-  })
+  });
 
-
-  useEffect(()=> {
-    if(isAutoDialData?.isAutoDial && userLogged?.type === "AGENT" && !location?.pathname.includes('break-view')) {
-      navigate('/agent-cip')
+  useEffect(() => {
+    if (
+      isAutoDialData?.isAutoDial &&
+      userLogged?.type === "AGENT" &&
+      !location?.pathname.includes("break-view")
+    ) {
+      navigate("/agent-cip");
     }
-  },[isAutoDialData?.isAutoDial, location?.pathname])
+  }, [isAutoDialData?.isAutoDial, location?.pathname]);
 
   const endCallYes = useCallback(async () => {
     if (selectedCustomer?._id) {
@@ -274,7 +283,11 @@ const NavbarExtn = () => {
   }, [endAndDispoCall, targetPath, navigate, dispatch]);
 
   const navClick = async (link: string) => {
-    if((isAutoDialData?.isAutoDial && userLogged?.type === "AGENT") || location.pathname.includes('break-view')) return null
+    if (
+      (isAutoDialData?.isAutoDial && userLogged?.type === "AGENT") ||
+      location.pathname.includes("break-view")
+    )
+      return null;
     if (onCall) {
       setTargetPath(link);
       setConfirm(true);
@@ -286,7 +299,6 @@ const NavbarExtn = () => {
       dispatch(setIsReport(false));
     }
   };
-
 
   return (
     userLogged && (
@@ -301,31 +313,69 @@ const NavbarExtn = () => {
         )}
         <div className="border-b select-none border-blue-400 flex items-center justify-center text-base font-medium text-slate-500 bg-white print:hidden">
           {accountsNavbar[userType].map((an, index) => {
-            const callLogs = an.name === "Call Logs"
-            return !callLogs && (
-            <div
-              onClick={() => navClick(an.link)}
-              key={index}
-              className={`relative ${isAutoDialData?.isAutoDial && userLogged?.type === "AGENT" ? "" : "cursor-pointer"}`}
-            >
-              <div
-                className={`${index > 0 && "border-l "} ${
-                  location.pathname.includes(an.link) &&
-                  "bg-blue-500 hover:bg-blue-500 hover:text-white text-shadow-md text-white"
-                } text-xs ${isAutoDialData?.isAutoDial && !location.pathname.includes(an.link) && userLogged?.type === "AGENT" ? "bg-gray-200" : "hover:bg-blue-400 hover:text-white border-blue-400 text-gray-500"} py-2 px-3 text-center font-black uppercase transition-all`}
-              >
-                {an.name}
-              </div>
-              {an.name.includes("Panel") && length > 0 && (
-                <>
-                  <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center text-white rounded-full bg-red-500 -top-3 border-white border-2 -right-1 z-50">
-                    {length}
+            const callLogs = an.name === "Call Logs";
+            return (
+              !callLogs && (
+                <div
+                  onClick={() => {
+                    if (an.link) {
+                      navClick(an.link); 
+                    } else if (an.tabs) {
+                      setOpenIndex(index === openIndex ? null : index);
+                    }
+                  }}
+                  key={index}
+                  className={`relative ${
+                    isAutoDialData?.isAutoDial && userLogged?.type === "AGENT"
+                      ? ""
+                      : "cursor-pointer"
+                  }`}
+                >
+                  <div
+                    className={`${index > 0 && "border-l "} ${
+                      location.pathname.includes(an.link as string) &&
+                      "bg-blue-500 hover:bg-blue-500 hover:text-white text-shadow-md text-white"
+                    } text-xs ${
+                      isAutoDialData?.isAutoDial &&
+                      !location.pathname.includes(an.link as string) &&
+                      userLogged?.type === "AGENT"
+                        ? "bg-gray-200"
+                        : "hover:bg-blue-400 hover:text-white border-blue-400 text-gray-500"
+                    } py-2 px-3 text-center font-black uppercase transition-all`}
+                  >
+                    {an.name}
                   </div>
-                  <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center rounded-full bg-red-500 -top-3 -right-1 z-40 animate-ping"></div>
-                </>
-              )}
-            </div>
-          )})}
+                  {an.tabs && openIndex === index && (
+                    <div className="absolute left-0 mt-1 bg-white border rounded-md shadow-lg min-w-max z-50">
+                      {an.tabs.map((tab, tabIndex) => (
+                        <div
+                          key={tabIndex}
+                          onClick={() => {
+                            if (tab.link) navClick(tab.link);
+                          }}
+                          className={`px-4 py-2 text-sm hover:bg-blue-500 hover:text-white cursor-pointer ${
+                            location.pathname.includes(tab.link as string)
+                              ? "bg-blue-500 text-white"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          {tab.name}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                  {an.name.includes("Panel") && length > 0 && (
+                    <>
+                      <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center text-white rounded-full bg-red-500 -top-3 border-white border-2 -right-1 z-50">
+                        {length}
+                      </div>
+                      <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center rounded-full bg-red-500 -top-3 -right-1 z-40 animate-ping"></div>
+                    </>
+                  )}
+                </div>
+              )
+            );
+          })}
         </div>
       </>
     )

@@ -489,7 +489,7 @@ const Navbar = () => {
                       return (
                         <Link
                           key={index}
-                          to={navTo}
+                          to={navTo as string}
                           className={`${
                             index === 0 && "rounded-t-lg"
                           } grow odd:bg-gray-100 px-5 border-b border-slate-200 flex items-center hover:bg-gray-200 duration-200 ease-in-out cursor-pointer py-2`}
@@ -505,7 +505,7 @@ const Navbar = () => {
                       breakValue !== BreakEnum.WELCOME && (
                         <div className="grow border-b border-slate-200 flex items-center cursor-pointer ">
                           <h1
-                            className="pl-5 py-2 h-full w-full hover:bg-gray-300 hover:text-white   duration-200 ease-in-out"
+                            className="pl-5 py-2 h-full w-full hover:bg-gray-300   duration-200 ease-in-out"
                             onClick={() => setPopUpBreak(!popUpBreak)}
                           >
                             Breaks

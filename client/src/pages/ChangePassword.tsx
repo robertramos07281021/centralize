@@ -30,8 +30,6 @@ const myUserInfos = gql`
     }
   } 
 `
-
-
 const LOGOUT = gql`
   mutation logout { 
     logout { 
@@ -123,8 +121,8 @@ const ChangePassword = () => {
  if(loading || changePassLoading) return (
     <Loading/>
   )
-
-  return (userLogged && !userLogged.change_password) ? (
+  
+  return (userLogged && !userLogged?.change_password) ? (
     <div className="h-screen w-screen flex flex-col">
       <div>
         <img src="/bernalesLogo.png" alt="Bernales Logo" className="w-56" />

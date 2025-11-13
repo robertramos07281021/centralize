@@ -14,7 +14,6 @@ import { useLocation } from "react-router-dom";
 import Loading from "../Loading.tsx";
 import { useDropzone } from "react-dropzone";
 import { motion, AnimatePresence } from "framer-motion";
-import Status from "./ProductionManagerView.tsx";
 
 type Finished = {
   name: string;
@@ -136,7 +135,7 @@ const SET_CALLFILE_AUTO_DIAL = gql`
 
 type Props = {
   bucket: string | null;
-  status: keyof typeof Status;
+  status: string;
   successUpload: boolean;
   setTotalPage: (e: number) => void;
   setCanUpload: (e: boolean) => void;
@@ -850,6 +849,8 @@ const CallfilesViews: React.FC<Props> = ({
                             </svg>
                           </div>
 
+
+                          {/* */}
                           <div
                             className="rounded-sm relative h-full w-full items-center shadow-sm flex justify-center hover:bg-yellow-800 transition-all px-1 py-1 cursor-pointer bg-yellow-700 text-white border-2 border-yellow-900"
                             onClick={() => {
@@ -868,6 +869,7 @@ const CallfilesViews: React.FC<Props> = ({
                               }
                             }}
                           >
+                       
                             {!item?.callfile?.autoDial ? (
                               <div title="Turn on Auto Dial">
                                 <svg

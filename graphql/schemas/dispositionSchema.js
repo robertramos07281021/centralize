@@ -128,7 +128,7 @@ const dispositionTypeDefs = gql`
 
   enum ContactMethod {
     skip
-    calls
+    call
     email
     sms
     field

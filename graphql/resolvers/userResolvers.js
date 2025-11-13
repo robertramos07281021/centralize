@@ -32,12 +32,12 @@ const userResolvers = {
         throw new CustomError(error.message, 500);
       }
     },
-    getUsers: async (_, { page = 1 }) => {
+    getUsers: async (_, { page = 1, limit = 20 }) => {
       try {
         const res = await User.aggregate([
           {
             $facet: {
-              users: [{ $skip: (page - 1) * 20 }, { $limit: 20 }],
+              users: [{ $skip: (page - 1) * limit }, { $limit: limit }],
               total: [{ $count: "totalUser" }],
             },
           },
@@ -71,7 +71,10 @@ const userResolvers = {
     },
     findUsers: async (_, { search, page, limit, filter }) => {
       try {
-        const searchFilter = { $regex: search, $options: "i" };
+        function escapeRegex(str) {
+          return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        }
+        const searchFilter = { $regex: escapeRegex(search), $options: "i" };
         const res = await User.aggregate([
           {
             $lookup: {
@@ -624,7 +627,12 @@ const userResolvers = {
             ? new Array(...new Set(findUser?.buckets?.map((x) => x.viciIp)))
             : [];
 
-        if (user.type !== "admin") {
+        const canCall =
+          findUser?.buckets?.length > 0
+            ? findUser?.buckets.map((x) => x.canCall)
+            : [];
+
+        if (canCall.includes(true)) {
           await logoutVici(findUser.vici_id, bucket[0]);
         }
 
