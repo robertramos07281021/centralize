@@ -564,6 +564,7 @@ const callResolver = {
           findUser?.buckets?.length > 0
             ? new Array(...new Set(findUser?.buckets?.map((x) => x.viciIp)))
             : [];
+            
         const chechIfisOnline = await Promise.all(
           bucket.map(async (x) => {
             const res = await checkIfAgentIsOnline(findUser?.vici_id, x);
