@@ -1506,7 +1506,7 @@ const productionResolver = {
             };
 
             const remoteDirVici = `/REC-${viciIpAddress}-${
-              [
+              ![
                 "CASH S2",
                 "LAZCASH S1",
                 "ACS1-TEAM 1",
