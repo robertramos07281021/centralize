@@ -1,4 +1,4 @@
-import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
+import { IoMdArrowDropdown } from "react-icons/io";
 import { useQuery, gql } from "@apollo/client";
 import { Users } from "../../middleware/types";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -90,7 +90,7 @@ const BacklogManagementView = () => {
   const [searchAgent, setSearchAgent] = useState<string>("");
   const userRef = useRef<HTMLDivElement | null>(null);
   const bucketRef = useRef<HTMLDivElement | null>(null);
-  const [reportView, setReportView] = useState<boolean>(false);
+  // const [reportView, setReportView] = useState<boolean>(false);
   const { data: disposition } = useQuery<{
     getDispositionTypes: DispositionType[];
   }>(GET_DISPOSITION_TYPES);

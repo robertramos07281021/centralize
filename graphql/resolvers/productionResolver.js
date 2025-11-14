@@ -1477,7 +1477,8 @@ const productionResolver = {
             const viciIpAddress = filtered?.bucket?.viciIp;
 
             const fileNale = {
-              "172.20.21.64": "HOMECREDIT",
+              "172.20.21.64": "AUTODIAL SHOPEE BCL-M7",
+              "172.20.21.63": "MIXED CAMPAIGN",
               "172.20.21.10": "MIXED CAMPAIGN NEW 2",
               "172.20.21.17": "PSBANK",
               "172.20.21.27": "MIXED CAMPAIGN",
@@ -1485,10 +1486,15 @@ const productionResolver = {
               "172.20.21.35": "MIXED CAMPAIGN",
               "172.20.21.67": "MIXED CAMPAIGN NEW",
               "172.20.21.97": "UB",
-              "172.20.21.70": "ATOME",
+              '172.20.21.70': 'AUTODIAL SHOPEE M3',
               "172.20.21.18": "MIXED CAMPAIGN NEW 2",
               '172.20.21.165': "PAGIBIGNCR",
               '172.20.21.105': "PAGIBIGPAM",
+              '172.20.21.91': 'AUTODIAL SHOPEE M2',
+              '172.20.21.85': 'AUTODIAL SHOPEE M4',
+              '172.20.21.76': 'AUTODIAL SHOPEE BCL-M7',
+              '172.20.21.30': 'MCC',
+              '172.20.21.196': 'ATOME NEW',
             };
 
             const issabelNasFileBane = {
@@ -1500,11 +1506,20 @@ const productionResolver = {
             };
 
             const remoteDirVici = `/REC-${viciIpAddress}-${
-              fileNale[viciIpAddress]
+              [
+                "CASH S2",
+                "LAZCASH S1",
+                "ACS1-TEAM 1",
+                "ACS1-TEAM 2",
+                "ACS1-TEAM 3",
+              ].includes(filtered?.bucket?.name) ? fileNale[viciIpAddress] : "ATOME"
             }/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`;
             const remoteDirIssabel = `/ISSABEL RECORDINGS/${
               issabelNasFileBane[issabelIpAddress]
             }/${monthCreated + " " + yearCreated}/${checkDate(dayCreated)}`;
+
+
+
 
             const ifATOME =
               [

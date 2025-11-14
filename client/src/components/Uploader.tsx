@@ -96,7 +96,7 @@ const Uploader: React.FC<modalProps> = ({
 
   const handleFileUpload = useCallback(async (file: File) => {
     try {
-      setLoading(true)
+      setLoading(true);
       const { read, utils, SSF } = await import("xlsx");
       const reader = new FileReader();
 
@@ -159,6 +159,13 @@ const Uploader: React.FC<modalProps> = ({
             new_pay_off,
             service_fee,
             gender,
+            //New BPI Fields
+            year,
+            brand,
+            model,
+            last_payment_amount,
+            last_payment_date,
+            //Hanggang Here
             ...others
           } = row;
 
@@ -210,7 +217,7 @@ const Uploader: React.FC<modalProps> = ({
                 : Number(total_os)
               : Number(principal_os) || Number(total_os),
             writeoff_balance: Number(writeoff_balance) || 0,
-            mo_amort: Number(mo_amort) || 0,
+         
             cf: Number(cf) || 0,
             pastdue_amount: Number(pastdue_amount) || 0,
             interest_os: isNaN(interest_os) ? 0 : Number(interest_os) || 0,
@@ -224,7 +231,7 @@ const Uploader: React.FC<modalProps> = ({
               : Number(penalty_interest_os) || 0,
             dst_fee_os: isNaN(dst_fee_os) ? 0 : Number(dst_fee_os) || 0,
             balance: Number(balance) || Number(total_os),
-            total_os: Number(total_os),
+            total_os: Number(total_os) || Number(mo_amort),
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
             overall_balance: Number(overall_balance) || 0,
             mo_balance: Number(mo_balance) || 0,
@@ -233,7 +240,10 @@ const Uploader: React.FC<modalProps> = ({
             new_tad_with_sf: Number(new_tad_with_sf) || 0,
             new_pay_off: Number(new_pay_off) || 0,
             service_fee: Number(service_fee) || 0,
-            gender: isNaN(gender) ? gender : "O"
+            brand: brand ? String(brand).trim() : null,
+            model: model ? String(model).trim() : null,
+            last_payment_amount: Number(last_payment_amount) || 0,
+            gender: isNaN(gender) ? gender : "O",
           } as Record<string, any>;
 
           if (emergencyContactMobile) {
@@ -258,12 +268,19 @@ const Uploader: React.FC<modalProps> = ({
             rows["max_dpd"] = Number(dpd);
           }
 
+          if (year) {
+            rows["year"] = safeDate(year);
+          }
+
           if (grass_date) {
             rows["grass_date"] = safeDate(grass_date);
           }
 
           if (bill_due_date) {
             rows["bill_due_date"] = safeDate(bill_due_date);
+          }
+          if (last_payment_date) {
+            rows["last_payment_date"] = safeDate(last_payment_date);
           }
 
           if (endorsement_date) {
@@ -343,11 +360,14 @@ const Uploader: React.FC<modalProps> = ({
       };
       reader.readAsBinaryString(file);
     } catch (error) {
+      console.log(error);
       dispatch(setServerError(true));
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
   }, []);
+
+  console.log(excelData)
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -365,6 +385,7 @@ const Uploader: React.FC<modalProps> = ({
   const [createCustomer] = useMutation(CREATE_CUSTOMER, {
     onError: (error) => {
       const errorMessage = error.message;
+      console.log(error);
       if (errorMessage?.includes("Not Included")) {
         dispatch(
           setSuccess({
@@ -389,7 +410,7 @@ const Uploader: React.FC<modalProps> = ({
       } else {
         dispatch(setServerError(true));
       }
-      setLoading(false)
+      setLoading(false);
     },
   });
 
@@ -430,13 +451,13 @@ const Uploader: React.FC<modalProps> = ({
       setExcelData([]);
       setFile([]);
       onSuccess();
-      setConfirm(false)
-      setRequired(false)
+      setConfirm(false);
+      setRequired(false);
       setLoading(false);
       bucketRequired(false);
     }
   }, [createCustomer, excelData, file, setConfirm, bucket]);
- 
+
   const submitUpload = () => {
     if (file.length === 0 || !bucket) {
       if (file.length === 0) {

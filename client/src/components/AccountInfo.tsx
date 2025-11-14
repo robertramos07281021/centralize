@@ -72,6 +72,12 @@ const OTHER_ACCOUNTS = gql`
         new_tad_with_sf
         new_pay_off
         service_fee
+        year
+        model
+        brand
+        late_payment_amount
+        late_payment_date
+
       }
       grass_details {
         grass_region
@@ -198,6 +204,11 @@ type AccountHistory = {
   new_tad_with_sf: number;
   new_pay_off: number;
   service_fee: number;
+  year: string;
+  model: string;
+  brand: string;
+  late_payment_amount: number;
+  late_payment_date: string;
 };
 
 const FieldsDiv = ({
@@ -336,7 +347,6 @@ const AccountInfo = forwardRef<
   // }, [presetAmount]);
 
   const presetLabel = presetSelection?.label || "Partial";
-
 
   return (
     <div className="w-full h-full">
@@ -682,11 +692,11 @@ const AccountInfo = forwardRef<
                   (bucket) => bucket.name === "BPIBANK 2025"
                 ) && (
                   <div className="w-full flex flex-col lg:ml-3 gap-5 text-black">
-                    <div className="bg-gray-100 w-full gap-2 grid grid-cols-2 lg:flex flex-col mb-1 md:mb-0 md:flex-row rounded-md">
+                    <div className="bg-gray-100 w-full gap-2 grid grid-cols-5 grid-rows-3 mb-1 md:mb-0 md:flex-row rounded-md">
                       <div className="w-full">
-                        <h1 className="font-medium truncate whitespace-nowrap 2xl:text-sm text-xs text-nowrap">
+                        <div className="font-medium truncate 2xl:text-sm text-xs text-nowrap" title="OUTSTANDING BALANCE">
                           Outstanding balance:
-                        </h1>
+                        </div>
                         <div className="w-full p-1 pl-2 border border-black rounded-sm">
                           {(
                             selectedCustomer?.out_standing_details
@@ -699,7 +709,7 @@ const AccountInfo = forwardRef<
                       </div>
 
                       <div className="w-full">
-                        <h1 className="font-medium 2xl:text-sm text-xs text-nowrap">
+                        <h1 className="font-medium truncate 2xl:text-sm text-xs text-nowrap" title="PARTIAL PAYMENT W/ SRVCE FEE">
                           PARTIAL PAYMENT W/ SRVCE FEE"
                         </h1>
                         <div className="w-full p-1 pl-2 border border-black rounded-sm">
@@ -756,6 +766,97 @@ const AccountInfo = forwardRef<
                           })}
                         </div>
                       </div>
+
+                      {/* {rows2} */}
+
+                      <div className="w-full">
+                        <h1 className="font-medium truncate 2xl:text-sm text-xs">
+                          Year:
+                        </h1>
+                        <div className=" w-full pl-2 p-1 border border-black rounded-sm">
+                          {/* {(
+                            selectedCustomer?.out_standing_details
+                              ?.year ?? 0
+                          ).toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })} */}
+                        </div>
+                      </div>
+
+                      <div className="w-full col-span-2">
+                        <h1 className="font-medium truncate 2xl:text-sm text-xs">
+                          Brand:
+                        </h1>
+                        <div className=" w-full pl-2 p-1 border border-black rounded-sm">
+                          {(
+                            selectedCustomer?.out_standing_details
+                              ?.service_fee ?? 0
+                          ).toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="w-full col-span-2">
+                        <h1 className="font-medium  truncate 2xl:text-sm text-xs">
+                          Model:
+                        </h1>
+                        <div className=" w-full pl-2 p-1 border border-black rounded-sm">
+                          {(
+                            selectedCustomer?.out_standing_details
+                              ?.service_fee ?? 0
+                          ).toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })}
+                        </div>
+                      </div>
+                      <div className="w-full col-span-2">
+                        <h1 className="font-medium  truncate 2xl:text-sm text-xs">
+                          Montly amortization:
+                        </h1>
+                        <div className=" w-full pl-2 p-1 border border-black rounded-sm">
+                          {(
+                            selectedCustomer?.out_standing_details
+                              ?.service_fee ?? 0
+                          ).toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })}
+                        </div>
+                      </div>
+
+                      <div className="w-full  col-span-2">
+                        <h1 className="font-medium truncate 2xl:text-sm text-xs">
+                          Last Payment Amount:
+                        </h1>
+                        <div className=" w-full pl-2 p-1 border border-black rounded-sm">
+                          {(
+                            selectedCustomer?.out_standing_details
+                              ?.service_fee ?? 0
+                          ).toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })}
+                        </div>
+                      </div>
+
+                       <div className="w-full">
+                        <h1 className="font-medium truncate 2xl:text-sm text-xs">
+                          Last Payment Date:
+                        </h1>
+                        <div className=" w-full pl-2 p-1 border border-black rounded-sm">
+                          {(
+                            selectedCustomer?.out_standing_details
+                              ?.service_fee ?? 0
+                          ).toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })}
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -766,7 +867,7 @@ const AccountInfo = forwardRef<
               ) ? (
                 <div className="flex w-full gap-2 text-black justify-end items-end">
                   <div className="w-full">
-                    <p className="font-medium whitespace-nowrap min-w-40 2xl:min-w-auto w-full text-xs 2xl:text-sm ">
+                    <p className="font-medium truncate min-w-40 2xl:min-w-auto w-full text-xs 2xl:text-sm ">
                       {presetLabel === "Partial"
                         ? "Partial Payment w/ Service Fee:"
                         : presetLabel === "New Tad with SF"

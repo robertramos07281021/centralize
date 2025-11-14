@@ -47,6 +47,11 @@ const customerTypeDefs = gql`
     new_tad_with_sf: Float
     new_pay_off: Float
     service_fee: Float
+    year: String
+    brand: String
+    model: String
+    last_payment_amount: Float
+    last_payment_date: String
   }
 
   type CustomerInfo {

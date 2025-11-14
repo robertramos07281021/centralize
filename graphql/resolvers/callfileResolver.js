@@ -629,7 +629,13 @@ const callfileResolver = {
               principal: "$out_standing_details.principal_os",
               amount: "$currentDispo.amount",
               balance: "$balance",
-              partial_payment_w_service_fee: "$out_standing_details.partial_payment_w_service_fee",
+              partial_payment_w_service_fee:
+                "$out_standing_details.partial_payment_w_service_fee",
+              year: "$out_standing_details.year",
+              brand: "$out_standing_details.brand",
+              model: "$out_standing_details.model",
+              last_payment_amount: "$out_standing_details.last_payment_amount",
+              last_payment_date: "$out_standing_details.last_payment_date",
               new_tad_with_sf: "$out_standing_details.new_tad_with_sf",
               new_pay_off: "$out_standing_details.new_pay_off",
               service_fee: "$out_standing_details.service_fee",
@@ -761,7 +767,11 @@ const callfileResolver = {
             "new_tad_with_sf",
             "new_pay_off",
             "service_fee",
-            
+            "year",
+            "brand",
+            "model",
+            "last_payment_amount",
+            "last_payment_date",
           ],
           emptyFieldValue: "",
         });
@@ -1374,7 +1384,6 @@ const callfileResolver = {
         throw new CustomError(error.message, 500);
       }
     },
-
   },
   Result: {
     callfile: async (parent) => {
@@ -1417,7 +1426,7 @@ const callfileResolver = {
             $set: { on_hands: false },
           }
         );
-        
+
         if (!finishedCallfile) throw new CustomError("Callfile not found", 404);
 
         await pubsub.publish(PUBSUB_EVENTS.FINISHED_CALLFILE, {
@@ -1427,7 +1436,6 @@ const callfileResolver = {
           },
         });
 
-      
         return {
           success: true,
           message: "Callfile successfully finished",

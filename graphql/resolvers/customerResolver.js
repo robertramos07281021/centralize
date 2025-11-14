@@ -72,8 +72,11 @@ const customerResolver = {
         if (!search) {
           return [];
         }
+        function escapeRegex(str) {
+          return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        }
 
-        const regexSearch = { $regex: search, $options: "i" };
+        const regex = new RegExp(escapeRegex(search), "i");
         const startOfTheDay = new Date();
         startOfTheDay.setHours(0, 0, 0, 0);
         const endOfTheDay = new Date();
@@ -98,14 +101,10 @@ const customerResolver = {
           {
             $match: {
               $or: [
-                { fullName: { $regex: search, $options: "i" } },
-                {
-                  contact_no: { $elemMatch: { $regex: search, $options: "i" } },
-                },
-                { emails: { $elemMatch: { $regex: search, $options: "i" } } },
-                {
-                  addresses: { $elemMatch: { $regex: search, $options: "i" } },
-                },
+                { fullName: regex },
+                { contact_no: { $elemMatch: { $regex: regex } } },
+                { emails: { $elemMatch: { $regex: regex } } },
+                { addresses: { $elemMatch: { $regex: regex } } },
               ],
             },
           },
@@ -151,7 +150,7 @@ const customerResolver = {
           },
           {
             $match: {
-              "account_bucket._id": { $in: user.buckets },
+              "account_bucket._id": { $in: user.buckets.map(x=> new mongoose.Types.ObjectId(x)) },
               "ca.on_hands": false,
               "account_callfile.active": { $eq: true },
               "account_callfile.endo": { $exists: false },
@@ -254,6 +253,11 @@ const customerResolver = {
               grass_details: "$ca.grass_details",
               account_bucket: "$account_bucket",
               emergency_contact: "$ca.emergency_contact",
+              year: "$ca.year",
+              brand: "$ca.brand",
+              model: "$ca.model",
+              last_payment_amount: "$ca.last_payment_amount",
+              last_payment_date: "$ca.last_payment_date",
             },
           },
         ]);
@@ -1138,8 +1142,8 @@ const customerResolver = {
 
         let newCallfile = await Callfile.findOne({ name: callfile });
 
-        const today = new Date()
-        today.setHours(0,0,0,0)
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
 
         if (!newCallfile) {
           newCallfile = new Callfile({
@@ -1149,14 +1153,13 @@ const customerResolver = {
             totalPrincipal: callfilePrincipal || 0,
             totalOB: callfileOB,
           });
-        } 
+        }
 
-        if(newCallfile.createdAt < today) throw new CustomError('E11000',401)
+        if (newCallfile.createdAt < today) throw new CustomError("E11000", 401);
 
         const res = await Promise.all(
           input.map(async (element) => {
             try {
-              
               const customer = new Customer({
                 fullName: element.customer_name,
                 platform_customer_id: element.platform_user_id || null,
@@ -1166,10 +1169,10 @@ const customerResolver = {
                 emails: element.email,
                 contact_no: element.contact,
               });
-  
+
               const paid_amount = element.total_os - element.balance;
               let agent = null;
-  
+
               if (element.collectorID) {
                 agent = await User.findOne({
                   callfile_id: { $eq: element.collectorID },
@@ -1188,7 +1191,7 @@ const customerResolver = {
                   });
                 }
               }
-  
+
               const createCA = {
                 customer: customer._id,
                 bucket: findBucket._id,
@@ -1229,6 +1232,11 @@ const customerResolver = {
                   new_tad_with_sf: element.new_tad_with_sf,
                   new_pay_off: element.new_pay_off,
                   service_fee: element.service_fee,
+                  year: element.year,
+                  brand: element.brand,
+                  model: element.model,
+                  last_payment_date: element.last_payment_date,
+                  last_payment_amount: element.last_payment_amount,
                 },
                 emergency_contact: {
                   name: element.emergencyContactName,
@@ -1240,7 +1248,7 @@ const customerResolver = {
                   grass_date: element.grass_date,
                 },
               };
-  
+
               if (agent) {
                 createCA["assigned"] = agent._id;
                 createCA["assignedModel"] = "User";
@@ -1250,22 +1258,25 @@ const customerResolver = {
               customer.customer_account = caResult._id;
               await customer.save();
             } catch (error) {
-              console.log(error)
+              console.log(error);
             }
           })
         );
 
-
         if (newCallfile.isNew) {
           await newCallfile.save();
         } else {
-          await Callfile.findByIdAndUpdate(newCallfile._id, {
-            $inc: {
-              totalAccounts: input.length || 0,
-              totalPrincipal: callfilePrincipal || 0,
-              totalOB: callfileOB || 0,
+          await Callfile.findByIdAndUpdate(
+            newCallfile._id,
+            {
+              $inc: {
+                totalAccounts: input.length || 0,
+                totalPrincipal: callfilePrincipal || 0,
+                totalOB: callfileOB || 0,
+              },
             },
-          },{new: true});
+            { new: true }
+          );
         }
 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {
@@ -1280,6 +1291,7 @@ const customerResolver = {
           message: "Callfile successfully created",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

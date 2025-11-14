@@ -58,8 +58,8 @@ const selectivesResolver = {
                   $project: {
                     _id: 1,
                     name: 1,
-                    callfile: "$selective_callfile.name",
-                    bucket: "selective_bucket",
+                    callfile: "$selective_callfile",
+                    bucket: "$selective_bucket",
                     createdAt: 1,
                   },
                 },
@@ -83,6 +83,7 @@ const selectivesResolver = {
               },
               {
                 $group: {
+                  _id: null,
                   count: { $sum: 1 },
                   amount: { $sum: "$amount" },
                 },
@@ -90,7 +91,7 @@ const selectivesResolver = {
             ]);
 
             const count = dispositions[0]?.count ?? 0;
-            const amount = dispositions[0]?.totalAmount ?? 0;
+            const amount = dispositions[0]?.amount ?? 0;
 
             return {
               ...selective,
@@ -109,7 +110,7 @@ const selectivesResolver = {
         };
         
       } catch (error) {
-        throw new CustomError(err.message, 500);
+        throw new CustomError(error.message, 500);
       }
     },
   },

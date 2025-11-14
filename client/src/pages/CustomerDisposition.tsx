@@ -112,6 +112,11 @@ const PICK_RANDOM = gql`
         new_tad_with_sf
         new_pay_off
         service_fee
+        year
+        model
+        brand
+        late_payment_amount
+        late_payment_date
       }
       grass_details {
         grass_region
@@ -224,6 +229,11 @@ const SEARCH = gql`
         new_tad_with_sf
         new_pay_off
         service_fee
+        year
+        model
+        brand
+        late_payment_amount
+        late_payment_date
       }
       grass_details {
         grass_region
@@ -699,8 +709,7 @@ const CustomerDisposition = () => {
     onCompleted: () => {
       setSearch("");
     },
-    onError: (err) => {
-      console.log(err);
+    onError: () => {
       dispatch(setServerError(true));
     },
   });
@@ -719,17 +728,25 @@ const CustomerDisposition = () => {
     onCompleted: () => {
       dispatch(setDeselectCustomer());
     },
-    onError: (err) => {
-      console.log(err);
+    onError: () => {
       dispatch(setServerError(true));
     },
   });
+
+   const { data } = useQuery<{ checkIfAgentIsInline: string }>(CHECK_IF_INLINE, {
+    notifyOnNetworkStatusChange: true,
+    skip: !location.pathname.includes("cip") || !canCallBuckets?.includes(true),
+    pollInterval: 1000,
+  });
+
+  const checkIfAgentIsInline = data?.checkIfAgentIsInline
+
 
   const clearSelectedCustomer = useCallback(async () => {
     await deselectTask({ variables: { id: selectedCustomer?._id } });
     setSearch("");
     dispatch(setIsRing(false));
-    if (!data?.checkIfAgentIsInline?.includes("PAUSE") && canCallBuckets?.includes(true)) {
+    if (!checkIfAgentIsInline?.includes("PAUSE") && canCallBuckets?.includes(true)) {
       await endAndDispoCall();
     }
   }, [selectedCustomer, deselectTask]);
@@ -867,11 +884,8 @@ const CustomerDisposition = () => {
   };
 
   // =============================== need to add on skip
-  const { data } = useQuery<{ checkIfAgentIsInline: string }>(CHECK_IF_INLINE, {
-    notifyOnNetworkStatusChange: true,
-    skip: !location.pathname.includes("cip") || !canCallBuckets?.includes(true),
-    pollInterval: 1000,
-  });
+ 
+
 
   useSubscription<{ newUpdateOnBucket: { bucket: string; message: string } }>(
     NEW_UPDATE_ONBUCKET,
@@ -983,7 +997,7 @@ const CustomerDisposition = () => {
       if (
         Boolean(selectedCustomer) &&
         isOnlineOnVici &&
-        data?.checkIfAgentIsInline?.includes("PAUSE") &&
+        checkIfAgentIsInline?.includes("PAUSE") &&
         isAutoDialData?.isAutoDial
       ) {
         let rawNumber = selectedCustomer?.customer_info?.contact_no[0];
@@ -1029,7 +1043,7 @@ const CustomerDisposition = () => {
     dispatch(setIsRing(true));
     dispatch(setOnCall(true));
 
-    if (isOnlineOnVici && data?.checkIfAgentIsInline.includes("PAUSE")) {
+    if (isOnlineOnVici && checkIfAgentIsInline?.includes("PAUSE")) {
       const timer = setTimeout(async () => {
         if (!onCall) {
           dispatch(setMobileToCall(manualDial));
@@ -1041,8 +1055,8 @@ const CustomerDisposition = () => {
   };
 
   useEffect(() => {
-    if (data?.checkIfAgentIsInline?.includes("DEAD")) {
-      dispatch(setDeadCall(data?.checkIfAgentIsInline?.includes("DEAD")));
+    if (checkIfAgentIsInline?.includes("DEAD")) {
+      dispatch(setDeadCall(checkIfAgentIsInline?.includes("DEAD")));
     }
   }, [data]);
 
@@ -1089,10 +1103,10 @@ const CustomerDisposition = () => {
     if (!canCallBuckets?.includes(true)) return null;
 
     if (
-      (data?.checkIfAgentIsInline?.includes("PAUSED") &&
-        !data?.checkIfAgentIsInline?.includes("LAGGED")) ||
-      (data?.checkIfAgentIsInline?.includes("INCALL") &&
-        data?.checkIfAgentIsInline?.includes("DEAD"))
+      (checkIfAgentIsInline?.includes("PAUSED") &&
+        !checkIfAgentIsInline?.includes("LAGGED")) ||
+      (checkIfAgentIsInline?.includes("INCALL") &&
+        checkIfAgentIsInline?.includes("DEAD"))
     ) {
       if (!Boolean(selectedCustomer)) {
         handleRandomFetch();
@@ -1121,7 +1135,7 @@ const CustomerDisposition = () => {
   }, [data, selectedCustomer, manualDialCustomerNumber, handleRandomFetch]);
 
   useEffect(() => {
-    if (data?.checkIfAgentIsInline?.includes("INCALL")) {
+    if (checkIfAgentIsInline?.includes("INCALL")) {
       dispatch(setOnCall(true));
     } else {
       dispatch(setOnCall(false));
@@ -1348,7 +1362,7 @@ const CustomerDisposition = () => {
                   {selectedCustomer && (
                     <DispositionForm
                       updateOf={() => setIsUpdate(false)}
-                      inlineData={data?.checkIfAgentIsInline || ""}
+                      inlineData={checkIfAgentIsInline || ""}
                       canCall={isAutoDialData?.isAutoDial as boolean}
                       onPresetAmountChange={setPresetSelection}
                     />
@@ -1404,7 +1418,7 @@ const CustomerDisposition = () => {
               transition={{ duration: 1, type: "spring" }}
               className={`" w-40 rounded-full  cursor-grab active:cursor-grabbing absolute top-30 right-20 z-40 justify-center items-center flex "`}
             >
-              {!data?.checkIfAgentIsInline.includes("INCALL") &&
+              {!checkIfAgentIsInline?.includes("INCALL") &&
                 !isRing &&
                 !isAutoDialData?.isAutoDial && (
                   <div
@@ -1581,12 +1595,12 @@ const CustomerDisposition = () => {
                 
               <div
                 className={` ${
-                  (data?.checkIfAgentIsInline?.includes("INCALL") &&
-                    !data?.checkIfAgentIsInline?.includes("DIAL") &&
-                    !data?.checkIfAgentIsInline?.includes("DEAD")) ||
-                  (data?.checkIfAgentIsInline.includes("PAUSED") &&
-                    data?.checkIfAgentIsInline.includes("LAGGED") &&
-                    data?.checkIfAgentIsInline.includes("DISPO"))
+                  (checkIfAgentIsInline?.includes("INCALL") &&
+                    !checkIfAgentIsInline?.includes("DIAL") &&
+                    !checkIfAgentIsInline?.includes("DEAD")) ||
+                  (checkIfAgentIsInline?.includes("PAUSED") &&
+                    checkIfAgentIsInline?.includes("LAGGED") &&
+                    checkIfAgentIsInline?.includes("DISPO"))
                     ? "bg-purple-900 border-black"
                     : "bg-gray-100 border-gray-900"
                 }  p-2 border-2  rounded-full h-full w-full shadow-md shadow-black/20 `}
@@ -1595,12 +1609,12 @@ const CustomerDisposition = () => {
                   <div className="w-full relative h-full flex justify-center items-center">
                     {/* Frequency */}
                     <AnimatePresence>
-                      {((data?.checkIfAgentIsInline?.includes("INCALL") &&
-                        !data?.checkIfAgentIsInline?.includes("DIAL") &&
-                        !data?.checkIfAgentIsInline?.includes("DEAD")) ||
-                        (data?.checkIfAgentIsInline.includes("PAUSED") &&
-                          data?.checkIfAgentIsInline.includes("LAGGED") &&
-                          data?.checkIfAgentIsInline.includes("DISPO"))) && (
+                      {((checkIfAgentIsInline?.includes("INCALL") &&
+                        !checkIfAgentIsInline?.includes("DIAL") &&
+                        !checkIfAgentIsInline?.includes("DEAD")) ||
+                        (checkIfAgentIsInline?.includes("PAUSED") &&
+                          checkIfAgentIsInline?.includes("LAGGED") &&
+                          checkIfAgentIsInline?.includes("DISPO"))) && (
                         <motion.div
                           key={"lottie-frequency-div"}
                           initial={{ scale: 0.8, opacity: 0 }}
@@ -1618,12 +1632,12 @@ const CustomerDisposition = () => {
                   {/* Dialer phone */}
                   <div className="absolute w-full font-black uppercase text-green-900 justify-evenly  cursor-grab flex flex-col  h-full items-center right-0 z-20 top-0">
                     {((!isRing &&
-                      data?.checkIfAgentIsInline?.includes("PAUSED")) ||
+                      checkIfAgentIsInline?.includes("PAUSED")) ||
                       (isRing &&
-                        data?.checkIfAgentIsInline?.includes("INCALL")) ||
-                      (data?.checkIfAgentIsInline?.includes("PAUSED") &&
-                        data?.checkIfAgentIsInline.includes("LAGGED") &&
-                        data?.checkIfAgentIsInline.includes("DISPO"))) && (
+                        checkIfAgentIsInline?.includes("INCALL")) ||
+                      (checkIfAgentIsInline?.includes("PAUSED") &&
+                        checkIfAgentIsInline?.includes("LAGGED") &&
+                        checkIfAgentIsInline?.includes("DISPO"))) && (
                       <motion.div
                         key={""}
                         className="absolute -left-5 top-14.5 transition-al"
@@ -1635,20 +1649,20 @@ const CustomerDisposition = () => {
                           onClick={handleUsingPhoneUI}
                           className={`" ${
                             !(
-                              (data?.checkIfAgentIsInline?.includes("PAUSED") &&
-                                !data?.checkIfAgentIsInline.includes(
+                              (checkIfAgentIsInline?.includes("PAUSED") &&
+                                !checkIfAgentIsInline?.includes(
                                   "LAGGED"
                                 ) &&
-                                !data?.checkIfAgentIsInline.includes(
+                                !checkIfAgentIsInline?.includes(
                                   "DISPO"
                                 )) ||
-                              (data?.checkIfAgentIsInline?.includes("PAUSED") &&
-                                data?.checkIfAgentIsInline.includes("LAGGED") &&
-                                !data?.checkIfAgentIsInline.includes(
+                              (checkIfAgentIsInline?.includes("PAUSED") &&
+                                checkIfAgentIsInline?.includes("LAGGED") &&
+                                !checkIfAgentIsInline?.includes(
                                   "DISPO"
                                 )) ||
-                              (data?.checkIfAgentIsInline?.includes("INCALL") &&
-                                data?.checkIfAgentIsInline?.includes("DEAD"))
+                              (checkIfAgentIsInline?.includes("INCALL") &&
+                                checkIfAgentIsInline?.includes("DEAD"))
                             )
                               ? "bg-gray-400 border-gray-500 cursor-not-allowed "
                               : " hover:scale-110 cursor-pointer bg-green-500 hover:bg-green-600 border-green-900 "
@@ -1685,12 +1699,12 @@ const CustomerDisposition = () => {
 
                     {/* End call */}
                     {((!isRing &&
-                      data?.checkIfAgentIsInline?.includes("PAUSED")) ||
+                      checkIfAgentIsInline?.includes("PAUSED")) ||
                       (isRing &&
-                        data?.checkIfAgentIsInline?.includes("INCALL")) ||
-                      (data?.checkIfAgentIsInline?.includes("PAUSED") &&
-                        data?.checkIfAgentIsInline?.includes("LAGGED") &&
-                        data?.checkIfAgentIsInline?.includes("DISPO"))) && (
+                        checkIfAgentIsInline?.includes("INCALL")) ||
+                      (checkIfAgentIsInline?.includes("PAUSED") &&
+                        checkIfAgentIsInline?.includes("LAGGED") &&
+                        checkIfAgentIsInline?.includes("DISPO"))) && (
                       <motion.div
                         className={`" absolute -right-5 top-14.5  "`}
                         initial={{ x: -40, opacity: 0 }}
@@ -1700,26 +1714,26 @@ const CustomerDisposition = () => {
                         <div
                           className={` ${
                             (isRing &&
-                              data?.checkIfAgentIsInline?.includes("INCALL")) ||
-                            (data?.checkIfAgentIsInline?.includes("PAUSED") &&
-                              data?.checkIfAgentIsInline?.includes("LAGGED") &&
-                              data?.checkIfAgentIsInline?.includes("DISPO"))
+                              checkIfAgentIsInline?.includes("INCALL")) ||
+                            (checkIfAgentIsInline?.includes("PAUSED") &&
+                              checkIfAgentIsInline?.includes("LAGGED") &&
+                              checkIfAgentIsInline?.includes("DISPO"))
                               ? "bg-red-500 border-red-900 hover:scale-110 cursor-pointer "
                               : "border-gray-900 cursor-not-allowed  bg-gray-400 "
                           } transition-all text-white   p-2  rounded-full border-2  `}
                           onClick={() => {
                             {
                               if (
-                                data?.checkIfAgentIsInline?.includes(
+                                checkIfAgentIsInline?.includes(
                                   "INCALL"
                                 ) ||
-                                (data?.checkIfAgentIsInline?.includes(
+                                (checkIfAgentIsInline?.includes(
                                   "PAUSED"
                                 ) &&
-                                  data?.checkIfAgentIsInline?.includes(
+                                  checkIfAgentIsInline?.includes(
                                     "LAGGED"
                                   ) &&
-                                  data?.checkIfAgentIsInline?.includes("DISPO"))
+                                  checkIfAgentIsInline?.includes("DISPO"))
                               ) {
                                 handleEndCall();
                               }
@@ -1968,30 +1982,30 @@ const CustomerDisposition = () => {
                 {/* Middle Phone */}
 
                 {(!isRing ||
-                  (isRing && data?.checkIfAgentIsInline?.includes("PAUSED")) ||
+                  (isRing && checkIfAgentIsInline?.includes("PAUSED")) ||
                   (isRing &&
-                    data?.checkIfAgentIsInline?.includes("INCALL") &&
-                    !data?.checkIfAgentIsInline?.includes("DIAL"))) && (
+                    checkIfAgentIsInline?.includes("INCALL") &&
+                    !checkIfAgentIsInline?.includes("DIAL"))) && (
                   <Lottie
                     animationData={phone}
                     loop={
                       isRing &&
-                      data?.checkIfAgentIsInline?.includes("PAUSED") &&
-                      !data?.checkIfAgentIsInline?.includes("LAGGED") &&
-                      !data?.checkIfAgentIsInline?.includes("DISPO")
+                      checkIfAgentIsInline?.includes("PAUSED") &&
+                      !checkIfAgentIsInline?.includes("LAGGED") &&
+                      !checkIfAgentIsInline?.includes("DISPO")
                     }
                     autoplay={
                       isRing &&
-                      data?.checkIfAgentIsInline?.includes("PAUSED") &&
-                      !data?.checkIfAgentIsInline?.includes("LAGGED") &&
-                      !data?.checkIfAgentIsInline?.includes("DISPO")
+                      checkIfAgentIsInline?.includes("PAUSED") &&
+                      !checkIfAgentIsInline?.includes("LAGGED") &&
+                      !checkIfAgentIsInline?.includes("DISPO")
                     }
                   />
                 )}
 
                 {isRing &&
-                  data?.checkIfAgentIsInline?.includes("INCALL") &&
-                  data?.checkIfAgentIsInline?.includes("DIAL") && (
+                  checkIfAgentIsInline?.includes("INCALL") &&
+                  checkIfAgentIsInline?.includes("DIAL") && (
                     <div
                       style={{
                         filter:
@@ -2002,13 +2016,13 @@ const CustomerDisposition = () => {
                         animationData={phone}
                         loop={
                           isRing &&
-                          data?.checkIfAgentIsInline?.includes("INCALL") &&
-                          data?.checkIfAgentIsInline?.includes("DIAL")
+                          checkIfAgentIsInline?.includes("INCALL") &&
+                          checkIfAgentIsInline?.includes("DIAL")
                         }
                         autoplay={
                           isRing &&
-                          data?.checkIfAgentIsInline?.includes("INCALL") &&
-                          data?.checkIfAgentIsInline?.includes("DIAL")
+                          checkIfAgentIsInline?.includes("INCALL") &&
+                          checkIfAgentIsInline?.includes("DIAL")
                         }
                       />
                     </div>

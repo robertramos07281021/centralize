@@ -255,7 +255,6 @@ const BucketSection: React.FC<BranchSectionProps> = ({
     });
   }, [createBucket, deptObject, deptSelected, bucketToUpdate]);
 
-  console.log(bucketToUpdate);
   const updatingBucket = useCallback(
     async (b: Bucket | null) => {
       if (b) {
@@ -399,7 +398,6 @@ const BucketSection: React.FC<BranchSectionProps> = ({
             {(bucketData?.findDeptBucket ?? []).length > 0 ? (
               <div className="gap-2 flex flex-col">
                 {bucketData?.findDeptBucket.map((b, index) => {
-                  console.log(b);
                   return (
                     <motion.div
                       key={b._id}

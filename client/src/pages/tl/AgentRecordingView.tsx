@@ -307,7 +307,6 @@ const AgentRecordingView = () => {
   const dispotypeRef = useRef<HTMLDivElement | null>(null);
   const recordingsRef = useRef<HTMLDivElement | null>(null);
 
-  
   const handleOnCheck = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>, value: string) => {
       if (e.target.checked) {
@@ -623,7 +622,7 @@ const AgentRecordingView = () => {
                                     ) : (
                                       <>
                                         {e.recordings?.length > 0 ? (
-                                          <div className="flex gap-1 ">
+                                          <div className="flex gap-1 relative">
                                             {callRecord?.length > 1 &&
                                               (() => {
                                                 const others =
@@ -633,15 +632,14 @@ const AgentRecordingView = () => {
                                                     <div
                                                       onClick={() => {
                                                         if (
-                                                          openRecordingsBox ===
-                                                          e._id
+                                                          !openRecordingsBox
                                                         ) {
                                                           setOpenRecordingsBox(
-                                                            null
+                                                            e._id
                                                           );
                                                         } else {
                                                           setOpenRecordingsBox(
-                                                            e._id
+                                                            null
                                                           );
                                                         }
                                                       }}
@@ -668,7 +666,7 @@ const AgentRecordingView = () => {
                                                                   o.name
                                                                 )
                                                               }
-                                                              className="text-nowrap flex p-2 bg-white rouned items-center cursor-pointer gap-2"
+                                                              className="text-nowrap flex p-2 bg-white rouned items-center cursor-pointer gap-2 hover:bg-blue-200"
                                                             >
                                                               <p className="mr-">
                                                                 {fileSizeToDuration(

@@ -14,6 +14,7 @@ If you are developing a production application, we recommend updating the config
 ```js
 export default tseslint.config({
   extends: [
+    //This system is contributed by Edrian Loberiano but a little lang. hihi.
     // Remove ...tseslint.configs.recommended and replace with this
     ...tseslint.configs.recommendedTypeChecked,
     // Alternatively, use this for stricter rules

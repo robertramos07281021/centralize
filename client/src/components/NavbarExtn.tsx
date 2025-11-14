@@ -16,6 +16,7 @@ import {
 import { useEffect, useState, useCallback } from "react";
 import ConfirmationModal from "./Confirmation.tsx";
 import { useSingleTabGuard } from "./useSingleTabGuard.tsx";
+import { motion, AnimatePresence } from "framer-motion";
 
 type MyTask = {
   case_id: string;
@@ -319,13 +320,13 @@ const NavbarExtn = () => {
                 <div
                   onClick={() => {
                     if (an.link) {
-                      navClick(an.link); 
+                      navClick(an.link);
                     } else if (an.tabs) {
                       setOpenIndex(index === openIndex ? null : index);
                     }
                   }}
                   key={index}
-                  className={`relative ${
+                  className={`relative justify-center flex items-center ${
                     isAutoDialData?.isAutoDial && userLogged?.type === "AGENT"
                       ? ""
                       : "cursor-pointer"
@@ -345,25 +346,33 @@ const NavbarExtn = () => {
                   >
                     {an.name}
                   </div>
-                  {an.tabs && openIndex === index && (
-                    <div className="absolute left-0 mt-1 bg-white border rounded-md shadow-lg min-w-max z-50">
-                      {an.tabs.map((tab, tabIndex) => (
-                        <div
-                          key={tabIndex}
-                          onClick={() => {
-                            if (tab.link) navClick(tab.link);
-                          }}
-                          className={`px-4 py-2 text-sm hover:bg-blue-500 hover:text-white cursor-pointer ${
-                            location.pathname.includes(tab.link as string)
-                              ? "bg-blue-500 text-white"
-                              : "text-gray-700"
-                          }`}
-                        >
-                          {tab.name}
-                        </div>
-                      ))}
-                    </div>
-                  )}
+                  <AnimatePresence>
+                    {an.tabs && openIndex === index && (
+                      <motion.div
+                        className="absolute mt-1 bg-white shadow-black/40 top-8  border border-blue-400 rounded-md shadow-md min-w-max z-50"
+                        initial={{ opacity: 0, y: -25, scale: 0.5 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: -25, scale: 0.5 }}
+                        transition={{ duration: 0.2 }}
+                      >
+                        {an.tabs.map((tab, tabIndex) => (
+                          <div
+                            key={tabIndex}
+                            onClick={() => {
+                              if (tab.link) navClick(tab.link);
+                            }}
+                            className={`px-4 py-2 last:border-b-0 border-b border-blue-400  text-sm transition-all hover:bg-blue-500 font-black uppercase hover:text-white cursor-pointer ${
+                              location.pathname.includes(tab.link as string)
+                                ? "bg-blue-500 text-white"
+                                : "text-gray-500"
+                            }`}
+                          >
+                            {tab.name}
+                          </div>
+                        ))}
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
                   {an.name.includes("Panel") && length > 0 && (
                     <>
                       <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center text-white rounded-full bg-red-500 -top-3 border-white border-2 -right-1 z-50">

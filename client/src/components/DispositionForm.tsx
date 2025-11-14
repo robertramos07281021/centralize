@@ -202,6 +202,10 @@ enum PaymentMethod {
   SEVENELEVEN = "7/11",
   GCASH_PAYMAYA = "Gcash / Pay Maya",
   CASH = "CASH",
+  SHOPEE_PAY = "Shopee Pay",
+  CEBUANA_LHUILLIER = "Cebuana Lhuillier",
+  PALAWAN = "Palawan",
+  BANK_OVERTHECOUNTER = "Bank (Over The Counter)"
 }
 
 enum DialerCode {
@@ -1350,7 +1354,7 @@ const DispositionForm: React.FC<Props> = ({
                             setIsOpen(false);
                           }}
                         >
-                          {label}
+                          {label} {value}
                         </div>
                       );
                     })}

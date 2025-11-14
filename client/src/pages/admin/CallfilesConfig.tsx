@@ -465,7 +465,7 @@ const CallfilesConfig = () => {
                             </div>
                           )}
                         </div>
-                        <div className="gap-3 flex justify-end">
+                        <div className="gap-1 flex justify-end">
 
                           {res.active && (
                             <div className="items-center  col-start-1 flex ">

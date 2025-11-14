@@ -306,8 +306,8 @@ useServer(
 
             const chechIfisOnline = await Promise.all(
               bucket.map(async (x) => {
-                const res = await checkIfAgentIsOnline(findUser?.vici_id, x);
-                return res;
+                const result = await checkIfAgentIsOnline(res?.vici_id, x);
+                return result;
               })
             );
 

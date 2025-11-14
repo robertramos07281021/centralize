@@ -234,19 +234,24 @@ const callResolver = {
         if (findUser?.vici_id?.trim() === "")
           throw new CustomError("Please enter vicidial id", 401);
 
-        const bucket =
-          findUser?.buckets?.length > 0
-            ? new Array(...new Set(findUser?.buckets?.map((x) => x.viciIp)))
-            : [];
+        const newBucketMap = findUser?.buckets.map((y) => y.canCall);
 
-        const chechIfisOnline = await Promise.all(
-          bucket.map(async (x) => {
-            const res = await checkIfAgentIsOnline(findUser?.vici_id, x);
-            return res;
-          })
-        );
+        if (newBucketMap.includes(true)) {
+          const bucket =
+            findUser?.buckets?.length > 0
+              ? new Array(...new Set(findUser?.buckets?.map((x) => x.viciIp)))
+              : [];
 
-        return chechIfisOnline.includes(true);
+          const chechIfisOnline = await Promise.all(
+            bucket.map(async (x) => {
+              const res = await checkIfAgentIsOnline(findUser?.vici_id, x);
+              return res;
+            })
+          );
+          return chechIfisOnline.includes(true);
+        } else {
+          return false;
+        }
       } catch (error) {
         throw new CustomError(error.message, 500);
       }
@@ -564,7 +569,7 @@ const callResolver = {
           findUser?.buckets?.length > 0
             ? new Array(...new Set(findUser?.buckets?.map((x) => x.viciIp)))
             : [];
-            
+
         const chechIfisOnline = await Promise.all(
           bucket.map(async (x) => {
             const res = await checkIfAgentIsOnline(findUser?.vici_id, x);
@@ -663,10 +668,12 @@ const callResolver = {
           })
         );
 
-        const userViciIp = await getUserInfo(bucket[chechIfisOnline.indexOf(true)],findUser.vici_id);
-        
-        console.log(userViciIp)
+        const userViciIp = await getUserInfo(
+          bucket[chechIfisOnline.indexOf(true)],
+          findUser.vici_id
+        );
 
+        console.log(userViciIp);
 
         const res = await bargeUser(
           bucket[chechIfisOnline.indexOf(true)],

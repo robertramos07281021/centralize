@@ -52,8 +52,8 @@ type Selective = {
   name: string;
   callfile: Callfile_Bucket;
   bucket: Callfile_Bucket;
-  count: number
-  amount: number
+  count: number;
+  amount: number;
 };
 
 type SelectiveData = {
@@ -79,13 +79,17 @@ const Selectives = () => {
     null
   );
 
-  const { data: selectivesData, refetch: selectivesRefetch, loading:selectivesLoading } = useQuery<{
+  const {
+    data: selectivesData,
+    refetch: selectivesRefetch,
+    loading: selectivesLoading,
+  } = useQuery<{
     getAllSelectives: SelectiveData;
   }>(GET_BUCKET_SELECTIVE, {
     variables: {
       page,
       limit,
-      bucket: selectedBucket?._id,
+      bucket: selectedBucket?.name ? selectedBucket._id : null,
     },
     notifyOnNetworkStatusChange: true,
     skip: isSelectivePage,
@@ -117,7 +121,8 @@ const Selectives = () => {
     refetching();
   }, []);
 
-  if(selectivesLoading) return <Loading/>
+
+  if (selectivesLoading) return <Loading />;
 
   return (
     <div className=" flex flex-col justify-between h-full ">
@@ -163,11 +168,14 @@ const Selectives = () => {
                     initial={{ y: -10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -5, opacity: 0 }}
+                    layout
                   >
-                    <div className="absolute flex flex-col = max-h-80 overflow-auto z-20 border bg-gray-100  shadow-md  transition-all cursor-pointer rounded-sm  mt-1">
+                    <div className="absolute flex flex-col max-h-80 overflow-auto z-20 border bg-gray-100  shadow-md  transition-all cursor-pointer rounded-sm  mt-1">
                       {data?.getAllBucket?.map((bucket) => (
                         <div
-                          onClick={() => setSelectedBucket(bucket.name ? bucket : null)}
+                          onClick={() =>
+                            setSelectedBucket(bucket.name ? bucket : null)
+                          }
                           className="px-3 py-1 odd:bg-gray-200 even:bg-gray-100 hover:bg-gray-300 transition-all "
                           key={bucket._id}
                         >
@@ -217,7 +225,7 @@ const Selectives = () => {
           </div>
         </div>
       </div>
-      <div className="" >
+      <div className="">
         <Pagination
           value={pages}
           onChangeValue={(e) => setPages(e)}
