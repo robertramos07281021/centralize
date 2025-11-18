@@ -287,8 +287,6 @@ const dispositionResolver = {
 
         const filter = type === "AOM" ? aomBuckets : user.buckets
   
-
-
         const dailyFTE = await Disposition.aggregate([
           {
             $lookup: {
@@ -1836,6 +1834,7 @@ const dispositionResolver = {
         
         const updateFields = {
           on_hands: false,
+          "features.alreadyCalled": true
         };
         
         const unsetFields = {};

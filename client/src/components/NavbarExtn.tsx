@@ -116,6 +116,14 @@ const IS_AUTO_DIAL = gql`
   }
 `;
 
+const AGENT_BUCKETS = gql`
+  query getTLBucket {
+    getTLBucket {
+      canCall
+    }
+  }
+`;
+
 const NavbarExtn = () => {
   const { userLogged, success, onCall, selectedCustomer } = useSelector(
     (state: RootState) => state.auth
@@ -131,6 +139,14 @@ const NavbarExtn = () => {
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const isDuplicate = useSingleTabGuard();
 
+  const { data: agentBucketsData, refetch: agentBucketRefetch } = useQuery<{
+    getTLBucket: { canCall: boolean }[];
+  }>(AGENT_BUCKETS, {
+    notifyOnNetworkStatusChange: true,
+  });
+
+  const canCallMap = agentBucketsData?.getTLBucket.map((x) => x.canCall);
+
   useEffect(() => {
     if (isDuplicate) {
       alert("You already have this app open. Redirecting...");
@@ -141,6 +157,7 @@ const NavbarExtn = () => {
   useEffect(() => {
     const refetching = async () => {
       await refetch();
+      await agentBucketRefetch();
     };
     refetching();
   }, []);
@@ -315,74 +332,75 @@ const NavbarExtn = () => {
         <div className="border-b select-none border-blue-400 flex items-center justify-center text-base font-medium text-slate-500 bg-white print:hidden">
           {accountsNavbar[userType].map((an, index) => {
             const callLogs = an.name === "Call Logs";
+            
+            if (callLogs && !canCallMap) return null;
+
             return (
-              !callLogs && (
+              <div
+                onClick={() => {
+                  if (an.link) {
+                    navClick(an.link);
+                  } else if (an.tabs) {
+                    setOpenIndex(index === openIndex ? null : index);
+                  }
+                }}
+                key={index}
+                className={`relative justify-center flex items-center ${
+                  isAutoDialData?.isAutoDial && userLogged?.type === "AGENT"
+                    ? ""
+                    : "cursor-pointer"
+                }`}
+              >
                 <div
-                  onClick={() => {
-                    if (an.link) {
-                      navClick(an.link);
-                    } else if (an.tabs) {
-                      setOpenIndex(index === openIndex ? null : index);
-                    }
-                  }}
-                  key={index}
-                  className={`relative justify-center flex items-center ${
-                    isAutoDialData?.isAutoDial && userLogged?.type === "AGENT"
-                      ? ""
-                      : "cursor-pointer"
-                  }`}
+                  className={`${index > 0 && "border-l "} ${
+                    location.pathname.includes(an.link as string) &&
+                    "bg-blue-500 hover:bg-blue-500 hover:text-white text-shadow-md text-white"
+                  } text-xs ${
+                    isAutoDialData?.isAutoDial &&
+                    !location.pathname.includes(an.link as string) &&
+                    userLogged?.type === "AGENT"
+                      ? "bg-gray-200"
+                      : "hover:bg-blue-400 hover:text-white border-blue-400 text-gray-500"
+                  } py-2 px-3 text-center font-black uppercase transition-all`}
                 >
-                  <div
-                    className={`${index > 0 && "border-l "} ${
-                      location.pathname.includes(an.link as string) &&
-                      "bg-blue-500 hover:bg-blue-500 hover:text-white text-shadow-md text-white"
-                    } text-xs ${
-                      isAutoDialData?.isAutoDial &&
-                      !location.pathname.includes(an.link as string) &&
-                      userLogged?.type === "AGENT"
-                        ? "bg-gray-200"
-                        : "hover:bg-blue-400 hover:text-white border-blue-400 text-gray-500"
-                    } py-2 px-3 text-center font-black uppercase transition-all`}
-                  >
-                    {an.name}
-                  </div>
-                  <AnimatePresence>
-                    {an.tabs && openIndex === index && (
-                      <motion.div
-                        className="absolute mt-1 bg-white shadow-black/40 top-8  border border-blue-400 rounded-md shadow-md min-w-max z-50"
-                        initial={{ opacity: 0, y: -25, scale: 0.5 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: -25, scale: 0.5 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        {an.tabs.map((tab, tabIndex) => (
-                          <div
-                            key={tabIndex}
-                            onClick={() => {
-                              if (tab.link) navClick(tab.link);
-                            }}
-                            className={`px-4 py-2 last:border-b-0 border-b border-blue-400  text-sm transition-all hover:bg-blue-500 font-black uppercase hover:text-white cursor-pointer ${
-                              location.pathname.includes(tab.link as string)
-                                ? "bg-blue-500 text-white"
-                                : "text-gray-500"
-                            }`}
-                          >
-                            {tab.name}
-                          </div>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
-                  {an.name.includes("Panel") && length > 0 && (
-                    <>
-                      <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center text-white rounded-full bg-red-500 -top-3 border-white border-2 -right-1 z-50">
-                        {length}
-                      </div>
-                      <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center rounded-full bg-red-500 -top-3 -right-1 z-40 animate-ping"></div>
-                    </>
-                  )}
+                  {an.name}
                 </div>
-              )
+                <AnimatePresence>
+                  {an.tabs && openIndex === index && (
+                    <motion.div
+                      className="absolute mt-1 bg-white shadow-black/40 top-8  border border-blue-400 rounded-md shadow-md min-w-max z-50"
+                      initial={{ opacity: 0, y: -25, scale: 0.5 }}
+                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      exit={{ opacity: 0, y: -25, scale: 0.5 }}
+                      transition={{ duration: 0.5, type: "spring" }}
+                    >
+                      {an.tabs.map((tab, tabIndex) => (
+                        <div
+                          key={tabIndex}
+                          onClick={() => {
+                            if (tab.link) navClick(tab.link);
+                          }}
+                          className={`px-4 py-2 last:border-b-0 border-b border-blue-400  text-sm transition-all hover:bg-blue-500 font-black uppercase hover:text-white cursor-pointer ${
+                            location.pathname.includes(tab.link as string)
+                              ? "bg-blue-500 text-white"
+                              : "text-gray-500"
+                          }`}
+                        >
+                          {tab.name}
+                        </div>
+                      ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+                {an.name.includes("Panel") && length > 0 && (
+                  <>
+                    <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center text-white rounded-full bg-red-500 -top-3 border-white border-2 -right-1 z-50">
+                      {length}
+                    </div>
+                    <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center rounded-full bg-red-500 -top-3 -right-1 z-40 animate-ping"></div>
+                  </>
+                )}
+              </div>
             );
           })}
         </div>

@@ -6,25 +6,25 @@ const customerTypeDefs = gql`
   input CustomerData {
     address: [String]
     admin_fee_os: Float
-    bill_due_date: String 
+    bill_due_date: String
     birthday: String
     endorsement_date: String
     grass_date: String
-    case_id: String      
+    case_id: String
     contact: [String]
-    platform_user_id: String 
-    credit_user_id: String    
+    platform_user_id: String
+    credit_user_id: String
     customer_name: String
     dpd_grp: String
     dst_fee_os: Float
     balance: Float
     email: [String]
     gender: String
-    grass_region: String 
+    grass_region: String
     interest_os: Float
     late_charge_os: Float
-    max_dpd: Float   
-    penalty_interest_os: Float 
+    max_dpd: Float
+    penalty_interest_os: Float
     late_charge_waive_fee_os: Float
     principal_os: Float
     total_os: Float
@@ -55,13 +55,13 @@ const customerTypeDefs = gql`
   }
 
   type CustomerInfo {
-    fullName:String
+    fullName: String
     dob: String
     gender: String
     contact_no: [String]
     emails: [String]
     addresses: [String]
-    _id:ID
+    _id: ID
     isRPC: Boolean
   }
 
@@ -73,7 +73,7 @@ const customerTypeDefs = gql`
   type Success {
     customer: CustomerInfo
   }
-  
+
   type outStandingDetails {
     principal_os: Float
     interest_os: Float
@@ -94,6 +94,11 @@ const customerTypeDefs = gql`
     new_tad_with_sf: Float
     new_pay_off: Float
     service_fee: Float
+    year: String
+    brand: String
+    model: String
+    last_payment_amount: Float
+    last_payment_date: String
   }
 
   type grassDetails {
@@ -102,7 +107,7 @@ const customerTypeDefs = gql`
     grass_date: String
   }
 
-  type  AccountBucket {
+  type AccountBucket {
     name: String
     dept: String
     _id: ID
@@ -119,9 +124,9 @@ const customerTypeDefs = gql`
     name: String
     user_id: String
   }
-  
+
   type CurrentDispo {
-    _id:ID
+    _id: ID
     amount: Float
     disposition: ID
     payment_date: String
@@ -145,7 +150,7 @@ const customerTypeDefs = gql`
     name: String
     user_id: String
   }
-  
+
   type Group {
     _id: ID
     name: String
@@ -172,27 +177,26 @@ const customerTypeDefs = gql`
     balance: Float
     dpd: Int
     paid_amount: Float
-    batch_no:String
+    batch_no: String
     out_standing_details: outStandingDetails
     grass_details: grassDetails
     account_bucket: Bucket
     customer_info: CustomerInfo
-    currentDisposition:CurrentDispo 
+    currentDisposition: CurrentDispo
     dispoType: DispoType
     assigned: Assigned
     disposition_user: User
   }
 
   type FindCustomerAccount {
-    CustomerAccounts: [CustomerAccount],
+    CustomerAccounts: [CustomerAccount]
     totalCountCustomerAccounts: [ID]
   }
 
   type EmergencyContact {
-    name: String,
+    name: String
     mobile: String
   }
-
 
   type Search {
     _id: ID
@@ -208,7 +212,7 @@ const customerTypeDefs = gql`
     assigned: ID
     assigned_date: String
     paid_amount: Float
-    batch_no:String
+    batch_no: String
     out_standing_details: outStandingDetails
     account_update_history: [AccountUpdateHistory]
     grass_details: grassDetails
@@ -216,9 +220,8 @@ const customerTypeDefs = gql`
     customer_info: CustomerInfo
     isRPCToday: Boolean
     emergency_contact: EmergencyContact
-    dispo_history:[CurrentDispo]
+    dispo_history: [CurrentDispo]
     current_disposition: CurrentDispo
-    
   }
 
   type PerformanceStatistic {
@@ -231,17 +234,17 @@ const customerTypeDefs = gql`
     paidAccount: Float
     attendanceRate: Float
   }
- 
+
   type MonthlyTarget {
     campaign: ID
     collected: Float
     target: Float
-    ptpCount: Int,
-    pkCount: Int,
-    pCount: Int,
-    ptp: Float,
-    pk: Float,
-    paid: Float,
+    ptpCount: Int
+    pkCount: Int
+    pCount: Int
+    ptp: Float
+    pk: Float
+    paid: Float
   }
 
   type AomReportsResult {
@@ -252,36 +255,50 @@ const customerTypeDefs = gql`
     campaign: ID
     bucket: ID
     from: String
-    to:String
+    to: String
   }
 
   input QueryCustomerAccount {
-    disposition:[String]
-    groupId:ID
-    page:Int
-    assigned:String
-    limit:Int
+    disposition: [String]
+    groupId: ID
+    page: Int
+    assigned: String
+    limit: Int
     selectedBucket: ID
     dpd: Int
   }
 
   type Query {
-    findCustomer(fullName:String, dob:String, email:String, contact_no:String): [CustomerInfo]
-    getCustomers(page:Int): getCustomers!
-    search(search:String):[Search]
-    findCustomerAccount(query:QueryCustomerAccount):FindCustomerAccount
-    accountsCount:Int
-    getMonthlyTarget:[MonthlyTarget]
-    getMonthlyPerformance:[PerformanceStatistic]
-    customerOtherAccounts(caId:ID):[Search]
+    findCustomer(
+      fullName: String
+      dob: String
+      email: String
+      contact_no: String
+    ): [CustomerInfo]
+    getCustomers(page: Int): getCustomers!
+    search(search: String): [Search]
+    findCustomerAccount(query: QueryCustomerAccount): FindCustomerAccount
+    accountsCount: Int
+    getMonthlyTarget: [MonthlyTarget]
+    getMonthlyPerformance: [PerformanceStatistic]
+    customerOtherAccounts(caId: ID): [Search]
     # getAomReports(input:AomReport):[]
   }
 
   type Mutation {
-    createCustomer(input:[CustomerData], callfile: String, bucket: ID): Success
-    updateCustomer(fullName:String!, dob:String!, gender:String!, mobiles:[String], emails:[String], addresses:[String],id:ID!, isRPC:Boolean): Success
-    updateRPC(id:ID!): Success
+    createCustomer(input: [CustomerData], callfile: String, bucket: ID): Success
+    updateCustomer(
+      fullName: String!
+      dob: String!
+      gender: String!
+      mobiles: [String]
+      emails: [String]
+      addresses: [String]
+      id: ID!
+      isRPC: Boolean
+    ): Success
+    updateRPC(id: ID!): Success
   }
-`
+`;
 
-export default customerTypeDefs
+export default customerTypeDefs;

@@ -18,90 +18,290 @@ import DispoType from "../../models/dispoType.js";
 
 const callResolver = {
   Query: {
+    // randomCustomer: async (_, { buckets, autoDial }) => {
+    //   try {
+    //     const userBuckets = (
+    //       await Bucket.find({
+    //         _id: { $in: buckets.map((x) => new mongoose.Types.ObjectId(x)) },
+    //         canCall: true,
+    //       })
+    //     ).map((bucket) => bucket._id);
+
+    //     const filter = {
+    //       bucket: {
+    //         $in: userBuckets.map((x) => new mongoose.Types.ObjectId(x)),
+    //       },
+    //       active: true,
+    //     };
+    //     const positiveDispotype = (
+    //       await DispoType.find({ code: { $in: ["UNEG", "PAID"] } })
+    //     ).map((dispotype) => dispotype._id);
+
+    //     let secondFilter = null;
+
+    //     if (autoDial) {
+    //       filter["autoDial"] = true;
+    //       secondFilter = [
+    //         {
+    //           "current_disposition.disposition": {
+    //             $nin: positiveDispotype.map(
+    //               (x) => new mongoose.Types.ObjectId(x)
+    //             ),
+    //           },
+    //         },
+    //         {
+    //           $expr: {
+    //             $ne: ["$features.called", "$ac.roundCount"],
+    //           },
+    //         },
+    //       ];
+    //     } else {
+    //       secondFilter = [
+    //         {
+    //           "current_disposition.disposition": {
+    //             $nin: positiveDispotype.map(
+    //               (x) => new mongoose.Types.ObjectId(x)
+    //             ),
+    //           },
+    //         },
+    //       ];
+    //     }
+
+    //     const findCallfile = (await Callfile.find(filter)).map((y) => y._id);
+
+    //     const startOfTheDay = new Date();
+    //     startOfTheDay.setHours(0, 0, 0, 0);
+    //     const endOfTheDay = new Date();
+    //     endOfTheDay.setHours(23, 59, 59, 999);
+    //     const success = [
+    //       "PTP",
+    //       "UNEG",
+    //       "FFUP",
+    //       "KOR",
+    //       "NOA",
+    //       "FV",
+    //       "HUP",
+    //       "LM",
+    //       "ANSM",
+    //       "DEC",
+    //       "RTP",
+    //       "ITP",
+    //       "PAID",
+    //     ];
+
+    //     const randomCustomer = await CustomerAccount.aggregate([
+    //       {
+    //         $match: {
+    //           on_hands: false,
+    //           callfile: {
+    //             $in: findCallfile.map((x) => new mongoose.Types.ObjectId(x)),
+    //           },
+    //           $or: [
+    //             { assigned: { $eq: null } },
+    //             { assigned: { $exists: false } },
+    //           ],
+    //         },
+    //       },
+    //       {
+    //         $lookup: {
+    //           from: "customers",
+    //           localField: "customer",
+    //           foreignField: "_id",
+    //           as: "customer_info",
+    //         },
+    //       },
+    //       {
+    //         $unwind: {
+    //           path: "$customer_info",
+    //           preserveNullAndEmptyArrays: true,
+    //         },
+    //       },
+    //       {
+    //         $match: {
+    //           $expr: { $gt: [{ $size: "$customer_info.contact_no" }, 0] },
+    //         },
+    //       },
+    //       {
+    //         $lookup: {
+    //           from: "dispotypes",
+    //           localField: "disposition",
+    //           foreignField: "_id",
+    //           as: "dispotype",
+    //         },
+    //       },
+    //       {
+    //         $unwind: {
+    //           path: "$dispotype",
+    //           preserveNullAndEmptyArrays: true,
+    //         },
+    //       },
+    //       {
+    //         $lookup: {
+    //           from: "buckets",
+    //           localField: "bucket",
+    //           foreignField: "_id",
+    //           as: "account_bucket",
+    //         },
+    //       },
+    //       {
+    //         $unwind: {
+    //           path: "$account_bucket",
+    //           preserveNullAndEmptyArrays: true,
+    //         },
+    //       },
+    //       {
+    //         $lookup: {
+    //           from: "dispositions",
+    //           localField: "current_disposition",
+    //           foreignField: "_id",
+    //           as: "current_disposition",
+    //         },
+    //       },
+    //       {
+    //         $unwind: {
+    //           path: "$current_disposition",
+    //           preserveNullAndEmptyArrays: true,
+    //         },
+    //       },
+    //       {
+    //         $lookup: {
+    //           from: "callfiles",
+    //           localField: "callfile",
+    //           foreignField: "_id",
+    //           pipeline: [
+    //             { $match: filter },
+    //           ],
+    //           as: "ac",
+    //         },
+    //       },
+    //       {
+    //         $unwind: {
+    //           path: "$ac",
+    //           preserveNullAndEmptyArrays: true,
+    //         },
+    //       },
+    //       {
+    //         $match: {
+    //           $and: secondFilter,
+    //         },
+    //       },
+
+    //       {
+    //         $lookup: {
+    //           from: "dispositions",
+    //           localField: "history",
+    //           foreignField: "_id",
+    //           as: "dispo_history",
+    //         },
+    //       },
+    //       {
+    //         $addFields: {
+    //           isRPCToday: {
+    //             $cond: {
+    //               if: {
+    //                 $and: [
+    //                   { $in: ["$dispotype.code", success] },
+    //                   { $gte: ["$createdAt", startOfTheDay] },
+    //                   { $lte: ["$createdAt", endOfTheDay] },
+    //                 ],
+    //               },
+    //               then: true,
+    //               else: false,
+    //             },
+    //           },
+    //         },
+    //       },
+    //       { $sample: { size: 1 } },
+    //     ]);
+
+    //     if (randomCustomer.length === 0) {
+    //       return null;
+    //     }
+    //     console.log(randomCustomer[0]);
+
+    //     return randomCustomer[0];
+    //   } catch (error) {
+    //     throw new CustomError(error.message, 500);
+    //   }
+    // },
     randomCustomer: async (_, { buckets, autoDial }) => {
       try {
-        const userBuckets = (
-          await Bucket.find({
-            _id: { $in: buckets.map((x) => new mongoose.Types.ObjectId(x)) },
-            canCall: true,
-          })
-        ).map((bucket) => bucket._id);
+        // PREPARE VALUES FIRST (tiny cost)
+        const userBucketIds = buckets.map(
+          (id) => new mongoose.Types.ObjectId(id)
+        );
 
-        const filter = {
-          bucket: {
-            $in: userBuckets.map((x) => new mongoose.Types.ObjectId(x)),
+        const bucketDocs = await Bucket.find({
+          _id: { $in: userBucketIds },
+          canCall: true,
+        }).select("_id");
+
+        const allowedBuckets = bucketDocs.map(
+          (b) => new mongoose.Types.ObjectId(b._id)
+        );
+
+        const positiveDispotype = await DispoType.find({
+          code: { $in: ["UNEG", "PAID", "LM", "UNK", "FFUP", "DISP"] },
+        }).select("_id");
+
+        const positiveIds = positiveDispotype.map((x) => x._id);
+
+        // SECOND FILTER BUILDER
+        let secondFilter = [
+          {
+            "current_disposition.disposition": {
+              $nin: positiveIds,
+            },
           },
-          active: true,
-        };
-        const positiveDispotype = (
-          await DispoType.find({ code: { $in: ["UNEG", "PAID"] } })
-        ).map((dispotype) => dispotype._id);
-
-        let secondFilter = null;
-
-        if (autoDial) {
-          filter["autoDial"] = true;
-          secondFilter = [
-            {
-              "current_disposition.disposition": {
-                $nin: positiveDispotype.map(
-                  (x) => new mongoose.Types.ObjectId(x)
-                ),
-              },
-            },
-            {
-              $expr: {
-                $ne: ["$features.called", "$ac.roundCount"],
-              },
-            },
-          ];
-        } else {
-          secondFilter = [
-            {
-              "current_disposition.disposition": {
-                $nin: positiveDispotype.map(
-                  (x) => new mongoose.Types.ObjectId(x)
-                ),
-              },
-            },
-          ];
-        }
-
-        const findCallfile = (await Callfile.find(filter)).map((y) => y._id);
-
-        const startOfTheDay = new Date();
-        startOfTheDay.setHours(0, 0, 0, 0);
-        const endOfTheDay = new Date();
-        endOfTheDay.setHours(23, 59, 59, 999);
-        const success = [
-          "PTP",
-          "UNEG",
-          "FFUP",
-          "KOR",
-          "NOA",
-          "FV",
-          "HUP",
-          "LM",
-          "ANSM",
-          "DEC",
-          "RTP",
-          "ITP",
-          "PAID",
+          {
+            "ac.active": true,
+          },
         ];
 
-        const randomCustomer = await CustomerAccount.aggregate([
+        if (autoDial) {
+          secondFilter.push({
+            $expr: { $ne: ["$features.called", "$ac.roundCount"] },
+          });
+        } else {
+          secondFilter.push({
+            $expr: {
+              $or: [
+                { $eq: ["$features.alreadyCalled", false] },
+                { $not: { $ifNull: ["$features.alreadyCalled", false] } },
+              ],
+            },
+          });
+        }
+
+        // MAIN OPTIMIZED PIPELINE
+        const pipeline = [
           {
             $match: {
               on_hands: false,
-              callfile: {
-                $in: findCallfile.map((x) => new mongoose.Types.ObjectId(x)),
-              },
-              $or: [
-                { assigned: { $eq: null } },
-                { assigned: { $exists: false } },
+              bucket: { $in: allowedBuckets },
+              $or: [{ assigned: null }, { assigned: { $exists: false } }],
+            },
+          },
+          {
+            $lookup: {
+              from: "callfiles",
+              localField: "callfile",
+              foreignField: "_id",
+              as: "ac",
+              pipeline: [
+                {
+                  $match: autoDial ? { autoDial: true } : {},
+                },
+                { $project: { _id: 1, roundCount: 1, autoDial: 1, active: 1 } },
               ],
             },
           },
+          { $unwind: { path: "$ac", preserveNullAndEmptyArrays: true } },
+          {
+            $match: { $and: secondFilter },
+          },
+          { $sample: { size: 1 } },
+
           {
             $lookup: {
               from: "customers",
@@ -116,9 +316,23 @@ const callResolver = {
               preserveNullAndEmptyArrays: true,
             },
           },
+
           {
             $match: {
-              $expr: { $gt: [{ $size: "$customer_info.contact_no" }, 0] },
+              $expr: {
+                $gt: [
+                  {
+                    $size: {
+                      $filter: {
+                        input: { $ifNull: ["$customer_info.contact_no", []] },
+                        as: "num",
+                        cond: { $ne: ["$$num", ""] },
+                      },
+                    },
+                  },
+                  0,
+                ],
+              },
             },
           },
           {
@@ -129,12 +343,8 @@ const callResolver = {
               as: "dispotype",
             },
           },
-          {
-            $unwind: {
-              path: "$customer_info",
-              preserveNullAndEmptyArrays: true,
-            },
-          },
+          { $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } },
+
           {
             $lookup: {
               from: "buckets",
@@ -143,12 +353,8 @@ const callResolver = {
               as: "account_bucket",
             },
           },
-          {
-            $unwind: {
-              path: "$account_bucket",
-              preserveNullAndEmptyArrays: true,
-            },
-          },
+          { $unwind: "$account_bucket" },
+
           {
             $lookup: {
               from: "dispositions",
@@ -163,31 +369,6 @@ const callResolver = {
               preserveNullAndEmptyArrays: true,
             },
           },
-          {
-            $lookup: {
-              from: "callfiles",
-              localField: "callfile",
-              foreignField: "_id",
-              as: "ac",
-            },
-          },
-          {
-            $unwind: {
-              path: "$ac",
-              preserveNullAndEmptyArrays: true,
-            },
-          },
-          {
-            $unwind: {
-              path: "$current_disposition",
-              preserveNullAndEmptyArrays: true,
-            },
-          },
-          {
-            $match: {
-              $and: secondFilter,
-            },
-          },
 
           {
             $lookup: {
@@ -197,32 +378,13 @@ const callResolver = {
               as: "dispo_history",
             },
           },
-          {
-            $addFields: {
-              isRPCToday: {
-                $cond: {
-                  if: {
-                    $and: [
-                      { $in: ["$dispotype.code", success] },
-                      { $gte: ["$createdAt", startOfTheDay] },
-                      { $lte: ["$createdAt", endOfTheDay] },
-                    ],
-                  },
-                  then: true,
-                  else: false,
-                },
-              },
-            },
-          },
-          { $sample: { size: 1 } },
-        ]);
+        ];
 
-        if (randomCustomer.length === 0) {
-          return null;
-        }
+        const [res] = await CustomerAccount.aggregate(pipeline);
 
-        return randomCustomer[0];
+        return res || null;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -486,6 +648,17 @@ const callResolver = {
         throw new CustomError(error.message, 500);
       }
     },
+    getBargingStatus: async(_,{vici_id},{user}) => {
+      try {
+        if (!user) throw new CustomError("Unauthorized", 401);
+        
+        const res = await getUserInfo(vici_id,user.vici_id)
+
+        return res
+      } catch (error) {
+        throw new CustomError(error.message, 500);
+      }
+    },
   },
 
   Mutation: {
@@ -623,15 +796,17 @@ const callResolver = {
           findUser?.vici_id
         );
 
+        if (!res) return null;
+
+        console.log(bucket[chechIfisOnline.indexOf(true)])
         const userInfoRes = await getUserInfo(
           bucket[chechIfisOnline.indexOf(true)],
           findUser?.vici_id
         );
+        const campaign_ID = userInfoRes.split("computer_ip")[1].split(",")[3];
 
-        const campaign_ID = userInfoRes.split("session_id")[1].split(",")[3];
-
-        const secondSplitRes = res.split(" ");
-        const forDuration = res.split("|");
+        const secondSplitRes = res.split(" ") || [];
+        const forDuration = res.split("|") || [];
 
         const duration = forDuration[forDuration.length - 2];
 
@@ -668,22 +843,36 @@ const callResolver = {
           })
         );
 
-        const userViciIp = await getUserInfo(
-          bucket[chechIfisOnline.indexOf(true)],
-          findUser.vici_id
-        );
-
-        console.log(userViciIp);
-
         const res = await bargeUser(
           bucket[chechIfisOnline.indexOf(true)],
           session_id,
-          tlUser.vici_id
+          tlUser.softphone
         );
 
         return res;
       } catch (error) {
-        throw new CustomError(error, 500);
+        throw new CustomError(error.message, 500);
+      }
+    },
+    updateDialNext: async (_, { callfile }) => {
+      try {
+        await CustomerAccount.updateMany(
+          {
+            callfile: new mongoose.Types.ObjectId(callfile),
+          },
+          {
+            $set: {
+              "features.alreadyCalled": false,
+            },
+          }
+        );
+
+        return {
+          success: true,
+          message: "Callfile successfully reset dial next call",
+        };
+      } catch (error) {
+        throw new CustomError(error.message, 500);
       }
     },
   },

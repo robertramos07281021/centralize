@@ -84,6 +84,10 @@ const customerAccountSchema = new Schema(
       called: {
         type: Number,
         default: 0
+      },
+      alreadyCalled: {
+        type: Boolean,
+        default: false
       }
     },
     account_update_history: [
@@ -194,6 +198,22 @@ const customerAccountSchema = new Schema(
       service_fee: {
         type: Number,
         default: 0,
+      },
+      year: {
+        type: String,
+      },
+      brand: {
+        type: String,
+      },
+      model: {
+        type: String,
+      },
+      last_payment_amount: {
+        type: Number,
+        default: 0,
+      },
+      last_payment_date: {
+        type: String,
       },
     },
     isPTP: {  

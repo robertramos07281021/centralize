@@ -98,6 +98,29 @@ const recordingsResolver = {
         if (!fs.existsSync(localDir)) {
           fs.mkdirSync(localDir, { recursive: true });
         }
+
+        const isShopee =
+          [
+            "SHOPEE C1 M2",
+            "SHOPEE C2 M2",
+            "SHOPEE C1 M3",
+            "SHOPEE C2 M3",
+            "SHOPEE C1 M4",
+            "SHOPEE C2 M4",
+            "SHOPEE C1 M7",
+            "SHOPEE C2 M7",
+            "BCL-M2",
+            "BCL-M3",
+            "BCL-M4",
+            "BCL-M7",
+          ].includes(findDispo?.bucket?.name) &&
+          createdAt.getMonth() < 12 &&
+          dayCreated < 12
+            ? `/REC-${fileNale["172.20.21.35"]}${yearCreated}-${checkDate(
+                month
+              )}-${checkDate(dayCreated)}`
+            : remoteDirVici;
+
         const ifATOME =
           [
             "CASH S2",
@@ -111,7 +134,7 @@ const recordingsResolver = {
             ? `/REC-172.20.21.18-MIXED CAMPAIGN NEW 2/${yearCreated}-${checkDate(
                 month
               )}-${checkDate(dayCreated)}`
-            : remoteDirVici;
+            : isShopee;
 
         const remoteDir =
           findDispo.dialer === "vici" ? ifATOME : `${remoteDirIssabel}`;

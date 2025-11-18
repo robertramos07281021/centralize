@@ -195,6 +195,16 @@ const SET_CALLFILE_TARGET = gql`
     }
   }
 `;
+
+const UPDATE_DIAL_NEXT = gql`
+  mutation updateDialNext($callfile: ID!) {
+    updateDialNext(callfile: $callfile) {
+      success
+      message
+    }
+  }
+`;
+
 const CallfilesViews: React.FC<Props> = ({
   bucket,
   status,
@@ -309,7 +319,7 @@ const CallfilesViews: React.FC<Props> = ({
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "FINISHED" as "FINISHED" | "DELETE" | "DOWNLOAD" | "SET" | "AUTO",
+    toggle: "FINISHED" as "FINISHED" | "DELETE" | "DOWNLOAD" | "SET" | "AUTO" | "DIAL",
     yes: () => {},
     no: () => {},
   });
@@ -428,9 +438,22 @@ const CallfilesViews: React.FC<Props> = ({
       },
     });
 
+  const [updateDialNext] = useMutation<{ updateDialNext: Success }>(UPDATE_DIAL_NEXT, {
+    onCompleted: (data) => {
+      setConfirm(false);
+      dispatch(
+        setSuccess({
+          success: data.updateDialNext.success,
+          message: data.updateDialNext.message,
+          isMessage: false,
+        })
+      );
+    },
+  });
+
   const onClickIcon = (
     id: string,
-    action: "FINISHED" | "DELETE" | "DOWNLOAD" | "SET" | "AUTO",
+    action: "FINISHED" | "DELETE" | "DOWNLOAD" | "SET" | "AUTO" | 'DIAL',
     name: string
   ) => {
     setConfirm(true);
@@ -442,6 +465,7 @@ const CallfilesViews: React.FC<Props> = ({
       AUTO: `Are you sure you want to ${
         autoDial ? "set auto dial" : "stop auto dial"
       } ${name.toUpperCase()} callfile?`,
+      DIAL: `Are you sure this ${name.toUpperCase()} callfile reset the dial next?`
     };
 
     const fn = {
@@ -491,6 +515,11 @@ const CallfilesViews: React.FC<Props> = ({
           variables: { callfileId: id, roundCount: count, finished: false },
         });
       },
+      DIAL: async() => {
+        await updateDialNext({
+          variables: {callfile: id}
+        })
+      }
     };
 
     setModalProps({
@@ -823,33 +852,31 @@ const CallfilesViews: React.FC<Props> = ({
                           : "grid grid-cols-2 gap-1 "
                       }  justify-center items-center  "`}
                     >
+                      <div
+                        className="rounded-sm shadow-sm flex justify-center hover:bg-purple-800 transition-all px-1 py-1 cursor-pointer bg-purple-700 text-white border-2 border-purple-900"
+                        title="Add Selectives"
+                        onClick={() => {
+                          setAddSelectiveModal((prev) => !prev);
+                          setCallfile(res.callfile._id);
+                        }}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="3"
+                          stroke="currentColor"
+                          className="size-5 "
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M12 4.5v15m7.5-7.5h-15"
+                          />
+                        </svg>
+                      </div>
                       {checkStatus && (
                         <>
-                          <div
-                            className="rounded-sm shadow-sm flex justify-center hover:bg-purple-800 transition-all px-1 py-1 cursor-pointer bg-purple-700 text-white border-2 border-purple-900"
-                            title="Add Selectives"
-                            onClick={() => {
-                              setAddSelectiveModal((prev) => !prev);
-                              setCallfile(res.callfile._id);
-                            }}
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth="3"
-                              stroke="currentColor"
-                              className="size-5 "
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M12 4.5v15m7.5-7.5h-15"
-                              />
-                            </svg>
-                          </div>
-
-
                           {/* */}
                           <div
                             className="rounded-sm relative h-full w-full items-center shadow-sm flex justify-center hover:bg-yellow-800 transition-all px-1 py-1 cursor-pointer bg-yellow-700 text-white border-2 border-yellow-900"
@@ -869,7 +896,6 @@ const CallfilesViews: React.FC<Props> = ({
                               }
                             }}
                           >
-                       
                             {!item?.callfile?.autoDial ? (
                               <div title="Turn on Auto Dial">
                                 <svg
@@ -924,6 +950,7 @@ const CallfilesViews: React.FC<Props> = ({
 
                           <div
                             className="rounded-sm flex shadow-sm justify-center hover:bg-green-800 px-1 py-1 cursor-pointer bg-green-700 text-white border-2 border-green-900"
+                            title="Finish"
                             onClick={() =>
                               onClickIcon(
                                 res.callfile._id,
@@ -952,7 +979,7 @@ const CallfilesViews: React.FC<Props> = ({
                               setModalTarget(true);
                               setCallfileId(res.callfile);
                             }}
-                            title=""
+                            title="Set Target"
                             className="rounded-sm border-2 flex shadow-sm justify-center hover:bg-orange-800 px-1 py-1 cursor-pointer bg-orange-700 text-white  border-orange-900"
                           >
                             <svg
@@ -979,6 +1006,7 @@ const CallfilesViews: React.FC<Props> = ({
                             res.callfile.name
                           )
                         }
+                        title="Download"
                         className={`" ${
                           checkStatus ? "" : "  col-start-2 "
                         } rounded-sm flex shadow-sm justify-center hover:bg-blue-800 py-1 cursor-pointer bg-blue-700 text-white border-2 border-blue-900 "`}
@@ -990,6 +1018,35 @@ const CallfilesViews: React.FC<Props> = ({
                           className="size-5"
                         >
                           <path d="M12 1.5a.75.75 0 0 1 .75.75V7.5h-1.5V2.25A.75.75 0 0 1 12 1.5ZM11.25 7.5v5.69l-1.72-1.72a.75.75 0 0 0-1.06 1.06l3 3a.75.75 0 0 0 1.06 0l3-3a.75.75 0 1 0-1.06-1.06l-1.72 1.72V7.5h3.75a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h3.75Z" />
+                        </svg>
+                      </div>
+
+                      <div
+                        onClick={() =>
+                          onClickIcon(
+                            res.callfile._id,
+                            "DIAL",
+                            res.callfile.name
+                          )
+                        }
+                        title="Next Round"
+                        className={`" ${
+                          checkStatus ? "" : "  col-start-2 "
+                        } rounded-sm flex shadow-sm justify-center transition-all hover:bg-amber-700 py-1 cursor-pointer bg-amber-600 text-white border-2 border-amber-900 "`}
+                      >
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="2"
+                          stroke="currentColor"
+                          className="size-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+                          />
                         </svg>
                       </div>
                     </div>

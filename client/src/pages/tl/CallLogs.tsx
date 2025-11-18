@@ -29,6 +29,12 @@ const CALL_LOGS = gql`
   }
 `;
 
+const GET_USER_STATUS = gql`
+  query getBargingStatus($viciId: String) {
+    getBargingStatus(vici_id: $viciId)
+  }
+`;
+
 const CallLogs = () => {
   const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
   const [selectedBucket2, setSelectedBucket2] = useState<string | null>(
@@ -51,17 +57,23 @@ const CallLogs = () => {
   });
   const newData = callLogsData?.getUsersLogginOnVici.split("\n");
 
+  const {data:getUserData, refetch:getUserDataRefetch} = useQuery(GET_USER_STATUS,{
+    variables: {viciId: ""},
+    notifyOnNetworkStatusChange: true
+  })
+  console.log(getUserData)
+
   useEffect(() => {
     if (data) {
       setSelectedBucket(data?.getTLBucket[0]._id);
     }
-
   }, [data]);
-  
+
   useEffect(() => {
     const refetching = async () => {
       await callLogsRefetch();
       await refetch();
+      await getUserDataRefetch()
     };
     refetching();
   }, []);
@@ -74,7 +86,6 @@ const CallLogs = () => {
 
   const handleBargeCall = useCallback(
     async (session_id: string | null, viciUserId: string | null) => {
-      console.log(session_id);
       await bargeCall({
         variables: {
           sessionId: session_id,
@@ -84,7 +95,6 @@ const CallLogs = () => {
     },
     [bargeCall]
   );
-  console.log(newData);
 
   return (
     <div className="w-full relative px-10 gap-2 pt-2 pb-5 h-[91vh] flex flex-col">
@@ -361,7 +371,7 @@ const CallLogs = () => {
                           </div>
                         )
                       ) : (
-                        col || "sda"
+                        col || ""
                       )}
                     </div>
                   );

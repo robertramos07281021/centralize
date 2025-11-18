@@ -159,13 +159,11 @@ const Uploader: React.FC<modalProps> = ({
             new_pay_off,
             service_fee,
             gender,
-            //New BPI Fields
             year,
             brand,
             model,
             last_payment_amount,
             last_payment_date,
-            //Hanggang Here
             ...others
           } = row;
 
@@ -217,7 +215,7 @@ const Uploader: React.FC<modalProps> = ({
                 : Number(total_os)
               : Number(principal_os) || Number(total_os),
             writeoff_balance: Number(writeoff_balance) || 0,
-         
+
             cf: Number(cf) || 0,
             pastdue_amount: Number(pastdue_amount) || 0,
             interest_os: isNaN(interest_os) ? 0 : Number(interest_os) || 0,
@@ -240,8 +238,6 @@ const Uploader: React.FC<modalProps> = ({
             new_tad_with_sf: Number(new_tad_with_sf) || 0,
             new_pay_off: Number(new_pay_off) || 0,
             service_fee: Number(service_fee) || 0,
-            brand: brand ? String(brand).trim() : null,
-            model: model ? String(model).trim() : null,
             last_payment_amount: Number(last_payment_amount) || 0,
             gender: isNaN(gender) ? gender : "O",
           } as Record<string, any>;
@@ -252,6 +248,18 @@ const Uploader: React.FC<modalProps> = ({
             ).toString();
           }
 
+          if (model) {
+            rows["model"] = model.toString().trim();
+          }
+
+          if (year) {
+            rows["year"] = year.toString().trim();
+          }
+
+          if (brand) {
+            rows["brand"] = brand.toString().trim();
+          }
+
           if (platform_user_id) {
             rows["platform_user_id"] = platform_user_id.toString().trim();
           }
@@ -259,17 +267,12 @@ const Uploader: React.FC<modalProps> = ({
           if (case_id) {
             rows["case_id"] = String(case_id).trim().replace(/^-/, "");
           }
-
           if (!isNaN(Number(dpd))) {
             rows["dpd"] = Number(dpd);
           }
 
           if (!isNaN(Number(max_dpd))) {
             rows["max_dpd"] = Number(dpd);
-          }
-
-          if (year) {
-            rows["year"] = safeDate(year);
           }
 
           if (grass_date) {
@@ -282,45 +285,65 @@ const Uploader: React.FC<modalProps> = ({
           if (last_payment_date) {
             rows["last_payment_date"] = safeDate(last_payment_date);
           }
-
           if (endorsement_date) {
             rows["endorsement_date"] = safeDate(endorsement_date);
           }
-
           if (birthday) {
             rows["birthday"] = safeDate(birthday);
           }
 
           if (contact) {
-            const newContact = normalizeContact(contact)
-              ?.toString()
-              ?.split(",");
-            if (newContact.length > 1) {
-              newContact.map((nc) => rows["contact"].push(nc));
-            } else {
-              rows["contact"].push(...newContact);
-            }
-          }
+            const contactStr = String(contact);
 
-          if (contact_2) {
-            const newContact = normalizeContact(contact_2)
-              ?.toString()
-              ?.split(",");
-            if (newContact.length > 1) {
-              newContact.map((nc) => rows["contact"].push(nc));
-            } else {
-              rows["contact"].push(...newContact);
-            }
-          }
+            if (contactStr.includes("PHONE MOBILE1")) {
+              const mobileMatches = contactStr.match(
+                /PHONE MOBILE\d*\s*:\s*(\d{10,11})/g
+              );
 
-          if (contact_3) {
-            const newContact = normalizeContact(contact_3)
-              ?.toString()
-              ?.split(",");
-            if (newContact.length > 1) {
-              newContact.map((nc) => rows["contact"].push(nc));
+              if (mobileMatches) {
+                mobileMatches.forEach((mob, index) => {
+                  const numMatch = mob.match(/(\d{10,11})/);
+                  if (numMatch) {
+                    const normalized = normalizeContact(numMatch[0]);
+                    if (index === 0) rows["contact"].push(normalized);
+                    else if (index === 1) rows["contact"].push(normalized);
+                    else if (index === 2) rows["contact"].push(normalized);
+                  }
+                });
+              }
             } else {
-              rows["contact"].push(...newContact);
+              if (contact) {
+                const newContact = normalizeContact(contact)
+                  ?.toString()
+                  ?.split(",");
+                if (newContact.length > 1) {
+                  newContact.map((nc) => rows["contact"].push(nc));
+                } else {
+                  rows["contact"].push(...newContact);
+                }
+              }
+
+              if (contact_2) {
+                const newContact = normalizeContact(contact_2)
+                  ?.toString()
+                  ?.split(",");
+                if (newContact.length > 1) {
+                  newContact.map((nc) => rows["contact"].push(nc));
+                } else {
+                  rows["contact"].push(...newContact);
+                }
+              }
+
+              if (contact_3) {
+                const newContact = normalizeContact(contact_3)
+                  ?.toString()
+                  ?.split(",");
+                if (newContact.length > 1) {
+                  newContact.map((nc) => rows["contact"].push(nc));
+                } else {
+                  rows["contact"].push(...newContact);
+                }
+              }
             }
           }
 
@@ -367,8 +390,7 @@ const Uploader: React.FC<modalProps> = ({
     }
   }, []);
 
-  console.log(excelData)
-
+  console.log(excelData);
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [],
@@ -433,14 +455,22 @@ const Uploader: React.FC<modalProps> = ({
 
     setLoading(true);
     try {
-      for (let i = 0; i < chunks.length; i++) {
-        await createCustomer({
-          variables: {
-            input: chunks[i],
-            callfile: file[0].name.split(".")[0],
-            bucket: bucket ?? "",
-          },
-        });
+      const CONCURRENT_CHUNKS = 3;
+
+      for (let i = 0; i < chunks.length; i += CONCURRENT_CHUNKS) {
+        const batch = chunks.slice(i, i + CONCURRENT_CHUNKS);
+
+        await Promise.allSettled(
+          batch.map((chunkData) =>
+            createCustomer({
+              variables: {
+                input: chunkData,
+                callfile: file[0].name.split(".")[0],
+                bucket: bucket ?? "",
+              },
+            })
+          )
+        );
       }
 
       setConfirm(false);

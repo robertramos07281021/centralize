@@ -75,8 +75,10 @@ const customerResolver = {
         function escapeRegex(str) {
           return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
         }
+        const regex = new RegExp("^" + escapeRegex(search), "i");
 
-        const regex = new RegExp(escapeRegex(search), "i");
+        const searchValue = search;
+
         const startOfTheDay = new Date();
         startOfTheDay.setHours(0, 0, 0, 0);
         const endOfTheDay = new Date();
@@ -101,10 +103,14 @@ const customerResolver = {
           {
             $match: {
               $or: [
-                { fullName: regex },
-                { contact_no: { $elemMatch: { $regex: regex } } },
-                { emails: { $elemMatch: { $regex: regex } } },
-                { addresses: { $elemMatch: { $regex: regex } } },
+                // { fullName: regex },
+                // { contact_no: { $elemMatch: { $regex: regex } } },
+                // { emails: { $elemMatch: { $regex: regex } } },
+                // { addresses: { $elemMatch: { $regex: regex } } },
+                { fullName: searchValue },
+                { contact_no: searchValue }, // matches array elements
+                { emails: searchValue }, // matches array elements
+                { addresses: searchValue },
               ],
             },
           },
@@ -150,7 +156,9 @@ const customerResolver = {
           },
           {
             $match: {
-              "account_bucket._id": { $in: user.buckets.map(x=> new mongoose.Types.ObjectId(x)) },
+              "account_bucket._id": {
+                $in: user.buckets.map((x) => new mongoose.Types.ObjectId(x)),
+              },
               "ca.on_hands": false,
               "account_callfile.active": { $eq: true },
               "account_callfile.endo": { $exists: false },
@@ -253,11 +261,12 @@ const customerResolver = {
               grass_details: "$ca.grass_details",
               account_bucket: "$account_bucket",
               emergency_contact: "$ca.emergency_contact",
-              year: "$ca.year",
-              brand: "$ca.brand",
-              model: "$ca.model",
-              last_payment_amount: "$ca.last_payment_amount",
-              last_payment_date: "$ca.last_payment_date",
+              year: "$ca.out_standing_details.year",
+              nodel: "$ca.out_standing_details.model",
+              brand: "$ca.out_standing_details.brand",
+              last_payment_amount:
+                "$ca.out_standing_details.last_payment_amount",
+              last_payment_date: "$ca.out_standing_details.last_payment_date",
             },
           },
         ]);
@@ -1004,7 +1013,6 @@ const customerResolver = {
     customerOtherAccounts: async (_, { caId }) => {
       try {
         if (!caId) return null;
-
         const findCustomerAccount = await CustomerAccount.aggregate([
           {
             $match: {
@@ -1080,6 +1088,7 @@ const customerResolver = {
 
         return otherCustomer;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1137,8 +1146,10 @@ const customerResolver = {
         if (!findBucket) throw new CustomError("Bucket not found", 404);
         const callfilePrincipal = input
           .map((x) => x.principal_os)
-          .reduce((t, v) => t + v);
-        const callfileOB = input.map((x) => x.total_os).reduce((t, v) => t + v);
+          .reduce((t, v) => t + v, 0);
+        const callfileOB = input
+          .map((x) => x.total_os)
+          .reduce((t, v) => t + v, 0);
 
         let newCallfile = await Callfile.findOne({ name: callfile });
 
@@ -1149,119 +1160,207 @@ const customerResolver = {
           newCallfile = new Callfile({
             name: callfile,
             bucket: findBucket._id,
-            totalAccounts: input.length || 0,
-            totalPrincipal: callfilePrincipal || 0,
+            totalAccounts: input.length,
+            totalPrincipal: callfilePrincipal,
             totalOB: callfileOB,
           });
         }
 
         if (newCallfile.createdAt < today) throw new CustomError("E11000", 401);
 
-        const res = await Promise.all(
-          input.map(async (element) => {
-            try {
-              const customer = new Customer({
-                fullName: element.customer_name,
-                platform_customer_id: element.platform_user_id || null,
-                gender: element.gender || null,
-                dob: element.birthday || null,
-                addresses: element.address,
-                emails: element.email,
-                contact_no: element.contact,
-              });
+        const customerDocs = input.map((e) => ({
+          fullName: e.customer_name,
+          platform_customer_id: e.platform_user_id || null,
+          gender: e.gender || "O",
+          dob: e.birthday || null,
+          addresses: e.address,
+          emails: e.email,
+          contact_no: e.contact,
+        }));
 
-              const paid_amount = element.total_os - element.balance;
-              let agent = null;
+        const insertedCustomers = await Customer.insertMany(customerDocs, {
+          ordered: false,
+        });
 
-              if (element.collectorID) {
-                agent = await User.findOne({
-                  callfile_id: { $eq: element.collectorID },
-                });
-                const findAgentProduction = await Production.findOne({
-                  user: agent._id,
-                }).lean();
-                if (!findAgentProduction) {
-                  await Production.create({
-                    user: findAgent,
-                    assignedAccount: 1,
-                  });
-                } else {
-                  await Production.findByIdAndUpdate(findAgentProduction._id, {
-                    $inc: { assignedAccount: 1 },
-                  });
-                }
-              }
+        const customerAccountDocs = input.map((e, i) => {
+          const customer = insertedCustomers[i];
+          return {
+            customer: customer._id,
+            bucket: findBucket._id,
+            case_id: e.case_id,
+            callfile: newCallfile._id,
+            credit_customer_id: e.credit_user_id,
+            endorsement_date: e.endorsement_date,
+            bill_due_day: e.bill_due_day,
+            max_dpd: e.max_dpd,
+            dpd: e.dpd,
+            balance: e.balance,
+            month_pd: e.mpd,
+            paid_amount: e.total_os - e.balance,
+            features: { branch: e.branch },
+            out_standing_details: {
+              principal_os: e.principal_os,
+              interest_os: e.interest_os,
+              admin_fee_os: e.admin_fee_os,
+              txn_fee_os: e.txn_fee_os,
+              late_charge_os: e.late_charge_os,
+              penalty_interest_os: e.penalty_interest_os,
+              dst_fee_os: e.dst_fee_os,
+              waive_fee_os: e.late_charge_waive_fee_os,
+              total_os: e.total_os,
+              total_balance: e.balance,
+              writeoff_balance: e.writeoff_balance,
+              overall_balance: e.overall_balance,
+              cf: e.cf,
+              mo_balance: e.mo_balance,
+              pastdue_amount: e.pastdue_amount,
+              mo_amort: e.mo_amort,
+              partial_payment_w_service_fee: e.partial_payment_w_service_fee,
+              new_tad_with_sf: e.new_tad_with_sf,
+              new_pay_off: e.new_pay_off,
+              service_fee: e.service_fee,
+              year: e.year,
+              brand: e.brand,
+              model: e.model,
+              last_payment_date: e.last_payment_date,
+              last_payment_amount: e.last_payment_amount,
+            },
+            emergency_contact: {
+              name: e.emergencyContactName,
+              mobile: e.emergencyContactMobile,
+            },
+            grass_details: {
+              grass_region: e.grass_region,
+              vendor_endorsement: e.vendor_endorsement,
+              grass_date: e.grass_date,
+            },
+            on_hands: false,
+          };
+        });
 
-              const createCA = {
-                customer: customer._id,
-                bucket: findBucket._id,
-                case_id: element.case_id,
-                callfile: newCallfile._id,
-                credit_customer_id: element.credit_user_id,
-                endorsement_date: element.endorsement_date,
-                bill_due_day: element.bill_due_day,
-                max_dpd: element.max_dpd,
-                dpd: element.dpd,
-                balance: element.balance,
-                month_pd: element.mpd,
-                paid_amount,
-                bill_due_date: element.bill_due_date,
-                account_id: element.account_id,
-                batch_no: element.batch_no,
-                features: {
-                  branch: element.branch,
-                },
-                out_standing_details: {
-                  principal_os: element.principal_os,
-                  interest_os: element.interest_os,
-                  admin_fee_os: element.admin_fee_os,
-                  txn_fee_os: element.txn_fee_os,
-                  late_charge_os: element.late_charge_os,
-                  dst_fee_os: element.dst_fee_os,
-                  waive_fee_os: element.late_charge_waive_fee_os,
-                  total_os: element.total_os,
-                  total_balance: element.balance,
-                  writeoff_balance: element.writeoff_balance,
-                  overall_balance: element.overall_balance,
-                  cf: element.cf,
-                  mo_balance: element.mo_balance,
-                  pastdue_amount: element.pastdue_amount,
-                  mo_amort: element.mo_amort,
-                  partial_payment_w_service_fee:
-                    element.partial_payment_w_service_fee,
-                  new_tad_with_sf: element.new_tad_with_sf,
-                  new_pay_off: element.new_pay_off,
-                  service_fee: element.service_fee,
-                  year: element.year,
-                  brand: element.brand,
-                  model: element.model,
-                  last_payment_date: element.last_payment_date,
-                  last_payment_amount: element.last_payment_amount,
-                },
-                emergency_contact: {
-                  name: element.emergencyContactName,
-                  mobile: element.emergencyContactMobile,
-                },
-                grass_details: {
-                  grass_region: element.grass_region,
-                  vendor_endorsement: element.vendor_endorsement,
-                  grass_date: element.grass_date,
-                },
-              };
-
-              if (agent) {
-                createCA["assigned"] = agent._id;
-                createCA["assignedModel"] = "User";
-                createCA["assigned_date"] = new Date();
-              }
-              const caResult = await CustomerAccount.create(createCA);
-              customer.customer_account = caResult._id;
-              await customer.save();
-            } catch (error) {
-              console.log(error);
-            }
-          })
+        // Insert customer accounts in bulk
+        const insertedAccounts = await CustomerAccount.insertMany(
+          customerAccountDocs,
+          { ordered: false }
         );
+
+        const bulkOps = insertedCustomers.map((cust, idx) => ({
+          updateOne: {
+            filter: { _id: cust._id },
+            update: { customer_account: insertedAccounts[idx]._id },
+          },
+        }));
+        if (bulkOps.length > 0) {
+          await Customer.bulkWrite(bulkOps);
+        }
+
+        // await Promise.all(
+        //   input.map(async (element) => {
+        //     try {
+        //       const customer = new Customer({
+        //         fullName: element.customer_name,
+        //         platform_customer_id: element.platform_user_id || null,
+        //         gender: element.gender || null,
+        //         dob: element.birthday || null,
+        //         addresses: element.address,
+        //         emails: element.email,
+        //         contact_no: element.contact,
+        //       });
+
+        //       const paid_amount = element.total_os - element.balance;
+        //       let agent = null;
+
+        //       if (element.collectorID) {
+        //         agent = await User.findOne({
+        //           callfile_id: { $eq: element.collectorID },
+        //         });
+
+        //         const findAgentProduction = await Production.findOne({
+        //           user: agent._id,
+        //         }).lean();
+
+        //         if (!findAgentProduction) {
+        //           await Production.create({
+        //             user: findAgent,
+        //             assignedAccount: 1,
+        //           });
+        //         } else {
+        //           await Production.findByIdAndUpdate(findAgentProduction._id, {
+        //             $inc: { assignedAccount: 1 },
+        //           });
+        //         }
+        //       }
+
+        //       const createCA = {
+        //         customer: customer._id,
+        //         bucket: findBucket._id,
+        //         case_id: element.case_id,
+        //         callfile: newCallfile._id,
+        //         credit_customer_id: element.credit_user_id,
+        //         endorsement_date: element.endorsement_date,
+        //         bill_due_day: element.bill_due_day,
+        //         max_dpd: element.max_dpd,
+        //         dpd: element.dpd,
+        //         balance: element.balance,
+        //         month_pd: element.mpd,
+        //         paid_amount,
+        //         bill_due_date: element.bill_due_date,
+        //         account_id: element.account_id,
+        //         batch_no: element.batch_no,
+        //         features: {
+        //           branch: element.branch,
+        //         },
+        //         out_standing_details: {
+        //           principal_os: element.principal_os,
+        //           interest_os: element.interest_os,
+        //           admin_fee_os: element.admin_fee_os,
+        //           txn_fee_os: element.txn_fee_os,
+        //           late_charge_os: element.late_charge_os,
+        //           dst_fee_os: element.dst_fee_os,
+        //           waive_fee_os: element.late_charge_waive_fee_os,
+        //           total_os: element.total_os,
+        //           total_balance: element.balance,
+        //           writeoff_balance: element.writeoff_balance,
+        //           overall_balance: element.overall_balance,
+        //           cf: element.cf,
+        //           mo_balance: element.mo_balance,
+        //           pastdue_amount: element.pastdue_amount,
+        //           mo_amort: element.mo_amort,
+        //           partial_payment_w_service_fee:
+        //             element.partial_payment_w_service_fee,
+        //           new_tad_with_sf: element.new_tad_with_sf,
+        //           new_pay_off: element.new_pay_off,
+        //           service_fee: element.service_fee,
+        //           year: element.year,
+        //           brand: element.brand,
+        //           model: element.model,
+        //           last_payment_date: element.last_payment_date,
+        //           last_payment_amount: element.last_payment_amount,
+        //         },
+        //         emergency_contact: {
+        //           name: element.emergencyContactName,
+        //           mobile: element.emergencyContactMobile,
+        //         },
+        //         grass_details: {
+        //           grass_region: element.grass_region,
+        //           vendor_endorsement: element.vendor_endorsement,
+        //           grass_date: element.grass_date,
+        //         },
+        //       };
+
+        //       if (agent) {
+        //         createCA["assigned"] = agent._id;
+        //         createCA["assignedModel"] = "User";
+        //         createCA["assigned_date"] = new Date();
+        //       }
+        //       const caResult = await CustomerAccount.create(createCA);
+        //       customer.customer_account = caResult._id;
+        //       await customer.save();
+        //     } catch (error) {
+        //       console.log(error);
+        //     }
+        //   })
+        // );
 
         if (newCallfile.isNew) {
           await newCallfile.save();

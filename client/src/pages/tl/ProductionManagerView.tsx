@@ -174,7 +174,6 @@ const ProductionManagerView = () => {
             </div>
           </div>
         </div>
-
         <CallfilesViews
           bucket={callfileBucket}
           status={status}

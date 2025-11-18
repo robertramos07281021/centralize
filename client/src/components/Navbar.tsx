@@ -143,6 +143,7 @@ const CHECK_USER_ONLINE_ON_VICI = gql`
   }
 `;
 
+
 const Navbar = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -154,12 +155,13 @@ const Navbar = () => {
     notifyOnNetworkStatusChange: true,
   });
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
-   const {data: agentBucketsData,refetch:agentBucketRefetch} = useQuery<{getTLBucket:{canCall:boolean}[]}>(AGENT_BUCKETS,{
+  const { data: agentBucketsData, refetch: agentBucketRefetch } = useQuery<{
+    getTLBucket: { canCall: boolean }[];
+  }>(AGENT_BUCKETS, {
     notifyOnNetworkStatusChange: true,
-  })
+  });
 
-  const canCallMap = agentBucketsData?.getTLBucket.map(x=> x.canCall)
-
+  const canCallMap = agentBucketsData?.getTLBucket.map((x) => x.canCall);
 
   const { data: userIsOnlineOnVici, error: viciDialError } = useQuery<{
     checkUserIsOnlineOnVici: boolean;
@@ -168,11 +170,10 @@ const Navbar = () => {
     notifyOnNetworkStatusChange: true,
     skip:
       (!location.pathname.includes("cip") &&
-      !["AGENT", "TL"].includes(userLogged?.type as keyof typeof String)) || !canCallMap?.includes(true),
+        !["AGENT", "TL"].includes(userLogged?.type as keyof typeof String)) ||
+      !canCallMap?.includes(true),
     pollInterval: 3000,
   });
-
- 
 
   useEffect(() => {
     if (Boolean(viciDialError) && canCallMap?.includes(true)) {
@@ -204,7 +205,7 @@ const Navbar = () => {
   useEffect(() => {
     const refetching = async () => {
       await refetch();
-      await agentBucketRefetch()
+      await agentBucketRefetch();
     };
     refetching();
   }, []);

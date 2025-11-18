@@ -101,7 +101,12 @@ export type CustomerData = {
 // =======================
 // customer update form, customer disposition
 // =====================================
-type outStandingDetails = {
+export type OutStandingDetails = {
+  last_payment_date: number;
+  last_payment_amount: number;
+  model: number;
+  brand: number;
+  year: number;
   principal_os: number;
   interest_os: number;
   admin_fee_os: number;
@@ -196,7 +201,7 @@ export type Search = {
   assigned_date: string;
   batch_no: string;
   account_update_history: AccountUpdateHistory[];
-  out_standing_details: outStandingDetails;
+  out_standing_details: OutStandingDetails;
   grass_details: grassDetails;
   account_bucket: AccountBucket;
   customer_info: CustomerRegistered;

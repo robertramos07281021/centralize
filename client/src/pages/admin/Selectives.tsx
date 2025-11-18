@@ -60,6 +60,9 @@ type SelectiveData = {
   selectives: Selective[];
   total: number;
 };
+
+// console.log("Selectives component rendered", selectivesData?.getAllSelectives?.selectives);
+
 const Selectives = () => {
   const [isOpen, setIsOpen] = useState(false);
   const location = useLocation();
@@ -95,6 +98,8 @@ const Selectives = () => {
     skip: isSelectivePage,
   });
 
+  console.log(selectivesData, "<< SELECTIVES DATA");
+
   useEffect(() => {
     if (selectivesData) {
       const searchExistingPages = Math.ceil(
@@ -121,6 +126,12 @@ const Selectives = () => {
     refetching();
   }, []);
 
+  console.log(selectivesData, "<< SELECTIVES DATA");
+
+  const selectivesList =
+    selectivesData?.getAllSelectives?.selectives ?? [];
+  const showEmptyState =
+    selectivesData && selectivesList.length === 0;
 
   if (selectivesLoading) return <Loading />;
 
@@ -208,20 +219,65 @@ const Selectives = () => {
           </div>
         </div>
         <div>
-          <div className="grid uppercase grid-cols-7 gap-2 px-4 py-1 border rounded-t-md bg-gray-300 font-black">
+          <div className="grid uppercase grid-cols-6 gap-2 px-4 py-1 border rounded-t-md bg-gray-300 font-black">
             <div>name of Selectives</div>
             <div>Callfile</div>
             <div>Bucket</div>
-            <div>Date</div>
             <div>Count</div>
             <div>Amount</div>
-            <div>Action</div>
+            <div></div>
           </div>
           <div>
-            <div></div>
-            <div></div>
-            <div></div>
-            <div></div>
+            {showEmptyState && (
+              <div className="text-center bg-gray-200 border-x py-2 text-gray-400 border-b rounded-b-md border-black font-black italic">No selectives found.</div>
+            )}
+            {selectivesList.map((selective, index) => (
+                <motion.div
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                  className="grid grid-cols-6 border-x items-center last:rounded-b-md last:shadow-md gap-2 px-4 py-2 border-b odd:bg-gray-50 even:bg-white hover:bg-gray-100 transition-all "
+                  key={selective._id}
+                >
+                  <div>{selective.name}</div>
+                  <div>{selective.callfile?.name || "N/A"}</div>
+                  <div>{selective.bucket?.name || "N/A"}</div>
+                  <div>{selective.count}</div>
+                  <div>
+                    {(selective.amount ?? 0).toLocaleString("en-PH", {
+                      style: "currency",
+                      currency: "PHP",
+                    })}
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <div className="px-2 py-1 text-white rounded-sm cursor-pointer border-2 border-blue-900 bg-blue-600 hover:bg-blue-700">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="size-5"
+                      >
+                        <path
+                          fillRule="evenodd"
+                          d="M4.755 10.059a7.5 7.5 0 0 1 12.548-3.364l1.903 1.903h-3.183a.75.75 0 1 0 0 1.5h4.992a.75.75 0 0 0 .75-.75V4.356a.75.75 0 0 0-1.5 0v3.18l-1.9-1.9A9 9 0 0 0 3.306 9.67a.75.75 0 1 0 1.45.388Zm15.408 3.352a.75.75 0 0 0-.919.53 7.5 7.5 0 0 1-12.548 3.364l-1.902-1.903h3.183a.75.75 0 0 0 0-1.5H2.984a.75.75 0 0 0-.75.75v4.992a.75.75 0 0 0 1.5 0v-3.18l1.9 1.9a9 9 0 0 0 15.059-4.035.75.75 0 0 0-.53-.918Z"
+                          clipRule="evenodd"
+                        />
+                      </svg>
+                    </div>
+
+                    <div className="px-2 py-1 text-white rounded-sm cursor-pointer border-2 border-green-900 bg-green-600 hover:bg-green-700">
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        viewBox="0 0 24 24"
+                        fill="currentColor"
+                        className="size-5"
+                      >
+                        <path d="M12 1.5a.75.75 0 0 1 .75.75V7.5h-1.5V2.25A.75.75 0 0 1 12 1.5ZM11.25 7.5v5.69l-1.72-1.72a.75.75 0 0 0-1.06 1.06l3 3a.75.75 0 0 0 1.06 0l3-3a.75.75 0 1 0-1.06-1.06l-1.72 1.72V7.5h3.75a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h3.75Z" />
+                      </svg>
+                    </div>
+                  </div>
+                </motion.div>
+            ))}
           </div>
         </div>
       </div>

@@ -358,6 +358,7 @@ const AgentRecordingView = () => {
                 type="checkbox"
                 name="ccsCalls"
                 id="ccsCalls"
+                readOnly
                 checked={ccsCall}
                 onClick={() => {
                   dispatch(setCCSCall());

@@ -54,7 +54,9 @@ const DivFTEs = ({ label, value }: DivFTEsProps) => {
 const DailyFTE = () => {
   const { selectedBucket } = useSelector((state: RootState) => state.auth);
   const { data, refetch } = useQuery<{ getDailyFTE: DailyFTEType[] }>(
-    DAILY_FTE
+    DAILY_FTE,{
+      notifyOnNetworkStatusChange: true
+    }
   );
   const { data: campaignAssignedData, refetch: campaignAssignedRefetch } =
     useQuery<{ getCampaignAssigned: CampaignAssigned[] }>(CAMPAIGN_ASSIGNED, {

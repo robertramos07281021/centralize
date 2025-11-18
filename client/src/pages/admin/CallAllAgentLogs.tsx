@@ -43,6 +43,12 @@ const CALL_LOGS = gql`
   }
 `;
 
+const GET_USER_STATUS = gql`
+  query getBargingStatus($viciId: String) {
+    getBargingStatus(vici_id: $viciId)
+  }
+`;
+
 const CallAllAgentLogs = () => {
   const [selectedBucket, setSelectedBucket] = useState<getAllBucket | null>(
     null
@@ -75,6 +81,16 @@ const CallAllAgentLogs = () => {
     skip: !selectedBucket,
     pollInterval: 1000,
   });
+
+  const { data: getUserData, refetch: getUserDataRefetch } = useQuery(
+    GET_USER_STATUS,
+    {
+      variables: { viciId: selectedBucket?.viciIp },
+      notifyOnNetworkStatusChange: true,
+    }
+  );
+  console.log(getUserData);
+
   const newData = useMemo(
     () =>
       callLogsData?.getUsersLogginOnVici
@@ -94,6 +110,7 @@ const CallAllAgentLogs = () => {
         .filter((id): id is string => Boolean(id))
     );
   }, [bucketUsers]);
+  
   const filteredRows = useMemo(() => {
     if (!bucketUsersData) return rows;
     if (allowedViciIds.size === 0) return [];
@@ -103,8 +120,11 @@ const CallAllAgentLogs = () => {
     });
   }, [rows, bucketUsersData, allowedViciIds]);
 
-  const [bargeCall] = useMutation(BARGE_CALL);
-
+  const [bargeCall] = useMutation(BARGE_CALL,{
+    onCompleted: async()=> {
+      await getUserDataRefetch()
+    }
+  });
 
   const handleBargeCall = useCallback(
     async (session_id: string | null, viciUserId: string | null) => {
@@ -117,8 +137,6 @@ const CallAllAgentLogs = () => {
     },
     [bargeCall]
   );
-
-
 
   return (
     <div className="w-full relative px-10 gap-2 pt-2 pb-5 h-[91vh] flex flex-col">

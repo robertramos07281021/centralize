@@ -472,6 +472,7 @@ const userResolvers = {
 
     updatePassword: async (_, { password, confirmPass }, { user }) => {
       try {
+     
         if (!user) throw new CustomError("Unauthorized", 401);
 
         if (confirmPass !== password) throw new CustomError("Not Match", 401);
@@ -494,6 +495,7 @@ const userResolvers = {
 
         return userChangePass;
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500);
       }
     },
@@ -641,8 +643,7 @@ const userResolvers = {
         throw new CustomError(error.message, 500);
       }
     },
-    resetPassword: async (_, { id }, { user }) => {
-      if (!user) throw new CustomError("Unauthorized", 401);
+    resetPassword: async (_, { id }, ) => {
       try {
         const saltPassword = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash("Bernales2025", saltPassword);
@@ -668,6 +669,7 @@ const userResolvers = {
           user: user,
         };
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500);
       }
     },

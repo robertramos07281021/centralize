@@ -56,6 +56,7 @@ import callTypeDefs from "./graphql/schemas/callSchema.js";
 import { checkIfAgentIsOnline, logoutVici } from "./middlewares/vicidial.js";
 import selectivesResolver from "./graphql/resolvers/selectivesResolver.js";
 import selectivesTypeDefs from "./graphql/schemas/selectivesSchema.js";
+import DispoType from "./models/dispoType.js";
 
 const connectedUsers = new Map();
 
@@ -125,7 +126,11 @@ cron.schedule(
   async () => {
     try {
       const cutoff = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-      const customerAccounts = await CustomerAccount.aggregate([
+      const dispotype = await DispoType.findOne({ code: "PTP" });
+
+      if (!dispotype) throw new Error("DispoType PTP not found");
+
+      const cursor = await CustomerAccount.aggregate([
         {
           $match: {
             assigned: { $ne: null },
@@ -140,31 +145,62 @@ cron.schedule(
           },
         },
         { $unwind: { path: "$cd", preserveNullAndEmptyArrays: true } },
-        { $match: { "cd.createdAt": { $lte: cutoff } } },
+        {
+          $match: {
+            "cd.createdAt": { $lte: cutoff },
+            "cd.disposition": dispotype._id,
+          },
+        },
         { $project: { _id: 1, user: "$cd.user" } },
-      ]).allowDiskUse(true);
+      ])
+        .allowDiskUse(true)
+        .cursor({ batchSize: 500 })
+        .exec();
 
-      const ids = [];
-      const users = [];
+      const BATCH_SIZE = 500;
+      let batchIds = [];
+      let batchUsers = new Set();
 
-      for await (const doc of customerAccounts) {
-        ids.push(doc._id);
-        if (doc.user) users.push(doc.user);
+      for await (const doc of cursor) {
+        batchIds.push(doc._id);
+        if (doc.user) batchUsers.push(doc.user);
+
+        if (batchIds.length >= BATCH_SIZE) {
+          await CustomerAccount.updateMany(
+            { _id: { $in: batchIds } },
+            { $unset: { assignedModel: "", assigned_date: "", assigned: "" } }
+          );
+
+          if (batchUsers.length > 0) {
+            await pubsub.publish(PUBSUB_EVENTS.TASK_CHANGING, {
+              taskChanging: {
+                members: batchUsers,
+                message: PUBSUB_EVENTS.TASK_CHANGING,
+              },
+            });
+          }
+
+          // reset batches
+          batchIds = [];
+          batchUsers = [];
+        }
       }
 
-      if (ids.length > 0) {
+      // process remaining
+      if (batchIds.length > 0) {
         await CustomerAccount.updateMany(
-          { _id: { $in: ids } },
-          {
-            $unset: { assignedModel: "", assigned_date: "", assigned: "" },
-          }
+          { _id: { $in: batchIds } },
+          { $unset: { assignedModel: "", assigned_date: "", assigned: "" } }
         );
-        await pubsub.publish(PUBSUB_EVENTS.TASK_CHANGING, {
-          taskChanging: {
-            members: users,
-            message: PUBSUB_EVENTS.TASK_CHANGING,
-          },
-        });
+
+        if (batchUsers.size > 0) {
+          await pubsub.publish(PUBSUB_EVENTS.TASK_CHANGING, {
+            taskChanging: {
+              members: Array.from(batchUsers),
+              message: PUBSUB_EVENTS.TASK_CHANGING,
+            },
+          });
+        }
       }
     } catch (error) {
       console.error("Cron job error", error);
@@ -314,7 +350,10 @@ useServer(
             const checkIfCanCall = res?.buckets?.map((x) => x.canCall);
 
             if (checkIfCanCall.includes(true)) {
-              await logoutVici(res.vici_id, bucket[chechIfisOnline.indexOf(true)]);
+              await logoutVici(
+                res.vici_id,
+                bucket[chechIfisOnline.indexOf(true)]
+              );
             }
 
             await pubsub.publish(PUBSUB_EVENTS.OFFLINE_USER, {

@@ -35,6 +35,7 @@ import Lottie from "lottie-react";
 import phone from "../Animations/Phone Call.json";
 import NeedToLoginVici from "./agent/NeedToLoginVici.tsx";
 import frequency from "../Animations/Sound voice waves.json";
+import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 const DESELECT_TASK = gql`
   mutation deselectTask($id: ID!) {
@@ -113,10 +114,10 @@ const PICK_RANDOM = gql`
         new_pay_off
         service_fee
         year
-        model
         brand
-        late_payment_amount
-        late_payment_date
+        model
+        last_payment_amount
+        last_payment_date
       }
       grass_details {
         grass_region
@@ -230,10 +231,10 @@ const SEARCH = gql`
         new_pay_off
         service_fee
         year
-        model
         brand
-        late_payment_amount
-        late_payment_date
+        model
+        last_payment_amount
+        last_payment_date
       }
       grass_details {
         grass_region
@@ -733,23 +734,32 @@ const CustomerDisposition = () => {
     },
   });
 
-   const { data } = useQuery<{ checkIfAgentIsInline: string }>(CHECK_IF_INLINE, {
+  const { data } = useQuery<{ checkIfAgentIsInline: string }>(CHECK_IF_INLINE, {
     notifyOnNetworkStatusChange: true,
     skip: !location.pathname.includes("cip") || !canCallBuckets?.includes(true),
     pollInterval: 1000,
   });
 
-  const checkIfAgentIsInline = data?.checkIfAgentIsInline
-
+  const checkIfAgentIsInline = data?.checkIfAgentIsInline;
 
   const clearSelectedCustomer = useCallback(async () => {
     await deselectTask({ variables: { id: selectedCustomer?._id } });
     setSearch("");
     dispatch(setIsRing(false));
-    if (!checkIfAgentIsInline?.includes("PAUSE") && canCallBuckets?.includes(true)) {
+    if (
+      !checkIfAgentIsInline?.includes("PAUSE") &&
+      canCallBuckets?.includes(true)
+    ) {
       await endAndDispoCall();
     }
-  }, [selectedCustomer, deselectTask]);
+  }, [
+    selectedCustomer,
+    deselectTask,
+    checkIfAgentIsInline,
+    canCallBuckets,
+    dispatch,
+    setSearch,
+  ]);
 
   useEffect(() => {
     if (breakValue !== BreakEnum.PROD && userLogged?.type === "AGENT") {
@@ -841,14 +851,12 @@ const CustomerDisposition = () => {
   const childrenDivRef = useRef<ChildHandle>(null);
   const [confirm, setConfirm] = useState(false);
 
-  const [getCallRecording] = useMutation<{ getCallRecording: string }>(
-    GET_RECORDING,
-    {
+  const [getCallRecording, { loading: getCallingRecordingLoading }] =
+    useMutation<{ getCallRecording: string }>(GET_RECORDING, {
       onCompleted: (data) => {
         dispatch(setCallUniqueId(data.getCallRecording));
       },
-    }
-  );
+    });
 
   const [makeCall] = useMutation<{
     makeCall: string;
@@ -863,29 +871,39 @@ const CustomerDisposition = () => {
       }
     },
   });
-
+  const [randomLoading, setRandomLoading] = useState(false);
   const handleRandomFetch = async () => {
     if (isAutoDialData?.isAutoDial) {
       dispatch(setIsRing(true));
     }
+    setRandomLoading(true);
     try {
-      const res = await refetchRandomCustomer({
-        buckets: userLogged?.buckets,
-        autoDial: false,
-      });
-
-      if (res) {
-        await selectTask({ variables: { id: res?.data?.randomCustomer?._id } });
-        dispatch(setSelectedCustomer(res?.data?.randomCustomer));
-      }
     } catch (error) {
-      dispatch(setServerError(true));
+    } finally {
+    }
+    const res = await refetchRandomCustomer({
+      buckets: userLogged?.buckets,
+      autoDial: false,
+    });
+
+    setRandomLoading(true);
+
+    if (res.data.randomCustomer) {
+      setRandomLoading(false);
+      await selectTask({ variables: { id: res?.data?.randomCustomer?._id } });
+      dispatch(setSelectedCustomer(res?.data?.randomCustomer));
+    } else {
+      setRandomLoading(false);
+      dispatch(
+        setSuccess({
+          success: true,
+          message: "All accounts already dial",
+          isMessage: false,
+        })
+      );
     }
   };
-
   // =============================== need to add on skip
- 
-
 
   useSubscription<{ newUpdateOnBucket: { bucket: string; message: string } }>(
     NEW_UPDATE_ONBUCKET,
@@ -905,7 +923,6 @@ const CustomerDisposition = () => {
     }
   );
 
-  // =============================== need to add on skip
   const { data: isAutoDialData, refetch: isAutodialRefetch } = useQuery<{
     isAutoDial: boolean;
   }>(IS_AUTO_DIAL, {
@@ -913,7 +930,6 @@ const CustomerDisposition = () => {
     skip: !location.pathname.includes("cip") || !canCallBuckets?.includes(true),
   });
 
-  // ================= =================here
   useSubscription<{ updateOnCallfiles: { bucket: string; message: string } }>(
     NEW_UPDATE_ONCALLFILE,
     {
@@ -977,7 +993,7 @@ const CustomerDisposition = () => {
           dispatch(setSelectedCustomer(res?.data?.randomCustomer));
         }
       }
-    }, 3000);
+    }, 1000);
   }, [selectedCustomer, search, isAutoDialData?.isAutoDial]);
 
   // console.log(data?.checkIfAgentIsInline)
@@ -987,8 +1003,33 @@ const CustomerDisposition = () => {
   //me 09126448847
   //christian inbound 09285191305
   //endrian 09694827149
-  // const mobileNo = 
-  //   userLogged?.username === "RRamos" ? "09126448847" : "09694827149"
+  // const mobileNo =
+  //   userLogged?.username === "RRamos" ? "09285191305" : "09694827149";
+
+  function normalizePhilippineNumber(rawNumber: string): string | null {
+    if (!rawNumber) return null;
+
+    // Remove all non-digit characters
+    let number = rawNumber.replace(/\D/g, "");
+
+    // Mobile numbers: remove international prefix if present
+    if (number.startsWith("00")) number = number.slice(2);
+    if (number.startsWith("63")) number = number.slice(2);
+
+    // Ensure leading 0 for local format
+    if (!number.startsWith("0")) number = "0" + number;
+
+    // Mobile numbers: 11 digits starting with 09
+    const mobileRegex = /^09\d{9}$/;
+    if (mobileRegex.test(number)) return number;
+
+    // Landlines: 8–11 digits starting with 0 (covers all area codes including subcodes like 08822)
+    const landlineRegex = /^0\d{7,10}$/;
+    if (landlineRegex.test(number)) return number;
+
+    // If it doesn’t match any pattern, return null
+    return null;
+  }
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -1001,18 +1042,14 @@ const CustomerDisposition = () => {
         isAutoDialData?.isAutoDial
       ) {
         let rawNumber = selectedCustomer?.customer_info?.contact_no[0];
-        if (!rawNumber) return;
-        let phoneNumber = rawNumber.toString().replace(/\D/g, "");
+        const phoneNumber = normalizePhilippineNumber(rawNumber as string);
+        if (!phoneNumber) return;
 
-        if (/^09\d{9}$/.test(phoneNumber)) {
-          phoneNumber = "0" + phoneNumber;
-        }
-
-        if ((!onCall || !isRing) && Boolean(phoneNumber)) {
+        if (!onCall || !isRing) {
           setDial(false);
           dispatch(setMobileToCall(phoneNumber));
-          await makeCall({ variables: { phoneNumber: phoneNumber } });
           // await makeCall({ variables: { phoneNumber: mobileNo } });
+          await makeCall({ variables: { phoneNumber: phoneNumber } });
         }
       }
     });
@@ -1023,20 +1060,19 @@ const CustomerDisposition = () => {
   const manualDialCustomerNumber = useCallback(async (phoneNumber: string) => {
     dispatch(setIsRing(true));
 
-    let newPhone = phoneNumber.toString().replace(/\D/g, "");
+    const newPhone = normalizePhilippineNumber(phoneNumber);
 
-    if (/^9\d{9}$/.test(newPhone)) {
-      newPhone = "0" + newPhone;
+    if (!newPhone) return;
+
+    if (checkIfAgentIsInline?.includes("INLINE")) {
+      await endAndDispoCall();
     }
-    await endAndDispoCall();
     setConfirm(false);
-    if (phoneNumber) {
-      setTimeout(async () => {
-        dispatch(setMobileToCall(newPhone));
-        await makeCall({ variables: { newPhone } });
-        // await makeCall({ variables: { phoneNumber: mobileNo } });
-      }, 1000);
-    }
+    setTimeout(async () => {
+      dispatch(setMobileToCall(newPhone));
+      // await makeCall({ variables: { phoneNumber: mobileNo } });
+      await makeCall({ variables: { phoneNumber: newPhone } });
+    }, 1000);
   }, []);
 
   const dialManualNumber = async () => {
@@ -1132,7 +1168,12 @@ const CustomerDisposition = () => {
         }
       }
     }
-  }, [data, selectedCustomer, manualDialCustomerNumber, handleRandomFetch]);
+  }, [
+    checkIfAgentIsInline,
+    selectedCustomer,
+    manualDialCustomerNumber,
+    handleRandomFetch,
+  ]);
 
   useEffect(() => {
     if (checkIfAgentIsInline?.includes("INCALL")) {
@@ -1142,7 +1183,7 @@ const CustomerDisposition = () => {
     }
   }, [data, dispatch]);
 
-  const isLoading = loading || updateRPCLoading;
+  const isLoading = loading || updateRPCLoading || getCallingRecordingLoading;
 
   if (isLoading) return <Loading />;
 
@@ -1372,7 +1413,6 @@ const CustomerDisposition = () => {
             )}
           </div>
 
-
           <AnimatePresence>
             {isUpdate && (
               <div className="fixed z-50 top-0 justify-center items-center left-0 w-full overflow-hidden flex h-full">
@@ -1403,7 +1443,6 @@ const CustomerDisposition = () => {
               </div>
             )}
           </AnimatePresence>
-          
 
           {/* Dial Button the violet one*/}
           {canCallBuckets?.includes(true) && (
@@ -1416,618 +1455,410 @@ const CustomerDisposition = () => {
               initial={{ opacity: 0, scale: 0.6 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, type: "spring" }}
-              className={`" w-40 rounded-full  cursor-grab active:cursor-grabbing absolute top-30 right-20 z-40 justify-center items-center flex "`}
+              className={`" w-40 rounded-full cursor-grab active:cursor-grabbing absolute top-30 right-20 z-40 justify-center items-center flex border "`}
             >
-              {!checkIfAgentIsInline?.includes("INCALL") &&
-                !isRing &&
-                !isAutoDialData?.isAutoDial && (
-                  <div
-                    onClick={() => {
-                      if (dial) {
-                        setManualDial(null);
-                        setBreaker(false);
-                        setDial((prev) => !prev);
-                      } else {
-                        setBreaker(false);
-
-                        setDial((prev) => !prev);
-                      }
-                    }}
-                    className="absolute z-50 -top-4 cursor-pointer"
-                  >
-                    <motion.div
-                      key={"dial-button-key"}
-                      initial={{ x: 0, y: 40, opacity: 0 }}
-                      animate={{ x: 0, y: 0, opacity: 1 }}
-                      transition={{ type: "spring", delay: isRing ? 1.4 : 0.6 }}
-                    >
-                      <div className="bg-purple-600  text-white cursor-pointer border-purple-950 hover:bg-purple-700 hover:scale-105 text-sm transition-all px-3 py-1 rounded-md border-2 shadow-md font-black uppercase">
-                        Dial{" "}
-                      </div>{" "}
-                    </motion.div>
-                  </div>
-                )}
-
-              {/* Break button on bottom */}
-              {userLogged?.type === "AGENT" && !selectedCustomer && (
-                <div
-                  onClick={() => {
-                    if (dial) {
-                      setDial(false);
-                      setBreaker((prev) => !prev);
-                    } else {
-                      setBreaker((prev) => !prev);
-                    }
-                  }}
-                  className="absolute z-50 -bottom-3 cursor-pointer"
-                >
-                  <motion.div
-                    key={"break-button-div"}
-                    initial={{ x: 0, y: -40, opacity: 0 }}
-                    animate={{ x: 0, y: 0, opacity: 1 }}
-                    transition={{
-                      type: "spring",
-                      delay: isRing ? 1.4 : 0.8,
-                    }}
-                  >
-                    <div className="bg-blue-600 text-white cursor-pointer border-blue-900 hover:bg-blue-700 hover:scale-105 text-sm transition-all px-3 py-1 rounded-md border-2 shadow-md font-black uppercase">
-                      break{" "}
-                    </div>{" "}
-                  </motion.div>
+              {randomLoading && !isRing && checkIfAgentIsInline?.includes('PAUSE') ? (
+                <div className="border h-40 w-100 rounded-full flex items-center justify-center bg-white">
+                  <AiOutlineLoading3Quarters className="animate-spin text-5xl"/>
                 </div>
-              )}
-
-              {/*Break selection*/}
-              <AnimatePresence>
-                {breaker && (
-                  <motion.div
-                    key={"breaker-div"}
-                    className="z-100 cursor-default bg-gray-200 shadow-md overflow-hidden border-2 rounded-md border-gray-800 -bottom-[216px] text-black absolute"
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.8, opacity: 0 }}
-                  >
-                    <div className="overflow-y-auto max-h-[194px]">
-                      {breaks.map((e, index) => (
-                        <div
-                          key={index}
-                          onClick={() => {
-                            setBreaker(false);
-                            onClickBreakSelection(
-                              BreakEnum[e.value as keyof typeof BreakEnum]
-                            );
-                          }}
-                          className="px-7 py-1 border-r last:border-b-0 cursor-pointer text-black border-b transition-all border-gray-300 odd:bg-gray-100 even:bg-white hover:bg-gray-200 whitespace-nowrap"
-                        >
-                          <div className="font-black uppercase">{e.name}</div>
-                        </div>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-
-
-                {/* Dial phone button */}
-              <AnimatePresence>
-                {dial && (
-                  <motion.div
-                    key={"dialer-button-div"}
-                    className="bg-gray-200 z-100 cursor-default shadow-md p-2 border-2 rounded-md border-gray-800 -bottom-54 text-black absolute"
-                    initial={{ scale: 0.8, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.8, opacity: 0 }}
-                  >
-                    <div>
-                      <input
-                        className="border bg-gray-400 text-center flex font-black py-1 focus:outline-none border-black rounded-sm shadow-md"
-                        placeholder="Ex. 09123456789"
-                        ref={inputRef}
-                        type="text"
-                        value={manualDial || ""}
-                        onChange={(e) =>
-                          setManualDial(e.target.value.replace(/[^0-9]/g, ""))
-                        }
-                        maxLength={11}
-                      />
-                    </div>
-
-                    <div className="grid items-center grid-cols-3 gap-2 py-2 font-black uppercase">
-                      {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map(
-                        (num) => (
-                          <div
-                            key={num}
-                            onClick={() => handleNumberClick(num)}
-                            className="text-center cursor-pointer transition-all hover:bg-gray-400 bg-gray-300 rounded-sm shadow-md border"
-                          >
-                            {num}
-                          </div>
-                        )
-                      )}
-
-                      <div className="justify-center text-center flex h-full">
-                        <div
-                          onClick={() => {
-                            if (manualDial && manualDial.length > 1) {
-                              handleClear();
-                            }
-                          }}
-                          className={`" ${
-                            manualDial && manualDial.length > 0
-                              ? "bg-red-600 cursor-pointer hover:bg-red-800 border-red-950 text-white "
-                              : "bg-gray-400 border-gray-500 cursor-not-allowed text-gray-300"
-                          }  h-full  w-full text-xs flex items-center justify-center border shadow-md  rounded-sm "`}
-                        >
-                          clear
-                        </div>
-                      </div>
-
-                      <div
-                        onClick={() => handleNumberClick("0")}
-                        className="text-center cursor-pointer transition-all hover:bg-gray-400 bg-gray-300 rounded-sm shadow-md border"
-                      >
-                        0
-                      </div>
+              ) : (
+                <>
+                  {!checkIfAgentIsInline?.includes("INCALL") &&
+                    !isRing &&
+                    !isAutoDialData?.isAutoDial && (
                       <div
                         onClick={() => {
-                          if (
-                            manualDial &&
-                            manualDial.length > 10 &&
-                            manualDial.includes("09")
-                          ) {
-                            dialManualNumber();
+                          if (dial) {
+                            setManualDial(null);
+                            setBreaker(false);
+                            setDial((prev) => !prev);
+                          } else {
+                            setBreaker(false);
+
+                            setDial((prev) => !prev);
                           }
                         }}
-                        className={`" ${
-                          manualDial &&
-                          manualDial.length > 10 &&
-                          manualDial.includes("09")
-                            ? "bg-green-500 hover:bg-green-600 border-black cursor-pointer text-white"
-                            : "bg-gray-400 border-gray-500 cursor-not-allowed text-gray-300"
-                        }  h-full flex justify-center   transition-all shadow-md text-center items-center border  text-xs rounded-sm "`}
+                        className="absolute z-50 -top-4 cursor-pointer"
                       >
-                        Dial
+                        <motion.div
+                          key={"dial-button-key"}
+                          initial={{ x: 0, y: 40, opacity: 0 }}
+                          animate={{ x: 0, y: 0, opacity: 1 }}
+                          transition={{
+                            type: "spring",
+                            delay: isRing ? 1.4 : 0.6,
+                          }}
+                        >
+                          <div className="bg-purple-600  text-white cursor-pointer border-purple-950 hover:bg-purple-700 hover:scale-105 text-sm transition-all px-3 py-1 rounded-md border-2 shadow-md font-black uppercase">
+                            Dial{" "}
+                          </div>{" "}
+                        </motion.div>
                       </div>
+                    )}
+
+                  {/* Break button on bottom */}
+                  {userLogged?.type === "AGENT" && !selectedCustomer && (
+                    <div
+                      onClick={() => {
+                        if (dial) {
+                          setDial(false);
+                          setBreaker((prev) => !prev);
+                        } else {
+                          setBreaker((prev) => !prev);
+                        }
+                      }}
+                      className="absolute z-50 -bottom-3 cursor-pointer"
+                    >
+                      <motion.div
+                        key={"break-button-div"}
+                        initial={{ x: 0, y: -40, opacity: 0 }}
+                        animate={{ x: 0, y: 0, opacity: 1 }}
+                        transition={{
+                          type: "spring",
+                          delay: isRing ? 1.4 : 0.8,
+                        }}
+                      >
+                        <div className="bg-blue-600 text-white cursor-pointer border-blue-900 hover:bg-blue-700 hover:scale-105 text-sm transition-all px-3 py-1 rounded-md border-2 shadow-md font-black uppercase">
+                          break{" "}
+                        </div>{" "}
+                      </motion.div>
                     </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-                
-              <div
-                className={` ${
-                  (checkIfAgentIsInline?.includes("INCALL") &&
-                    !checkIfAgentIsInline?.includes("DIAL") &&
-                    !checkIfAgentIsInline?.includes("DEAD")) ||
-                  (checkIfAgentIsInline?.includes("PAUSED") &&
-                    checkIfAgentIsInline?.includes("LAGGED") &&
-                    checkIfAgentIsInline?.includes("DISPO"))
-                    ? "bg-purple-900 border-black"
-                    : "bg-gray-100 border-gray-900"
-                }  p-2 border-2  rounded-full h-full w-full shadow-md shadow-black/20 `}
-              >
-                <div className={`   transition-all duration-300 `}>
-                  <div className="w-full relative h-full flex justify-center items-center">
-                    {/* Frequency */}
-                    <AnimatePresence>
-                      {((checkIfAgentIsInline?.includes("INCALL") &&
+                  )}
+
+                  {/*Break selection*/}
+                  <AnimatePresence>
+                    {breaker && (
+                      <motion.div
+                        key={"breaker-div"}
+                        className="z-100 cursor-default bg-gray-200 shadow-md overflow-hidden border-2 rounded-md border-gray-800 -bottom-[216px] text-black absolute"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                      >
+                        <div className="overflow-y-auto max-h-[194px]">
+                          {breaks.map((e, index) => (
+                            <div
+                              key={index}
+                              onClick={() => {
+                                setBreaker(false);
+                                onClickBreakSelection(
+                                  BreakEnum[e.value as keyof typeof BreakEnum]
+                                );
+                              }}
+                              className="px-7 py-1 border-r last:border-b-0 cursor-pointer text-black border-b transition-all border-gray-300 odd:bg-gray-100 even:bg-white hover:bg-gray-200 whitespace-nowrap"
+                            >
+                              <div className="font-black uppercase">
+                                {e.name}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  {/* Dial phone button */}
+                  <AnimatePresence>
+                    {dial && (
+                      <motion.div
+                        key={"dialer-button-div"}
+                        className="bg-gray-200 z-100 cursor-default shadow-md p-2 border-2 rounded-md border-gray-800 -bottom-54 text-black absolute"
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        exit={{ scale: 0.8, opacity: 0 }}
+                      >
+                        <div>
+                          <input
+                            className="border bg-gray-400 text-center flex font-black py-1 focus:outline-none border-black rounded-sm shadow-md"
+                            placeholder="Ex. 09123456789"
+                            ref={inputRef}
+                            type="text"
+                            value={manualDial || ""}
+                            onChange={(e) =>
+                              setManualDial(
+                                e.target.value.replace(/[^0-9]/g, "")
+                              )
+                            }
+                            maxLength={11}
+                          />
+                        </div>
+
+                        <div className="grid items-center grid-cols-3 gap-2 py-2 font-black uppercase">
+                          {["1", "2", "3", "4", "5", "6", "7", "8", "9"].map(
+                            (num) => (
+                              <div
+                                key={num}
+                                onClick={() => handleNumberClick(num)}
+                                className="text-center cursor-pointer transition-all hover:bg-gray-400 bg-gray-300 rounded-sm shadow-md border"
+                              >
+                                {num}
+                              </div>
+                            )
+                          )}
+
+                          <div className="justify-center text-center flex h-full">
+                            <div
+                              onClick={() => {
+                                if (manualDial && manualDial.length > 1) {
+                                  handleClear();
+                                }
+                              }}
+                              className={`" ${
+                                manualDial && manualDial.length > 0
+                                  ? "bg-red-600 cursor-pointer hover:bg-red-800 border-red-950 text-white "
+                                  : "bg-gray-400 border-gray-500 cursor-not-allowed text-gray-300"
+                              }  h-full  w-full text-xs flex items-center justify-center border shadow-md  rounded-sm "`}
+                            >
+                              clear
+                            </div>
+                          </div>
+
+                          <div
+                            onClick={() => handleNumberClick("0")}
+                            className="text-center cursor-pointer transition-all hover:bg-gray-400 bg-gray-300 rounded-sm shadow-md border"
+                          >
+                            0
+                          </div>
+                          <div
+                            onClick={() => {
+                              if (
+                                manualDial &&
+                                manualDial.length > 10 &&
+                                manualDial.includes("09")
+                              ) {
+                                dialManualNumber();
+                              }
+                            }}
+                            className={`" ${
+                              manualDial &&
+                              manualDial.length > 10 &&
+                              manualDial.includes("09")
+                                ? "bg-green-500 hover:bg-green-600 border-black cursor-pointer text-white"
+                                : "bg-gray-400 border-gray-500 cursor-not-allowed text-gray-300"
+                            }  h-full flex justify-center   transition-all shadow-md text-center items-center border  text-xs rounded-sm "`}
+                          >
+                            Dial
+                          </div>
+                        </div>
+                      </motion.div>
+                    )}
+                  </AnimatePresence>
+
+                  <div
+                    className={` ${
+                      (checkIfAgentIsInline?.includes("INCALL") &&
                         !checkIfAgentIsInline?.includes("DIAL") &&
                         !checkIfAgentIsInline?.includes("DEAD")) ||
-                        (checkIfAgentIsInline?.includes("PAUSED") &&
-                          checkIfAgentIsInline?.includes("LAGGED") &&
-                          checkIfAgentIsInline?.includes("DISPO"))) && (
-                        <motion.div
-                          key={"lottie-frequency-div"}
-                          initial={{ scale: 0.8, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          exit={{ opacity: 0 }}
-                          layout
-                          className="absolute -top-0 p-3 rounded-md "
-                        >
-                          <Lottie animationData={frequency} />
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Dialer phone */}
-                  <div className="absolute w-full font-black uppercase text-green-900 justify-evenly  cursor-grab flex flex-col  h-full items-center right-0 z-20 top-0">
-                    {((!isRing &&
-                      checkIfAgentIsInline?.includes("PAUSED")) ||
-                      (isRing &&
-                        checkIfAgentIsInline?.includes("INCALL")) ||
                       (checkIfAgentIsInline?.includes("PAUSED") &&
                         checkIfAgentIsInline?.includes("LAGGED") &&
-                        checkIfAgentIsInline?.includes("DISPO"))) && (
-                      <motion.div
-                        key={""}
-                        className="absolute -left-5 top-14.5 transition-al"
-                        initial={{ x: 40, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ type: "spring", delay: 0.2 }}
-                      >
-                        <div
-                          onClick={handleUsingPhoneUI}
-                          className={`" ${
-                            !(
-                              (checkIfAgentIsInline?.includes("PAUSED") &&
-                                !checkIfAgentIsInline?.includes(
-                                  "LAGGED"
-                                ) &&
-                                !checkIfAgentIsInline?.includes(
-                                  "DISPO"
-                                )) ||
-                              (checkIfAgentIsInline?.includes("PAUSED") &&
-                                checkIfAgentIsInline?.includes("LAGGED") &&
-                                !checkIfAgentIsInline?.includes(
-                                  "DISPO"
-                                )) ||
-                              (checkIfAgentIsInline?.includes("INCALL") &&
-                                checkIfAgentIsInline?.includes("DEAD"))
-                            )
-                              ? "bg-gray-400 border-gray-500 cursor-not-allowed "
-                              : " hover:scale-110 cursor-pointer bg-green-500 hover:bg-green-600 border-green-900 "
-                          }  transition-all items-center justify-center flex p-2 text-white  rounded-full border-2 "`}
-                        >
-                          <div
-                            title={
-                              !Boolean(selectedCustomer)
-                                ? "Dial Next"
-                                : "Re-Dial"
-                            }
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                              className="size-5"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M19.5 9.75a.75.75 0 0 1-.75.75h-4.5a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 1 1.5 0v2.69l4.72-4.72a.75.75 0 1 1 1.06 1.06L16.06 9h2.69a.75.75 0 0 1 .75.75Z"
-                                clipRule="evenodd"
-                              />
-                              <path
-                                fillRule="evenodd"
-                                d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </div>
-                        </div>
-                      </motion.div>
-                    )}
-
-                    {/* End call */}
-                    {((!isRing &&
-                      checkIfAgentIsInline?.includes("PAUSED")) ||
-                      (isRing &&
-                        checkIfAgentIsInline?.includes("INCALL")) ||
-                      (checkIfAgentIsInline?.includes("PAUSED") &&
-                        checkIfAgentIsInline?.includes("LAGGED") &&
-                        checkIfAgentIsInline?.includes("DISPO"))) && (
-                      <motion.div
-                        className={`" absolute -right-5 top-14.5  "`}
-                        initial={{ x: -40, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        transition={{ type: "spring", delay: isRing ? 1 : 0.4 }}
-                      >
-                        <div
-                          className={` ${
-                            (isRing &&
-                              checkIfAgentIsInline?.includes("INCALL")) ||
+                        checkIfAgentIsInline?.includes("DISPO"))
+                        ? "bg-purple-900 border-black"
+                        : "bg-gray-100 border-gray-900"
+                    }  p-2 border-2  rounded-full h-full w-full shadow-md shadow-black/20 `}
+                  >
+                    <div className={`   transition-all duration-300 `}>
+                      <div className="w-full relative h-full flex justify-center items-center">
+                        {/* Frequency */}
+                        <AnimatePresence>
+                          {((checkIfAgentIsInline?.includes("INCALL") &&
+                            !checkIfAgentIsInline?.includes("DIAL") &&
+                            !checkIfAgentIsInline?.includes("DEAD")) ||
                             (checkIfAgentIsInline?.includes("PAUSED") &&
                               checkIfAgentIsInline?.includes("LAGGED") &&
-                              checkIfAgentIsInline?.includes("DISPO"))
-                              ? "bg-red-500 border-red-900 hover:scale-110 cursor-pointer "
-                              : "border-gray-900 cursor-not-allowed  bg-gray-400 "
-                          } transition-all text-white   p-2  rounded-full border-2  `}
-                          onClick={() => {
-                            {
-                              if (
-                                checkIfAgentIsInline?.includes(
-                                  "INCALL"
-                                ) ||
-                                (checkIfAgentIsInline?.includes(
-                                  "PAUSED"
-                                ) &&
-                                  checkIfAgentIsInline?.includes(
-                                    "LAGGED"
-                                  ) &&
-                                  checkIfAgentIsInline?.includes("DISPO"))
-                              ) {
-                                handleEndCall();
-                              }
-                            }
-                          }}
-                          title="End Call"
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            viewBox="0 0 24 24"
-                            fill="currentColor"
-                            className="size-5"
-                          >
-                            <path
-                              fillRule="evenodd"
-                              d="M15 3.75a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0V5.56l-4.72 4.72a.75.75 0 1 1-1.06-1.06l4.72-4.72h-2.69a.75.75 0 0 1-.75-.75Z"
-                              clipRule="evenodd"
-                            />
-                            <path
-                              fillRule="evenodd"
-                              d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z"
-                              clipRule="evenodd"
-                            />
-                          </svg>
-                        </div>
-                      </motion.div>
-                    )}
-                    {/* Mute and Unmute */}
-                    {/* {((data?.checkIfAgentIsInline?.includes("INCALL") &&
-                      !data?.checkIfAgentIsInline?.includes("DIAL") &&
-                      !data?.checkIfAgentIsInline?.includes("DEAD")) ||
-                      (data?.checkIfAgentIsInline?.includes("PAUSED") &&
-                        data?.checkIfAgentIsInline?.includes("LAGGED") &&
-                        data?.checkIfAgentIsInline?.includes("DISPO"))) && (
-                      <AnimatePresence>
-                        <motion.div
-                          className=" absolute left-1 top-28  "
-                          initial={{ x: 40, y: -40, opacity: 0 }}
-                          animate={{ x: 0, y: 0, opacity: 1 }}
-                          exit={{ x: 40, y: -40, opacity: 0 }}
-                          transition={{ type: "spring", delay: 0.4 }}
-                        >
-                          <div
-                            className={`  transition-all text-white bg-green-500 hover:scale-110 hover:bg-green-600 p-2 cursor-pointer rounded-full border-2 border-green-900 `}
-                            onClick={() => setMute(!mute)}
-                            title={mute ? "Unmute" : "Mute"}
-                          >
-                            {mute ? (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth="2.5"
-                                stroke="currentColor"
-                                className="size-4"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M19.114 5.636a9 9 0 0 1 0 12.728M16.463 8.288a5.25 5.25 0 0 1 0 7.424M6.75 8.25l4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"
-                                />
-                              </svg>
-                            ) : (
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth="2.5"
-                                stroke="currentColor"
-                                className="size-4"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M17.25 9.75 19.5 12m0 0 2.25 2.25M19.5 12l2.25-2.25M19.5 12l-2.25 2.25m-10.5-6 4.72-4.72a.75.75 0 0 1 1.28.53v15.88a.75.75 0 0 1-1.28.53l-4.72-4.72H4.51c-.88 0-1.704-.507-1.938-1.354A9.009 9.009 0 0 1 2.25 12c0-.83.112-1.633.322-2.396C2.806 8.756 3.63 8.25 4.51 8.25H6.75Z"
-                                />
-                              </svg>
-                            )}
-                          </div>
-                        </motion.div>
-                      </AnimatePresence>
-                    )} */}
-                    {/* Call Forwarding */}
-                    {/* <AnimatePresence>
-
-                      {((data?.checkIfAgentIsInline?.includes("INCALL") &&
-                        !data?.checkIfAgentIsInline?.includes("DIAL") &&
-                        !data?.checkIfAgentIsInline?.includes("DEAD")) ||
-                        (data?.checkIfAgentIsInline?.includes("PAUSED") &&
-                          data?.checkIfAgentIsInline?.includes("LAGGED") &&
-                          data?.checkIfAgentIsInline?.includes("DISPO"))) && (
-                        <motion.div
-                          className=" absolute left-1 -top-0  "
-                          initial={{ x: 40, y: 35, opacity: 0 }}
-                          animate={{ x: 0, y: 5, opacity: 1 }}
-                          exit={{ x: 40, y: 35, opacity: 0 }}
-                          transition={{ type: "spring", delay: 1 }}
-                        >
-                          <div
-                            className="bg-blue-500 transition-all text-white hover:scale-110 hover:bg-blue-600 p-2 cursor-pointer rounded-full border-2 border-blue-900"
-                            title="Call Forwarding"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              fill="none"
-                              viewBox="0 0 24 24"
-                              strokeWidth="3"
-                              stroke="currentColor"
-                              className="size-4"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                d="M7.5 21 3 16.5m0 0L7.5 12M3 16.5h13.5m0-13.5L21 7.5m0 0L16.5 12M21 7.5H7.5"
-                              />
-                            </svg>
-                          </div>
-                        </motion.div>
-                      )}
-                    </AnimatePresence> */}
-
-                    {/* Hold and Resume button */}
-                    {/* <AnimatePresence>
-                      {((data?.checkIfAgentIsInline?.includes("INCALL") &&
-                        !data?.checkIfAgentIsInline?.includes("DIAL") &&
-                        !data?.checkIfAgentIsInline?.includes("DEAD")) ||
-                        (data?.checkIfAgentIsInline?.includes("PAUSED") &&
-                          data?.checkIfAgentIsInline?.includes("LAGGED") &&
-                          data?.checkIfAgentIsInline?.includes("DISPO"))) && (
-                        <div>
-                          {!audioStatus && (
+                              checkIfAgentIsInline?.includes("DISPO"))) && (
                             <motion.div
-                              className=" absolute right-1 top-28"
-                              initial={{
-                                x: pause ? 0 : -40,
-                                y: pause ? 0 : -40,
-                                opacity: 0,
-                              }}
-                              animate={{ x: 0, y: 0, opacity: 1 }}
-                              exit={{
-                                x: pause ? 0 : -40,
-                                y: pause ? 0 : -40,
-                                opacity: 0,
-                              }}
-                              transition={{
-                                type: "spring",
-                                delay: pause ? 0 : 0.6,
-                              }}
-                              onClick={() => {
-                                setPause(false);
-                                haandleResumePauseCall("PLAY");
-                              }}
+                              key={"lottie-frequency-div"}
+                              initial={{ scale: 0.8, opacity: 0 }}
+                              animate={{ scale: 1, opacity: 1 }}
+                              exit={{ opacity: 0 }}
+                              layout
+                              className="absolute -top-0 p-3 rounded-md "
+                            >
+                              <Lottie animationData={frequency} />
+                            </motion.div>
+                          )}
+                        </AnimatePresence>
+                      </div>
+
+                      {/* Dialer phone */}
+                      <div className="absolute w-full font-black uppercase text-green-900 justify-evenly  cursor-grab flex flex-col  h-full items-center right-0 z-20 top-0">
+                        {((!isRing &&
+                          checkIfAgentIsInline?.includes("PAUSED")) ||
+                          (isRing &&
+                            checkIfAgentIsInline?.includes("INCALL")) ||
+                          (checkIfAgentIsInline?.includes("PAUSED") &&
+                            checkIfAgentIsInline?.includes("LAGGED") &&
+                            checkIfAgentIsInline?.includes("DISPO"))) && (
+                          <motion.div
+                            key={""}
+                            className="absolute -left-5 top-14.5 transition-al"
+                            initial={{ x: 40, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{ type: "spring", delay: 0.2 }}
+                          >
+                            <div
+                              onClick={handleUsingPhoneUI}
+                              className={`" ${
+                                !(
+                                  (checkIfAgentIsInline?.includes("PAUSED") &&
+                                    !checkIfAgentIsInline?.includes("LAGGED") &&
+                                    !checkIfAgentIsInline?.includes("DISPO")) ||
+                                  (checkIfAgentIsInline?.includes("PAUSED") &&
+                                    checkIfAgentIsInline?.includes("LAGGED") &&
+                                    !checkIfAgentIsInline?.includes("DISPO")) ||
+                                  (checkIfAgentIsInline?.includes("INCALL") &&
+                                    checkIfAgentIsInline?.includes("DEAD"))
+                                )
+                                  ? "bg-gray-400 border-gray-500 cursor-not-allowed "
+                                  : " hover:scale-110 cursor-pointer bg-green-500 hover:bg-green-600 border-green-900 "
+                              }  transition-all items-center justify-center flex p-2 text-white  rounded-full border-2 "`}
                             >
                               <div
-                                className="bg-red-500 transition-all text-white hover:scale-110 hover:bg-red-600 p-2 cursor-pointer rounded-full border-2 border-red-900"
-                                title="Pause"
+                                title={
+                                  !Boolean(selectedCustomer)
+                                    ? "Dial Next"
+                                    : "Re-Dial"
+                                }
                               >
                                 <svg
                                   xmlns="http://www.w3.org/2000/svg"
                                   viewBox="0 0 24 24"
                                   fill="currentColor"
-                                  className="size-4"
+                                  className="size-5"
                                 >
                                   <path
                                     fillRule="evenodd"
-                                    d="M6.75 5.25a.75.75 0 0 1 .75-.75H9a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H7.5a.75.75 0 0 1-.75-.75V5.25Zm7.5 0A.75.75 0 0 1 15 4.5h1.5a.75.75 0 0 1 .75.75v13.5a.75.75 0 0 1-.75.75H15a.75.75 0 0 1-.75-.75V5.25Z"
+                                    d="M19.5 9.75a.75.75 0 0 1-.75.75h-4.5a.75.75 0 0 1-.75-.75v-4.5a.75.75 0 0 1 1.5 0v2.69l4.72-4.72a.75.75 0 1 1 1.06 1.06L16.06 9h2.69a.75.75 0 0 1 .75.75Z"
+                                    clipRule="evenodd"
+                                  />
+                                  <path
+                                    fillRule="evenodd"
+                                    d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z"
                                     clipRule="evenodd"
                                   />
                                 </svg>
                               </div>
-                            </motion.div>
-                          )}
-                          {audioStatus?.includes("PLAY") &&
-                            audioStatus?.includes("SUCCESS") &&
-                            audioStatus && (
-                              <motion.div
-                                className="  absolute right-1 top-28 "
-                                initial={{ scale: 0.8, opacity: 0 }}
-                                animate={{ scale: 1, opacity: 1 }}
-                                exit={{ scale: 0.8, opacity: 0 }}
-                                transition={{ type: "spring" }}
-                                onClick={() => {
-                                  haandleResumePauseCall("STOP");
-                                  dispatch(setAudioStatus(null));
-                                }}
-                              >
-                                <div
-                                  className="bg-green-500 transition-all text-white hover:scale-110 hover:bg-green-600 p-2 cursor-pointer rounded-full border-2 border-green-900"
-                                  title="Continue"
-                                >
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="currentColor"
-                                    className="size-4"
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M4.5 5.653c0-1.427 1.529-2.33 2.779-1.643l11.54 6.347c1.295.712 1.295 2.573 0 3.286L7.28 19.99c-1.25.687-2.779-.217-2.779-1.643V5.653Z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
-                                </div>
-                              </motion.div>
-                            )}
-                        </div>
-                      )}
-                    </AnimatePresence> */}
-                    {/* Barging */}
-                    {/* <AnimatePresence>
-                      {((data?.checkIfAgentIsInline?.includes("INCALL") &&
-                        !data?.checkIfAgentIsInline?.includes("DIAL") &&
-                        !data?.checkIfAgentIsInline?.includes("DEAD")) ||
-                        (data?.checkIfAgentIsInline?.includes("PAUSED") &&
-                          data?.checkIfAgentIsInline?.includes("LAGGED") &&
-                          data?.checkIfAgentIsInline?.includes("DISPO"))) && (
-                        <div>
+                            </div>
+                          </motion.div>
+                        )}
+
+                        {/* End call */}
+                        {((!isRing &&
+                          checkIfAgentIsInline?.includes("PAUSED")) ||
+                          (isRing &&
+                            checkIfAgentIsInline?.includes("INCALL")) ||
+                          (checkIfAgentIsInline?.includes("PAUSED") &&
+                            checkIfAgentIsInline?.includes("LAGGED") &&
+                            checkIfAgentIsInline?.includes("DISPO"))) && (
                           <motion.div
-                            className=" absolute right-1 -top-0  "
-                            initial={{ x: -40, y: 40, opacity: 0 }}
-                            animate={{ x: -0, y: 5, opacity: 1 }}
-                            exit={{ x: -40, y: 40, opacity: 0 }}
-                            transition={{ type: "spring", delay: 0.8 }}
+                            className={`" absolute -right-5 top-14.5  "`}
+                            initial={{ x: -40, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            transition={{
+                              type: "spring",
+                              delay: isRing ? 1 : 0.4,
+                            }}
                           >
                             <div
-                              className="bg-orange-500 transition-all text-white hover:scale-110 hover:bg-orange-600 p-2 cursor-pointer rounded-full border-2 border-orange-900"
-                              title="Barging"
+                              className={` ${
+                                (isRing &&
+                                  checkIfAgentIsInline?.includes("INCALL")) ||
+                                (checkIfAgentIsInline?.includes("PAUSED") &&
+                                  checkIfAgentIsInline?.includes("LAGGED") &&
+                                  checkIfAgentIsInline?.includes("DISPO"))
+                                  ? "bg-red-500 border-red-900 hover:scale-110 cursor-pointer "
+                                  : "border-gray-900 cursor-not-allowed  bg-gray-400 "
+                              } transition-all text-white   p-2  rounded-full border-2  `}
+                              onClick={() => {
+                                {
+                                  if (
+                                    checkIfAgentIsInline?.includes("INCALL") ||
+                                    (checkIfAgentIsInline?.includes("PAUSED") &&
+                                      checkIfAgentIsInline?.includes(
+                                        "LAGGED"
+                                      ) &&
+                                      checkIfAgentIsInline?.includes("DISPO"))
+                                  ) {
+                                    handleEndCall();
+                                  }
+                                }
+                              }}
+                              title="End Call"
                             >
                               <svg
                                 xmlns="http://www.w3.org/2000/svg"
                                 viewBox="0 0 24 24"
                                 fill="currentColor"
-                                className="size-4"
+                                className="size-5"
                               >
-                                <path d="M4.913 2.658c2.075-.27 4.19-.408 6.337-.408 2.147 0 4.262.139 6.337.408 1.922.25 3.291 1.861 3.405 3.727a4.403 4.403 0 0 0-1.032-.211 50.89 50.89 0 0 0-8.42 0c-2.358.196-4.04 2.19-4.04 4.434v4.286a4.47 4.47 0 0 0 2.433 3.984L7.28 21.53A.75.75 0 0 1 6 21v-4.03a48.527 48.527 0 0 1-1.087-.128C2.905 16.58 1.5 14.833 1.5 12.862V6.638c0-1.97 1.405-3.718 3.413-3.979Z" />
-                                <path d="M15.75 7.5c-1.376 0-2.739.057-4.086.169C10.124 7.797 9 9.103 9 10.609v4.285c0 1.507 1.128 2.814 2.67 2.94 1.243.102 2.5.157 3.768.165l2.782 2.781a.75.75 0 0 0 1.28-.53v-2.39l.33-.026c1.542-.125 2.67-1.433 2.67-2.94v-4.286c0-1.505-1.125-2.811-2.664-2.94A49.392 49.392 0 0 0 15.75 7.5Z" />
+                                <path
+                                  fillRule="evenodd"
+                                  d="M15 3.75a.75.75 0 0 1 .75-.75h4.5a.75.75 0 0 1 .75.75v4.5a.75.75 0 0 1-1.5 0V5.56l-4.72 4.72a.75.75 0 1 1-1.06-1.06l4.72-4.72h-2.69a.75.75 0 0 1-.75-.75Z"
+                                  clipRule="evenodd"
+                                />
+                                <path
+                                  fillRule="evenodd"
+                                  d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z"
+                                  clipRule="evenodd"
+                                />
                               </svg>
                             </div>
                           </motion.div>
-                        </div>
-                      )}
-                    </AnimatePresence> */}
-                  </div>
-                </div>
+                        )}
+                      </div>
+                    </div>
 
-                {/* Middle Phone */}
+                    {/* Middle Phone */}
 
-                {(!isRing ||
-                  (isRing && checkIfAgentIsInline?.includes("PAUSED")) ||
-                  (isRing &&
-                    checkIfAgentIsInline?.includes("INCALL") &&
-                    !checkIfAgentIsInline?.includes("DIAL"))) && (
-                  <Lottie
-                    animationData={phone}
-                    loop={
-                      isRing &&
-                      checkIfAgentIsInline?.includes("PAUSED") &&
-                      !checkIfAgentIsInline?.includes("LAGGED") &&
-                      !checkIfAgentIsInline?.includes("DISPO")
-                    }
-                    autoplay={
-                      isRing &&
-                      checkIfAgentIsInline?.includes("PAUSED") &&
-                      !checkIfAgentIsInline?.includes("LAGGED") &&
-                      !checkIfAgentIsInline?.includes("DISPO")
-                    }
-                  />
-                )}
-
-                {isRing &&
-                  checkIfAgentIsInline?.includes("INCALL") &&
-                  checkIfAgentIsInline?.includes("DIAL") && (
-                    <div
-                      style={{
-                        filter:
-                          "invert(10%) sepia(94%) saturate(7475%) hue-rotate(350deg) brightness(100%) contrast(100%)",
-                      }}
-                    >
+                    {(!isRing ||
+                      (isRing && checkIfAgentIsInline?.includes("PAUSED")) ||
+                      (isRing &&
+                        checkIfAgentIsInline?.includes("INCALL") &&
+                        !checkIfAgentIsInline?.includes("DIAL"))) && (
                       <Lottie
                         animationData={phone}
                         loop={
                           isRing &&
-                          checkIfAgentIsInline?.includes("INCALL") &&
-                          checkIfAgentIsInline?.includes("DIAL")
+                          checkIfAgentIsInline?.includes("PAUSED") &&
+                          !checkIfAgentIsInline?.includes("LAGGED") &&
+                          !checkIfAgentIsInline?.includes("DISPO")
                         }
                         autoplay={
                           isRing &&
-                          checkIfAgentIsInline?.includes("INCALL") &&
-                          checkIfAgentIsInline?.includes("DIAL")
+                          checkIfAgentIsInline?.includes("PAUSED") &&
+                          !checkIfAgentIsInline?.includes("LAGGED") &&
+                          !checkIfAgentIsInline?.includes("DISPO")
                         }
                       />
-                    </div>
-                  )}
-              </div>
+                    )}
+
+                    {isRing &&
+                      checkIfAgentIsInline?.includes("INCALL") &&
+                      checkIfAgentIsInline?.includes("DIAL") && (
+                        <div
+                          style={{
+                            filter:
+                              "invert(10%) sepia(94%) saturate(7475%) hue-rotate(350deg) brightness(100%) contrast(100%)",
+                          }}
+                        >
+                          <Lottie
+                            animationData={phone}
+                            loop={
+                              isRing &&
+                              checkIfAgentIsInline?.includes("INCALL") &&
+                              checkIfAgentIsInline?.includes("DIAL")
+                            }
+                            autoplay={
+                              isRing &&
+                              checkIfAgentIsInline?.includes("INCALL") &&
+                              checkIfAgentIsInline?.includes("DIAL")
+                            }
+                          />
+                        </div>
+                      )}
+                  </div>
+                </>
+              )}
             </motion.div>
           )}
         </div>

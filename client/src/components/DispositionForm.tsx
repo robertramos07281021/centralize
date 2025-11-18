@@ -871,14 +871,14 @@ const DispositionForm: React.FC<Props> = ({
                               findDispoName?.contact_methods ?? {};
 
                             return (
-                              data.contact_method &&
+                              (data.contact_method &&
                               findDispoName?.active &&
                               findDispoName?.buckets?.includes(
                                 selectedCustomer?.account_bucket?._id
                               ) &&
                               dispoCM[
                                 data?.contact_method as keyof typeof dispoCM
-                              ] && (
+                              ]) && (
                                 <option
                                   value={key}
                                   key={index}
@@ -1354,7 +1354,7 @@ const DispositionForm: React.FC<Props> = ({
                             setIsOpen(false);
                           }}
                         >
-                          {label} {value}
+                          {label}
                         </div>
                       );
                     })}

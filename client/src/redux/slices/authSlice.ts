@@ -178,6 +178,7 @@ const authSlice = createSlice({
       state.onCall = false;
       state.deadCall = false;
       state.mobileToCall = null;
+      state.isRing = false
     },
     setCallUniqueId: (state, action: PayloadAction<string | null>) => {
       state.callUniqueId = action.payload;

@@ -15,7 +15,6 @@ type AgentProdPerDay = {
   date: number;
   ptp: number;
   ptp_kept: number;
-  paid: number;
   variance: number;
 };
 
@@ -26,7 +25,6 @@ const AGENT_PER_DAY_PROD = gql`
       date
       ptp
       ptp_kept
-      paid
     }
   }
 `;

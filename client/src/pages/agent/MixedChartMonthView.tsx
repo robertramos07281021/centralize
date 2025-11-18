@@ -14,7 +14,6 @@ type AgentProdPerMonth = {
     month: number
     ptp: number
     ptp_kept: number
-    paid: number
     variance: number
 }
 const AGENT_PER_MONTH_PROD = gql`
@@ -24,7 +23,6 @@ const AGENT_PER_MONTH_PROD = gql`
       month
       ptp
       ptp_kept
-      paid
     }
   }
 `
@@ -48,8 +46,6 @@ export default function MixedChartMonthView() {
   }[]= [
     { label: "PTP", key: "ptp", color: color[2], type: "bar" },
     { label: "Kept", key: "ptp_kept", color: color[7], type: "bar" },
-    // { label: "Paid Collected", key: "paid", color: color[15], type: "bar" },
-    // { label: "Collected", key: "total", color: "#000", type: "line" },
     { label: "Variance", key: "variance", color: "red", type: "line" },
   ];
 

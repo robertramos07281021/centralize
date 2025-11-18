@@ -77,6 +77,10 @@ const color = {
     title: "bg-yellow-800",
     button: "bg-yellow-800 hover:bg-yellow-800 focus:ring-yellow-800",
   },
+  DIAL: {
+    title: "bg-orange-500",
+    button: "bg-orange-500 hover:bg-orange-600 focus:ring-orange-300",
+  }
 };
 
 type toggleType = keyof typeof color;

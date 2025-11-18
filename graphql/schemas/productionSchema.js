@@ -9,25 +9,14 @@ const productionTypeDefs = gql`
 
   type PerDay {
     date: Int
-    calls: Float
-    sms: Float
-    email: Float
-    skip: Float
-    field: Float
     ptp_kept: Float
-    paid: Float
     ptp: Float
     total: Float
   }
   type perMonth {
     month: Int
-    calls: Float
-    sms: Float
-    email: Float
-    skip: Float
-    field: Float
+
     ptp_kept: Float
-    paid: Float
     ptp: Float
     total: Float
   }
@@ -39,13 +28,8 @@ const productionTypeDefs = gql`
   type DailyCollection {
     ptp_amount: Float
     ptp_count: Int
-    ptp_yesterday: Float
     ptp_kept_amount: Float
     ptp_kept_count: Int
-    ptp_kept_yesterday: Float
-    paid_amount: Float
-    paid_count: Int
-    paid_yesterday: Float
   }
   type Login {
     success: Boolean
@@ -72,6 +56,7 @@ const productionTypeDefs = gql`
     type: String
     existing: Boolean
     start: String
+    end: String
   }
 
   type AgentProduction {
@@ -148,6 +133,7 @@ const productionTypeDefs = gql`
     agentProduction:MyProduction
     getAgentDispositionRecords(agentID:ID, limit:Int, page:Int, from:String, to:String, search: String, dispotype: [String], ccsCalls: Boolean!):AgentDispo
     monthlyWeeklyCollected:Collected
+    getAllAgentProductions(bucketId:ID, from: String, to: String):Success
   }
 
   type Mutation {

@@ -1,9 +1,8 @@
-import { IoMdCloseCircleOutline } from "react-icons/io";
 import { CurrentDispo } from "../middleware/types";
 import { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 
 type OSD = {
   principal_os: number;
@@ -68,11 +67,11 @@ const FieldsComponents = ({
   }
   return (
     <div>
-      <h1 className="text-base font-medium text-gray-700">{label} :</h1>
+      <h1 className="text-base font-black uppercase text-black">{label} :</h1>
       <div
         className={`${
-          newValue ? "p-2" : "p-5 bg-slate-100"
-        } border rounded-md border-slate-500 text-slate-900 font-light`}
+          newValue ? "p-2" : "p-5 "
+        } border rounded-md border-black bg-gray-100 text-black font-light`}
       >
         {newValue}
       </div>
@@ -113,35 +112,46 @@ const AccountHistoriesView: React.FC<ComponentProps> = ({
     return () => document.removeEventListener("keydown", handleKeyDown);
   }, [setShowMore, close, showMore]);
 
-
   return (
     <div className="w-full h-full">
-      {showMore && (
-        <div className="absolute top-0 left-0 bg-black/20 backdrop-blur-xs w-full h-full z-50 flex justify-center p-5">
-          <IoMdCloseCircleOutline
-            className="text-5xl absolute top-4 right-5 hover:scale-110 cursor-pointer hover:text-black text-white hidden lg:block"
-            onClick={() => {
-              setShowMore(false);
-              setSelectedHistory(null);
-            }}
-          />
-          <div className="min-h-96 border lg:w-1/2 w-full bg-white rounded-lg border-slate-400 p-10 flex flex-col relative">
-            <IoMdCloseCircleOutline
-              className="text-5xl  absolute top-4 right-5 hover:scale-110 cursor-pointer hover:text-black text-black lg:hidden block"
-              onClick={() => {
-                setShowMore(false);
-                setSelectedHistory(null);
-              }}
-            />
-            <h1 className="text-3xl font-medium text-gray-600">
-              {selectedHistory?.account_callfile.name}
-            </h1>
-            <h1 className="text-lg text-gray-600 font-medium">
-              {selectedHistory?.account_bucket.name}
-            </h1>
-            <div className="h-full flex flex-col">
-              <div className="flex gap-10 mt-5">
-                <div className="w-full flex gap-2 flex-col">
+      <AnimatePresence>
+        {showMore && (
+          <motion.div className="absolute top-0 z-60  left-0 bg-black/20 backdrop-blur-xs w-full h-full  flex justify-center p-5"
+            initial={{ opacity: 0}}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }} 
+          >
+            <div className=" border bg-white rounded-lg border-black p-10 flex flex-col relative">
+              <div
+                className="p-1 bg-red-500 absolute top-5 right-5 z- hover:bg-red-600 transition-all shadow-md cursor-pointer rounded-full border-2 border-red-800 text-white  "
+                onClick={() => {
+                  setShowMore(false);
+                  setSelectedHistory(null);
+                }}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2.5"
+                  stroke="currentColor"
+                  className="size-6"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18 18 6M6 6l12 12"
+                  />
+                </svg>
+              </div>
+              <h1 className="text-2xl font-black text-black">
+                {selectedHistory?.account_callfile.name}
+              </h1>
+              <h1 className="text-md text-black font-black">
+                {selectedHistory?.account_bucket.name}
+              </h1>
+              <div className=" flex flex-col">
+                <div className="grid grid-cols-3  gap-2 mt-5">
                   <FieldsComponents
                     label="Case ID"
                     value={selectedHistory?.case_id}
@@ -151,8 +161,6 @@ const AccountHistoriesView: React.FC<ComponentProps> = ({
                     value={selectedHistory?.endorsement_date}
                   />
                   <FieldsComponents label="DPD" value={selectedHistory?.dpd} />
-                </div>
-                <div className="w-full flex gap-2 flex-col">
                   <FieldsComponents
                     label="Balance"
                     value={selectedHistory?.balance}
@@ -166,86 +174,86 @@ const AccountHistoriesView: React.FC<ComponentProps> = ({
                     value={selectedHistory?.out_standing_details.total_os}
                   />
                 </div>
-              </div>
-              <div className="h-full mt-5 flex gap-2 flex-col">
-                <h1 className="text-2xl font-medium text-slate-600">
-                  Existing Disposition
-                </h1>
+                <div className=" mt-5 flex gap-2 flex-col">
+                  <h1 className="text-md uppercase font-black text-black">
+                    Existing Disposition
+                  </h1>
 
-                <fieldset className="flex w-full gap-10 border p-2 rounded-md border-slate-500">
-                  <legend className="px-2 text-lg font-medium text-slate-700 ">
-                    Agent Info
-                  </legend>
-                  <div className="w-full">
-                    <FieldsComponents
-                      label="Name"
-                      value={selectedHistory?.user.name.toUpperCase()}
-                    />
-                  </div>
-                  <div className="w-full">
-                    <FieldsComponents
-                      label="SIP ID"
-                      value={selectedHistory?.user.user_id}
-                    />
-                  </div>
-                </fieldset>
-                <div className="h-full flex gap-10">
-                  <div className="w-full flex flex-col gap-2">
-                    <FieldsComponents
-                      label="Time Stamp"
-                      value={date(selectedHistory?.cd?.createdAt || "")}
-                    />
-                    <FieldsComponents
-                      label="Amount"
-                      value={selectedHistory?.cd.amount}
-                    />
-                    <FieldsComponents
-                      label="Contact Method"
-                      value={selectedHistory?.cd.contact_method.toUpperCase()}
-                    />
-                    <FieldsComponents
-                      label="Comment"
-                      value={selectedHistory?.cd.comment}
-                    />
-                  </div>
-                  <div className="w-full flex gap-2 flex-col">
-                    <FieldsComponents
-                      label="Disposition: "
-                      value={selectedHistory?.dispotype.name}
-                    />
-                    <FieldsComponents
-                      label="Payment"
-                      value={selectedHistory?.cd?.payment?.toString() || ""}
-                    />
-                    {selectedHistory?.cd.chatApp && (
+                  <fieldset className="flex w-full gap-2 border px-4 py-2 rounded-md border-black">
+                    <legend className="px-2 uppercase text-lg font-black text-black ">
+                      Agent Info
+                    </legend>
+                    <div className="w-full">
                       <FieldsComponents
-                        label="Chat App"
-                        value={selectedHistory?.cd?.chatApp.toUpperCase()}
+                        label="Name"
+                        value={selectedHistory?.user.name.toUpperCase()}
                       />
-                    )}
-                    {selectedHistory?.cd.sms && (
+                    </div>
+                    <div className="w-full">
                       <FieldsComponents
-                        label="SMS"
-                        value={selectedHistory?.cd?.sms.toUpperCase()}
+                        label="SIP ID"
+                        value={selectedHistory?.user.user_id}
                       />
-                    )}
-                    {selectedHistory?.cd.dialer && (
+                    </div>
+                  </fieldset>
+                  <div className=" flex gap-2">
+                    <div className="w-full flex flex-col gap-2">
                       <FieldsComponents
-                        label="Dialer"
-                        value={selectedHistory?.cd?.dialer.toUpperCase()}
+                        label="Time Stamp"
+                        value={date(selectedHistory?.cd?.createdAt || "")}
                       />
-                    )}
-                    <FieldsComponents
-                      label="RFD"
-                      value={selectedHistory?.cd?.RFD?.toString() || ""}
-                    />
+                      <FieldsComponents
+                        label="Amount"
+                        value={selectedHistory?.cd.amount}
+                      />
+                      <FieldsComponents
+                        label="Contact Method"
+                        value={selectedHistory?.cd.contact_method.toUpperCase()}
+                      />
+                      <FieldsComponents
+                        label="Comment"
+                        value={selectedHistory?.cd.comment}
+                      />
+                    </div>
+                    <div className="w-full flex gap-2 flex-col">
+                      <FieldsComponents
+                        label="Disposition: "
+                        value={selectedHistory?.dispotype.name}
+                      />
+                      <FieldsComponents
+                        label="Payment"
+                        value={selectedHistory?.cd?.payment?.toString() || ""}
+                      />
+                      {selectedHistory?.cd.chatApp && (
+                        <FieldsComponents
+                          label="Chat App"
+                          value={selectedHistory?.cd?.chatApp.toUpperCase()}
+                        />
+                      )}
+                      {selectedHistory?.cd.sms && (
+                        <FieldsComponents
+                          label="SMS"
+                          value={selectedHistory?.cd?.sms.toUpperCase()}
+                        />
+                      )}
+                      {selectedHistory?.cd.dialer && (
+                        <FieldsComponents
+                          label="Dialer"
+                          value={selectedHistory?.cd?.dialer.toUpperCase()}
+                        />
+                      )}
+                      <FieldsComponents
+                        label="RFD"
+                        value={selectedHistory?.cd?.RFD?.toString() || ""}
+                      />
+                    </div>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
-        </div>
-      )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="w-full h-full z-50 gap-5 absolute top-0 left-0 bg-black/50 backdrop-blur-[2px] p-5">
         <motion.div
@@ -285,7 +293,7 @@ const AccountHistoriesView: React.FC<ComponentProps> = ({
           <div className="h-full overflow-y-auto">
             <div className="w-full table-auto">
               <div className=" text-black py-2 font-black uppercase items-center gap-2 px-2 border grid grid-cols-10 rounded-t-md text-sm text-left select-none bg-gray-300">
-                <div className="">Callfile</div>
+                <div className="">Callfile name</div>
                 <div className="truncate">Case ID / PN / Account ID</div>
                 <div className=" ">Principal</div>
                 <div className=" ">OB</div>
@@ -312,47 +320,75 @@ const AccountHistoriesView: React.FC<ComponentProps> = ({
                   return (
                     <div
                       key={oa._id}
-                      className="text-gray-600 text-left select-none even:bg-gray-50  text-sm"
+                      className="grid grid-cols-10 gap-2 px-2 py-1 hover:bg-gray-300 transition-all text-black items-center text-left select-none odd:bg-gray-200 even:bg-gray-100 border-x border-b border-black last:rounded-b-md last:shadow-md text-sm"
                     >
-                      <div className="pl-5">{oa.account_callfile.name}</div>
-                      <div className="pl-5">{oa.case_id}</div>
-                      <div className="pl-5">
-                        {oa.out_standing_details.principal_os.toLocaleString(
-                          "en-PH",
-                          { style: "currency", currency: "PHP" }
+                      <div className="">{oa.account_callfile?.name || "-"}</div>
+
+                      <div className="">{oa.case_id || "-"}</div>
+
+                      <div className="">
+                        {oa.out_standing_details?.principal_os != null
+                          ? oa.out_standing_details.principal_os.toLocaleString(
+                              "en-PH",
+                              {
+                                style: "currency",
+                                currency: "PHP",
+                              }
+                            )
+                          : "-"}
+                      </div>
+
+                      <div className="">
+                        {oa.out_standing_details?.total_os != null
+                          ? oa.out_standing_details.total_os.toLocaleString(
+                              "en-PH",
+                              {
+                                style: "currency",
+                                currency: "PHP",
+                              }
+                            )
+                          : "-"}
+                      </div>
+
+                      <div className="">
+                        {oa.balance != null ? (
+                          oa.balance.toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })
+                        ) : (
+                          <div className="text-gray-400 italic text-xs">
+                            No balance
+                          </div>
                         )}
                       </div>
-                      <div className="pl-5">
-                        {oa.out_standing_details.total_os.toLocaleString(
-                          "en-PH",
-                          { style: "currency", currency: "PHP" }
+
+                      <div className="">{oa.dispotype?.name || "-"}</div>
+
+                      <div className="">{oa.cd?.contact_method || "-"}</div>
+
+                      <div className="">
+                        {oa.cd?.contact_method === "calls" &&
+                          (oa.cd?.dialer || "-")}
+                        {oa.cd?.contact_method === "sms" && (oa.cd?.sms || "-")}
+                        {(oa.cd?.contact_method === "email" ||
+                          oa.cd?.contact_method === "field") &&
+                          "-"}
+                        {oa.cd?.contact_method === "skip" &&
+                          (oa.cd?.chatApp || "-")}
+
+                        {oa.cd?.contact_method && (
+                          <div className="text-gray-400 italic text-xs">
+                            No communication app
+                          </div>
                         )}
                       </div>
-                      <div className="pl-5">
-                        {oa.balance.toLocaleString("en-PH", {
-                          style: "currency",
-                          currency: "PHP",
-                        })}
-                      </div>
-                      <div className="pl-5 py-1.5">{oa.dispotype.name}</div>
-                      <div className="pl-5 py-1.5">{oa.cd.contact_method}</div>
-                      {oa.cd.contact_method === "calls" && (
-                        <div className="pl-5 py-1.5">{oa.cd.dialer}</div>
-                      )}
-                      {oa.cd.contact_method === "sms" && (
-                        <div className="pl-5 py-1.5">{oa.cd.sms}</div>
-                      )}
-                      {oa.cd.contact_method === "email" ||
-                        (oa.cd.contact_method === "field" && (
-                          <div className="pl-5 py-1.5">-</div>
-                        ))}
-                      {oa.cd.contact_method === "skip" && (
-                        <div className="pl-5 py-1.5">{oa.cd.chatApp}</div>
-                      )}
-                      <div className="capitalize">{oa.user.name}</div>
-                      <div className="py-1.5">
+
+                      <div className="capitalize">{oa.user?.name || "-"}</div>
+
+                      <div className="">
                         <button
-                          className="px-7 py-2 text-sm lg:text-base font-medium bg-orange-500 text-white rounded-md hover:bg-orange-700 cursor-pointer"
+                          className="px-5 py-1 text-sm border-2 border-orange-800 lg:text-base font-black uppercase bg-orange-500 text-white rounded-md hover:bg-orange-600 cursor-pointer"
                           onClick={() => {
                             setShowMore(true);
                             setSelectedHistory(oa);

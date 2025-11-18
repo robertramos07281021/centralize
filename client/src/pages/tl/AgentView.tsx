@@ -22,6 +22,7 @@ const TL_AGENT = gql`
       active
       attempt_login
       callfile_id
+      vici_id
       buckets {
         name
       }
@@ -64,6 +65,7 @@ type TLAgent = {
   buckets: Bucket[];
   departments: Department[];
   targets?: Target;
+  vici_id: string;
 };
 
 const AGENT_PRODUCTION = gql`
@@ -241,6 +243,32 @@ const AgentView = () => {
   const [updateSetTargets, setUpdateSetTarget] = useState<boolean>(false);
   const [bucketTargetModal, setBucketTargetModal] = useState<boolean>(false);
 
+  useEffect(() => {
+    if (!tlAgentData?.findDeptAgents) return;
+
+    let filtered = tlAgentData.findDeptAgents;
+    if (search.trim() !== "") {
+      filtered = filtered.filter(
+        (e) =>
+          e.user_id.includes(search) ||
+          e.name.toLowerCase().includes(search.toLowerCase()) ||
+          e.buckets.some((bucket) =>
+            bucket.name.toLowerCase().includes(search.toLowerCase())
+          ) ||
+          e.departments.some((dept) =>
+            dept.name.toLowerCase().includes(search.toLowerCase())
+          )
+      );
+    }
+    if (option === 50) {
+      filtered = filtered.filter((e) => e.isOnline);
+    } else if (option === 95) {
+      filtered = filtered.filter((e) => !e.isOnline);
+    }
+
+    setAgentProduction(filtered);
+  }, [search, tlAgentData, option]);
+
   const unlockingUser = useCallback(
     async (userId: string | null) => {
       await unlockUser({ variables: { id: userId } });
@@ -268,8 +296,7 @@ const AgentView = () => {
     (
       userId: string | null,
       lock: boolean,
-      eventMethod: keyof typeof ButtonType,
-
+      eventMethod: keyof typeof ButtonType
     ) => {
       const message = eventMethod.toLowerCase();
       if (
@@ -289,7 +316,7 @@ const AgentView = () => {
         });
       }
     },
-    [, setAuthentication, setIsAuthorize]
+    [eventType, setAuthentication, setIsAuthorize]
   );
 
   return (
@@ -447,9 +474,7 @@ const AgentView = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
               className="shadow-md"
-              onClick={() =>
-                onClickAction(null, false, ButtonType.SET_TARGETS)
-              }
+              onClick={() => onClickAction(null, false, ButtonType.SET_TARGETS)}
             >
               <div className="right-5 px-5 py-2 text-sm bg-orange-500 transition-all rounded-md text-orange-900 border-2 cursor-pointer font-black uppercase  border-orange-800 hover:bg-orange-600">
                 Set Targets
@@ -466,7 +491,7 @@ const AgentView = () => {
         >
           <div className="grid px-2 border rounded-t-md gap-2 border-gray-600 grid-cols-11 font-black uppercase  text-slate-800 bg-gray-300 ">
             <div className=" py-1 flex items-center">Name</div>
-            <div className="py-1 truncate flex items-center">Agent ID</div>
+            <div className="py-1 truncate flex items-center">VICI ID</div>
             <div className="py-1 truncate flex items-center">Callfile ID</div>
             <div className="py-1 truncate flex items-center">Bucket</div>
             <div className="py-1 truncate flex items-center">Campaign</div>
@@ -510,9 +535,9 @@ const AgentView = () => {
                         <div className="items-center hover:bg-gray-300 transition-all gap-2 px-2 py-2 grid grid-cols-11 lg:text-xs 2xl:text-sm text-gray-800 font-normal">
                           <div className="capitalize truncate">{e.name}</div>
                           <div>
-                            {e.user_id || (
+                            {e.vici_id || (
                               <div className="text-gray-400 italic text-xs">
-                                No agent ID
+                                No vici ID
                               </div>
                             )}
                           </div>
@@ -554,7 +579,7 @@ const AgentView = () => {
                                   onClickAction(
                                     e._id,
                                     e.isLock,
-                                    ButtonType.UNLOCK,
+                                    ButtonType.UNLOCK
                                   )
                                 }
                                 className=" bg-red-700 cursor-pointer hover:bg-red-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-red-900 text-white"
@@ -670,40 +695,9 @@ const AgentView = () => {
                             </div>
                           </div>
                           <div className="flex flex-row justify-end text-white gap-1">
-                            {/* <div
-                              onClick={() =>
-                                onClickAction(
-                                  e._id,
-                                  e.isLock,
-                                  ButtonType.UNLOCK,
-                                  e.attempt_login
-                                )
-                              }
-                              className=" w-hull flex justify-center hover:bg-blue-700 transition-all items-center border-2 border-blue-800 bg-blue-600 cursor-pointer rounded-sm h-full py-1"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth="2"
-                                stroke="currentColor"
-                                className="size-4"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M15.75 5.25a3 3 0 0 1 3 3m3 0a6 6 0 0 1-7.029 5.912c-.563-.097-1.159.026-1.563.43L10.5 17.25H8.25v2.25H6v2.25H2.25v-2.818c0-.597.237-1.17.659-1.591l6.499-6.499c.404-.404.527-1 .43-1.563A6 6 0 1 1 21.75 8.25Z"
-                                />
-                              </svg>
-                            </div> */}
-                          
                             <div
                               onClick={() =>
-                                onClickAction(
-                                  e._id,
-                                  e.isLock,
-                                  ButtonType.SET
-                                )
+                                onClickAction(e._id, e.isLock, ButtonType.SET)
                               }
                               className=" w-hull flex px-2 justify-center hover:bg-orange-700 transition-all items-center border-2 border-orange-800 bg-orange-600 cursor-pointer rounded-sm h-full py-1"
                             >

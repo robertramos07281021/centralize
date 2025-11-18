@@ -9,13 +9,8 @@ import { motion } from "framer-motion";
 type DailyCollection = {
   ptp_amount: number;
   ptp_count: number;
-  ptp_yesterday: number;
   ptp_kept_amount: number;
   ptp_kept_count: number;
-  ptp_kept_yesterday: number;
-  paid_amount: number;
-  paid_count: number;
-  paid_yesterday: number;
 };
 
 const AGENT_DAILY_COLLECTIONS = gql`
@@ -23,13 +18,8 @@ const AGENT_DAILY_COLLECTIONS = gql`
     getAgentDailyCollection {
       ptp_amount
       ptp_count
-      ptp_yesterday
       ptp_kept_amount
       ptp_kept_count
-      ptp_kept_yesterday
-      paid_amount
-      paid_count
-      paid_yesterday
     }
   }
 `;

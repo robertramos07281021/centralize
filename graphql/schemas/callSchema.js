@@ -10,6 +10,7 @@ const callTypeDefs = gql`
     getUsersLogginOnVici(bucket:ID!):String
     isAutoDial:Boolean
     checkIfCallfileAutoIsDone(callfile:ID):Boolean
+    getBargingStatus(vici_id:String):String
   }  
 
   type Mutation {
@@ -18,7 +19,7 @@ const callTypeDefs = gql`
     endAndDispoCall:Success
     getCallRecording(user_id: ID!,mobile:String!):String
     bargeCall(session_id:String,viciUser_id: String):String
-  
+    updateDialNext(callfile:ID!):Success
   }
   
 `

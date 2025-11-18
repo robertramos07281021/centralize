@@ -198,6 +198,18 @@ const callfileResolver = {
                                   regex: "^09\\d{9}$",
                                 },
                               },
+                              {
+                                $regexMatch: {
+                                  input: { $toString: "$$num" },
+                                  regex: "^9\\d{9}$",
+                                },
+                              },
+                              {
+                                $regexMatch: {
+                                  input: { $toString: "$$num" },
+                                  regex: "^639\\d{9}$",
+                                },
+                              },
                             ],
                           },
                         },

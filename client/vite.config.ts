@@ -16,11 +16,11 @@ export default defineConfig({
         secure: false,
       },
     },
-    hmr: {
-      protocol: "ws",
-      host: "172.16.24.31",
-      port: 3000,
-    },
+    // hmr: {
+    //   protocol: "ws",
+    //   host: "localhost",
+      // port: 3000,
+    // },
   },
   build: {
     chunkSizeWarningLimit: 2000,

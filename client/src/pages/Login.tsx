@@ -180,6 +180,7 @@ const Login = () => {
       }
     }
   `;
+
   const snowflakes = useMemo<Snowflake[]>(
     () =>
       Array.from({ length: 120 }, (_, index) => {
@@ -236,7 +237,7 @@ const Login = () => {
       }
     },
     onError: async (error) => {
-      console.log(error)
+      console.log(error);
       await persistor.purge();
       const errorMessage = ["Invalid", "Already", "Lock"];
       if (!errorMessage.includes(error.message)) {

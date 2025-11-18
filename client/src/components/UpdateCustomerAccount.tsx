@@ -11,6 +11,7 @@ import {
 import { useSelector } from "react-redux";
 import { AccountUpdateHistory } from "../middleware/types";
 import { motion, AnimatePresence } from "framer-motion";
+import { OutStandingDetails } from "../middleware/types";
 
 type CustomerProps = {
   cancel: () => void;
@@ -59,31 +60,35 @@ const UPDATE_ACCOUNT_INFO = gql`
     }
   }
 `;
-type outStandingDetails = {
-  principal_os: number;
-  interest_os: number;
-  admin_fee_os: number;
-  txn_fee_os: number;
-  late_charge_os: number;
-  dst_fee_os: number;
-  total_os: number;
-  waive_fee_os: number;
-  late_charge_waive_fee_os: number;
-  writeoff_balance: number;
-  overall_balance: number;
-  cf: number;
-  mo_balance: number;
-  pastdue_amount: number;
-  mo_amort: number;
-  partial_payment_w_service_fee: number;
-  new_tad_with_sf: number;
-  new_pay_off: number;
-  service_fee: number;
-};
-
+// type outStandingDetails = {
+//   principal_os: number;
+//   interest_os: number;
+//   admin_fee_os: number;
+//   txn_fee_os: number;
+//   late_charge_os: number;
+//   dst_fee_os: number;
+//   total_os: number;
+//   waive_fee_os: number;
+//   late_charge_waive_fee_os: number;
+//   writeoff_balance: number;
+//   overall_balance: number;
+//   cf: number;
+//   mo_balance: number;
+//   pastdue_amount: number;
+//   mo_amort: number;
+//   partial_payment_w_service_fee: number;
+//   new_tad_with_sf: number;
+//   new_pay_off: number;
+//   service_fee: number;
+//   last_payment_date: string | null;
+//   last_payment_amount: number | null;
+//   model: string | null;
+//   brand: string | null;
+//   yearts: number | null;
+// };
 type CustomerAccount = {
   balance: number;
-  out_standing_details: outStandingDetails;
+  out_standing_details: OutStandingDetails;
   account_update_history: AccountUpdateHistory[];
 };
 

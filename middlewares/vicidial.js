@@ -189,12 +189,14 @@ export async function getUserInfo(vici_id, agent_user) {
     });
     return data;
   } catch (error) {
+    console.log(agent_user)
     console.error("❌ Error Get UserInfo:", error.message);
   }
 }
 
 export async function getLoggedInUser(vici_id) {
   const VICIDIAL_API = `http://${vici_id}/vicidial/non_agent_api.php`;
+
   try {
     const { data } = await axios.get(VICIDIAL_API, {
       params: {
@@ -229,7 +231,6 @@ export async function bargeUser(vici_id, session_id, barger_phone) {
       },
     });
 
-    console.log(res.data);
     return res.data;
   } catch (error) {
     console.error("❌ Error Get bargeUser:", error.message);

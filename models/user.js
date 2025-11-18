@@ -80,6 +80,9 @@ const userSchema = new Schema(
     vici_id: {
       type: String,
     },
+    softphone: {
+      type: String,
+    },
     targets: {
       daily: {
         type: Number,

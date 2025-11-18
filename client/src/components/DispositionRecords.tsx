@@ -90,6 +90,8 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
     ? checkingOnly[0]._id === findExisting?._id
     : null;
 
+  console.log(findExisting);
+
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === "Escape") {
@@ -145,7 +147,7 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
                   <div className="">User</div>
                   <div className="">Date</div>
                   <div className=" ">Disposition</div>
-                  <div className=" text-nowrap">CM</div>
+                  <div className=" truncate">Contact Method</div>
                   <div className=" ">Amount</div>
                   <div className=" text-nowrap">Ref No.</div>
                   <div className=" ">Payment</div>
@@ -168,34 +170,54 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
                 )}
 
                 {findExisting && (
-                  <div className="text-gray-600 border-b border-x border-black shadow-md gap-2 items-center text-left select-none grid grid-cols-13 bg-gray-100 lg:text-xs 2xl:text-sm">
-                    <div className="pl-5 capitalize text-nowrap">
+                  <div className="text-gray-600 border-b py-1 border-x border-black shadow-md gap-2 items-center text-left select-none grid grid-cols-13 bg-gray-100 lg:text-xs 2xl:text-sm">
+                    <div className="pl-5 capitalize ">
                       Current{" "}
                       {checkIfExistingIsLatest && <span> - Latest</span>}
                     </div>
-                    <div className=" capitalize text-nowrap truncate pr-1">
+                    <div className=" capitalize  pr-1">
                       {agentObject[findExisting.user]}
                     </div>
-                    <div className=" ">
-                      {date(findExisting.createdAt)}
-                    </div>
+                    <div className=" ">{date(findExisting.createdAt)}</div>
                     <div className=" text-nowrap truncate pr-1">
                       {dispotypeObject[findExisting.disposition]}
                     </div>
-                    <div className="">{findExisting.contact_method}</div>
                     <div className="">
-                      {findExisting.amount > 0
-                        ? findExisting.amount.toLocaleString("en-PH", {
-                            style: "currency",
-                            currency: "PHP",
-                          })
-                        : null}
+                      {findExisting.contact_method ? (
+                        findExisting.contact_method
+                      ) : (
+                        <div className="text-gray-400 italic">
+                          No contact method
+                        </div>
+                      )}
+                    </div>
+                    <div className="">
+                      {findExisting.amount > 0 ? (
+                        findExisting.amount.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })
+                      ) : (
+                        <div className="text-gray-400 italic">No amount</div>
+                      )}
                     </div>
                     <div className=" py-1.5 text-nowrap truncate">
-                      {findExisting.ref_no || <div className="text-gray-400 italic" >No ref no.</div>}
+                      {findExisting.ref_no || (
+                        <div className="text-gray-400 italic">No ref no.</div>
+                      )}
                     </div>
-                    <div className=" py-1.5">{findExisting.payment}</div>
-                    <div className=" py-1.5">{findExisting.payment_date}</div>
+                    <div className=" py-1.5">
+                      {findExisting.payment || (
+                        <div className="text-gray-400 italic">No payment</div>
+                      )}
+                    </div>
+                    <div className=" py-1.5">
+                      {findExisting.payment_date || (
+                        <div className="text-gray-400 italic">
+                          No payment date
+                        </div>
+                      )}
+                    </div>
                     {findExisting.selectivesDispo && <div></div>}
                     {findExisting.contact_method === "calls" &&
                       findExisting.dialer && (
@@ -219,7 +241,9 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
                           : ""
                       }
                     >
-                      {findExisting.comment}
+                      {findExisting.comment || (
+                        <div className="text-gray-400 italic">No comment</div>
+                      )}
                     </div>
                     <div
                       className="truncate  py-1.5 max-w-30 pr-2"
@@ -227,7 +251,9 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
                         findExisting.RFD ? findExisting.RFD.toString() : ""
                       }
                     >
-                      {findExisting.RFD}
+                      {findExisting.RFD || (
+                        <div className="text-gray-400 italic">No rfd</div>
+                      )}
                     </div>
                     <div className=" py-1.5 max-w-30 pr-2">
                       {findExisting.selectivesDispo ? "Yes" : "No"}
@@ -242,20 +268,18 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
                     </div>
                   </div>
                 )}
-                {((dispo_historySorted?.length ||
-                  (dispo_historySorted?.length === 0)) && (
-                    <div className="py-1.5 bg-gray-100 px-5 text-gray-800 border-x border-b font-medium ">
-                      No history
-                    </div>
-                  ))}
+                {(dispo_historySorted?.length ||
+                  dispo_historySorted?.length === 0) && (
+                  <div className="py-1.5 bg-gray-100 px-5 text-gray-800 border-x border-b font-medium ">
+                    No history
+                  </div>
+                )}
                 {dispo_historySorted?.map((ne, index) => {
-                  
                   return (
                     <div
                       key={ne._id}
                       className="text-gray-600 last:rounded-b-md last:shadow-m items-center border-x border-b grid grid-cols-13 gap-2 text-left select-none even:bg-gray-50  lg:text-xs 2xl:text-sm"
                     >
-
                       <div className="pl-5">
                         {" "}
                         {index + 1 === 1
@@ -275,18 +299,32 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
                       </div>
                       <div className="">{ne.contact_method}</div>
                       <div className="">
-                        {ne.amount > 0
-                          ? ne.amount.toLocaleString("en-PH", {
-                              style: "currency",
-                              currency: "PHP",
-                            })
-                          : null}
+                        {ne.amount > 0 ? (
+                          ne.amount.toLocaleString("en-PH", {
+                            style: "currency",
+                            currency: "PHP",
+                          })
+                        ) : (
+                          <div className="text-gray-400 italic">No amount</div>
+                        )}
                       </div>
                       <div className=" py-1.5 text-nowrap truncate">
-                        {ne.ref_no}
+                        {ne.ref_no || (
+                          <div className="text-gray-400 italic">No ref no.</div>
+                        )}
                       </div>
-                      <div className=" py-1.5">{ne.payment}</div>
-                      <div className=" py-1.5">{ne.payment_date}</div>
+                      <div className=" py-1.5">
+                        {ne.payment || (
+                          <div className="text-gray-400 italic">No payment</div>
+                        )}
+                      </div>
+                      <div className=" py-1.5">
+                        {ne.payment_date || (
+                          <div className="text-gray-400 italic">
+                            No payment date
+                          </div>
+                        )}
+                      </div>
                       {ne.contact_method === "calls" && (
                         <div className=" py-1.5">{ne.dialer}</div>
                       )}
@@ -304,13 +342,19 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
                         className="truncate  py-1.5 max-w-30 pr-2"
                         title={ne.comment ? ne.comment.toString() : ""}
                       >
-                        {ne.comment}
+                        {ne.comment || (
+                          <div className="text-gray-400 italic">No comment</div>
+                        )}
                       </div>
                       <div
                         className="truncate  py-1.5 max-w-30 pr-2"
                         title={ne.RFD ? ne.RFD.toString() : ""}
                       >
-                        {ne.RFD}
+                        {ne.RFD || (
+                          <div className="text-gray-400 italic">
+                            No rfd
+                          </div>
+                        )}
                       </div>
                       <div className=" py-1.5 max-w-30 pr-2">
                         {ne.selectivesDispo ? "Yes" : "No"}

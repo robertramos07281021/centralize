@@ -1,6 +1,4 @@
 import ftp from "basic-ftp";
-import fs from "fs";
-import path from "path";
 import mongoose from "mongoose";
 import { DateTime } from "../../middlewares/dateTime.js";
 import CustomError from "../../middlewares/errors.js";
@@ -10,7 +8,6 @@ import User from "../../models/user.js";
 import bcrypt from "bcryptjs";
 import DispoType from "../../models/dispoType.js";
 import "dotenv/config.js";
-import CustomerAccount from "../../models/customerAccount.js";
 
 const productionResolver = {
   DateTime,
@@ -38,28 +35,6 @@ const productionResolver = {
             $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
           },
           {
-            $lookup: {
-              from: "dispositions",
-              localField: "paidDispo",
-              foreignField: "_id",
-              as: "pd",
-            },
-          },
-          {
-            $unwind: { path: "$pd", preserveNullAndEmptyArrays: true },
-          },
-          {
-            $lookup: {
-              from: "dispotypes",
-              localField: "pd.disposition",
-              foreignField: "_id",
-              as: "pd_dispo",
-            },
-          },
-          {
-            $unwind: { path: "$pd_dispo", preserveNullAndEmptyArrays: true },
-          },
-          {
             $match: {
               user: user._id,
               createdAt: { $gte: firstDay, $lt: lastDay },
@@ -71,37 +46,6 @@ const productionResolver = {
               _id: {
                 day: { $dayOfMonth: "$createdAt" },
               },
-              // total: {
-              //   $sum: {
-              //     $cond: [
-              //       {
-              //         $or: [
-              //           {
-              //             $and: [
-              //               { $eq: ['$dispotype.code','PAID'] },
-              //               { $eq: ['$ptp', false] },
-              //               { $eq: ['$selectiveDispo', true]},
-              //               {
-              //                 $eq: [
-              //                   { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
-              //                   { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
-              //                 ]
-              //               }
-              //             ]
-              //           },
-              //           {
-              //             $and: [
-              //               { $eq: ['$dispotye.code', 'PAID'] },
-              //               { $eq: ['$ptp', true] }
-              //             ]
-              //           }
-              //         ]
-              //       },
-              //       "$amount",
-              //       0
-              //     ]
-              //   }
-              // },
               ptp_kept: {
                 $sum: {
                   $cond: [
@@ -117,58 +61,11 @@ const productionResolver = {
                   ],
                 },
               },
-              // paid: {
-              //   $sum: {
-              //     $cond: [
-              //       {
-              //         $and: [
-              //           {
-              //             $eq: ['$ptp',false]
-              //           },
-              //           {
-              //             $eq: ['$dispotype.code','PAID']
-              //           },
-              //         ]
-              //       },
-              //       "$amount",
-              //       0
-              //     ]
-              //   }
-              // },
               ptp: {
                 $sum: {
                   $cond: [
                     {
-                      $or: [
-                        {
-                          $and: [
-                            {
-                              $eq: ["$dispotype.code", "PTP"],
-                            },
-                            // {
-                            //   $gte: [
-                            //     '$createdAt',
-                            //     { $dateSubtract: { startDate: '$$NOW', unit: 'day', amount: 3 } }
-                            //   ]
-                            // },
-                            { $ne: [{ $type: "$paidDispo" }, "objectId"] },
-                          ],
-                        },
-                        {
-                          $and: [
-                            { $eq: ["$dispotype.code", "PTP"] },
-                            { $eq: ["$selectivesDispo", false] },
-                            { $eq: ["$pd.selectivesDispo", true] },
-                          ],
-                        },
-                        {
-                          $and: [
-                            { $eq: ["$dispotype.code", "PAID"] },
-                            { $eq: ["$ptp", true] },
-                            { $eq: ["$selectivesDispo", false] },
-                          ],
-                        },
-                      ],
+                      $eq: ["$dispotype.code", "PTP"],
                     },
                     "$amount",
                     0,
@@ -181,8 +78,6 @@ const productionResolver = {
             $project: {
               _id: 0,
               date: "$_id.day",
-              // total: 1,
-              // paid: 1,
               ptp: 1,
               ptp_kept: 1,
             },
@@ -249,61 +144,17 @@ const productionResolver = {
           },
           {
             $match: {
-              "dispotype.code": { $in: ["PAID", "PTP"] },
+              "dispotype.code": "PTP",
             },
           },
           {
             $group: {
               _id: null,
               totalAmountPTP: {
-                $sum: {
-                  $cond: [
-                    {
-                      $or: [
-                        {
-                          $and: [
-                            { $eq: ["$dispotype.code", "PAID"] },
-                            { $eq: ["$ptp", true] },
-                            { $ne: [{ $type: "$paidDispo" }, "objectId"] },
-                          ],
-                        },
-                        {
-                          $and: [
-                            { $eq: ["$dispotype.code", "PTP"] },
-                            { $ne: [{ $type: "$paidDispo" }, "objectId"] },
-                          ],
-                        },
-                      ],
-                    },
-                    "$amount",
-                    0,
-                  ],
-                },
+                $sum: "$amount",
               },
               totalCountPTP: {
-                $sum: {
-                  $cond: [
-                    {
-                      $or: [
-                        {
-                          $and: [
-                            { $eq: ["$dispotype.code", "PAID"] },
-                            { $eq: ["$ptp", true] },
-                            { $ne: [{ $type: "$paidDispo" }, "objectId"] },
-                          ],
-                        },
-                        {
-                          $and: [
-                            { $eq: ["$dispotype.code", "PTP"] },
-                            { $ne: [{ $type: "$paidDispo" }, "objectId"] },
-                          ],
-                        },
-                      ],
-                    },
-                    1,
-                    0,
-                  ],
-                },
+                $sum: 1,
               },
               totalAmountKept: {
                 $sum: {
@@ -392,30 +243,6 @@ const productionResolver = {
               _id: {
                 month: { $month: "$createdAt" },
               },
-              // total: {
-              //   $sum: {
-              //     $cond: [
-              //       {
-              //         $or: [
-              //           {
-              //             $and: [
-              //               { $eq: ['$dispotype.code','PAID'] },
-              //               { $eq: ['$ptp', false] },
-              //               {
-              //                 $eq: [
-              //                   { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
-              //                   { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
-              //                 ]
-              //               }
-              //             ]
-              //           },
-              //         ]
-              //       },
-              //       "$amount",
-              //       0
-              //     ]
-              //   }
-              // },
               ptp_kept: {
                 $sum: {
                   $cond: [
@@ -437,64 +264,11 @@ const productionResolver = {
                   ],
                 },
               },
-              // paid: {
-              //   $sum: {
-              //     $cond: [
-              //       {
-              //         $and: [
-              //           {
-              //             $eq: ['$ptp',false]
-              //           },
-              //           {
-              //             $eq: ['$dispotype.code','PAID']
-              //           },
-              //           {
-              //             $eq: [
-              //               { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
-              //               { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
-              //             ]
-              //           }
-              //         ]
-              //       },
-              //       "$amount",
-              //       0
-              //     ]
-              //   }
-              // },
               ptp: {
                 $sum: {
                   $cond: [
                     {
-                      $or: [
-                        {
-                          $and: [
-                            {
-                              $eq: ["$dispotype.code", "PTP"],
-                            },
-                            // {
-                            //   $gte: [
-                            //     '$createdAt',
-                            //     { $dateSubtract: { startDate: '$$NOW', unit: 'day', amount: 3 } }
-                            //   ]
-                            // },
-                            { $ne: [{ $type: "$paidDispo" }, "objectId"] },
-                          ],
-                        },
-                        {
-                          $and: [
-                            { $eq: ["$dispotype.code", "PTP"] },
-                            { $eq: ["$selectivesDispo", false] },
-                            { $eq: ["$pd.selectivesDispo", true] },
-                          ],
-                        },
-                        {
-                          $and: [
-                            { $eq: ["$dispotype.code", "PAID"] },
-                            { $eq: ["$ptp", true] },
-                            { $eq: ["$selectivesDispo", false] },
-                          ],
-                        },
-                      ],
+                      $eq: ["$dispotype.code", "PTP"],
                     },
                     "$amount",
                     0,
@@ -507,7 +281,6 @@ const productionResolver = {
             $project: {
               month: "$_id.month",
               total: 1,
-              paid: 1,
               ptp: 1,
               ptp_kept: 1,
             },
@@ -579,13 +352,6 @@ const productionResolver = {
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
 
-        const yesterdayStart = new Date();
-        yesterdayStart.setDate(yesterdayStart.getDate() - 1);
-        yesterdayStart.setHours(0, 0, 0, 0);
-        const yesterDayEnd = new Date();
-        yesterDayEnd.setDate(yesterDayEnd.getDate() - 1);
-        yesterDayEnd.setHours(23, 59, 59, 999);
-
         const agentCollection = await Disposition.aggregate([
           {
             $lookup: {
@@ -625,9 +391,9 @@ const productionResolver = {
           },
           {
             $match: {
-              createdAt: { $gte: yesterdayStart, $lt: todayEnd },
+              createdAt: { $gte: todayStart, $lt: todayEnd },
               user: { $eq: user._id },
-              "dispotype.code": { $in: ["PAID", "PTP"] },
+              "dispotype.code": "PTP",
             },
           },
           {
@@ -640,20 +406,7 @@ const productionResolver = {
               selectivesDispo: 1,
               code: "$dispotype.code",
               pd: 1,
-              havePd: { $eq: [{ $type: "$paidDispo" }, "objectId"] },
               pd_code: "$pd_dispotype.code",
-              isToday: {
-                $and: [
-                  { $gte: ["$createdAt", todayStart] },
-                  { $lt: ["$createdAt", todayEnd] },
-                ],
-              },
-              isYesterday: {
-                $and: [
-                  { $gte: ["$createdAt", yesterdayStart] },
-                  { $lt: ["$createdAt", yesterDayEnd] },
-                ],
-              },
             },
           },
           {
@@ -661,222 +414,12 @@ const productionResolver = {
               _id: null,
               ptp_amount: {
                 $sum: {
-                  $cond: [
-                    {
-                      $and: [
-                        "$isToday",
-                        {
-                          $or: [
-                            {
-                              $and: [
-                                { $eq: ["$havePd", false] },
-                                { $eq: ["$code", "PTP"] },
-                              ],
-                            },
-                            {
-                              $and: [
-                                {
-                                  $gte: [
-                                    "$createdAt",
-                                    {
-                                      $dateSubtract: {
-                                        startDate: "$$NOW",
-                                        unit: "day",
-                                        amount: 3,
-                                      },
-                                    },
-                                  ],
-                                },
-                                { $eq: ["$code", "PTP"] },
-                                { $eq: ["$havePd", false] },
-                                { $eq: ["$selectivesDispo", false] },
-                              ],
-                            },
-                            {
-                              $and: [
-                                { $eq: ["$code", "PAID"] },
-                                { $eq: ["$ptp", true] },
-                                { $eq: ["$havePd", false] },
-                                { $eq: ["$selectivesDispo", false] },
-                              ],
-                            },
-                            {
-                              $and: [
-                                { $eq: ["$code", "PAID"] },
-                                { $eq: ["$ptp", true] },
-                                { $eq: ["$havePd", false] },
-                                { $eq: ["$selectivesDispo", false] },
-                              ],
-                            },
-                            // {
-                            //   $and: [
-                            //     { $eq: ['$code','PAID'] },
-                            //     { $eq: ['$ptp',false] },
-                            //     { $eq: ["$havePd", false] },
-                            //     { $eq: ['$selectivesDispo',false]},
-                            //     {
-                            //       $eq: [
-                            //         { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                            //         "$payment_date"
-                            //       ]
-                            //     }
-                            //   ]
-                            // },
-                          ],
-                        },
-                      ],
-                    },
-                    "$amount",
-                    0,
-                  ],
-                },
-              },
-              ptp_yesterday: {
-                $sum: {
-                  $cond: [
-                    {
-                      $and: [
-                        "$isYesterday",
-                        {
-                          $or: [
-                            {
-                              $and: [
-                                { $eq: ["$havePd", true] },
-                                { $eq: ["$code", "PTP"] },
-                                { $eq: ["$pd_code", "PAID"] },
-                                { $eq: ["$pd.selectivesDispo", true] },
-                              ],
-                            },
-                            {
-                              $and: [
-                                {
-                                  $gte: [
-                                    "$createdAt",
-                                    {
-                                      $dateSubtract: {
-                                        startDate: "$$NOW",
-                                        unit: "day",
-                                        amount: 3,
-                                      },
-                                    },
-                                  ],
-                                },
-                                { $eq: ["$code", "PTP"] },
-                                { $eq: ["$havePd", false] },
-                                { $eq: ["$selectivesDispo", false] },
-                              ],
-                            },
-                            {
-                              $and: [
-                                { $eq: ["$code", "PAID"] },
-                                { $eq: ["$ptp", true] },
-                                { $eq: ["$havePd", true] },
-                                { $eq: ["$selectivesDispo", false] },
-                                { $eq: ["$pd_code", "PAID"] },
-                                { $eq: ["$pd.selectivesDispo", true] },
-                              ],
-                            },
-                            {
-                              $and: [
-                                { $eq: ["$code", "PAID"] },
-                                { $eq: ["$ptp", true] },
-                                { $eq: ["$havePd", false] },
-                                { $eq: ["$selectivesDispo", false] },
-                              ],
-                            },
-                            // {
-                            //   $and: [
-                            //     { $eq: ['$code','PAID'] },
-                            //     { $eq: ['$ptp',false] },
-                            //     { $eq: ["$havePd", false] },
-                            //     { $eq: ['$selectivesDispo',false]},
-                            //     {
-                            //       $eq: [
-                            //         { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                            //         "$payment_date"
-                            //       ]
-                            //     }
-                            //   ]
-                            // },
-                          ],
-                        },
-                      ],
-                    },
-                    "$amount",
-                    0,
-                  ],
+                  $cond: [{ $eq: ["$code", "PTP"] }, "$amount", 0],
                 },
               },
               ptp_count: {
                 $sum: {
-                  $cond: [
-                    {
-                      $and: [
-                        "$isToday",
-                        {
-                          $or: [
-                            {
-                              $and: [
-                                { $eq: ["$havePd", false] },
-                                { $eq: ["$code", "PTP"] },
-                              ],
-                            },
-                            {
-                              $and: [
-                                {
-                                  $gte: [
-                                    "$createdAt",
-                                    {
-                                      $dateSubtract: {
-                                        startDate: "$$NOW",
-                                        unit: "day",
-                                        amount: 3,
-                                      },
-                                    },
-                                  ],
-                                },
-                                { $eq: ["$code", "PTP"] },
-                                { $eq: ["$havePd", false] },
-                                { $eq: ["$selectivesDispo", false] },
-                              ],
-                            },
-                            {
-                              $and: [
-                                { $eq: ["$code", "PAID"] },
-                                { $eq: ["$ptp", true] },
-                                { $eq: ["$havePd", false] },
-                                { $eq: ["$selectivesDispo", false] },
-                              ],
-                            },
-                            {
-                              $and: [
-                                { $eq: ["$code", "PAID"] },
-                                { $eq: ["$ptp", true] },
-                                { $eq: ["$havePd", false] },
-                                { $eq: ["$selectivesDispo", false] },
-                              ],
-                            },
-                            // {
-                            //   $and: [
-                            //     { $eq: ['$code','PAID'] },
-                            //     { $eq: ['$ptp',false] },
-                            //     { $eq: ["$havePd", false] },
-                            //     { $eq: ['$selectivesDispo',false]},
-                            //     {
-                            //       $eq: [
-                            //         { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } },
-                            //         "$payment_date"
-                            //       ]
-                            //     }
-                            //   ]
-                            // },
-                          ],
-                        },
-                      ],
-                    },
-                    1,
-                    0,
-                  ],
+                  $cond: [{ $eq: ["$code", "PTP"] }, 1, 0],
                 },
               },
               ptp_kept_amount: {
@@ -884,23 +427,6 @@ const productionResolver = {
                   $cond: [
                     {
                       $and: [
-                        "$isToday",
-                        { $eq: ["$code", "PAID"] },
-                        { $eq: ["$ptp", true] },
-                        { $eq: ["$selectivesDispo", true] },
-                      ],
-                    },
-                    "$amount",
-                    0,
-                  ],
-                },
-              },
-              ptp_kept_yesterday: {
-                $sum: {
-                  $cond: [
-                    {
-                      $and: [
-                        "$isYesterday",
                         { $eq: ["$code", "PAID"] },
                         { $eq: ["$ptp", true] },
                         { $eq: ["$selectivesDispo", true] },
@@ -916,7 +442,6 @@ const productionResolver = {
                   $cond: [
                     {
                       $and: [
-                        "$isToday",
                         { $eq: ["$code", "PAID"] },
                         { $eq: ["$ptp", true] },
                         { $eq: ["$selectivesDispo", true] },
@@ -927,69 +452,6 @@ const productionResolver = {
                   ],
                 },
               },
-              // paid_amount: {
-              //   $sum: {
-              //     $cond: [
-              //       {
-              //         $and: [
-              //           "$isToday",
-              //           { $eq: ["$code", "PAID"] },
-              //           { $eq: ['$ptp', false] },
-              //           {
-              //             $eq: [
-              //               { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
-              //               { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
-              //             ]
-              //           }
-              //         ]
-              //       },
-              //       "$amount",
-              //       0
-              //     ]
-              //   }
-              // },
-              // paid_yesterday: {
-              //   $sum: {
-              //     $cond: [
-              //       {
-              //         $and: [
-              //           "$isYesterday",
-              //           { $eq: ["$code", "PAID"] },
-              //           { $eq: ['$ptp', false] },
-              //           {
-              //             $eq: [
-              //               { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
-              //               { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
-              //             ]
-              //           }
-              //         ]
-              //       },
-              //       "$amount",
-              //       0
-              //     ]
-              //   }
-              // },
-              // paid_count: {
-              //   $sum: {
-              //     $cond: [
-              //       {
-              //         $and: [
-              //           "$isToday",
-              //           { $eq: ["$code", "PAID"] },
-              //           { $eq: ['$ptp', false] },
-              //           {
-              //             $eq: [
-              //               { $dateToString: { format: "%Y-%m-%d", date: { $dateFromString: { dateString: "$payment_date", format: "%Y-%m-%d" } } } },
-              //               { $dateToString: { format: "%Y-%m-%d", date: "$createdAt" } }
-              //             ]
-              //           }
-              //         ]
-              //       },
-              //       1,
-              //       0
-              //     ]
-              //   }
-              // },
             },
           },
           {
@@ -997,13 +459,8 @@ const productionResolver = {
               _id: 0,
               ptp_amount: 1,
               ptp_count: 1,
-              ptp_yesterday: 1,
               ptp_kept_amount: 1,
               ptp_kept_count: 1,
-              ptp_kept_yesterday: 1,
-              paid_amount: 1,
-              paid_count: 1,
-              paid_yesterday: 1,
             },
           },
         ]);
@@ -1144,6 +601,49 @@ const productionResolver = {
           },
         ]);
         return production;
+      } catch (error) {
+        throw new CustomError(error.message, 500);
+      }
+    },
+    getAllAgentProductions: async (_, { bucketId, from, to }) => {
+      try {
+        let startOfTheDay = null;
+        let endOfTheDay = null;
+
+        if (!from && !to) {
+          const start = new Date();
+          start.setHours(0, 0, 0, 0);
+          startOfTheDay = start;
+
+          const end = new Date();
+
+          end.setHours(23, 59, 59, 999);
+          endOfTheDay = end;
+        }
+
+        const production = await Production.aggregate([
+          {
+            $match: {
+              createdAt: { $gt: startOfTheDay, $lte: endOfTheDay },
+            },
+          },
+          {
+            $lookup: {
+              from: "users",
+              localField: "user",
+              foreignField: "_id",
+              as: "userInfo",
+            },
+          },
+          {
+            $unwind: { path: "$userInfo", preserveNullAndEmptyArrays: true },
+          },
+          {
+            $match: {
+              "userInfo.buckets": { bucketId },
+            },
+          },
+        ]);
       } catch (error) {
         throw new CustomError(error.message, 500);
       }
@@ -1486,15 +986,15 @@ const productionResolver = {
               "172.20.21.35": "MIXED CAMPAIGN",
               "172.20.21.67": "MIXED CAMPAIGN NEW",
               "172.20.21.97": "UB",
-              '172.20.21.70': 'AUTODIAL SHOPEE M3',
+              "172.20.21.70": "AUTODIAL SHOPEE M3",
               "172.20.21.18": "MIXED CAMPAIGN NEW 2",
-              '172.20.21.165': "PAGIBIGNCR",
-              '172.20.21.105': "PAGIBIGPAM",
-              '172.20.21.91': 'AUTODIAL SHOPEE M2',
-              '172.20.21.85': 'AUTODIAL SHOPEE M4',
-              '172.20.21.76': 'AUTODIAL SHOPEE BCL-M7',
-              '172.20.21.30': 'MCC',
-              '172.20.21.196': 'ATOME NEW',
+              "172.20.21.165": "PAGIBIGNCR",
+              "172.20.21.105": "PAGIBIGPAM",
+              "172.20.21.91": "AUTODIAL SHOPEE M2",
+              "172.20.21.85": "AUTODIAL SHOPEE M4",
+              "172.20.21.76": "AUTODIAL SHOPEE BCL-M7",
+              "172.20.21.30": "MCC",
+              "172.20.21.196": "ATOME NEW",
             };
 
             const issabelNasFileBane = {
@@ -1512,14 +1012,36 @@ const productionResolver = {
                 "ACS1-TEAM 1",
                 "ACS1-TEAM 2",
                 "ACS1-TEAM 3",
-              ].includes(filtered?.bucket?.name) ? fileNale[viciIpAddress] : "ATOME"
+              ].includes(filtered?.bucket?.name)
+                ? fileNale[viciIpAddress]
+                : "ATOME"
             }/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`;
+
             const remoteDirIssabel = `/ISSABEL RECORDINGS/${
               issabelNasFileBane[issabelIpAddress]
             }/${monthCreated + " " + yearCreated}/${checkDate(dayCreated)}`;
 
-
-
+            const isShopee =
+              [
+                "SHOPEE C1 M2",
+                "SHOPEE C2 M2",
+                "SHOPEE C1 M3",
+                "SHOPEE C2 M3",
+                "SHOPEE C1 M4",
+                "SHOPEE C2 M4",
+                "SHOPEE C1 M7",
+                "SHOPEE C2 M7",
+                "BCL-M2",
+                "BCL-M3",
+                "BCL-M4",
+                "BCL-M7",
+              ].includes(filtered?.bucket?.name) &&
+              createdAt.getMonth() < 12 &&
+              dayCreated < 12
+                ? `/REC-${fileNale["172.20.21.35"]}${yearCreated}-${checkDate(
+                    month
+                  )}-${checkDate(dayCreated)}`
+                : remoteDirVici;
 
             const ifATOME =
               [
@@ -1534,7 +1056,7 @@ const productionResolver = {
                 ? `/REC-172.20.21.18-MIXED CAMPAIGN NEW 2/${yearCreated}-${checkDate(
                     month
                   )}-${checkDate(dayCreated)}`
-                : remoteDirVici;
+                : isShopee;
 
             const remoteDir =
               filtered.dialer === "vici" ? ifATOME : remoteDirIssabel;
