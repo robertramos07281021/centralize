@@ -876,17 +876,13 @@ const CustomerDisposition = () => {
     if (isAutoDialData?.isAutoDial) {
       dispatch(setIsRing(true));
     }
+
     setRandomLoading(true);
-    try {
-    } catch (error) {
-    } finally {
-    }
+
     const res = await refetchRandomCustomer({
       buckets: userLogged?.buckets,
       autoDial: false,
     });
-
-    setRandomLoading(true);
 
     if (res.data.randomCustomer) {
       setRandomLoading(false);
@@ -1071,7 +1067,7 @@ const CustomerDisposition = () => {
     setTimeout(async () => {
       dispatch(setMobileToCall(newPhone));
       // await makeCall({ variables: { phoneNumber: mobileNo } });
-      await makeCall({ variables: { phoneNumber: newPhone } });
+      await makeCall({ variables: { phoneNumber: "09285191305" } });
     }, 1000);
   }, []);
 

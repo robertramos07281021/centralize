@@ -8,6 +8,7 @@ const TL_BUCKET = gql`
     getTLBucket {
       _id
       name
+      viciIp
     }
   }
 `;
@@ -21,6 +22,7 @@ const BARGE_CALL = gql`
 type Bucket = {
   _id: string;
   name: string;
+  viciIp: string
 };
 
 const CALL_LOGS = gql`
@@ -36,9 +38,9 @@ const GET_USER_STATUS = gql`
 `;
 
 const CallLogs = () => {
-  const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
+  const [selectedBucket, setSelectedBucket] = useState<Bucket | null>(null);
   const [selectedBucket2, setSelectedBucket2] = useState<string | null>(
-    "SELECT A BUCKET"
+    null
   );
 
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
@@ -51,21 +53,22 @@ const CallLogs = () => {
     getUsersLogginOnVici: string;
   }>(CALL_LOGS, {
     notifyOnNetworkStatusChange: true,
-    variables: { bucket: selectedBucket },
-    skip: !selectedBucket,
+    variables: { bucket: selectedBucket?._id },
+    skip: !selectedBucket?._id,
     pollInterval: 1000,
   });
   const newData = callLogsData?.getUsersLogginOnVici.split("\n");
 
   const {data:getUserData, refetch:getUserDataRefetch} = useQuery(GET_USER_STATUS,{
-    variables: {viciId: ""},
+    variables: {viciId: selectedBucket?.viciIp},
     notifyOnNetworkStatusChange: true
   })
   console.log(getUserData)
 
   useEffect(() => {
     if (data) {
-      setSelectedBucket(data?.getTLBucket[0]._id);
+      setSelectedBucket(data?.getTLBucket[0]);
+      setSelectedBucket2(data.getTLBucket[0].name)
     }
   }, [data]);
 
@@ -158,6 +161,7 @@ const CallLogs = () => {
                       <span
                         onClick={() => {
                           setSelectedBucket2(bucket.name);
+                          setSelectedBucket(bucket)
                           setIsOpen(false);
                         }}
                         className="whitespace-nowrap  hover:bg-gray-300 px-3 py-1 "
