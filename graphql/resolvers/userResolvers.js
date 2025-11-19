@@ -478,7 +478,9 @@ const userResolvers = {
         if (confirmPass !== password) throw new CustomError("Not Match", 401);
 
         const userChangePass = await User.findById(user.id);
+       
         if (!userChangePass) throw new CustomError("User not found", 404);
+
 
         const saltPassword = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash(password, saltPassword);

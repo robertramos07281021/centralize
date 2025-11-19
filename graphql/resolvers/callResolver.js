@@ -226,7 +226,6 @@ const callResolver = {
     // },
     randomCustomer: async (_, { buckets, autoDial }) => {
       try {
-        // PREPARE VALUES FIRST (tiny cost)
         const userBucketIds = buckets.map(
           (id) => new mongoose.Types.ObjectId(id)
         );
@@ -236,9 +235,12 @@ const callResolver = {
           canCall: true,
         }).select("_id");
 
-        const allowedBuckets = bucketDocs.map(
-          (b) => new mongoose.Types.ObjectId(b._id)
-        );
+        const callfiles = await Callfile.find({
+          bucket: { $in: bucketDocs.map((x) => x._id) },
+          active: true,
+        }).select("_id autoDial roundCount");
+
+        const allowedBuckets = bucketDocs.map((b) => b._id);
 
         const positiveDispotype = await DispoType.find({
           code: { $in: ["UNEG", "PAID", "LM", "UNK", "FFUP", "DISP"] },
@@ -246,42 +248,25 @@ const callResolver = {
 
         const positiveIds = positiveDispotype.map((x) => x._id);
 
-        // SECOND FILTER BUILDER
-        let secondFilter = [
-          {
-            "current_disposition.disposition": {
-              $nin: positiveIds,
-            },
-          },
-          {
-            "ac.active": true,
-          },
-        ];
-
+        // Prepare callfile filter
+        let callfileFilter = callfiles.map((x) => x._id);
         if (autoDial) {
-          secondFilter.push({
-            $expr: { $ne: ["$features.called", "$ac.roundCount"] },
-          });
-        } else {
-          secondFilter.push({
-            $expr: {
-              $or: [
-                { $eq: ["$features.alreadyCalled", false] },
-                { $not: { $ifNull: ["$features.alreadyCalled", false] } },
-              ],
-            },
-          });
+          const callfileAuto = callfiles.filter((x) => x.autoDial === true);
+          callfileFilter = callfileAuto.map((x) => x._id);
         }
 
-        // MAIN OPTIMIZED PIPELINE
         const pipeline = [
+          // --- Early filter ---
           {
             $match: {
               on_hands: false,
               bucket: { $in: allowedBuckets },
               $or: [{ assigned: null }, { assigned: { $exists: false } }],
+              callfile: { $in: callfileFilter },
             },
           },
+
+          // --- Lookup callfile to get roundCount if autoDial ---
           {
             $lookup: {
               from: "callfiles",
@@ -289,34 +274,56 @@ const callResolver = {
               foreignField: "_id",
               as: "ac",
               pipeline: [
-                {
-                  $match: autoDial ? { autoDial: true } : {},
-                },
-                { $project: { _id: 1, roundCount: 1, autoDial: 1, active: 1 } },
+                { $project: { roundCount: 1, autoDial: 1, active: 1 } },
               ],
             },
           },
-          { $unwind: { path: "$ac", preserveNullAndEmptyArrays: true } },
-          {
-            $match: { $and: secondFilter },
-          },
-          { $sample: { size: 1 } },
+          { $unwind: "$ac" },
 
+          // --- Filter based on dispositions and call status ---
+          {
+            $match: {
+              "current_disposition.disposition": { $nin: positiveIds },
+              ...(autoDial
+                ? { $expr: { $lt: ["$features.called", "$ac.roundCount"] } }
+                : {
+                    $expr: {
+                      $or: [
+                        { $eq: ["$features.alreadyCalled", false] },
+                        {
+                          $not: { $ifNull: ["$features.alreadyCalled", false] },
+                        },
+                      ],
+                    },
+                  }),
+            },
+          },
+
+          // --- Lookup customer info ---
           {
             $lookup: {
               from: "customers",
               localField: "customer",
               foreignField: "_id",
               as: "customer_info",
+              pipeline: [
+                {
+                  $project: {
+                    fullName: 1,
+                    contact_no: 1,
+                    dob: 1,
+                    gender: 1,
+                    emails: 1,
+                    addresses: 1,
+                    isRPC: 1,
+                  },
+                },
+              ],
             },
           },
-          {
-            $unwind: {
-              path: "$customer_info",
-              preserveNullAndEmptyArrays: true,
-            },
-          },
+          { $unwind: "$customer_info" },
 
+          // --- Keep only docs with at least one valid contact number ---
           {
             $match: {
               $expr: {
@@ -335,6 +342,11 @@ const callResolver = {
               },
             },
           },
+
+          // --- Pick 1 random customer ---
+          { $sample: { size: 1 } },
+
+          // --- Lookup other related data ---
           {
             $lookup: {
               from: "dispotypes",
@@ -380,11 +392,9 @@ const callResolver = {
           },
         ];
 
-        const [res] = await CustomerAccount.aggregate(pipeline);
-
-        return res || null;
+        const res = await CustomerAccount.aggregate(pipeline);
+        return res[0] || null;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -648,13 +658,13 @@ const callResolver = {
         throw new CustomError(error.message, 500);
       }
     },
-    getBargingStatus: async(_,{vici_id},{user}) => {
+    getBargingStatus: async (_, { vici_id }, { user }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
-        
-        const res = await getUserInfo(vici_id,user.vici_id)
+        console.log("hello")
+        const res = await getUserInfo(vici_id, user.vici_id);
 
-        return res
+        return res;
       } catch (error) {
         throw new CustomError(error.message, 500);
       }
@@ -798,7 +808,6 @@ const callResolver = {
 
         if (!res) return null;
 
-        console.log(bucket[chechIfisOnline.indexOf(true)])
         const userInfoRes = await getUserInfo(
           bucket[chechIfisOnline.indexOf(true)],
           findUser?.vici_id

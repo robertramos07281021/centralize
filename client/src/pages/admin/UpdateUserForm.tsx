@@ -260,7 +260,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const validForCampaignAndBucket = ["AGENT", "TL", "MIS",'ADMIN'];
+  const validForCampaignAndBucket = ["AGENT", "TL", "MIS", "ADMIN"];
 
   const { data: branchesData, refetch: branchRefetch } = useQuery<{
     getBranches: Branch[];
@@ -368,7 +368,9 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
   }, [deptBucket]);
 
   // ================ mutations ===================================
-  const [updateUser,{loading:updateUserLoading}] = useMutation<{ updateUser: SuccessUpdate }>(UPDATE_USER, {
+  const [updateUser, { loading: updateUserLoading }] = useMutation<{
+    updateUser: SuccessUpdate;
+  }>(UPDATE_USER, {
     onCompleted: (res) => {
       navigate(location.pathname, {
         state: { ...res.updateUser.user, newKey: "newKey" },
@@ -387,39 +389,17 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
     },
   });
 
-  const [resetPassword,{loading:resetPassLoading}] = useMutation<{ resetPassword: SuccessUpdate }>(
-    RESET_PASSWORD,
-    {
-      onCompleted: (res) => {
-        navigate(location.pathname, {
-          state: { ...res.resetPassword.user, newKey: "newKey" },
-        });
-        dispatch(
-          setSuccess({
-            success: res.resetPassword.success,
-            message: res.resetPassword.message,
-            isMessage: false,
-          })
-        );
-      },
-      onError: () => {
-        dispatch(setServerError(true));
-      },
-    }
-  );
-
-  
-  const [updateActiveStatus,{loading:updateActiveStatusLoading}] = useMutation<{
-    updateActiveStatus: SuccessUpdate;
-  }>(STATUS_UPDATE, {
+  const [resetPassword, { loading: resetPassLoading }] = useMutation<{
+    resetPassword: SuccessUpdate;
+  }>(RESET_PASSWORD, {
     onCompleted: (res) => {
       navigate(location.pathname, {
-        state: { ...res.updateActiveStatus.user, newKey: "newKey" },
+        state: { ...res.resetPassword.user, newKey: "newKey" },
       });
       dispatch(
         setSuccess({
-          success: res.updateActiveStatus.success,
-          message: res.updateActiveStatus.message,
+          success: res.resetPassword.success,
+          message: res.resetPassword.message,
           isMessage: false,
         })
       );
@@ -429,7 +409,30 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
     },
   });
 
-  const [unlockUser, {loading:unlockUserLoading}] = useMutation<{ unlockUser: SuccessUpdate }>(UNLOCK_USER, {
+  const [updateActiveStatus, { loading: updateActiveStatusLoading }] =
+    useMutation<{
+      updateActiveStatus: SuccessUpdate;
+    }>(STATUS_UPDATE, {
+      onCompleted: (res) => {
+        navigate(location.pathname, {
+          state: { ...res.updateActiveStatus.user, newKey: "newKey" },
+        });
+        dispatch(
+          setSuccess({
+            success: res.updateActiveStatus.success,
+            message: res.updateActiveStatus.message,
+            isMessage: false,
+          })
+        );
+      },
+      onError: () => {
+        dispatch(setServerError(true));
+      },
+    });
+
+  const [unlockUser, { loading: unlockUserLoading }] = useMutation<{
+    unlockUser: SuccessUpdate;
+  }>(UNLOCK_USER, {
     onCompleted: (res) => {
       navigate(location.pathname, {
         state: { ...res.unlockUser.user, newKey: "newKey" },
@@ -447,28 +450,26 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
     },
   });
 
-
-  const [adminLogout,{loading:adminLogoutLoading}] = useMutation<{ adminLogout: SuccessUpdate }>(
-    LOGOUT_USER,
-    {
-      onCompleted: (res) => {
-        navigate(location.pathname, {
-          state: { ...res.adminLogout.user, newKey: "newKey" },
-        });
-        dispatch(
-          setSuccess({
-            success: res.adminLogout.success,
-            message: res.adminLogout.message,
-            isMessage: false,
-          })
-        );
-      },
-      onError: (err) => {
-        console.log(err);
-        dispatch(setServerError(true));
-      },
-    }
-  );
+  const [adminLogout, { loading: adminLogoutLoading }] = useMutation<{
+    adminLogout: SuccessUpdate;
+  }>(LOGOUT_USER, {
+    onCompleted: (res) => {
+      navigate(location.pathname, {
+        state: { ...res.adminLogout.user, newKey: "newKey" },
+      });
+      dispatch(
+        setSuccess({
+          success: res.adminLogout.success,
+          message: res.adminLogout.message,
+          isMessage: false,
+        })
+      );
+    },
+    onError: (err) => {
+      console.log(err);
+      dispatch(setServerError(true));
+    },
+  });
 
   //  ======================================================================
 
@@ -624,9 +625,14 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
   const campaignDiv = useRef<HTMLDivElement | null>(null);
   const bucketDiv = useRef<HTMLDivElement | null>(null);
 
-  const isLoading = updateUserLoading || resetPassLoading || updateActiveStatusLoading || unlockUserLoading || adminLogoutLoading
+  const isLoading =
+    updateUserLoading ||
+    resetPassLoading ||
+    updateActiveStatusLoading ||
+    unlockUserLoading ||
+    adminLogoutLoading;
 
-  if(isLoading) return <Loading/>
+  if (isLoading) return <Loading />;
 
   return (
     <>
@@ -702,7 +708,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
             />
           </label>
 
-          <div className="flex gap-2">
+          <div className="grid grid-cols-2 grid-rows-2 gap-2">
             <label className="w-full">
               <p className=" text-base font-medium text-slate-500">SIP ID</p>
               <input
@@ -739,6 +745,24 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                 }  border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}
               />
             </label>
+
+            <label className="w-full">
+              <p className=" text-base font-medium text-slate-500">
+                Softphone ID
+              </p>
+              <input
+                type="text"
+                id="callfile_id"
+                name="callfile_id"
+                autoComplete="off"
+                disabled={true}
+                placeholder="Under Construction"
+                className={`${
+                  data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"
+                }  border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}
+              />
+            </label>
+
             <label className="w-full">
               <p className=" text-base font-medium text-slate-500">VICI ID</p>
               <input

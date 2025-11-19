@@ -116,11 +116,11 @@ const SuccessToast: React.FC<modalProps> = ({ successObject, close }) => {
   useEffect(() => {
     const timer = setTimeout(() => {
       if (successObject?.success) {
-        close();
+        close?.();
       }
-    }, 5000);
+    }, 2000);
     return () => clearTimeout(timer);
-  }, [successObject, close]);
+  }, []);
 
   const messageText = successObject?.message?.toUpperCase() ?? "";
   let successType: keyof typeof toastColor = "CREATED";

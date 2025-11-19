@@ -1517,18 +1517,21 @@ const callfileResolver = {
         });
 
         for (const i of selectives) {
+
           const res = await CustomerAccount.findOne({
-            case_id: { $eq: String(i.account_no) },
-            callfile: { $eq: new mongoose.Types.ObjectId(callfile._id) },
+            case_id:  String(i.account_no),
+            callfile: new mongoose.Types.ObjectId(callfile._id),
           }).populate("current_disposition");
 
-          if (!res) {
-            continue;
+          
+          if (!res._id) {
+            continue;  
           }
 
-          if (res && res.balance > 0) {
+         
+          if (res._id && res?.balance > 0) {
             const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-
+           
             const cdCreatedAt =
               new Date(res?.current_disposition?.createdAt) <= threeDaysAgo;
 
@@ -1576,7 +1579,7 @@ const callfileResolver = {
             } else {
               data["payment"] = "partial";
             }
-
+            console.log(data)
             const newDispo = new Disposition(data);
 
             if (res?.current_disposition) {

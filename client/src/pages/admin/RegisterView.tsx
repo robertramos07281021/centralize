@@ -230,7 +230,6 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
   const validateOther = () => data.name && data.username;
 
   const handleCreateUser = useCallback(async () => {
-    
     console.log("Creating user with input:", data);
     try {
       const res = await createUser({ variables: { createInput: data } });
@@ -423,6 +422,27 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                   !data.type ||
                   !validForCampaignAndBucket.toString().includes(data.type)
                 }
+                className={`${
+                  !data.type ||
+                  !validForCampaignAndBucket.toString().includes(data.type)
+                    ? "bg-gray-200"
+                    : "bg-gray-50"
+                } bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
+              />
+            </label>
+
+            <label className="w-full">
+              <p className="w-full text-base font-black uppercase text-slate-800">
+                Softphone ID:
+              </p>
+              <input
+                type="text"
+                name="id_number"
+                id="id_number"
+                autoComplete="off"
+                aria-disabled="true"
+                disabled={true}
+                placeholder="Under Construction"
                 className={`${
                   !data.type ||
                   !validForCampaignAndBucket.toString().includes(data.type)
@@ -746,14 +766,14 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
           </div>
           <div className="flex justify-end w-full">
             <button
-              className="bg-blue-500 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-medium rounded-md uppercase text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
+              className="bg-blue-500 border-2 border-blue-900 hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-400 font-black  rounded-md uppercase text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
               onClick={setCancel}
             >
               Cancel
             </button>
             <button
               type="button"
-              className="bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-medium rounded-md uppercase text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
+              className="bg-orange-500 border-2 border-orange-900 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-black rounded-md uppercase text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
               onClick={submitForm}
             >
               Submit

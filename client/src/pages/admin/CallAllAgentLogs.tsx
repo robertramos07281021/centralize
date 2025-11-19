@@ -57,7 +57,7 @@ const CallAllAgentLogs = () => {
   const [isOpen, setIsOpen] = useState(false);
 
   const { data: allBucketsData } = useQuery<{ getAllBucket: getAllBucket[] }>(
-    GET_ALL_BUCKET
+    GET_ALL_BUCKET,{notifyOnNetworkStatusChange: true}
   );
 
   const { data: bucketUsersData } = useQuery<{
@@ -81,16 +81,19 @@ const CallAllAgentLogs = () => {
     skip: !selectedBucket,
     pollInterval: 1000,
   });
+  
+  const getUsersLogginOnVici = callLogsData?.getUsersLogginOnVici
 
-  const { data: getUserData, refetch: getUserDataRefetch } = useQuery(
+  const { data: getUserData, refetch: getUserDataRefetch } = useQuery<{getBargingStatus:string}>(
     GET_USER_STATUS,
     {
       variables: { viciId: selectedBucket?.viciIp },
+      skip: !getUsersLogginOnVici || getUsersLogginOnVici?.includes("ERROR:"),
       notifyOnNetworkStatusChange: true,
     }
   );
-  console.log(getUserData);
 
+  console.log(getUserData)
   const newData = useMemo(
     () =>
       callLogsData?.getUsersLogginOnVici
@@ -103,6 +106,7 @@ const CallAllAgentLogs = () => {
     return newData.slice(1).filter((line) => line?.trim());
   }, [newData]);
   const bucketUsers = bucketUsersData?.getBucketUser ?? [];
+  
   const allowedViciIds = useMemo(() => {
     return new Set(
       bucketUsers

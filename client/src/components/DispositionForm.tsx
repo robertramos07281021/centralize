@@ -1000,9 +1000,9 @@ const DispositionForm: React.FC<Props> = ({
                         onChange={(e) =>
                           handleDataChange(
                             "dialer",
-                            checkIfChangeContactMethod &&
+                            (checkIfChangeContactMethod &&
                               !selectedCustomer.current_disposition
-                                ?.selectivesDispo
+                                ?.selectivesDispo)
                               ? existingDispo?.dialer
                               : e.target.value
                           )

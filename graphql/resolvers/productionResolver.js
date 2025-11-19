@@ -8,10 +8,27 @@ import User from "../../models/user.js";
 import bcrypt from "bcryptjs";
 import DispoType from "../../models/dispoType.js";
 import "dotenv/config.js";
+import Bucket from "../../models/bucket.js";
 
 const productionResolver = {
   DateTime,
   Query: {
+    productions: async () => {
+      try {
+        const data = await Production.find().lean();
+        return data;
+      } catch (error) {
+        throw new CustomError(error.message, 500);
+      }
+    },
+    productionByUser: async (_, { userId }) => {
+      try {
+        const prod = await Production.findOne({ user: userId }).lean();
+        return prod;
+      } catch (error) {
+        throw new CustomError(error.message, 500);
+      }
+    },
     getAgentProductionPerDay: async (_, __, { user }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
@@ -607,9 +624,10 @@ const productionResolver = {
     },
     getAllAgentProductions: async (_, { bucketId, from, to }) => {
       try {
+        if (!bucketId) return null;
+
         let startOfTheDay = null;
         let endOfTheDay = null;
-
         if (!from && !to) {
           const start = new Date();
           start.setHours(0, 0, 0, 0);
@@ -620,31 +638,69 @@ const productionResolver = {
           end.setHours(23, 59, 59, 999);
           endOfTheDay = end;
         }
+        console.log(startOfTheDay)
+        console.log(endOfTheDay)
+
+        const users = (await User.find({buckets: bucketId})).map(x=>new mongoose.Types.ObjectId(x._id))
 
         const production = await Production.aggregate([
           {
             $match: {
               createdAt: { $gt: startOfTheDay, $lte: endOfTheDay },
-            },
-          },
-          {
-            $lookup: {
-              from: "users",
-              localField: "user",
-              foreignField: "_id",
-              as: "userInfo",
-            },
-          },
-          {
-            $unwind: { path: "$userInfo", preserveNullAndEmptyArrays: true },
-          },
-          {
-            $match: {
-              "userInfo.buckets": { bucketId },
+              // user: {$in: users}
             },
           },
         ]);
+
+        console.log(production);
+
+        const agentIds = production.map(
+          (prod) => new mongoose.Types.ObjectId(prod.user)
+        );
+        const disposition = await Disposition.aggregate([
+          {
+            $match: {
+              createdAt: { $gt: startOfTheDay, $lte: endOfTheDay },
+              user: { $in: agentIds },
+              callId: { $exists: true, $ne: "", $ne: null },
+            },
+          },
+          {
+            $group: {
+              _id: "$user",
+              total: { $sum: 1 },
+              dispositions: { $push: "$callId" },
+            },
+          },
+        ]);
+
+        const newProduction = production.map((prod) => {
+          const findUser = disposition.find(
+            (x) => x._id.toString() === prod.user.toString()
+          );
+          if (!findUser) {
+            return { ...prod, total: 0, average: 0, longest: 0 };
+          }
+
+          const callTimes = findUser.dispositions
+            .map((fileName) => {
+              const parts = fileName.split(".mp3");
+              return parts.length > 1 ? Number(parts[1]) : 0;
+            })
+            .filter((x) => !isNaN(x));
+
+          const totalCalls = callTimes.length;
+          const average =
+            totalCalls > 0
+              ? callTimes.reduce((t, v) => t + v, 0) / totalCalls
+              : 0;
+          const longest = totalCalls > 0 ? Math.max(...callTimes) : 0;
+          return { ...prod, total: totalCalls, average, longest };
+        });
+
+        return newProduction;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

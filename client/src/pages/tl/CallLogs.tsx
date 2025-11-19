@@ -1,6 +1,6 @@
 import { useMutation, useQuery } from "@apollo/client";
 import gql from "graphql-tag";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const TL_BUCKET = gql`
@@ -22,7 +22,7 @@ const BARGE_CALL = gql`
 type Bucket = {
   _id: string;
   name: string;
-  viciIp: string
+  viciIp: string;
 };
 
 const CALL_LOGS = gql`
@@ -37,17 +37,39 @@ const GET_USER_STATUS = gql`
   }
 `;
 
+// ⭐ NEW — same query used in CallAllAgentLogs
+const GET_BUCKET_USERS = gql`
+  query getBucketUser($bucketId: ID) {
+    getBucketUser(bucketId: $bucketId) {
+      _id
+      name
+      vici_id
+    }
+  }
+`;
+
 const CallLogs = () => {
   const [selectedBucket, setSelectedBucket] = useState<Bucket | null>(null);
-  const [selectedBucket2, setSelectedBucket2] = useState<string | null>(
-    null
-  );
-
+  const [selectedBucket2, setSelectedBucket2] = useState<string | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+
   const { data, refetch } = useQuery<{ getTLBucket: Bucket[] }>(TL_BUCKET, {
     notifyOnNetworkStatusChange: true,
   });
+
+  // ⭐ NEW — get users of the selected TL bucket
+  const { data: bucketUsersData } = useQuery(GET_BUCKET_USERS, {
+    variables: selectedBucket ? { bucketId: selectedBucket._id } : undefined,
+    skip: !selectedBucket,
+    notifyOnNetworkStatusChange: true,
+  });
+
+  const bucketUsers =
+    bucketUsersData?.getBucketUser?.map((u: any) => u.vici_id?.trim()) ?? [];
+
+  // ⭐ NEW — allowed Vici IDs
+  const allowedViciIds = useMemo(() => new Set(bucketUsers), [bucketUsers]);
 
   const { data: callLogsData, refetch: callLogsRefetch } = useQuery<{
     getUsersLogginOnVici: string;
@@ -57,18 +79,45 @@ const CallLogs = () => {
     skip: !selectedBucket?._id,
     pollInterval: 1000,
   });
-  const newData = callLogsData?.getUsersLogginOnVici.split("\n");
 
-  const {data:getUserData, refetch:getUserDataRefetch} = useQuery(GET_USER_STATUS,{
-    variables: {viciId: selectedBucket?.viciIp},
-    notifyOnNetworkStatusChange: true
-  })
+  const newData = useMemo(
+    () =>
+      callLogsData?.getUsersLogginOnVici
+        ? callLogsData.getUsersLogginOnVici.split("\n")
+        : [],
+    [callLogsData]
+  );
+
+  const rows = useMemo(() => {
+    if (!newData || newData.length === 0) return [];
+    return newData.slice(1).filter((line) => line?.trim());
+  }, [newData]);
+
+  // ⭐ NEW — filteredRows (IDENTICAL to CallAllAgentLogs)
+  const filteredRows = useMemo(() => {
+    if (!bucketUsersData) return rows;
+    if (allowedViciIds.size === 0) return [];
+
+    return rows.filter((row) => {
+      const viciId = row.split("|")[0]?.trim();
+      return viciId && allowedViciIds.has(viciId);
+    });
+  }, [rows, bucketUsersData, allowedViciIds]);
+
+  const { data: getUserData, refetch: getUserDataRefetch } = useQuery(
+    GET_USER_STATUS,
+    {
+      variables: { viciId: selectedBucket?.viciIp },
+      notifyOnNetworkStatusChange: true,
+    }
+  );
+
   console.log(getUserData)
 
   useEffect(() => {
     if (data) {
-      setSelectedBucket(data?.getTLBucket[0]);
-      setSelectedBucket2(data.getTLBucket[0].name)
+      setSelectedBucket(data.getTLBucket[0]);
+      setSelectedBucket2(data.getTLBucket[0].name);
     }
   }, [data]);
 
@@ -76,16 +125,12 @@ const CallLogs = () => {
     const refetching = async () => {
       await callLogsRefetch();
       await refetch();
-      await getUserDataRefetch()
+      await getUserDataRefetch();
     };
     refetching();
   }, []);
 
-  const [bargeCall] = useMutation(BARGE_CALL, {
-    onError: (err) => {
-      console.log(err);
-    },
-  });
+  const [bargeCall] = useMutation(BARGE_CALL);
 
   const handleBargeCall = useCallback(
     async (session_id: string | null, viciUserId: string | null) => {
@@ -161,7 +206,7 @@ const CallLogs = () => {
                       <span
                         onClick={() => {
                           setSelectedBucket2(bucket.name);
-                          setSelectedBucket(bucket)
+                          setSelectedBucket(bucket);
                           setIsOpen(false);
                         }}
                         className="whitespace-nowrap  hover:bg-gray-300 px-3 py-1 "
@@ -238,233 +283,234 @@ const CallLogs = () => {
           <div className="text-center">barge</div>
         </div>
         <div className="w-full flex flex-col h-full overflow-auto">
-          {newData?.slice(1).map((x, index) => {
-            const newtext = x.split("|");
-            if (newtext.length < 1)
-              return (
-                <div className="flex justify-center items-center bg-gray-200 w-full py-3 rounded-b-md shadow-md font-black italic text-gray-400 border-black  border-x border-b">
-                  <div>No agent found</div>
-                </div>
-              );
-            const viciId = newtext[0];
-            const session = newtext[2];
-            const canBarge =
-              x.includes("INCALL") &&
-              !x.includes("DEAD") &&
-              !x.includes("DISPO") &&
-              !x.includes("DIAL");
+          {filteredRows.length === 0 ? (
+            <div className="flex justify-center items-center bg-gray-200 py-3 rounded-b-md shadow-md italic text-gray-400 border-x border-b">
+              No agent found
+            </div>
+          ) : (
+            filteredRows.map((x, index) => {
+              const newtext = x.split("|");
+              const viciId = newtext[0];
+              const session = newtext[2];
 
-            return (
-              <motion.div
-                key={index}
-                className="grid pl-4 pr-1 gap-2 hover:bg-gray-3 00 last:shadow-md last:rounded-b-md even:bg-gray-100 odd:bg-gray-200 border-x border-b grid-cols-13"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ delay: index * 0.1 }}
-              >
-                {newtext.map((col, colIndex) => {
-                  return (
-                    <div
-                      key={colIndex}
-                      className=" py-3 truncate items-center flex-row flex whitespace-nowrap"
-                      title={col}
-                    >
-                      {colIndex === 3 ? (
-                        col === "PAUSED" ? (
-                          <AnimatePresence>
-                            <motion.div
-                              className="p-1.5 ml-2.5 bg-gray-300 border border-gray-500 rounded-full text-gray-600"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              title="Not on-call"
-                            >
-                              {" "}
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth="1.5"
-                                stroke="currentColor"
-                                className="size-4"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"
-                                />
-                              </svg>
-                            </motion.div>
-                          </AnimatePresence>
-                        ) : (
-                          <AnimatePresence>
-                            <motion.div
-                              className="p-1.5 ml-2.5 bg-green-500 shadow-md border border-green-800 rounded-full text-white"
-                              initial={{ opacity: 0 }}
-                              animate={{ opacity: 1 }}
-                              exit={{ opacity: 0 }}
-                              title="Incall"
-                            >
-                              <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                fill="none"
-                                viewBox="0 0 24 24"
-                                strokeWidth="1.5"
-                                stroke="currentColor"
-                                className="size-4"
-                              >
-                                <path
-                                  strokeLinecap="round"
-                                  strokeLinejoin="round"
-                                  d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"
-                                />
-                              </svg>
-                            </motion.div>
-                          </AnimatePresence>
-                        )
-                      ) : colIndex === 5 ? (
-                        col ? (
-                          <div className="truncate">{col}</div>
-                        ) : (
-                          <div className="text-xs text-gray-400 italic">
-                            No caller id
-                          </div>
-                        )
-                      ) : colIndex === 6 ? (
-                        col !== "0" ? (
-                          <div className=" text-center w-full flex justify-center truncate">
-                            {col}
-                          </div>
-                        ) : (
-                          <div className="text-center flex justify-center w-full">
-                            0
-                          </div>
-                        )
-                      ) : colIndex === 7 ? (
-                        col ? (
-                          <div className="truncate">{col}</div>
-                        ) : (
-                          <div className="text-xs text-gray-400 italic">
-                            No fullname
-                          </div>
-                        )
-                      ) : colIndex === 10 ? (
-                        col || (
-                          <div className="text-xs text-gray-400 italic">
-                            No break
-                          </div>
-                        )
-                      ) : colIndex === 11 ? (
-                        canBarge ? (
-                          <div className="w-full flex justify-center">
-                            <div
-                              className="text-xs cursor-default shadow-md font-black uppercase text-white px-3 py-1 border-2 border-red-900 rounded-sm bg-red-600"
-                              title="Agent and client are talking"
-                            >
-                              Live
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="w-full flex justify-center">
-                            <div
-                              className="text-xs cursor-default  font-black uppercase text-gray-500 px-3 py-1 border-2 border-gray-500 rounded-sm bg-gray-300"
-                              title="Agent and client aren't connected yet"
-                            >
-                              Live
-                            </div>
-                          </div>
-                        )
-                      ) : (
-                        col || ""
-                      )}
-                    </div>
-                  );
-                })}
-                <div>
-                  {!canBarge ? (
-                    <span className="flex items-center justify-center w-full h-full">
+              const canBarge =
+                x.includes("INCALL") &&
+                !x.includes("DEAD") &&
+                !x.includes("DISPO") &&
+                !x.includes("DIAL");
+
+              return (
+                <motion.div
+                  key={index}
+                  className="grid pl-4 pr-1 gap-2 hover:bg-gray-3 00 last:shadow-md last:rounded-b-md even:bg-gray-100 odd:bg-gray-200 border-x border-b grid-cols-13"
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ delay: index * 0.1 }}
+                >
+                  {newtext.map((col, colIndex) => {
+                    return (
                       <div
-                        title="Barge"
-                        className=" overflow-hidden justify-center cursor-not-allowed text-gray-600 bg-gray-300 p-1 rounded-sm border border-gray-500 transition-all relative flex items-center"
+                        key={colIndex}
+                        className=" py-3 truncate items-center flex-row flex whitespace-nowrap"
+                        title={col}
                       >
-                        <div>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="1.5"
-                            stroke="currentColor"
-                            className="size-5"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-                            />
-                          </svg>
-                        </div>
+                        {colIndex === 3 ? (
+                          col === "PAUSED" ? (
+                            <AnimatePresence>
+                              <motion.div
+                                className="p-1.5 ml-2.5 bg-gray-300 border border-gray-500 rounded-full text-gray-600"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                title="Not on-call"
+                              >
+                                {" "}
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth="1.5"
+                                  stroke="currentColor"
+                                  className="size-4"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"
+                                  />
+                                </svg>
+                              </motion.div>
+                            </AnimatePresence>
+                          ) : (
+                            <AnimatePresence>
+                              <motion.div
+                                className="p-1.5 ml-2.5 bg-green-500 shadow-md border border-green-800 rounded-full text-white"
+                                initial={{ opacity: 0 }}
+                                animate={{ opacity: 1 }}
+                                exit={{ opacity: 0 }}
+                                title="Incall"
+                              >
+                                <svg
+                                  xmlns="http://www.w3.org/2000/svg"
+                                  fill="none"
+                                  viewBox="0 0 24 24"
+                                  strokeWidth="1.5"
+                                  stroke="currentColor"
+                                  className="size-4"
+                                >
+                                  <path
+                                    strokeLinecap="round"
+                                    strokeLinejoin="round"
+                                    d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"
+                                  />
+                                </svg>
+                              </motion.div>
+                            </AnimatePresence>
+                          )
+                        ) : colIndex === 5 ? (
+                          col ? (
+                            <div className="truncate">{col}</div>
+                          ) : (
+                            <div className="text-xs text-gray-400 italic">
+                              No caller id
+                            </div>
+                          )
+                        ) : colIndex === 6 ? (
+                          col !== "0" ? (
+                            <div className=" text-center w-full flex justify-center truncate">
+                              {col}
+                            </div>
+                          ) : (
+                            <div className="text-center flex justify-center w-full">
+                              0
+                            </div>
+                          )
+                        ) : colIndex === 7 ? (
+                          col ? (
+                            <div className="truncate">{col}</div>
+                          ) : (
+                            <div className="text-xs text-gray-400 italic">
+                              No fullname
+                            </div>
+                          )
+                        ) : colIndex === 10 ? (
+                          col || (
+                            <div className="text-xs text-gray-400 italic">
+                              No break
+                            </div>
+                          )
+                        ) : colIndex === 11 ? (
+                          canBarge ? (
+                            <div className="w-full flex justify-center">
+                              <div
+                                className="text-xs cursor-default shadow-md font-black uppercase text-white px-3 py-1 border-2 border-red-900 rounded-sm bg-red-600"
+                                title="Agent and client are talking"
+                              >
+                                Live
+                              </div>
+                            </div>
+                          ) : (
+                            <div className="w-full flex justify-center">
+                              <div
+                                className="text-xs cursor-default  font-black uppercase text-gray-500 px-3 py-1 border-2 border-gray-500 rounded-sm bg-gray-300"
+                                title="Agent and client aren't connected yet"
+                              >
+                                Live
+                              </div>
+                            </div>
+                          )
+                        ) : (
+                          col || ""
+                        )}
                       </div>
-                    </span>
-                  ) : (
-                    <span
-                      className="flex items-center h-full justify-center"
-                      onClick={() => {
-                        handleBargeCall(session, viciId);
-                      }}
-                      title="barge"
-                    >
-                      <div
-                        onMouseEnter={() => setHoveredRow(index)}
-                        onMouseLeave={() => setHoveredRow(null)}
-                        className={`" ${
-                          hoveredRow === index ? "pl-1 pr-2 py-1" : "p-1"
-                        } shadow-md overflow-hidden bg-green-500  cursor-pointer text-white rounded-sm border border-gray-800 transition-all relative flex items-center "`}
-                      >
-                        <div>
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="1.5"
-                            stroke="currentColor"
-                            className="size-5"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-                            />
-                          </svg>
-                        </div>
+                    );
+                  })}
+                  <div>
+                    {!canBarge ? (
+                      <span className="flex items-center justify-center w-full h-full">
                         <div
-                          className={`" ${
-                            hoveredRow === index
-                              ? "left-3 top-1"
-                              : "-top-10 left-10"
-                          } transition-all absolute  "`}
+                          title="Barge"
+                          className=" overflow-hidden justify-center cursor-not-allowed text-gray-600 bg-gray-300 p-1 rounded-sm border border-gray-500 transition-all relative flex items-center"
                         >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="1.5"
-                            stroke="currentColor"
-                            className="size-4"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
-                            />
-                          </svg>
+                          <div>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth="1.5"
+                              stroke="currentColor"
+                              className="size-5"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                              />
+                            </svg>
+                          </div>
                         </div>
-                      </div>
-                    </span>
-                  )}
-                </div>
-              </motion.div>
-            );
-          })}
+                      </span>
+                    ) : (
+                      <span
+                        className="flex items-center h-full justify-center"
+                        onClick={() => {
+                          handleBargeCall(session, viciId);
+                        }}
+                        title="barge"
+                      >
+                        <div
+                          onMouseEnter={() => setHoveredRow(index)}
+                          onMouseLeave={() => setHoveredRow(null)}
+                          className={`" ${
+                            hoveredRow === index ? "pl-1 pr-2 py-1" : "p-1"
+                          } shadow-md overflow-hidden bg-green-500  cursor-pointer text-white rounded-sm border border-gray-800 transition-all relative flex items-center "`}
+                        >
+                          <div>
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth="1.5"
+                              stroke="currentColor"
+                              className="size-5"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                              />
+                            </svg>
+                          </div>
+                          <div
+                            className={`" ${
+                              hoveredRow === index
+                                ? "left-3 top-1"
+                                : "-top-10 left-10"
+                            } transition-all absolute  "`}
+                          >
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              fill="none"
+                              viewBox="0 0 24 24"
+                              strokeWidth="1.5"
+                              stroke="currentColor"
+                              className="size-4"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                d="M15.75 6a3.75 3.75 0 1 1-7.5 0 3.75 3.75 0 0 1 7.5 0ZM4.501 20.118a7.5 7.5 0 0 1 14.998 0A17.933 17.933 0 0 1 12 21.75c-2.676 0-5.216-.584-7.499-1.632Z"
+                              />
+                            </svg>
+                          </div>
+                        </div>
+                      </span>
+                    )}
+                  </div>
+                </motion.div>
+              );
+            })
+          )}
         </div>
 
         {isOpen && (

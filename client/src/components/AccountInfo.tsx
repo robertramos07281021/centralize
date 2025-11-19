@@ -376,11 +376,11 @@ const AccountInfo = forwardRef<
   }, [selectedCustomer]);
 
   const sumOf =
-    selectedCustomer && data && accountHistory
-      ? data?.customerOtherAccounts?.length +
-        accountHistory?.findAccountHistories?.length +
-        selectedCustomer?.dispo_history?.length +
-        selectedCustomer?.account_update_history?.length
+    (selectedCustomer && data && accountHistory)
+      ? (data?.customerOtherAccounts?.length || 0) +
+        (accountHistory?.findAccountHistories?.length || 0) +
+        (selectedCustomer?.dispo_history?.length || 0) +
+        (selectedCustomer?.account_update_history?.length || 0)
       : 0;
 
   // const formattedAmount = useMemo(() => {

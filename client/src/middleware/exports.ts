@@ -115,7 +115,7 @@ export const accountsNavbar: { [key: string]: links[] } = {
           link: "/agent-attendance-logs",
         },
         {
-          name: "Call Logs",
+          name: "Call Monitoring",
           link: "/all-call-logs",
         },
       ],
@@ -175,7 +175,7 @@ export const accountsNavbar: { [key: string]: links[] } = {
       tabs: null,
     },
     {
-      name: "Call Logs",
+      name: "Call Monitoring",
       link: "/call-agents-logs",
       tabs: null,
     },

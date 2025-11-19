@@ -1150,22 +1150,28 @@ const customerResolver = {
         const callfileOB = input
           .map((x) => x.total_os)
           .reduce((t, v) => t + v, 0);
-
-        let newCallfile = await Callfile.findOne({ name: callfile });
-
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
+        let newCallfile = await Callfile.findOne({ name: callfile });
+
         if (!newCallfile) {
-          newCallfile = new Callfile({
+          newCallfile = await Callfile.create({
             name: callfile,
             bucket: findBucket._id,
             totalAccounts: input.length,
             totalPrincipal: callfilePrincipal,
             totalOB: callfileOB,
           });
+        } else {
+          await Callfile.findByIdAndUpdate(newCallfile._id, {
+            $inc: {
+              totalAccounts: input.length,
+              totalPrincipal: callfilePrincipal,
+              totalOB: callfileOB,
+            },
+          });
         }
-
         if (newCallfile.createdAt < today) throw new CustomError("E11000", 401);
 
         const customerDocs = input.map((e) => ({
@@ -1250,132 +1256,9 @@ const customerResolver = {
             update: { customer_account: insertedAccounts[idx]._id },
           },
         }));
+
         if (bulkOps.length > 0) {
           await Customer.bulkWrite(bulkOps);
-        }
-
-        // await Promise.all(
-        //   input.map(async (element) => {
-        //     try {
-        //       const customer = new Customer({
-        //         fullName: element.customer_name,
-        //         platform_customer_id: element.platform_user_id || null,
-        //         gender: element.gender || null,
-        //         dob: element.birthday || null,
-        //         addresses: element.address,
-        //         emails: element.email,
-        //         contact_no: element.contact,
-        //       });
-
-        //       const paid_amount = element.total_os - element.balance;
-        //       let agent = null;
-
-        //       if (element.collectorID) {
-        //         agent = await User.findOne({
-        //           callfile_id: { $eq: element.collectorID },
-        //         });
-
-        //         const findAgentProduction = await Production.findOne({
-        //           user: agent._id,
-        //         }).lean();
-
-        //         if (!findAgentProduction) {
-        //           await Production.create({
-        //             user: findAgent,
-        //             assignedAccount: 1,
-        //           });
-        //         } else {
-        //           await Production.findByIdAndUpdate(findAgentProduction._id, {
-        //             $inc: { assignedAccount: 1 },
-        //           });
-        //         }
-        //       }
-
-        //       const createCA = {
-        //         customer: customer._id,
-        //         bucket: findBucket._id,
-        //         case_id: element.case_id,
-        //         callfile: newCallfile._id,
-        //         credit_customer_id: element.credit_user_id,
-        //         endorsement_date: element.endorsement_date,
-        //         bill_due_day: element.bill_due_day,
-        //         max_dpd: element.max_dpd,
-        //         dpd: element.dpd,
-        //         balance: element.balance,
-        //         month_pd: element.mpd,
-        //         paid_amount,
-        //         bill_due_date: element.bill_due_date,
-        //         account_id: element.account_id,
-        //         batch_no: element.batch_no,
-        //         features: {
-        //           branch: element.branch,
-        //         },
-        //         out_standing_details: {
-        //           principal_os: element.principal_os,
-        //           interest_os: element.interest_os,
-        //           admin_fee_os: element.admin_fee_os,
-        //           txn_fee_os: element.txn_fee_os,
-        //           late_charge_os: element.late_charge_os,
-        //           dst_fee_os: element.dst_fee_os,
-        //           waive_fee_os: element.late_charge_waive_fee_os,
-        //           total_os: element.total_os,
-        //           total_balance: element.balance,
-        //           writeoff_balance: element.writeoff_balance,
-        //           overall_balance: element.overall_balance,
-        //           cf: element.cf,
-        //           mo_balance: element.mo_balance,
-        //           pastdue_amount: element.pastdue_amount,
-        //           mo_amort: element.mo_amort,
-        //           partial_payment_w_service_fee:
-        //             element.partial_payment_w_service_fee,
-        //           new_tad_with_sf: element.new_tad_with_sf,
-        //           new_pay_off: element.new_pay_off,
-        //           service_fee: element.service_fee,
-        //           year: element.year,
-        //           brand: element.brand,
-        //           model: element.model,
-        //           last_payment_date: element.last_payment_date,
-        //           last_payment_amount: element.last_payment_amount,
-        //         },
-        //         emergency_contact: {
-        //           name: element.emergencyContactName,
-        //           mobile: element.emergencyContactMobile,
-        //         },
-        //         grass_details: {
-        //           grass_region: element.grass_region,
-        //           vendor_endorsement: element.vendor_endorsement,
-        //           grass_date: element.grass_date,
-        //         },
-        //       };
-
-        //       if (agent) {
-        //         createCA["assigned"] = agent._id;
-        //         createCA["assignedModel"] = "User";
-        //         createCA["assigned_date"] = new Date();
-        //       }
-        //       const caResult = await CustomerAccount.create(createCA);
-        //       customer.customer_account = caResult._id;
-        //       await customer.save();
-        //     } catch (error) {
-        //       console.log(error);
-        //     }
-        //   })
-        // );
-
-        if (newCallfile.isNew) {
-          await newCallfile.save();
-        } else {
-          await Callfile.findByIdAndUpdate(
-            newCallfile._id,
-            {
-              $inc: {
-                totalAccounts: input.length || 0,
-                totalPrincipal: callfilePrincipal || 0,
-                totalOB: callfileOB || 0,
-              },
-            },
-            { new: true }
-          );
         }
 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_NEW_ON_CALLFILE, {

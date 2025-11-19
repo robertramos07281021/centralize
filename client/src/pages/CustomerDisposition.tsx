@@ -35,7 +35,6 @@ import Lottie from "lottie-react";
 import phone from "../Animations/Phone Call.json";
 import NeedToLoginVici from "./agent/NeedToLoginVici.tsx";
 import frequency from "../Animations/Sound voice waves.json";
-import { AiOutlineLoading3Quarters } from "react-icons/ai";
 
 const DESELECT_TASK = gql`
   mutation deselectTask($id: ID!) {
@@ -999,8 +998,8 @@ const CustomerDisposition = () => {
   //me 09126448847
   //christian inbound 09285191305
   //endrian 09694827149
-  // const mobileNo =
-  //   userLogged?.username === "RRamos" ? "09285191305" : "09694827149";
+  const mobileNo =
+    userLogged?.username === "RRamos" ? "09285191305" : "09694827149";
 
   function normalizePhilippineNumber(rawNumber: string): string | null {
     if (!rawNumber) return null;
@@ -1044,8 +1043,8 @@ const CustomerDisposition = () => {
         if (!onCall || !isRing) {
           setDial(false);
           dispatch(setMobileToCall(phoneNumber));
-          // await makeCall({ variables: { phoneNumber: mobileNo } });
-          await makeCall({ variables: { phoneNumber: phoneNumber } });
+          await makeCall({ variables: { phoneNumber: mobileNo } });
+          // await makeCall({ variables: { phoneNumber: phoneNumber } });
         }
       }
     });
@@ -1066,8 +1065,8 @@ const CustomerDisposition = () => {
     setConfirm(false);
     setTimeout(async () => {
       dispatch(setMobileToCall(newPhone));
-      // await makeCall({ variables: { phoneNumber: mobileNo } });
-      await makeCall({ variables: { phoneNumber: "09285191305" } });
+      await makeCall({ variables: { phoneNumber: mobileNo } });
+      // await makeCall({ variables: { phoneNumber: newPhone } });
     }, 1000);
   }, []);
 
@@ -1451,11 +1450,16 @@ const CustomerDisposition = () => {
               initial={{ opacity: 0, scale: 0.6 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 1, type: "spring" }}
-              className={`" w-40 rounded-full cursor-grab active:cursor-grabbing absolute top-30 right-20 z-40 justify-center items-center flex border "`}
+              className={`" w-40 rounded-full cursor-grab active:cursor-grabbing absolute top-30 right-20 z-40 justify-center items-center flex "`}
             >
-              {randomLoading && !isRing && checkIfAgentIsInline?.includes('PAUSE') ? (
-                <div className="border h-40 w-100 rounded-full flex items-center justify-center bg-white">
-                  <AiOutlineLoading3Quarters className="animate-spin text-5xl"/>
+              {randomLoading &&
+              !isRing &&
+              checkIfAgentIsInline?.includes("PAUSE") ? (
+                <div className=" h-40  border-0 bg-white w-full rounded-full flex items-center justify-center">
+                  <div className="absolute z-20 text-gray-500 text-sm">
+                    Please wait...
+                  </div>
+                  <div className="border-t-2 bg-gray-100 shadow-md w-40 h-40 animate-spin rounded-full"></div>
                 </div>
               ) : (
                 <>

@@ -87,13 +87,14 @@ const AgentReport = () => {
             ref={modalRef}
           >
             <motion.div
-              className="h-full border-2 text-center justify-center  border-slate-500 rounded-md flex items-center px-2 cursor-default"
+              className="h-full border-2 max-w-80 text-center justify-center  border-slate-500 rounded-md flex items-center px-2 cursor-default"
               onClick={onClickPopUpDispoType}
               title={selectedDispoAgent
                 .map((e) => dispotypeObject[e])
                 .join(", ")}
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
+              layout
             >
               {selectedDispoAgent.length > 0 ? (
                 <div className="w-full truncate text-sm">

@@ -450,41 +450,48 @@ const Uploader: React.FC<modalProps> = ({
   const [loading, setLoading] = useState<boolean>(false);
 
   const creatingCustomer = useCallback(async () => {
+    if (!excelData.length) return;
     const CHUNK_SIZE = 2000;
+    const CONCURRENT_CHUNKS = 3;
     const chunks = chunk(excelData, CHUNK_SIZE);
 
     setLoading(true);
     try {
-      const CONCURRENT_CHUNKS = 3;
-
       for (let i = 0; i < chunks.length; i += CONCURRENT_CHUNKS) {
         const batch = chunks.slice(i, i + CONCURRENT_CHUNKS);
 
-        await Promise.allSettled(
-          batch.map((chunkData) =>
-            createCustomer({
-              variables: {
-                input: chunkData,
-                callfile: file[0].name.split(".")[0],
-                bucket: bucket ?? "",
-              },
-            })
-          )
+        // Map each chunk to a createCustomer mutation
+        const promises = batch.map((chunkData) =>
+          createCustomer({
+            variables: {
+              input: chunkData,
+              callfile: file[0].name.split(".")[0],
+              bucket: bucket ?? "",
+            },
+          })
         );
-      }
 
+        // Wait for all to settle before next batch
+        const results = await Promise.allSettled(promises);
+
+        // Optional: handle errors per chunk without stopping the rest
+        results.forEach((res, idx) => {
+          if (res.status === "rejected") {
+            console.error(`Chunk ${i + idx} failed:`, res.reason);
+          }
+        });
+      }
       setConfirm(false);
+      setExcelData([]);
+      setFile([]);
+      setRequired(false);
+      bucketRequired(false);
     } catch (error) {
       console.log(error);
     } finally {
-      successUpload();
-      setExcelData([]);
-      setFile([]);
-      onSuccess();
-      setConfirm(false);
-      setRequired(false);
+      successUpload?.();
+      onSuccess?.();
       setLoading(false);
-      bucketRequired(false);
     }
   }, [createCustomer, excelData, file, setConfirm, bucket]);
 

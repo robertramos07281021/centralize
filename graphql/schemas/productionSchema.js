@@ -3,7 +3,7 @@ import { gql } from "graphql-tag";
 const productionTypeDefs = gql`
   scalar DateTime
   type Disposition {
-    _id:ID
+    _id: ID
     count: Int
   }
 
@@ -43,7 +43,7 @@ const productionTypeDefs = gql`
   }
 
   type DipotypeCount {
-    dispotype: Dispotype,
+    dispotype: Dispotype
     count: Int
   }
 
@@ -51,7 +51,7 @@ const productionTypeDefs = gql`
     totalDisposition: Int
     dispotypes: [DipotypeCount]
   }
-  
+
   type History {
     type: String
     existing: Boolean
@@ -66,7 +66,6 @@ const productionTypeDefs = gql`
     createdAt: DateTime
     target_today: Float
   }
-  
 
   type Recording {
     name: String
@@ -95,11 +94,10 @@ const productionTypeDefs = gql`
     total: Int
   }
 
-
   type MyProduction {
-    totalAmountPTP: Float,
-    totalCountPTP: Int,
-    totalAmountKept: Float,
+    totalAmountPTP: Float
+    totalCountPTP: Int
+    totalAmountKept: Float
     totalCountKept: Float
   }
 
@@ -121,28 +119,65 @@ const productionTypeDefs = gql`
     totalCount: Int
   }
 
+  type ProdHistory {
+    type: String
+    start: String
+    end: String
+    existing: Boolean
+  }
+
+  type Production {
+    _id: ID!
+    user: ID!
+    target_today: Int
+    prod_history: [ProdHistory]
+    createdAt: DateTime
+    total: Int
+    average: Int
+    longes: Int
+  }
+
+
+
+  extend type Query {
+    productions: [Production]
+    productionByUser(userId: ID!): Production
+  }
 
   type Query {
-    getAgentProductionPerDay:[PerDay]
-    getAgentProductionPerMonth:[perMonth]
-    getAgentTotalDispositions:[AgentTotalDispo]
+    getAgentProductionPerDay: [PerDay]
+    getAgentProductionPerMonth: [perMonth]
+    getAgentTotalDispositions: [AgentTotalDispo]
     getAgentDailyCollection: DailyCollection
     getAgentRPCCount: AgentRPCCount
-    ProductionReport(dispositions:[ID],from:String,to:String):ProductionReport
-    getAgentProductions:[AgentProduction]
-    agentProduction:MyProduction
-    getAgentDispositionRecords(agentID:ID, limit:Int, page:Int, from:String, to:String, search: String, dispotype: [String], ccsCalls: Boolean!):AgentDispo
-    monthlyWeeklyCollected:Collected
-    getAllAgentProductions(bucketId:ID, from: String, to: String):Success
+    ProductionReport(
+      dispositions: [ID]
+      from: String
+      to: String
+    ): ProductionReport
+    getAgentProductions: [AgentProduction]
+    agentProduction: MyProduction
+    getAgentDispositionRecords(
+      agentID: ID
+      limit: Int
+      page: Int
+      from: String
+      to: String
+      search: String
+      dispotype: [String]
+      ccsCalls: Boolean!
+    ): AgentDispo
+    monthlyWeeklyCollected: Collected
+    getAllAgentProductions(bucketId: ID, from: String, to: String): [Production]
   }
 
   type Mutation {
-    setTargets(userId:ID, targets: Targets):Success
-    updateProduction(type: String!):Success
-    loginToProd(password: String):Login
-    lockAgent:Success
-    setBucketTargets(bucketId:ID ,targets: Targets):Success
+    setTargets(userId: ID, targets: Targets): Success
+    updateProduction(type: String!): Success
+    loginToProd(password: String): Login
+    lockAgent: Success
+    setBucketTargets(bucketId: ID, targets: Targets): Success
   }
-`
+`;
 
-export default productionTypeDefs
+export default productionTypeDefs;
