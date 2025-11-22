@@ -112,8 +112,7 @@ const dispositionTypeDefs = gql`
   }
 
   type DailyFTE {
-    campaign: ID
-    online: Int
+    totalUsers: Int
   }
 
   type AomDailyCollection {
@@ -192,7 +191,7 @@ const dispositionTypeDefs = gql`
     getAccountDispoCount(id:ID!): Count
     getDispositionReports(reports:SearchDispoReports): Reports
     getAllDispositionTypes:[DispoType]
-    getDailyFTE:[DailyFTE]
+    getDailyFTE(bucket:ID):DailyFTE
     getAOMPTPPerDay: [AomDailyCollection]
     getAOMPTPKeptPerDay: [AomDailyCollection]
     getAOMPaidPerDay: [AomDailyCollection]

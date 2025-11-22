@@ -135,7 +135,15 @@ const callfileResolver = {
                               input: "$histories",
                               as: "history",
                               cond: {
-                                $eq: ["$$history.disposition", paidDispo._id],
+                                $and: [
+                                  {
+                                    $eq: [
+                                      "$$history.disposition",
+                                      paidDispo._id,
+                                    ],
+                                  },
+                                  { $eq: ["$$history.selectivesDispo", true] },
+                                ],
                               },
                             },
                           },
@@ -350,6 +358,7 @@ const callfileResolver = {
           count: total | 0,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -381,6 +390,7 @@ const callfileResolver = {
         ]);
         return findActiveCallfile;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -390,6 +400,14 @@ const callfileResolver = {
         const findCallfile = await Callfile.findById(callfile).lean();
 
         if (!findCallfile) return null;
+
+        const disposition = await DispoType.find({ active: true });
+
+        const newMap = () => {
+          return Object.fromEntries(disposition.map((x) => [x._id, x.code]));
+        };
+
+        const dispotypeMap = newMap();
 
         const customers = await CustomerAccount.aggregate([
           {
@@ -459,6 +477,31 @@ const callfileResolver = {
             $unwind: {
               path: "$customer_info",
               preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "history",
+              foreignField: "_id",
+              as: "histories",
+            },
+          },
+          {
+            $addFields: {
+              newHistories: {
+                $filter: {
+                  input: "$histories",
+                  as: "h",
+                  cond: {
+                    $and: [
+                      { $ne: ["$$h.callId", null] }, // not null
+                      { $ne: ["$$h.callId", ""] }, // not empty string
+                      { $ne: ["$$h.callId", undefined] }, // optional: not undefined
+                    ],
+                  },
+                },
+              },
             },
           },
           {
@@ -553,12 +596,44 @@ const callfileResolver = {
                         },
                         {
                           $regexMatch: {
+                            input: { $toString: "$$num" },
+                            regex: "^2\\d{8}$",
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $toString: "$$num" },
+                            regex: "^632\\d{8}$",
+                          },
+                        },
+                        {
+                          $regexMatch: {
                             input: {
                               $toString: {
                                 $ifNull: ["$emergency_contact.mobile", ""],
                               },
                             },
                             regex: "^(08822|08842)\\d{5}$",
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: {
+                              $toString: {
+                                $ifNull: ["$emergency_contact.mobile", ""],
+                              },
+                            },
+                            regex: "^(8822|8842)\\d{5}$",
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: {
+                              $toString: {
+                                $ifNull: ["$emergency_contact.mobile", ""],
+                              },
+                            },
+                            regex: "^(638822|638842)\\d{5}$",
                           },
                         },
                         {
@@ -571,7 +646,33 @@ const callfileResolver = {
                         {
                           $regexMatch: {
                             input: { $toString: "$$num" },
+                            regex:
+                              "^(3[2-8]|4[2-9]|5[2-6]|6[2-8]|7[2-8]|8[2-8])\\d{7}$",
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $toString: "$$num" },
+                            regex:
+                              "^(633[2-8]|634[2-9]|635[2-6]|636[2-8]|637[2-8]|638[2-8])\\d{7}$",
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $toString: "$$num" },
                             regex: "^09\\d{9}$",
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $toString: "$$num" },
+                            regex: "^9\\d{9}$",
+                          },
+                        },
+                        {
+                          $regexMatch: {
+                            input: { $toString: "$$num" },
+                            regex: "^639\\d{9}$",
                           },
                         },
                       ],
@@ -652,6 +753,10 @@ const callfileResolver = {
               new_pay_off: "$out_standing_details.new_pay_off",
               service_fee: "$out_standing_details.service_fee",
               dialer: "$currentDispo.dialer",
+              chatApp: "$currentDispo.chatApp",
+              sms: "$currentDispo.sms",
+              selectives: "$currentDispo.selectivesDispo",
+              dispo_date: "$currentDispo.createdAt",
               case_id: "$case_id",
               platform_user_id: "$customer_info.platform_customer_id",
               emergencyContactName: "$emergency_contact.name",
@@ -735,11 +840,120 @@ const callfileResolver = {
                   else: false,
                 },
               },
+              call_penetration: "$newHistories",
             },
           },
         ]);
 
-        const csv = json2csv(customers, {
+        function formatDateTime(date) {
+          if (!date) return "";
+          const d = new Date(date);
+
+          const monthNames = [
+            "Jan",
+            "Feb",
+            "Mar",
+            "Apr",
+            "May",
+            "Jun",
+            "Jul",
+            "Aug",
+            "Sep",
+            "Oct",
+            "Nov",
+            "Dec",
+          ];
+
+          const month = monthNames[d.getMonth()];
+          const day = d.getDate();
+          const year = d.getFullYear();
+
+          let hours = d.getHours();
+          const minutes = d.getMinutes().toString().padStart(2, "0");
+          const ampm = hours >= 12 ? "PM" : "AM";
+          hours = hours % 12;
+          hours = hours ? hours : 12; // 0 should be 12
+
+          return `${month} ${day}, ${year} ${hours}:${minutes} ${ampm}`;
+        }
+        function formatDateTimeForPenetration(date) {
+          if (!date) return "";
+          const newdate = date.slice(0, 8); // 20251119
+          const time = date.slice(9); // 165925
+
+          const year = newdate.slice(0, 4);
+          const month = newdate.slice(4, 6);
+          const day = newdate.slice(6, 8);
+
+          let hour = parseInt(time.slice(0, 2), 10);
+          const minute = time.slice(2, 4);
+          const second = time.slice(4, 6);
+
+          // Convert to AM/PM
+          const ampm = hour >= 12 ? "PM" : "AM";
+          hour = hour % 12 || 12;
+
+          const formatted = `${year}-${month}-${day} ${hour}:${minute}:${second} ${ampm}`;
+
+          return formatted;
+        }
+
+        function formatDuration(value) {
+          // Remove any spaces and normalize
+          const v = (value || "").trim();
+
+          // If not digits → invalid
+          if (!/^\d+$/.test(v)) return "";
+
+          const seconds = parseInt(v, 10); // convert safely
+          const mins = Math.floor(seconds / 60);
+          const secs = seconds % 60;
+
+          return `${mins}:${secs.toString().padStart(2, "0")}`;
+        }
+
+        const formattedCustomers = customers.map((c) => {
+          const call_penetration = c.call_penetration.map((x) => {
+            if (!x.callId) return "";
+
+            const dateTime = x.callId
+              ? formatDateTimeForPenetration(x.callId.split("_")[1])
+              : "";
+            const spliting = x.callId.split("_");
+            const durations = x.callId.split("_")[spliting.length - 1];
+            return `${dispotypeMap[x.disposition]}-${dateTime}-${formatDuration(
+              durations
+            )}\n`;
+          });
+
+          return {
+            ...c,
+
+            contact1: c.contact1 ? `="${c.contact1}"` : "",
+            contact2: c.contact2 ? `="${c.contact2}"` : "",
+            contact3: c.contact3 ? `="${c.contact3}"` : "",
+            call_penetration: call_penetration
+              ? `="${call_penetration.toString()}"`
+              : "",
+            call_penetration_count: call_penetration
+              ? `="${call_penetration.length}"`
+              : "",
+            platform_user_id: c.platform_user_id
+              ? `="${c.platform_user_id}"`
+              : "",
+            case_id: c.case_id ? `="${c.case_id}"` : "",
+            dispo_date: c.dispo_date
+              ? `="${formatDateTime(c.dispo_date)}"`
+              : "",
+            email1: c.email1 ?? "",
+            email2: c.email2 ?? "",
+            email3: c.email3 ?? "",
+            emergencyContactName: c.emergencyContactName,
+            emergencyContactMobile: c.emergencyContactMobile,
+          };
+        });
+
+        const csv = json2csv(formattedCustomers, {
           keys: [
             "contact1",
             "contact2",
@@ -779,17 +993,24 @@ const callfileResolver = {
             "new_tad_with_sf",
             "new_pay_off",
             "service_fee",
+            "dispo_date",
             "year",
+            "chatApp",
+            "sms",
+            "selectives",
             "brand",
             "model",
             "last_payment_amount",
             "last_payment_date",
+            "call_penetration",
+            "call_penetration_count",
           ],
           emptyFieldValue: "",
         });
 
         return csv;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -986,12 +1207,15 @@ const callfileResolver = {
 
         return customerAccounts;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
     getToolsProduction: async (_, { bucket, interval }) => {
       try {
         const selectedBucket = await Bucket.findById(bucket).lean();
+        if (!selectedBucket) return null;
+
         const callfile = (
           await Callfile.find({ bucket: selectedBucket._id }).lean()
         ).map((cf) => new mongoose.Types.ObjectId(cf._id));
@@ -1257,12 +1481,14 @@ const callfileResolver = {
 
         return newMap || null;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
     getCollectionMonitoring: async (_, { bucket, interval }) => {
       try {
         const selectedBucket = await Bucket.findById(bucket).lean();
+        if (!selectedBucket) return null;
 
         const callfile = (
           await Callfile.find({ bucket: selectedBucket._id })
@@ -1346,6 +1572,7 @@ const callfileResolver = {
 
         return newDataCollected;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1393,6 +1620,7 @@ const callfileResolver = {
           total: totals,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1402,6 +1630,7 @@ const callfileResolver = {
       try {
         return await Callfile.findById(parent.callfile).populate("finished_by");
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1453,6 +1682,7 @@ const callfileResolver = {
           message: "Callfile successfully finished",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1480,6 +1710,7 @@ const callfileResolver = {
           message: "Callfile successfully deleted",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1496,6 +1727,7 @@ const callfileResolver = {
           success: true,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1517,21 +1749,18 @@ const callfileResolver = {
         });
 
         for (const i of selectives) {
-
           const res = await CustomerAccount.findOne({
-            case_id:  String(i.account_no),
+            case_id: String(i.account_no),
             callfile: new mongoose.Types.ObjectId(callfile._id),
           }).populate("current_disposition");
 
-          
-          if (!res._id) {
-            continue;  
+          if (!res) {
+            continue;
           }
 
-         
           if (res._id && res?.balance > 0) {
             const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-           
+
             const cdCreatedAt =
               new Date(res?.current_disposition?.createdAt) <= threeDaysAgo;
 
@@ -1579,7 +1808,7 @@ const callfileResolver = {
             } else {
               data["payment"] = "partial";
             }
-            console.log(data)
+
             const newDispo = new Disposition(data);
 
             if (res?.current_disposition) {
@@ -1638,6 +1867,7 @@ const callfileResolver = {
           message: "Successfully added selectives",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

@@ -11,7 +11,6 @@ import User from "../../models/user.js";
 import Department from "../../models/department.js";
 import Callfile from "../../models/callfile.js";
 import Disposition from "../../models/disposition.js";
-import Production from "../../models/production.js";
 
 const customerResolver = {
   DateTime,
@@ -42,6 +41,7 @@ const customerResolver = {
           ]);
           return searchQuery;
         } catch (error) {
+          console.log(error);
           throw new CustomError(error.message, 500);
         }
       }
@@ -64,6 +64,7 @@ const customerResolver = {
               : 0,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -550,6 +551,7 @@ const customerResolver = {
 
         return newResult;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -712,6 +714,7 @@ const customerResolver = {
           totalCountCustomerAccounts: allAccounts,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -731,6 +734,7 @@ const customerResolver = {
           })) || 0
         );
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1007,6 +1011,7 @@ const customerResolver = {
 
         return newMonthlyTarget;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1117,6 +1122,7 @@ const customerResolver = {
         const user = await User.findById(parent.assigned);
         return user;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1144,6 +1150,14 @@ const customerResolver = {
       try {
         const findBucket = await Bucket.findById(bucket);
         if (!findBucket) throw new CustomError("Bucket not found", 404);
+
+        const findingActiveCallfile = await Callfile.findOne({
+          bucket: findBucket._id,
+          active: true,
+        });
+        if (findingActiveCallfile)
+          throw new CustomError("Already have active file", 409);
+
         const callfilePrincipal = input
           .map((x) => x.principal_os)
           .reduce((t, v) => t + v, 0);
@@ -1322,6 +1336,7 @@ const customerResolver = {
           customer,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1351,6 +1366,7 @@ const customerResolver = {
           customer,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

@@ -5,14 +5,15 @@ import ModifyRecord from "../../models/modifyRecord.js";
 const modifyReportResolver = {
   DateTime,
   Query: {
-    getModifyReport: async(_,{id}) => {
+    getModifyReport: async (_, { id }) => {
       try {
-        return await ModifyRecord.find({user: id}) 
+        return await ModifyRecord.find({ user: id });
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
   },
-}
+};
 
-export default modifyReportResolver
+export default modifyReportResolver;

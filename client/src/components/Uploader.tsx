@@ -107,6 +107,7 @@ const Uploader: React.FC<modalProps> = ({
         const sheet = workbook.Sheets[sheetName];
         const jsonDataRaw = utils.sheet_to_json<Record<string, any>>(sheet, {
           defval: "",
+          raw: true,
         });
         const jsonData = jsonDataRaw.map((row) => {
           const cleanRow: Record<string, any> = {};
@@ -167,32 +168,40 @@ const Uploader: React.FC<modalProps> = ({
             ...others
           } = row;
 
-          function normalizeContact(contact: string) {
+          function normalizePHNumber(contact: string) {
             if (!contact) return "";
 
-            const cleaned = contact
-              .toString()
-              .trim()
-              .replace(/[+\-\s()]/g, "");
+            // Remove spaces, dashes, parentheses
+            let cleaned = contact.replace(/[+\-\s()]/g, "");
 
+            // If there’s a slash (multiple numbers), take the first one
             if (cleaned.includes("/")) {
-              return cleaned.split("/").toString();
+              cleaned = cleaned.split("/")[0];
             }
 
-            if (isNaN(Number(cleaned))) return "";
-
-            if (/^09\d{9}$/.test(cleaned)) {
-              return "63" + cleaned.slice(1);
+            // Mobile numbers
+            if (/^(09\d{9})$/.test(cleaned)) {
+              return cleaned; // already starts with 0
+            }
+            if (/^639\d{9}$/.test(cleaned)) {
+              return "0" + cleaned.slice(2); // add leading 0
+            }
+            if (/^\+639\d{9}$/.test(contact)) {
+              return "0" + cleaned.slice(3); // add leading 0
             }
 
-            if (/^63\d{10}$/.test(cleaned)) {
-              return cleaned;
+            // Landline numbers
+            if (/^0\d{1,2}\d{7}$/.test(cleaned)) {
+              return cleaned; // already starts with 0
+            }
+            if (/^63\d{1,2}\d{7}$/.test(cleaned)) {
+              return "0" + cleaned.slice(2);
+            }
+            if (/^\+63\d{1,2}\d{7}$/.test(contact)) {
+              return "0" + cleaned.slice(3);
             }
 
-            if (/^\+63\d{10}$/.test(contact)) {
-              return contact.replace("+", "");
-            }
-
+            // fallback
             return cleaned;
           }
 
@@ -243,7 +252,7 @@ const Uploader: React.FC<modalProps> = ({
           } as Record<string, any>;
 
           if (emergencyContactMobile) {
-            rows["emergencyContactMobile"] = normalizeContact(
+            rows["emergencyContactMobile"] = normalizePHNumber(
               emergencyContactMobile
             ).toString();
           }
@@ -304,7 +313,7 @@ const Uploader: React.FC<modalProps> = ({
                 mobileMatches.forEach((mob, index) => {
                   const numMatch = mob.match(/(\d{10,11})/);
                   if (numMatch) {
-                    const normalized = normalizeContact(numMatch[0]);
+                    const normalized = normalizePHNumber(numMatch[0]);
                     if (index === 0) rows["contact"].push(normalized);
                     else if (index === 1) rows["contact"].push(normalized);
                     else if (index === 2) rows["contact"].push(normalized);
@@ -313,7 +322,7 @@ const Uploader: React.FC<modalProps> = ({
               }
             } else {
               if (contact) {
-                const newContact = normalizeContact(contact)
+                const newContact = normalizePHNumber(contact)
                   ?.toString()
                   ?.split(",");
                 if (newContact.length > 1) {
@@ -324,7 +333,7 @@ const Uploader: React.FC<modalProps> = ({
               }
 
               if (contact_2) {
-                const newContact = normalizeContact(contact_2)
+                const newContact = normalizePHNumber(contact_2)
                   ?.toString()
                   ?.split(",");
                 if (newContact.length > 1) {
@@ -335,7 +344,7 @@ const Uploader: React.FC<modalProps> = ({
               }
 
               if (contact_3) {
-                const newContact = normalizeContact(contact_3)
+                const newContact = normalizePHNumber(contact_3)
                   ?.toString()
                   ?.split(",");
                 if (newContact.length > 1) {
@@ -390,7 +399,6 @@ const Uploader: React.FC<modalProps> = ({
     }
   }, []);
 
-  console.log(excelData);
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [],
@@ -486,14 +494,13 @@ const Uploader: React.FC<modalProps> = ({
       setFile([]);
       setRequired(false);
       bucketRequired(false);
-    } catch (error) {
-      console.log(error);
-    } finally {
       successUpload?.();
       onSuccess?.();
       setLoading(false);
+    } catch (error) {
+      console.log(error);
     }
-  }, [createCustomer, excelData, file, setConfirm, bucket]);
+  }, [createCustomer, excelData, file, setConfirm, bucket, setExcelData, setRequired, bucketRequired, successUpload, onSuccess, setLoading]);
 
   const submitUpload = () => {
     if (file.length === 0 || !bucket) {

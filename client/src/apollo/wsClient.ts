@@ -7,7 +7,8 @@ export function getWsClient() {
   if (!wsClient) {
     const hostname = window.location.hostname;
     wsClient = createClient({
-      url: `ws://${hostname}:3000/graphql`,
+      url: `ws://${hostname}:3000/graphql`, // dev
+      // url: `ws://172.16.24.31:4000/graphql`, // prod
       connectionParams: () => {
         const token = store.getState().auth.myToken;
         return {

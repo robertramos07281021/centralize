@@ -47,7 +47,7 @@ const GET_BUCKET_USERS = gql`
   }
 `;
 
-const CallLogs = () => {
+const QASVCallLogs = () => {
   const [selectedBucket, setSelectedBucket] = useState<Bucket | null>(null);
   const [selectedBucket2, setSelectedBucket2] = useState<string | null>(null);
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
@@ -90,7 +90,6 @@ const CallLogs = () => {
     return newData.slice(1).filter((line) => line?.trim());
   }, [newData]);
 
-  // ⭐ NEW — filteredRows (IDENTICAL to CallAllAgentLogs)
   const filteredRows = useMemo(() => {
     if (!bucketUsersData) return rows;
     if (allowedViciIds.size === 0) return [];
@@ -101,13 +100,15 @@ const CallLogs = () => {
     });
   }, [rows, bucketUsersData, allowedViciIds]);
 
-  const { data: getUserData, refetch: getUserDataRefetch } = useQuery<{getBargingStatus:string}>(
+  const { data: getUserData, refetch: getUserDataRefetch } = useQuery(
     GET_USER_STATUS,
     {
       variables: { viciId: selectedBucket?.viciIp },
       notifyOnNetworkStatusChange: true,
     }
   );
+
+  console.log(getUserData)
 
   useEffect(() => {
     if (data) {
@@ -129,16 +130,14 @@ const CallLogs = () => {
 
   const handleBargeCall = useCallback(
     async (session_id: string | null, viciUserId: string | null) => {
-      if(!getUserData?.getBargingStatus.includes("ERROR")) {
-        await bargeCall({
-          variables: {
-            sessionId: session_id,
-            viciUserId: viciUserId,
-          },
-        });
-      }
+      await bargeCall({
+        variables: {
+          sessionId: session_id,
+          viciUserId: viciUserId,
+        },
+      });
     },
-    [bargeCall, getUserData]
+    [bargeCall]
   );
 
   return (
@@ -521,4 +520,4 @@ const CallLogs = () => {
   );
 };
 
-export default CallLogs;
+export default QASVCallLogs;

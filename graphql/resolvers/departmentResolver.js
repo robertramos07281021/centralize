@@ -7,145 +7,164 @@ import mongoose from "mongoose";
 
 const deptResolver = {
   Query: {
-    getDepts: async()=> {
+    getDepts: async () => {
       try {
-        const result = await Department.find()
-        return result
+        const result = await Department.find();
+        return result;
       } catch (error) {
-        throw new CustomError(error.message,500)
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
-    getDept: async(_,{name}) => {
+    getDept: async (_, { name }) => {
       try {
-        const res = await Department.findOne({name})
-        console.log(res)
-        if(!res) throw new CustomError("Department not exists",404)
-          return res
+        const res = await Department.findOne({ name });
+
+        if (!res) throw new CustomError("Department not exists", 404);
+        return res;
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
-    getBranchDept: async(_,{branch}) => {
+    getBranchDept: async (_, { branch }) => {
       try {
-       const findBranch = await Branch.findOne({name: branch})
-        if(!findBranch) throw new CustomError("Branch not exists",404)
-        const res = await Department.find({branch: findBranch.name})
+        if(!branch) return null
+
+        const findBranch = await Branch.findOne({ name: branch });
+        if (!findBranch) throw new CustomError("Branch not exists", 404);
+        const res = await Department.find({ branch: findBranch.name });
         return res || [];
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
-    getAomDept: async(_,__,{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-      try { 
-        const res = await Department.find({aom: user._id})
-        return res
-      } catch (error) {
-        throw new CustomError(error.message,500)
-      }
-    },
-    getDepartmentBucket: async(_,{depts})=> {
+    getAomDept: async (_, __, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
       try {
-      
-        const deptsRes = (await Department.find({_id: {$in: depts.map(d=> new mongoose.Types.ObjectId(d))}})).map(d=> d.name)
-        if(deptsRes.length < 1) {
-          throw new CustomError("No Campaign selected",404)
-        }
-        const buckets = await Bucket.find({dept: {$in: deptsRes}}) 
-        
-        return buckets
+        const res = await Department.find({ aom: user._id });
+        return res;
       } catch (error) {
-        throw new CustomError(error.message,500)
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
-    }
+    },
+    getDepartmentBucket: async (_, { depts }) => {
+      try {
+        const deptsRes = (
+          await Department.find({
+            _id: { $in: depts.map((d) => new mongoose.Types.ObjectId(d)) },
+          })
+        ).map((d) => d.name);
+        if (deptsRes.length < 1) {
+          throw new CustomError("No Campaign selected", 404);
+        }
+        const buckets = await Bucket.find({ dept: { $in: deptsRes } });
+
+        return buckets;
+      } catch (error) {
+        console.log(error);
+        throw new CustomError(error.message, 500);
+      }
+    },
   },
   Dept: {
-    aom: async(parent) => {
+    aom: async (parent) => {
       try {
-        const aom = await User.findById(parent.aom)
-        return aom
+        const aom = await User.findById(parent.aom);
+        return aom;
       } catch (error) {
-        throw new CustomError(error.message,500)
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
-      
-    }
+    },
   },
 
   Mutation: {
-    createDept: async(_,{name, branch, aom}, {user} ) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-   
+    createDept: async (_, { name, branch, aom }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
       try {
-          const [findBranch, findUser, findDept] = await Promise.all([
-          await Branch.findOne({name:branch}).lean(),
-          await User.findOne({name: aom.toLowerCase()}).lean(),
+        const [findBranch, findUser, findDept] = await Promise.all([
+          await Branch.findOne({ name: branch }).lean(),
+          await User.findOne({ name: aom.toLowerCase() }).lean(),
           await Department.findOne({
-            $and: [{name: {$eq: name},},{branch: {$eq:branch}}]
-          })
-        ])
+            $and: [{ name: { $eq: name } }, { branch: { $eq: branch } }],
+          }),
+        ]);
 
-        if(!findBranch) throw new CustomError("Branch not existing",400)
-  
-        if(!findUser) throw new CustomError("User not found")
+        if (!findBranch) throw new CustomError("Branch not existing", 400);
 
-        if(findDept) throw new CustomError("Duplicate",400)
+        if (!findUser) throw new CustomError("User not found");
+
+        if (findDept) throw new CustomError("Duplicate", 400);
 
         const typeOfUser = {
           ADMIN: null,
-          AOM: findUser._id
-        }
+          AOM: findUser._id,
+        };
 
-        await Department.create({name, branch, aom:typeOfUser[findUser.type] }) 
+        await Department.create({
+          name,
+          branch,
+          aom: typeOfUser[findUser.type],
+        });
 
-        return {success: true, message: "Department successfully created"}
+        return { success: true, message: "Department successfully created" };
       } catch (error) {
-        throw new CustomError(error.message,500)
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
-    updateDept: async(_,{id,name, branch, aom},{user}) => {
-    
-      if(!user) throw new CustomError("Unauthorized",401)
-        
+    updateDept: async (_, { id, name, branch, aom }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
       try {
-        const findBranch = await Branch.findOne({name: branch})
-        if(!findBranch) throw new CustomError("Branch not existing",400)
-      
-        const findUser = await User.findOne({name: aom.toString()})
-        if(!findUser) throw new CustomError("User not found")
+        const findBranch = await Branch.findOne({ name: branch });
+        if (!findBranch) throw new CustomError("Branch not existing", 400);
 
-        const aomDeclared = name === "admin" ? null : findUser._id
+        const findUser = await User.findOne({ name: aom.toString() });
+        if (!findUser) throw new CustomError("User not found");
 
-        const updateDept = await Department.findById(id)
-        if(!updateDept)  throw new CustomError("Department not found",404)
+        const aomDeclared = name === "admin" ? null : findUser._id;
 
-        await Bucket.updateMany({dept: updateDept.name },{$set: {dept: name}})
+        const updateDept = await Department.findById(id);
+        if (!updateDept) throw new CustomError("Department not found", 404);
 
-        updateDept.name = name
-        updateDept.branch = branch
-        updateDept.aom = aomDeclared
-        await updateDept.save()
+        await Bucket.updateMany(
+          { dept: updateDept.name },
+          { $set: { dept: name } }
+        );
 
-        return {success: true, message: "Department successfully updated"}
+        updateDept.name = name;
+        updateDept.branch = branch;
+        updateDept.aom = aomDeclared;
+        await updateDept.save();
+
+        return { success: true, message: "Department successfully updated" };
       } catch (error) {
-        throw new CustomError(error.message,500)
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
-    deleteDept: async(_,{id}, {user})=> {
-      if(!user) throw new CustomError("Unauthorized",401)
+    deleteDept: async (_, { id }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
       try {
-        const deletedDept = await Department.findByIdAndDelete(id)
-        if(!deletedDept) throw new CustomError("Department not found",404)
-    
-        const findDept = await Department.find({name: deletedDept.name}) 
-        if(findDept.length === 0) {
-          await Bucket.deleteMany({dept: {$eq: deletedDept.name}})
+        const deletedDept = await Department.findByIdAndDelete(id);
+        if (!deletedDept) throw new CustomError("Department not found", 404);
+
+        const findDept = await Department.find({ name: deletedDept.name });
+        if (findDept.length === 0) {
+          await Bucket.deleteMany({ dept: { $eq: deletedDept.name } });
         }
-        return {success: true, message:"Department successfully deleted"}
+        return { success: true, message: "Department successfully deleted" };
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
   },
-}
+};
 
-export default deptResolver
+export default deptResolver;

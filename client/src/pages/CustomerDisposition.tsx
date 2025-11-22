@@ -853,6 +853,7 @@ const CustomerDisposition = () => {
   const [getCallRecording, { loading: getCallingRecordingLoading }] =
     useMutation<{ getCallRecording: string }>(GET_RECORDING, {
       onCompleted: (data) => {
+        console.log(data)
         dispatch(setCallUniqueId(data.getCallRecording));
       },
     });
@@ -958,7 +959,6 @@ const CustomerDisposition = () => {
       if (!canCallBuckets?.includes(true)) {
         return null;
       }
-
       if (
         !selectedCustomer &&
         userLogged?.type === "AGENT" &&
@@ -1004,25 +1004,23 @@ const CustomerDisposition = () => {
   function normalizePhilippineNumber(rawNumber: string): string | null {
     if (!rawNumber) return null;
 
-    // Remove all non-digit characters
     let number = rawNumber.replace(/\D/g, "");
 
-    // Mobile numbers: remove international prefix if present
     if (number.startsWith("00")) number = number.slice(2);
     if (number.startsWith("63")) number = number.slice(2);
 
-    // Ensure leading 0 for local format
+
     if (!number.startsWith("0")) number = "0" + number;
 
-    // Mobile numbers: 11 digits starting with 09
+
     const mobileRegex = /^09\d{9}$/;
     if (mobileRegex.test(number)) return number;
 
-    // Landlines: 8–11 digits starting with 0 (covers all area codes including subcodes like 08822)
+
     const landlineRegex = /^0\d{7,10}$/;
     if (landlineRegex.test(number)) return number;
 
-    // If it doesn’t match any pattern, return null
+ 
     return null;
   }
 
@@ -1059,9 +1057,10 @@ const CustomerDisposition = () => {
 
     if (!newPhone) return;
 
-    if (checkIfAgentIsInline?.includes("INLINE")) {
+    if (checkIfAgentIsInline?.includes("INCALL")) {
       await endAndDispoCall();
     }
+
     setConfirm(false);
     setTimeout(async () => {
       dispatch(setMobileToCall(newPhone));
@@ -1089,7 +1088,7 @@ const CustomerDisposition = () => {
     if (checkIfAgentIsInline?.includes("DEAD")) {
       dispatch(setDeadCall(checkIfAgentIsInline?.includes("DEAD")));
     }
-  }, [data]);
+  }, [checkIfAgentIsInline]);
 
   const [endAndDispoCall] = useMutation<{
     endAndDispoCall: { success: boolean; message: string };
@@ -1178,7 +1177,7 @@ const CustomerDisposition = () => {
     }
   }, [data, dispatch]);
 
-  const isLoading = loading || updateRPCLoading || getCallingRecordingLoading;
+  const isLoading = loading || updateRPCLoading ;
 
   if (isLoading) return <Loading />;
 
@@ -1452,7 +1451,7 @@ const CustomerDisposition = () => {
               transition={{ duration: 1, type: "spring" }}
               className={`" w-40 rounded-full cursor-grab active:cursor-grabbing absolute top-30 right-20 z-40 justify-center items-center flex "`}
             >
-              {randomLoading &&
+              {(randomLoading || getCallingRecordingLoading) &&
               !isRing &&
               checkIfAgentIsInline?.includes("PAUSE") ? (
                 <div className=" h-40  border-0 bg-white w-full rounded-full flex items-center justify-center">

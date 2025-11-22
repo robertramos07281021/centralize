@@ -117,7 +117,7 @@ const userTypeDefs = gql`
     findUsers(search: String!, page: Int!, limit: Int!, filter: String!): PaginatedUsers!
     findDeptAgents: [DeptUser]
     findAgents: [Users]
-    getCampaignAssigned: [CampaignUser]
+    getCampaignAssigned(bucket:ID): Int
     getAOMCampaignFTE: [AOM_FTE]
     getHelperAgent: [Users]
     getBucketTL: [Users]

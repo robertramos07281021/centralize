@@ -6,11 +6,13 @@ import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { AiOutlineLoading3Quarters } from "react-icons/ai";
 import { motion } from "framer-motion";
+import { IntervalsTypes } from "../../middleware/types.ts";
 
 type Targets = {
   daily: number;
   weekly: number;
   monthly: number;
+  callfile: number;
 };
 
 type Agent = {
@@ -136,13 +138,20 @@ const AgentProductionMonitoringTable = () => {
                     )
                   : null;
 
+                const selectionOfInterval =
+                  intervalTypes === IntervalsTypes.CALLFILE
+                    ? IntervalsTypes.MONTHLY
+                    : intervalTypes;
+
+
                 const collectionPercent = findAgent
-                  ? (findAgent?.kept / x.targets[intervalTypes]) * 100
+                  ? (findAgent?.kept / x.targets[selectionOfInterval]) * 100
                   : null;
 
                 const theVariance = findAgent
-                  ? x.targets[intervalTypes] - findAgent?.kept
+                  ? x.targets[selectionOfInterval] - findAgent?.kept
                   : null;
+
 
                 return (
                   x.active && (
@@ -197,7 +206,7 @@ const AgentProductionMonitoringTable = () => {
                         )}
                       </div>
                       <div>
-                        {x.targets[intervalTypes]?.toLocaleString("en-PH", {
+                        {x.targets[selectionOfInterval]?.toLocaleString("en-PH", {
                           style: "currency",
                           currency: "PHP",
                         }) || <div className="text-gray-400 italic">₱0.00</div>}

@@ -29,6 +29,7 @@ const userResolvers = {
         });
         return findUser;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -47,6 +48,7 @@ const userResolvers = {
           total: res[0].total.length > 0 ? res[0].total[0].totalUser : 0,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -54,6 +56,7 @@ const userResolvers = {
       try {
         return await User.findById(id);
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -66,6 +69,7 @@ const userResolvers = {
       try {
         return await User.find({ type: "AOM" });
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -145,6 +149,7 @@ const userResolvers = {
           total: total,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -168,6 +173,7 @@ const userResolvers = {
 
         return { users, total };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -185,6 +191,7 @@ const userResolvers = {
 
         return agent;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -197,53 +204,23 @@ const userResolvers = {
         });
         return agents;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
-    getCampaignAssigned: async (_, __, { user }) => {
+    getCampaignAssigned: async (_, { bucket }) => {
       try {
-        const aomCampaign = await Department.find({ aom: user._id }).lean();
-        const aomCampaignNameArray = aomCampaign.map((e) => e.name);
-
-        const aombuckets = (
-          await Bucket.find({ dept: { $in: aomCampaignNameArray } })
-        ).map((ab) => new mongoose.Types.ObjectId(ab._id));
-
-        const userIs =
-          user.type === "AOM"
-            ? aombuckets
-            : user.buckets.map((x) => new mongoose.Types.ObjectId(x));
-
-        const assignedUserPerCampagin = await User.aggregate([
-          {
-            $match: {
-              type: { $eq: "AGENT" },
-              active: true,
-              buckets: { $in: userIs },
-            },
-          },
-          {
-            $group: {
-              _id: "$buckets",
-              assigned: { $sum: 1 },
-            },
-          },
-          {
-            $project: {
-              _id: 0,
-              campaign: "$_id",
-              assigned: 1,
-            },
-          },
-        ]);
-
-        return assignedUserPerCampagin.map((x) => {
-          return {
-            ...x,
-            campaign: x.campaign[0],
-          };
+        if (!bucket) return null;
+        const assigned = await User.countDocuments({
+          type: "AGENT",
+          reliver: false,
+          active: true,
+          buckets: new mongoose.Types.ObjectId(bucket),
         });
+
+        return assigned;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -307,6 +284,7 @@ const userResolvers = {
 
         return aomFTEs;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -357,6 +335,7 @@ const userResolvers = {
 
         return UserHelper;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -375,6 +354,7 @@ const userResolvers = {
         ]);
         return findUserTLs;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -385,6 +365,7 @@ const userResolvers = {
         const buckets = await Bucket.find({ _id: { $in: parent.buckets } });
         return buckets;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -396,6 +377,7 @@ const userResolvers = {
 
         return departments;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -466,21 +448,20 @@ const userResolvers = {
           message: "New Account Created",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
 
     updatePassword: async (_, { password, confirmPass }, { user }) => {
       try {
-     
         if (!user) throw new CustomError("Unauthorized", 401);
 
         if (confirmPass !== password) throw new CustomError("Not Match", 401);
 
         const userChangePass = await User.findById(user.id);
-       
-        if (!userChangePass) throw new CustomError("User not found", 404);
 
+        if (!userChangePass) throw new CustomError("User not found", 404);
 
         const saltPassword = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash(password, saltPassword);
@@ -497,7 +478,7 @@ const userResolvers = {
 
         return userChangePass;
       } catch (error) {
-        console.log(error)
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -559,12 +540,6 @@ const userResolvers = {
             { createdAt: 1 }
           ),
         ]);
-
-        // res.cookie('token', token, {
-        //   httpOnly: true,
-        //   secure:false ,
-        //   sameSite: "Lax"
-        // });
 
         const prodLength = findProd.length <= 0;
 
@@ -645,7 +620,7 @@ const userResolvers = {
         throw new CustomError(error.message, 500);
       }
     },
-    resetPassword: async (_, { id }, ) => {
+    resetPassword: async (_, { id }) => {
       try {
         const saltPassword = await bcrypt.genSalt(10);
         const hashPassword = await bcrypt.hash("Bernales2025", saltPassword);
@@ -671,7 +646,7 @@ const userResolvers = {
           user: user,
         };
       } catch (error) {
-        console.log(error)
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -714,6 +689,7 @@ const userResolvers = {
           user: updateUser,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -734,6 +710,7 @@ const userResolvers = {
           user: findUser,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -755,6 +732,7 @@ const userResolvers = {
           message: "Successfully logout",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -787,6 +765,7 @@ const userResolvers = {
           user: unlockUser,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -840,6 +819,7 @@ const userResolvers = {
           message: "Password is valid",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -855,6 +835,7 @@ const userResolvers = {
           message: "User successfully deleted",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -878,6 +859,7 @@ const userResolvers = {
           user: updateUser,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -900,6 +882,7 @@ const userResolvers = {
           message: "User successfully updated",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

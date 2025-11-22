@@ -319,7 +319,13 @@ const CallfilesViews: React.FC<Props> = ({
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "FINISHED" as "FINISHED" | "DELETE" | "DOWNLOAD" | "SET" | "AUTO" | "DIAL",
+    toggle: "FINISHED" as
+      | "FINISHED"
+      | "DELETE"
+      | "DOWNLOAD"
+      | "SET"
+      | "AUTO"
+      | "DIAL",
     yes: () => {},
     no: () => {},
   });
@@ -438,22 +444,25 @@ const CallfilesViews: React.FC<Props> = ({
       },
     });
 
-  const [updateDialNext] = useMutation<{ updateDialNext: Success }>(UPDATE_DIAL_NEXT, {
-    onCompleted: (data) => {
-      setConfirm(false);
-      dispatch(
-        setSuccess({
-          success: data.updateDialNext.success,
-          message: data.updateDialNext.message,
-          isMessage: false,
-        })
-      );
-    },
-  });
+  const [updateDialNext] = useMutation<{ updateDialNext: Success }>(
+    UPDATE_DIAL_NEXT,
+    {
+      onCompleted: (data) => {
+        setConfirm(false);
+        dispatch(
+          setSuccess({
+            success: data.updateDialNext.success,
+            message: data.updateDialNext.message,
+            isMessage: false,
+          })
+        );
+      },
+    }
+  );
 
   const onClickIcon = (
     id: string,
-    action: "FINISHED" | "DELETE" | "DOWNLOAD" | "SET" | "AUTO" | 'DIAL',
+    action: "FINISHED" | "DELETE" | "DOWNLOAD" | "SET" | "AUTO" | "DIAL",
     name: string
   ) => {
     setConfirm(true);
@@ -465,7 +474,7 @@ const CallfilesViews: React.FC<Props> = ({
       AUTO: `Are you sure you want to ${
         autoDial ? "set auto dial" : "stop auto dial"
       } ${name.toUpperCase()} callfile?`,
-      DIAL: `Are you sure this ${name.toUpperCase()} callfile reset the dial next?`
+      DIAL: `Are you sure this ${name.toUpperCase()} callfile reset the dial next?`,
     };
 
     const fn = {
@@ -480,6 +489,7 @@ const CallfilesViews: React.FC<Props> = ({
           const { data } = await downloadCallfiles({
             variables: { callfile: id },
           });
+
           if (!data.downloadCallfiles) {
             setConfirm(false);
             dispatch(setServerError(true));
@@ -502,6 +512,7 @@ const CallfilesViews: React.FC<Props> = ({
             })
           );
         } catch (err) {
+          console.log(err);
           dispatch(setServerError(true));
         }
       },
@@ -515,11 +526,11 @@ const CallfilesViews: React.FC<Props> = ({
           variables: { callfileId: id, roundCount: count, finished: false },
         });
       },
-      DIAL: async() => {
+      DIAL: async () => {
         await updateDialNext({
-          variables: {callfile: id}
-        })
-      }
+          variables: { callfile: id },
+        });
+      },
     };
 
     setModalProps({
@@ -573,6 +584,7 @@ const CallfilesViews: React.FC<Props> = ({
   const [excelData, setExcelData] = useState<Data[]>([]);
   const [callfile, setCallfile] = useState<string | null>(null);
 
+  //for selectives file adding
   const handleFileUpload = useCallback(async (file: File) => {
     try {
       const { read, utils, SSF } = await import("xlsx");
@@ -583,7 +595,7 @@ const CallfilesViews: React.FC<Props> = ({
         const workbook = read(binaryString, { type: "binary" });
         const sheetName = workbook.SheetNames[0];
         const sheet = workbook.Sheets[sheetName];
-        const jsonData: Data[] = utils.sheet_to_json(sheet);
+        const jsonData: Data[] = utils.sheet_to_json(sheet, { raw: true });
         const dateConverting = jsonData.map((row) => {
           const safeDate = (date: string) => {
             try {
@@ -605,6 +617,7 @@ const CallfilesViews: React.FC<Props> = ({
       dispatch(setServerError(true));
     }
   }, []);
+
 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
@@ -634,7 +647,8 @@ const CallfilesViews: React.FC<Props> = ({
       setCallfile(null);
       setExcelData([]);
     },
-    onError: () => {
+    onError: (error) => {
+      console.log(error)
       dispatch(setServerError(true));
     },
   });
@@ -997,7 +1011,6 @@ const CallfilesViews: React.FC<Props> = ({
                           </div>
                         </>
                       )}
-                      {/* <FaTrash className=" text-red-500 lg:text-xs 2xl:text-lg cursor-pointer hover:scale-110" onClick={()=> onClickIcon(res.callfile._id, "DELETE", res.callfile.name)} title="Delete"/> */}
                       <div
                         onClick={() =>
                           onClickIcon(

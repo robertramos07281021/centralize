@@ -240,6 +240,39 @@ export const accountsNavbar: { [key: string]: links[] } = {
       link: "/qa-agents-dashboard",
       tabs: null,
     },
+    {
+      name: "Logs",
+      link: null,
+      tabs: [
+        {
+          name: "Agent Logs",
+          link: "/agent-attendance-logs",
+        },
+        {
+          name: "Call Monitoring",
+          link: "/all-call-logs",
+        },
+      ],
+    },
+    {
+      name: "Reports",
+      link: null,
+      tabs: [
+        {
+          name: "Callfile Performance",
+          link: "/qa-callfile-reports",
+        },
+        {
+          name: "Agent Performance",
+          link: "/qa-agent-reports",
+        },
+      ],
+    },
+    {
+      name: "Score Card",
+      link: "/score-card",
+      tabs: null,
+    },
   ],
   QASUPERVISOR: [
     {
@@ -251,6 +284,48 @@ export const accountsNavbar: { [key: string]: links[] } = {
       name: "QA Accounts",
       link: "/qasv-accounts",
       tabs: null,
+    },
+    {
+      name: "Logs",
+      link: null,
+      tabs: [
+        {
+          name: "Agent Logs",
+          link: "/agent-attendance-logs",
+        },
+        {
+          name: "Call Monitoring",
+          link: "/all-call-logs",
+        },
+      ],
+    },
+    {
+      name: "Reports",
+      link: null,
+      tabs: [
+        {
+          name: "Callfile Performance",
+          link: "/qasv-callfile-reports",
+        },
+        {
+          name: "Agent Performance",
+          link: "/qasv-agent-reports",
+        },
+      ],
+    },
+    {
+      name: "Score Card",
+      link: null,
+      tabs: [
+        {
+          name: "Default Score Card",
+          link: "/default-score-card",
+        },
+        {
+          name: "UB Score Card",
+          link: "/ub-score-card",
+        },
+      ],
     },
   ],
 };

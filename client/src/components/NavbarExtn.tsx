@@ -332,8 +332,8 @@ const NavbarExtn = () => {
         )}
         <div className="border-b select-none border-blue-400 flex items-center justify-center text-base font-medium text-slate-500 bg-white print:hidden">
           {accountsNavbar[userType].map((an, index) => {
-            const callLogs = an.name === "Call Monitoring";
-       
+            const callLogs = an.name.trim().toLowerCase() === "call monitoring";
+            
             if (callLogs && !canCallMap?.includes(true)) return null;
 
             return (

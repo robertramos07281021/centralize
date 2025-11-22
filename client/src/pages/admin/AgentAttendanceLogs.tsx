@@ -1,6 +1,6 @@
 import { gql, useQuery } from "@apollo/client";
 import { useEffect, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 import { Users } from "../../middleware/types.ts";
 
 type ProductionHistoryEntry = {
@@ -85,13 +85,13 @@ type Bucket = {
 }
 
 const AgentAttendanceLogs = () => {
-  const [isOpen, setIsOpen] = useState(false);
+  // const [isOpen, setIsOpen] = useState(false);
   const [isOpenView, setIsOpenView] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Users | null>(null);
   const [selectedProduction, setSelectedProduction] =
     useState<ProductionRecord | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
-  const [selectedBucket, setSelectedBucket] = useState<Bucket | null>(null)
+  const [selectedBucket, setSelectedBucket] = useState<string | null>(null)
   
 
   const { data } = useQuery<{
@@ -107,31 +107,34 @@ const AgentAttendanceLogs = () => {
   const {data:bucketsData, refetch} = useQuery<{getAllBucket:Bucket[]}>(BUCKETS,{notifyOnNetworkStatusChange: true})
 
   
-  const { data: getAllProdData, refetch:getAllProdDataRefetch } = useQuery<{
+  const { refetch:getAllProdDataRefetch } = useQuery<{
     getAllAgentProductions: ProductionRecord[];
   }>(GET_PRODUCTION, {
     notifyOnNetworkStatusChange: true,
-    variables: { bucketId: selectedBucket?._id, from: null, to: null },
+    variables: { bucketId: selectedBucket, from: null, to: null },
     skip: !selectedBucket
   });
 
-  console.log(getAllProdData)
   useEffect(()=>  {
     const refetching =  async() => {
       await refetch()
       await getAllProdDataRefetch()
     }
     refetching()
-
   },[])
   
   useEffect(()=> {
     if(bucketsData?.getAllBucket) {
-      setSelectedBucket(bucketsData?.getAllBucket[0])
+      setSelectedBucket(bucketsData?.getAllBucket[0]._id)
     }
   },[bucketsData])
 
-
+  useEffect(()=> {
+    const refetching = async() => {
+      await getAllProdDataRefetch()
+    }
+    refetching()
+  },[selectedBucket])
 
   const users = data?.getUsers?.users || [];
   const productions = prodData?.productions || [];
@@ -225,6 +228,15 @@ const AgentAttendanceLogs = () => {
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring" }}
         >
+          <select name="buckets" id="bucket" onChange={(e)=> {
+            setSelectedBucket(e.target.value)
+          }}>
+            {
+              bucketsData?.getAllBucket?.map(bucket  => {
+                return <option value={bucket._id} key={bucket._id}>{bucket.name}</option>
+              })
+            }
+          </select>
           <div className="grid grid-cols-7 gap-2 font-black uppercase rounded-t-md border px-4 bg-gray-300 py-2">
             <div>user id</div>
             <div>name</div>

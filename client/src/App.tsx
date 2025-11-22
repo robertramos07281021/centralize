@@ -52,7 +52,12 @@ import CallLogs from "./pages/tl/CallLogs.tsx";
 import CallAllAgentLogs from "./pages/admin/CallAllAgentLogs.tsx";
 import AgentAttendanceLogs from "./pages/admin/AgentAttendanceLogs.tsx";
 import Selectives from "./pages/admin/Selectives.tsx";
-
+import CallQALogs from "./pages/qa/QACallLogs.tsx";
+import QAAgentReportLogs from "./components/QAAgentReportLogs.tsx";
+import QACallfileReport from "./components/QACallfileReport.tsx";
+import QASVCallLogs from "./pages/qasupervisor/QASVCallLogs.tsx"
+import DefaultScoreCard from "./components/ScoreCard.tsx";
+import UBScoreCard from "./components/UBScoreCard.tsx";
 Chart.register(
   ...registerables,
   ChartDataLabels,
@@ -126,10 +131,38 @@ function App() {
         <Route element={<QARoute />}>
           <Route path="/qa-agents-dashboard" element={<QAAgentViews />} />
           <Route path="/qa-dashboard" element={<QADashboard />} />
+          <Route path="/agent-call-logs" element={<CallQALogs />} />
+          <Route path="/qa-agent-reports" element={<QAAgentReportLogs />} />
+          <Route
+            path="/qa-callfile-reports"
+            element={<QACallfileReport />}
+          />
+          
+          <Route
+            path="/score-card"
+            element={<DefaultScoreCard />}
+          />
         </Route>
         <Route element={<QASVRoute />}>
+          <Route path="/agentsv-call-logs" element={<QASVCallLogs />} />
+          <Route path="/qasv-agent-reports" element={<QAAgentReportLogs />} />
           <Route path="/qasv-accounts" element={<QASVSupervisor />} />
           <Route path="/qasv-dashboard" element={<QASupervisorDashboard />} />
+          <Route
+            path="/qasv-callfile-reports"
+            element={<QACallfileReport />}
+          />
+          <Route
+            path="/default-score-card"
+            element={<DefaultScoreCard />}
+          />
+
+          <Route
+            path="/ub-score-card"
+            element={<UBScoreCard />}
+          />
+
+
         </Route>
       </Routes>
     </BrowserRouter>

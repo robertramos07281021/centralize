@@ -178,7 +178,7 @@ const CallDoughnut: React.FC<ComponentsProps> = ({
   return (
     <div className="flex gap-3 justify-between w-full h-full pr-5">
       <div className="w-full flex justify-center item-center flex-col ">
-        <div className="flex flex-col justify-center min-h-5/6">
+        <div className="flex flex-col justify-center h-full">
           {dispoData.map((dd, index) => {
             const findDispotype = disposition?.getDispositionTypes.find(
               (x) => x.code === dd.code

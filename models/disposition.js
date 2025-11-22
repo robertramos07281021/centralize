@@ -70,7 +70,7 @@ const dispositionSchema = new Schema(
     },
     chatApp: {
       type: String,
-      enum: ['viber','whatsapp','facebook','google','linkedin','gcash','yellowpage','brgy','telegram'],
+      enum: ['viber','whatsapp','facebook','google','linkedin','gcash','yellowpage','brgy','telegram',],
       default: undefined
     },
     sms: {

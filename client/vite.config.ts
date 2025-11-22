@@ -3,11 +3,17 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import flowbiteReact from "flowbite-react/plugin/vite";
 
+
 export default defineConfig({
-  plugins: [react(), tailwindcss(), flowbiteReact()] as PluginOption[],
+  plugins: [
+    react(),
+    tailwindcss(),
+    flowbiteReact(),
+  ] as PluginOption[],
   server: {
     port: 3000,
     host: true,
+    // middlewareMode: true,// prod
     proxy: {
       "/graphql": {
         target: "http://localhost:4000",
@@ -17,12 +23,12 @@ export default defineConfig({
     },
     hmr: {
       protocol: "ws",
-      host: "172.16.24.31",
+      host: "localhost",
       port: 3000,
-      clientPort: 3000
     },
   },
   build: {
-    chunkSizeWarningLimit: 2000,
+    // outDir: "dist", // prod
+    chunkSizeWarningLimit: 3000,
   },
 });

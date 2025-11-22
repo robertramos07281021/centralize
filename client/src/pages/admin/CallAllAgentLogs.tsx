@@ -84,7 +84,7 @@ const CallAllAgentLogs = () => {
   
   const getUsersLogginOnVici = callLogsData?.getUsersLogginOnVici
 
-  const { data: getUserData, refetch: getUserDataRefetch } = useQuery<{getBargingStatus:string}>(
+  const { refetch: getUserDataRefetch } = useQuery<{getBargingStatus:string}>(
     GET_USER_STATUS,
     {
       variables: { viciId: selectedBucket?.viciIp },
@@ -93,7 +93,6 @@ const CallAllAgentLogs = () => {
     }
   );
 
-  console.log(getUserData)
   const newData = useMemo(
     () =>
       callLogsData?.getUsersLogginOnVici

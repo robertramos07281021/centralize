@@ -1,10 +1,13 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import GaugeChart from "react-gauge-chart";
 
 const QASupervisorDashboard = () => {
   const [value, setValue] = useState(1);
-  const [hehe, setHehe] = useState(40);
+  // const [hehe, setHehe] = useState(40);
+  useEffect(()=> {
+    setValue(1)
+  },[])
 
   return (
     <div className="w-full h-full overflow-hidden relative flex flex-col">

@@ -57,6 +57,8 @@ import { checkIfAgentIsOnline, logoutVici } from "./middlewares/vicidial.js";
 import selectivesResolver from "./graphql/resolvers/selectivesResolver.js";
 import selectivesTypeDefs from "./graphql/schemas/selectivesSchema.js";
 import DispoType from "./models/dispoType.js";
+import Production from "./models/production.js";
+import mongoose from "mongoose";
 
 const connectedUsers = new Map();
 
@@ -72,12 +74,14 @@ connectDB();
 const allowedOrigins = [
   process.env.MY_FRONTEND,
   "http://localhost:4000",
+  "http://localhost:3000",
   `http://${process.env.MY_IP}:4000`,
 ];
 
 app.use(
   cors({
     origin: function (origin, callback) {
+    
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -335,21 +339,50 @@ useServer(
               { new: true }
             ).populate("buckets");
 
+            const startToday = new Date();
+            startToday.setHours(0, 0, 0, 0);
+            const endToday = new Date();
+            endToday.setHours(23, 59, 59, 999);
+
+            const prodRes = await Production.findOne(
+              { user: new mongoose.Types.ObjectId(userId) },
+              { createdAt: { $gt: startToday, lt: endToday } }
+            );
+
+            prodRes.prod_history = prodRes.prod_history.map((prod) => {
+              if (prod.existing === true) {
+                return {
+                  ...prod,
+                  existing: false,
+                  end: new Date(),
+                };
+              }
+              return prod;
+            });
+
+            prodRes.prod_history.push({
+              type: "LOGOUT",
+              start: newStart,
+              existing: true,
+            });
+
+            await prodRes.save();
+
             const bucket =
               res?.buckets?.length > 0
                 ? new Array(...new Set(res?.buckets?.map((x) => x.viciIp)))
                 : [];
 
-            const chechIfisOnline = await Promise.all(
-              bucket.map(async (x) => {
-                const result = await checkIfAgentIsOnline(res?.vici_id, x);
-                return result;
-              })
-            );
+            const bucketCanCall = res?.buckets.map((x) => x.canCall);
 
-            const checkIfCanCall = res?.buckets?.map((x) => x.canCall);
+            if (bucketCanCall.includes(true)) {
+              const chechIfisOnline = await Promise.all(
+                bucket.map(async (x) => {
+                  const result = await checkIfAgentIsOnline(res?.vici_id, x);
+                  return result;
+                })
+              );
 
-            if (checkIfCanCall.includes(true)) {
               await logoutVici(
                 res.vici_id,
                 bucket[chechIfisOnline.indexOf(true)]

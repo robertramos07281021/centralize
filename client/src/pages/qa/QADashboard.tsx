@@ -1,10 +1,13 @@
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import GaugeChart from "react-gauge-chart";
 
-const AdminDashboard = () => {
+const QAAdminDashboard = () => {
   const [value, setValue] = useState(1);
-  const [hehe, setHehe] = useState(40);
+  // const [hehe, setHehe] = useState(40);
+  useEffect(()=> {
+    setValue(1)
+  },[])
 
   return (
     <div className="w-full h-full overflow-hidden relative flex flex-col">
@@ -33,7 +36,7 @@ const AdminDashboard = () => {
               viewBox="0 0 24 24"
               strokeWidth="3"
               stroke="currentColor"
-              className="size-6 text-gray-500"
+              className="size-6 text-black"
             >
               <path
                 strokeLinecap="round"
@@ -50,8 +53,8 @@ const AdminDashboard = () => {
       <div className="flex flex-col">
         <div className="grid grid-cols-4 relative mt-3 gap-3 px-3 ">
           <motion.div
-            className="bg-gray-200 font-black uppercase text-gray-500 text-center border-4 rounded-md p-2 border-gray-500"
-            initial={{ opacity: 0, y: 100 }}
+            className="bg-gray-300 font-black uppercase text-black text-center border rounded-md p-2 border-black"
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring" }}
           >
@@ -59,8 +62,8 @@ const AdminDashboard = () => {
             <div className=" text-5xl text-red-800">100</div>
           </motion.div>
           <motion.div
-            className="bg-gray-200 font-black uppercase text-gray-500 text-center border-4 rounded-md p-2 border-gray-500"
-            initial={{ opacity: 0, y: 100 }}
+            className="bg-gray-300 font-black uppercase text-black text-center border rounded-md p-2 border-black"
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", delay: 0.1 }}
           >
@@ -68,8 +71,8 @@ const AdminDashboard = () => {
             <div className=" text-5xl text-red-800">100</div>
           </motion.div>
           <motion.div
-            className="bg-gray-200 font-black uppercase text-gray-500 text-center border-4 rounded-md p-2 border-gray-500"
-            initial={{ opacity: 0, y: 100 }}
+            className="bg-gray-300 font-black uppercase text-black text-center border rounded-md p-2 border-black"
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", delay: 0.2 }}
           >
@@ -77,8 +80,8 @@ const AdminDashboard = () => {
             <div className=" text-5xl text-red-800">100</div>
           </motion.div>
           <motion.div
-            className="bg-gray-200 font-black uppercase text-gray-500 text-center border-4 rounded-md p-2 border-gray-500"
-            initial={{ opacity: 0, y: 100 }}
+            className="bg-gray-300 font-black uppercase text-black text-center border rounded-md p-2 border-black"
+            initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring", delay: 0.3 }}
           >
@@ -100,64 +103,64 @@ const AdminDashboard = () => {
           <input type="radio" />
         </motion.div>
       </div>
-      <div className="grid grid-cols-2 px-3 py-3 gap-3 grid-rows-2 h-full">
+      <div className="grid grid-cols-2 px-3 py-3 gap-3 grid-rows-2  h-full">
         <motion.div
-          initial={{ opacity: 0, y: 100 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring" }}
         >
-          <div className="grid  rounded-md shadow border-4 border-gray-500 grid-rows-5 h-full bg-gray-200">
-            <div className="grid-cols-6 text-center grid items-center px-4 shadow-md rounded-t-sm font-black text-sm text-gray-500 bg-gray-300">
-              <div>Agent Name</div>
-              <div>Total Calls</div>
-              <div>Calls Answered</div>
-              <div>Avg. Speed of Ans</div>
-              <div>Call Resolution</div>
-              <div>CR Trend</div>
+          <div className="grid  rounded-md shadow border border-black overflow-hidden grid-rows-5 h-full bg-gray-100">
+            <div className="grid-cols-6 gap-2  uppercase border-b border-black text-center grid items-center px-4 py-2 shadow-md rounded-t-sm font-black text-sm text-black bg-gray-300">
+              <div>Agent Name</div> 
+              <div className="truncate">Total Calls</div>
+              <div className="truncate">Calls Answered</div>
+              <div className="truncate" >Avg. Speed of Ans</div>
+              <div className="truncate">Call Resolution</div>
+              <div className="truncate">CR Trend</div>
             </div>
             <div></div>
           </div>
         </motion.div>
         <motion.div
-          initial={{ opacity: 0, y: 100 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", delay: 0.4 }}
         >
-          <div className=" rounded-md flex flex-col shadow border-4 border-gray-500 h-full bg-gray-200">
+          <div className=" rounded-md flex flex-col shadow border overflow-hidden border-black h-full bg-gray-200">
             <div className="bg-gray-300 rounded-t-sm flex flex-col w-full">
-              <div className="font-black uppercase text-center py-3 text-gray-500 text-2xl shadow-md ">
+              <div className="font-black uppercase text-center py-3 text-black border-b text-2xl shadow-md ">
                 Call Abandon Rate - By Department
               </div>
             </div>
-            <div className="h-full grid grid-cols-5 grid-rows-1 px-10  items-end content-center justify-center">
+            <div className="h-full grid grid-cols-5 grid-rows-1 px-10 bg-gray-100 items-end content-center justify-center">
               <div className="w-full h-full flex flex-col justify-end items-center">
-                <div className="mb-2 font-black text-gray-500">40%</div>
+                <div className="mb-2 font-black text-black">40%</div>
                 <div
                   className={`w-16 h-[40%] duration-500 rounded-t-md bg-green-700 text-center transition-all`}
                 ></div>
               </div>
 
               <div className="w-full h-full flex flex-col justify-end items-center">
-                <div className="mb-2 font-black text-gray-500">25%</div>
+                <div className="mb-2 font-black text-black">25%</div>
                 <div className="w-16 h-[25%] rounded-t-md bg-green-700 text-center"></div>
               </div>
 
               <div className="w-full h-full flex flex-col justify-end items-center">
-                <div className="mb-2 font-black text-gray-500">70%</div>
+                <div className="mb-2 font-black text-black">70%</div>
                 <div className="w-16 h-[70%] rounded-t-md bg-green-700 text-center"></div>
               </div>
 
               <div className="w-full h-full flex flex-col justify-end items-center">
-                <div className="mb-2 font-black text-gray-500">55%</div>
+                <div className="mb-2 font-black text-black">55%</div>
                 <div className="w-16 h-[55%] rounded-t-md bg-green-700 text-center"></div>
               </div>
 
               <div className="w-full h-full flex flex-col justify-end items-center">
-                <div className="mb-2 font-black text-gray-500">85%</div>
+                <div className="mb-2 font-black text-black">85%</div>
                 <div className="w-16 h-[85%] rounded-t-md bg-red-700 text-center"></div>
               </div>
             </div>
-            <div className="px-10 border-t-2 border-gray-500 grid grid-cols-5 text-sm gap-3 truncate text-center font-black uppercase text-gray-500 justify-evenly py-2">
+            <div className="px-10 border-t text-black border-black grid grid-cols-5 text-sm gap-3 truncate text-center font-black uppercase justify-evenly py-2">
               <div>Washing Machine</div>
               <div>Toaster</div>
               <div>Fridge</div>
@@ -167,25 +170,25 @@ const AdminDashboard = () => {
           </div>
         </motion.div>
         <motion.div
-          initial={{ opacity: 0, y: 100 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", delay: 0.5 }}
         >
-          <div className=" rounded-md shadow  border-4 relative flex flex-col border-gray-500 h-full bg-gray-200">
-            <div className="bg-gray-300  rounded-t-sm justify-evenly py-2 shadow-md w-full flex text-sm ">
-              <div className="font-black uppercase text-center py-3 text-gray-500 ">
+          <div className=" rounded-md shadow  border relative flex flex-col border-black h-full bg-gray-300">
+            <div className="bg-gray-300 border-b rounded-t-sm justify-evenly py-2 shadow-md w-full flex text-sm ">
+              <div className="font-black uppercase text-center py-3 text-black ">
                 Overall Satisfaction Score
               </div>
-              <div className="font-black uppercase text-center py-3 text-gray-500 ">
+              <div className="font-black uppercase text-center py-3 text-black ">
                 Satisfaction Score - By Agent
               </div>
             </div>
-            <div className="flex h-full">
+            <div className="flex h-full bg-[#fff]">
               <div className="flex items-center justify-center h-full flex-col w-full relative">
                 <GaugeChart
                   id="gauge-chart"
                   nrOfLevels={100}
-                  colors={["#fff"]}
+                  colors={["#cecece"]}
                   percent={value}
                   arcWidth={0.3}
                   needleColor="#333"
@@ -193,11 +196,11 @@ const AdminDashboard = () => {
                   
                   hideText
                 />
-                <div className="font-black uppercase text-gray-500">
+                <div className="font-black uppercase text-black">
                   Satisfaction Score: 3.33
                 </div>
               </div>
-              <div className="flex flex-col w-full h-full py-3 px-3 items-end font-black text-gray-500">
+              <div className="flex flex-col w-full h-full py-3 px-3 items-end font-black text-black">
                 <div className="h-full flex w-full">
                   <div className="h-full flex pr-5 border-r-2 flex-col text-end justify-evenly">
                     <div>Jim</div>
@@ -227,18 +230,18 @@ const AdminDashboard = () => {
           </div>
         </motion.div>
         <motion.div
-          initial={{ opacity: 0, y: 100 }}
+          initial={{ opacity: 0, y: 40 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring", delay: 0.6 }}
         >
-          <div className=" rounded-md shadow border-4 relative flex flex-col border-gray-500 h-full bg-gray-200">
+          <div className=" rounded-md shadow border relative flex flex-col border-black h-full bg-gray-300">
             <div className="bg-gray-300 rounded-t-md w-full">
-              <div className="font-black uppercase text-center py-3 text-gray-500 text-2xl shadow-md ">
+              <div className="font-black uppercase text-center py-3 text-black text-2xl shadow-md ">
                 SLA Limits
               </div>
             </div>
 
-            <div className="h-full flex text-gray-500 relative flex-col items-center">
+            <div className="h-full flex text-black relative flex-col items-center">
               <div className="h-full px-10 font-black items-center justify-center content-center flex relative w-full">
                 <div className="text-2xl w-full uppercase ">
                   Call answered in less than 180 seconds:
@@ -260,4 +263,4 @@ const AdminDashboard = () => {
   );
 };
 
-export default AdminDashboard;
+export default QAAdminDashboard;

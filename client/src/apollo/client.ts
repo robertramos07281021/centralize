@@ -4,9 +4,12 @@ import { getMainDefinition } from '@apollo/client/utilities'
 import { closeWsClient, getWsClient } from "./wsClient.ts";
 
 const httpLink = new HttpLink({
-  uri:'/graphql',
+  // uri:'http://172.16.24.31:4000/graphql', // prod
+  uri:'/graphql', // dev
   credentials: 'include',
 });
+
+
 
 const wsLink = new GraphQLWsLink(getWsClient());
 

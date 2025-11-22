@@ -115,7 +115,7 @@ const ReportsViewPage: React.FC<Props> = ({ search }) => {
   const location = useLocation();
   const [searchFilter, setSearchFilter] = useState<SearchFilter>();
   const dispatch = useAppDispatch();
-
+  console.log(isReport)
   useEffect(() => {
     setSearchFilter({
       agent: search.searchAgent,
@@ -138,7 +138,7 @@ const ReportsViewPage: React.FC<Props> = ({ search }) => {
 
   const callMethod =
     reportsData?.getDispositionReports?.toolsDispoCount?.find(
-      (x) => x.call_method === "calls"
+      (x) => x.call_method === "call"
     )?.dispositions || [];
   const smsMethod =
     reportsData?.getDispositionReports?.toolsDispoCount?.find(

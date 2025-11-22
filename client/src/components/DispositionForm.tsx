@@ -69,10 +69,11 @@ type Success = {
 };
 
 const GET_AGENT_BUCKET = gql`
-  query GetDeptBucket {
+  query getDeptBucket {
     getDeptBucket {
       _id
       name
+      canCall
     }
   }
 `;
@@ -105,7 +106,7 @@ const DESELECT_TASK = gql`
 `;
 
 const USER_TL = gql`
-  query GetBucketTL {
+  query getBucketTL {
     getBucketTL {
       _id
       name
@@ -114,7 +115,9 @@ const USER_TL = gql`
 `;
 
 type Bucket = {
+  _id: string
   name: string;
+  canCall: boolean
 };
 
 type TL = {
@@ -205,7 +208,7 @@ enum PaymentMethod {
   SHOPEE_PAY = "Shopee Pay",
   CEBUANA_LHUILLIER = "Cebuana Lhuillier",
   PALAWAN = "Palawan",
-  BANK_OVERTHECOUNTER = "Bank (Over The Counter)"
+  BANK_OVERTHECOUNTER = "Bank (Over The Counter)",
 }
 
 enum DialerCode {
@@ -290,6 +293,8 @@ const DispositionForm: React.FC<Props> = ({
   const existingDispo = selectedCustomer?.dispo_history.find(
     (x) => x.existing === true
   );
+
+  
   const neverChangeContactMethod = ["PTP", "UNEG", "PAID", "DEC", "RTP", "ITP"];
   const dispoNeverChangeContactMethod = disposition?.getDispositionTypes
     .filter((x) => neverChangeContactMethod.includes(x.code))
@@ -323,6 +328,9 @@ const DispositionForm: React.FC<Props> = ({
       d.map((e) => [e.code, Code[e.code as keyof typeof Code]])
     );
   }, [disposition]);
+
+
+  const checkIfCanCall = agentBucketData?.getDeptBucket.map(x => x.canCall).includes(true)
 
   const [data, setData] = useState<Data>({
     amount: null,
@@ -481,9 +489,8 @@ const DispositionForm: React.FC<Props> = ({
 
   const handleOnChangeAmount = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
+      let { value } = e.target;
 
-      let {value} = e.target;
-      
       if (value === "" || value === "0") {
         handleDataChange("amount", null);
         handleDataChange("payment", null);
@@ -512,6 +519,7 @@ const DispositionForm: React.FC<Props> = ({
   });
 
   const creatingDispo = useCallback(async () => {
+
     await createDisposition({
       variables: {
         input: {
@@ -625,14 +633,17 @@ const DispositionForm: React.FC<Props> = ({
     ]
   );
   useEffect(() => {
-    if (canCall && userLogged?.account_type === "caller") {
+    if (
+      (canCall && userLogged?.account_type === "caller") ||
+      inlineData.includes("INCALL") ||
+      (inlineData.includes("PAUSE") && inlineData.includes("DISPO"))
+    ) {
       setData((prev) => ({
         ...prev,
         contact_method: AccountType.CALL,
-        dialer: Dialer.VICI,
       }));
     }
-  }, [canCall]);
+  }, [canCall, inlineData]);
 
   const anabledDispo = ["PAID", "PTP", "UNEG"];
   const requiredDispo = ["PAID", "PTP"];
@@ -871,14 +882,14 @@ const DispositionForm: React.FC<Props> = ({
                               findDispoName?.contact_methods ?? {};
 
                             return (
-                              (data.contact_method &&
+                              data.contact_method &&
                               findDispoName?.active &&
                               findDispoName?.buckets?.includes(
                                 selectedCustomer?.account_bucket?._id
                               ) &&
                               dispoCM[
                                 data?.contact_method as keyof typeof dispoCM
-                              ]) && (
+                              ] && (
                                 <option
                                   value={key}
                                   key={index}
@@ -987,7 +998,7 @@ const DispositionForm: React.FC<Props> = ({
                     </div>
                   </div>
 
-                  {data.contact_method === AccountType.CALL && (
+                  {data?.contact_method === AccountType.CALL && (
                     <label className="flex flex-col  items-center gap-0.5">
                       <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4">
                         Dialer
@@ -995,14 +1006,18 @@ const DispositionForm: React.FC<Props> = ({
                       <select
                         name="dialer"
                         id="dialer"
-                        required={data.contact_method === AccountType.CALL}
-                        value={data.dialer ?? ""}
+                        required={data?.contact_method === AccountType.CALL}
+                        value={
+                          !(data.contact_method ===  AccountType.CALL && checkIfCanCall)
+                            ? data?.dialer ?? ""
+                            : Dialer.VICI ?? ""
+                        }
                         onChange={(e) =>
                           handleDataChange(
                             "dialer",
-                            (checkIfChangeContactMethod &&
+                            checkIfChangeContactMethod &&
                               !selectedCustomer.current_disposition
-                                ?.selectivesDispo)
+                                ?.selectivesDispo
                               ? existingDispo?.dialer
                               : e.target.value
                           )

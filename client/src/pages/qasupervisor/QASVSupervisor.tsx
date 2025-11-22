@@ -460,12 +460,12 @@ const QASupervisorView = () => {
           </div>
         </div>
         <motion.div
-          className=" rounded-md border-gray-300 mt-3  overflow-hidden"
+          className="   mt-3  "
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <div className="grid grid-cols-7 gap-3 px-2 py-2  font-black uppercase bg-gray-300">
+          <div className="grid shadow-md border rounded-t-md bg-gray-300  grid-cols-7 gap-3 px-2 py-2  font-black uppercase ">
             <div
               className="
             "
@@ -492,7 +492,7 @@ const QASupervisorView = () => {
               filteredUsers.map((user, index) => (
                 <motion.div
                   key={user._id}
-                  className="grid grid-cols-7 gap-3 items-center bg-gray-100 py-2 pl-2 text-sm even:bg-gray-200"
+                  className="grid grid-cols-7 border-x border-b last:rounded-b-md gap-3 items-center bg-gray-100 py-2 pl-2 text-sm odd:bg-gray-200"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
@@ -643,7 +643,6 @@ const QASupervisorView = () => {
                   <div className="grid grid-cols-2 gap-3 text-sm lg:text-lg h-full overflow-hidden">
                     <div className="overflow-auto flex flex-col gap-0">
                       {deptData?.getDepts?.map((dept) => {
-
                         return (
                           dept.name !== "ADMIN" && (
                             <label

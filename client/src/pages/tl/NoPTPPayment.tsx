@@ -36,7 +36,26 @@ const NoPTPPayment = () => {
   const paidSelected = noPTPCollection?.noPTPCollection || null
 
   return (
-    <div className='border-purple-500 shadow-md border bg-white text-purple-800 rounded-sm flex flex-col'>
+    <div className='border-purple-500 relative shadow-md border bg-white text-purple-800 rounded-sm flex flex-col'>
+      <div
+        className="absolute top-2 right-2 text-purple-800"
+        title={"PTP will start to calculate once you uploaded a selectives.\n No Selectives means no PTP."}
+      >
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          strokeWidth="1.5"
+          stroke="currentColor"
+          className="size-5"
+        >
+          <path
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"
+          />
+        </svg>
+      </div>
       <div className='lg:text-xs bg-purple-400 2xl:text-lg font-black h-[50%] flex items-center justify-center border-b border-purple-500 '>
         <h1>
           No PTP Payment <span className="text-[0.6rem] 2xl:text-xs font- capitalize">{`(${intervalTypes})`}</span> 

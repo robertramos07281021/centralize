@@ -22,8 +22,8 @@ const BUCKET_AGENT = gql`
 `;
 
 const GET_BUCKET = gql`
-  query getTLBucket {
-    getTLBucket {
+  query getAllBucket {
+    getAllBucket {
       _id
       name
     }
@@ -79,12 +79,12 @@ const QAAgentViews = () => {
 
   return (
     <div className="overflow-hidden flex h-full w-full flex-col">
-      <motion.div className="flex items-center justify-end px-5 pt-4">
+      <motion.div className="flex items-center justify-start px-5 pt-4">
         {data && data?.getTLBucket?.length > 0 && (
           <select
             name="campaign"
             id="campaign"
-            className="px-6 text-center border border-slate-500 rounded py-1.5"
+            className="px-6 text-center border rounded py-1.5"
             onChange={(e) => {
               const value =
                 e.target.value.trim() === "" ? null : e.target.value;
@@ -101,14 +101,14 @@ const QAAgentViews = () => {
           </select>
         )}
       </motion.div>
-      <div className="h-full w-full p-5 overflow-hidden flex">
+      <div className="h-full w-full px-5 pb-5 pt-2 overflow-hidden flex">
         <motion.div
-          className="w-full h-full overflow-auto "
+          className="w-full h-full "
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
         >
-          <div className="w-full overflow-hidden rounded-md div-fixed">
-            <div className=" bg-gray-300 uppercase font-black overflow-hidden">
+          <div className="w-full h-full overflow-hidden  div-fixed">
+            <div className=" bg-gray-300 border border-black rounded-t-md uppercase font-black overflow-hidden">
               <div className="grid grid-cols-6 items-center">
                 <div className="px-2 py-2">Name</div>
                 <div className="px-2 py-2">SIP</div>
@@ -119,11 +119,11 @@ const QAAgentViews = () => {
                 <div className="text-center flex justify-center"></div>
               </div>
             </div>
-            <div>
+            <div className=" overflow-auto flex flex-col h-full">
               {agendivata?.getBucketUser.map((user, index) => (
                 <motion.div
                   key={user._id}
-                  className=" even:bg-gray-200 grid py-2 items-center w-full grid-cols-6 bg-gray-100 cursor-default transition-all hover:bg-gray-200 select-none"
+                  className=" even:bg-gray-200 text-sm border-x border-b last:rounded-b-md grid py-1 items-center w-full grid-cols-6 bg-gray-100 cursor-default transition-all hover:bg-gray-300 select-none"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
@@ -155,44 +155,7 @@ const QAAgentViews = () => {
                       <div className=" shadow-md bg-red-600 w-5 rounded-full h-5"></div>
                     )}
                   </div>
-                  {/* <div className="justify-center flex">
-                    {user.isLock ? (
-                      <div className="bg-red-500 px-2 border-2 rounded-sm border-red-800 shadow-md cursor-pointer hover:bg-red-600 transition-all text-white py-1">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth="3"
-                          stroke="currentColor"
-                          className="size-5"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-                          />
-                        </svg>
-                      </div>
-                    ) : (
-                      <div className="bg-gray-300 px-2 border-2 rounded-sm border-gray-400 transition-all text-gray-400 py-1">
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth="3"
-                          stroke="currentColor"
-                          className="size-5"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M13.5 10.5V6.75a4.5 4.5 0 1 1 9 0v3.75M3.75 21.75h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H3.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z"
-                          />
-                        </svg>
-                      </div>
-                    )}
-                  </div> */}
-                  <div className=" flex justify-center">
+                  <div className=" flex justify-end pr-3">
                     <Link
                       className=" bg-blue-600 border-2 hover:bg-blue-700 text-white border-blue-800 shadow-md rounded-sm px-2 py-1"
                       to="/agent-recordings"

@@ -1,29 +1,30 @@
-import mongoose from "mongoose"
-import CustomError from "../../middlewares/errors.js"
-import Bucket from "../../models/bucket.js"
-import Customer from "../../models/customer.js"
-import CustomerAccount from "../../models/customerAccount.js"
-import Disposition from "../../models/disposition.js"
-import DispoType from "../../models/dispoType.js"
-import Group from "../../models/group.js"
-import User from "../../models/user.js"
-import Callfile from "../../models/callfile.js"
-import Selective from "../../models/selective.js"
+import mongoose from "mongoose";
+import CustomError from "../../middlewares/errors.js";
+import Bucket from "../../models/bucket.js";
+import Customer from "../../models/customer.js";
+import CustomerAccount from "../../models/customerAccount.js";
+import Disposition from "../../models/disposition.js";
+import DispoType from "../../models/dispoType.js";
+import Group from "../../models/group.js";
+import User from "../../models/user.js";
+import Callfile from "../../models/callfile.js";
+import Selective from "../../models/selective.js";
 
 const taskResolver = {
   Query: {
-    myTasks: async(_,__,{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
+    myTasks: async (_, __, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
       try {
         const myTask = await CustomerAccount.aggregate([
           {
-            $match:
-              {
-                assigned: new mongoose.Types.ObjectId(user._id),
-                on_hands: false,
-                bucket: {$in: user.buckets.map(x => new mongoose.Types.ObjectId(x))}
-              }
-          }, 
+            $match: {
+              assigned: new mongoose.Types.ObjectId(user._id),
+              on_hands: false,
+              bucket: {
+                $in: user.buckets.map((x) => new mongoose.Types.ObjectId(x)),
+              },
+            },
+          },
           {
             $lookup: {
               from: "customers",
@@ -32,8 +33,11 @@ const taskResolver = {
               as: "customer_info",
             },
           },
-          { 
-            $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$customer_info",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -43,8 +47,11 @@ const taskResolver = {
               as: "account_bucket",
             },
           },
-          { 
-            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$account_bucket",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -54,13 +61,16 @@ const taskResolver = {
               as: "account_callfile",
             },
           },
-          { 
-            $unwind: { path: "$account_callfile", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$account_callfile",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $match: {
-              "account_callfile.active": true
-            }
+              "account_callfile.active": true,
+            },
           },
           {
             $lookup: {
@@ -70,8 +80,8 @@ const taskResolver = {
               as: "cd",
             },
           },
-          { 
-            $unwind: { path: "$cd", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$cd", preserveNullAndEmptyArrays: true },
           },
           {
             $lookup: {
@@ -81,8 +91,8 @@ const taskResolver = {
               as: "dispotype",
             },
           },
-          { 
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
           },
           {
             $lookup: {
@@ -92,8 +102,8 @@ const taskResolver = {
               as: "user",
             },
           },
-          { 
-            $unwind: { path: "$user", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$user", preserveNullAndEmptyArrays: true },
           },
           {
             $lookup: {
@@ -124,35 +134,37 @@ const taskResolver = {
               account_bucket: "$account_bucket",
               assigned: "$assigned",
               current_disposition: "$cd",
-              account_update_history: '$account_update_history',
+              account_update_history: "$account_update_history",
               assignedModel: "$assignedModel",
               assigned_date: "$assigned_date",
-              emergency_contact: "$emergency_contact"
-            }
-          }
-        ])
+              emergency_contact: "$emergency_contact",
+            },
+          },
+        ]);
 
-        return myTask
+        return myTask;
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
-    groupTask: async(_,__,{user}) => {
-      if(!user) throw new CustomError("Unauthorized",401)
-      try { 
-        const myGroup = await Group.findOne({members: user._id})
-        if(!myGroup) return {
-          _id: null,
-          task: []
-        }
-       
+    groupTask: async (_, __, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+      try {
+        const myGroup = await Group.findOne({ members: user._id });
+        if (!myGroup)
+          return {
+            _id: null,
+            task: [],
+          };
+
         const customerAccounts = await CustomerAccount.aggregate([
           {
             $match: {
               assignedModel: "Group",
               assigned: new mongoose.Types.ObjectId(myGroup._id),
-              on_hands: false
-            }
+              on_hands: false,
+            },
           },
           {
             $lookup: {
@@ -162,8 +174,11 @@ const taskResolver = {
               as: "customer_info",
             },
           },
-          { 
-            $unwind: { path: "$customer_info", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$customer_info",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -173,8 +188,11 @@ const taskResolver = {
               as: "account_bucket",
             },
           },
-          { 
-            $unwind: { path: "$account_bucket", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$account_bucket",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $lookup: {
@@ -184,13 +202,16 @@ const taskResolver = {
               as: "account_callfile",
             },
           },
-          { 
-            $unwind: { path: "$account_callfile", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: {
+              path: "$account_callfile",
+              preserveNullAndEmptyArrays: true,
+            },
           },
           {
             $match: {
-              "account_callfile.active": true
-            }
+              "account_callfile.active": true,
+            },
           },
           {
             $lookup: {
@@ -200,8 +221,8 @@ const taskResolver = {
               as: "cd",
             },
           },
-          { 
-            $unwind: { path: "$cd", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$cd", preserveNullAndEmptyArrays: true },
           },
           {
             $lookup: {
@@ -211,8 +232,8 @@ const taskResolver = {
               as: "dispotype",
             },
           },
-          { 
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
           },
           {
             $lookup: {
@@ -222,8 +243,8 @@ const taskResolver = {
               as: "user",
             },
           },
-          { 
-            $unwind: { path: "$user", preserveNullAndEmptyArrays: true } 
+          {
+            $unwind: { path: "$user", preserveNullAndEmptyArrays: true },
           },
           {
             $lookup: {
@@ -253,123 +274,139 @@ const taskResolver = {
               grass_details: "$grass_details",
               account_bucket: "$account_bucket",
               assigned: "$assigned",
-              account_update_history: '$account_update_history',
+              account_update_history: "$account_update_history",
               current_disposition: "$cd",
               assigned_date: "$assigned_date",
-              emergency_contact: "$emergency_contact"
-            }
-          }
-        ])
-
+              emergency_contact: "$emergency_contact",
+            },
+          },
+        ]);
 
         return {
           _id: myGroup._id,
-          task: customerAccounts
-        }
-
+          task: customerAccounts,
+        };
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
-    }
+    },
   },
   Mutation: {
-    selectTask: async(_,{id}, {user, pubsub, PUBSUB_EVENTS})=>{
+    selectTask: async (_, { id }, { user, pubsub, PUBSUB_EVENTS }) => {
       try {
-        if(!user) throw new CustomError("Unauthorized",401)
-    
-        const ca = await CustomerAccount.findById(id)
-        
-        if(!ca) throw new CustomError("Customer account not found", 404) 
-      
-        const findGroup = await Group.findById(ca.assigned)
- 
-        const assigned = ca.assignedModel ? (ca.assignedModel === 'Group' ? findGroup.members : [ca.assigned]) : []
+        if (!user) throw new CustomError("Unauthorized", 401);
 
-        if(ca.on_hands) throw new CustomError("Already taken")
+        const ca = await CustomerAccount.findById(id);
 
-        ca.on_hands = true
+        if (!ca) throw new CustomError("Customer account not found", 404);
 
-        await ca.save()
- 
+        const findGroup = await Group.findById(ca.assigned);
+
+        const assigned = ca.assignedModel
+          ? ca.assignedModel === "Group"
+            ? findGroup.members
+            : [ca.assigned]
+          : [];
+
+        if (ca.on_hands) throw new CustomError("Already taken");
+
+        ca.on_hands = true;
+
+        await ca.save();
+
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
-            members: [...new Set([...assigned,user._id])],
-            message: "TASK_SELECTION"
+            members: [...new Set([...assigned, user._id])],
+            message: "TASK_SELECTION",
           },
         });
 
         return {
           success: true,
-          message: "Successfully selected"
-        }
+          message: "Successfully selected",
+        };
       } catch (error) {
-        throw new CustomError(error.message, 500)  
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
-    deselectTask: async(_,{id},{PUBSUB_EVENTS, pubsub}) => {
+    deselectTask: async (_, { id }, { PUBSUB_EVENTS, pubsub }) => {
       try {
-        const ca = await CustomerAccount.findByIdAndUpdate(id,{$set: {on_hands: false}},{new: true})
-        if(!ca) throw new CustomError("Customer account not found", 404) 
-      
-        const group = await Group.findById(ca.assigned)
-      
-        const assigned = ca?.assigned ? (group ? [...group.members] : [ca.assigned]) : []
+        const ca = await CustomerAccount.findByIdAndUpdate(
+          id,
+          { $set: { on_hands: false } },
+          { new: true }
+        );
+        if (!ca) throw new CustomError("Customer account not found", 404);
+
+        const group = await Group.findById(ca.assigned);
+
+        const assigned = ca?.assigned
+          ? group
+            ? [...group.members]
+            : [ca.assigned]
+          : [];
 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
             members: assigned,
-            message: "TASK_SELECTION"
+            message: "TASK_SELECTION",
           },
         });
 
         return {
           success: true,
-          message: "Successfully deselected"
-        }
+          message: "Successfully deselected",
+        };
       } catch (error) {
-        throw new CustomError(error.message, 500)  
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
-    tlEscalation: async(_,{id,tlUserId},{PUBSUB_EVENTS, pubsub}) => {
+    tlEscalation: async (_, { id, tlUserId }, { PUBSUB_EVENTS, pubsub }) => {
       try {
-        const escalateToTL = await CustomerAccount.findById(id)
-        if(!escalateToTL) throw new CustomError('Customer not found', 404)
+        const escalateToTL = await CustomerAccount.findById(id);
+        if (!escalateToTL) throw new CustomError("Customer not found", 404);
 
-        const findTl = await User.findById(tlUserId)
-        if(!findTl) throw new CustomError('User not found',404)
+        const findTl = await User.findById(tlUserId);
+        if (!findTl) throw new CustomError("User not found", 404);
 
-        await CustomerAccount.updateOne({_id: id},{$set: {assigned: findTl._id, assignedModel: 'User'}})
-        
+        await CustomerAccount.updateOne(
+          { _id: id },
+          { $set: { assigned: findTl._id, assignedModel: "User" } }
+        );
+
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
             members: [findTl._id],
-            message: "TASK_SELECTION"
+            message: "TASK_SELECTION",
           },
         });
-    
+
         return {
           success: true,
-          message: "Successfully transfer to team leader"
-        }
+          message: "Successfully transfer to team leader",
+        };
       } catch (error) {
-        throw new CustomError(error.message, 500)          
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
-    updateDatabase: async()=> {
+    updateDatabase: async () => {
       try {
-        
         // const findSelectives = await Disposition.find({selectiveFiles: {$eq: new mongoose.Types.ObjectId("68da0371ee872f3ae955225b")}})
 
         return {
           success: true,
-          message: "Customers Account Successfully update"
-        }
+          message: "Customers Account Successfully update",
+        };
       } catch (error) {
-        throw new CustomError(error.message, 500)
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
   },
+};
 
-}
-
-export default taskResolver
+export default taskResolver;

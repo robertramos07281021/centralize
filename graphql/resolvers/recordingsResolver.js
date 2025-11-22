@@ -148,6 +148,7 @@ const recordingsResolver = {
           message: "Successfully downloaded",
         };
       } catch (err) {
+        console.log(error);
         throw new CustomError(err.message, 500);
       } finally {
         client.close();

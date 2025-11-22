@@ -1,7 +1,7 @@
 import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { RiArrowDownSFill, RiArrowUpSFill } from "react-icons/ri";
+import { RiArrowUpSFill } from "react-icons/ri";
 import GroupSection from "./GroupSection";
 import TaskDispoSection from "./TaskDispoSection";
 import AgentSection from "./AgentSection";

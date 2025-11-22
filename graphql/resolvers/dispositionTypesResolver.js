@@ -8,6 +8,7 @@ const dispositionTypeResolver = {
         const dipositionTypes = await DispoType.find().sort({ rank: 1 });
         return dipositionTypes;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -16,6 +17,7 @@ const dispositionTypeResolver = {
         const dipositionTypes = await DispoType.find().sort({ rank: 1 });
         return dipositionTypes;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -48,6 +50,7 @@ const dispositionTypeResolver = {
           message: `${newDispotype.name} has been created`,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -85,6 +88,7 @@ const dispositionTypeResolver = {
           message: `${findDispoType.name.toUpperCase()} successfully updated`,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -106,6 +110,7 @@ const dispositionTypeResolver = {
           }`,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

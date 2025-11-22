@@ -18,6 +18,7 @@ const productionResolver = {
         const data = await Production.find().lean();
         return data;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -26,6 +27,7 @@ const productionResolver = {
         const prod = await Production.findOne({ user: userId }).lean();
         return prod;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -103,6 +105,7 @@ const productionResolver = {
 
         return disposition;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -216,6 +219,7 @@ const productionResolver = {
 
         return dtc[0];
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -306,6 +310,7 @@ const productionResolver = {
 
         return res;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -357,6 +362,7 @@ const productionResolver = {
         ]);
         return res;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -483,6 +489,7 @@ const productionResolver = {
         ]);
         return agentCollection[0];
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -562,6 +569,7 @@ const productionResolver = {
           dispotypes: userDispostion,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -617,8 +625,10 @@ const productionResolver = {
             },
           },
         ]);
+
         return production;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -629,34 +639,33 @@ const productionResolver = {
         let startOfTheDay = null;
         let endOfTheDay = null;
         if (!from && !to) {
-          const start = new Date();
+          const start = new Date("11-19-2025");
           start.setHours(0, 0, 0, 0);
           startOfTheDay = start;
 
-          const end = new Date();
+          const end = new Date("11-19-2025");
 
           end.setHours(23, 59, 59, 999);
           endOfTheDay = end;
         }
-        console.log(startOfTheDay)
-        console.log(endOfTheDay)
 
-        const users = (await User.find({buckets: bucketId})).map(x=>new mongoose.Types.ObjectId(x._id))
+        const users = (
+          await User.find({ buckets: bucketId, type: "AGENT" })
+        ).map((x) => new mongoose.Types.ObjectId(x._id));
 
         const production = await Production.aggregate([
           {
             $match: {
               createdAt: { $gt: startOfTheDay, $lte: endOfTheDay },
-              // user: {$in: users}
+              user: { $in: users },
             },
           },
         ]);
 
-        console.log(production);
-
         const agentIds = production.map(
           (prod) => new mongoose.Types.ObjectId(prod.user)
         );
+
         const disposition = await Disposition.aggregate([
           {
             $match: {
@@ -678,6 +687,7 @@ const productionResolver = {
           const findUser = disposition.find(
             (x) => x._id.toString() === prod.user.toString()
           );
+
           if (!findUser) {
             return { ...prod, total: 0, average: 0, longest: 0 };
           }
@@ -1206,6 +1216,7 @@ const productionResolver = {
             total: total,
           };
         } catch (error) {
+          console.log(error);
           throw new CustomError(error.message, 500);
         } finally {
           client.close();
@@ -1374,6 +1385,7 @@ const productionResolver = {
 
         return res;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1560,6 +1572,7 @@ const productionResolver = {
 
         return RPCCustomerAccount[0];
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1595,6 +1608,7 @@ const productionResolver = {
           message: "Target successfully updated",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1652,6 +1666,7 @@ const productionResolver = {
           start: newStart,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1668,6 +1683,7 @@ const productionResolver = {
           message: "Successfully login",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1746,6 +1762,7 @@ const productionResolver = {
           message: "Account lock",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

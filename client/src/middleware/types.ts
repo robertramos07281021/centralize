@@ -215,4 +215,5 @@ export enum IntervalsTypes {
   DAILY = "daily",
   WEEKLY = "weekly",
   MONTHLY = "monthly",
+  CALLFILE = 'callfile',
 }

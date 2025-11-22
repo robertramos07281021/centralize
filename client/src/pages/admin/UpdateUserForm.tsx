@@ -838,7 +838,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
             <div
               className={`${
                 data?.departments?.length === 0 && "bg-gray-200"
-              } w-full text-sm border rounded-lg max-w-[450px] flex justify-between ${
+              } w-full text-sm border rounded-lg flex justify-between ${
                 selectionDept && data.departments.length > 0
                   ? "border-blue-500"
                   : "border-slate-300"

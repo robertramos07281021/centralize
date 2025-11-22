@@ -176,6 +176,9 @@ export async function getRecordings(vici_id, agent_user) {
 export async function getUserInfo(vici_id, agent_user) {
   const VICIDIAL_API = `http://${vici_id}/vicidial/non_agent_api.php`;
   try {
+
+    if(!vici_id) return null
+
     const { data } = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
@@ -196,7 +199,7 @@ export async function getUserInfo(vici_id, agent_user) {
 
 export async function getLoggedInUser(vici_id) {
   const VICIDIAL_API = `http://${vici_id}/vicidial/non_agent_api.php`;
-
+  
   try {
     const { data } = await axios.get(VICIDIAL_API, {
       params: {

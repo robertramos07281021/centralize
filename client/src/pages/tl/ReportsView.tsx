@@ -5,10 +5,9 @@ import CallDoughnut from "./CallDoughnut";
 import CallReportTables from "./CallReportTables";
 import RFDReportTables from "./RFDReportTables";
 import ReportsTables from "./ReportsTables";
-import { useLocation, Link } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useSelector } from "react-redux";
-import { RootState, useAppDispatch } from "../../redux/store";
+import {  useAppDispatch } from "../../redux/store";
 import { setIsReport } from "../../redux/slices/authSlice";
 
 const GET_DISPOSITION_REPORTS = gql`
@@ -111,11 +110,10 @@ type Props = {
 };
 
 const ReportsView: React.FC<Props> = ({ search }) => {
-  const { isReport } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
   const [searchFilter, setSearchFilter] = useState<SearchFilter>();
   const dispatch = useAppDispatch();
-
+ 
   useEffect(() => {
     setSearchFilter({
       agent: search.searchAgent,
@@ -138,7 +136,7 @@ const ReportsView: React.FC<Props> = ({ search }) => {
 
   const callMethod =
     reportsData?.getDispositionReports?.toolsDispoCount?.find(
-      (x) => x.call_method === "calls"
+      (x) => x.call_method === "call"
     )?.dispositions || [];
   const smsMethod =
     reportsData?.getDispositionReports?.toolsDispoCount?.find(
@@ -172,9 +170,7 @@ const ReportsView: React.FC<Props> = ({ search }) => {
   if (reportLoading) return <Loading />;
 
   return (
-    <div
-      className={` col-span-2 flex flex-col overflow-auto relative h-5/6 px-5`}
-    >
+    <div className=" col-span-2 flex flex-col overflow-auto relative h-5/6 px-5">
       <div className="text-center border-b-2 border-gray-200 sticky bg-white top-0 uppercase font-black 2xl:text-lg lg:text-2xl  text-slate-800 flex item-center justify-center gap-5 pb-2 ">
         <div className="flex items-center py-1 justify-center">
           {reportsData?.getDispositionReports?.bucket && (
@@ -203,7 +199,8 @@ const ReportsView: React.FC<Props> = ({ search }) => {
               </div>
             )}
           <div className="absolute text-sm items-center flex right-2">
-            <div onClick={reportView} 
+            <div
+              onClick={reportView}
               className="bg-blue-500 hover:bg-blue-600 transition-all px-3 text-white cursor-pointer rounded-sm shadow-md py-1 border-2 border-blue-800"
             >
               View
