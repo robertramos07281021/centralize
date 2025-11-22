@@ -139,7 +139,7 @@ const callfileResolver = {
                                   {
                                     $eq: [
                                       "$$history.disposition",
-                                      paidDispo._id,
+                                      paidDispo?._id || null ,
                                     ],
                                   },
                                   { $eq: ["$$history.selectivesDispo", true] },
