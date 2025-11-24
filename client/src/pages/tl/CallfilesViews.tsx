@@ -489,20 +489,19 @@ const CallfilesViews: React.FC<Props> = ({
           const { data } = await downloadCallfiles({
             variables: { callfile: id },
           });
-
-          if (!data.downloadCallfiles) {
+          if (!data) {
             setConfirm(false);
             dispatch(setServerError(true));
             return;
           }
-          const blob = new Blob([data.downloadCallfiles], { type: "text/csv" });
-          const url = window.URL.createObjectURL(blob);
+
           const link = document.createElement("a");
-          link.href = url;
-          link.setAttribute("download", `${name}.csv`);
+          link.href = data.downloadCallfiles; // now this is the file URL
+          link.download = `${name}.csv`;
           document.body.appendChild(link);
           link.click();
           document.body.removeChild(link);
+
           setConfirm(false);
           dispatch(
             setSuccess({
@@ -513,6 +512,7 @@ const CallfilesViews: React.FC<Props> = ({
           );
         } catch (err) {
           console.log(err);
+          setConfirm(false);
           dispatch(setServerError(true));
         }
       },
@@ -618,7 +618,6 @@ const CallfilesViews: React.FC<Props> = ({
     }
   }, []);
 
-
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [],
@@ -648,7 +647,7 @@ const CallfilesViews: React.FC<Props> = ({
       setExcelData([]);
     },
     onError: (error) => {
-      console.log(error)
+      console.log(error);
       dispatch(setServerError(true));
     },
   });

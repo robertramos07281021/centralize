@@ -30,6 +30,14 @@ const recordingsResolver = {
             path: "bucket",
           },
         });
+        if (!findDispo) {
+          throw new CustomError("Disposition not found", 404);
+        }
+
+        if (!findDispo?.customer_account?.bucket) {
+          throw new CustomError("Bucket information is missing", 404);
+        }
+
         const createdAt = new Date(findDispo.createdAt);
         const yearCreated = createdAt.getFullYear();
         const monthCreated = months[createdAt.getMonth()];
@@ -37,6 +45,7 @@ const recordingsResolver = {
         const month = createdAt.getMonth() + 1;
         const viciIpAddress = findDispo.customer_account.bucket.viciIp;
         const issabelIpAddress = findDispo.customer_account.bucket.issabelIp;
+        const bucketName = findDispo.customer_account.bucket.name || "";
 
         const fileNale = {
           "172.20.21.64": "AUTODIAL SHOPEE BCL-M7",
@@ -79,19 +88,20 @@ const recordingsResolver = {
           secure: false,
         });
 
+        const viciFolder = fileNale[viciIpAddress];
         const remoteDirVici = `/REC-${viciIpAddress}-${
-          ![
+          [
             "CASH S2",
             "LAZCASH S1",
             "ACS1-TEAM 1",
             "ACS1-TEAM 2",
             "ACS1-TEAM 3",
-          ].includes(filtered?.bucket?.name)
-            ? fileNale[viciIpAddress]
-            : "ATOME"
+          ].includes(bucketName)
+            ? "ATOME"
+            : viciFolder || "UNKNOWN"
         }/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`;
         const remoteDirIssabel = `/ISSABEL RECORDINGS/${
-          issabelNasFileBane[issabelIpAddress]
+          issabelNasFileBane[issabelIpAddress] || "UNKNOWN"
         }/${monthCreated + " " + yearCreated}/${checkDate(dayCreated)}`;
         const localDir = "./recordings";
 
@@ -113,7 +123,7 @@ const recordingsResolver = {
             "BCL-M3",
             "BCL-M4",
             "BCL-M7",
-          ].includes(findDispo?.bucket?.name) &&
+          ].includes(bucketName) &&
           createdAt.getMonth() < 12 &&
           dayCreated < 12
             ? `/REC-${fileNale["172.20.21.35"]}${yearCreated}-${checkDate(
@@ -128,7 +138,7 @@ const recordingsResolver = {
             "ACS1-TEAM 1",
             "ACS1-TEAM 2",
             "ACS1-TEAM 3",
-          ].includes(findDispo?.bucket?.name) &&
+          ].includes(bucketName) &&
           createdAt.getMonth() < 7 &&
           dayCreated < 18
             ? `/REC-172.20.21.18-MIXED CAMPAIGN NEW 2/${yearCreated}-${checkDate(
@@ -148,8 +158,8 @@ const recordingsResolver = {
           message: "Successfully downloaded",
         };
       } catch (err) {
-        console.log(error);
-        throw new CustomError(err.message, 500);
+        console.log(err);
+        throw new CustomError(err.message || "Unable to download recording", 500);
       } finally {
         client.close();
       }

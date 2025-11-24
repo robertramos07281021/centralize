@@ -10,6 +10,8 @@ import Bucket from "../../models/bucket.js";
 import Disposition from "../../models/disposition.js";
 import Selective from "../../models/selective.js";
 import User from "../../models/user.js";
+import fs from "fs";
+import path from "path";
 
 const callfileResolver = {
   DateTime,
@@ -139,7 +141,7 @@ const callfileResolver = {
                                   {
                                     $eq: [
                                       "$$history.disposition",
-                                      paidDispo?._id || null ,
+                                      paidDispo?._id || null,
                                     ],
                                   },
                                   { $eq: ["$$history.selectivesDispo", true] },
@@ -497,7 +499,6 @@ const callfileResolver = {
                     $and: [
                       { $ne: ["$$h.callId", null] }, // not null
                       { $ne: ["$$h.callId", ""] }, // not empty string
-                      { $ne: ["$$h.callId", undefined] }, // optional: not undefined
                     ],
                   },
                 },
@@ -1008,7 +1009,13 @@ const callfileResolver = {
           emptyFieldValue: "",
         });
 
-        return csv;
+        const tmpDir = path.join(process.cwd(), "tmp");
+        if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
+
+        const filePath = path.join(tmpDir, `${findCallfile.name}.csv`);
+        await fs.promises.writeFile(filePath, csv);
+
+        return `http://${process.env.MY_IP}:4000/tmp/${findCallfile.name}.csv`;
       } catch (error) {
         console.log(error);
         throw new CustomError(error.message, 500);
@@ -1528,15 +1535,15 @@ const callfileResolver = {
         if (interval === "daily") {
           selectedInterval["$gt"] = todayStart;
           selectedInterval["$lte"] = todayEnd;
-          newDataCollected["target"] = Number(existingFile.target) / 4 / 6;
+          newDataCollected["target"] = Number(existingFile?.target) / 4 / 6;
         } else if (interval === "weekly") {
           selectedInterval["$gt"] = startOfWeek;
           selectedInterval["$lte"] = endOfWeek;
-          newDataCollected["target"] = Number(existingFile.target) / 4;
+          newDataCollected["target"] = Number(existingFile?.target) / 4;
         } else if (interval === "monthly") {
           selectedInterval["$gt"] = startOfMonth;
           selectedInterval["$lte"] = endOfMonth;
-          newDataCollected["target"] = Number(existingFile.target);
+          newDataCollected["target"] = Number(existingFile?.target);
         }
 
         const dispotypesFilter = await DispoType.findOne({

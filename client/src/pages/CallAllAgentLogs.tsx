@@ -152,6 +152,7 @@ const CallAllAgentLogs = () => {
     [bargeCall]
   );
 
+
   const updateAllLogs = useCallback(async () => {
     if (!allBuckets.length) {
       setAllLogs([]);

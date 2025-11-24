@@ -99,7 +99,6 @@ type Success = {
   message: string;
 };
 
-
 const GET_CSV_FILES = gql`
   query downloadCallfiles($callfile: ID!) {
     downloadCallfiles(callfile: $callfile)
@@ -138,7 +137,6 @@ const CallfilesConfig = () => {
     skip: !selectedOption || !isCallfileConfig,
     notifyOnNetworkStatusChange: true,
   });
-
 
   useEffect(() => {
     setPage(callfilesPages.toString());
@@ -184,7 +182,7 @@ const CallfilesConfig = () => {
         const res = await refetch();
         if (res.data) {
           if (res.data?.getCF?.result?.length <= 0) {
-            if(callfilesPages > 1) {
+            if (callfilesPages > 1) {
               dispatch(setCallfilesPages(callfilesPages - 1));
             }
           }
@@ -217,7 +215,7 @@ const CallfilesConfig = () => {
         const res = await refetch();
         if (res?.data) {
           if (res?.data?.getCF?.result?.length <= 0) {
-            if(callfilesPages > 1) {
+            if (callfilesPages > 1) {
               dispatch(setCallfilesPages(callfilesPages - 1));
             }
           }
@@ -267,21 +265,19 @@ const CallfilesConfig = () => {
             const { data } = await downloadCallfiles({
               variables: { callfile: id },
             });
-            if (!data.downloadCallfiles) {
+            if (!data) {
               setConfirm(false);
               dispatch(setServerError(true));
               return;
             }
-            const blob = new Blob([data.downloadCallfiles], {
-              type: "text/csv",
-            });
-            const url = window.URL.createObjectURL(blob);
+
             const link = document.createElement("a");
-            link.href = url;
-            link.setAttribute("download", `${name}.csv`);
+            link.href = data.downloadCallfiles;
+            link.download = `${name}.csv`;
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
+
             setConfirm(false);
             dispatch(
               setSuccess({
@@ -291,6 +287,8 @@ const CallfilesConfig = () => {
               })
             );
           } catch (err) {
+            console.log(err);
+            setConfirm(false);
             dispatch(setServerError(true));
           }
         },
@@ -365,14 +363,26 @@ const CallfilesConfig = () => {
           </div>
           <div className="flex">
             <div className="grid  bg-gray-300 border-gray-600 w-full border rounded-t-md grid-cols-11 gap-3  px-3  py-2 font-black uppercase">
-              <div className="col-span-2" >Name</div>
+              <div className="col-span-2">Name</div>
               <div>Created At</div>
               <div>Endo</div>
               <div>Work Days</div>
-              <div className="truncate" title="Finished by"  >Finished By</div>
-              <div className="whitespace-nowrap truncate" title="Total Accounts" >Total Accounts</div>
+              <div className="truncate" title="Finished by">
+                Finished By
+              </div>
+              <div
+                className="whitespace-nowrap truncate"
+                title="Total Accounts"
+              >
+                Total Accounts
+              </div>
               <div>Total OB</div>
-              <div className="whitespace-nowrap truncate" title="Total Principal">Total Principal</div>
+              <div
+                className="whitespace-nowrap truncate"
+                title="Total Principal"
+              >
+                Total Principal
+              </div>
               <div>Activity</div>
               <div className=""></div>
             </div>
@@ -466,7 +476,6 @@ const CallfilesConfig = () => {
                           )}
                         </div>
                         <div className="gap-1 flex justify-end">
-
                           {res.active && (
                             <div className="items-center  col-start-1 flex ">
                               <div

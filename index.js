@@ -59,6 +59,15 @@ import selectivesTypeDefs from "./graphql/schemas/selectivesSchema.js";
 import DispoType from "./models/dispoType.js";
 import Production from "./models/production.js";
 import mongoose from "mongoose";
+import { fileURLToPath } from "url";
+
+
+
+const __filename = fileURLToPath(import.meta.url);
+
+// Equivalent of __dirname
+const __dirname = path.dirname(__filename);
+
 
 const connectedUsers = new Map();
 
@@ -98,11 +107,13 @@ app.use(cookieParser());
 app.use(compression());
 
 app.use("/recordings", express.static(path.join(process.cwd(), "recordings")));
+app.use("/tmp", express.static(path.join(__dirname, "tmp")));
 const sessionStore = MongoStore.create({
   mongoUrl: process.env.MONGO_URL,
   collectionName: "sessions",
   ttl: 60 * 60 * 24,
 });
+
 
 const sessionMiddleware = session({
   secret: process.env.SECRET,
@@ -344,29 +355,35 @@ useServer(
             const endToday = new Date();
             endToday.setHours(23, 59, 59, 999);
 
-            const prodRes = await Production.findOne(
-              { user: new mongoose.Types.ObjectId(userId) },
-              { createdAt: { $gt: startToday, lt: endToday } }
-            );
-
-            prodRes.prod_history = prodRes.prod_history.map((prod) => {
-              if (prod.existing === true) {
-                return {
-                  ...prod,
-                  existing: false,
-                  end: new Date(),
-                };
-              }
-              return prod;
+            const prodRes = await Production.findOne({
+              user: new mongoose.Types.ObjectId(userId),
+              createdAt: { $gt: startToday, $lt: endToday },
             });
 
-            prodRes.prod_history.push({
-              type: "LOGOUT",
-              start: newStart,
-              existing: true,
-            });
+            if (prodRes) {
+              const newStart = new Date();
 
-            await prodRes.save();
+              prodRes.prod_history = (prodRes.prod_history || []).map(
+                (prod) => {
+                  if (prod.existing === true) {
+                    return {
+                      ...prod,
+                      existing: false,
+                      end: new Date(),
+                    };
+                  }
+                  return prod;
+                }
+              );
+
+              prodRes.prod_history.push({
+                type: "LOGOUT",
+                start: newStart,
+                existing: true,
+              });
+
+              await prodRes.save();
+            }
 
             const bucket =
               res?.buckets?.length > 0

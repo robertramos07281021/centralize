@@ -7,7 +7,7 @@ const callTypeDefs = gql`
     checkUserIsOnlineOnVici(_id:ID!):Boolean
     checkIfAgentIsInline:String
     forRefetchingCustomer(_id:ID!):Search
-    getUsersLogginOnVici(bucket:ID!):String
+    getUsersLogginOnVici(bucket:ID):String
     isAutoDial:Boolean
     checkIfCallfileAutoIsDone(callfile:ID):Boolean
     getBargingStatus(vici_id:String):String

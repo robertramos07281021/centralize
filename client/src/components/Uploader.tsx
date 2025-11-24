@@ -170,13 +170,13 @@ const Uploader: React.FC<modalProps> = ({
 
           function normalizePHNumber(contact: string) {
             if (!contact) return "";
-
+    
             // Remove spaces, dashes, parentheses
-            let cleaned = contact.replace(/[+\-\s()]/g, "");
+            let cleaned = String(contact ?? "").replace(/[+\-\s()]/g, "");
 
             // If there’s a slash (multiple numbers), take the first one
             if (cleaned.includes("/")) {
-              cleaned = cleaned.split("/")[0];
+              cleaned = cleaned?.split("/")[0];
             }
 
             // Mobile numbers
@@ -333,7 +333,7 @@ const Uploader: React.FC<modalProps> = ({
               }
 
               if (contact_2) {
-                const newContact = normalizePHNumber(contact_2)
+                const newContact = normalizePHNumber(String(contact_2))
                   ?.toString()
                   ?.split(",");
                 if (newContact.length > 1) {

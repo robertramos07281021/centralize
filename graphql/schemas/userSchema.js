@@ -25,6 +25,8 @@ const userTypeDefs = gql`
     CLINIC
     PROD
     WELCOME
+    REPORT
+    LOGOUT
   }
 
   type Login {
@@ -114,10 +116,15 @@ const userTypeDefs = gql`
     getMe: Users
     getBucketUser(bucketId: ID): [Users]
     getAomUser: [Users]
-    findUsers(search: String!, page: Int!, limit: Int!, filter: String!): PaginatedUsers!
+    findUsers(
+      search: String!
+      page: Int!
+      limit: Int!
+      filter: String!
+    ): PaginatedUsers!
     findDeptAgents: [DeptUser]
     findAgents: [Users]
-    getCampaignAssigned(bucket:ID): Int
+    getCampaignAssigned(bucket: ID): Int
     getAOMCampaignFTE: [AOM_FTE]
     getHelperAgent: [Users]
     getBucketTL: [Users]
@@ -169,7 +176,7 @@ const userTypeDefs = gql`
     authorization(password: String!): Success
     deleteUser(id: ID!): Success
     updateUserVici_id(vici_id: String!): Success
-    updateQAUser(input:UpdateQAInput): Success
+    updateQAUser(input: UpdateQAInput): Success
   }
 `;
 

@@ -29,7 +29,13 @@ const client = new ApolloClient({
   link: splitLink,
   cache: new InMemoryCache(),
   credentials: 'include',
-  connectToDevTools: true
+  connectToDevTools: true,
+  defaultOptions: {
+    query: {
+      fetchPolicy: "no-cache",
+      errorPolicy: "all",
+    },
+  },
 });
 
 

@@ -38,7 +38,7 @@ const BARGE_CALL = gql`
 `;
 
 const CALL_LOGS = gql`
-  query getUsersLogginOnVici($bucket: ID!) {
+  query getUsersLogginOnVici($bucket: ID) {
     getUsersLogginOnVici(bucket: $bucket)
   }
 `;
@@ -77,7 +77,7 @@ const CallAllAgentLogs = () => {
     getUsersLogginOnVici: string;
   }>(CALL_LOGS, {
     notifyOnNetworkStatusChange: true,
-    variables: selectedBucket ? { bucket: selectedBucket._id } : undefined,
+    variables: selectedBucket ? { bucket: selectedBucket?._id || "" } : undefined,
     skip: !selectedBucket,
     pollInterval: 1000,
   });

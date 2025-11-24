@@ -315,6 +315,10 @@ const taskResolver = {
 
         await ca.save();
 
+        await User.findByIdAndUpdate(user._id, {
+          $set: { handsOn: true },
+        });
+
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
             members: [...new Set([...assigned, user._id])],
@@ -331,13 +335,15 @@ const taskResolver = {
         throw new CustomError(error.message, 500);
       }
     },
-    deselectTask: async (_, { id }, { PUBSUB_EVENTS, pubsub }) => {
+    deselectTask: async (_, { id }, { user, PUBSUB_EVENTS, pubsub }) => {
       try {
+        if (!user) throw new CustomError("Unauthorized", 401);
         const ca = await CustomerAccount.findByIdAndUpdate(
           id,
           { $set: { on_hands: false } },
           { new: true }
         );
+
         if (!ca) throw new CustomError("Customer account not found", 404);
 
         const group = await Group.findById(ca.assigned);
@@ -347,6 +353,10 @@ const taskResolver = {
             ? [...group.members]
             : [ca.assigned]
           : [];
+
+        await User.findByIdAndUpdate(user._id, {
+          $set: { handsOn: false },
+        });
 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {

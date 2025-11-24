@@ -459,6 +459,8 @@ const callResolver = {
     },
     getUsersLogginOnVici: async (_, { bucket }) => {
       try {
+
+        if(!bucket) return null
         const selectedBucket = await Bucket.findById(bucket);
         if (!selectedBucket) throw new CustomError("Bucket not found", 401);
 

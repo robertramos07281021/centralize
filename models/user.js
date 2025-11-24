@@ -109,6 +109,10 @@ const userSchema = new Schema(
         default: 0
       },
     },
+    handsOn: {
+      type: Boolean,
+      default: false
+    },
     phone_login: {
       type: String,
     },

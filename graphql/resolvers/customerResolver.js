@@ -73,10 +73,10 @@ const customerResolver = {
         if (!search) {
           return [];
         }
-        function escapeRegex(str) {
-          return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        }
-        const regex = new RegExp("^" + escapeRegex(search), "i");
+        // function escapeRegex(str) {
+        //   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+        // }
+        // const regex = new RegExp("^" + escapeRegex(search), "i");
 
         const searchValue = search;
 
@@ -1150,13 +1150,6 @@ const customerResolver = {
       try {
         const findBucket = await Bucket.findById(bucket);
         if (!findBucket) throw new CustomError("Bucket not found", 404);
-
-        const findingActiveCallfile = await Callfile.findOne({
-          bucket: findBucket._id,
-          active: true,
-        });
-        if (findingActiveCallfile)
-          throw new CustomError("Already have active file", 409);
 
         const callfilePrincipal = input
           .map((x) => x.principal_os)

@@ -282,7 +282,8 @@ const AgentRecordingView = () => {
         );
       }
     },
-    onError: () => {
+    onError: (err) => {
+      console.log(err)
       dispatch(setServerError(true));
     },
   });

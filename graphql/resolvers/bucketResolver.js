@@ -145,10 +145,10 @@ const bucketResolver = {
         const checkDept = await Department.findOne({name: input.dept})
         if(!checkDept) throw new CustomError("Department not found",404)
 
-        const checkName = await Bucket.findOne({$and: [
-          {name: input.name},
-          {dept: input.dept},
-        ]})
+        const checkName = await Bucket.findOne({
+          name: input.name,
+          dept: input.dept
+        })
 
         if(checkName) throw new CustomError("Duplicate",400)
     
@@ -169,7 +169,7 @@ const bucketResolver = {
         const updateBucket = await Bucket.findById(_id)
         if(!updateBucket) throw new CustomError("Bucket not found",404)
 
-        const checkBucket = await Bucket.find({$and: [{name},{dept: updateBucket.dept}, {_id: {$ne: updateBucket._id}}]})
+        const checkBucket = await Bucket.find({name, dept: updateBucket.dept, _id: {$ne: updateBucket._id}})
         if(checkBucket.length > 0) throw new CustomError("Duplicate", 400) 
             
         await Bucket.findByIdAndUpdate(updateBucket._id,{$set: { name ,viciIp, issabelIp, ...others }},{new: true})
