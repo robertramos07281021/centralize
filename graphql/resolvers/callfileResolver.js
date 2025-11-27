@@ -1,9 +1,10 @@
+import "dotenv/config.js";
 import mongoose from "mongoose";
 import { DateTime } from "../../middlewares/dateTime.js";
 import CustomError from "../../middlewares/errors.js";
 import Callfile from "../../models/callfile.js";
 import CustomerAccount from "../../models/customerAccount.js";
-import { json2csv } from "json-2-csv";
+// import { json2csv } from 'json-2-csv';
 import Department from "../../models/department.js";
 import DispoType from "../../models/dispoType.js";
 import Bucket from "../../models/bucket.js";
@@ -411,7 +412,7 @@ const callfileResolver = {
 
         const dispotypeMap = newMap();
 
-        const customers = await CustomerAccount.aggregate([
+        const customersCursor = CustomerAccount.aggregate([
           {
             $match: {
               callfile: new mongoose.Types.ObjectId(findCallfile._id),
@@ -499,6 +500,7 @@ const callfileResolver = {
                     $and: [
                       { $ne: ["$$h.callId", null] }, // not null
                       { $ne: ["$$h.callId", ""] }, // not empty string
+                      { $ne: ["$$h.callId", undefined] },
                     ],
                   },
                 },
@@ -846,6 +848,10 @@ const callfileResolver = {
           },
         ]);
 
+        const cursor = customersCursor
+          .allowDiskUse(true)
+          .cursor({ batchSize: 10000 });
+
         function formatDateTime(date) {
           if (!date) return "";
           const d = new Date(date);
@@ -912,32 +918,87 @@ const callfileResolver = {
 
           return `${mins}:${secs.toString().padStart(2, "0")}`;
         }
+        const headers = [
+          "contact1",
+          "contact2",
+          "contact3",
+          "isRPC",
+          "case_id",
+          "dpd",
+          "max_dpd",
+          "fullname",
+          "email1",
+          "email2",
+          "email3",
+          "gender",
+          "address1",
+          "address2",
+          "address3",
+          "dob",
+          "emergencyContactName",
+          "emergencyContactMobile",
+          "collector_sip",
+          "collector",
+          "outstanding_balance",
+          "amount_paid",
+          "amount",
+          "principal",
+          "balance",
+          "payment",
+          "payment_date",
+          "payment_method",
+          "contact_method",
+          "comment",
+          "disposition",
+          "endorsement_date",
+          "contactable",
+          "dialer",
+          "partial_payment_w_service_fee",
+          "new_tad_with_sf",
+          "new_pay_off",
+          "service_fee",
+          "dispo_date",
+          "year",
+          "chatApp",
+          "sms",
+          "selectives",
+          "brand",
+          "model",
+          "last_payment_amount",
+          "last_payment_date",
+          "call_penetration",
+          "call_penetration_count",
+        ];
 
-        const formattedCustomers = customers.map((c) => {
-          const call_penetration = c.call_penetration.map((x) => {
-            if (!x.callId) return "";
+        const formatCustomerRow = (c) => {
+          const callPenetration = (c.call_penetration || [])
+            .map((x) => {
+              if (!x.callId) return "";
 
-            const dateTime = x.callId
-              ? formatDateTimeForPenetration(x.callId.split("_")[1])
-              : "";
-            const spliting = x.callId.split("_");
-            const durations = x.callId.split("_")[spliting.length - 1];
-            return `${dispotypeMap[x.disposition]}-${dateTime}-${formatDuration(
-              durations
-            )}\n`;
-          });
+              const parts = x.callId.split("_");
+              const dateSegment = parts[1];
+              const durationSegment = parts[parts.length - 1];
+
+              const dateTime = dateSegment
+                ? formatDateTimeForPenetration(dateSegment)
+                : "";
+
+              return `${
+                dispotypeMap[x.disposition]
+              }-${dateTime}-${formatDuration(durationSegment)}\n`;
+            })
+            .filter(Boolean);
 
           return {
             ...c,
-
             contact1: c.contact1 ? `="${c.contact1}"` : "",
             contact2: c.contact2 ? `="${c.contact2}"` : "",
             contact3: c.contact3 ? `="${c.contact3}"` : "",
-            call_penetration: call_penetration
-              ? `="${call_penetration.toString()}"`
+            call_penetration: callPenetration.length
+              ? `="${callPenetration.toString()}"`
               : "",
-            call_penetration_count: call_penetration
-              ? `="${call_penetration.length}"`
+            call_penetration_count: callPenetration.length
+              ? `="${callPenetration.length}"`
               : "",
             platform_user_id: c.platform_user_id
               ? `="${c.platform_user_id}"`
@@ -952,70 +1013,68 @@ const callfileResolver = {
             emergencyContactName: c.emergencyContactName,
             emergencyContactMobile: c.emergencyContactMobile,
           };
-        });
+        };
 
-        const csv = json2csv(formattedCustomers, {
-          keys: [
-            "contact1",
-            "contact2",
-            "contact3",
-            "isRPC",
-            "case_id",
-            "dpd",
-            "max_dpd",
-            "fullname",
-            "email1",
-            "email2",
-            "email3",
-            "gender",
-            "address1",
-            "address2",
-            "address3",
-            "dob",
-            "emergencyContactName",
-            "emergencyContactMobile",
-            "collector_sip",
-            "collector",
-            "outstanding_balance",
-            "amount_paid",
-            "amount",
-            "principal",
-            "balance",
-            "payment",
-            "payment_date",
-            "payment_method",
-            "contact_method",
-            "comment",
-            "disposition",
-            "endorsement_date",
-            "contactable",
-            "dialer",
-            "partial_payment_w_service_fee",
-            "new_tad_with_sf",
-            "new_pay_off",
-            "service_fee",
-            "dispo_date",
-            "year",
-            "chatApp",
-            "sms",
-            "selectives",
-            "brand",
-            "model",
-            "last_payment_amount",
-            "last_payment_date",
-            "call_penetration",
-            "call_penetration_count",
-          ],
-          emptyFieldValue: "",
-        });
+        const escapeCsvValue = (value) => {
+          if (value === null || value === undefined) return "";
+          const str = String(value);
+          if (str === "") return "";
+          if (/[",\r\n]/.test(str)) {
+            return `"${str.replace(/"/g, '""')}"`;
+          }
+          return str;
+        };
 
+        const writeLine = (stream, line) =>
+          new Promise((resolve, reject) => {
+            const handleError = (err) => {
+              stream.removeListener("error", handleError);
+              reject(err);
+            };
+
+            stream.once("error", handleError);
+
+            if (stream.write(line)) {
+              stream.removeListener("error", handleError);
+              resolve();
+              return;
+            }
+
+            stream.once("drain", () => {
+              stream.removeListener("error", handleError);
+              resolve();
+            });
+          });
+
+        const timestamp = Date.now();
         const tmpDir = path.join(process.cwd(), "tmp");
-        if (!fs.existsSync(tmpDir)) fs.mkdirSync(tmpDir);
+        await fs.promises.mkdir(tmpDir, { recursive: true });
 
-        const filePath = path.join(tmpDir, `${findCallfile.name}.csv`);
-        await fs.promises.writeFile(filePath, csv);
+        const filePath = path.join(
+          tmpDir,
+          `${findCallfile.name}_${timestamp}.csv`
+        );
 
-        return `http://${process.env.MY_IP}:4000/tmp/${findCallfile.name}.csv`;
+        const writeStream = fs.createWriteStream(filePath, {
+          encoding: "utf8",
+        });
+
+        await writeLine(writeStream, `${headers.join(",")}\n`);
+
+        for await (const customer of cursor) {
+          const formatted = formatCustomerRow(customer);
+          const row = headers
+            .map((key) => escapeCsvValue(formatted[key]))
+            .join(",");
+          await writeLine(writeStream, `${row}\n`);
+        }
+
+        await new Promise((resolve, reject) => {
+          writeStream.end(resolve);
+          writeStream.once("error", reject);
+        });
+
+        return `http://${process.env.MY_IP}:4000/tmp/${findCallfile.name}_${timestamp}.csv`;
       } catch (error) {
         console.log(error);
         throw new CustomError(error.message, 500);

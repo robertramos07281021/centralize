@@ -5,7 +5,9 @@ import {
   callViaVicidial,
   checkIfAgentIsInlineOnVici,
   checkIfAgentIsOnline,
+  checkingLiveCall,
   endAndDispo,
+  getCallInfo,
   getLoggedInUser,
   getRecordings,
   getUserInfo,
@@ -447,11 +449,37 @@ const callResolver = {
         const chechIfisOnline = await Promise.all(
           bucket.map(async (x) => {
             const res = await checkIfAgentIsInlineOnVici(findUser?.vici_id, x);
-            return res;
+         
+            // const resTheSecond = await checkingLiveCall(x, findUser?.vici_id)
+            // // console.log(resTheSecond)
+            // if (res.includes("PAUSE") || res.includes("INCALL")) {
+            //   const new1 = res.split("|");
+
+            //   if (new1[1] && new1[2]) {
+            //     const newRes = await getCallInfo(x, new1[1], new1[2]);
+            //     // console.log("first: ", newRes);
+            //     return res;
+            //   } else {
+            //     // console.log("second: ", newMap[0]);
+            //     return res;
+            //   }
+            // }
+            return res
           })
         );
 
-        return chechIfisOnline.find((x) => !x.includes("ERROR"));
+        // if(typeof chechIfisOnline === "object") {
+
+        //   const splitObject =(chechIfisOnline?.find((x) => !x.includes("ERROR")))?.split(',')
+        //   const ifObject = splitObject[splitObject.length - 2]
+
+        //   return ifObject
+        // } else {
+
+        //   return chechIfisOnline?.find((x) => !x.includes("ERROR"))
+        // }
+      // console.log(chechIfisOnline)
+        return chechIfisOnline?.find((x) => !x.includes("ERROR"));
       } catch (error) {
         console.log(error);
         throw new CustomError(error.message, 500);
@@ -459,8 +487,7 @@ const callResolver = {
     },
     getUsersLogginOnVici: async (_, { bucket }) => {
       try {
-
-        if(!bucket) return null
+        if (!bucket) return null;
         const selectedBucket = await Bucket.findById(bucket);
         if (!selectedBucket) throw new CustomError("Bucket not found", 401);
 

@@ -60,6 +60,8 @@ import DispoType from "./models/dispoType.js";
 import Production from "./models/production.js";
 import mongoose from "mongoose";
 import { fileURLToPath } from "url";
+import scoreCardResolver from "./graphql/resolvers/scoreCardResolver.js";
+import scoreCardTypeDefs from "./graphql/schemas/scoreCardSchema.js";
 
 
 
@@ -244,6 +246,7 @@ const resolvers = mergeResolvers([
   CustomerExtnResolver,
   callResolver,
   selectivesResolver,
+  scoreCardResolver,
 ]);
 
 const typeDefs = mergeTypeDefs([
@@ -264,11 +267,13 @@ const typeDefs = mergeTypeDefs([
   CustomerExtnTypeDefs,
   callTypeDefs,
   selectivesTypeDefs,
+  scoreCardTypeDefs,
 ]);
 
 const httpServer = createServer(app);
 
-httpServer.setTimeout(60000);
+// Allow large CSV downloads to finish even on slow networks
+httpServer.setTimeout(10 * 60 * 1000);
 
 httpServer.on("connection", (socket) => {
   socket.setMaxListeners(100);

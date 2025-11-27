@@ -122,6 +122,7 @@ const userTypeDefs = gql`
       limit: Int!
       filter: String!
     ): PaginatedUsers!
+    getAgentsByDepartment(deptId: ID!): [Users]
     findDeptAgents: [DeptUser]
     findAgents: [Users]
     getCampaignAssigned(bucket: ID): Int

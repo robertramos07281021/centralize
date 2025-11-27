@@ -80,6 +80,7 @@ type UserState = {
   bucketCanCall: boolean;
   isRing: boolean;
   mobileToCall: string | null;
+  readyForBreak: BreakEnum | null
 };
 
 const initialState: UserState = {
@@ -119,11 +120,12 @@ const initialState: UserState = {
   isOnlineOnVici: false,
   callUniqueId: null,
   onCall: false,
-  ccsCall: true,
+  ccsCall: false,
   deadCall: false,
   bucketCanCall: false,
   isRing: false,
   mobileToCall: null,
+  readyForBreak: null
 };
 
 const authSlice = createSlice({
@@ -235,6 +237,9 @@ const authSlice = createSlice({
     setMobileToCall: (state, action: PayloadAction<string | null>) => {
       state.mobileToCall = action.payload;
     },
+    setReadyForBreak: (state,action: PayloadAction<BreakEnum | null> ) => {
+      state.readyForBreak = action.payload
+    }
   },
 });
 
@@ -273,5 +278,6 @@ export const {
   setIsRing,
   setMobileToCall,
   setIsReport,
+  setReadyForBreak
 } = authSlice.actions;
 export default authSlice.reducer;

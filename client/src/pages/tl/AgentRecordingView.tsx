@@ -152,6 +152,8 @@ const AgentRecordingView = () => {
     dispotype: [],
   });
 
+  
+
   const [triggeredSearch, setTriggeredSearch] = useState<SearchRecordings>({
     search: "",
     from: "",

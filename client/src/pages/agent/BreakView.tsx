@@ -61,6 +61,8 @@ const BreakView = () => {
   const [requried, setRequired] = useState<boolean>(false);
   const [eye, setEye] = useState<boolean>(false);
   const [incorrect, setIncorrect] = useState<boolean>(false);
+  
+
 
   const [updateProduction,{loading:UpdateProductionLoading}] = useMutation<{
     updateProduction: UpdateProduction;
@@ -87,13 +89,16 @@ const BreakView = () => {
         await updateProduction({ variables: { type: BreakEnum.PROD } });
       },
       onError: (error) => {
-        console.log(error)
         const message = error.message;
         if (message.includes("Incorrect")) {
           setIncorrect(true);
           setRequired(false);
+          setPassword("")
         } else {
           dispatch(setServerError(true));
+          setIncorrect(true);
+          setRequired(false);
+          setPassword("")
         }
       },
     }
@@ -135,7 +140,7 @@ const BreakView = () => {
     SKIPTRACING: "/skipTracingIcon.png",
     CLINIC: "/clinicIcon.png",
     WELCOME: "/welcomeIcon.png",
-    REPORT: "/image.png",
+    REPORT: "/welcomeIcon.png",
   };
 
   useEffect(() => {

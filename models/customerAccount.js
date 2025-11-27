@@ -17,7 +17,7 @@ const customerAccountSchema = new Schema(
     },
     assignedModel: {
       type: String,
-      enum: ["Group", "User"],
+      enum: ["Group", "User", ""],
     },
     current_disposition: {
       type: mongoose.Schema.Types.ObjectId,

@@ -178,6 +178,30 @@ const userResolvers = {
       }
     },
 
+    getAgentsByDepartment: async (_, { deptId }) => {
+      try {
+        if (!deptId) {
+          return [];
+        }
+
+        const department = await Department.findById(deptId);
+        if (!department) {
+          return [];
+        }
+
+        const agents = await User.find({
+          type: { $eq: "AGENT" },
+          departments: { $in: [department._id] },
+          active: true,
+        }).select("_id name");
+
+        return agents;
+      } catch (error) {
+        console.log(error);
+        throw new CustomError(error.message, 500);
+      }
+    },
+
     findDeptAgents: async (_, __, { user }) => {
       try {
         if (!user) throw new CustomError("Not authenticated", 401);

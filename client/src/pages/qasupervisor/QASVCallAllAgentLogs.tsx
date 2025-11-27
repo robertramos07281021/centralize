@@ -1,41 +1,25 @@
-import { useMutation, useQuery } from "@apollo/client";
+import { useMutation, useQuery, useApolloClient } from "@apollo/client";
 import gql from "graphql-tag";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
-const TL_BUCKET = gql`
-  query getTLBucket {
-    getTLBucket {
+const GET_ALL_BUCKET = gql`
+  query GetAllBucket {
+    getAllBucket {
       _id
+      dept
       name
       viciIp
     }
   }
 `;
 
-const BARGE_CALL = gql`
-  mutation bargeCall($sessionId: String, $viciUserId: String) {
-    bargeCall(session_id: $sessionId, viciUser_id: $viciUserId)
-  }
-`;
-
-type Bucket = {
+type getAllBucket = {
   _id: string;
+  dept: string;
   name: string;
   viciIp: string;
 };
-
-const CALL_LOGS = gql`
-  query getUsersLogginOnVici($bucket: ID!) {
-    getUsersLogginOnVici(bucket: $bucket)
-  }
-`;
-
-const GET_USER_STATUS = gql`
-  query getBargingStatus($viciId: String) {
-    getBargingStatus(vici_id: $viciId)
-  }
-`;
 
 const GET_BUCKET_USERS = gql`
   query getBucketUser($bucketId: ID) {
@@ -47,36 +31,75 @@ const GET_BUCKET_USERS = gql`
   }
 `;
 
-const QASVCallLogs = () => {
-  const [selectedBucket, setSelectedBucket] = useState<Bucket | null>(null);
-  const [selectedBucket2, setSelectedBucket2] = useState<string | null>(null);
+const BARGE_CALL = gql`
+  mutation bargeCall($sessionId: String, $viciUserId: String) {
+    bargeCall(session_id: $sessionId, viciUser_id: $viciUserId)
+  }
+`;
+
+const CALL_LOGS = gql`
+  query getUsersLogginOnVici($bucket: ID!) {
+    getUsersLogginOnVici(bucket: $bucket)
+  }
+`;
+
+type BucketOption = getAllBucket & { isAll?: boolean };
+const ALL_BUCKET_OPTION: BucketOption = {
+  _id: "ALL",
+  dept: "All",
+  name: "All Buckets",
+  viciIp: "",
+  isAll: true,
+};
+
+const QASVCallAllAgentLogs = () => {
+  const [selectedBucket, setSelectedBucket] = useState<BucketOption | null>(
+    ALL_BUCKET_OPTION
+  );
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
+  const [allLogs, setAllLogs] = useState<string[]>([]);
 
-  const { data, refetch } = useQuery<{ getTLBucket: Bucket[] }>(TL_BUCKET, {
-    notifyOnNetworkStatusChange: true,
+  const { data: allBucketsData } = useQuery<{ getAllBucket: getAllBucket[] }>(
+    GET_ALL_BUCKET
+  );
+
+  const allBuckets = useMemo(
+    () => allBucketsData?.getAllBucket ?? [],
+    [allBucketsData]
+  );
+
+  // const effectiveBucketId = useMemo(
+  //   () => (selectedBucket?.isAll ? allBuckets[0]?._id : selectedBucket?._id),
+  //   [selectedBucket, allBuckets]
+  // );
+
+  const bucketOptions = useMemo<BucketOption[]>(
+    () => [ALL_BUCKET_OPTION, ...allBuckets],
+    [allBuckets]
+  );
+
+  const apolloClient = useApolloClient();
+
+  const { data: bucketUsersData } = useQuery<{
+    getBucketUser: { _id: string; name: string; vici_id: string }[];
+  }>(GET_BUCKET_USERS, {
+    variables: selectedBucket?.isAll
+      ? undefined
+      : { bucketId: selectedBucket?._id },
+    skip: !selectedBucket || selectedBucket.isAll,
   });
 
-  const { data: bucketUsersData } = useQuery(GET_BUCKET_USERS, {
-    variables: selectedBucket ? { bucketId: selectedBucket._id } : undefined,
-    skip: !selectedBucket,
-    notifyOnNetworkStatusChange: true,
-  });
-
-  const bucketUsers =
-    bucketUsersData?.getBucketUser?.map((u: any) => u.vici_id?.trim()) ?? [];
-
-  const allowedViciIds = useMemo(() => new Set(bucketUsers), [bucketUsers]);
-
-  const { data: callLogsData, refetch: callLogsRefetch } = useQuery<{
+  const { data: callLogsData } = useQuery<{
     getUsersLogginOnVici: string;
   }>(CALL_LOGS, {
     notifyOnNetworkStatusChange: true,
-    variables: { bucket: selectedBucket?._id },
-    skip: !selectedBucket?._id,
-    pollInterval: 1000,
+    variables: selectedBucket?.isAll
+      ? undefined
+      : { bucket: selectedBucket?._id },
+    skip: !selectedBucket || selectedBucket.isAll,
+    pollInterval: selectedBucket?.isAll ? undefined : 1000,
   });
-
   const newData = useMemo(
     () =>
       callLogsData?.getUsersLogginOnVici
@@ -84,47 +107,36 @@ const QASVCallLogs = () => {
         : [],
     [callLogsData]
   );
-
   const rows = useMemo(() => {
     if (!newData || newData.length === 0) return [];
     return newData.slice(1).filter((line) => line?.trim());
   }, [newData]);
 
-  const filteredRows = useMemo(() => {
-    if (!bucketUsersData) return rows;
-    if (allowedViciIds.size === 0) return [];
-
-    return rows.filter((row) => {
-      const viciId = row.split("|")[0]?.trim();
-      return viciId && allowedViciIds.has(viciId);
-    });
-  }, [rows, bucketUsersData, allowedViciIds]);
-
-  const { data: getUserData, refetch: getUserDataRefetch } = useQuery(
-    GET_USER_STATUS,
-    {
-      variables: { viciId: selectedBucket?.viciIp },
-      notifyOnNetworkStatusChange: true,
-    }
+  const bucketUsers = bucketUsersData?.getBucketUser ?? [];
+  const allowedViciIds = useMemo(
+    () =>
+      bucketUsers
+        .map((user) => user.vici_id?.trim())
+        .filter((id): id is string => Boolean(id)),
+    [bucketUsers]
   );
 
-  console.log(getUserData)
+  const rawRows = useMemo(
+    () => (selectedBucket?.isAll ? allLogs : rows),
+    [selectedBucket, allLogs, rows]
+  );
 
-  useEffect(() => {
-    if (data) {
-      setSelectedBucket(data.getTLBucket[0]);
-      setSelectedBucket2(data.getTLBucket[0].name);
-    }
-  }, [data]);
-
-  useEffect(() => {
-    const refetching = async () => {
-      await callLogsRefetch();
-      await refetch();
-      await getUserDataRefetch();
-    };
-    refetching();
-  }, []);
+  const filteredRows = useMemo(() => {
+    if (selectedBucket?.isAll) return rawRows;
+    if (!bucketUsersData) return rawRows;
+    if (!allowedViciIds.length) return [];
+    return rawRows.filter((row) => {
+      const viciId = row.split("|")[0]?.trim();
+      return viciId
+        ? allowedViciIds.some((allowedId) => viciId.includes(allowedId))
+        : false;
+    });
+  }, [rawRows, bucketUsersData, allowedViciIds, selectedBucket]);
 
   const [bargeCall] = useMutation(BARGE_CALL);
 
@@ -140,84 +152,113 @@ const QASVCallLogs = () => {
     [bargeCall]
   );
 
+
+  const updateAllLogs = useCallback(async () => {
+    if (!allBuckets.length) {
+      setAllLogs([]);
+      return;
+    }
+    try {
+      const responses = await Promise.all(
+        allBuckets.map((bucket) =>
+          apolloClient.query<{ getUsersLogginOnVici: string }>({
+            query: CALL_LOGS,
+            variables: { bucket: bucket._id },
+            fetchPolicy: "network-only",
+          })
+        )
+      );
+      const merged = responses.flatMap(({ data }) =>
+        data?.getUsersLogginOnVici
+          ? data.getUsersLogginOnVici
+              .split("\n")
+              .slice(1)
+              .filter((line) => line?.trim())
+          : []
+      );
+      setAllLogs(merged);
+    } catch (error) {
+      setAllLogs([]);
+    }
+  }, [allBuckets, apolloClient]);
+
+
+
+  useEffect(() => {
+    if (!selectedBucket?.isAll) return;
+    updateAllLogs();
+    const intervalId = setInterval(updateAllLogs, 1000);
+    return () => clearInterval(intervalId);
+  }, [selectedBucket, updateAllLogs]);
+
   return (
     <div className="w-full relative px-10 gap-2 pt-2 pb-5 h-[91vh] flex flex-col">
-      <div>
-        {/* {data && data?.getTLBucket?.length > 1 && ( */}
-        {/* <select
-          className="py-2 border  rounded-sm bg-gray-200 px-3"
-          name=""
-          id=""
-        >
-          {data?.getTLBucket.map((bucket) => {
-            return (
-              <option value={bucket._id} key={bucket._id}>
-                {bucket.name}
-              </option>
-            );
-          })}
-        </select> */}
-        {/* )} */}
-      </div>
       <div className="flex justify-between">
-        <div>
+        <div className="flex items-center gap-3">
           <div className="">
-            <motion.div onClick={() => setIsOpen(!isOpen)} layout>
-              <div className="bg-gray-200 relative z-20 cursor-pointer hover:bg-gray-300 transition-all px-2 flex gap-3 py-1 rounded-sm shadow-md border">
-                <div>{selectedBucket2}</div>
-                <div
-                  className={`" ${
-                    isOpen ? "rotate-90" : ""
-                  } transition-all items-center flex text-black"`}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="size-4"
+            <div className="">
+              <motion.div onClick={() => setIsOpen(!isOpen)} layout>
+                <div className="bg-gray-200 relative z-20 cursor-pointer hover:bg-gray-300 transition-all px-2 flex gap-3 py-1 rounded-sm shadow-md border">
+                  <div>{selectedBucket?.name ?? "Select a Bucket"}</div>
+                  <div
+                    className={`" ${
+                      isOpen ? "rotate-90" : ""
+                    } transition-all items-center flex text-black"`}
                   >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="m8.25 4.5 7.5 7.5-7.5 7.5"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-
-          <AnimatePresence>
-            {isOpen && (
-              <motion.div
-                initial={{ y: -10, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                exit={{ y: -5, opacity: 0 }}
-              >
-                <div className="absolute flex flex-col  z-20 border overflow-hidden bg-gray-200 shadow-md  transition-all cursor-pointer rounded-sm  mt-1">
-                  {data?.getTLBucket.map((bucket) => {
-                    return (
-                      <span
-                        onClick={() => {
-                          setSelectedBucket2(bucket.name);
-                          setSelectedBucket(bucket);
-                          setIsOpen(false);
-                        }}
-                        className="whitespace-nowrap  hover:bg-gray-300 px-3 py-1 "
-                        key={bucket._id}
-                      >
-                        {bucket.name}
-                      </span>
-                    );
-                  })}
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="1.5"
+                      stroke="currentColor"
+                      className="size-4"
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                      />
+                    </svg>
+                  </div>
                 </div>
               </motion.div>
-            )}
-          </AnimatePresence>
-        </div>
+            </div>
 
+            <AnimatePresence>
+              {isOpen && (
+                <motion.div
+                  initial={{ y: -10, opacity: 0 }}
+                  animate={{ y: 0, opacity: 1 }}
+                  exit={{ y: -5, opacity: 0 }}
+                >
+                  <div className="absolute flex flex-col max-h-80 overflow-auto z-20 border bg-gray-200 shadow-md  transition-all cursor-pointer rounded-sm  mt-1">
+                    {bucketOptions?.map((bucket) => {
+                      return (
+                        <span
+                          onClick={() => {
+                            setSelectedBucket(bucket);
+                            setIsOpen(false);
+                          }}
+                          className="whitespace-nowrap  hover:bg-gray-300 px-3 py-1 "
+                          key={bucket._id}
+                        >
+                          {bucket.name}
+                        </span>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 1 }}
+          >
+            {selectedBucket?.isAll ? "Multiple IPs" : selectedBucket?.viciIp}
+          </motion.div>
+        </div>
         <div className="bg-gray-200 rounded-sm shadow-md border items-center gap-3 px-3 py-1 flex">
           <svg
             xmlns="http://www.w3.org/2000/svg"
@@ -280,15 +321,20 @@ const QASVCallLogs = () => {
         </div>
         <div className="w-full flex flex-col h-full overflow-auto">
           {filteredRows.length === 0 ? (
-            <div className="flex justify-center items-center bg-gray-200 py-3 rounded-b-md shadow-md italic text-gray-400 border-x border-b">
-              No agent found
+            <div className="flex justify-center items-center bg-gray-200 w-full py-3 rounded-b-md shadow-md font-black italic text-gray-400 border-black border-x border-b">
+              <div>No agent found</div>
             </div>
           ) : (
             filteredRows.map((x, index) => {
               const newtext = x.split("|");
-              const viciId = newtext[0];
+              if (newtext.length < 1)
+                return (
+                  <div className="flex justify-center items-center bg-gray-200 w-full py-3 rounded-b-md shadow-md font-black italic text-gray-400 border-black  border-x border-b">
+                    <div>No agent found</div>
+                  </div>
+                );
+              const viciId = newtext[0]?.trim();
               const session = newtext[2];
-
               const canBarge =
                 x.includes("INCALL") &&
                 !x.includes("DEAD") &&
@@ -301,7 +347,7 @@ const QASVCallLogs = () => {
                   className="grid pl-4 pr-1 gap-2 hover:bg-gray-3 00 last:shadow-md last:rounded-b-md even:bg-gray-100 odd:bg-gray-200 border-x border-b grid-cols-13"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.1 }}
+                  transition={{ delay: index * 0.05 }}
                 >
                   {newtext.map((col, colIndex) => {
                     return (
@@ -416,7 +462,7 @@ const QASVCallLogs = () => {
                             </div>
                           )
                         ) : (
-                          col || ""
+                          col || "sda"
                         )}
                       </div>
                     );
@@ -520,4 +566,4 @@ const QASVCallLogs = () => {
   );
 };
 
-export default QASVCallLogs;
+export default QASVCallAllAgentLogs;

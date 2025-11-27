@@ -21,18 +21,28 @@ const credentials = {
   user: process.env.VICIDIAL_ADMIN_USER,
 };
 
+// const mobileNo =
+//   userLogged?.username === "RRamos" ? "09285191305" : "09694827149";
+
 const passwordNonAuto = process.env.VICIDIAL_ADMIN_PASS;
 const passwordAuto = process.env.VICIDIAL_ADMIN_PASS_A;
 
 export async function callViaVicidial(agentUser, phoneNumber, vici_id) {
   const VICIDIAL_API = `http://${vici_id}/agc/api.php`;
 
+  const isProd =
+    process.env.NODE_ENV === "production"
+      ? phoneNumber
+      : agentUser === "5555"
+      ? process.env.EDRIAN
+      : process.env.ME;
+
   const params = {
     ...credentials,
     pass: viciAuto.includes(vici_id) ? passwordAuto : passwordNonAuto,
     function: "external_dial",
     agent_user: agentUser,
-    value: phoneNumber,
+    value: isProd,
     phone_code: "63",
     search: "YES",
     preview: "NO",
@@ -80,6 +90,19 @@ export async function endAndDispo(agentUser, vici_id) {
   const VICIDIAL_API = `http://${vici_id}/agc/api.php`;
 
   try {
+
+    await axios.get(VICIDIAL_API, {
+      params: {
+        ...credentials,
+        pass: viciAuto.includes(vici_id) ? passwordAuto : passwordNonAuto,
+        agent_user: agentUser,
+        function: "external_pause",
+        value: "PAUSE",
+      },
+    })
+
+    await new Promise((res) => setTimeout(res, 1000));
+
     await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
@@ -176,8 +199,7 @@ export async function getRecordings(vici_id, agent_user) {
 export async function getUserInfo(vici_id, agent_user) {
   const VICIDIAL_API = `http://${vici_id}/vicidial/non_agent_api.php`;
   try {
-
-    if(!vici_id) return null
+    if (!vici_id) return null;
 
     const { data } = await axios.get(VICIDIAL_API, {
       params: {
@@ -192,14 +214,14 @@ export async function getUserInfo(vici_id, agent_user) {
     });
     return data;
   } catch (error) {
-    console.log(agent_user)
+    console.log(agent_user);
     console.error("❌ Error Get UserInfo:", error.message);
   }
 }
 
 export async function getLoggedInUser(vici_id) {
   const VICIDIAL_API = `http://${vici_id}/vicidial/non_agent_api.php`;
-  
+
   try {
     const { data } = await axios.get(VICIDIAL_API, {
       params: {
@@ -240,4 +262,43 @@ export async function bargeUser(vici_id, session_id, barger_phone) {
   }
 }
 
-export async function escalations() {}
+export async function getCallInfo(vici_id, call_id, session_id) {
+  const VICIDIAL_API = `http://${vici_id}/vicidial/non_agent_api.php`;
+  try {
+    if (!session_id) return null;
+
+    const res = await axios.get(VICIDIAL_API, {
+      params: {
+        ...credentials,
+        pass: viciAuto.includes(vici_id) ? passwordAuto : passwordNonAuto,
+        function: "callid_info ",
+        call_id: call_id,
+        session_id: session_id,
+        detail: "YES",
+        stage: "csv",
+      },
+    });
+
+    return res.data;
+  } catch (error) {
+    console.error("❌ Error Get getCallInfo:", error.message);
+  }
+}
+
+export async function checkingLiveCall(vici_id, agent_user) {
+  const VICIDIAL_API = `http://${vici_id}/agc/api.php`;
+  try {
+    const res = await axios.get(VICIDIAL_API, {
+      params: {
+        ...credentials,
+        pass: viciAuto.includes(vici_id) ? passwordAuto : passwordNonAuto,
+        function: "live_agent_status",
+        agent_user: agent_user,
+      },
+    });
+
+    return res.data
+  } catch (error) {
+    console.error("❌ Error Logout Vici:", error.message);
+  }
+}

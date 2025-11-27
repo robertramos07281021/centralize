@@ -22,6 +22,30 @@ const REPORT = gql`
   }
 `;
 
+const AGENT_TOTAL_DISPO = gql`
+  query getAgentTotalDispositions {
+    getAgentTotalDispositions {
+      count
+      dispotype
+    }
+  }
+`;
+
+const DISPO_TYPES = gql`
+  query getDispositionTypes {
+    getDispositionTypes {
+      id
+      name
+      code
+    }
+  }
+`;
+
+type AgentTotalDispo = {
+  count: number;
+  dispotype: Dispotype;
+};
+
 type Dispotype = {
   _id: string;
   code: string;
@@ -49,17 +73,40 @@ type DoughnutData = {
   labels: string[];
 };
 
+type DispositionType = {
+  id: string;
+  code: string;
+  name: string;
+};
+
 const ReportsComponents: React.FC<ReportsComponents> = ({
   dispositions,
   from,
   to,
 }) => {
+  const { data: agentTotalDispoData, refetch: TotalDispoRefetch } = useQuery<{
+    getAgentTotalDispositions: AgentTotalDispo[];
+  }>(AGENT_TOTAL_DISPO, {
+    notifyOnNetworkStatusChange: true,
+  });
+
+  const { data: dispotypeData, refetch: DispoTypeRefetch } = useQuery<{
+    getDispositionTypes: DispositionType[];
+  }>(DISPO_TYPES, {
+    notifyOnNetworkStatusChange: true,
+  });
+
+
   const { data: productionReportData, refetch } = useQuery<{
     ProductionReport: ProductionReport;
   }>(REPORT, {
     variables: { dispositions, from, to },
     notifyOnNetworkStatusChange: true,
   });
+
+  console.log(productionReportData)
+
+  console.log("Production Report Data:", productionReportData);
   const [doughnutData, setDoughnutData] = useState<DoughnutData>({
     datas: [],
     colors: [],
@@ -183,52 +230,53 @@ const ReportsComponents: React.FC<ReportsComponents> = ({
         <h1 className="text-center text-xl uppercase text-black rounded-t-sm border-b py-3 bg-gray-300 font-black ">
           Dispositions
         </h1>
-        <div className="grid grid-cols-3 bg-gray-200 border-b lg:text-sm 2xl:text-lg md:px-3 ">
+        <div className="grid grid-cols-3 gap-2  py-2 px-4  bg-gray-200 border-b lg:text-sm 2xl:text-lg md:px-3 ">
           {labels.map((e, index) => (
             <div
               key={index}
-              className="text-black text-xs gap-2 p-0 pl-1 md:p-2 last:border-0 font-black uppercase "
+              className="text-black text-xs  last:border-0 font-black uppercase "
             >
               {e}
             </div>
           ))}
         </div>
         <div className="h-full overflow-y-auto">
-          {productionReportData && productionReportData?.ProductionReport?.dispotypes?.length < 0 ? (
-            <div>
-              {productionReportData?.ProductionReport?.dispotypes?.map((e) => {
-                return (
-                  <div
-                    key={e.dispotype._id}
-                    className="grid grid-cols-3 lg:text-xs 2xl:text-sm text-black "
-                  >
-                    <div className="flex gap-5 justify-between pr-3">
-                      <div className="">{e.dispotype.name}</div>
-                      <div
-                        style={{
-                          backgroundColor: colorDispo[e.dispotype.code],
-                        }}
-                        className={`w-1/2`}
-                      ></div>
-                    </div>
-                    <div>{e.dispotype.code}</div>
-                    <div>{e.count}</div>
-                  </div>
-                );
-              })}
-            </div>
-          ) : (
-            <div className="italic py-2 text-center text-gray-500 font-sans ">
-              No account found
+          {(!agentTotalDispoData?.getAgentTotalDispositions ||
+            agentTotalDispoData.getAgentTotalDispositions.length === 0) && (
+            <div className="text-gray-400 italic text-center py-2">
+              {" "}
+              No performance found.
             </div>
           )}
+
+          {agentTotalDispoData?.getAgentTotalDispositions.map((e) => {
+            const findDispo = dispotypeData?.getDispositionTypes.find(
+              (y) => y.id === e.dispotype
+            );
+
+            return (
+              <div
+                className="grid grid-cols-3 gap-2 odd:bg-gray-200 even:bg-gray-100  py-2 px-3 border-b border-gray-300 text-xs font-medium text-black cursor-default"
+                key={e.dispotype}
+              >
+                <div
+                  className="truncate"
+                  title={findDispo?.name}
+                >
+                  {findDispo?.name}
+                </div>
+                <div className="">{findDispo?.code}</div>
+                <div className="">{e.count}</div>
+              </div>
+            );
+          })}
         </div>
       </motion.div>
       <motion.div
         className="p-20 w-1/2 border bg-gray-100 rounded-md h-full shadow-md border-gray-700"
-        initial={{y: 20, opacity: 0}}
-        animate={{y: 0, opacity: 1}}
-        transition={{delay: 0.5}}
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.5 }}
         layout
       >
         <Doughnut data={data} options={options} />

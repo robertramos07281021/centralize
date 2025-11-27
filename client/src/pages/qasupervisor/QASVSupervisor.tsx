@@ -492,18 +492,28 @@ const QASupervisorView = () => {
               filteredUsers.map((user, index) => (
                 <motion.div
                   key={user._id}
-                  className="grid grid-cols-7 border-x border-b last:rounded-b-md gap-3 items-center bg-gray-100 py-2 pl-2 text-sm odd:bg-gray-200"
+                  className="grid grid-cols-7 hover:bg-gray-300 border-x border-b last:rounded-b-md gap-3 items-center bg-gray-100 py-2 pl-2 text-sm odd:bg-gray-200"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
                 >
                   <div className=" first-letter:uppercase">{user.name}</div>
-                  <div>
+                  <div
+                    className="truncate"
+                    title={user.departments
+                      .map((dept) => newDeptMap[dept])
+                      .join(", ")}
+                  >
                     {user.departments
                       .map((dept) => newDeptMap[dept])
                       .join(", ")}
                   </div>
-                  <div>
+                  <div
+                    className="truncate"
+                    title={user.buckets
+                      .map((bucket) => newBucketMap[bucket])
+                      .join(", ")}
+                  >
                     {user.buckets
                       .map((bucket) => newBucketMap[bucket])
                       .join(", ")}
@@ -641,13 +651,13 @@ const QASupervisorView = () => {
                 </div>
                 <div className="flex flex-col h-full  overflow-hidden relative">
                   <div className="grid grid-cols-2 gap-3 text-sm lg:text-lg h-full overflow-hidden">
-                    <div className="overflow-auto flex flex-col gap-0">
+                    <div className="overflow-auto mt-2 flex pr-2 flex-col gap-1">
                       {deptData?.getDepts?.map((dept) => {
                         return (
                           dept.name !== "ADMIN" && (
                             <label
                               key={dept.id}
-                              className="flex gap-2 items-center"
+                              className="flex bg-gray-200 border px-3 rounded-sm hover:bg-gray-300 transition-all gap-2 items-center"
                             >
                               <input
                                 type="checkbox"
@@ -684,12 +694,12 @@ const QASupervisorView = () => {
                           No campaign selected
                         </div>
                       ) : (
-                        <div className="flex  flex-col h-full overflow-auto gap-x-3 py-2 ">
+                        <div className="flex  flex-col gap-1 h-full overflow-auto gap-x-3 py-2 ">
                           {deptBucketData?.getDepartmentBucket?.map(
                             (bucket) => (
                               <label
                                 key={bucket._id}
-                                className="flex items-center gap-2"
+                                className="flex bg-gray-200 hover:bg-gray-300 transition-all border px-3 rounded-sm items-center gap-2"
                               >
                                 <input
                                   type="checkbox"

@@ -55,9 +55,13 @@ import Selectives from "./pages/admin/Selectives.tsx";
 import CallQALogs from "./pages/qa/QACallLogs.tsx";
 import QAAgentReportLogs from "./components/QAAgentReportLogs.tsx";
 import QACallfileReport from "./components/QACallfileReport.tsx";
-import QASVCallLogs from "./pages/qasupervisor/QASVCallLogs.tsx"
 import DefaultScoreCard from "./components/ScoreCard.tsx";
 import UBScoreCard from "./components/UBScoreCard.tsx";
+import EastwestScoreCard from "./components/EastwestScoreCard.tsx";
+import QACallAllAgentLogs from "./pages/qa/QACallAllAgentLogs.tsx";
+import QASVCallAllAgentLogs from "./pages/qasupervisor/QASVCallAllAgentLogs.tsx";
+import UBMortgageScoreCard from "./components/UBMortgageScoreCard.tsx";
+import Guidlines from "./components/Guidlines.tsx";
 Chart.register(
   ...registerables,
   ChartDataLabels,
@@ -128,41 +132,42 @@ function App() {
         <Route element={<CeoRoute />}>
           <Route path="/ceo-dashboard" element={<CeoDashboard />} />
         </Route>
+
         <Route element={<QARoute />}>
           <Route path="/qa-agents-dashboard" element={<QAAgentViews />} />
           <Route path="/qa-dashboard" element={<QADashboard />} />
           <Route path="/agent-call-logs" element={<CallQALogs />} />
           <Route path="/qa-agent-reports" element={<QAAgentReportLogs />} />
+          <Route path="/qa-callfile-reports" element={<QACallfileReport />} />
           <Route
-            path="/qa-callfile-reports"
-            element={<QACallfileReport />}
+            path="/qa-call-all-agent-logs"
+            element={<QACallAllAgentLogs />}
           />
-          
           <Route
-            path="/score-card"
-            element={<DefaultScoreCard />}
+            path="/qa-agent-attendance"
+            element={<AgentAttendanceLogs />}
           />
+          <Route path="/score-card" element={<DefaultScoreCard />} />
         </Route>
+
         <Route element={<QASVRoute />}>
-          <Route path="/agentsv-call-logs" element={<QASVCallLogs />} />
+          <Route
+            path="/qasv-call-all-agent-logs"
+            element={<QASVCallAllAgentLogs />}
+          />
+          <Route 
+            path="/qasv-agent-attendance"
+            element={<AgentAttendanceLogs />}
+          />
           <Route path="/qasv-agent-reports" element={<QAAgentReportLogs />} />
           <Route path="/qasv-accounts" element={<QASVSupervisor />} />
           <Route path="/qasv-dashboard" element={<QASupervisorDashboard />} />
-          <Route
-            path="/qasv-callfile-reports"
-            element={<QACallfileReport />}
-          />
-          <Route
-            path="/default-score-card"
-            element={<DefaultScoreCard />}
-          />
-
-          <Route
-            path="/ub-score-card"
-            element={<UBScoreCard />}
-          />
-
-
+          <Route path="/qasv-callfile-reports" element={<QACallfileReport />} />
+          <Route path="/default-score-card" element={<DefaultScoreCard />} />
+          <Route path="/eastwest-score-card" element={<EastwestScoreCard />} />
+          <Route path="/ub-score-card" element={<UBScoreCard />} />
+          <Route path="/ub-mortgage-score-card" element={<UBMortgageScoreCard />} />
+          <Route path="/guidlines" element={<Guidlines />} />
         </Route>
       </Routes>
     </BrowserRouter>

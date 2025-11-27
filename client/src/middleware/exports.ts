@@ -246,11 +246,11 @@ export const accountsNavbar: { [key: string]: links[] } = {
       tabs: [
         {
           name: "Agent Logs",
-          link: "/agent-attendance-logs",
+          link: "/qa-agent-attendance",
         },
         {
           name: "Call Monitoring",
-          link: "/all-call-logs",
+          link: "/qa-call-all-agent-logs",
         },
       ],
     },
@@ -291,11 +291,11 @@ export const accountsNavbar: { [key: string]: links[] } = {
       tabs: [
         {
           name: "Agent Logs",
-          link: "/agent-attendance-logs",
+          link: "/qasv-agent-attendance",
         },
         {
           name: "Call Monitoring",
-          link: "/all-call-logs",
+          link: "/qasv-call-all-agent-logs",
         },
       ],
     },
@@ -322,10 +322,23 @@ export const accountsNavbar: { [key: string]: links[] } = {
           link: "/default-score-card",
         },
         {
-          name: "UB Score Card",
+          name: "UB Cards Score Card",
           link: "/ub-score-card",
         },
+        {
+          name: "Eastwest Score Card",
+          link: "/eastwest-score-card",
+        },
+        {
+          name: "UB Mortgage Score Card",
+          link: "/ub-mortgage-score-card",
+        },
       ],
+    },
+    {
+      name: "Guidelines",
+      link: "/guidlines",
+      tabs: null,
     },
   ],
 };
@@ -420,4 +433,96 @@ export const colorDispo: { [key: string]: string } = {
   DEC: "oklch(0.76 0.185 30.0)",
   UNK: "oklch(0.78 0.18 350.0)",
   SET: "oklch(0.76 0.19 20.0)",
+};
+
+export const scoreCardDropdownOptions: Record<string, string[]> = {
+  "opening-introduction": [
+    "1. Agent should respond and engage promptly within 10 seconds once the call is connected and use appropriate greeting/s.",
+    "2. Agent must introduce first in case of customer refusal of identity.",
+    "2.1 Agents may introduce by using their First name, Last name of Full name, incase the agents have 2(Two) first names, the agents may use either of the names.",
+    "2.2 Agents are not allowed to use aliases or nicknames.",
+    "3. Agent must introduce that we are calling from Bernales & Associates and state the reason for calling.",
+  ],
+  "opening-account-overview": [
+    "1. Agent must set the importance and or urgency of the customers account by providing account status.",
+  ],
+  "negotiation-probing": [
+    "1. Agent must assess the customer’s current financial situation by probing the customer’s reason for delay of payments.",
+    "2. Agent must establish the source of funds to assess the customer’s capacity to pay on the agreement.",
+  ],
+  "negotiation-hierarchy": [
+    "1. Agent should ask the customer to settle in full today.",
+    "2. Agent should be able to offer payment option/s to the customer based on the customer’s ability to pay as identified during probing.",
+    "3. Agent must follow the limit of payment period and should not go beyond the allotted days without a valid reason and approval from a Supervisor/Manager.",
+    "4. Agent should not offer payment plans all at once.",
+  ],
+  "negotiation-solidifying": [
+    "1. Agent should recap the highlights of negotiation by stating the MAD “Method, Amount and Date of payment",
+    "2. Agent must state the benefits/WIIFM (What’s In It For Me) for settling the balance or consequence for not making a payment based on the agreed arrangement",
+    "3. Agent should ask the client to send a promissory note as confirmation of the PTP during the negotiation, otherwise we will be sending the details via SMS/Email to the client and they need to reply as acknowledgement",
+  ],
+  "negotiation-listening": [
+    "1. Avoid repetitive, unnecessary questions and off topic responses, except either of parties experience technical issues",
+    "2. Agent should ask a follow up/clarifying questions if the customers statement is vague or line is distorted",
+  ],
+  "negotiation-words": [
+    "1.Agent should use appropriate empathy/acknowledgement statements",
+    "2. Agent used inappropriate tone/volume",
+  ],
+  "negotiation-control": [
+    "1. Agent must not interrupt while the customer is talking, except either of parties experience technical issues",
+    "2. Agent should attempt to de-escalate the complaint once, if the customer threatens to file a complaint despite de-escalation, agent must escalate the call to a Supervisor",
+    "3. If the customer mentioned that the call happened at an unexpected time and sounded in a hurry, agent must attempt to explain that the call will only last a few minutes to avoid early termination, except when the customers safety is at risk ",
+    "4. If the customer experience technical difficulties (choppy/distorted line), agent must attempt to request for the customer to move to location with better reception",
+    "5. Agent owned and control the call at the beginning and throughout the call",
+    "6. Lengthily explanations that causes confusion and agitate the client",
+  ],
+  "negotiation-education": [
+    "1. Agent must ask the customer if they still have access to their account and provide assistance to the customer if necessary",
+    "2. Agent must acknowledge and answers customers collection and or payment concerns, and ensure that information provided is complete and accurate",
+    "3. In the event if applicable the customer asked for repeat loan/account activation eligibility, agent must advise the customer that repeat loan/account activation are subject for approval",
+    "4. For Medical and serious health related reasons, agent must ask first the customers consent before proceeding with the call",
+    "5. For RTP, NIOP and Partial payment calls, agent must set the customer’s expectation on follow-up collection calls to lessen the risk of irate customers due to frequent calling",
+  ],
+  "closing-third-party": [
+    "1. Agent must obtain any of the following when talking to a Third Party: name, whereabouts of the customer, other contacts of the customer and relationship to the customer.",
+    "2. Agent must not insist on proceeding with the call if the Third Party refused to disclose any information.",
+    "3. If the customer is not available, agent must advise the third party that the customer may contact us via email and/or our inbound number.",
+    "4. In case the client is deceased, agent must advise the third party to send a certified true copy of Death Certificate.",
+  ],
+  "closing-spiel": [
+    "1. Did not follow proper closing spiel/no proper closing spiel.",
+  ],
+  "call-disposition": [
+    "1. Team members must use proper disposition based on what was transcribed on the call",
+  ],
+  "confidentiality-of-information": [
+    "1. Any infraction or violation under SEC: SEC – Unfair Debt Collection Practices / BSP: BSP Circular 454 Sec 7",
+    "2. Account disclosure to unverified/unauthorized parties",
+  ],
+  "unfair-debt-collection-practices": [
+    "1. Any infraction or violation under SEC: SEC – Unfair Debt Collection Practices / BSP: BSP Circular 454 Sec 7",
+    "2. When Agent obtains sensitive, personal information including but not limited to Medical, Political, Marital, Religious belief, connections and affiliations"
+  ],
+  "information-accuracy": [
+    "1. Agent must provide correct information from the amount due, policies and procedures of the Financial Companies/Lending Companies",
+    "2. When an Agent provides false information intended to deceive the customers just to gain payment",
+    "3. Whether intentional or unintentional as long as the agent provides false information unless the agent was able to correct his/her statement on the same call and was acknowledged and understood by the customer."
+  ],
+  "call-recording-statement": [
+    "1. Agents must state the call recording statement on the onset of the call"
+  ],
+  "incomplete-attempt-to-negotiate": [
+    "1. Agent should attempt to negotiate accounts in every call as possible",
+    "2. Agent must complete the negotiation process."
+  ],
+  "call-avoidance-early-termination": [
+    "1. Agent deliberately ended the call while the customer is talking.",
+    "2. Agent does not respond to the customer until the customer disconnected the call, unless there is a technical issue.", 
+    "3. Agent intentionally ended the call after delivering the opening spiel or at any part of the call.",
+    "4. Agent should release the call for not more than 1 minute after the customer acknowledges the closing spiel."
+  ],
+  "professionalism": [
+    "1. Agent shows disrespect and or rudeness to customer."
+  ],
 };

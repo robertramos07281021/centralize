@@ -882,7 +882,7 @@ const dispositionResolver = {
           {
             $match: {
               $expr: { $gt: [{ $size: "$history" }, 0] },
-              callfile: { $eq: existingCalllfile._id },
+              callfile: { $eq: existingCalllfile?._id },
             },
           },
           {

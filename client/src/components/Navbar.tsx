@@ -176,7 +176,7 @@ const Navbar = () => {
   });
 
   useEffect(() => {
-    if (Boolean(viciDialError) && canCallMap?.includes(true)) {
+    if (Boolean(viciDialError) && canCallMap?.includes(true) && userLogged?.name !== "tl-cignal") {
       dispatch(
         setSuccess({
           isMessage: true,

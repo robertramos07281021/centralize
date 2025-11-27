@@ -51,6 +51,7 @@ const bucketResolver = {
     },
     getDeptBucket: async(_,__,{user}) => {
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
         const dept = (await Department.find({_id: {$in:user.departments}})).map(e => e.name)
         return await Bucket.find({dept: {$in: dept}})
       } catch (error) {
@@ -80,6 +81,7 @@ const bucketResolver = {
     },
     getTLBucket: async(_,__,{user}) => {
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
         const res = await Bucket.find({_id: user.buckets.map(x=> new mongoose.Types.ObjectId(x))})
         return res
       } catch (error) {
@@ -89,6 +91,7 @@ const bucketResolver = {
     },
     findAomBucket: async(_,__,{user})=> {
       try {
+        if(!user) throw new CustomError("Unauthorized",401)
         const aomDept = (await Department.find({aom: user._id}).lean()).map(e => e.name)
 
         const findAomBucket = await Bucket.aggregate([

@@ -22,6 +22,7 @@ import {
   setSuccess,
   setBreakValue,
   setStart,
+  setReadyForBreak,
 } from "../redux/slices/authSlice";
 import AgentTimer from "./agent/AgentTimer";
 import MyTaskSection from "../components/MyTaskSection";
@@ -601,6 +602,7 @@ const CustomerDisposition = () => {
     onCall,
     isRing,
     mobileToCall,
+    readyForBreak,
   } = useSelector((state: RootState) => state.auth);
   const [manualDial, setManualDial] = useState<string | null>(null);
   const [isUpdate, setIsUpdate] = useState<boolean>(false);
@@ -616,6 +618,15 @@ const CustomerDisposition = () => {
   const containerRef = useRef(null);
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const [dispoLoading, setDispoLoading] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (readyForBreak && !selectedCustomer) {
+      onClickBreakSelection(BreakEnum[readyForBreak as keyof typeof BreakEnum]);
+      dispatch(setReadyForBreak(null));
+    }
+  }, [readyForBreak, selectedCustomer]);
+
   const { data: bucketData, refetch: bucketsRefetch } = useQuery<{
     getAllBucket: BucketCanCall[];
   }>(ALL_BUCKET, {
@@ -741,6 +752,17 @@ const CustomerDisposition = () => {
 
   const checkIfAgentIsInline = data?.checkIfAgentIsInline;
 
+
+  // useEffect(() => {
+  //   if (
+  //     checkIfAgentIsInline?.includes("PAUSE") &&
+  //     !checkIfAgentIsInline.includes("DEAD") &&
+  //     !checkIfAgentIsInline.includes("DISPO")
+  //   ) {
+  //     dispatch(setIsRing(false));
+  //   }
+  // }, [checkIfAgentIsInline]);
+
   const clearSelectedCustomer = useCallback(async () => {
     await deselectTask({ variables: { id: selectedCustomer?._id } });
     setSearch("");
@@ -853,7 +875,7 @@ const CustomerDisposition = () => {
   const [getCallRecording, { loading: getCallingRecordingLoading }] =
     useMutation<{ getCallRecording: string }>(GET_RECORDING, {
       onCompleted: (data) => {
-        console.log(data)
+        console.log(data);
         dispatch(setCallUniqueId(data.getCallRecording));
       },
     });
@@ -993,13 +1015,12 @@ const CustomerDisposition = () => {
 
   // console.log(data?.checkIfAgentIsInline)
   // console.log(data?.checkIfAgentIsInline);
-  //maam lorna 09566689072
-  //love 09812851484
+
   //me 09126448847
-  //christian inbound 09285191305
+  //inbound 09285191305
   //endrian 09694827149
-  const mobileNo =
-    userLogged?.username === "RRamos" ? "09285191305" : "09694827149";
+  // const mobileNo =
+  //   userLogged?.username === "RRamos" ? "09285191305" : "09694827149";
 
   function normalizePhilippineNumber(rawNumber: string): string | null {
     if (!rawNumber) return null;
@@ -1009,18 +1030,14 @@ const CustomerDisposition = () => {
     if (number.startsWith("00")) number = number.slice(2);
     if (number.startsWith("63")) number = number.slice(2);
 
-
     if (!number.startsWith("0")) number = "0" + number;
-
 
     const mobileRegex = /^09\d{9}$/;
     if (mobileRegex.test(number)) return number;
 
-
     const landlineRegex = /^0\d{7,10}$/;
     if (landlineRegex.test(number)) return number;
 
- 
     return null;
   }
 
@@ -1041,8 +1058,7 @@ const CustomerDisposition = () => {
         if (!onCall || !isRing) {
           setDial(false);
           dispatch(setMobileToCall(phoneNumber));
-          await makeCall({ variables: { phoneNumber: mobileNo } });
-          // await makeCall({ variables: { phoneNumber: phoneNumber } });
+          await makeCall({ variables: { phoneNumber: phoneNumber } });
         }
       }
     });
@@ -1057,15 +1073,21 @@ const CustomerDisposition = () => {
 
     if (!newPhone) return;
 
-    if (checkIfAgentIsInline?.includes("INCALL")) {
+    // const checkForCallStatus = checkIfAgentIsInline?.split("|")
+
+    if (
+      checkIfAgentIsInline?.includes("INCALL") ||
+      (checkIfAgentIsInline?.includes("PAUSE") &&
+        checkIfAgentIsInline.includes("LAGGED") &&
+        checkIfAgentIsInline.includes("DISPO"))
+    ) {
       await endAndDispoCall();
     }
 
     setConfirm(false);
     setTimeout(async () => {
       dispatch(setMobileToCall(newPhone));
-      await makeCall({ variables: { phoneNumber: mobileNo } });
-      // await makeCall({ variables: { phoneNumber: newPhone } });
+      await makeCall({ variables: { phoneNumber: newPhone } });
     }, 1000);
   }, []);
 
@@ -1146,6 +1168,7 @@ const CustomerDisposition = () => {
           selectedCustomer?.customer_info?.contact_no?.length > 0
         ) {
           setConfirm(true);
+
           if (selectedCustomer?.customer_info?.contact_no[0].trim() !== "") {
             setModalProps({
               message: `Do you want to redial this number (${selectedCustomer?.customer_info?.contact_no[0]})?`,
@@ -1177,7 +1200,7 @@ const CustomerDisposition = () => {
     }
   }, [data, dispatch]);
 
-  const isLoading = loading || updateRPCLoading ;
+  const isLoading = loading;
 
   if (isLoading) return <Loading />;
 
@@ -1188,6 +1211,11 @@ const CustomerDisposition = () => {
 
   return (
     <div className="overflow-hidden flex flex-col relative">
+      {readyForBreak && (
+        <div className="absolute top-10 z-20  left-0 translate-x-1/2 text-center py-2 w-1/2 text-2xl border-2 border-red-500 rounded-xl bg-red-200 font-bold text-red-600">
+          You are on <span className="underline">{readyForBreak} Break</span>  after this session!
+        </div>
+      )}
       <div className="oveflow-hidden flex h-full w-full ">
         {(isRPCToday || isRPC) && <Confirmation {...modalProps} />}
 
@@ -1241,12 +1269,21 @@ const CustomerDisposition = () => {
                     {selectedCustomer &&
                       !selectedCustomer?.customer_info.isRPC && (
                         <button
-                          className={` px-10 py-1.5 rounded text-white font-black bg-orange-500 transition-all border-orange-700 border-2 shadow-md hover:shadow-none hover:bg-orange-600 cursor-pointer ${
+                          className={`px-10 py-1.5 rounded text-white font-black transition-all border-2 shadow-md ${
                             isUpdate ? "2xl:absolute top-5 right-5" : ""
-                          } `}
-                          onClick={handleClickRPC}
+                          } ${
+                            updateRPCLoading
+                              ? "bg-orange-300 border-orange-500 cursor-not-allowed"
+                              : "bg-orange-500 border-orange-700 hover:shadow-none hover:bg-orange-600 cursor-pointer"
+                          }`}
+                          disabled={updateRPCLoading}
+                          onClick={() => {
+                            if (!updateRPCLoading) {
+                              handleClickRPC();
+                            }
+                          }}
                         >
-                          RPC
+                          {updateRPCLoading ? "Processing..." : "RPC"}
                         </button>
                       )}
                     {selectedCustomer?._id &&
@@ -1400,6 +1437,7 @@ const CustomerDisposition = () => {
                       inlineData={checkIfAgentIsInline || ""}
                       canCall={isAutoDialData?.isAutoDial as boolean}
                       onPresetAmountChange={setPresetSelection}
+                      setLoading={(e: boolean) => setDispoLoading(e)}
                     />
                   )}
                 </div>
@@ -1451,7 +1489,7 @@ const CustomerDisposition = () => {
               transition={{ duration: 1, type: "spring" }}
               className={`" w-40 rounded-full cursor-grab active:cursor-grabbing absolute top-30 right-20 z-40 justify-center items-center flex "`}
             >
-              {(randomLoading || getCallingRecordingLoading) &&
+              {(randomLoading || getCallingRecordingLoading || dispoLoading) &&
               !isRing &&
               checkIfAgentIsInline?.includes("PAUSE") ? (
                 <div className=" h-40  border-0 bg-white w-full rounded-full flex items-center justify-center">
@@ -1496,7 +1534,7 @@ const CustomerDisposition = () => {
                     )}
 
                   {/* Break button on bottom */}
-                  {userLogged?.type === "AGENT" && !selectedCustomer && (
+                  {userLogged?.type === "AGENT" && (
                     <div
                       onClick={() => {
                         if (dial) {
@@ -1540,9 +1578,15 @@ const CustomerDisposition = () => {
                               key={index}
                               onClick={() => {
                                 setBreaker(false);
-                                onClickBreakSelection(
-                                  BreakEnum[e.value as keyof typeof BreakEnum]
-                                );
+                                if (readyForBreak !== e.value) {
+                                  dispatch(
+                                    setReadyForBreak(e.value as BreakEnum)
+                                  );
+                                } else {
+                                  dispatch(
+                                    setReadyForBreak(null)
+                                  );
+                                }
                               }}
                               className="px-7 py-1 border-r last:border-b-0 cursor-pointer text-black border-b transition-all border-gray-300 odd:bg-gray-100 even:bg-white hover:bg-gray-200 whitespace-nowrap"
                             >

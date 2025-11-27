@@ -227,6 +227,7 @@ type Props = {
   inlineData: string;
   canCall: boolean;
   onPresetAmountChange: (value: PresetSelection) => void;
+  setLoading: (e:boolean) => void
 };
 
 const IFBANK = ({ label }: { label: string }) => {
@@ -267,6 +268,7 @@ type User = { _id: string };
 type DispoType = { id: string };
 type Customer = {
   assigned?: string;
+  balance?: number
   current_disposition?: {
     disposition?: string;
     selectivesDispo?: boolean;
@@ -278,6 +280,7 @@ const DispositionForm: React.FC<Props> = ({
   inlineData,
   canCall,
   onPresetAmountChange,
+  setLoading
 }) => {
   const { selectedCustomer, userLogged, callUniqueId, isRing, onCall } =
     useSelector((state: RootState) => state.auth);
@@ -417,7 +420,7 @@ const DispositionForm: React.FC<Props> = ({
     },
   });
 
-  const [createDisposition] = useMutation<{ createDisposition: Success }>(
+  const [createDisposition, {loading: dispoLoading}] = useMutation<{ createDisposition: Success }>(
     CREATE_DISPOSITION,
     {
       onCompleted: (res) => {
@@ -428,18 +431,25 @@ const DispositionForm: React.FC<Props> = ({
             isMessage: false,
           })
         );
-        setConfirm(false);
+        setLoading(false)
         resetForm();
         updateOf();
         dispatch(setDeselectCustomer());
       },
       onError: async () => {
         await deselectTask({ variables: { id: selectedCustomer?._id } });
-        setConfirm(false);
+        
         dispatch(setServerError(true));
       },
+    
     }
   );
+
+  useEffect(()=> {
+    if(!dispoLoading){
+      setLoading(dispoLoading)
+    }
+  },[dispoLoading])
 
   const [tlEscalation] = useMutation<{ tlEscalation: Success }>(TL_ESCATATION, {
     onCompleted: async (res) => {
@@ -529,6 +539,8 @@ const DispositionForm: React.FC<Props> = ({
         },
       },
     });
+    setConfirm(false);
+
   }, [data, selectedCustomer, createDisposition, callUniqueId]);
 
   const noCallback = useCallback(() => {
@@ -664,18 +676,20 @@ const DispositionForm: React.FC<Props> = ({
     if (!customer) return false;
 
     const cd = customer.current_disposition;
+    const balance = customer.balance
     const dispo = cd?.disposition;
+    
     const hasSelective = cd?.selectivesDispo;
-    const assignedToUser = customer.assigned === user?._id;
+    const assignedToUser = customer.assigned?.toString() === user?._id.toString();
     const notAssigned = !customer.assigned;
     const ptpId = ptpDispoType?.id;
     const paidId = paidDispoType?.id;
-    const isNotPTPorPaidAndUnassigned =
-      ![ptpId, paidId].includes(dispo ?? "") && (notAssigned || assignedToUser);
     const isPTPAndAssignedToUser = dispo === ptpId && assignedToUser;
     const isPaidWithSelective = dispo === paidId && hasSelective;
+    
     return !!(
-      isNotPTPorPaidAndUnassigned ||
+      Number(balance) >= 0 ||
+      notAssigned ||
       isPTPAndAssignedToUser ||
       isPaidWithSelective
     );

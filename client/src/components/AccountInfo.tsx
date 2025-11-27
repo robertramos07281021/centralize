@@ -31,7 +31,7 @@ const OTHER_ACCOUNTS = gql`
       dpd
       balance
       paid_amount
-      # isRPCToday
+      isRPCToday
       month_pd
       assigned
       assigned_date
@@ -376,7 +376,7 @@ const AccountInfo = forwardRef<
   }, [selectedCustomer]);
 
   const sumOf =
-    (selectedCustomer && data && accountHistory)
+    selectedCustomer && data && accountHistory
       ? (data?.customerOtherAccounts?.length || 0) +
         (accountHistory?.findAccountHistories?.length || 0) +
         (selectedCustomer?.dispo_history?.length || 0) +
@@ -601,6 +601,12 @@ const AccountInfo = forwardRef<
                       </div>
                     </div>
                   )}
+
+                  <div className="relative cursor-pointer">
+                    <div className="bg-amber-600 border-2 px-4 border-amber-900 hover:bg-amber-700 text-shadow-2xs text-center py-3 text-white transition-all cursor-pointer shadow-md rounded-md uppercase font-black text-xs">
+                      MASTERFILE
+                    </div>
+                  </div>
                 </motion.div>
               )}
             </AnimatePresence>

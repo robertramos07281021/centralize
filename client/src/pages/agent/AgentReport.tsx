@@ -87,7 +87,7 @@ const AgentReport = () => {
             ref={modalRef}
           >
             <motion.div
-              className="h-full border-2 max-w-80 text-center justify-center  border-slate-500 rounded-md flex items-center px-2 cursor-default"
+              className="h-full border-2 truncate w-60 bg-gray-100 text-center justify-center  border-slate-500 rounded-md flex items-center px-2 cursor-default"
               onClick={onClickPopUpDispoType}
               title={selectedDispoAgent
                 .map((e) => dispotypeObject[e])
@@ -108,8 +108,8 @@ const AgentReport = () => {
               <IoMdArrowDropdown className="text-2xl" />
             </motion.div>
             {popUpDispo && (
-              <div className="w-full h-96 overflow-y-auto border absolute top-10 bg-white left-0 flex flex-col p-2 border-slate-300 shadow-lg shadow-black/30">
-                <label className="flex gap-2  text-sm">
+              <div className="w-full h-96 gap-1 overflow-y-auto border absolute top-10 bg-white left-0 flex flex-col p-2 border-slate-300 shadow-lg shadow-black/30">
+                <label className="flex gap-2 px-2 py-1 rounded-sm border hover:bg-gray-200 bg-gray-100 text-sm">
                   <input
                     type="checkbox"
                     name="all"
@@ -134,7 +134,7 @@ const AgentReport = () => {
                 {dispotypeData?.getDispositionTypes.map((dispotype) => (
                   <label
                     key={dispotype.id}
-                    className="flex gap-2 text-sm"
+                    className="flex gap-2 px-2 py-1 rounded-sm border hover:bg-gray-200 bg-gray-100 text-sm"
                   >
                     <input
                       type="checkbox"
@@ -160,7 +160,9 @@ const AgentReport = () => {
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
             >
-              <span className="font-black uppercase whitespace-nowrap">From :</span>
+              <span className="font-black uppercase whitespace-nowrap">
+                From :
+              </span>
               <input
                 type="date"
                 name="from"

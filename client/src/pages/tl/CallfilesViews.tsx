@@ -205,6 +205,18 @@ const UPDATE_DIAL_NEXT = gql`
   }
 `;
 
+const SELECTED_BUCKET = gql`
+  query selectedBucket($id: ID) {
+    selectedBucket(id: $id) {
+      canCall
+    }
+  }
+`;
+
+type Bucket = {
+  canCall: boolean;
+};
+
 const CallfilesViews: React.FC<Props> = ({
   bucket,
   status,
@@ -216,6 +228,7 @@ const CallfilesViews: React.FC<Props> = ({
   const { limit, productionManagerPage, userLogged } = useSelector(
     (state: RootState) => state.auth
   );
+
   const dispatch = useAppDispatch();
   const location = useLocation();
   const [modalTarget, setModalTarget] = useState<boolean>(false);
@@ -242,6 +255,15 @@ const CallfilesViews: React.FC<Props> = ({
     skip: isProductionManager,
     notifyOnNetworkStatusChange: true,
   });
+
+  const { data: selectedBucketData } = useQuery<{ selectedBucket: Bucket }>(
+    SELECTED_BUCKET,
+    {
+      notifyOnNetworkStatusChange: true,
+      skip: !bucket,
+      variables: { id: bucket },
+    }
+  );
 
   useEffect(() => {
     if (bucket) {
@@ -890,65 +912,32 @@ const CallfilesViews: React.FC<Props> = ({
                       </div>
                       {checkStatus && (
                         <>
-                          {/* */}
-                          <div
-                            className="rounded-sm relative h-full w-full items-center shadow-sm flex justify-center hover:bg-yellow-800 transition-all px-1 py-1 cursor-pointer bg-yellow-700 text-white border-2 border-yellow-900"
-                            onClick={() => {
-                              if (!res.callfile.autoDial) {
-                                setAutoDial({
-                                  id: res.callfile._id,
-                                  name: res.callfile.name,
-                                });
-                                setCount(1);
-                              } else {
-                                onClickIcon(
-                                  res.callfile._id,
-                                  "AUTO",
-                                  res.callfile.name
-                                );
-                              }
-                            }}
-                          >
-                            {!item?.callfile?.autoDial ? (
-                              <div title="Turn on Auto Dial">
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  viewBox="0 0 24 24"
-                                  fill="currentColor"
-                                  className="size-4 "
-                                >
-                                  <path
-                                    fillRule="evenodd"
-                                    d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z"
-                                    clipRule="evenodd"
-                                  />
-                                </svg>
-                              </div>
-                            ) : (
-                              <div title="Turn off Auto Dial">
-                                <div className="absolute text-yellow-900 z-10 top-[0px] left-[5px]">
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                    strokeWidth="1.5"
-                                    stroke="currentColor"
-                                    className="size-7"
-                                  >
-                                    <path
-                                      strokeLinecap="round"
-                                      strokeLinejoin="round"
-                                      d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"
-                                    />
-                                  </svg>
-                                </div>
-
-                                <div className="z-20">
+                          {selectedBucketData?.selectedBucket?.canCall && (
+                            <div
+                              className="rounded-sm relative h-full w-full items-center shadow-sm flex justify-center hover:bg-yellow-800 transition-all px-1 py-1 cursor-pointer bg-yellow-700 text-white border-2 border-yellow-900"
+                              onClick={() => {
+                                if (!res.callfile.autoDial) {
+                                  setAutoDial({
+                                    id: res.callfile._id,
+                                    name: res.callfile.name,
+                                  });
+                                  setCount(1);
+                                } else {
+                                  onClickIcon(
+                                    res.callfile._id,
+                                    "AUTO",
+                                    res.callfile.name
+                                  );
+                                }
+                              }}
+                            >
+                              {!item?.callfile?.autoDial ? (
+                                <div title="Turn on Auto Dial">
                                   <svg
                                     xmlns="http://www.w3.org/2000/svg"
                                     viewBox="0 0 24 24"
                                     fill="currentColor"
-                                    className="size-4"
+                                    className="size-4 "
                                   >
                                     <path
                                       fillRule="evenodd"
@@ -957,9 +946,44 @@ const CallfilesViews: React.FC<Props> = ({
                                     />
                                   </svg>
                                 </div>
-                              </div>
-                            )}
-                          </div>
+                              ) : (
+                                <div title="Turn off Auto Dial">
+                                  <div className="absolute text-yellow-900 z-10 top-[0px] left-[5px]">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      fill="none"
+                                      viewBox="0 0 24 24"
+                                      strokeWidth="1.5"
+                                      stroke="currentColor"
+                                      className="size-7"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"
+                                      />
+                                    </svg>
+                                  </div>
+
+                                  <div className="z-20">
+                                    <svg
+                                      xmlns="http://www.w3.org/2000/svg"
+                                      viewBox="0 0 24 24"
+                                      fill="currentColor"
+                                      className="size-4"
+                                    >
+                                      <path
+                                        fillRule="evenodd"
+                                        d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z"
+                                        clipRule="evenodd"
+                                      />
+                                    </svg>
+                                  </div>
+                                </div>
+                              )}
+                            </div>
+                          )}
+                          {/* */}
 
                           <div
                             className="rounded-sm flex shadow-sm justify-center hover:bg-green-800 px-1 py-1 cursor-pointer bg-green-700 text-white border-2 border-green-900"
@@ -1033,34 +1057,36 @@ const CallfilesViews: React.FC<Props> = ({
                         </svg>
                       </div>
 
-                      <div
-                        onClick={() =>
-                          onClickIcon(
-                            res.callfile._id,
-                            "DIAL",
-                            res.callfile.name
-                          )
-                        }
-                        title="Next Round"
-                        className={`" ${
-                          checkStatus ? "" : "  col-start-2 "
-                        } rounded-sm flex shadow-sm justify-center transition-all hover:bg-amber-700 py-1 cursor-pointer bg-amber-600 text-white border-2 border-amber-900 "`}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth="2"
-                          stroke="currentColor"
-                          className="size-5"
+                      {selectedBucketData?.selectedBucket.canCall && (
+                        <div
+                          onClick={() =>
+                            onClickIcon(
+                              res.callfile._id,
+                              "DIAL",
+                              res.callfile.name
+                            )
+                          }
+                          title="Next Round"
+                          className={`" ${
+                            checkStatus ? "" : "  col-start-2 "
+                          } rounded-sm flex shadow-sm justify-center transition-all hover:bg-amber-700 py-1 cursor-pointer bg-amber-600 text-white border-2 border-amber-900 "`}
                         >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-                          />
-                        </svg>
-                      </div>
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="2"
+                            stroke="currentColor"
+                            className="size-5"
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+                            />
+                          </svg>
+                        </div>
+                      )}
                     </div>
                   </div>
                 </motion.div>
