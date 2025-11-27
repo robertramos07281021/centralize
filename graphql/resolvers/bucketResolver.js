@@ -82,7 +82,7 @@ const bucketResolver = {
     getTLBucket: async(_,__,{user}) => {
       try {
         if(!user) throw new CustomError("Unauthorized",401)
-        const res = await Bucket.find({_id: user.buckets.map(x=> new mongoose.Types.ObjectId(x))})
+        const res = await Bucket.find({_id: user?.buckets.map(x=> new mongoose.Types.ObjectId(x))})
         return res
       } catch (error) {
          console.log(error)

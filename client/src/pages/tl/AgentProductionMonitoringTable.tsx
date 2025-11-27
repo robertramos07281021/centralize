@@ -132,6 +132,7 @@ const AgentProductionMonitoringTable = () => {
             </div>
             <div className="  overflow-auto  flex flex-col h-7/10">
               {bucketAgents?.map((x, index) => {
+
                 const findAgent = agentDailyProd?.agentDispoDaily
                   ? agentDailyProd?.agentDispoDaily.find(
                       (agent) => agent.user === x._id
@@ -152,9 +153,9 @@ const AgentProductionMonitoringTable = () => {
                   ? x.targets[selectionOfInterval] - findAgent?.kept
                   : null;
 
-
+                  
                 return (
-                  x.active && (
+                  x.active && findAgent && (
                     <motion.div
                       className="text-left hover:bg-gray-200  odd:bg-gray-100 bg-white items-center gap-2 grid grid-cols-7 text-gray-600"
                       key={x._id}

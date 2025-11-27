@@ -2,7 +2,14 @@ import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { Doughnut } from "react-chartjs-2";
 import { colorDispo } from "../../middleware/exports";
-import { useEffect, useState } from "react";
+import {
+  forwardRef,
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useState,
+} from "react";
 import { ChartData, ChartOptions } from "chart.js";
 import { motion } from "framer-motion";
 
@@ -43,7 +50,7 @@ const DISPO_TYPES = gql`
 
 type AgentTotalDispo = {
   count: number;
-  dispotype: Dispotype;
+  dispotype: string;
 };
 
 type Dispotype = {
@@ -61,10 +68,14 @@ type ProductionReport = {
   dispotypes: Dispotypes[];
 };
 
-type ReportsComponents = {
+type ReportsComponentsProps = {
   dispositions: string[];
   from: string;
   to: string;
+};
+
+export type ReportsComponentsHandle = {
+  exportDispositions: () => Promise<void>;
 };
 
 type DoughnutData = {
@@ -79,23 +90,23 @@ type DispositionType = {
   name: string;
 };
 
-const ReportsComponents: React.FC<ReportsComponents> = ({
-  dispositions,
-  from,
-  to,
-}) => {
-  const { data: agentTotalDispoData, refetch: TotalDispoRefetch } = useQuery<{
+const ReportsComponents = forwardRef<
+  ReportsComponentsHandle,
+  ReportsComponentsProps
+>(({ dispositions, from, to }, ref) => {
+  const { data: agentTotalDispoData } = useQuery<{
     getAgentTotalDispositions: AgentTotalDispo[];
   }>(AGENT_TOTAL_DISPO, {
     notifyOnNetworkStatusChange: true,
   });
 
-  const { data: dispotypeData, refetch: DispoTypeRefetch } = useQuery<{
+  const { data: dispotypeData } = useQuery<{
     getDispositionTypes: DispositionType[];
   }>(DISPO_TYPES, {
     notifyOnNetworkStatusChange: true,
   });
 
+  // console.log(dispotypeData);
 
   const { data: productionReportData, refetch } = useQuery<{
     ProductionReport: ProductionReport;
@@ -104,14 +115,56 @@ const ReportsComponents: React.FC<ReportsComponents> = ({
     notifyOnNetworkStatusChange: true,
   });
 
-  console.log(productionReportData)
-
-  console.log("Production Report Data:", productionReportData);
   const [doughnutData, setDoughnutData] = useState<DoughnutData>({
     datas: [],
     colors: [],
     labels: [],
   });
+
+  const dispositionLookup = useMemo(() => {
+    const map: Record<string, DispositionType> = {};
+    dispotypeData?.getDispositionTypes.forEach((item) => {
+      map[item.id] = item;
+    });
+    return map;
+  }, [dispotypeData]);
+
+  const exportDispositions = useCallback(async () => {
+    const rows =
+      agentTotalDispoData?.getAgentTotalDispositions.map((entry) => {
+        const meta = dispositionLookup[entry.dispotype];
+        return {
+          Name: meta?.name ?? "Unknown",
+          Code: meta?.code ?? "N/A",
+          Count: entry.count,
+        };
+      }) || [];
+
+    if (rows.length === 0) {
+      console.warn("No disposition data available for export.");
+      return;
+    }
+
+    try {
+      const { utils, writeFile } = await import("xlsx");
+      const worksheet = utils.json_to_sheet(rows);
+      const workbook = utils.book_new();
+      utils.book_append_sheet(workbook, worksheet, "Dispositions");
+      const safeFrom = from || "start";
+      const safeTo = to || "end";
+      writeFile(
+        workbook,
+        `dispositions_${safeFrom.replace(/\s+/g, "-")}_${safeTo.replace(
+          /\s+/g,
+          "-"
+        )}.xlsx`
+      );
+    } catch (error) {
+      console.error("Failed to export dispositions", error);
+    }
+  }, [agentTotalDispoData, dispositionLookup, from, to]);
+
+  useImperativeHandle(ref, () => ({ exportDispositions }));
 
   useEffect(() => {
     if (productionReportData) {
@@ -170,7 +223,7 @@ const ReportsComponents: React.FC<ReportsComponents> = ({
       await refetch();
     };
     refetching();
-  }, [dispositions.length, from, to]);
+  }, [dispositions.length, from, to, refetch]);
 
   const data: ChartData<"doughnut"> = {
     labels: doughnutData.labels,
@@ -234,7 +287,7 @@ const ReportsComponents: React.FC<ReportsComponents> = ({
           {labels.map((e, index) => (
             <div
               key={index}
-              className="text-black text-xs  last:border-0 font-black uppercase "
+              className="text-black hover:bg-gray-500 text-xs last:border-0 font-black uppercase "
             >
               {e}
             </div>
@@ -259,10 +312,7 @@ const ReportsComponents: React.FC<ReportsComponents> = ({
                 className="grid grid-cols-3 gap-2 odd:bg-gray-200 even:bg-gray-100  py-2 px-3 border-b border-gray-300 text-xs font-medium text-black cursor-default"
                 key={e.dispotype}
               >
-                <div
-                  className="truncate"
-                  title={findDispo?.name}
-                >
+                <div className="truncate" title={findDispo?.name}>
                   {findDispo?.name}
                 </div>
                 <div className="">{findDispo?.code}</div>
@@ -273,7 +323,7 @@ const ReportsComponents: React.FC<ReportsComponents> = ({
         </div>
       </motion.div>
       <motion.div
-        className="p-20 w-1/2 border bg-gray-100 rounded-md h-full shadow-md border-gray-700"
+        className="p-10 w-1/2 border bg-gray-100 rounded-md h-full shadow-md border-gray-700"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.5 }}
@@ -283,6 +333,6 @@ const ReportsComponents: React.FC<ReportsComponents> = ({
       </motion.div>
     </div>
   );
-};
+});
 
 export default ReportsComponents;

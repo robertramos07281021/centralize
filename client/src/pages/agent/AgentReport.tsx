@@ -3,7 +3,9 @@ import gql from "graphql-tag";
 import { useEffect, useMemo, useRef, useState } from "react";
 import { IoMdArrowDropdown } from "react-icons/io";
 import { FaDownload } from "react-icons/fa6";
-import ReportsComponents from "./ReportsComponents";
+import ReportsComponents, {
+  ReportsComponentsHandle,
+} from "./ReportsComponents";
 import { motion } from "framer-motion";
 
 type DispositionType = {
@@ -31,6 +33,7 @@ const AgentReport = () => {
   }, [dispotypeData]);
 
   const [selectedDispoAgent, setSelectedDispoAgent] = useState<string[]>([]);
+  const reportsRef = useRef<ReportsComponentsHandle>(null);
 
   const handleCheckeDisposition = (
     value: string,
@@ -192,6 +195,7 @@ const AgentReport = () => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.3 }}
+              onClick={() => reportsRef.current?.exportDispositions()}
             >
               <div className="flex items-center gap-5 rounded-md border-2 border-blue-800 px-4 hover:bg-blue-600 duration-200 ease-in-out cursor-pointer py-1.5 bg-blue-500 text-white font-bold ">
                 Export <FaDownload />
@@ -201,6 +205,7 @@ const AgentReport = () => {
         </div>
       </div>
       <ReportsComponents
+        ref={reportsRef}
         dispositions={selectedDispoAgent}
         from={date.from}
         to={date.to}
