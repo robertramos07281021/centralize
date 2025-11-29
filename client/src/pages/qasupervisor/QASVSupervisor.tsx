@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect, useCallback } from "react";
+import { useState, useMemo, useEffect, useCallback, useRef } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { VscLoading } from "react-icons/vsc";
@@ -75,6 +75,13 @@ const UNLOCK_USER = gql`
   }
 `;
 
+const SCORE_CARD_ITEMS = [
+  "Default Score Card",
+  "UB CARDS Score Card",
+  "EASTWEST Score Card",
+  "UB MORTGAGE Score Card",
+];
+
 type Bucket = {
   _id: string;
   name: string;
@@ -119,6 +126,14 @@ const QASupervisorView = () => {
   });
   const [option, setOption] = useState(0);
   const [width, setWidth] = useState(50);
+  const [activeScoreCardUserId, setActiveScoreCardUserId] =
+    useState<string | null>(null);
+  const [scoreCardSelections, setScoreCardSelections] = useState<
+    Record<string, string>
+  >({});
+  const scoreCardDropdownRefs = useRef<Record<string, HTMLDivElement | null>>(
+    {}
+  );
 
   const { data: deptData } = useQuery<{
     getDepts: { id: string; name: string; branch: string }[];
@@ -247,6 +262,22 @@ const QASupervisorView = () => {
 
   const [required, setRequired] = useState<boolean>(false);
 
+  useEffect(() => {
+    if (!activeScoreCardUserId) {
+      return;
+    }
+
+    const handleClickOutside = (event: MouseEvent) => {
+      const dropdownNode = scoreCardDropdownRefs.current[activeScoreCardUserId];
+      if (dropdownNode && !dropdownNode.contains(event.target as Node)) {
+        setActiveScoreCardUserId(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [activeScoreCardUserId]);
+
   const handleUpdateUser = useCallback(() => {
     if (
       !userId.userId ||
@@ -312,6 +343,14 @@ const QASupervisorView = () => {
     },
     [setModalProps, setConfirm, unlockUser]
   );
+
+  const handleScoreCardSelect = (id: string, scoreCard: string) => {
+    setScoreCardSelections((prev) => ({
+      ...prev,
+      [id]: scoreCard,
+    }));
+    setActiveScoreCardUserId(null);
+  };
 
   if (usersLoading || updateLoading) return <Loading />;
 
@@ -465,7 +504,7 @@ const QASupervisorView = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <div className="grid shadow-md border rounded-t-md bg-gray-300  grid-cols-7 gap-3 px-2 py-2  font-black uppercase ">
+          <div className="grid shadow-md border rounded-t-md bg-gray-300  grid-cols-8 gap-3 px-2 py-2  font-black uppercase ">
             <div
               className="
             "
@@ -476,7 +515,10 @@ const QASupervisorView = () => {
             <div className="">buckets</div>
             <div className="flex justify-center">activity</div>
             <div className="flex justify-center">online</div>
+            <div className="flex justify-center">Score card</div>
+
             <div className="flex justify-center">lock</div>
+
             <div className="flex justify-center"></div>
           </div>
           <div className="flex  flex-col overflow-auto h-[72vh] rounded-b-md">
@@ -492,7 +534,7 @@ const QASupervisorView = () => {
               filteredUsers.map((user, index) => (
                 <motion.div
                   key={user._id}
-                  className="grid grid-cols-7 hover:bg-gray-300 border-x border-b last:rounded-b-md gap-3 items-center bg-gray-100 py-2 pl-2 text-sm odd:bg-gray-200"
+                  className="grid grid-cols-8 hover:bg-gray-300 border-x border-b last:rounded-b-md gap-3 items-center bg-gray-100 py-2 pl-2 text-sm odd:bg-gray-200"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
@@ -531,6 +573,79 @@ const QASupervisorView = () => {
                     ) : (
                       <div className="shadow-md bg-red-600 w-5 rounded-full h-5"></div>
                     )}
+                  </div>
+                  <div
+                    className="border relative border-black flex px-3 justify-between items-center rounded-sm cursor-pointer hover:bg-gray-200 bg-gray-100 shadow-md py-1 relative"
+                    ref={(node) => {
+                      scoreCardDropdownRefs.current[user._id] = node;
+                    }}
+                  >
+                    <button
+                      type="button"
+                      className="w-full flex cursor-pointer  justify-between items-center gap-2"
+                      onClick={() =>
+                        setActiveScoreCardUserId((prev) =>
+                          prev === user._id ? null : user._id
+                        )
+                      }
+                      onKeyDown={(event) => {
+                        if (event.key === "Enter" || event.key === " ") {
+                          event.preventDefault();
+                          setActiveScoreCardUserId((prev) =>
+                            prev === user._id ? null : user._id
+                          );
+                        }
+                      }}
+                      aria-haspopup="listbox"
+                      aria-expanded={activeScoreCardUserId === user._id}
+                    >
+                      <div className="rounded-sm text-left truncate outline-none">
+                        {scoreCardSelections[user._id] || SCORE_CARD_ITEMS[0]}
+                      </div>
+                      <div>
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="3"
+                          stroke="currentColor"
+                          className={`size-4 transition-transform ${
+                            activeScoreCardUserId === user._id ? "rotate-90" : ""
+                          }`}
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                          />
+                        </svg>
+                      </div>
+                    </button>
+                    <AnimatePresence>
+                      {activeScoreCardUserId === user._id && (
+                        <motion.div
+                          initial={{ opacity: 0, y: -6 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, y: -6 }}
+                          transition={{ duration: 0.15 }}
+                          className="absolute right-0 top-full mt-1 w-full rounded-sm overflow-hidden border border-black bg-white shadow-lg z-10"
+                          role="listbox"
+                        >
+                          {SCORE_CARD_ITEMS.map((item) => (
+                            <button
+                              type="button"
+                              key={item}
+                              className="w-full even:bg-gray-100 truncate odd:bg-gray-200 text-left px-3 py-2 text-sm cursor-pointer hover:bg-gray-300 border-b last:border-b-0"
+                              onClick={() => handleScoreCardSelect(user._id, item)}
+                              role="option"
+                              aria-selected={scoreCardSelections[user._id] === item}
+                            >
+                              {item}
+                            </button>
+                          ))}
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
                   </div>
                   <div className="justify-center flex">
                     {user.isLock ? (

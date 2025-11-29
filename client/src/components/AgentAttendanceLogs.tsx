@@ -1,7 +1,7 @@
 import { gql, useQuery } from "@apollo/client";
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { motion } from "framer-motion";
-import { Users } from "../../middleware/types.ts";
+import { Users } from "../middleware/types.ts";
 
 type ProductionHistoryEntry = {
   type: string;
@@ -10,15 +10,21 @@ type ProductionHistoryEntry = {
   existing: string;
 };
 
+type User = {
+  vici_id: string;
+  name: string;
+  _id: string;
+};
+
 type ProductionRecord = {
   _id: string;
-  user: string;
-  target_today: number;
+  user: User;
   prod_history: ProductionHistoryEntry[];
   createdAt: string;
   total: number;
   average: number;
-  longes: number;
+  longest: number;
+  target_today: number;
 };
 
 const GET_ALL_USERS = gql`
@@ -51,21 +57,24 @@ const GET_ALL_PRODUCTIONS = gql`
 `;
 
 const GET_PRODUCTION = gql`
-  query getAllAgentProductions($bucketId: ID, $from: String, $to: String) {
+  query getAllAgentProductions($bucketId: ID!, $from: String, $to: String) {
     getAllAgentProductions(bucketId: $bucketId, from: $from, to: $to) {
       _id
-      user
-      target_today
+      user {
+        _id
+        name
+        vici_id
+      }
+      average
+      createdAt
+      longest
       prod_history {
-        type
-        start
         end
         existing
+        start
+        type
       }
-      createdAt
       total
-      average
-      longes
     }
   }
 `;
@@ -80,19 +89,17 @@ const BUCKETS = gql`
 `;
 
 type Bucket = {
-  _id: string
-  name: string
-}
+  _id: string;
+  name: string;
+};
 
 const AgentAttendanceLogs = () => {
-  // const [isOpen, setIsOpen] = useState(false);
   const [isOpenView, setIsOpenView] = useState(false);
   const [selectedUser, setSelectedUser] = useState<Users | null>(null);
-  const [selectedProduction, setSelectedProduction] =
-    useState<ProductionRecord | null>(null);
   const [selectedDate, setSelectedDate] = useState<string>("");
-  const [selectedBucket, setSelectedBucket] = useState<string | null>(null)
-  
+  const [selectedBucket, setSelectedBucket] = useState<string | null>(null);
+  const [fromDate, setFromDate] = useState<string>("");
+  const [toDate, setToDate] = useState<string>("");
 
   const { data } = useQuery<{
     getUsers: { users: Users[] };
@@ -103,50 +110,43 @@ const AgentAttendanceLogs = () => {
   const { data: prodData } = useQuery<{
     productions: ProductionRecord[];
   }>(GET_ALL_PRODUCTIONS);
+  const { data: bucketsData } = useQuery<{ getAllBucket: Bucket[] }>(
+    BUCKETS,
+    { notifyOnNetworkStatusChange: true }
+  );
 
-  const {data:bucketsData, refetch} = useQuery<{getAllBucket:Bucket[]}>(BUCKETS,{notifyOnNetworkStatusChange: true})
-
-  
-  const { refetch:getAllProdDataRefetch } = useQuery<{
+  const { data: getAllProdData } = useQuery<{
     getAllAgentProductions: ProductionRecord[];
   }>(GET_PRODUCTION, {
     notifyOnNetworkStatusChange: true,
-    variables: { bucketId: selectedBucket, from: null, to: null },
-    skip: !selectedBucket
+    variables: {
+      bucketId: selectedBucket,
+      from: fromDate || null,
+      to: toDate || null,
+    },
+    skip: !selectedBucket,
   });
 
-  useEffect(()=>  {
-    const refetching =  async() => {
-      await refetch()
-      await getAllProdDataRefetch()
-    }
-    refetching()
-  },[])
-  
-  useEffect(()=> {
-    if(bucketsData?.getAllBucket) {
-      setSelectedBucket(bucketsData?.getAllBucket[0]._id)
-    }
-  },[bucketsData])
+  const bucketProductionByUser = useMemo(() => {
+    const map = new Map<string, ProductionRecord>();
+    getAllProdData?.getAllAgentProductions?.forEach((record) => {
+      if (record?.user?._id) {
+        map.set(record.user._id, record);
+      }
+    });
+    return map;
+  }, [getAllProdData]);
 
-  useEffect(()=> {
-    const refetching = async() => {
-      await getAllProdDataRefetch()
+  useEffect(() => {
+    if (bucketsData?.getAllBucket) {
+      setSelectedBucket(bucketsData?.getAllBucket[0]._id);
     }
-    refetching()
-  },[selectedBucket])
-
+  }, [bucketsData]);
   const users = data?.getUsers?.users || [];
   const productions = prodData?.productions || [];
-
   const agentUsers = users.filter((u: Users) => u.type === "AGENT");
-
-  const getProductionForUser = (userId: string) => {
-    return productions.find((p) => p.user === userId);
-  };
-
   const getAllProductionsForUser = (userId: string) => {
-    return productions.filter((p) => p.user === userId);
+    return productions.filter((p) => p.user._id === userId);
   };
 
   const getAllHistoryForUser = (userId: string) => {
@@ -192,55 +192,61 @@ const AgentAttendanceLogs = () => {
   return (
     <div className="px-10 py-3 w-full h-[90.7%]">
       <div className="w-full flex flex-col gap-2 h-full">
-        {/* <div className="flex justify-between items-center">
-          <div className="flex flex-col">
-            <motion.div onClick={() => setIsOpen(!isOpen)} layout>
-              <div className="bg-gray-200 relative z-20 cursor-pointer hover:bg-gray-300 transition-all px-2 flex gap-3 py-1 rounded-sm shadow-md border">
-                <div></div>
-                <div
-                  className={`${
-                    isOpen ? "rotate-90" : ""
-                  } transition-all items-center flex text-black`}
-                >
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    strokeWidth="1.5"
-                    stroke="currentColor"
-                    className="size-4"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      d="m8.25 4.5 7.5 7.5-7.5 7.5"
-                    />
-                  </svg>
-                </div>
-              </div>
-            </motion.div>
-          </div>
-        </div> */}
-
         <motion.div
           className="flex flex-col h-full"
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ type: "spring" }}
         >
-          <select name="buckets" id="bucket" onChange={(e)=> {
-            setSelectedBucket(e.target.value)
-          }}>
-            {
-              bucketsData?.getAllBucket?.map(bucket  => {
-                return <option value={bucket._id} key={bucket._id}>{bucket.name}</option>
-              })
-            }
-          </select>
-          <div className="grid grid-cols-7 gap-2 font-black uppercase rounded-t-md border px-4 bg-gray-300 py-2">
-            <div>user id</div>
+          <div className="flex justify-between mb-2">
+            <div className="shadow-md border rounded-sm">
+              <select
+                name="buckets"
+                id="bucket"
+                value={selectedBucket ?? ""}
+                onChange={(e) => {
+                  setSelectedBucket(e.target.value);
+                }}
+                className="px-3 py-1 "
+              >
+                {bucketsData?.getAllBucket?.map((bucket) => {
+                  return (
+                    <option value={bucket._id} key={bucket._id}>
+                      {bucket.name}
+                    </option>
+                  );
+                })}
+              </select>
+            </div>
+            <div className="flex gap-2">
+              <div className="flex items-center gap-2">
+                <div>From:</div>
+                <div className="rounded-sm shadow-md border">
+                  <input
+                    className="px-3 py-1 outline-none"
+                    type="date"
+                    value={fromDate}
+                    onChange={(event) => setFromDate(event.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center gap-2">
+                <div>To:</div>
+                <div className=" rounded-sm shadow-md border">
+                  <input
+                    className="px-3 py-1 outline-none"
+                    type="date"
+                    value={toDate}
+                    onChange={(event) => setToDate(event.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="grid grid-cols-6 gap-2 font-black uppercase rounded-t-md border px-4 bg-gray-300 py-2">
+            <div>vici id</div>
             <div>name</div>
-            <div>Target Today</div>
             <div>total calls</div>
             <div>Average</div>
             <div>Longest Call</div>
@@ -249,7 +255,7 @@ const AgentAttendanceLogs = () => {
 
           <div className=" flex flex-col overflow-auto">
             {agentUsers.map((user: Users, index: number) => {
-              const prod = getProductionForUser(user._id);
+              const summary = bucketProductionByUser.get(user._id);
 
               return (
                 <motion.div
@@ -257,27 +263,43 @@ const AgentAttendanceLogs = () => {
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.05 }}
                   key={user._id}
-                  className="pl-4 py-2 gap-2 last:rounded-b-md items-center border-x grid grid-cols-7 hover:bg-gray-200 border-b"
+                  className="pl-4 py-2 gap-2 even:bg-gray-100 odd:bg-gray-200 last:rounded-b-md items-center border-x grid grid-cols-6 hover:bg-gray-200 border-b"
                 >
-                  <div>{user.user_id}</div>
+                  <div>
+                    {user.vici_id || (
+                      <div className="text-xs italic text-gray-400">
+                        No vici id
+                      </div>
+                    )}
+                  </div>
                   <div
                     className="first-letter:uppercase truncate "
                     title={user.name}
                   >
                     {user.name}
                   </div>
+                  <div>
+                    {summary?.total ?? (
+                      <div className="text-xs italic text-gray-400">--</div>
+                    )}
+                  </div>
 
-                  <div>{prod?.target_today ?? 0}</div>
-                  <div></div>
-                  <div></div>
-                  <div></div>
+                  <div>
+                    {summary?.average ?? (
+                      <div className="text-xs italic text-gray-400">--</div>
+                    )}
+                  </div>
+                  <div>
+                    {summary?.longest ?? (
+                      <div className="text-xs italic text-gray-400">--</div>
+                    )}
+                  </div>
 
                   <div className="flex justify-end px-3">
                     <div
                       onClick={() => {
                         setIsOpenView(true);
                         setSelectedUser(user);
-                        setSelectedProduction(prod ?? null);
                       }}
                       className="px-3 cursor-pointer border-2 border-blue-900 rounded-sm font-black uppercase text-white py-1 bg-blue-600"
                     >
@@ -320,9 +342,6 @@ const AgentAttendanceLogs = () => {
                 <div className="text-lg font-black uppercase first-letter:uppercase ">
                   Agent name: {selectedUser?.name ?? "Unknown Agent"}
                 </div>
-                <div className="text-sm text-gray-600">
-                  Target today: {selectedProduction?.target_today ?? "N/A"}
-                </div>
               </div>
               <button
                 onClick={() => {
@@ -356,13 +375,9 @@ const AgentAttendanceLogs = () => {
                 >
                   {!selectedDate && "All"} Production History
                 </motion.div>
-                <input
-                  type="date"
-                  value={selectedDate}
-                  onChange={(e) => setSelectedDate(e.target.value)}
-                  className="border shadow-md rounded-sm px-2 py-1 text-sm"
-                  placeholder="Filter by date"
-                />
+                <div className="px-3 py-1 bg-blue-600 hover:bg-blue-700 border-2 border-blue-900 rounded-sm text-white cursor-pointer text-sm font-black uppercase">
+                  Export
+                </div>
               </div>
 
               <div>

@@ -1,3 +1,13 @@
+import {
+  Chart,
+  registerables,
+  CategoryScale,
+  LinearScale,
+  BarElement,
+  Title,
+  Tooltip,
+  Legend,
+} from "chart.js";
 import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Login from "./pages/Login";
 import { Error } from "./pages/Error";
@@ -26,18 +36,7 @@ import BreakView from "./pages/agent/BreakView";
 import AgentView from "./pages/tl/AgentView";
 import AgentRecordingView from "./pages/tl/AgentRecordingView";
 import DispositionConfigurationView from "./pages/admin/DispositionConfigurationView";
-
-import {
-  Chart,
-  registerables,
-  CategoryScale,
-  LinearScale,
-  BarElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
-
+import QASVAgentRecordings from "./pages/qasupervisor/QASVAgentRecordings";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import MISDashboard from "./pages/tl/MISDashboard";
 import FTEUserView from "./pages/aom/FTEUserView";
@@ -50,7 +49,7 @@ import QASVSupervisor from "./pages/qasupervisor/QASVSupervisor.tsx";
 import QASupervisorDashboard from "./pages/qasupervisor/QASupervisorDashboard.tsx";
 import CallLogs from "./pages/tl/CallLogs.tsx";
 import CallAllAgentLogs from "./pages/admin/CallAllAgentLogs.tsx";
-import AgentAttendanceLogs from "./pages/admin/AgentAttendanceLogs.tsx";
+import AgentAttendanceLogs from "./components/AgentAttendanceLogs.tsx";
 import Selectives from "./pages/admin/Selectives.tsx";
 import CallQALogs from "./pages/qa/QACallLogs.tsx";
 import QAAgentReportLogs from "./components/QAAgentReportLogs.tsx";
@@ -62,6 +61,7 @@ import QACallAllAgentLogs from "./pages/qa/QACallAllAgentLogs.tsx";
 import QASVCallAllAgentLogs from "./pages/qasupervisor/QASVCallAllAgentLogs.tsx";
 import UBMortgageScoreCard from "./components/UBMortgageScoreCard.tsx";
 import Guidlines from "./components/Guidlines.tsx";
+import ScoreCardOverview from "./components/ScoreCardOverview.tsx";
 Chart.register(
   ...registerables,
   ChartDataLabels,
@@ -82,6 +82,7 @@ function App() {
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/agent-recordings" element={<AgentRecordingView />} />
         <Route path="/break-view" element={<BreakView />} />
+
         <Route element={<AdminRoute />}>
           <Route path="/selectives" element={<Selectives />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
@@ -102,20 +103,24 @@ function App() {
             element={<DispositionConfigurationView />}
           />
         </Route>
+
         <Route element={<AgentRoute />}>
           <Route path="/agent-dashboard" element={<StatisticsView />} />
           <Route path="/agent-cip" element={<CustomerDisposition />} />
           <Route path="/agent-report" element={<AgentReport />} />
         </Route>
+
         <Route element={<AomRoute />}>
           <Route path="/aom-dashboard" element={<TlDashboard />} />
           <Route path="/aom-reports" element={<Reports />} />
           <Route path="/aom-fte-user" element={<FTEUserView />} />
         </Route>
+
         <Route element={<OpsRoute />}>
           <Route path="/operation-dashboard" element={<OperationDashboard />} />
           <Route path="/operation-reports" element={<Reports />} />
         </Route>
+
         <Route element={<TlRoute />}>
           <Route path="/tl-dashboard" element={<TlDashboard />} />
           <Route path="/mis-dashboard" element={<MISDashboard />} />
@@ -129,6 +134,7 @@ function App() {
           <Route path="/tl-reports" element={<BacklogManagementView />} />
           <Route path="/call-agents-logs" element={<CallLogs />} />
         </Route>
+
         <Route element={<CeoRoute />}>
           <Route path="/ceo-dashboard" element={<CeoDashboard />} />
         </Route>
@@ -149,7 +155,7 @@ function App() {
           />
           <Route path="/score-card" element={<DefaultScoreCard />} />
         </Route>
-
+        
         <Route element={<QASVRoute />}>
           <Route
             path="/qasv-call-all-agent-logs"
@@ -168,6 +174,8 @@ function App() {
           <Route path="/ub-score-card" element={<UBScoreCard />} />
           <Route path="/ub-mortgage-score-card" element={<UBMortgageScoreCard />} />
           <Route path="/guidlines" element={<Guidlines />} />
+          <Route path="/qasv-recordings" element={<QASVAgentRecordings />} />
+          <Route path="/scorecard-overview" element={<ScoreCardOverview />} />
         </Route>
       </Routes>
     </BrowserRouter>

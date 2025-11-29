@@ -1804,17 +1804,18 @@ const callfileResolver = {
     ) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
-
         const paidDispo = await DispoType.findOne({ code: "PAID" });
         const ptpDispo = await DispoType.findOne({ code: "PTP" });
-
         const callfile = await Callfile.findById(_id);
-        const newSelective = await Selective.create({
+        const newSelective = new Selective({
           name: selectiveName,
           callfile: callfile._id,
         });
 
         for (const i of selectives) {
+
+          if(!i.amount) return null
+
           const res = await CustomerAccount.findOne({
             case_id: String(i.account_no),
             callfile: new mongoose.Types.ObjectId(callfile._id),
@@ -1827,9 +1828,10 @@ const callfileResolver = {
           if (res._id && res?.balance > 0) {
             const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
 
+            
             const cdCreatedAt =
               new Date(res?.current_disposition?.createdAt) <= threeDaysAgo;
-
+          
             const data = {
               customer_account: res._id,
               amount: i.amount,
@@ -1916,6 +1918,8 @@ const callfileResolver = {
             });
           }
         }
+
+        await newSelective.save()
 
         const users = (await User.find({ buckets: callfile.bucket })).map((u) =>
           String(u._id)

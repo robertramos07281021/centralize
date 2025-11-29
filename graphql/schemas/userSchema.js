@@ -25,8 +25,8 @@ const userTypeDefs = gql`
     CLINIC
     PROD
     WELCOME
-    REPORT
     LOGOUT
+    REPORT
   }
 
   type Login {

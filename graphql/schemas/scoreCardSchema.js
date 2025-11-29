@@ -1,6 +1,8 @@
 import { gql } from "graphql-tag";
 
 const scoreCardTypeDefs = gql`
+  scalar JSON
+
   type ScoreCardData {
     _id: ID!
     month: String!
@@ -10,8 +12,21 @@ const scoreCardTypeDefs = gql`
     number: String!
     assignedQA: ID!
     typeOfScoreCard: String!
+    scoreDetails: JSON
+    totalScore: Float
     createdAt: String
     updatedAt: String
+  }
+
+  type ScoreCardSummary {
+    _id: ID!
+    agent: User
+    typeOfScoreCard: String!
+    totalScore: Float
+    dateAndTimeOfCall: String!
+    createdAt: String
+    updatedAt: String
+    scoreDetails: JSON
   }
 
   input ScoreCardDataInput {
@@ -22,6 +37,12 @@ const scoreCardTypeDefs = gql`
     number: String!
     assignedQA: ID!
     typeOfScoreCard: String!
+    scoreDetails: JSON!
+    totalScore: Float!
+  }
+
+  extend type Query {
+    getScoreCardSummaries(date: String, search: String): [ScoreCardSummary!]!
   }
 
   type Mutation {

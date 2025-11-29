@@ -1,13 +1,13 @@
 import { gql, useQuery } from "@apollo/client";
-import { useEffect, useState } from "react";
+import { useMemo } from "react";
 import Loading from "../Loading";
-import CallDoughnut from "./CallDoughnut";
+import CallDoughnut, { DoughnutExportPayload } from "./CallDoughnut";
 import CallReportTables from "./CallReportTables";
 import RFDReportTables from "./RFDReportTables";
 import ReportsTables from "./ReportsTables";
 import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import {  useAppDispatch } from "../../redux/store";
+import { useAppDispatch } from "../../redux/store";
 import { setIsReport } from "../../redux/slices/authSlice";
 
 const GET_DISPOSITION_REPORTS = gql`
@@ -107,22 +107,29 @@ type SearchFilter = {
 
 type Props = {
   search: Search;
+  onDoughnutDataReady?: (payload: DoughnutExportPayload) => void;
 };
 
-const ReportsView: React.FC<Props> = ({ search }) => {
+const ReportsView: React.FC<Props> = ({ search, onDoughnutDataReady }) => {
   const location = useLocation();
-  const [searchFilter, setSearchFilter] = useState<SearchFilter>();
   const dispatch = useAppDispatch();
- 
-  useEffect(() => {
-    setSearchFilter({
+
+  const searchFilter = useMemo<SearchFilter>(
+    () => ({
       agent: search.searchAgent,
       disposition: search.selectedDisposition,
       from: search.dateDistance.from,
       to: search.dateDistance.to,
       callfile: search.callfile,
-    });
-  }, [search]);
+    }),
+    [
+      search.searchAgent,
+      search.selectedDisposition,
+      search.dateDistance.from,
+      search.dateDistance.to,
+      search.callfile,
+    ]
+  );
 
   const isReporting = location.pathname !== "/tl-reports";
 
@@ -173,31 +180,38 @@ const ReportsView: React.FC<Props> = ({ search }) => {
     <div className=" col-span-2 flex flex-col overflow-auto relative h-5/6 px-5">
       <div className="text-center border-b-2 border-gray-200 sticky bg-white top-0 uppercase font-black 2xl:text-lg lg:text-2xl  text-slate-800 flex item-center justify-center gap-5 pb-2 ">
         <div className="flex items-center py-1 justify-center">
-          {reportsData?.getDispositionReports?.bucket && (
-            <span>Bucket: {reportsData.getDispositionReports.bucket}</span>
-          )}
-          {reportsData?.getDispositionReports?.agent?.name && (
-            <h1 className="flex gap-2">
-              Agent Name: {reportsData.getDispositionReports.agent.name}
-            </h1>
-          )}
+          <div className="flex flex-col">
+            <div>
+              {reportsData?.getDispositionReports?.bucket && (
+                <span>Bucket: {reportsData.getDispositionReports.bucket}</span>
+              )}
+              {reportsData?.getDispositionReports?.agent?.name && (
+                <h1 className="flex gap-2">
+                  Agent Name: {reportsData.getDispositionReports.agent.name}
+                </h1>
+              )}
+            </div>
 
-          {search.dateDistance.from &&
-            search.dateDistance.to &&
-            search.dateDistance.from !== search.dateDistance.to && (
-              <div>
-                From: {search.dateDistance.from} to {search.dateDistance.to}
-              </div>
-            )}
+            <div className="text-gray-400 text-xs">
+              {search.dateDistance.from &&
+                search.dateDistance.to &&
+                search.dateDistance.from !== search.dateDistance.to && (
+                  <div>
+                    From: {search.dateDistance.from} to {search.dateDistance.to}
+                  </div>
+                )}
 
-          {((!search.dateDistance.from && search.dateDistance.to) ||
-            (search.dateDistance.from && !search.dateDistance.to) ||
-            search.dateDistance.from === search.dateDistance.to) &&
-            (search.dateDistance.from || search.dateDistance.to) && (
-              <div>
-                Date: {search.dateDistance.from || search.dateDistance.to}
-              </div>
-            )}
+              {((!search.dateDistance.from && search.dateDistance.to) ||
+                (search.dateDistance.from && !search.dateDistance.to) ||
+                search.dateDistance.from === search.dateDistance.to) &&
+                (search.dateDistance.from || search.dateDistance.to) && (
+                  <div>
+                    Date: {search.dateDistance.from || search.dateDistance.to}
+                  </div>
+                )}
+            </div>
+          </div>
+
           <div className="absolute text-sm items-center flex right-2">
             <div
               onClick={reportView}
@@ -214,7 +228,12 @@ const ReportsView: React.FC<Props> = ({ search }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", duration: 1 }}
       >
-        <CallDoughnut totalAccounts={totalAccounts} dispoData={callMethod} />
+        <CallDoughnut
+          totalAccounts={totalAccounts}
+          dispoData={callMethod}
+          selectedDispositions={search.selectedDisposition}
+          onDataPrepared={onDoughnutDataReady}
+        />
         <div className="flex flex-col gap-5 py-5">
           {callMethod.length > 0 && (
             <CallReportTables

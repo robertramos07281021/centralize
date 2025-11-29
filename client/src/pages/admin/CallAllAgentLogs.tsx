@@ -146,7 +146,9 @@ const CallAllAgentLogs = () => {
       <div className="flex justify-between">
         <div className="flex items-center gap-3">
           <div className="">
+
             <div className="">
+          
               <motion.div onClick={() => setIsOpen(!isOpen)} layout>
                 <div className="bg-gray-200 relative z-20 cursor-pointer hover:bg-gray-300 transition-all px-2 flex gap-3 py-1 rounded-sm shadow-md border">
                   <div>{selectedBucket?.name ?? "Select a Bucket"}</div>

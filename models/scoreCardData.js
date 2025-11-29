@@ -38,6 +38,15 @@ const scoreCardDataSchema = new Schema(
       default: "Default Score Card",
       trim: true,
     },
+    scoreDetails: {
+      type: Schema.Types.Mixed,
+      default: {},
+    },
+    totalScore: {
+      type: Number,
+      default: 0,
+      min: 0,
+    },
   },
   { timestamps: true }
 );

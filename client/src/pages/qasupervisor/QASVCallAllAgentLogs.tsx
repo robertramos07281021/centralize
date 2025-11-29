@@ -1,6 +1,6 @@
-import { useMutation, useQuery, useApolloClient } from "@apollo/client";
+import { useMutation, useQuery } from "@apollo/client";
 import gql from "graphql-tag";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 
 const GET_ALL_BUCKET = gql`
@@ -47,7 +47,7 @@ type BucketOption = getAllBucket & { isAll?: boolean };
 const ALL_BUCKET_OPTION: BucketOption = {
   _id: "ALL",
   dept: "All",
-  name: "All Buckets",
+  name: "Select a bucket",
   viciIp: "",
   isAll: true,
 };
@@ -58,7 +58,6 @@ const QASVCallAllAgentLogs = () => {
   );
   const [hoveredRow, setHoveredRow] = useState<number | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [allLogs, setAllLogs] = useState<string[]>([]);
 
   const { data: allBucketsData } = useQuery<{ getAllBucket: getAllBucket[] }>(
     GET_ALL_BUCKET
@@ -78,8 +77,6 @@ const QASVCallAllAgentLogs = () => {
     () => [ALL_BUCKET_OPTION, ...allBuckets],
     [allBuckets]
   );
-
-  const apolloClient = useApolloClient();
 
   const { data: bucketUsersData } = useQuery<{
     getBucketUser: { _id: string; name: string; vici_id: string }[];
@@ -122,8 +119,8 @@ const QASVCallAllAgentLogs = () => {
   );
 
   const rawRows = useMemo(
-    () => (selectedBucket?.isAll ? allLogs : rows),
-    [selectedBucket, allLogs, rows]
+    () => (selectedBucket?.isAll ? [] : rows),
+    [selectedBucket, rows]
   );
 
   const filteredRows = useMemo(() => {
@@ -151,45 +148,6 @@ const QASVCallAllAgentLogs = () => {
     },
     [bargeCall]
   );
-
-
-  const updateAllLogs = useCallback(async () => {
-    if (!allBuckets.length) {
-      setAllLogs([]);
-      return;
-    }
-    try {
-      const responses = await Promise.all(
-        allBuckets.map((bucket) =>
-          apolloClient.query<{ getUsersLogginOnVici: string }>({
-            query: CALL_LOGS,
-            variables: { bucket: bucket._id },
-            fetchPolicy: "network-only",
-          })
-        )
-      );
-      const merged = responses.flatMap(({ data }) =>
-        data?.getUsersLogginOnVici
-          ? data.getUsersLogginOnVici
-              .split("\n")
-              .slice(1)
-              .filter((line) => line?.trim())
-          : []
-      );
-      setAllLogs(merged);
-    } catch (error) {
-      setAllLogs([]);
-    }
-  }, [allBuckets, apolloClient]);
-
-
-
-  useEffect(() => {
-    if (!selectedBucket?.isAll) return;
-    updateAllLogs();
-    const intervalId = setInterval(updateAllLogs, 1000);
-    return () => clearInterval(intervalId);
-  }, [selectedBucket, updateAllLogs]);
 
   return (
     <div className="w-full relative px-10 gap-2 pt-2 pb-5 h-[91vh] flex flex-col">
@@ -256,7 +214,7 @@ const QASVCallAllAgentLogs = () => {
             animate={{ opacity: 1 }}
             transition={{ delay: 1 }}
           >
-            {selectedBucket?.isAll ? "Multiple IPs" : selectedBucket?.viciIp}
+            {selectedBucket?.isAll ? "Select a Bucket" : selectedBucket?.viciIp}
           </motion.div>
         </div>
         <div className="bg-gray-200 rounded-sm shadow-md border items-center gap-3 px-3 py-1 flex">
@@ -320,7 +278,11 @@ const QASVCallAllAgentLogs = () => {
           <div className="text-center">barge</div>
         </div>
         <div className="w-full flex flex-col h-full overflow-auto">
-          {filteredRows.length === 0 ? (
+          {!selectedBucket || selectedBucket.isAll ? (
+            <div className="flex justify-center items-center bg-gray-200 w-full py-3 rounded-b-md shadow-md font-black italic text-gray-400 border-black border-x border-b">
+              <div>Select a bucket to view agents</div>
+            </div>
+          ) : filteredRows.length === 0 ? (
             <div className="flex justify-center items-center bg-gray-200 w-full py-3 rounded-b-md shadow-md font-black italic text-gray-400 border-black border-x border-b">
               <div>No agent found</div>
             </div>

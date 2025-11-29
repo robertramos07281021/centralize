@@ -189,7 +189,7 @@ export async function getRecordings(vici_id, agent_user) {
         duration: "Y",
       },
     });
-
+    console.log(data)
     return data;
   } catch (error) {
     console.error("❌ Error Get Recordings:", error.message);

@@ -336,7 +336,7 @@ const AgentRecordingView = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   }
 
-  return ["QA", "TL", "MIS"].includes(userLogged?.type || "") ? (
+  return ["QA", "TL", "MIS", "QASUPERVISOR"].includes(userLogged?.type || "") ? (
     <Wrapper>
       <Navbar />
       <div

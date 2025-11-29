@@ -23,6 +23,7 @@ const productionTypeDefs = gql`
   type AgentTotalDispo {
     dispotype: ID
     count: Int
+    createdAt: DateTime
   }
 
   type DailyCollection {
@@ -126,15 +127,16 @@ const productionTypeDefs = gql`
     existing: Boolean
   }
 
+
+
   type Production {
     _id: ID!
-    user: ID!
-    target_today: Int
+    user: Users
     prod_history: [ProdHistory]
     createdAt: DateTime
-    total: Int
-    average: Int
-    longes: Int
+    total: Float
+    average: Float
+    longest: Float
   }
 
 
@@ -147,7 +149,7 @@ const productionTypeDefs = gql`
   type Query {
     getAgentProductionPerDay: [PerDay]
     getAgentProductionPerMonth: [perMonth]
-    getAgentTotalDispositions: [AgentTotalDispo]
+    getAgentTotalDispositions(from: String, to: String): [AgentTotalDispo]
     getAgentDailyCollection: DailyCollection
     getAgentRPCCount: AgentRPCCount
     ProductionReport(

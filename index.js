@@ -80,6 +80,9 @@ function getMillisecondsUntilEndOfDay() {
   return endOfDay.getTime() - now.getTime();
 }
 
+
+
+
 const app = express();
 connectDB();
 const allowedOrigins = [
@@ -110,10 +113,16 @@ app.use(compression());
 
 app.use("/recordings", express.static(path.join(process.cwd(), "recordings")));
 app.use("/tmp", express.static(path.join(__dirname, "tmp")));
+
+const now = new Date();
+const tomorrow = new Date(now);
+tomorrow.setHours(24, 0, 0, 0);
+const secondsUntilMidnight = Math.floor((tomorrow - now) / 1000);
+
 const sessionStore = MongoStore.create({
   mongoUrl: process.env.MONGO_URL,
   collectionName: "sessions",
-  ttl: 60 * 60 * 24,
+  ttl: secondsUntilMidnight,
 });
 
 
@@ -304,7 +313,7 @@ useServer(
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
         throw new CustomError("Missing Token", 401);
       }
-
+ 
       const token = authHeader.split(" ")[1];
       let user = null;
 
@@ -316,7 +325,7 @@ useServer(
 
         const socket = ctx.extra.socket;
         let entry = connectedUsers.get(userId);
-
+        
         if (!entry) {
           connectedUsers.set(userId, {
             sockets: new Set([socket]),
@@ -329,6 +338,7 @@ useServer(
             entry.cleanupTimer = null;
           }
         }
+
       } catch (err) {
         console.log("WebSocket token error:", err.message);
       }

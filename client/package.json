@@ -21,10 +21,14 @@
     "connect-history-api-fallback": "^2.0.0",
     "crypto-js": "^4.2.0",
     "flowbite-react": "^0.11.7",
+    "exceljs": "^4.4.0",
     "framer-motion": "^12.23.22",
     "graphql": "^16.10.0",
     "graphql-tag": "^2.12.6",
     "graphql-ws": "^6.0.4",
+    "html2canvas": "^1.4.1",
+    "jspdf": "^2.5.1",
+    "jspdf-autotable": "^3.8.3",
     "jssip": "^3.10.1",
     "lodash": "^4.17.21",
     "lottie-react": "^2.4.1",
@@ -59,3 +63,4 @@
     "vite": "^6.2.0"
   }
 }
+

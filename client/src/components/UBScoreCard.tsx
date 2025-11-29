@@ -7,7 +7,7 @@ type ColumnInputGridProps = {
 };
 
 const ColumnInputGrid = ({ inputClassName = "" }: ColumnInputGridProps) => (
-  <div className="grid h-full w-full grid-cols-6 items-center border-black">
+  <div className="grid h-full bg-gray-100 w-full grid-cols-6 items-center border-black">
     {Array.from({ length: 6 }).map((_, idx) => (
       <div
         key={idx}
@@ -152,7 +152,7 @@ const UBScoreCard = () => {
                   <div className="">Call 4</div>
                   <div className="">Call 5</div>
                 </div>
-                <div className="text-sm w-full flex flex-col shadow-md rounded-sm font-black uppercase">
+                <div className="text-sm w-full bg-gray-100 flex flex-col shadow-md rounded-sm font-black uppercase">
                   <div className="bg-gray-400 truncate text-md border-x rounded-t-md border-y px-5 py-1">
                     Account Name/Account Number
                   </div>
@@ -164,7 +164,7 @@ const UBScoreCard = () => {
                 </div>
               </div>
 
-              <div className="text-sm flex flex-col shadow-md rounded-sm font-black uppercase">
+              <div className="text-sm flex bg-gray-100 flex-col shadow-md rounded-sm font-black uppercase">
                 <div className="bg-gray-400 truncate text-md border-x rounded-t-md border-y px-5 py-1">
                   Date and Time of Call
                 </div>
@@ -176,7 +176,7 @@ const UBScoreCard = () => {
               </div>
 
               <div className="flex w-full gap-2">
-                <div className="text-sm flex flex-col shadow-md rounded-sm font-black uppercase">
+                <div className="text-sm flex bg-gray-100 flex-col shadow-md rounded-sm font-black uppercase">
                   <div className="bg-gray-400 truncate text-md border-x rounded-t-md border-y px-5 py-1">
                     Date of Logger Review
                   </div>
@@ -186,7 +186,7 @@ const UBScoreCard = () => {
                   <input className="py-1 pl-3 border-x border-b outline-none" />
                   <input className="py-1 pl-3 border-x rounded-b-md border-b outline-none" />
                 </div>
-                <div className="text-sm truncate flex flex-col shadow-md rounded-sm font-black uppercase">
+                <div className="text-sm truncate bg-gray-100 flex flex-col shadow-md rounded-sm font-black uppercase">
                   <div
                     className="bg-gray-400 truncate text-md border-x rounded-t-md border-y px-5 py-1"
                     title="1st Call"
@@ -199,7 +199,7 @@ const UBScoreCard = () => {
                   <input className="py-1 pl-3 border-x border-b outline-none" />
                   <input className="py-1 pl-3 border-x rounded-b-md border-b outline-none" />
                 </div>
-                <div className="text-sm truncate flex flex-col shadow-md rounded-sm font-black uppercase">
+                <div className="text-sm truncate bg-gray-100 flex flex-col shadow-md rounded-sm font-black uppercase">
                   <div
                     className="bg-gray-400 truncate text-md border-x rounded-t-md border-y px-5 py-1"
                     title="Lat Call"
@@ -235,7 +235,7 @@ const UBScoreCard = () => {
               <div className="w-full bg-gray-400 px-3 py-1 rounded-t-md border">
                 A. OPENING
               </div>
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full bg-gray-100 flex border-x border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate"
                   title="
@@ -248,13 +248,13 @@ const UBScoreCard = () => {
                 <ColumnInputGrid />
               </div>
 
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full bg-gray-100 flex border-x border-b ">
                 <div className="w-full pl-3 py-1 border-r truncate">
                   Mentioned UBP Disclaimer spiel
                 </div>
                 <ColumnInputGrid />
               </div>
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full bg-gray-100 flex border-x border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate "
                   title="
@@ -264,7 +264,7 @@ const UBScoreCard = () => {
                 </div>
                 <ColumnInputGrid inputClassName="whitespace-nowrap" />
               </div>
-              <div className="h-full flex flex-row border-x border-b ">
+              <div className="h-full flex bg-gray-100 flex-row border-x border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r"
                   title="
@@ -277,7 +277,7 @@ const UBScoreCard = () => {
                 </div>
                 <ColumnInputGrid />
               </div>
-              <div className=" h-full flex rounded-b-md shadow-md border-x border-b ">
+              <div className=" h-full flex bg-gray-100 rounded-b-md shadow-md border-x border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r "
                   title="  Properly identified self, mentioned first and last name to CH/Valid CP/Y"
@@ -298,10 +298,10 @@ const UBScoreCard = () => {
                 WITH CONTACT (A/Y)
               </div>
 
-              <div className="w-full font-semibold px-3 py-1  border-x border-b">
+              <div className="w-full font-semibold bg-gray-300 px-3 py-1  border-x border-b">
                 ESTABLISHING RAPPORT, EMPATHY & COURTESY
               </div>
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full flex border-x bg-gray-100 border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate"
                   title="
@@ -312,13 +312,13 @@ const UBScoreCard = () => {
                 <ColumnInputGrid />
               </div>
 
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full flex border-x bg-gray-100 border-b ">
                 <div className="w-full pl-3 py-1 border-r truncate">
                   Asked if CH received demand/ notification letter*
                 </div>
                 <ColumnInputGrid />
               </div>
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full flex border-x bg-gray-100 border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate "
                   title="Showed empathy and compassion as appropriate."
@@ -328,11 +328,11 @@ const UBScoreCard = () => {
                 <ColumnInputGrid inputClassName="whitespace-nowrap" />
               </div>
 
-              <div className="w-full font-semibold bg-gray-400 px-3 py-1  border-x border-b">
+              <div className="w-full font-semibold bg-gray-300 px-3 py-1  border-x border-b">
                 LISTENING SKILLS
               </div>
               <div
-                className="h-full flex flex-row border-x border-b "
+                className="h-full flex flex-row bg-gray-100 border-x border-b "
                 title="
                 Sought RFD in payment & RFBP*"
               >
@@ -342,10 +342,10 @@ const UBScoreCard = () => {
                 <ColumnInputGrid />
               </div>
 
-              <div className="w-full uppercase font-semibold bg-gray-400 px-3 py-1  border-x border-b">
+              <div className="w-full uppercase font-semibold bg-gray-300 px-3 py-1  border-x border-b">
                 negotiation SKILLS
               </div>
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full flex border-x border-b bg-gray-100 ">
                 <div
                   className="w-full pl-3 py-1 border-r "
                   title=" Explained consequences of non-payment, if applicable (explained conseq of legal and BAP listing/explained side of the Bank and the contract signed/explained that the bank is serious in collecting legal obligations/possible negative listing of name/future credit facility will be closed/additional collection agency expenses/involvement of lawyer will also be CH's expense)*"
@@ -361,7 +361,7 @@ const UBScoreCard = () => {
                 <ColumnInputGrid />
               </div>
 
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full flex border-x border-b bg-gray-100 ">
                 <div
                   className="w-full pl-3 py-1 border-r "
                   title=" Asked for CM's capacity to pay, if applicable"
@@ -371,7 +371,7 @@ const UBScoreCard = () => {
                 <ColumnInputGrid />
               </div>
 
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full flex border-x border-b bg-gray-100 ">
                 <div
                   className="w-full pl-3 py-1 border-r "
                   title=" Followed hierarchy of negotiation*"
@@ -381,11 +381,11 @@ const UBScoreCard = () => {
                 <ColumnInputGrid />
               </div>
 
-              <div className="w-full uppercase font-semibold bg-gray-400 px-3 py-1  border-x border-b">
+              <div className="w-full uppercase font-semibold bg-gray-300 px-3 py-1  border-x border-b">
                 OFFERING SOLUTIONS
               </div>
 
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full flex border-x border-b bg-gray-100 ">
                 <div
                   className="w-full pl-3 py-1 border-r "
                   title=" Followed hierarchy of negotiation*"
@@ -395,7 +395,7 @@ const UBScoreCard = () => {
                 <ColumnInputGrid />
               </div>
 
-              <div className=" h-full flex border-x rounded-b-md shadow-md border-b ">
+              <div className=" h-full flex border-x rounded-b-md bg-gray-100 shadow-md border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r "
                   title=" Followed hierarchy of negotiation*"
@@ -409,10 +409,10 @@ const UBScoreCard = () => {
                 WITH OUT CONTACT
               </div>
 
-              <div className="w-full font-semibold px-3 py-1  border-x border-b">
+              <div className="w-full bg-gray-300 font-semibold px-3 py-1  border-x border-b">
                 ESTABLISHING RAPPORT, EMPATHY & COURTESY
               </div>
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full bg-gray-100 flex border-x border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate"
                   title="
@@ -423,13 +423,13 @@ const UBScoreCard = () => {
                 <ColumnInputGrid />
               </div>
 
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full bg-gray-100 flex border-x border-b ">
                 <div className="w-full pl-3 py-1 border-r truncate">
                   Used time schedule and follow-up if applicable
                 </div>
                 <ColumnInputGrid />
               </div>
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full bg-gray-100 flex border-x border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate "
                   title="Showed empathy and compassion as appropriate."
@@ -439,7 +439,7 @@ const UBScoreCard = () => {
                 <ColumnInputGrid inputClassName="whitespace-nowrap" />
               </div>
 
-              <div className=" h-full rounded-b-md shadow-md flex border-x border-b ">
+              <div className=" h-full bg-gray-100 rounded-b-md shadow-md flex border-x border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate "
                   title="Showed empathy and compassion as appropriate."
@@ -453,10 +453,10 @@ const UBScoreCard = () => {
                 WITH or WITH OUT CONTACT
               </div>
 
-              <div className="w-full font-semibold px-3 py-1  border-x border-b">
+              <div className="w-full bg-gray-300 font-semibold px-3 py-1  border-x border-b">
                 QUALITY OF CALL
               </div>
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full flex bg-gray-100 border-x border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate"
                   title="
@@ -467,14 +467,14 @@ const UBScoreCard = () => {
                 <ColumnInputGrid />
               </div>
 
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full flex bg-gray-100 border-x border-b ">
                 <div className="w-full pl-3 py-1 border-r truncate">
                   Did not use unacceptable words/phrases and maintained
                   polite/civil language
                 </div>
                 <ColumnInputGrid />
               </div>
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full flex bg-gray-100 border-x border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate "
                   title="Showed empathy and compassion as appropriate."
@@ -485,7 +485,7 @@ const UBScoreCard = () => {
                 <ColumnInputGrid inputClassName="whitespace-nowrap" />
               </div>
 
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full flex bg-gray-100 border-x border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate "
                   title="Showed empathy and compassion as appropriate."
@@ -495,7 +495,7 @@ const UBScoreCard = () => {
                 <ColumnInputGrid inputClassName="whitespace-nowrap" />
               </div>
 
-              <div className=" h-full flex border-x border-b ">
+              <div className=" h-full flex bg-gray-100 border-x border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate "
                   title="Showed empathy and compassion as appropriate."
@@ -506,7 +506,7 @@ const UBScoreCard = () => {
                 <ColumnInputGrid inputClassName="whitespace-nowrap" />
               </div>
 
-              <div className=" h-full rounded-b-md shadow-md flex border-x border-b ">
+              <div className=" h-full rounded-b-md bg-gray-100 shadow-md flex border-x border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate "
                   title="Showed empathy and compassion as appropriate."
@@ -522,10 +522,10 @@ const UBScoreCard = () => {
               <div className="w-full bg-gray-400 px-3 py-1 rounded-t-md border">
                 C. CLOSING THE CALL
               </div>
-              <div className="w-full bg-gray-400 font-semibold px-3 py-1  border-x border-b">
+              <div className="w-full bg-gray-300 font-semibold px-3 py-1  border-x border-b">
                 SUMMARY
               </div>
-              <div className=" h-full flex border-x border-b ">
+              <div className="  bg-gray-100 h-full flex border-x border-b ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate"
                   title="Summarized payment arrangement*"
@@ -535,7 +535,7 @@ const UBScoreCard = () => {
                 <ColumnInputGrid />
               </div>
 
-              <div className=" h-full flex border-x border-b rounded-b-md  ">
+              <div className=" bg-gray-100 h-full flex border-x border-b rounded-b-md  ">
                 <div
                   className="w-full pl-3 py-1 border-r truncate"
                   title="Request return call for payment confirmation*"
@@ -546,8 +546,8 @@ const UBScoreCard = () => {
               </div>
             </div>
             <div className="flex gap-2">
-              <div className="flex w-full h-auto flex-col">
-                <div className=" h-full flex border-x border-y rounded-t-md ">
+              <div className="flex w-full h-auto flex-col overflow-hidden border rounded-md">
+                <div className=" bg-gray-100 border-b h-full flex  ">
                   <div
                     className="w-full pl-3 py-1 border-r truncate"
                     title="Summarized payment arrangement*"
@@ -557,7 +557,7 @@ const UBScoreCard = () => {
                   <ColumnInputGrid />
                 </div>
 
-                <div className=" h-full flex border-x border-b ">
+                <div className=" bg-gray-100 h-full flex border-b ">
                   <div
                     className="w-full pl-3 py-1 border-r truncate"
                     title="Request return call for payment confirmation*"
@@ -566,7 +566,7 @@ const UBScoreCard = () => {
                   </div>
                   <ColumnInputGrid />
                 </div>
-                <div className=" h-full flex border-b border-x rounded-b-md shadow-md ">
+                <div className=" bg-gray-100 h-full flex  shadow-md ">
                   <div
                     className="w-full pl-3 py-1 border-r truncate"
                     title="Summarized payment arrangement*"
@@ -591,7 +591,7 @@ const UBScoreCard = () => {
                 <div>Action Plan</div>
               </div>
 
-              <div className="grid uppercase grid-cols-4 items-center border-x border-b rounded-b-md gap-2">
+              <div className="grid bg-gray-100 uppercase grid-cols-4 items-center border-x border-b rounded-b-md gap-2">
                 <div className="col-span-2 ml-2 py-1 flex items-center border-r h-full">
                   <input className="outline-none px-1 w-full" />
                 </div>
@@ -611,7 +611,7 @@ const UBScoreCard = () => {
                 <div>Action Plan</div>
               </div>
 
-              <div className="grid uppercase grid-cols-4 items-center border-x border-b rounded-b-md gap-2">
+              <div className="grid uppercase bg-gray-100 grid-cols-4 items-center border-x border-b rounded-b-md gap-2">
                 <div className="col-span-2 ml-2 py-1 flex items-center border-r h-full">
                   <input className="outline-none px-1 w-full" />
                 </div>
@@ -631,7 +631,7 @@ const UBScoreCard = () => {
                 <div>Action Plan</div>
               </div>
 
-              <div className="grid uppercase grid-cols-4 items-center border-x border-b rounded-b-md gap-2">
+              <div className="grid uppercase bg-gray-100 grid-cols-4 items-center border-x border-b rounded-b-md gap-2">
                 <div className="col-span-2 ml-2 py-1 flex items-center border-r h-full">
                   <input className="outline-none px-1 w-full" />
                 </div>
@@ -651,7 +651,7 @@ const UBScoreCard = () => {
                 <div>Action Plan</div>
               </div>
 
-              <div className="grid uppercase grid-cols-4 items-center border-x border-b rounded-b-md gap-2">
+              <div className="grid uppercase bg-gray-100 grid-cols-4 items-center border-x border-b rounded-b-md gap-2">
                 <div className="col-span-2 ml-2 py-1 flex items-center border-r h-full">
                   <input className="outline-none px-1 w-full" />
                 </div>
@@ -670,8 +670,7 @@ const UBScoreCard = () => {
                 <div>COMMENTS OF AGENCY TL</div>
                 <div>Action Plan</div>
               </div>
-
-              <div className="grid uppercase grid-cols-4 items-center border-x border-b rounded-b-md gap-2">
+              <div className="grid uppercase bg-gray-100 grid-cols-4 items-center border-x border-b rounded-b-md gap-2">
                 <div className="col-span-2 ml-2 py-1 flex items-center border-r h-full">
                   <input className="outline-none px-1 w-full" />
                 </div>

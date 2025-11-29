@@ -73,7 +73,7 @@ const LOGOUT = gql`
 `;
 
 const DESELECT_TASK = gql`
-  mutation DeselectTask($id: ID!) {
+  mutation deselectTask($id: ID!) {
     deselectTask(id: $id) {
       message
       success
@@ -154,6 +154,9 @@ const Navbar = () => {
   const { error, data, refetch } = useQuery<{ getMe: UserInfo }>(myUserInfos, {
     notifyOnNetworkStatusChange: true,
   });
+
+
+
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
   const { data: agentBucketsData, refetch: agentBucketRefetch } = useQuery<{
     getTLBucket: { canCall: boolean }[];
@@ -244,8 +247,8 @@ const Navbar = () => {
 
   const [logout, { loading }] = useMutation(LOGOUT, {
     onCompleted: async () => {
-      dispatch(setLogout());
       await persistor.purge();
+      dispatch(setLogout());
       navigate("/");
     },
     onError: () => {
@@ -267,10 +270,10 @@ const Navbar = () => {
     setModalProps({
       no: () => setConfirmation(false),
       yes: async () => {
-        await logout();
         if (selectedCustomer) {
           await deselectTask({ variables: { id: selectedCustomer?._id } });
         }
+        await logout();
       },
       message: "Are you sure you want to logout?",
       toggle: "LOGOUT",
@@ -288,8 +291,8 @@ const Navbar = () => {
     logoutToPersist: { success: boolean; message: string };
   }>(LOGOUT_USING_PERSIST, {
     onCompleted: async () => {
-      dispatch(setLogout());
       await persistor.purge();
+      dispatch(setLogout());
       navigate("/");
     },
     onError: () => {
@@ -309,12 +312,12 @@ const Navbar = () => {
   });
 
   const forceLogout = useCallback(async () => {
-    await logoutToPersist({ variables: { id: userLogged?._id } });
     if (selectedCustomer) {
       await deselectTask({
         variables: { id: selectedCustomer?._id, user_id: userLogged?._id },
       });
     }
+    await logoutToPersist({ variables: { id: userLogged?._id } });
   }, [deselectTask, logoutToPersist, selectedCustomer, userLogged]);
 
   useEffect(() => {

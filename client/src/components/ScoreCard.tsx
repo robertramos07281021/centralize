@@ -2,8 +2,48 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { gql, useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import { useSelector } from "react-redux";
+import html2canvas from "html2canvas";
+import jsPDF from "jspdf";
 import { RootState } from "../redux/store";
 import { scoreCardDropdownOptions } from "../middleware/exports";
+
+const SCORE_CARD_EXPORT_ROOT_ID = "score-card-export-root";
+const COLOR_PROPS: Array<
+  | "color"
+  | "backgroundColor"
+  | "borderTopColor"
+  | "borderRightColor"
+  | "borderBottomColor"
+  | "borderLeftColor"
+> = [
+  "color",
+  "backgroundColor",
+  "borderTopColor",
+  "borderRightColor",
+  "borderBottomColor",
+  "borderLeftColor",
+];
+
+const applyInlineColorFallbacks = (root: HTMLElement) => {
+  const docView = root.ownerDocument.defaultView;
+  if (!docView) {
+    return;
+  }
+
+  const elements: HTMLElement[] = [
+    root,
+    ...Array.from(root.querySelectorAll<HTMLElement>("*")),
+  ];
+  elements.forEach((element) => {
+    const computed = docView.getComputedStyle(element);
+    COLOR_PROPS.forEach((prop) => {
+      const value = computed[prop];
+      if (typeof value === "string" && value && value !== "transparent" && value !== "rgba(0, 0, 0, 0)") {
+        element.style[prop] = value;
+      }
+    });
+  });
+};
 
 const MONTHS = [
   "January",
@@ -49,6 +89,102 @@ const REGULATORY_SELECTION_TO_MISSED_MAP = REGULATORY_POINT_IDS.reduce(
   },
   {} as Record<string, string>
 );
+type SectionFieldConfig = {
+  key: string;
+  scoreId: string;
+  missedId?: string;
+};
+
+const SCORE_VALUE_MAP = {
+  YES: 1,
+  NO: 0,
+  COACHING: 2,
+  "N/A": 3,
+} as const;
+
+type SelectionValue = keyof typeof SCORE_VALUE_MAP;
+
+const OPENING_FIELD_CONFIG: SectionFieldConfig[] = [
+  {
+    key: "introduction",
+    scoreId: "opening-question-1",
+    missedId: "opening-introduction",
+  },
+  {
+    key: "accountOverview",
+    scoreId: "opening-question-2",
+    missedId: "opening-account-overview",
+  },
+];
+
+const NEGOTIATION_FIELD_CONFIG: SectionFieldConfig[] = [
+  { key: "probing", scoreId: "negotiation-probing" },
+  { key: "hierarchyOfNegotiation", scoreId: "negotiation-hierarchy" },
+  { key: "solidifyingStatements", scoreId: "negotiation-solidifying" },
+  { key: "activeListening", scoreId: "negotiation-listening" },
+  { key: "choiceOfWords", scoreId: "negotiation-words" },
+  { key: "conversationControl", scoreId: "negotiation-control" },
+  {
+    key: "processAndCustomerEducation",
+    scoreId: "negotiation-education",
+  },
+];
+
+const CLOSING_FIELD_CONFIG: SectionFieldConfig[] = [
+  { key: "thirdPartyCallHandling", scoreId: "closing-third-party" },
+  { key: "closingSpiel", scoreId: "closing-spiel" },
+];
+
+const REGULATORY_FIELD_CONFIG: SectionFieldConfig[] = [
+  {
+    key: "callDisposition",
+    scoreId: "regulatory-call-disposition",
+    missedId: "call-disposition",
+  },
+  {
+    key: "confidentialityOfInformation",
+    scoreId: "regulatory-confidentiality",
+    missedId: "confidentiality-of-information",
+  },
+  {
+    key: "unfairDebtCollectionPractices",
+    scoreId: "regulatory-unfair-debt",
+    missedId: "unfair-debt-collection-practices",
+  },
+  {
+    key: "informationAccuracy",
+    scoreId: "regulatory-information-accuracy",
+    missedId: "information-accuracy",
+  },
+  {
+    key: "callRecordingStatement",
+    scoreId: "regulatory-call-recording",
+    missedId: "call-recording-statement",
+  },
+  {
+    key: "noOrIncompleteAttemptToNegotiate",
+    scoreId: "regulatory-no-negotiation",
+    missedId: "incomplete-attempt-to-negotiate",
+  },
+  {
+    key: "callAvoidanceAndEarlyTermination",
+    scoreId: "regulatory-call-avoidance",
+    missedId: "call-avoidance-early-termination",
+  },
+  {
+    key: "professionalism",
+    scoreId: "regulatory-professionalism",
+    missedId: "professionalism",
+  },
+];
+
+const SCORE_TO_MISSED_GUIDELINE_ID_MAP: Record<string, string> =
+  OPENING_FIELD_CONFIG.reduce((acc, field) => {
+    if (field.missedId && field.missedId !== field.scoreId) {
+      acc[field.scoreId] = field.missedId;
+    }
+    return acc;
+  }, {} as Record<string, string>);
 
 const GET_DEPARTMENTS = gql`
   query getDepts {
@@ -72,6 +208,7 @@ const CREATE_SCORECARD_DATA = gql`
   mutation CreateScoreCardData($input: ScoreCardDataInput!) {
     createScoreCardData(input: $input) {
       _id
+      totalScore
     }
   }
 `;
@@ -100,6 +237,7 @@ type PointsInputColumnProps = {
   className?: string;
   valueMap: Record<string, string>;
   onChange: (id: string, value: string) => void;
+  disabledMap?: Record<string, boolean>;
 };
 
 const NumericInputColumn = ({
@@ -149,7 +287,7 @@ const NumericInputColumn = ({
     <div className={className}>
       {Array.from({ length: rows }).map((_, idx) => (
         <div
-          className="flex py-1 border-b items-center w-full justify-center border-gray-400 last:border-b-0 gap-2 px-3"
+          className="grid grid-cols-1 lg:grid-cols-2 2xl:flex py-1 border-b items-center w-full justify-center border-gray-400 last:border-b-0 gap-2 px-3"
           key={idx}
         >
           {buttons.map((button) => {
@@ -317,17 +455,22 @@ const PointsInputColumn = ({
   className = "",
   valueMap,
   onChange,
+  disabledMap,
 }: PointsInputColumnProps) => (
   <div className={className}>
     {ids.map((id, idx) => (
       <input
         key={id}
-        type="number"
+        type="text"
         inputMode="numeric"
-        min={0}
         className={`outline-none px-2 py-1 ${
           idx !== ids.length - 1 ? "border-b border-gray-400" : ""
+        } ${
+          disabledMap?.[id]
+            ? "bg-gray-200 cursor-not-allowed text-gray-500"
+            : ""
         }`}
+        disabled={Boolean(disabledMap?.[id])}
         value={valueMap[id] ?? ""}
         onKeyDown={(event) => {
           if (["-", "+", "e", "E", "."].includes(event.key)) {
@@ -355,6 +498,10 @@ const DefaultScoreCard = () => {
   const [selectedAgentId, setSelectedAgentId] = useState<string>("");
   const [callDateTime, setCallDateTime] = useState("");
   const [callNumber, setCallNumber] = useState("");
+  const [highlights, setHighlights] = useState("");
+  const [commentsNote, setCommentsNote] = useState("");
+  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
   const [saveFeedback, setSaveFeedback] = useState<{
     type: "success" | "error";
     message: string;
@@ -363,6 +510,9 @@ const DefaultScoreCard = () => {
   const [missedGuidelineValues, setMissedGuidelineValues] = useState<
     Record<string, string>
   >({});
+  const [scoreSelections, setScoreSelections] = useState<Record<string, string>>(
+    {}
+  );
   const [regulatorySelections, setRegulatorySelections] = useState<
     Record<string, string>
   >(() =>
@@ -382,6 +532,7 @@ const DefaultScoreCard = () => {
   const monthFieldRef = useRef<HTMLDivElement | null>(null);
   const deptFieldRef = useRef<HTMLDivElement | null>(null);
   const agentFieldRef = useRef<HTMLDivElement | null>(null);
+  const scoreCardRef = useRef<HTMLDivElement | null>(null);
 
   const { data: deptData, loading: deptLoading } = useQuery<{
     getDepts: { id: string; name: string }[];
@@ -411,6 +562,13 @@ const DefaultScoreCard = () => {
 
   const { userLogged } = useSelector((state: RootState) => state.auth);
   const LoginUser = userLogged?.name || "Unknown";
+  const pointSnapshotsRef = useRef<Record<string, string>>({});
+  const [disabledPoints, setDisabledPoints] = useState<Record<string, boolean>>(
+    {}
+  );
+  const [disabledMissedGuidelines, setDisabledMissedGuidelines] = useState<
+    Record<string, boolean>
+  >({});
 
   const totalScore = useMemo(() => {
     return Object.values(pointValues).reduce((sum, value) => {
@@ -428,6 +586,114 @@ const DefaultScoreCard = () => {
     : totalScore < 87
     ? "text-yellow-500"
     : "text-green-600";
+
+  const mapSelectionToScoreValue = (selection?: string) => {
+    const normalizedSelection: SelectionValue =
+      selection === "YES" ||
+      selection === "NO" ||
+      selection === "COACHING" ||
+      selection === "N/A"
+        ? selection
+        : "N/A";
+    return SCORE_VALUE_MAP[normalizedSelection];
+  };
+
+  const buildSectionEntries = (
+    config: SectionFieldConfig[],
+    options?: {
+      includePoints?: boolean;
+      selectionMap?: Record<string, string>;
+    }
+  ) => {
+    const includePoints = options?.includePoints !== false;
+    const selectionSource = options?.selectionMap ?? scoreSelections;
+    return config.reduce<Record<string, { scores: number; points: number | null; missedGuidlines: string }>>(
+      (acc, field) => {
+        acc[field.key] = {
+          scores: mapSelectionToScoreValue(selectionSource[field.scoreId]),
+          points: includePoints
+            ? Number(pointValues[field.scoreId] ?? 0)
+            : null,
+          missedGuidlines:
+            missedGuidelineValues[field.missedId ?? field.scoreId] ?? "",
+        };
+        return acc;
+      },
+      {}
+    );
+  };
+
+  const buildScoreDetailsPayload = () => ({
+    opening: buildSectionEntries(OPENING_FIELD_CONFIG),
+    negotiationSkills: buildSectionEntries(NEGOTIATION_FIELD_CONFIG),
+    closing: buildSectionEntries(CLOSING_FIELD_CONFIG),
+    regulatoryAndCompliance: buildSectionEntries(REGULATORY_FIELD_CONFIG, {
+      includePoints: false,
+      selectionMap: regulatorySelections,
+    }),
+    comments: {
+      highlights: highlights.trim(),
+      comments: commentsNote.trim(),
+    },
+  });
+
+  const formatCallDateTime = (value: string) => {
+    if (!value) {
+      return "N/A";
+    }
+    const parsed = new Date(value);
+    if (Number.isNaN(parsed.getTime())) {
+      return value;
+    }
+    return parsed.toLocaleString(undefined, {
+      dateStyle: "medium",
+      timeStyle: "short",
+    });
+  };
+
+  const buildExcelCriteriaRows = () => {
+    const rows: Array<Array<string | number>> = [];
+
+    const pushRows = (
+      sectionLabel: string,
+      config: SectionFieldConfig[],
+      options?: {
+        includePoints?: boolean;
+        selectionMap?: Record<string, string>;
+      }
+    ) => {
+      const includePoints = options?.includePoints !== false;
+      const selectionSource = options?.selectionMap ?? scoreSelections;
+      config.forEach((field, index) => {
+        const selectionLabel = selectionSource[field.scoreId] ?? "N/A";
+        const missedValue =
+          missedGuidelineValues[field.missedId ?? field.scoreId] ?? "";
+        const pointsValue = includePoints ? pointValues[field.scoreId] ?? "" : "";
+        rows.push([
+          index === 0 ? sectionLabel : "",
+          field.key
+            .replace(/([A-Z])/g, " $1")
+            .replace(/[-_]/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+            .replace(/\b\w/g, (char) => char.toUpperCase()),
+          selectionLabel,
+          pointsValue,
+          missedValue,
+        ]);
+      });
+    };
+
+    pushRows("Opening", OPENING_FIELD_CONFIG);
+    pushRows("Negotiation Skills", NEGOTIATION_FIELD_CONFIG);
+    pushRows("Closing", CLOSING_FIELD_CONFIG);
+    pushRows("Regulatory and Compliance", REGULATORY_FIELD_CONFIG, {
+      includePoints: false,
+      selectionMap: regulatorySelections,
+    });
+
+    return rows;
+  };
 
   useEffect(() => {
     if (!isMonthMenuOpen && !isDeptMenuOpen && !isAgentMenuOpen) {
@@ -495,6 +761,54 @@ const DefaultScoreCard = () => {
     }));
   };
 
+  const handleScoringSelection = (fieldId: string, selection: string) => {
+    setScoreSelections((prev) => ({
+      ...prev,
+      [fieldId]: selection,
+    }));
+    const missedGuidelineId =
+      SCORE_TO_MISSED_GUIDELINE_ID_MAP[fieldId] ?? fieldId;
+    if (selection === "NO") {
+      if (pointSnapshotsRef.current[fieldId] === undefined) {
+        pointSnapshotsRef.current[fieldId] = pointValues[fieldId] ?? "";
+      }
+      setPointValues((prev) => ({
+        ...prev,
+        [fieldId]: "0",
+      }));
+      setDisabledPoints((prev) => ({
+        ...prev,
+        [fieldId]: true,
+      }));
+      setDisabledMissedGuidelines((prev) => ({
+        ...prev,
+        [missedGuidelineId]: true,
+      }));
+      return;
+    }
+
+    const snapshot = pointSnapshotsRef.current[fieldId];
+    if (snapshot !== undefined) {
+      setPointValues((prev) => ({
+        ...prev,
+        [fieldId]: snapshot,
+      }));
+      delete pointSnapshotsRef.current[fieldId];
+    }
+    setDisabledPoints((prev) => {
+      if (!prev[fieldId]) return prev;
+      const copy = { ...prev };
+      delete copy[fieldId];
+      return copy;
+    });
+    setDisabledMissedGuidelines((prev) => {
+      if (!prev[missedGuidelineId]) return prev;
+      const copy = { ...prev };
+      delete copy[missedGuidelineId];
+      return copy;
+    });
+  };
+
   const handleMissedGuidelineChange = (fieldId: string, value: string) => {
     setMissedGuidelineValues((prev) => {
       if (!value) {
@@ -551,16 +865,19 @@ const DefaultScoreCard = () => {
     }
 
     try {
+      const scoreDetailsPayload = buildScoreDetailsPayload();
       await createScoreCardData({
         variables: {
           input: {
             month: selectedMonth,
             department: selectedDeptId,
-            agent: selectedAgentId,
+            agentName: selectedAgentId,
             dateAndTimeOfCall: new Date(callDateTime).toISOString(),
             number: callNumber.trim(),
             assignedQA: userLogged._id,
             typeOfScoreCard: SCORE_CARD_TYPE,
+            scoreDetails: scoreDetailsPayload,
+            totalScore,
           },
         },
       });
@@ -569,45 +886,384 @@ const DefaultScoreCard = () => {
     }
   };
 
+  const handleExportPdf = async () => {
+    if (isExportingPdf) {
+      return;
+    }
+    if (!scoreCardRef.current) {
+      setSaveFeedback({
+        type: "error",
+        message: "Unable to locate the score card for export.",
+      });
+      return;
+    }
+
+    try {
+      setIsExportingPdf(true);
+      const canvas = await html2canvas(scoreCardRef.current, {
+        scale: Math.min(2, window.devicePixelRatio || 1),
+        useCORS: true,
+        windowWidth: scoreCardRef.current.scrollWidth,
+        windowHeight: scoreCardRef.current.scrollHeight,
+        onclone: (clonedDoc) => {
+          const clonedCard = clonedDoc.getElementById(
+            SCORE_CARD_EXPORT_ROOT_ID
+          );
+          if (clonedCard) {
+            applyInlineColorFallbacks(clonedCard as HTMLElement);
+          }
+        },
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF("p", "mm", "a4");
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * pageWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      const sanitizedAgent = (selectedAgent || "agent").replace(/\s+/g, "-");
+      pdf.save(`score-card-${sanitizedAgent}.pdf`);
+    } catch (error) {
+      console.error("Failed to export score card", error);
+      setSaveFeedback({
+        type: "error",
+        message: "Failed to export PDF. Please try again.",
+      });
+    } finally {
+      setIsExportingPdf(false);
+    }
+  };
+
+  const handleExportExcel = async () => {
+    if (isExportingExcel) {
+      return;
+    }
+
+    try {
+      setIsExportingExcel(true);
+      const excelModule = await import("exceljs/dist/exceljs.min.js");
+      const ExcelJS = excelModule.default ?? excelModule;
+      const workbook = new ExcelJS.Workbook();
+      workbook.creator = LoginUser || "QA";
+      workbook.created = new Date();
+
+      const worksheet = workbook.addWorksheet("QA Score Card", {
+        properties: { defaultRowHeight: 22 },
+        views: [{ showGridLines: false }],
+        pageSetup: {
+          fitToWidth: 1,
+          orientation: "portrait",
+          margins: {
+            left: 0.4,
+            right: 0.4,
+            top: 0.4,
+            bottom: 0.4,
+            header: 0.2,
+            footer: 0.2,
+          },
+        },
+      });
+
+      worksheet.columns = [
+        { key: "colA", width: 2 },
+        { key: "colB", width: 20 },
+        { key: "colC", width: 26 },
+        { key: "colD", width: 14 },
+        { key: "colE", width: 12 },
+        { key: "colF", width: 28 },
+        { key: "colG", width: 16 },
+        { key: "colH", width: 12 },
+      ];
+
+      const brandBlue = "FF1F497D";
+      const headerBlue = "FF366092";
+      const lightBlue = "FFE6EEF8";
+      const tableLight = "FFF2F6FB";
+      const borderColor = "000";
+      const white = "FFFFFFFF";
+      const borderTemplate = { style: "thin" as const, color: { argb: borderColor } };
+      const applyBorder = (cell: any) => {
+        cell.border = {
+          top: borderTemplate,
+          left: borderTemplate,
+          bottom: borderTemplate,
+          right: borderTemplate,
+        };
+      };
+      const applyBorderRange = (
+        startRow: number,
+        endRow: number,
+        startCol: number,
+        endCol: number
+      ) => {
+        for (let row = startRow; row <= endRow; row += 1) {
+          for (let col = startCol; col <= endCol; col += 1) {
+            applyBorder(worksheet.getCell(row, col));
+          }
+        }
+      };
+
+      try {
+        const logoResponse = await fetch("/bernalesLogo.png");
+        if (logoResponse.ok) {
+          const logoBuffer = await logoResponse.arrayBuffer();
+          const logoId = workbook.addImage({
+            buffer: new Uint8Array(logoBuffer),
+            extension: "png",
+          });
+          worksheet.addImage(logoId, {
+            tl: { col: 1, row: 0.2 },
+            ext: { width: 230, height: 70 },
+          });
+        }
+      } catch (logoError) {
+        console.warn("Unable to load logo for Excel export", logoError);
+      }
+
+      worksheet.mergeCells("B1:H3");
+      const firmCell = worksheet.getCell("B1");
+      firmCell.value = "BERNALES & ASSOCIATES";
+      firmCell.font = { name: "Calibri", bold: true, size: 20, color: { argb: brandBlue } };
+      firmCell.alignment = { horizontal: "center", vertical: "middle" };
+
+      worksheet.mergeCells("B4:H4");
+      const titleCell = worksheet.getCell("B4");
+      titleCell.value = "QA Evaluation Form";
+      titleCell.font = { name: "Calibri", bold: true, size: 14, color: { argb: white } };
+      titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: headerBlue } };
+      titleCell.alignment = { horizontal: "left", vertical: "middle" };
+      applyBorderRange(4, 4, 2, 8);
+
+      const infoRowsStart = 5;
+      const infoRows: Array<[string, string]> = [
+        ["Month", selectedMonth || "N/A"],
+        ["Name", selectedAgent || "N/A"],
+        ["Department", selectedDept || "N/A"],
+        ["Date and Time of Call", formatCallDateTime(callDateTime)],
+        ["Number", callNumber || "N/A"],
+        ["Assigned QA", LoginUser || "Unknown"],
+      ];
+
+      infoRows.forEach(([label, value], index) => {
+        const rowIndex = infoRowsStart + index;
+        const labelCell = worksheet.getCell(`B${rowIndex}`);
+        labelCell.value = label;
+        labelCell.font = { bold: true, color: { argb: white } };
+        labelCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: brandBlue } };
+        labelCell.alignment = { horizontal: "left", vertical: "middle" };
+        const valueRange = `C${rowIndex}:F${rowIndex}`;
+        worksheet.mergeCells(valueRange);
+        const valueCell = worksheet.getCell(`C${rowIndex}`);
+        valueCell.value = value;
+        valueCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: lightBlue } };
+        valueCell.alignment = { horizontal: "left", vertical: "middle" };
+        applyBorderRange(rowIndex, rowIndex, 2, 6);
+      });
+
+      worksheet.mergeCells("G5:H6");
+      const totalLabelCell = worksheet.getCell("G5");
+      totalLabelCell.value = "Total Score";
+      totalLabelCell.font = { bold: true, color: { argb: white }, size: 12 };
+      totalLabelCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: headerBlue } };
+      totalLabelCell.alignment = { horizontal: "center", vertical: "middle" };
+      applyBorderRange(5, 6, 7, 8);
+
+      worksheet.mergeCells("G7:H9");
+      const totalScoreCell = worksheet.getCell("G7");
+      totalScoreCell.value = scoreExceeded ? "Check Score" : totalScore || 0;
+      totalScoreCell.font = { bold: true, size: 26, color: { argb: brandBlue } };
+      totalScoreCell.alignment = { horizontal: "center", vertical: "middle" };
+      totalScoreCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEDF2FA" } };
+      applyBorderRange(7, 9, 7, 8);
+
+      const criteriaHeaderRow = infoRowsStart + infoRows.length + 2;
+      const tableHeaders = [
+        ["B", "Criteria"],
+        ["C", "Category"],
+        ["D", "Scores"],
+        ["E", "Points"],
+        ["F", "Missed Guideline"],
+      ] as const;
+      tableHeaders.forEach(([col, label]) => {
+        const cell = worksheet.getCell(`${col}${criteriaHeaderRow}`);
+        cell.value = label;
+        cell.font = { bold: true, color: { argb: white } };
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: headerBlue } };
+        applyBorder(cell);
+      });
+
+      const criteriaRows = buildExcelCriteriaRows();
+      const firstDataRow = criteriaHeaderRow + 1;
+      criteriaRows.forEach((rowValues, index) => {
+        const excelRowIndex = firstDataRow + index;
+        ["B", "C", "D", "E", "F"].forEach((col, colIndex) => {
+          const cell = worksheet.getCell(`${col}${excelRowIndex}`);
+          cell.value = rowValues[colIndex] ?? "";
+          cell.alignment = {
+            horizontal: col === "C" || col === "F" ? "left" : "center",
+            vertical: "middle",
+            wrapText: true,
+          };
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: (index % 2 === 0 ? tableLight : lightBlue) },
+          };
+          if (col === "B" && typeof rowValues[0] === "string" && rowValues[0]) {
+            cell.font = { bold: true };
+          }
+          applyBorder(cell);
+        });
+      });
+
+      const commentsTitleRow = firstDataRow + criteriaRows.length + 1;
+      worksheet.mergeCells(`B${commentsTitleRow}:F${commentsTitleRow}`);
+      const commentsHeaderCell = worksheet.getCell(`B${commentsTitleRow}`);
+      commentsHeaderCell.value = "Comments";
+      commentsHeaderCell.font = { bold: true, color: { argb: white } };
+      commentsHeaderCell.alignment = { horizontal: "left", vertical: "middle" };
+      commentsHeaderCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: headerBlue } };
+      applyBorderRange(commentsTitleRow, commentsTitleRow, 2, 6);
+
+      const commentsEntries: Array<[string, string]> = [
+        ["Highlights", highlights.trim() || "N/A"],
+        ["Opportunity", commentsNote.trim() || "N/A"],
+      ];
+      commentsEntries.forEach(([label, value], index) => {
+        const rowIndex = commentsTitleRow + 1 + index;
+        const labelCell = worksheet.getCell(`B${rowIndex}`);
+        labelCell.value = label;
+        labelCell.font = { bold: true };
+        labelCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: lightBlue } };
+        labelCell.alignment = { horizontal: "left", vertical: "middle" };
+        worksheet.mergeCells(`C${rowIndex}:F${rowIndex}`);
+        const valueCell = worksheet.getCell(`C${rowIndex}`);
+        valueCell.value = value;
+        valueCell.alignment = { horizontal: "left", vertical: "top", wrapText: true };
+        valueCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: tableLight } };
+        applyBorderRange(rowIndex, rowIndex, 2, 6);
+      });
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+      const sanitizedAgent = (selectedAgent || "agent").replace(/\s+/g, "-");
+      const downloadUrl = URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = downloadUrl;
+      link.download = `score-card-${sanitizedAgent}.xlsx`;
+      link.click();
+      URL.revokeObjectURL(downloadUrl);
+    } catch (error) {
+      console.error("Failed to export Excel", error);
+      setSaveFeedback({
+        type: "error",
+        message: "Failed to export Excel. Please try again.",
+      });
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
+
   return (
-    <div className="p-10 flex flex-col  text-black w-full h-full">
+    <div className="p-10 flex flex-col  text-black w-full h-[90vh]">
       <motion.div
+        ref={scoreCardRef}
+        id={SCORE_CARD_EXPORT_ROOT_ID}
         className="border flex rounded-md overflow-hidden flex-col h-full"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 100 }}
       >
-        <div className=" font-black border-b items-center justify-center flex relative  uppercase bg-gray-400 text-2xl text-center py-3 w-full text-black">
+        <div className=" font-black  border-b items-center justify-center flex relative  uppercase bg-gray-400 text-2xl text-center py-3 w-full text-black">
           <div>QA Evaluation Page</div>
-
-          <div
-            role="button"
-            tabIndex={0}
-            aria-disabled={saveLoading}
-            className={`py-1 px-4 text-sm absolute right-5 border-green-900 transition-all border-2 font-black uppercase rounded-sm shadow-md text-white ${
-              saveLoading
-                ? "bg-green-400 cursor-not-allowed"
-                : "bg-green-600 hover:bg-green-700 cursor-pointer"
-            }`}
-            onClick={() => {
-              if (!saveLoading) {
-                void handleSave();
-              }
-            }}
-            onKeyDown={(event) => {
-              if (
-                !saveLoading &&
-                (event.key === "Enter" || event.key === " ")
-              ) {
-                event.preventDefault();
-                void handleSave();
-              }
-            }}
-          >
-            {saveLoading ? "Saving..." : "Save"}
+          <div className="flex items-center absolute right-5 h-full gap-1 justify-end text-xs">
+            {/* <button
+              type="button"
+              onClick={handleExportPdf}
+              disabled={isExportingPdf}
+              className={`font-black flex justify-center w-full text-center hover:shadow-none uppercase text-white px-4 py-2 rounded-sm shadow-md border-2 transition-all border-red-800 ${
+                isExportingPdf
+                  ? "bg-red-400 cursor-not-allowed"
+                  : "bg-red-600 cursor-pointer hover:bg-red-700"
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="size-4 mr-2"
+              >
+                <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
+                <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+              </svg>
+              {isExportingPdf ? "Exporting..." : "pdf"}
+            </button> */}
+            <button
+              type="button"
+              onClick={handleExportExcel}
+              disabled={isExportingExcel}
+              className={`font-black flex hover:shadow-none uppercase text-white px-4 py-2 rounded-sm shadow-md border-2 transition-all border-green-800 ${
+                isExportingExcel
+                  ? "bg-green-400 cursor-not-allowed"
+                  : "bg-green-600 cursor-pointer hover:bg-green-700"
+              }`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="size-4 mr-2"
+              >
+                <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
+                <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+              </svg>
+              {isExportingExcel ? "Exporting..." : "excel"}
+            </button>
+            <div
+              role="button"
+              tabIndex={0}
+              aria-disabled={saveLoading}
+              className={` px-4 py-2  border-green-900 transition-all border-2 font-black uppercase rounded-sm shadow-md text-white ${
+                saveLoading
+                  ? "bg-green-400 cursor-not-allowed"
+                  : "bg-green-600 hover:bg-green-700 cursor-pointer"
+              }`}
+              onClick={() => {
+                if (!saveLoading) {
+                  void handleSave();
+                }
+              }}
+              onKeyDown={(event) => {
+                if (
+                  !saveLoading &&
+                  (event.key === "Enter" || event.key === " ")
+                ) {
+                  event.preventDefault();
+                  void handleSave();
+                }
+              }}
+            >
+              {saveLoading ? "Saving..." : "Save"}
+            </div>
           </div>
         </div>
-        <div className="bg-gray-300 p-5 flex flex-col h-full">
+        <div className="bg-gray-300 overflow-auto p-5 flex flex-col h-full">
           {saveFeedback && (
             <div
               className={`mb-3 text-sm font-semibold ${
@@ -943,32 +1599,6 @@ const DefaultScoreCard = () => {
             </div>
 
             <div className="flex h-full gap-4">
-              <div className="flex flex-col h-full gap-2 justify-end text-xs items-end">
-                <div className="font-black flex justify-center w-full text-center hover:shadow-none uppercase bg-red-600 text-white px-4 py-2 rounded-md shadow-md border-2 transition-all border-red-800 cursor-pointer hover:bg-red-700">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="size-4 mr-2"
-                  >
-                    <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
-                    <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
-                  </svg>
-                  export to pdf
-                </div>
-                <div className="font-black flex hover:shadow-none uppercase bg-green-600 text-white px-4 py-2 rounded-md shadow-md border-2 transition-all border-green-800 cursor-pointer hover:bg-green-700">
-                  <svg
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="size-4 mr-2"
-                  >
-                    <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
-                    <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
-                  </svg>
-                  export to excel
-                </div>
-              </div>
               <div className="flex flex-col h-full">
                 <div className="px-16 text-2xl border rounded-t-md bg-gray-400 py-2 text-black font-black uppercase">
                   Total Score
@@ -1001,7 +1631,7 @@ const DefaultScoreCard = () => {
               <div>Category</div>
               <div>Scores</div>
               <div>points</div>
-              <div>missed guidlines</div>
+              <div className="truncate" >missed guidlines</div>
             </div>
 
             <motion.div
@@ -1027,6 +1657,8 @@ const DefaultScoreCard = () => {
                     <NumericInputColumn
                       rows={2}
                       className="grid grid-rows-2 w-full border-r"
+                      ids={["opening-question-1", "opening-question-2"]}
+                      onSelectionChange={handleScoringSelection}
                     />
 
                     <PointsInputColumn
@@ -1034,6 +1666,7 @@ const DefaultScoreCard = () => {
                       className="grid grid-rows-2 border-r"
                       valueMap={pointValues}
                       onChange={handlePointChange}
+                      disabledMap={disabledPoints}
                     />
 
                     <TextAreaInputColumn
@@ -1041,6 +1674,9 @@ const DefaultScoreCard = () => {
                       className="grid grid-rows-2"
                       ids={["opening-introduction", "opening-account-overview"]}
                       dropdownOptions={scoreCardDropdownOptions}
+                      valueMap={missedGuidelineValues}
+                      onValueChange={handleMissedGuidelineChange}
+                      disabledMap={disabledMissedGuidelines}
                     />
                   </div>
                 </div>
@@ -1081,6 +1717,16 @@ const DefaultScoreCard = () => {
                   <NumericInputColumn
                     rows={7}
                     className="grid grid-rows-7 border-r"
+                    ids={[
+                      "negotiation-probing",
+                      "negotiation-hierarchy",
+                      "negotiation-solidifying",
+                      "negotiation-listening",
+                      "negotiation-words",
+                      "negotiation-control",
+                      "negotiation-education",
+                    ]}
+                    onSelectionChange={handleScoringSelection}
                   />
 
                   <PointsInputColumn
@@ -1096,6 +1742,7 @@ const DefaultScoreCard = () => {
                     className="grid grid-rows-7 border-r"
                     valueMap={pointValues}
                     onChange={handlePointChange}
+                    disabledMap={disabledPoints}
                   />
 
                   <TextAreaInputColumn
@@ -1111,6 +1758,9 @@ const DefaultScoreCard = () => {
                       "negotiation-education",
                     ]}
                     dropdownOptions={scoreCardDropdownOptions}
+                    valueMap={missedGuidelineValues}
+                    onValueChange={handleMissedGuidelineChange}
+                    disabledMap={disabledMissedGuidelines}
                   />
                 </div>
               </div>
@@ -1137,6 +1787,8 @@ const DefaultScoreCard = () => {
                   <NumericInputColumn
                     rows={2}
                     className="grid grid-rows-2 border-r"
+                    ids={["closing-third-party", "closing-spiel"]}
+                    onSelectionChange={handleScoringSelection}
                   />
 
                   <PointsInputColumn
@@ -1144,6 +1796,7 @@ const DefaultScoreCard = () => {
                     className="grid grid-rows-2 border-r"
                     valueMap={pointValues}
                     onChange={handlePointChange}
+                    disabledMap={disabledPoints}
                   />
 
                   <TextAreaInputColumn
@@ -1151,6 +1804,9 @@ const DefaultScoreCard = () => {
                     className="grid grid-rows-2"
                     ids={["closing-third-party", "closing-spiel"]}
                     dropdownOptions={scoreCardDropdownOptions}
+                    valueMap={missedGuidelineValues}
+                    onValueChange={handleMissedGuidelineChange}
+                    disabledMap={disabledMissedGuidelines}
                   />
                 </div>
               </div>
@@ -1259,11 +1915,19 @@ const DefaultScoreCard = () => {
                   <div className="grid grid-cols-2 gap-2 p-2 col-span-4">
                     <div className="flex rows-span-2 gap-2">
                       <div>HighLights:</div>
-                      <input className="h-full outline-none px-2 py-1 bg-gray-200 border rounded-sm shadow-md w-full" />
+                      <input
+                        className="h-full outline-none px-2 py-1 bg-gray-200 border rounded-sm shadow-md w-full"
+                        value={highlights}
+                        onChange={(event) => setHighlights(event.target.value)}
+                      />
                     </div>
                     <div className="flex rows-span-2 gap-2">
                       <div>Comments:</div>
-                      <input className="h-full outline-none px-2 py-1 bg-gray-200 border rounded-sm shadow-md w-full" />
+                      <input
+                        className="h-full outline-none px-2 py-1 bg-gray-200 border rounded-sm shadow-md w-full"
+                        value={commentsNote}
+                        onChange={(event) => setCommentsNote(event.target.value)}
+                      />
                     </div>
                   </div>
                 </div>

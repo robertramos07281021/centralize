@@ -4,10 +4,18 @@ import { Users } from "../../middleware/types";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { FaDownload } from "react-icons/fa6";
 import ReportsView, { Search } from "./ReportsView";
+import type { DoughnutExportPayload } from "./CallDoughnut";
 import { useSelector } from "react-redux";
 import { motion, AnimatePresence } from "framer-motion";
 import { RootState } from "../../redux/store";
 import ReportsViewPage from "./ReportsViewPage";
+
+const formatDate = (value: Date) => {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 type DispositionType = {
   id: string;
@@ -90,13 +98,20 @@ const BacklogManagementView = () => {
   const [searchAgent, setSearchAgent] = useState<string>("");
   const userRef = useRef<HTMLDivElement | null>(null);
   const bucketRef = useRef<HTMLDivElement | null>(null);
+  const [doughnutExportData, setDoughnutExportData] =
+    useState<DoughnutExportPayload | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   // const [reportView, setReportView] = useState<boolean>(false);
   const { data: disposition } = useQuery<{
     getDispositionTypes: DispositionType[];
   }>(GET_DISPOSITION_TYPES);
-  const [dateDistance, setDateDistance] = useState({
-    from: "",
-    to: "",
+  const [dateDistance, setDateDistance] = useState(() => {
+    const today = new Date();
+    const formatted = formatDate(today);
+    return {
+      from: formatted,
+      to: formatted,
+    };
   });
   let bucketsOfCallfile = [];
   if (Boolean(searchAgent)) {
@@ -200,6 +215,10 @@ const BacklogManagementView = () => {
     setAgentDropdown(false);
   }, [setBucketDropdown, setAgentDropdown, bucketDropdown]);
 
+  const handleDoughnutData = useCallback((payload: DoughnutExportPayload) => {
+    setDoughnutExportData(payload);
+  }, []);
+
   const yourBucket = Boolean(userLogged && userLogged?.buckets.length > 1);
 
   const SearchFilter: Search = {
@@ -209,6 +228,63 @@ const BacklogManagementView = () => {
     dateDistance: dateDistance,
     callfile: callfile?.find((x) => x.name === selectedCallfile)?._id || "",
   };
+
+  const handleExport = useCallback(async () => {
+    if (!doughnutExportData || doughnutExportData.dispositions.length === 0) {
+      window.alert("No call doughnut data available yet. Run a report first.");
+      return;
+    }
+    try {
+      setIsExporting(true);
+      const { utils, writeFile } = await import("xlsx");
+      const breakdownSheet = [
+        ["Code", "Name", "Sentiment", "Count", "Percentage"],
+        ...doughnutExportData.dispositions.map((row) => [
+          row.code,
+          row.name,
+          row.sentiment,
+          row.count,
+          `${row.percentage.toFixed(2)}%`,
+        ]),
+      ];
+      const summarySheet = [
+        ["Label", "Count", "Percentage"],
+        ...doughnutExportData.summary.map((row) => [
+          row.label,
+          row.count,
+          `${row.percentage.toFixed(2)}%`,
+        ]),
+        ["Total Accounts", doughnutExportData.totalAccounts, "100%"],
+      ];
+      const workbook = utils.book_new();
+      utils.book_append_sheet(
+        workbook,
+        utils.aoa_to_sheet(breakdownSheet),
+        "Disposition Breakdown"
+      );
+      utils.book_append_sheet(
+        workbook,
+        utils.aoa_to_sheet(summarySheet),
+        "Call Doughnut Summary"
+      );
+
+      const identifier = (selectedCallfile || searchAgent || searchBucket || "Report")
+        .replace(/\s+/g, "_")
+        .replace(/[^a-zA-Z0-9_-]/g, "");
+      const timestamp = new Date().toISOString().replace(/[:]/g, "-").slice(0, 19);
+      writeFile(workbook, `CallDoughnut_${identifier || "Report"}_${timestamp}.xlsx`);
+    } catch (error) {
+      console.error("Failed to export Call Doughnut data", error);
+      window.alert("Unable to export the report right now. Please try again.");
+    } finally {
+      setIsExporting(false);
+    }
+  }, [
+    doughnutExportData,
+    searchAgent,
+    searchBucket,
+    selectedCallfile,
+  ]);
 
   return (
     <div
@@ -224,7 +300,7 @@ const BacklogManagementView = () => {
     >
       <div className="h-full px-5 py-10 flex flex-col justify-center">
         <motion.div
-          className="bg-gray-200 rounded-md border-gray-400 shadow-md border-2 py-5 px-1"
+          className="bg-gray-200 h-full flex flex-col rounded-md border-gray-400 shadow-md border-2 py-5 px-1"
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
@@ -380,11 +456,11 @@ const BacklogManagementView = () => {
               <div className="flex font-black uppercase items-center text-slate-500 py-2 text-center justify-center">
                 Disposition
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-1 max-h-50 items-center text-slate-500 gap-y-1 border-black rounded-sm shadow-sm p-2 justify-center border overflow-y-auto">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-1 max-h-80 items-center text-slate-500 gap-y-1 border-black rounded-sm shadow-sm p-2 justify-center border overflow-y-auto">
                 {disposition?.getDispositionTypes?.map((dispoTypes) => (
                   <label
                     key={dispoTypes.id}
-                    className=" text-[0.6rem] bg-gray-300 hover:bg-gray-400 h-full overflow-hidden transition-all cursor-pointer p-2 rounded-sm border hover:text-white border-black lg:text-lg lg:whitespace-nowrap font-black items-center flex gap-2"
+                    className=" text-[0.6rem] bg-gray-300 hover:bg-gray-400 h-full overflow-hidden transition-all cursor-pointer p-2 rounded-sm border hover:text-white border-black lg:text-sm font-black items-center flex gap-2"
                   >
                     <input
                       type="checkbox"
@@ -419,7 +495,7 @@ const BacklogManagementView = () => {
                       }
                     }}
                   />
-                  <span className="uppercase font-black text-[0.6rem] lg:text-xl whitespace-nowrap">
+                  <span className="uppercase font-black text-[0.6rem] lg:text-sm whitespace-nowrap">
                     Select All
                   </span>
                 </label>
@@ -468,16 +544,21 @@ const BacklogManagementView = () => {
             <div className="flex gap-5 mt-2 justify-end">
               <button
                 type="button"
-                className="bg-blue-500 border-2 border-blue-800 transition-all font-black uppercase hover:bg-blue-600 focus:outline-none text-white  focus:ring-4 focus:ring-blue-300 rounded-lg text-sm px-5 py-2.5 cursor-pointer flex gap-2 items-center justify-center"
+                onClick={handleExport}
+                disabled={isExporting}
+                className="bg-blue-500 border-2 border-blue-800 transition-all font-black uppercase hover:bg-blue-600 focus:outline-none text-white focus:ring-4 focus:ring-blue-300 rounded-lg text-sm px-5 py-2.5 cursor-pointer flex gap-2 items-center justify-center disabled:opacity-60 disabled:cursor-not-allowed"
               >
-                <span>Export</span>
-                <FaDownload />
+                <span>{isExporting ? "Exporting..." : "Export"}</span>
+                <FaDownload className={isExporting ? "animate-pulse" : ""} />
               </button>
             </div>
           </div>
         </motion.div>
       </div>
-      <ReportsView search={SearchFilter} />
+      <ReportsView
+        search={SearchFilter}
+        onDoughnutDataReady={handleDoughnutData}
+      />
       <AnimatePresence>
         {isReport && (
           <motion.div

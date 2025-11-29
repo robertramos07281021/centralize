@@ -1,7 +1,7 @@
 import { useQuery } from "@apollo/client";
 import { ChartData, ChartOptions } from "chart.js";
 import gql from "graphql-tag";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Doughnut } from "react-chartjs-2";
 import { motion } from "framer-motion";
 
@@ -31,11 +31,48 @@ type DispositionType = {
 type ComponentsProps = {
   totalAccounts: number;
   dispoData: DispositionType[];
+  selectedDispositions: string[];
+  onDataPrepared?: (payload: DoughnutExportPayload) => void;
+};
+
+const positiveDispositionCodes = [
+  "PTP",
+  "FFUP",
+  "UNEG",
+  "RTP",
+  "PAID",
+  "DISP",
+  "LM",
+  "HUP",
+  "WN",
+  "RPCCB",
+];
+
+export type DoughnutDispositionRow = {
+  code: string;
+  name: string;
+  count: number;
+  percentage: number;
+  sentiment: "Positive" | "Negative";
+};
+
+export type DoughnutSummaryRow = {
+  label: string;
+  count: number;
+  percentage: number;
+};
+
+export type DoughnutExportPayload = {
+  totalAccounts: number;
+  dispositions: DoughnutDispositionRow[];
+  summary: DoughnutSummaryRow[];
 };
 
 const CallDoughnut: React.FC<ComponentsProps> = ({
   totalAccounts,
   dispoData,
+  selectedDispositions,
+  onDataPrepared,
 }) => {
   const { data: disposition } = useQuery<{
     getDispositionTypes: DispositionType[];
@@ -44,15 +81,39 @@ const CallDoughnut: React.FC<ComponentsProps> = ({
     Record<string, number>
   >({});
 
+  const selectionSet = useMemo(() => {
+    const normalized = (selectedDispositions || [])
+      .map((entry) => entry?.toString().trim().toUpperCase())
+      .filter(Boolean);
+    const set = new Set(normalized);
+    if (disposition?.getDispositionTypes?.length) {
+      disposition.getDispositionTypes.forEach((type) => {
+        const nameKey = type.name?.toString().trim().toUpperCase();
+        const codeKey = type.code?.toString().trim().toUpperCase();
+        if (nameKey && normalized.includes(nameKey) && codeKey) {
+          set.add(codeKey);
+        }
+      });
+    }
+    return set;
+  }, [disposition, selectedDispositions]);
+
+  const filteredDispoData = useMemo(() => {
+    if (!selectionSet.size) return dispoData;
+    return dispoData.filter((item) => {
+      const nameKey = (item.name || "").trim().toUpperCase();
+      const codeKey = (item.code || "").trim().toUpperCase();
+      return selectionSet.has(nameKey) || selectionSet.has(codeKey);
+    });
+  }, [dispoData, selectionSet]);
+
   useEffect(() => {
     const reportsDispo: { [key: string]: number } = {};
-    if (dispoData) {
-      dispoData?.forEach((element: DispositionType) => {
-        reportsDispo[element.code] = element.count ? Number(element.count) : 0;
-      });
-      setNewReportsDispo(reportsDispo);
-    }
-  }, [dispoData]);
+    filteredDispoData?.forEach((element: DispositionType) => {
+      reportsDispo[element.code] = element.count ? Number(element.count) : 0;
+    });
+    setNewReportsDispo(reportsDispo);
+  }, [filteredDispoData]);
 
   useEffect(() => {
     if (disposition?.getDispositionTypes) {
@@ -61,56 +122,39 @@ const CallDoughnut: React.FC<ComponentsProps> = ({
         count: Number(newReportsDispo[e.code])
           ? Number(newReportsDispo[e.code])
           : 0,
-        color: positive.includes(e.code)
+        color: positiveDispositionCodes.includes(e.code)
           ? `oklch(62.7% 0.194 149.214)`
           : `oklch(63.7% 0.237 25.331)`,
       }));
       setDispositionData(updatedData);
     }
   }, [disposition, newReportsDispo]);
-
-  const positive = [
-    "PTP",
-    "FFUP",
-    "UNEG",
-    "RTP",
-    "PAID",
-    "DISP",
-    "LM",
-    "HUP",
-    "WN",
-    "RPCCB",
-  ];
   const [dispositionData, setDispositionData] = useState<Dispositions[]>([]);
 
-  const positiveCalls =
-    dispoData && dispoData.length > 0
-      ? dispoData?.filter((x) => positive.includes(x.code))
-      : [];
-  const negativeCalls =
-    dispoData && dispoData?.length > 0
-      ? dispoData?.filter((x) => !positive.includes(x.code))
-      : [];
+  const positiveCalls = filteredDispoData.filter((x) =>
+    positiveDispositionCodes.includes(x.code)
+  );
+  const negativeCalls = filteredDispoData.filter(
+    (x) => !positiveDispositionCodes.includes(x.code)
+  );
 
-  const filteredPositive =
-    positiveCalls.length > 0
-      ? positiveCalls?.map((y) => y.count)?.reduce((t, v) => t + v)
-      : [];
-  const filteredNegative =
-    negativeCalls.length > 0
-      ? negativeCalls?.map((y) => y.count)?.reduce((t, v) => t + v)
-      : [];
+  const sumCounts = (items: DispositionType[]) =>
+    items.reduce((total, item) => total + Number(item.count ?? 0), 0);
 
-  const totalPositiveCalls =
-    dispoData && dispoData.length > 0
-      ? dispoData.map((x) => x.count)?.reduce((t, v) => t + v)
-      : 0;
+  const filteredPositive = sumCounts(positiveCalls);
+  const filteredNegative = sumCounts(negativeCalls);
+  const totalDispositionCounts = sumCounts(filteredDispoData);
+
+  const unconnectedCalls = Math.max(
+    totalAccounts - totalDispositionCounts,
+    0
+  );
 
   const dataLabels = ["Negative Calls", "Positive Calls", "Unconnected Calls"];
   const dataCount = [
-    isNaN(Number(filteredNegative)) ? 0 : Number(filteredNegative),
-    isNaN(Number(filteredPositive)) ? 0 : Number(filteredPositive),
-    Number(totalAccounts - Number(totalPositiveCalls)),
+    filteredNegative,
+    filteredPositive,
+    unconnectedCalls,
   ];
   const dataColor = [
     `oklch(63.7% 0.237 25.331)`,
@@ -162,7 +206,7 @@ const CallDoughnut: React.FC<ComponentsProps> = ({
   const dispositionCount = useCallback(
     (code: string) => {
       const newFilter = dispositionData?.filter((e) => e.code === code);
-      return newFilter[0]?.count;
+      return newFilter[0]?.count ?? 0;
     },
     [dispositionData]
   );
@@ -170,16 +214,74 @@ const CallDoughnut: React.FC<ComponentsProps> = ({
   const percentageOfDispo = useCallback(
     (code: string) => {
       const newFilter = dispositionData.filter((e) => e.code === code);
-      return (newFilter[0]?.count / totalAccounts) * 100;
+      if (!totalAccounts) return 0;
+      return ((newFilter[0]?.count ?? 0) / totalAccounts) * 100;
     },
-    [dispositionData]
+    [dispositionData, totalAccounts]
   );
+
+  const exportRows = useMemo(() => {
+    return filteredDispoData.map((item) => {
+      const count = Number(item.count ?? 0);
+      const percentage = totalAccounts ? (count / totalAccounts) * 100 : 0;
+      return {
+        code: item.code,
+        name: item.name,
+        count,
+        percentage,
+        sentiment: positiveDispositionCodes.includes(item.code)
+          ? "Positive"
+          : "Negative",
+      } satisfies DoughnutDispositionRow;
+    });
+  }, [filteredDispoData, totalAccounts]);
+
+  const summaryRows = useMemo(() => {
+    const safeTotal = totalAccounts || 0;
+    const toPercentage = (value: number) =>
+      safeTotal ? (value / safeTotal) * 100 : 0;
+    return [
+      {
+        label: "Negative Calls",
+        count: filteredNegative,
+        percentage: toPercentage(filteredNegative),
+      },
+      {
+        label: "Positive Calls",
+        count: filteredPositive,
+        percentage: toPercentage(filteredPositive),
+      },
+      {
+        label: "Unconnected Calls",
+        count: unconnectedCalls,
+        percentage: toPercentage(unconnectedCalls),
+      },
+    ] satisfies DoughnutSummaryRow[];
+  }, [filteredNegative, filteredPositive, totalAccounts, unconnectedCalls]);
+
+  const exportPayload = useMemo(() => {
+    return {
+      totalAccounts,
+      dispositions: exportRows,
+      summary: summaryRows,
+    } satisfies DoughnutExportPayload;
+  }, [exportRows, summaryRows, totalAccounts]);
+
+  const lastPayloadRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    if (!onDataPrepared) return;
+    const serialized = JSON.stringify(exportPayload);
+    if (lastPayloadRef.current === serialized) return;
+    lastPayloadRef.current = serialized;
+    onDataPrepared(exportPayload);
+  }, [exportPayload, onDataPrepared]);
 
   return (
     <div className="flex gap-3 justify-between w-full h-full pr-5">
       <div className="w-full flex justify-center item-center flex-col ">
         <div className="flex flex-col justify-center h-full">
-          {dispoData.map((dd, index) => {
+          {filteredDispoData.map((dd, index) => {
             const findDispotype = disposition?.getDispositionTypes.find(
               (x) => x.code === dd.code
             );
@@ -194,7 +296,7 @@ const CallDoughnut: React.FC<ComponentsProps> = ({
                 <div
                   style={{
                     backgroundColor: `${
-                      positive.includes(dd?.code)
+                        positiveDispositionCodes.includes(dd?.code)
                         ? `oklch(40.7% 0.194 149.214)`
                         : `oklch(50.7% 0.237 25.331)`
                     }`,
@@ -209,7 +311,7 @@ const CallDoughnut: React.FC<ComponentsProps> = ({
                 <div
                   style={{
                     backgroundColor: `${
-                      positive.includes(dd?.code)
+                        positiveDispositionCodes.includes(dd?.code)
                         ? `oklch(40.7% 0.194 149.214)`
                         : `oklch(50.7% 0.237 25.331)`
                     }`,

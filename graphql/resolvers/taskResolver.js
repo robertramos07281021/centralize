@@ -337,7 +337,7 @@ const taskResolver = {
     },
     deselectTask: async (_, { id }, { user, PUBSUB_EVENTS, pubsub }) => {
       try {
-        if (!user) throw new CustomError("Unauthorized", 401);
+        if (!user) throw new CustomError("DeselectTask: Unauthorized", 401);
         const ca = await CustomerAccount.findByIdAndUpdate(
           id,
           { $set: { on_hands: false } },

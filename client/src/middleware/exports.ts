@@ -286,6 +286,11 @@ export const accountsNavbar: { [key: string]: links[] } = {
       tabs: null,
     },
     {
+      name: "Agent Recordings",
+      link: "/qasv-recordings",
+      tabs: null,
+    },
+    {
       name: "Logs",
       link: null,
       tabs: [
@@ -298,6 +303,8 @@ export const accountsNavbar: { [key: string]: links[] } = {
           link: "/qasv-call-all-agent-logs",
         },
       ],
+
+      
     },
     {
       name: "Reports",
@@ -318,6 +325,10 @@ export const accountsNavbar: { [key: string]: links[] } = {
       link: null,
       tabs: [
         {
+          name: "Score Card Overview",
+          link: "/scorecard-overview",
+        },
+        {
           name: "Default Score Card",
           link: "/default-score-card",
         },
@@ -334,11 +345,6 @@ export const accountsNavbar: { [key: string]: links[] } = {
           link: "/ub-mortgage-score-card",
         },
       ],
-    },
-    {
-      name: "Guidelines",
-      link: "/guidlines",
-      tabs: null,
     },
   ],
 };
@@ -357,6 +363,7 @@ export enum BreakEnum {
   PROD = "PROD",
   WELCOME = "WELCOME",
   REPORT = "REPORT",
+  LOGOUT = 'LOGOUT'
 }
 
 type Breaks = {

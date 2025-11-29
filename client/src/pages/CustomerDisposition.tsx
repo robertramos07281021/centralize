@@ -1011,7 +1011,7 @@ const CustomerDisposition = () => {
         }
       }
     }, 1000);
-  }, [selectedCustomer, search, isAutoDialData?.isAutoDial]);
+  }, [selectedCustomer, search, isAutoDialData?.isAutoDial, breakValue]);
 
   // console.log(data?.checkIfAgentIsInline)
   // console.log(data?.checkIfAgentIsInline);
@@ -1527,7 +1527,7 @@ const CustomerDisposition = () => {
                           }}
                         >
                           <div className="bg-purple-600  text-white cursor-pointer border-purple-950 hover:bg-purple-700 hover:scale-105 text-sm transition-all px-3 py-1 rounded-md border-2 shadow-md font-black uppercase">
-                            Dial{" "}
+                            Keypad{" "}
                           </div>{" "}
                         </motion.div>
                       </div>
@@ -1699,7 +1699,7 @@ const CustomerDisposition = () => {
                         : "bg-gray-100 border-gray-900"
                     }  p-2 border-2  rounded-full h-full w-full shadow-md shadow-black/20 `}
                   >
-                    <div className={`   transition-all duration-300 `}>
+                    <div className={`transition-all duration-300 `}>
                       <div className="w-full relative h-full flex justify-center items-center">
                         {/* Frequency */}
                         <AnimatePresence>

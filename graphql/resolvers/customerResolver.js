@@ -1180,7 +1180,7 @@ const customerResolver = {
           });
         }
         if (newCallfile.createdAt < today) throw new CustomError("E11000", 401);
-
+        
         const customerDocs = input.map((e) => ({
           fullName: e.customer_name,
           platform_customer_id: e.platform_user_id || null,

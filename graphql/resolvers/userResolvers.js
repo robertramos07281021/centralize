@@ -514,7 +514,7 @@ const userResolvers = {
     ) => {
       try {
         const user = await User.findOne({ username });
-
+        console.log('hello')
         if (!user) throw new CustomError("Invalid", 401);
 
         if (user.isLock) throw new CustomError("Lock", 401);
@@ -554,20 +554,16 @@ const userResolvers = {
         todayEnd.setHours(23, 59, 59, 999);
 
         const [findProd, firstProd] = await Promise.all([
-          Production.find({
-            $and: [
-              { user: user._id },
-              { createdAt: { $gte: todayStart, $lt: todayEnd } },
-            ],
+          Production.findOne({
+            user: user._id,
+            createdAt: { $gte: todayStart, $lt: todayEnd },
           }),
           Production.find({ user: new mongoose.Types.ObjectId(user._id) }).sort(
             { createdAt: 1 }
           ),
         ]);
 
-        const prodLength = findProd.length <= 0;
-
-        if (prodLength && user.type === "AGENT") {
+        if (!findProd && user.type === "AGENT") {
           const today_prod =
             firstProd.length > 0
               ? firstProd[0]?.target_today + user.default_target
@@ -578,17 +574,32 @@ const userResolvers = {
           });
         }
 
-        const existingProd =
-          findProd[0]?.prod_history
-            ?.filter((e) => e.existing === true)
-            .map((e) => e.type)
-            .toString() || "WELCOME";
+        let type = null;
 
-        const status = !prodLength ? existingProd : "WELCOME";
+        const dateToday = new Date();
 
-        const start = findProd[0]?.prod_history?.filter(
-          (e) => e.existing === true
-        );
+        if (!findProd) {
+          type = "WELCOME";
+        } else {
+          type = "PROD";
+          const existingProd = findProd?.prod_history?.find(
+            (e) => e.existing === true
+          );
+          if (existingProd.type === "LOGOUT") {
+            findProd?.prod_history.forEach((x) => {
+              if (x.existing) {
+                x.end = dateToday;
+                x.existing = false;
+              }
+            });
+            findProd.prod_history.push({
+              type: "PROD",
+              existing: true,
+              start: dateToday,
+            });
+            await findProd.save();
+          }
+        }
 
         user.attempt_login = 0;
         user.isOnline = true;
@@ -596,10 +607,8 @@ const userResolvers = {
 
         return {
           user: user,
-          prodStatus: status,
-          start: start
-            ? start?.map((e) => e.start).toString()
-            : new Date().toString(),
+          prodStatus: type,
+          start: dateToday,
           token,
         };
       } catch (error) {
@@ -608,7 +617,7 @@ const userResolvers = {
     },
     logout: async (_, __, { user, res }) => {
       try {
-        if (!user) throw new CustomError("Unauthorized", 401);
+        if (!user) throw new CustomError("Logout: Unauthorized", 401);
 
         const findUser = await User.findByIdAndUpdate(
           user._id,
@@ -621,6 +630,34 @@ const userResolvers = {
         if (!findUser) {
           throw CustomError("User not found", 404);
         }
+
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+
+        const userProd = await Production.findOne({
+          user: findUser._id,
+          createdAt: { $gt: start, $lte: end },
+        });
+
+        const dateToday = new Date();
+
+        userProd.prod_history.forEach((x) => {
+          if (x.existing === true) {
+            x.existing = false;
+            x.end = dateToday;
+          }
+        });
+
+        userProd.prod_history.push({
+          type: "LOGOUT",
+          start: dateToday,
+          existing: true,
+        });
+
+        await userProd.save();
 
         res.clearCookie("connect.sid");
         res.clearCookie("token");
@@ -748,6 +785,34 @@ const userResolvers = {
           throw CustomError("User not found", 404);
         }
 
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+
+        const userProd = await Production.findOne({
+          user: findUser._id,
+          createdAt: { $gt: start, $lte: end },
+        });
+
+        const dateToday = new Date();
+
+        userProd.prod_history.forEach((x) => {
+          if (x.existing === true) {
+            x.existing = false;
+            x.end = dateToday;
+          }
+        });
+
+        userProd.prod_history.push({
+          type: "LOGOUT",
+          start: dateToday,
+          existing: true,
+        });
+
+        await userProd.save();
+
         res.clearCookie("connect.sid");
         res.clearCookie("token");
 
@@ -810,6 +875,35 @@ const userResolvers = {
         });
 
         if (!logoutUser) throw new CustomError("User not found", 404);
+
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+
+        const userProd = await Production.findOne({
+          user: logoutUser._id,
+          createdAt: { $gt: start, $lte: end },
+        });
+
+        const dateToday = new Date();
+
+        userProd.prod_history.forEach((x) => {
+          if (x.existing === true) {
+            x.existing = false;
+            x.end = dateToday;
+          }
+        });
+
+        userProd.prod_history.push({
+          type: "LOGOUT",
+          start: dateToday,
+          existing: true,
+        });
+
+        await userProd.save();
+
 
         const bucket =
           userBuckets > 0

@@ -218,7 +218,11 @@ const ReportsViewPage: React.FC<Props> = ({ search }) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", duration: 1 }}
       >
-        <CallDoughnut totalAccounts={totalAccounts} dispoData={callMethod} />
+        <CallDoughnut
+          totalAccounts={totalAccounts}
+          dispoData={callMethod}
+          selectedDispositions={search.selectedDisposition}
+        />
         <div className="grid grid-cols-2 gap-5 py-5">
           
           {callMethod.length > 0 && (

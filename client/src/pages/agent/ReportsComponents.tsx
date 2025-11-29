@@ -30,10 +30,11 @@ const REPORT = gql`
 `;
 
 const AGENT_TOTAL_DISPO = gql`
-  query getAgentTotalDispositions {
-    getAgentTotalDispositions {
+  query getAgentTotalDispositions($from: String, $to: String) {
+    getAgentTotalDispositions(from: $from, to: $to) {
       count
       dispotype
+      createdAt
     }
   }
 `;
@@ -51,6 +52,7 @@ const DISPO_TYPES = gql`
 type AgentTotalDispo = {
   count: number;
   dispotype: string;
+  createdAt?: string;
 };
 
 type Dispotype = {
@@ -97,8 +99,13 @@ const ReportsComponents = forwardRef<
   const { data: agentTotalDispoData } = useQuery<{
     getAgentTotalDispositions: AgentTotalDispo[];
   }>(AGENT_TOTAL_DISPO, {
+    variables: {
+      from: from || null,
+      to: to || null,
+    },
     notifyOnNetworkStatusChange: true,
   });
+
 
   const { data: dispotypeData } = useQuery<{
     getDispositionTypes: DispositionType[];
@@ -218,12 +225,22 @@ const ReportsComponents = forwardRef<
     }
   }, [productionReportData]);
 
+  const serializedDispositions = useMemo(
+    () => dispositions.join(","),
+    [dispositions]
+  );
+
+  const refetchVariables = useMemo(
+    () => ({ dispositions, from, to }),
+    [serializedDispositions, from, to]
+  );
+
   useEffect(() => {
     const refetching = async () => {
-      await refetch();
+      await refetch(refetchVariables);
     };
     refetching();
-  }, [dispositions.length, from, to, refetch]);
+  }, [refetchVariables, refetch]);
 
   const data: ChartData<"doughnut"> = {
     labels: doughnutData.labels,
@@ -287,7 +304,7 @@ const ReportsComponents = forwardRef<
           {labels.map((e, index) => (
             <div
               key={index}
-              className="text-black hover:bg-gray-500 text-xs last:border-0 font-black uppercase "
+              className="text-black  text-xs last:border-0 font-black uppercase "
             >
               {e}
             </div>
@@ -309,7 +326,7 @@ const ReportsComponents = forwardRef<
 
             return (
               <div
-                className="grid grid-cols-3 gap-2 odd:bg-gray-200 even:bg-gray-100  py-2 px-3 border-b border-gray-300 text-xs font-medium text-black cursor-default"
+                className="grid grid-cols-3 gap-2 hover:bg-gray-300  odd:bg-gray-200 even:bg-gray-100  py-2 px-3 border-b border-gray-300 text-xs font-medium text-black cursor-default"
                 key={e.dispotype}
               >
                 <div className="truncate" title={findDispo?.name}>

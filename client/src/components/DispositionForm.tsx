@@ -209,6 +209,8 @@ enum PaymentMethod {
   CEBUANA_LHUILLIER = "Cebuana Lhuillier",
   PALAWAN = "Palawan",
   BANK_OVERTHECOUNTER = "Bank (Over The Counter)",
+  LAZADA_APP = "Lazada App",
+  ATOME_APP = "Atome App",
 }
 
 enum DialerCode {

@@ -455,7 +455,7 @@ const AccountInfo = forwardRef<
         </div>
       )}
 
-      <div className="flex flex-col w-full">
+      <div className="flex flex-col w-full gap-3">
         <div className="absolute top-15 left-5 z-30">
           <motion.div initial={{ scale: 0.5 }} animate={{ scale: 1 }}>
             {selectedCustomer && (
@@ -1080,7 +1080,7 @@ const AccountInfo = forwardRef<
 
             return (
               <motion.div
-                className=" w-full flex flex-col mt-2 lg:mt-0 lg:ml-3 justify-center gap-5 text-slate-800"
+                className=" w-full flex flex-col mt-2 lg:mt-0 justify-center gap-5 text-slate-800"
                 initial={{ x: 20, opacity: 0 }}
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.1 }}

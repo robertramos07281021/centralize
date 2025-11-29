@@ -314,19 +314,48 @@ const productionResolver = {
         throw new CustomError(error.message, 500);
       }
     },
-    getAgentTotalDispositions: async (_, __, { user }) => {
+    getAgentTotalDispositions: async (_, { from, to }, { user }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
-        const year = new Date().getFullYear();
-        const month = new Date().getMonth();
+        const now = new Date();
+        const year = now.getFullYear();
+        const month = now.getMonth();
         const firstDay = new Date(year, month, 1);
+        firstDay.setHours(0, 0, 0, 0);
         const lastDay = new Date(year, month + 1, 0);
+        lastDay.setHours(23, 59, 59, 999);
+
+        const hasCustomRange = Boolean(from || to);
+        let startDate = from ? new Date(from) : null;
+        let endDate = to ? new Date(to) : null;
+
+        if (startDate) {
+          startDate.setHours(0, 0, 0, 0);
+        }
+
+        if (endDate) {
+          endDate.setHours(23, 59, 59, 999);
+        }
+
+        if (hasCustomRange) {
+          if (!startDate && endDate) {
+            startDate = new Date(endDate);
+            startDate.setHours(0, 0, 0, 0);
+          }
+          if (startDate && !endDate) {
+            endDate = new Date(startDate);
+            endDate.setHours(23, 59, 59, 999);
+          }
+        } else {
+          startDate = firstDay;
+          endDate = lastDay;
+        }
 
         const res = await Disposition.aggregate([
           {
             $match: {
               user: user._id,
-              createdAt: { $gte: firstDay, $lt: lastDay },
+              createdAt: { $gte: startDate, $lte: endDate },
               selectivesDispo: false,
             },
           },
@@ -345,13 +374,15 @@ const productionResolver = {
             $group: {
               _id: "$dispotype._id",
               count: { $sum: 1 },
+              latestCreatedAt: { $max: "$createdAt" },
             },
           },
           {
             $project: {
-              _id: null,
+              _id: 0,
               dispotype: "$_id",
               count: 1,
+              createdAt: "$latestCreatedAt",
             },
           },
           {
@@ -360,6 +391,8 @@ const productionResolver = {
             },
           },
         ]);
+
+        console.log(res)
         return res;
       } catch (error) {
         console.log(error);
@@ -496,44 +529,46 @@ const productionResolver = {
     ProductionReport: async (_, { dispositions, from, to }, { user }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
-        const startFrom = new Date(from);
-        startFrom.setHours(0, 0, 0, 0);
-
-        const endTo = new Date(to);
-        endTo.setHours(23, 59, 59, 999);
-
         const dispositionFilter =
           dispositions.length > 0
             ? { $in: dispositions.map((e) => new mongoose.Types.ObjectId(e)) }
             : { $ne: null };
 
-        let objectMatch = {
-          user: new mongoose.Types.ObjectId(user._id),
-          disposition: dispositionFilter,
+        const buildDayRange = (dateValue) => {
+          const start = new Date(dateValue);
+          start.setHours(0, 0, 0, 0);
+          const end = new Date(dateValue);
+          end.setHours(23, 59, 59, 999);
+          return { start, end };
         };
 
-        let totalDispositionDate = {};
+        let dateFilter = null;
+        const hasFrom = Boolean(from);
+        const hasTo = Boolean(to);
 
-        if (from && to) {
-          objectMatch["createdAt"] = { $gte: startFrom, $lt: endTo };
-          totalDispositionDate["$gte"] = startFrom;
-          totalDispositionDate["$lt"] = endTo;
+        if (hasFrom && hasTo) {
+          const startRange = new Date(from);
+          startRange.setHours(0, 0, 0, 0);
+          const endRange = new Date(to);
+          endRange.setHours(23, 59, 59, 999);
+          if (startRange > endRange) {
+            const temp = new Date(startRange);
+            startRange.setTime(endRange.getTime());
+            endRange.setTime(temp.getTime());
+          }
+          dateFilter = { $gte: startRange, $lte: endRange };
+        } else if (hasFrom || hasTo) {
+          const { start, end } = buildDayRange(hasFrom ? from : to);
+          dateFilter = { $gte: start, $lte: end };
         }
 
-        if (from || to) {
-          const startDate = new Date(from || to);
-          startDate.setHours(0, 0, 0, 0);
+        const objectMatch = {
+          user: new mongoose.Types.ObjectId(user._id),
+          disposition: dispositionFilter,
+          ...(dateFilter ? { createdAt: dateFilter } : {}),
+        };
 
-          const endDate = new Date(from || to);
-          endDate.setHours(23, 59, 59, 999);
-
-          objectMatch["createdAt"] = { $gte: startDate, $lt: endDate };
-          totalDispositionDate["$gte"] = startDate;
-          totalDispositionDate["$lt"] = endDate;
-        }
-
-        const filterAllCreatedAt =
-          !from && !to ? { $ne: null } : totalDispositionDate;
+        const filterAllCreatedAt = dateFilter || { $ne: null };
 
         const totalDisposition = await Disposition.countDocuments({
           user: new mongoose.Types.ObjectId(user._id),
@@ -635,15 +670,26 @@ const productionResolver = {
     getAllAgentProductions: async (_, { bucketId, from, to }) => {
       try {
         if (!bucketId) return null;
-
+      
         let startOfTheDay = null;
         let endOfTheDay = null;
         if (!from && !to) {
-          const start = new Date("11-19-2025");
+          const start = new Date('11-19-2025');
           start.setHours(0, 0, 0, 0);
           startOfTheDay = start;
 
-          const end = new Date("11-19-2025");
+          const end = new Date('11-19-2025');
+
+          end.setHours(23, 59, 59, 999);
+          endOfTheDay = end;
+        } else if(!from && to || !to && from) {
+          const date = to || from
+
+          const start = new Date(date);
+          start.setHours(0, 0, 0, 0);
+          startOfTheDay = start;
+
+          const end = new Date(date);
 
           end.setHours(23, 59, 59, 999);
           endOfTheDay = end;
@@ -682,21 +728,24 @@ const productionResolver = {
             },
           },
         ]);
-
-        const newProduction = production.map((prod) => {
+  
+        const newProduction = production.map(async(prod) => {
+         
           const findUser = disposition.find(
             (x) => x._id.toString() === prod.user.toString()
           );
 
+          
           if (!findUser) {
             return { ...prod, total: 0, average: 0, longest: 0 };
           }
-
+          
           const callTimes = findUser.dispositions
-            .map((fileName) => {
-              const parts = fileName.split(".mp3");
-              return parts.length > 1 ? Number(parts[1]) : 0;
-            })
+          .map((fileName) => {
+            const parts = fileName.split(".mp3_");
+            return parts.length > 1 ? Number(parts[1]) : 0;
+          })
+          const user = await User.findById(findUser._id)
             .filter((x) => !isNaN(x));
 
           const totalCalls = callTimes.length;
@@ -704,10 +753,14 @@ const productionResolver = {
             totalCalls > 0
               ? callTimes.reduce((t, v) => t + v, 0) / totalCalls
               : 0;
+        
+          
           const longest = totalCalls > 0 ? Math.max(...callTimes) : 0;
-          return { ...prod, total: totalCalls, average, longest };
+
+          return { ...prod, user , total: totalCalls, average, longest };
         });
 
+        
         return newProduction;
       } catch (error) {
         console.log(error);

@@ -13,6 +13,8 @@ type DispositionType = {
   name: string;
   code: string;
 };
+
+
 const GET_DISPOSITION_TYPES = gql`
   query getDispositionTypes {
     getDispositionTypes {
@@ -22,6 +24,13 @@ const GET_DISPOSITION_TYPES = gql`
     }
   }
 `;
+  
+const formatDate = (value: Date) => {
+  const year = value.getFullYear();
+  const month = String(value.getMonth() + 1).padStart(2, "0");
+  const day = String(value.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+};
 
 const AgentReport = () => {
   const { data: dispotypeData } = useQuery<{
@@ -48,11 +57,11 @@ const AgentReport = () => {
     }
   };
 
-  const [date, setDate] = useState<{ from: string; to: string }>({
-    from: "",
-    to: "",
+  const [date, setDate] = useState<{ from: string; to: string }>(() => {
+    const today = new Date();
+    const formatted = formatDate(today);
+    return { from: formatted, to: formatted };
   });
-
   const [popUpDispo, setPopUpDispo] = useState(false);
 
   const onClickPopUpDispoType = () => {
@@ -171,6 +180,7 @@ const AgentReport = () => {
                 name="from"
                 id="from"
                 onChange={(e) => setDate({ ...date, from: e.target.value })}
+                value={date.from}
                 className="border-2 border-slate-500 text-base px-2 py-1 rounded-md w-60"
               />
             </motion.label>
@@ -187,6 +197,7 @@ const AgentReport = () => {
                   name="to"
                   id="to"
                   onChange={(e) => setDate({ ...date, to: e.target.value })}
+                  value={date.to}
                   className="border-2 border-slate-500 text-base px-2 py-1 rounded-md w-60"
                 />
               </div>
