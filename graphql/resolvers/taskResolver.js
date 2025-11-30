@@ -316,7 +316,7 @@ const taskResolver = {
         await ca.save();
 
         await User.findByIdAndUpdate(user._id, {
-          $set: { handsOn: true },
+          $set: { handsOn: ca._id },
         });
 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
@@ -338,6 +338,7 @@ const taskResolver = {
     deselectTask: async (_, { id }, { user, PUBSUB_EVENTS, pubsub }) => {
       try {
         if (!user) throw new CustomError("DeselectTask: Unauthorized", 401);
+
         const ca = await CustomerAccount.findByIdAndUpdate(
           id,
           { $set: { on_hands: false } },
@@ -355,7 +356,7 @@ const taskResolver = {
           : [];
 
         await User.findByIdAndUpdate(user._id, {
-          $set: { handsOn: false },
+          $unset: { handsOn: "" },
         });
 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {

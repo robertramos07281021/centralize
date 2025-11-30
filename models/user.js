@@ -110,8 +110,8 @@ const userSchema = new Schema(
       },
     },
     handsOn: {
-      type: Boolean,
-      default: false
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "CustomerAccount"
     },
     phone_login: {
       type: String,

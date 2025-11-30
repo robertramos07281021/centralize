@@ -11,6 +11,7 @@ import Production from "../../models/production.js";
 import Bucket from "../../models/bucket.js";
 import mongoose from "mongoose";
 import { logoutVici } from "../../middlewares/vicidial.js";
+import CustomerAccount from "../../models/customerAccount.js";
 
 const userResolvers = {
   DateTime,
@@ -514,7 +515,7 @@ const userResolvers = {
     ) => {
       try {
         const user = await User.findOne({ username });
-        console.log('hello')
+
         if (!user) throw new CustomError("Invalid", 401);
 
         if (user.isLock) throw new CustomError("Lock", 401);
@@ -578,30 +579,32 @@ const userResolvers = {
 
         const dateToday = new Date();
 
-        if (!findProd) {
-          type = "WELCOME";
-        } else {
-          type = "PROD";
-          const existingProd = findProd?.prod_history?.find(
-            (e) => e.existing === true
-          );
-          if (existingProd.type === "LOGOUT") {
-            findProd?.prod_history.forEach((x) => {
-              if (x.existing) {
-                x.end = dateToday;
-                x.existing = false;
-              }
-            });
-            findProd.prod_history.push({
-              type: "PROD",
-              existing: true,
-              start: dateToday,
-            });
-            await findProd.save();
+        if (user.type === "AGENT") {
+          if (!findProd) {
+            type = "WELCOME";
+          } else {
+            type = "PROD";
+            const existingProd = findProd?.prod_history?.find(
+              (e) => e.existing === true
+            );
+            if (existingProd.type === "LOGOUT") {
+              findProd?.prod_history.forEach((x) => {
+                if (x.existing) {
+                  x.end = dateToday;
+                  x.existing = false;
+                }
+              });
+              findProd.prod_history.push({
+                type: "PROD",
+                existing: true,
+                start: dateToday,
+              });
+              await findProd.save();
+            }
           }
+          user.attempt_login = 0;
         }
 
-        user.attempt_login = 0;
         user.isOnline = true;
         await user.save();
 
@@ -612,6 +615,7 @@ const userResolvers = {
           token,
         };
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500);
       }
     },
@@ -619,10 +623,18 @@ const userResolvers = {
       try {
         if (!user) throw new CustomError("Logout: Unauthorized", 401);
 
+        if(user.handsOn) {
+          await CustomerAccount.findByIdAndUpdate(
+            user.handsOn,
+            { $set: { on_hands: false } }
+          );
+        }
+
         const findUser = await User.findByIdAndUpdate(
           user._id,
           {
             $set: { isOnline: false },
+            $unset: { handsOn: "" },
           },
           { new: true }
         ).populate("buckets");
@@ -631,33 +643,35 @@ const userResolvers = {
           throw CustomError("User not found", 404);
         }
 
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
+        if (findUser.type === "AGENT") {
+          const start = new Date();
+          start.setHours(0, 0, 0, 0);
 
-        const end = new Date();
-        end.setHours(23, 59, 59, 999);
+          const end = new Date();
+          end.setHours(23, 59, 59, 999);
 
-        const userProd = await Production.findOne({
-          user: findUser._id,
-          createdAt: { $gt: start, $lte: end },
-        });
+          const userProd = await Production.findOne({
+            user: findUser._id,
+            createdAt: { $gt: start, $lte: end },
+          });
 
-        const dateToday = new Date();
+          const dateToday = new Date();
 
-        userProd.prod_history.forEach((x) => {
-          if (x.existing === true) {
-            x.existing = false;
-            x.end = dateToday;
-          }
-        });
+          userProd.prod_history.forEach((x) => {
+            if (x.existing === true) {
+              x.existing = false;
+              x.end = dateToday;
+            }
+          });
 
-        userProd.prod_history.push({
-          type: "LOGOUT",
-          start: dateToday,
-          existing: true,
-        });
+          userProd.prod_history.push({
+            type: "LOGOUT",
+            start: dateToday,
+            existing: true,
+          });
 
-        await userProd.save();
+          await userProd.save();
+        }
 
         res.clearCookie("connect.sid");
         res.clearCookie("token");
@@ -785,33 +799,35 @@ const userResolvers = {
           throw CustomError("User not found", 404);
         }
 
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
+        if (findUser.type === "AGENT") {
+          const start = new Date();
+          start.setHours(0, 0, 0, 0);
 
-        const end = new Date();
-        end.setHours(23, 59, 59, 999);
+          const end = new Date();
+          end.setHours(23, 59, 59, 999);
 
-        const userProd = await Production.findOne({
-          user: findUser._id,
-          createdAt: { $gt: start, $lte: end },
-        });
+          const userProd = await Production.findOne({
+            user: findUser._id,
+            createdAt: { $gt: start, $lte: end },
+          });
 
-        const dateToday = new Date();
+          const dateToday = new Date();
 
-        userProd.prod_history.forEach((x) => {
-          if (x.existing === true) {
-            x.existing = false;
-            x.end = dateToday;
-          }
-        });
+          userProd.prod_history.forEach((x) => {
+            if (x.existing === true) {
+              x.existing = false;
+              x.end = dateToday;
+            }
+          });
 
-        userProd.prod_history.push({
-          type: "LOGOUT",
-          start: dateToday,
-          existing: true,
-        });
+          userProd.prod_history.push({
+            type: "LOGOUT",
+            start: dateToday,
+            existing: true,
+          });
 
-        await userProd.save();
+          await userProd.save();
+        }
 
         res.clearCookie("connect.sid");
         res.clearCookie("token");
@@ -903,7 +919,6 @@ const userResolvers = {
         });
 
         await userProd.save();
-
 
         const bucket =
           userBuckets > 0

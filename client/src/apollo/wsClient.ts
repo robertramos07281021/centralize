@@ -15,6 +15,11 @@ export function getWsClient() {
           authorization: token ? `Bearer ${token}` : '',
         };
       },
+      on: {
+        connected: (socket) => {
+          window.mySocket = socket
+        }
+      },
       lazy: true,
       retryAttempts: 3,
       shouldRetry: () => true,

@@ -143,19 +143,26 @@ const CHECK_USER_ONLINE_ON_VICI = gql`
   }
 `;
 
-
 const Navbar = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const location = useLocation();
+
   const { userLogged, selectedCustomer, breakValue, serverError, success } =
     useSelector((state: RootState) => state.auth);
   const modalRef = useRef<HTMLDivElement>(null);
-  const { error, data, refetch } = useQuery<{ getMe: UserInfo }>(myUserInfos, {
+  const { data, error, refetch } = useQuery<{ getMe: UserInfo }>(myUserInfos, {
     notifyOnNetworkStatusChange: true,
   });
 
-
+  useEffect(()=> {
+    if(!userLogged) {
+      if(window.mySocket) {
+        console.log(window.mySocket)
+      }
+      persistor.purge()
+    }
+  },[userLogged])
 
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
   const { data: agentBucketsData, refetch: agentBucketRefetch } = useQuery<{
@@ -179,7 +186,11 @@ const Navbar = () => {
   });
 
   useEffect(() => {
-    if (Boolean(viciDialError) && canCallMap?.includes(true) && userLogged?.name !== "tl-cignal") {
+    if (
+      Boolean(viciDialError) &&
+      canCallMap?.includes(true) &&
+      userLogged?.name !== "tl-cignal"
+    ) {
       dispatch(
         setSuccess({
           isMessage: true,
@@ -314,7 +325,7 @@ const Navbar = () => {
   const forceLogout = useCallback(async () => {
     if (selectedCustomer) {
       await deselectTask({
-        variables: { id: selectedCustomer?._id, user_id: userLogged?._id },
+        variables: { id: selectedCustomer?._id },
       });
     }
     await logoutToPersist({ variables: { id: userLogged?._id } });
@@ -422,6 +433,14 @@ const Navbar = () => {
     });
     return () => clearTimeout(timer);
   }, [data]);
+
+  const persistedKey = "persist:root";
+
+  window.addEventListener("storage", async(e) => {
+    if (e.key === persistedKey && !localStorage.getItem(persistedKey)) {
+      await logout()
+    }
+  });
 
   if (loading || logoutToPEristsLoading) return <Loading />;
 

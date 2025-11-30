@@ -62,6 +62,7 @@ const userTypeDefs = gql`
     account_type: String
     vici_id: String
     departmentDetails: Department
+    handsOn: ID
   }
 
   type PaginatedUsers {
