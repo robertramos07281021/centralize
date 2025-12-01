@@ -224,10 +224,7 @@ const Login = () => {
         navigate("/change-password", { state: res?.login?.user });
       } else {
         if (res.login.user.type === "AGENT") {
-          console.log(res.login.prodStatus)
-          if(res.login.prodStatus !== 'LOGOUT') {
-            dispatch(setBreakValue(res.login.prodStatus));
-          }
+          dispatch(setBreakValue(res.login.prodStatus));
           dispatch(setStart(res.login.start));
           const navigateString =
             res.login.prodStatus === BreakEnum.PROD

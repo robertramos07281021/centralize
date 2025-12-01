@@ -73,7 +73,7 @@ const ScoreCardOverview = () => {
     fetchPolicy: "network-only",
   });
 
-  console.log(data, "<<")
+  console.log(data, "<<");
 
   const scorecards: ScoreCardSummary[] = data?.getScoreCardSummaries ?? [];
 
@@ -180,11 +180,13 @@ const ScoreCardOverview = () => {
                     entry.points < 5
                       ? "bg-red-600 border-red-900"
                       : entry.points < 10
-                      ? "bg-yellow-600 border-yellow-900"
+                      ? "bg-amber-600 border-amber-900"
+                      : entry.points < 1
+                      ? "bg-green-600 border-green-900"
                       : "bg-green-600 border-green-900"
                   } font-black text-white text-shadow-2xs shadow-md px-3 border-2 rounded-sm py-1 `}
                 >
-                  {entry?.points ?? 0}
+                  {entry?.points === 1 ?  "Failed" : entry?.points === 2 ? "Passed"  ? entry?.scores : formatPoints(entry?.points): 0}
                 </div>
               </div>
               <div className="md:col-span-3 text-gray-600">
@@ -408,14 +410,17 @@ const ScoreCardOverview = () => {
                 </div>
               </div>
 
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm text-gray-800">
                 <div>
-                  <span className="font-black uppercase text-black">Call Date:</span>{" "}
+                  <span className="font-black uppercase text-black">
+                    Call Date:
+                  </span>{" "}
                   {formatDate(selectedScoreCard.dateAndTimeOfCall)}
                 </div>
                 <div>
-                  <span className="font-black uppercase text-black">Scorecard Type:</span>{" "}
+                  <span className="font-black uppercase text-black">
+                    Scorecard Type:
+                  </span>{" "}
                   {selectedScoreCard.typeOfScoreCard}
                 </div>
               </div>
@@ -456,8 +461,6 @@ const ScoreCardOverview = () => {
                   </div>
                 </div>
               )}
-
-              
             </motion.div>
           </motion.div>
         )}

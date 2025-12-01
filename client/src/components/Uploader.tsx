@@ -170,7 +170,7 @@ const Uploader: React.FC<modalProps> = ({
 
           function normalizePHNumber(contact: string) {
             if (!contact) return "";
-    
+
             // Remove spaces, dashes, parentheses
             let cleaned = String(contact ?? "").replace(/[+\-\s()]/g, "");
 
@@ -500,7 +500,19 @@ const Uploader: React.FC<modalProps> = ({
     } catch (error) {
       console.log(error);
     }
-  }, [createCustomer, excelData, file, setConfirm, bucket, setExcelData, setRequired, bucketRequired, successUpload, onSuccess, setLoading]);
+  }, [
+    createCustomer,
+    excelData,
+    file,
+    setConfirm,
+    bucket,
+    setExcelData,
+    setRequired,
+    bucketRequired,
+    successUpload,
+    onSuccess,
+    setLoading,
+  ]);
 
   const submitUpload = () => {
     if (file.length === 0 || !bucket) {

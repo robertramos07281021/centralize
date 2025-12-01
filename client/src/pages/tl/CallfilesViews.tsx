@@ -619,6 +619,9 @@ const CallfilesViews: React.FC<Props> = ({
         const sheet = workbook.Sheets[sheetName];
         const jsonData: Data[] = utils.sheet_to_json(sheet, { raw: true });
         const dateConverting = jsonData.map((row) => {
+          const normalizedRow = Object.fromEntries(
+            Object.entries(row).map(([key, value]) => [key.trim(), value])
+          );
           const safeDate = (date: string) => {
             try {
               return date ? SSF.format("yyyy-mm-dd", date) : undefined;
@@ -627,9 +630,9 @@ const CallfilesViews: React.FC<Props> = ({
             }
           };
           return {
-            account_no: String(row.account_no),
-            amount: Number(row.amount),
-            date: safeDate(row.date),
+            account_no: String(normalizedRow.account_no),
+            amount: Number(normalizedRow.amount),
+            date: safeDate(normalizedRow.date as string),
           };
         });
         setExcelData(dateConverting.slice(0, dateConverting.length));
@@ -699,7 +702,7 @@ const CallfilesViews: React.FC<Props> = ({
       setRequired(true);
     }
   }, [setRequired, file, callfile, addSelective, setModalProps, excelData]);
-
+  
   const { data: isAutoDialFinished, refetch: IADFRefetching } = useQuery<{
     checkIfCallfileAutoIsDone: boolean;
   }>(CHECK_IF_AUTODIAL_FINISHED, {

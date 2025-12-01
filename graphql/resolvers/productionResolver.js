@@ -9,6 +9,7 @@ import bcrypt from "bcryptjs";
 import DispoType from "../../models/dispoType.js";
 import "dotenv/config.js";
 import Bucket from "../../models/bucket.js";
+import Callfile from "../../models/callfile.js";
 
 const productionResolver = {
   DateTime,
@@ -392,7 +393,7 @@ const productionResolver = {
           },
         ]);
 
-        console.log(res)
+        console.log(res);
         return res;
       } catch (error) {
         console.log(error);
@@ -670,20 +671,20 @@ const productionResolver = {
     getAllAgentProductions: async (_, { bucketId, from, to }) => {
       try {
         if (!bucketId) return null;
-      
+
         let startOfTheDay = null;
         let endOfTheDay = null;
         if (!from && !to) {
-          const start = new Date('11-19-2025');
+          const start = new Date("11-19-2025");
           start.setHours(0, 0, 0, 0);
           startOfTheDay = start;
 
-          const end = new Date('11-19-2025');
+          const end = new Date("11-19-2025");
 
           end.setHours(23, 59, 59, 999);
           endOfTheDay = end;
-        } else if(!from && to || !to && from) {
-          const date = to || from
+        } else if ((!from && to) || (!to && from)) {
+          const date = to || from;
 
           const start = new Date(date);
           start.setHours(0, 0, 0, 0);
@@ -728,39 +729,35 @@ const productionResolver = {
             },
           },
         ]);
-  
-        const newProduction = production.map(async(prod) => {
-         
+
+        const newProduction = production.map(async (prod) => {
           const findUser = disposition.find(
             (x) => x._id.toString() === prod.user.toString()
           );
 
-          
           if (!findUser) {
             return { ...prod, total: 0, average: 0, longest: 0 };
           }
-          
-          const callTimes = findUser.dispositions
-          .map((fileName) => {
+
+          const callTimes = findUser.dispositions.map((fileName) => {
             const parts = fileName.split(".mp3_");
             return parts.length > 1 ? Number(parts[1]) : 0;
-          })
-          const user = await User.findById(findUser._id)
-            .filter((x) => !isNaN(x));
+          });
+          const user = await User.findById(findUser._id).filter(
+            (x) => !isNaN(x)
+          );
 
           const totalCalls = callTimes.length;
           const average =
             totalCalls > 0
               ? callTimes.reduce((t, v) => t + v, 0) / totalCalls
               : 0;
-        
-          
+
           const longest = totalCalls > 0 ? Math.max(...callTimes) : 0;
 
-          return { ...prod, user , total: totalCalls, average, longest };
+          return { ...prod, user, total: totalCalls, average, longest };
         });
 
-        
         return newProduction;
       } catch (error) {
         console.log(error);
@@ -1274,6 +1271,83 @@ const productionResolver = {
         } finally {
           client.close();
         }
+      }
+    },
+    checkAgentIfHaveProd: async (_, { bucket, interval }) => {
+      try {
+        const selectedBucket = await Bucket.findById(bucket).lean();
+        
+        if (!selectedBucket) return null;
+
+        const callfile = (
+          await Callfile.find({ bucket: selectedBucket._id }).lean()
+        ).map((cf) => new mongoose.Types.ObjectId(cf._id));
+        const existingCallfile = await Callfile.findOne({
+          bucket: selectedBucket._id,
+          active: true,
+        });
+        if (callfile.length <= 0) return null;
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const now = new Date();
+        const currentDay = now.getDay();
+        const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() + diffToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        endOfWeek.setMilliseconds(-1);
+
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
+
+        let filter = { selectivesDispo: false };
+
+        if (interval === "daily") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+        } else if (interval === "weekly") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+        } else if (interval === "monthly") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+        } else if (interval === "callfile") {
+          filter["callfile"] = new mongoose.Types.ObjectId(
+            existingCallfile._id
+          );
+        }
+
+        const disposition = await Disposition.aggregate([
+          {
+            $match: filter,
+          },
+          {
+            $group: {
+              _id: "$user",
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              users: "$_id",
+            },
+          },
+        ]);
+
+        // console.log(disposition)
+        return disposition.map(x=> x.users);
+      } catch (error) {
+        console.log(error);
+        throw new CustomError(error.message, 500);
       }
     },
     monthlyWeeklyCollected: async (_, __, { user }) => {

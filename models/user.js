@@ -111,7 +111,8 @@ const userSchema = new Schema(
     },
     handsOn: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "CustomerAccount"
+      ref: "CustomerAccount",
+      default: null,
     },
     phone_login: {
       type: String,
@@ -123,6 +124,13 @@ const userSchema = new Schema(
   },
   { timestamps: true }
 );
+
+userSchema.pre("validate", function (next) {
+  if (typeof this.handsOn === "boolean") {
+    this.handsOn = undefined;
+  }
+  next();
+});
 
 const User = mongoose.model("User", userSchema);
 export default User;

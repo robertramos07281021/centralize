@@ -38,7 +38,12 @@ const applyInlineColorFallbacks = (root: HTMLElement) => {
     const computed = docView.getComputedStyle(element);
     COLOR_PROPS.forEach((prop) => {
       const value = computed[prop];
-      if (typeof value === "string" && value && value !== "transparent" && value !== "rgba(0, 0, 0, 0)") {
+      if (
+        typeof value === "string" &&
+        value &&
+        value !== "transparent" &&
+        value !== "rgba(0, 0, 0, 0)"
+      ) {
         element.style[prop] = value;
       }
     });
@@ -185,6 +190,20 @@ const SCORE_TO_MISSED_GUIDELINE_ID_MAP: Record<string, string> =
     }
     return acc;
   }, {} as Record<string, string>);
+
+const DEFAULT_POINT_VALUES: Record<string, string> = {
+  "opening-question-1": "8",
+  "opening-question-2": "8",
+  "negotiation-probing": "10",
+  "negotiation-hierarchy": "15",
+  "negotiation-solidifying": "15",
+  "negotiation-listening": "6",
+  "negotiation-words": "6",
+  "negotiation-control": "7",
+  "negotiation-education": "8",
+  "closing-third-party": "7",
+  "closing-spiel": "10",
+};
 
 const GET_DEPARTMENTS = gql`
   query getDepts {
@@ -470,7 +489,7 @@ const PointsInputColumn = ({
             ? "bg-gray-200 cursor-not-allowed text-gray-500"
             : ""
         }`}
-        disabled={Boolean(disabledMap?.[id])}
+        disabled={true}
         value={valueMap[id] ?? ""}
         onKeyDown={(event) => {
           if (["-", "+", "e", "E", "."].includes(event.key)) {
@@ -510,9 +529,9 @@ const DefaultScoreCard = () => {
   const [missedGuidelineValues, setMissedGuidelineValues] = useState<
     Record<string, string>
   >({});
-  const [scoreSelections, setScoreSelections] = useState<Record<string, string>>(
-    {}
-  );
+  const [scoreSelections, setScoreSelections] = useState<
+    Record<string, string>
+  >({});
   const [regulatorySelections, setRegulatorySelections] = useState<
     Record<string, string>
   >(() =>
@@ -603,24 +622,41 @@ const DefaultScoreCard = () => {
     options?: {
       includePoints?: boolean;
       selectionMap?: Record<string, string>;
+      scoreMapper?: (selection?: string) => number;
+      pointMapper?: (
+        field: SectionFieldConfig,
+        selection?: string
+      ) => number | null | undefined;
     }
   ) => {
     const includePoints = options?.includePoints !== false;
     const selectionSource = options?.selectionMap ?? scoreSelections;
-    return config.reduce<Record<string, { scores: number; points: number | null; missedGuidlines: string }>>(
-      (acc, field) => {
-        acc[field.key] = {
-          scores: mapSelectionToScoreValue(selectionSource[field.scoreId]),
-          points: includePoints
-            ? Number(pointValues[field.scoreId] ?? 0)
-            : null,
-          missedGuidlines:
-            missedGuidelineValues[field.missedId ?? field.scoreId] ?? "",
-        };
-        return acc;
-      },
-      {}
-    );
+    const scoreMapper = options?.scoreMapper ?? mapSelectionToScoreValue;
+    const pointMapper = options?.pointMapper;
+    return config.reduce<
+      Record<
+        string,
+        { scores: number; points: number | null; missedGuidlines: string }
+      >
+    >((acc, field) => {
+      const selectionValue = selectionSource[field.scoreId];
+      let calculatedPoints: number | null = null;
+      if (includePoints) {
+        if (pointMapper) {
+          const mappedPoints = pointMapper(field, selectionValue);
+          calculatedPoints = mappedPoints ?? null;
+        } else {
+          calculatedPoints = Number(pointValues[field.scoreId] ?? 0);
+        }
+      }
+      acc[field.key] = {
+        scores: scoreMapper(selectionValue),
+        points: calculatedPoints,
+        missedGuidlines:
+          missedGuidelineValues[field.missedId ?? field.scoreId] ?? "",
+      };
+      return acc;
+    }, {});
   };
 
   const buildScoreDetailsPayload = () => ({
@@ -628,8 +664,9 @@ const DefaultScoreCard = () => {
     negotiationSkills: buildSectionEntries(NEGOTIATION_FIELD_CONFIG),
     closing: buildSectionEntries(CLOSING_FIELD_CONFIG),
     regulatoryAndCompliance: buildSectionEntries(REGULATORY_FIELD_CONFIG, {
-      includePoints: false,
+      includePoints: true,
       selectionMap: regulatorySelections,
+      pointMapper: (_, selection) => (selection === "YES" ? 1 : selection === "NO" ? 2 : 0),
     }),
     comments: {
       highlights: highlights.trim(),
@@ -668,7 +705,9 @@ const DefaultScoreCard = () => {
         const selectionLabel = selectionSource[field.scoreId] ?? "N/A";
         const missedValue =
           missedGuidelineValues[field.missedId ?? field.scoreId] ?? "";
-        const pointsValue = includePoints ? pointValues[field.scoreId] ?? "" : "";
+        const pointsValue = includePoints
+          ? pointValues[field.scoreId] ?? ""
+          : "";
         rows.push([
           index === 0 ? sectionLabel : "",
           field.key
@@ -794,6 +833,15 @@ const DefaultScoreCard = () => {
         [fieldId]: snapshot,
       }));
       delete pointSnapshotsRef.current[fieldId];
+    }
+    if (snapshot === undefined || snapshot === "") {
+      const defaultPoint = DEFAULT_POINT_VALUES[fieldId];
+      if (defaultPoint !== undefined) {
+        setPointValues((prev) => ({
+          ...prev,
+          [fieldId]: defaultPoint,
+        }));
+      }
     }
     setDisabledPoints((prev) => {
       if (!prev[fieldId]) return prev;
@@ -978,23 +1026,40 @@ const DefaultScoreCard = () => {
       });
 
       worksheet.columns = [
-        { key: "colA", width: 2 },
-        { key: "colB", width: 20 },
-        { key: "colC", width: 26 },
-        { key: "colD", width: 14 },
-        { key: "colE", width: 12 },
-        { key: "colF", width: 28 },
-        { key: "colG", width: 16 },
-        { key: "colH", width: 12 },
+        { key: "colA", width: 3 },
+        { key: "colB", width: 12 },
+        { key: "colC", width: 12 },
+        { key: "colD", width: 10 },
+        { key: "colE", width: 10 },
+        { key: "colF", width: 10 },
+        { key: "colG", width: 10 },
+        { key: "colH", width: 10 },
+        { key: "colI", width: 10 },
+        { key: "colJ", width: 10 },
+        { key: "colK", width: 7 },
       ];
 
-      const brandBlue = "FF1F497D";
+      			
+
+
+      const brandBlue = "FF2F5597";
       const headerBlue = "FF366092";
       const lightBlue = "FFE6EEF8";
       const tableLight = "FFF2F6FB";
       const borderColor = "000";
       const white = "FFFFFFFF";
-      const borderTemplate = { style: "thin" as const, color: { argb: borderColor } };
+      const borderTemplate = {
+        style: "thin" as const,
+        color: { argb: borderColor },
+      };
+      const thickBorderTemplate = {
+        style: "medium" as const,
+        color: { argb: borderColor },
+      };
+      const whiteBorderTemplate = {
+        style: "thin" as const,
+        color: { argb: white },
+      };
       const applyBorder = (cell: any) => {
         cell.border = {
           top: borderTemplate,
@@ -1015,6 +1080,50 @@ const DefaultScoreCard = () => {
           }
         }
       };
+      const applyOuterBorder = (
+        startRow: number,
+        endRow: number,
+        startCol: number,
+        endCol: number,
+        template = thickBorderTemplate
+      ) => {
+        for (let row = startRow; row <= endRow; row += 1) {
+          for (let col = startCol; col <= endCol; col += 1) {
+            const cell = worksheet.getCell(row, col);
+            const existingBorder = cell.border ?? {};
+            const newBorder = { ...existingBorder };
+            if (row === startRow) {
+              newBorder.top = template;
+            }
+            if (row === endRow) {
+              newBorder.bottom = template;
+            }
+            if (col === startCol) {
+              newBorder.left = template;
+            }
+            if (col === endCol) {
+              newBorder.right = template;
+            }
+            cell.border = newBorder;
+          }
+        }
+      };
+      const applyColumnBorder = (
+        startRow: number,
+        endRow: number,
+        column: number,
+        side: "left" | "right",
+        template = thickBorderTemplate
+      ) => {
+        for (let row = startRow; row <= endRow; row += 1) {
+          const cell = worksheet.getCell(row, column);
+          const existingBorder = cell.border ?? {};
+          cell.border = {
+            ...existingBorder,
+            [side]: template,
+          };
+        }
+      };
 
       try {
         const logoResponse = await fetch("/bernalesLogo.png");
@@ -1026,28 +1135,20 @@ const DefaultScoreCard = () => {
           });
           worksheet.addImage(logoId, {
             tl: { col: 1, row: 0.2 },
-            ext: { width: 230, height: 70 },
+            ext: { width: 300, height: 110 },
           });
         }
       } catch (logoError) {
         console.warn("Unable to load logo for Excel export", logoError);
       }
 
-      worksheet.mergeCells("B1:H3");
-      const firmCell = worksheet.getCell("B1");
-      firmCell.value = "BERNALES & ASSOCIATES";
-      firmCell.font = { name: "Calibri", bold: true, size: 20, color: { argb: brandBlue } };
-      firmCell.alignment = { horizontal: "center", vertical: "middle" };
-
-      worksheet.mergeCells("B4:H4");
-      const titleCell = worksheet.getCell("B4");
+      worksheet.mergeCells("B5:G5");
+      const titleCell = worksheet.getCell("B5");
       titleCell.value = "QA Evaluation Form";
-      titleCell.font = { name: "Calibri", bold: true, size: 14, color: { argb: white } };
-      titleCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: headerBlue } };
+      titleCell.font = { name: "Calibri", bold: true, size: 14 };
       titleCell.alignment = { horizontal: "left", vertical: "middle" };
-      applyBorderRange(4, 4, 2, 8);
 
-      const infoRowsStart = 5;
+      const infoRowsStart = 6;
       const infoRows: Array<[string, string]> = [
         ["Month", selectedMonth || "N/A"],
         ["Name", selectedAgent || "N/A"],
@@ -1059,104 +1160,269 @@ const DefaultScoreCard = () => {
 
       infoRows.forEach(([label, value], index) => {
         const rowIndex = infoRowsStart + index;
+        const valueRanges = `B${rowIndex}:C${rowIndex}`;
+        worksheet.mergeCells(valueRanges);
         const labelCell = worksheet.getCell(`B${rowIndex}`);
         labelCell.value = label;
-        labelCell.font = { bold: true, color: { argb: white } };
-        labelCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: brandBlue } };
+        labelCell.font = { bold: false, color: { argb: white } };
+        labelCell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: brandBlue },
+        };
         labelCell.alignment = { horizontal: "left", vertical: "middle" };
-        const valueRange = `C${rowIndex}:F${rowIndex}`;
+        const valueRange = `D${rowIndex}:G${rowIndex}`;
         worksheet.mergeCells(valueRange);
-        const valueCell = worksheet.getCell(`C${rowIndex}`);
+        const valueCell = worksheet.getCell(`D${rowIndex}`);
         valueCell.value = value;
-        valueCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: lightBlue } };
+        valueCell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: white },
+        };
         valueCell.alignment = { horizontal: "left", vertical: "middle" };
-        applyBorderRange(rowIndex, rowIndex, 2, 6);
+        applyBorderRange(rowIndex, rowIndex, 2, 7);
       });
+      applyOuterBorder(infoRowsStart, infoRowsStart + infoRows.length - 1, 2, 7);
 
-      worksheet.mergeCells("G5:H6");
-      const totalLabelCell = worksheet.getCell("G5");
+      worksheet.mergeCells("H6:H12");
+      const totalLabelCells = worksheet.getCell("H6");
+      totalLabelCells.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFFFFF" },
+      };
+      totalLabelCells.alignment = { horizontal: "center", vertical: "middle" };
+
+      totalLabelCells.border = {
+        top: whiteBorderTemplate,
+        left: whiteBorderTemplate,
+        bottom: whiteBorderTemplate,
+        right: whiteBorderTemplate,
+      };
+
+      worksheet.mergeCells("L1:L41");
+      const rightBorderCell = worksheet.getCell("L1");
+      rightBorderCell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFFFFF" },
+      };
+      rightBorderCell.alignment = { horizontal: "center", vertical: "middle" };
+      rightBorderCell.border = {
+        left: thickBorderTemplate,
+      };
+
+       worksheet.mergeCells("A42:K42");
+      const rightBorderCellc = worksheet.getCell("A42");
+      rightBorderCellc.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFFFFF" },
+      };
+      rightBorderCellc.alignment = { horizontal: "center", vertical: "middle" };
+      rightBorderCellc.border = {
+        top: thickBorderTemplate,
+      };
+
+      worksheet.mergeCells("I6:J7");
+      const totalLabelCell = worksheet.getCell("I6");
       totalLabelCell.value = "Total Score";
-      totalLabelCell.font = { bold: true, color: { argb: white }, size: 12 };
-      totalLabelCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: headerBlue } };
+      totalLabelCell.font = { bold: false, color: { argb: white }, size: 12 };
+      totalLabelCell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: headerBlue },
+      };
       totalLabelCell.alignment = { horizontal: "center", vertical: "middle" };
-      applyBorderRange(5, 6, 7, 8);
 
-      worksheet.mergeCells("G7:H9");
-      const totalScoreCell = worksheet.getCell("G7");
+      worksheet.mergeCells("I8:J11");
+      const totalScoreCell = worksheet.getCell("I8");
       totalScoreCell.value = scoreExceeded ? "Check Score" : totalScore || 0;
-      totalScoreCell.font = { bold: true, size: 26, color: { argb: brandBlue } };
+      totalScoreCell.font = {
+        bold: true,
+        size: 26,
+        color: { argb: brandBlue },
+      };
       totalScoreCell.alignment = { horizontal: "center", vertical: "middle" };
-      totalScoreCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: "FFEDF2FA" } };
-      applyBorderRange(7, 9, 7, 8);
+      totalScoreCell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFEDF2FA" },
+      };
+      applyBorderRange(6, 11, 9, 10);
+      applyOuterBorder(6, 11, 9, 10);
 
-      const criteriaHeaderRow = infoRowsStart + infoRows.length + 2;
-      const tableHeaders = [
-        ["B", "Criteria"],
-        ["C", "Category"],
-        ["D", "Scores"],
-        ["E", "Points"],
-        ["F", "Missed Guideline"],
-      ] as const;
-      tableHeaders.forEach(([col, label]) => {
-        const cell = worksheet.getCell(`${col}${criteriaHeaderRow}`);
+      const criteriaHeaderRow = infoRowsStart + infoRows.length + 1;
+      const headerRowEnd = criteriaHeaderRow + 1;
+      const headerRanges: Array<{ range: string; label: string }> = [
+        { range: `B${criteriaHeaderRow}:C${headerRowEnd}`, label: "Criteria" },
+        { range: `D${criteriaHeaderRow}:G${headerRowEnd}`, label: "Category" },
+        { range: `H${criteriaHeaderRow}:H${headerRowEnd}`, label: "Scores" },
+        { range: `I${criteriaHeaderRow}:I${headerRowEnd}`, label: "Points" },
+        { range: `J${criteriaHeaderRow}:J${headerRowEnd}`, label: "Missed Guideline" },
+      ];
+      headerRanges.forEach(({ range, label }) => {
+        worksheet.mergeCells(range);
+        const [startCell] = range.split(":");
+        const cell = worksheet.getCell(startCell);
         cell.value = label;
-        cell.font = { bold: true, color: { argb: white } };
+        cell.font = { bold: false, color: { argb: white } };
         cell.alignment = { horizontal: "center", vertical: "middle" };
-        cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: headerBlue } };
+        cell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: headerBlue },
+        };
+        cell.border = { size: 10, color: { argb: borderColor } };
         applyBorder(cell);
       });
+      applyBorderRange(criteriaHeaderRow, headerRowEnd, 2, 10);
 
       const criteriaRows = buildExcelCriteriaRows();
-      const firstDataRow = criteriaHeaderRow + 1;
+      const highlightValue = highlights.trim() || "N/A";
+      const opportunityValue = commentsNote.trim() || "N/A";
+      const commentRows: Array<Array<string | number>> = [
+        ["Comments", `Highlights: ${highlightValue}`, "", "", ""],
+        ["", "", "", "", ""],
+        ["", "", "", "", ""],
+        ["", `Opportunity: ${opportunityValue}`, "", "", ""],
+        ["", "", "", "", ""],
+        ["", "", "", "", ""],
+      ];
+      criteriaRows.push(...commentRows);
+      const firstDataRow = headerRowEnd + 1;
+      const criteriaTableEndRow = firstDataRow + criteriaRows.length - 1;
+      const sectionRanges: Array<{
+        label: string;
+        startRow: number;
+        endRow: number;
+        fillColor: string;
+      }> = [];
+      let currentSectionIndex: number | null = null;
+      const commentStartRow =
+        firstDataRow + criteriaRows.length - commentRows.length;
       criteriaRows.forEach((rowValues, index) => {
         const excelRowIndex = firstDataRow + index;
-        ["B", "C", "D", "E", "F"].forEach((col, colIndex) => {
-          const cell = worksheet.getCell(`${col}${excelRowIndex}`);
-          cell.value = rowValues[colIndex] ?? "";
-          cell.alignment = {
-            horizontal: col === "C" || col === "F" ? "left" : "center",
-            vertical: "middle",
-            wrapText: true,
-          };
-          cell.fill = {
+        const rowColor = index % 2 === 0 ? tableLight : lightBlue;
+        const [criteriaLabel, categoryLabel, scoreValue, pointValue, missedValue] = rowValues;
+        const isCommentRow = excelRowIndex >= commentStartRow;
+        if (typeof criteriaLabel === "string" && criteriaLabel) {
+          sectionRanges.push({
+            label: criteriaLabel,
+            startRow: excelRowIndex,
+            endRow: excelRowIndex,
+            fillColor: rowColor,
+          });
+          currentSectionIndex = sectionRanges.length - 1;
+        } else if (currentSectionIndex !== null) {
+          sectionRanges[currentSectionIndex].endRow = excelRowIndex;
+        }
+        if (!isCommentRow) {
+          worksheet.mergeCells(`D${excelRowIndex}:G${excelRowIndex}`);
+          const categoryCell = worksheet.getCell(`D${excelRowIndex}`);
+          categoryCell.value = categoryLabel ?? "";
+          categoryCell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+          categoryCell.fill = {
             type: "pattern",
             pattern: "solid",
-            fgColor: { argb: (index % 2 === 0 ? tableLight : lightBlue) },
+            fgColor: { argb: rowColor },
           };
-          if (col === "B" && typeof rowValues[0] === "string" && rowValues[0]) {
-            cell.font = { bold: true };
-          }
-          applyBorder(cell);
-        });
+
+          const scoreCell = worksheet.getCell(`H${excelRowIndex}`);
+          scoreCell.value = scoreValue ?? "";
+          scoreCell.alignment = { horizontal: "center", vertical: "middle" };
+          scoreCell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: rowColor },
+          };
+
+          const pointsCell = worksheet.getCell(`I${excelRowIndex}`);
+          pointsCell.value = pointValue ?? "";
+          pointsCell.alignment = { horizontal: "center", vertical: "middle" };
+          pointsCell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: rowColor },
+          };
+
+          const missedCell = worksheet.getCell(`J${excelRowIndex}`);
+          missedCell.value = missedValue ?? "";
+          missedCell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+          missedCell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: rowColor },
+          };
+        }
+
+        applyBorderRange(excelRowIndex, excelRowIndex, 2, 10);
       });
 
-      const commentsTitleRow = firstDataRow + criteriaRows.length + 1;
-      worksheet.mergeCells(`B${commentsTitleRow}:F${commentsTitleRow}`);
-      const commentsHeaderCell = worksheet.getCell(`B${commentsTitleRow}`);
-      commentsHeaderCell.value = "Comments";
-      commentsHeaderCell.font = { bold: true, color: { argb: white } };
-      commentsHeaderCell.alignment = { horizontal: "left", vertical: "middle" };
-      commentsHeaderCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: headerBlue } };
-      applyBorderRange(commentsTitleRow, commentsTitleRow, 2, 6);
+      sectionRanges.forEach(({ label, startRow, endRow, fillColor }) => {
+        const mergedRange = `B${startRow}:C${endRow}`;
+        worksheet.mergeCells(mergedRange);
+        const criteriaCell = worksheet.getCell(`B${startRow}`);
+        criteriaCell.value = label;
+        criteriaCell.alignment = {
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true,
+        };
+        criteriaCell.font = { bold: true };
+        criteriaCell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: fillColor },
+        };
+        applyBorderRange(startRow, endRow, 2, 3);
+      });
 
-      const commentsEntries: Array<[string, string]> = [
-        ["Highlights", highlights.trim() || "N/A"],
-        ["Opportunity", commentsNote.trim() || "N/A"],
+      const highlightStartRow = commentStartRow;
+      const highlightEndRow = highlightStartRow + 2;
+      const opportunityStartRow = highlightEndRow + 1;
+      const opportunityEndRow = opportunityStartRow + 2;
+      const commentBlocks = [
+        {
+          value: `Highlights: ${highlightValue}`,
+          startRow: highlightStartRow,
+          endRow: highlightEndRow,
+        },
+        {
+          value: `Opportunity: ${opportunityValue}`,
+          startRow: opportunityStartRow,
+          endRow: opportunityEndRow,
+        },
       ];
-      commentsEntries.forEach(([label, value], index) => {
-        const rowIndex = commentsTitleRow + 1 + index;
-        const labelCell = worksheet.getCell(`B${rowIndex}`);
-        labelCell.value = label;
-        labelCell.font = { bold: true };
-        labelCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: lightBlue } };
-        labelCell.alignment = { horizontal: "left", vertical: "middle" };
-        worksheet.mergeCells(`C${rowIndex}:F${rowIndex}`);
-        const valueCell = worksheet.getCell(`C${rowIndex}`);
-        valueCell.value = value;
-        valueCell.alignment = { horizontal: "left", vertical: "top", wrapText: true };
-        valueCell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: tableLight } };
-        applyBorderRange(rowIndex, rowIndex, 2, 6);
+      commentBlocks.forEach(({ value, startRow, endRow }) => {
+        for (let row = startRow; row <= endRow; row += 1) {
+          ["D", "E", "F", "G", "H", "I", "J"].forEach((col) => {
+            worksheet.getCell(`${col}${row}`).value = undefined;
+          });
+        }
+        worksheet.mergeCells(`D${startRow}:J${endRow}`);
+        const blockCell = worksheet.getCell(`D${startRow}`);
+        blockCell.value = value;
+        blockCell.alignment = {
+          horizontal: "left",
+          vertical: "top",
+          wrapText: true,
+        };
+        blockCell.fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: tableLight },
+        };
+        applyBorderRange(startRow, endRow, 4, 10);
       });
+
+      applyColumnBorder(firstDataRow, criteriaTableEndRow, 4, "left");
+      sectionRanges.forEach(({ startRow, endRow }) => {
+        applyOuterBorder(startRow, endRow, 2, 10);
+      });
+
+      applyOuterBorder(criteriaHeaderRow, criteriaTableEndRow, 2, 10);
 
       const buffer = await workbook.xlsx.writeBuffer();
       const blob = new Blob([buffer], {
@@ -1631,7 +1897,7 @@ const DefaultScoreCard = () => {
               <div>Category</div>
               <div>Scores</div>
               <div>points</div>
-              <div className="truncate" >missed guidlines</div>
+              <div className="truncate">missed guidlines</div>
             </div>
 
             <motion.div
@@ -1926,7 +2192,9 @@ const DefaultScoreCard = () => {
                       <input
                         className="h-full outline-none px-2 py-1 bg-gray-200 border rounded-sm shadow-md w-full"
                         value={commentsNote}
-                        onChange={(event) => setCommentsNote(event.target.value)}
+                        onChange={(event) =>
+                          setCommentsNote(event.target.value)
+                        }
                       />
                     </div>
                   </div>

@@ -1285,7 +1285,11 @@ const callfileResolver = {
         const callfile = (
           await Callfile.find({ bucket: selectedBucket._id }).lean()
         ).map((cf) => new mongoose.Types.ObjectId(cf._id));
-        if (!callfile) return null;
+        const existingCallfile = await Callfile.findOne({
+          bucket: selectedBucket._id,
+          active: true,
+        });
+        if (callfile.length <= 0) return null;
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -1308,27 +1312,41 @@ const callfileResolver = {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         endOfMonth.setMilliseconds(-1);
 
-        let selectedInterval = {};
+        let filter = { selectivesDispo: false };
+        let secondFilter = { "dispotype.code": { $in: ["PAID", "PTP"] } };
+
         if (interval === "daily") {
-          selectedInterval["$gt"] = todayStart;
-          selectedInterval["$lte"] = todayEnd;
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+          (secondFilter["callfile"] = { $in: callfile }),
+            (secondFilter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
         } else if (interval === "weekly") {
-          selectedInterval["$gt"] = startOfWeek;
-          selectedInterval["$lte"] = endOfWeek;
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+          (secondFilter["callfile"] = { $in: callfile }),
+            (secondFilter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
         } else if (interval === "monthly") {
-          selectedInterval["$gt"] = startOfMonth;
-          selectedInterval["$lte"] = endOfMonth;
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+          (secondFilter["callfile"] = { $in: callfile }),
+            (secondFilter["createdAt"] = {
+              $gt: startOfMonth,
+              $lte: endOfMonth,
+            });
+        } else if (interval === "callfile") {
+          filter["callfile"] = new mongoose.Types.ObjectId(
+            existingCallfile._id
+          );
+          secondFilter["callfile"] = new mongoose.Types.ObjectId(
+            existingCallfile._id
+          );
         }
 
         const rpcCount = ["PTP", "PAID", "UNEG", "DISP", "RTP", "FFUP"];
 
         const TotalRPC = await Disposition.aggregate([
           {
-            $match: {
-              callfile: { $in: callfile },
-              createdAt: selectedInterval,
-              selectivesDispo: false,
-            },
+            $match: filter,
           },
           {
             $lookup: {
@@ -1451,11 +1469,7 @@ const callfileResolver = {
             $unwind: { path: "$pd", preserveNullAndEmptyArrays: true },
           },
           {
-            $match: {
-              createdAt: selectedInterval,
-              callfile: { $in: callfile },
-              "dispotype.code": { $in: ["PAID", "PTP"] },
-            },
+            $match: secondFilter,
           },
           {
             $group: {
@@ -1557,11 +1571,13 @@ const callfileResolver = {
         if (!selectedBucket) return null;
 
         const callfile = (
-          await Callfile.find({ bucket: selectedBucket._id })
-        ).map((c) => new mongoose.Types.ObjectId(c._id));
-
-        if (callfile.length < 1) return null;
-
+          await Callfile.find({ bucket: selectedBucket._id }).lean()
+        ).map((cf) => new mongoose.Types.ObjectId(cf._id));
+        const existingCallfile = await Callfile.findOne({
+          bucket: selectedBucket._id,
+          active: true,
+        });
+        if (callfile.length <= 0) return null;
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -1583,40 +1599,40 @@ const callfileResolver = {
         const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         endOfMonth.setMilliseconds(-1);
-        const existingFile = await Callfile.findOne({
-          bucket: selectedBucket._id,
-          active: { $eq: true },
-        });
-
-        let selectedInterval = {};
-        let newDataCollected = {};
-
-        if (interval === "daily") {
-          selectedInterval["$gt"] = todayStart;
-          selectedInterval["$lte"] = todayEnd;
-          newDataCollected["target"] = Number(existingFile?.target) / 4 / 6;
-        } else if (interval === "weekly") {
-          selectedInterval["$gt"] = startOfWeek;
-          selectedInterval["$lte"] = endOfWeek;
-          newDataCollected["target"] = Number(existingFile?.target) / 4;
-        } else if (interval === "monthly") {
-          selectedInterval["$gt"] = startOfMonth;
-          selectedInterval["$lte"] = endOfMonth;
-          newDataCollected["target"] = Number(existingFile?.target);
-        }
 
         const dispotypesFilter = await DispoType.findOne({
           code: { $eq: "PAID" },
         });
 
+        let newDataCollected = {};
+
+        let filter = {
+          selectivesDispo: true,
+          disposition: dispotypesFilter._id,
+        };
+
+        if (interval === "daily") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+          newDataCollected["target"] = (Number(existingCallfile?.target) / 4) / 6;
+        } else if (interval === "weekly") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+          newDataCollected["target"] = Number(existingCallfile?.target) / 4;
+        } else if (interval === "monthly") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+          newDataCollected["target"] = Number(existingCallfile?.target);
+        } else if (interval === "callfile") {
+          filter["callfile"] = new mongoose.Types.ObjectId(
+            existingCallfile._id
+          );
+          newDataCollected["target"] = Number(existingCallfile?.target);
+        }
+
         const findCustomerCallfile = await Disposition.aggregate([
           {
-            $match: {
-              createdAt: selectedInterval,
-              callfile: { $in: callfile },
-              disposition: dispotypesFilter._id,
-              selectivesDispo: true,
-            },
+            $match: filter,
           },
           {
             $group: {
@@ -1635,6 +1651,7 @@ const callfileResolver = {
         ]);
 
         newDataCollected["collected"] = findCustomerCallfile[0]?.collected || 0;
+
 
         return newDataCollected;
       } catch (error) {
@@ -1813,8 +1830,7 @@ const callfileResolver = {
         });
 
         for (const i of selectives) {
-
-          if(!i.amount) return null
+          if (!i.amount) return null;
 
           const res = await CustomerAccount.findOne({
             case_id: String(i.account_no),
@@ -1828,10 +1844,9 @@ const callfileResolver = {
           if (res._id && res?.balance > 0) {
             const threeDaysAgo = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
 
-            
             const cdCreatedAt =
               new Date(res?.current_disposition?.createdAt) <= threeDaysAgo;
-          
+
             const data = {
               customer_account: res._id,
               amount: i.amount,
@@ -1919,7 +1934,7 @@ const callfileResolver = {
           }
         }
 
-        await newSelective.save()
+        await newSelective.save();
 
         const users = (await User.find({ buckets: callfile.bucket })).map((u) =>
           String(u._id)

@@ -42,12 +42,12 @@ const TLDailyCollected = () => {
   } = useQuery<{ getTLDailyCollected: Collected }>(DAILY_COLLECTION, {
     variables: {
       input: { bucket: selectedBucket, interval: intervalTypes },
-      skip: !isTLDashboard,
     },
+    skip: !isTLDashboard,
     notifyOnNetworkStatusChange: true,
   });
 
-  const { data: bucketData } = useQuery<{ selectedBucket: Bucket }>(
+  const { data: bucketData, refetch:selectedBucketRefetch } = useQuery<{ selectedBucket: Bucket }>(
     SELECTED_BUCKET,
     {
       variables: { id: selectedBucket },
@@ -59,6 +59,7 @@ const TLDailyCollected = () => {
   useEffect(() => {
     const timer = async () => {
       await refetch();
+      await selectedBucketRefetch()
     };
     if (selectedBucket) {
       timer();

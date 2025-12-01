@@ -43,7 +43,8 @@ const ToolsProductionMonitoringTable = () => {
     notifyOnNetworkStatusChange: true,
   });
   const toolsData = data?.getToolsProduction || [];
-
+  
+  console.log(toolsData)
   useEffect(() => {
     const refetching = async () => {
       await refetch();

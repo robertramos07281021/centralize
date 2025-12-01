@@ -401,13 +401,17 @@ const callResolver = {
         throw new CustomError(error.message, 500);
       }
     },
-    checkUserIsOnlineOnVici: async (_, { _id }) => {
+    checkUserIsOnlineOnVici: async (_, { _id }, {user}) => {
       try {
+        if(!user) return null
+
         const findUser = await User.findById(_id).populate("buckets");
         if (!findUser) throw new CustomError("User not found", 401);
 
-        if (findUser?.vici_id?.trim() === "")
+        if (findUser?.vici_id?.trim() === "") {
+          console.log(findUser.name)
           throw new CustomError("Please enter vicidial id", 401);
+        }
 
         const newBucketMap = findUser?.buckets.map((y) => y.canCall);
 

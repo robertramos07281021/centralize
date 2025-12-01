@@ -82,6 +82,7 @@ function App() {
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/agent-recordings" element={<AgentRecordingView />} />
         <Route path="/break-view" element={<BreakView />} />
+          <Route path="/score-card-temporary" element={<DefaultScoreCard />} />
 
         <Route element={<AdminRoute />}>
           <Route path="/selectives" element={<Selectives />} />

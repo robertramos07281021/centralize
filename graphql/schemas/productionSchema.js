@@ -171,6 +171,7 @@ const productionTypeDefs = gql`
     ): AgentDispo
     monthlyWeeklyCollected: Collected
     getAllAgentProductions(bucketId: ID, from: String, to: String): [Production]
+    checkAgentIfHaveProd(bucket: ID, interval: String ):[ID]
   }
 
   type Mutation {
@@ -178,7 +179,7 @@ const productionTypeDefs = gql`
     updateProduction(type: String!): Success
     loginToProd(password: String): Login
     lockAgent: Success
-    setBucketTargets(bucketId: ID, targets: Targets): Success
+    setBucketTargets(bucket: ID, targets: Targets): Success
   }
 `;
 

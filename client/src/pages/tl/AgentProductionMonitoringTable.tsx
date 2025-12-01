@@ -1,6 +1,6 @@
 import gql from "graphql-tag";
 import { useQuery } from "@apollo/client";
-import { useEffect } from "react";
+import {  useEffect } from "react";
 import { RootState } from "../../redux/store";
 import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
@@ -60,6 +60,12 @@ const BUCKET_AGENTS = gql`
   }
 `;
 
+const AGENT_WITH_PROD = gql`
+  query checkAgentIfHaveProd($bucket: ID, $interval: String) {
+    checkAgentIfHaveProd(bucket: $bucket, interval: $interval)
+  }
+`;
+
 const AgentProductionMonitoringTable = () => {
   const { intervalTypes, selectedBucket } = useSelector(
     (state: RootState) => state.auth
@@ -88,10 +94,20 @@ const AgentProductionMonitoringTable = () => {
     notifyOnNetworkStatusChange: true,
   });
 
+  const { data: withProdAgentData, refetch: withProdAgentRefetch } = useQuery<{
+    checkAgentIfHaveProd: string[];
+  }>(AGENT_WITH_PROD, {
+    variables: { bucket: selectedBucket, interval: intervalTypes },
+    notifyOnNetworkStatusChange: true,
+    skip: !isTLDashboard,
+  });
+  console.log(withProdAgentData)
+
   useEffect(() => {
     const refetching = async () => {
       await findAgentRefetch();
       await refetch();
+      await withProdAgentRefetch();
     };
     refetching();
   }, [selectedBucket, intervalTypes]);
@@ -130,9 +146,8 @@ const AgentProductionMonitoringTable = () => {
                 <div>Variance</div>
               </div>
             </div>
-            <div className="  overflow-auto  flex flex-col h-7/10">
+            <div className="  overflow-auto  flex flex-col h-full">
               {bucketAgents?.map((x, index) => {
-
                 const findAgent = agentDailyProd?.agentDispoDaily
                   ? agentDailyProd?.agentDispoDaily.find(
                       (agent) => agent.user === x._id
@@ -144,7 +159,6 @@ const AgentProductionMonitoringTable = () => {
                     ? IntervalsTypes.MONTHLY
                     : intervalTypes;
 
-
                 const collectionPercent = findAgent
                   ? (findAgent?.kept / x.targets[selectionOfInterval]) * 100
                   : null;
@@ -153,9 +167,9 @@ const AgentProductionMonitoringTable = () => {
                   ? x.targets[selectionOfInterval] - findAgent?.kept
                   : null;
 
-                  
                 return (
-                  x.active && findAgent && (
+                  x.active &&
+                  withProdAgentData?.checkAgentIfHaveProd?.includes(x._id) && (
                     <motion.div
                       className="text-left hover:bg-gray-200  odd:bg-gray-100 bg-white items-center gap-2 grid grid-cols-7 text-gray-600"
                       key={x._id}
@@ -207,10 +221,13 @@ const AgentProductionMonitoringTable = () => {
                         )}
                       </div>
                       <div>
-                        {x.targets[selectionOfInterval]?.toLocaleString("en-PH", {
-                          style: "currency",
-                          currency: "PHP",
-                        }) || <div className="text-gray-400 italic">₱0.00</div>}
+                        {x.targets[selectionOfInterval]?.toLocaleString(
+                          "en-PH",
+                          {
+                            style: "currency",
+                            currency: "PHP",
+                          }
+                        ) || <div className="text-gray-400 italic">₱0.00</div>}
                       </div>
                       <div
                         className={`${
