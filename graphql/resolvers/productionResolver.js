@@ -19,7 +19,6 @@ const productionResolver = {
         const data = await Production.find().lean();
         return data;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -28,7 +27,6 @@ const productionResolver = {
         const prod = await Production.findOne({ user: userId }).lean();
         return prod;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -106,7 +104,6 @@ const productionResolver = {
 
         return disposition;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -220,7 +217,6 @@ const productionResolver = {
 
         return dtc[0];
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -311,7 +307,6 @@ const productionResolver = {
 
         return res;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -393,10 +388,8 @@ const productionResolver = {
           },
         ]);
 
-        console.log(res);
         return res;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -523,7 +516,6 @@ const productionResolver = {
         ]);
         return agentCollection[0];
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -605,7 +597,6 @@ const productionResolver = {
           dispotypes: userDispostion,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -664,34 +655,36 @@ const productionResolver = {
 
         return production;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
     getAllAgentProductions: async (_, { bucketId, from, to }) => {
       try {
         if (!bucketId) return null;
-
         let startOfTheDay = null;
         let endOfTheDay = null;
         if (!from && !to) {
-          const start = new Date("11-19-2025");
+          const start = new Date();
           start.setHours(0, 0, 0, 0);
           startOfTheDay = start;
 
-          const end = new Date("11-19-2025");
+          const end = new Date();
 
           end.setHours(23, 59, 59, 999);
           endOfTheDay = end;
         } else if ((!from && to) || (!to && from)) {
           const date = to || from;
-
           const start = new Date(date);
           start.setHours(0, 0, 0, 0);
           startOfTheDay = start;
-
           const end = new Date(date);
-
+          end.setHours(23, 59, 59, 999);
+          endOfTheDay = end;
+        } else if (from && to) {
+          const start = new Date(from);
+          start.setHours(0, 0, 0, 0);
+          startOfTheDay = start;
+          const end = new Date(to);
           end.setHours(23, 59, 59, 999);
           endOfTheDay = end;
         }
@@ -709,60 +702,231 @@ const productionResolver = {
           },
         ]);
 
-        const agentIds = production.map(
-          (prod) => new mongoose.Types.ObjectId(prod.user)
-        );
+        const agentIds = [
+          ...new Set(
+            production.map((prod) => new mongoose.Types.ObjectId(prod.user))
+          ),
+        ];
 
         const disposition = await Disposition.aggregate([
           {
             $match: {
               createdAt: { $gt: startOfTheDay, $lte: endOfTheDay },
               user: { $in: agentIds },
-              callId: { $exists: true, $ne: "", $ne: null },
             },
           },
           {
             $group: {
               _id: "$user",
-              total: { $sum: 1 },
-              dispositions: { $push: "$callId" },
+              total: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $ne: ["$callId", undefined] },
+                        { $ne: ["$callId", ""] },
+                        { $ne: ["$callId", null] },
+                      ],
+                    },
+                    1,
+                    0,
+                  ],
+                },
+              },
+              dispositions: {
+                $push: {
+                  $cond: [
+                    {
+                      $and: [
+                        { $ne: ["$callId", null] },
+                        { $ne: ["$callId", ""] },
+                      ],
+                    },
+                    "$callId",
+                    "$$REMOVE",
+                  ],
+                },
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 1,
+              total: 1,
+              dispositions: 1,
             },
           },
         ]);
 
-        const newProduction = production.map(async (prod) => {
-          const findUser = disposition.find(
-            (x) => x._id.toString() === prod.user.toString()
-          );
+        const newProduction = await Promise.all(
+          disposition.map(async (prod) => {
+            const findUser = production
+              .filter((x) => x.user.toString() === prod._id.toString())
+              .map((y) => {
+                return {
+                  createdAt: y.createdAt,
+                  prod: y.prod_history,
+                };
+              });
 
-          if (!findUser) {
-            return { ...prod, total: 0, average: 0, longest: 0 };
-          }
+            const newUser = await User.findById(prod._id);
 
-          const callTimes = findUser.dispositions.map((fileName) => {
-            const parts = fileName.split(".mp3_");
-            return parts.length > 1 ? Number(parts[1]) : 0;
-          });
-          const user = await User.findById(findUser._id).filter(
-            (x) => !isNaN(x)
-          );
+            const callTimes = prod.dispositions.map((fileName) => {
+              const parts = fileName?.split(".mp3_");
+              return parts && parts?.length > 1 ? Number(parts[1]) : 0;
+            });
 
-          const totalCalls = callTimes.length;
-          const average =
-            totalCalls > 0
-              ? callTimes.reduce((t, v) => t + v, 0) / totalCalls
-              : 0;
+            const totalCalls = callTimes?.length ?? 0;
+            const average =
+              totalCalls > 0
+                ? callTimes.reduce((t, v) => t + v, 0) / totalCalls
+                : 0;
 
-          const longest = totalCalls > 0 ? Math.max(...callTimes) : 0;
+            const longest = totalCalls > 0 ? Math.max(...callTimes) : 0;
 
-          return { ...prod, user, total: totalCalls, average, longest };
-        });
+            return {
+              prod_history: findUser,
+              user: newUser,
+              total: totalCalls,
+              average,
+              longest,
+            };
+          })
+        );
 
         return newProduction;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
+    },
+    ptpAndConfirmPaid: async (_, { bucket, interval }) => {
+      const selectedBucket = await Bucket.findById(bucket).lean();
+
+      if (!selectedBucket) return null;
+
+      const callfile = (
+        await Callfile.find({ bucket: selectedBucket._id }).lean()
+      ).map((cf) => new mongoose.Types.ObjectId(cf._id));
+      const existingCallfile = await Callfile.findOne({
+        bucket: selectedBucket._id,
+        active: true,
+      });
+      if (callfile.length <= 0) return null;
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const now = new Date();
+      const currentDay = now.getDay();
+      const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() + diffToMonday);
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 7);
+      endOfWeek.setMilliseconds(-1);
+
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      endOfMonth.setMilliseconds(-1);
+
+      const ptpPaid = (
+        await DispoType.find({ code: { $in: ["PTP", "PAID"] } })
+      ).map((x) => new mongoose.Types.ObjectId(x._id));
+
+      let filter = { selectivesDispo: false, disposition: { $in: ptpPaid } };
+
+      if (interval === "daily") {
+        (filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+      } else if (interval === "weekly") {
+        (filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+      } else if (interval === "monthly") {
+        (filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+      } else if (interval === "callfile") {
+        filter["callfile"] = new mongoose.Types.ObjectId(existingCallfile._id);
+      }
+
+      const findDispo = await Disposition.aggregate([
+        {
+          $match: filter,
+        },
+        {
+          $lookup: {
+            from: "dispositions",
+            localField: "paid_dispo",
+            foreignField: "_id",
+            as: "pd",
+          },
+        },
+        {
+          $unwind: { path: "$pd", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: "dispotypes",
+            localField: "disposition",
+            foreignField: "_id",
+            as: "dispotype",
+          },
+        },
+        {
+          $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $group: {
+            _id: null,
+            ptp: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $ne: ["$pd", undefined] },
+                      { $ne: ["$pd", null] },
+                      { $ne: ["$pd", ""] },
+                      { $eq: ["$dispotype.code", "PTP"] },
+                    ],
+                  },
+                  1,
+                  0,
+                ],
+              },
+            },
+            ptp_amount: {
+              $sum: {
+                $cond: [
+                  {
+                    $and: [
+                      { $ne: ["$pd", undefined] },
+                      { $ne: ["$pd", null] },
+                      { $ne: ["$pd", ""] },
+                      { $eq: ["$dispotype.code", "PTP"] },
+                    ],
+                  },
+                  "$amount",
+                  0,
+                ],
+              },
+            },
+            paid: {
+              $sum: {
+                $cond: [{ $eq: ["$dispotype.code", "PAID"] }, 1, 0],
+              },
+            },
+            paid_amount: {
+              $sum: {
+                $cond: [{ $eq: ["$dispotype.code", "PAID"] }, "$amount", 0],
+              },
+            },
+          },
+        },
+      ]);
     },
     getAgentDispositionRecords: async (
       _,
@@ -826,8 +990,8 @@ const productionResolver = {
         const forFiltering = await Disposition.aggregate([
           {
             $match: {
-              callId: { $ne: null },
               callId: { $exists: true },
+              callId: { $ne: null },
             },
           },
           {
@@ -902,7 +1066,7 @@ const productionResolver = {
               comment: 1,
               contact_no: "$customer.contact_no",
               createdAt: 1,
-              callId: 1,
+              callId: "$callId",
               dialer: 1,
               user: "$dispo_user",
             },
@@ -1266,7 +1430,6 @@ const productionResolver = {
             total: total,
           };
         } catch (error) {
-          console.log(error);
           throw new CustomError(error.message, 500);
         } finally {
           client.close();
@@ -1276,7 +1439,7 @@ const productionResolver = {
     checkAgentIfHaveProd: async (_, { bucket, interval }) => {
       try {
         const selectedBucket = await Bucket.findById(bucket).lean();
-        
+
         if (!selectedBucket) return null;
 
         const callfile = (
@@ -1342,11 +1505,8 @@ const productionResolver = {
             },
           },
         ]);
-
-        // console.log(disposition)
-        return disposition.map(x=> x.users);
+        return disposition.map((x) => x.users);
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1371,7 +1531,7 @@ const productionResolver = {
         const findDisposition = await Disposition.aggregate([
           {
             $match: {
-              user: new mongoose.Types.ObjectId(user._id),
+              user: new mongoose.Types.ObjectId(user?._id),
               createdAt: { $gte: startOfMonth, $lte: endOfMonth },
             },
           },
@@ -1512,12 +1672,13 @@ const productionResolver = {
 
         return res;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
     getAgentRPCCount: async (_, __, { user }) => {
       try {
+        if (!user) throw new CustomError("Unauthorized", 404);
+
         const now = new Date();
         const startDate = new Date(now);
         startDate.setHours(0, 0, 0, 0);
@@ -1533,7 +1694,7 @@ const productionResolver = {
         const RPCCustomerAccount = await Disposition.aggregate([
           {
             $match: {
-              user: new mongoose.Types.ObjectId(user._id),
+              user: new mongoose.Types.ObjectId(user?._id),
             },
           },
           {
@@ -1699,7 +1860,6 @@ const productionResolver = {
 
         return RPCCustomerAccount[0];
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1735,7 +1895,6 @@ const productionResolver = {
           message: "Target successfully updated",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1793,7 +1952,6 @@ const productionResolver = {
           start: newStart,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1810,7 +1968,6 @@ const productionResolver = {
           message: "Successfully login",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1889,7 +2046,6 @@ const productionResolver = {
           message: "Account lock",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

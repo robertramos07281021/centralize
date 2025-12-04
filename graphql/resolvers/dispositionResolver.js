@@ -22,7 +22,6 @@ const dispositionResolver = {
         });
         return { count: dispositionCount };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -117,7 +116,6 @@ const dispositionResolver = {
         ]);
         return disposition;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -261,7 +259,6 @@ const dispositionResolver = {
           toolsDispoCount: toolsDispoCount || 0,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -348,7 +345,6 @@ const dispositionResolver = {
 
         return dailyFTE[0];
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -505,7 +501,6 @@ const dispositionResolver = {
 
         return newPTPOfMonth;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -663,7 +658,6 @@ const dispositionResolver = {
 
         return newPTPKeptOfMonth;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -821,7 +815,6 @@ const dispositionResolver = {
 
         return newPTPKeptOfMonth;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1016,7 +1009,6 @@ const dispositionResolver = {
 
         return PTP[0];
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1133,7 +1125,6 @@ const dispositionResolver = {
         ]);
         return PTPKept[0];
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1252,7 +1243,6 @@ const dispositionResolver = {
 
         return paid[0];
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1381,7 +1371,6 @@ const dispositionResolver = {
 
         return TotalRPC[0];
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1613,7 +1602,6 @@ const dispositionResolver = {
 
         return newResult;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1851,7 +1839,6 @@ const dispositionResolver = {
               totalPrincipal: callfile?.totalPrincipal || 0,
             };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -2038,7 +2025,6 @@ const dispositionResolver = {
           dispoId: newDisposition._id,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

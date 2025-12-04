@@ -60,6 +60,13 @@ const callfileTypeDefs = gql`
     collected: Float
   }
 
+  type CallfileDispositionSummary {
+    code: String
+    name: String
+    count: Int
+    amount: Float
+  }
+
   input Selective {
     account_no: String
     amount: Float
@@ -79,6 +86,18 @@ const callfileTypeDefs = gql`
     getBucketCallfile(bucketId:[ID]):[Callfile]
     getToolsProduction(bucket:ID,interval:String):[ToolsProduction]
     getCollectionMonitoring(bucket:ID, interval:String):Collection
+    getCallfileDispositions(
+      callfileId: ID!
+      dateFrom: DateTime
+      dateTo: DateTime
+    ): [CallfileDispositionSummary]
+    getAgentCallfileDispositions(
+      agentId: ID!
+      bucketId: ID
+      callfileId: ID
+      dateFrom: DateTime
+      dateTo: DateTime
+    ): [CallfileDispositionSummary]
   }
 
   type Mutation {
@@ -87,7 +106,6 @@ const callfileTypeDefs = gql`
     deleteCallfile(callfile:ID!):Success
     addSelective(_id:ID, selectiveName:String, selectives:[Selective]):Success
   }
-
 `
 
 export default callfileTypeDefs

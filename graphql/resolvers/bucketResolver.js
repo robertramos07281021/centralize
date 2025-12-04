@@ -37,7 +37,6 @@ const bucketResolver = {
         ]) 
         return deptBucket ? deptBucket : []
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -45,7 +44,6 @@ const bucketResolver = {
       try {
         return await Bucket.findOne({name})  
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -55,7 +53,6 @@ const bucketResolver = {
         const dept = (await Department.find({_id: {$in:user.departments}})).map(e => e.name)
         return await Bucket.find({dept: {$in: dept}})
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -68,7 +65,6 @@ const bucketResolver = {
         const res = await Bucket.find({dept: findDept.name})
         return res
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -85,7 +81,6 @@ const bucketResolver = {
         const res = await Bucket.find({_id: user?.buckets.map(x=> new mongoose.Types.ObjectId(x))})
         return res
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -126,7 +121,6 @@ const bucketResolver = {
         ])
         return findAomBucket
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -158,7 +152,6 @@ const bucketResolver = {
         await Bucket.create({...input})
         return {message: "Bucket successfully created", success: true}
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -186,7 +179,6 @@ const bucketResolver = {
 
         return {message: "Bucket successfully updated",success: true}
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -197,7 +189,6 @@ const bucketResolver = {
         if(!deleteBucket) throw new CustomError("Bucket not found",404)
         return {message: "Bucket successfully deleted",success: true}
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -219,7 +210,6 @@ const bucketResolver = {
           message: "Message successfully send"
         }
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500) 
       }
     }

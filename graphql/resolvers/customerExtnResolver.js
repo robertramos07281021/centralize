@@ -84,7 +84,6 @@ const CustomerExtnResolver = {
 
         return findHistory
       } catch (error) {
-            console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -200,7 +199,6 @@ const CustomerExtnResolver = {
 
         return paid[0]
       } catch (error) {
-            console.log(error)
         throw new CustomError(error.message, 500)
       }
     }
@@ -253,7 +251,6 @@ const CustomerExtnResolver = {
           }
         }
       } catch (error) {
-            console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

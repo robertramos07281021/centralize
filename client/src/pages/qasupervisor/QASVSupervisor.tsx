@@ -3,9 +3,15 @@ import { motion, AnimatePresence } from "framer-motion";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import { VscLoading } from "react-icons/vsc";
 import Confirmation from "../../components/Confirmation.tsx";
-import { useAppDispatch } from "../../redux/store.ts";
-import { setServerError, setSuccess } from "../../redux/slices/authSlice.ts";
+import { RootState, useAppDispatch } from "../../redux/store.ts";
+import {
+  setAdminUsersPage,
+  setServerError,
+  setSuccess,
+} from "../../redux/slices/authSlice.ts";
 import Loading from "../Loading.tsx";
+import Pagination from "../../components/Pagination.tsx";
+import { useSelector } from "react-redux";
 
 const GET_ALL_DEPTS = gql`
   query getDepts {
@@ -46,7 +52,7 @@ const GET_USERS = gql`
 `;
 
 const GET_DEPARTMENT_BUCKET = gql`
-  query GetDepartmentBucket($depts: [ID]) {
+  query getDepartmentBucket($depts: [ID]) {
     getDepartmentBucket(depts: $depts) {
       _id
       name
@@ -116,6 +122,8 @@ type SuccessUpdate = {
 };
 
 const QASupervisorView = () => {
+  const { adminUsersPage, limit } = useSelector((state: RootState) => state.auth);
+
   const dispatch = useAppDispatch();
   const [update, setUpdate] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -126,14 +134,17 @@ const QASupervisorView = () => {
   });
   const [option, setOption] = useState(0);
   const [width, setWidth] = useState(50);
-  const [activeScoreCardUserId, setActiveScoreCardUserId] =
-    useState<string | null>(null);
+  const [activeScoreCardUserId, setActiveScoreCardUserId] = useState<
+    string | null
+  >(null);
   const [scoreCardSelections, setScoreCardSelections] = useState<
     Record<string, string>
   >({});
   const scoreCardDropdownRefs = useRef<Record<string, HTMLDivElement | null>>(
     {}
   );
+  const [page, setPage] = useState<string>("1");
+  const [totalPage, setTotalPage] = useState<number>(1);
 
   const { data: deptData } = useQuery<{
     getDepts: { id: string; name: string; branch: string }[];
@@ -155,6 +166,8 @@ const QASupervisorView = () => {
     }
   }, [userId?.userId]);
 
+  const deptVariables = useMemo(() => ({ depts: userId?.departments }), [userId?.departments]);
+
   const {
     data: deptBucketData,
     refetch: deptBucketRefetch,
@@ -163,18 +176,17 @@ const QASupervisorView = () => {
     getDepartmentBucket: Bucket[];
   }>(GET_DEPARTMENT_BUCKET, {
     variables: {
-      depts: userId.departments,
+      deptVariables,
     },
-    skip: userId?.departments?.length <= 0,
+    skip: !userId?.userId,
     notifyOnNetworkStatusChange: true,
   });
-
   useEffect(() => {
     const refetching = async () => {
       await deptBucketRefetch();
     };
 
-    if (userId.departments.length > 0) {
+    if (userId?.userId) {
       refetching();
     }
   }, [userId.departments]);
@@ -196,12 +208,24 @@ const QASupervisorView = () => {
   } = useQuery<{
     getQAUsers: GetUser;
   }>(GET_USERS, {
-    variables: { page: 1, limit: 10 },
+    variables: { page: 1, limit: limit },
+    notifyOnNetworkStatusChange: true,
   });
+
+  useEffect(() => {
+    if (usersData) {
+      const searchExistingPages = Math.ceil(
+        (usersData?.getQAUsers.total || 1) / limit
+      );
+      setTotalPage(searchExistingPages);
+    }
+  }, [usersData]);
+
 
   useEffect(() => {
     const refetching = async () => {
       await usersRefetch();
+      await deptBucketRefetch();
     };
     refetching();
   }, []);
@@ -380,22 +404,22 @@ const QASupervisorView = () => {
       }) || [];
 
   return (
-    <div className="h-full relative">
-      <div className=" w-full h-full p-5">
+    <div className="h-full relative overflow-hidden">
+      <div className=" w-full h-full flex flex-col px-5 pt-5">
         {/* <div className="px-5 flex justify-end pt-4">
-        <select
-          name="campaign"
-          id="campaign"
-          className="px-6 text-center border border-slate-500 rounded py-1.5"
-        >
-          <option value="">Selecte Campaign</option>
-          <option>dsa</option>
-        </select>
-      </div> */}
+          <select
+            name="campaign"
+            id="campaign"
+            className="px-6 text-center border border-slate-500 rounded py-1.5"
+          >
+            <option value="">Selecte Campaign</option>
+            <option>dsa</option>
+          </select>
+        </div> */}
         <div className="flex justify-between">
           <div className="uppercase text-2xl font-black">QA Account</div>
           <div className="flex items-center gap-3">
-            <div className="">
+            <div>
               <motion.div
                 className="bg-white flex-row relative border-2 border-gray-500 overflow-hidden px-4 py-1 rounded-full flex gap-6 text-gray-400 font-black uppercase items-center"
                 initial={{ y: 20, opacity: 0 }}
@@ -472,7 +496,7 @@ const QASupervisorView = () => {
                 ></motion.div>
               </motion.div>
             </div>
-            <div className="flex px-2 py-1 rounded-md shadow-md items-center border">
+            <div className="flex px-2 py-1 rounded-md shadow-md items-center border ">
               <div>
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -499,12 +523,12 @@ const QASupervisorView = () => {
           </div>
         </div>
         <motion.div
-          className="   mt-3  "
+          className="  flex flex-col overflow-hidden mt-3"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <div className="grid shadow-md border rounded-t-md bg-gray-300  grid-cols-8 gap-3 px-2 py-2  font-black uppercase ">
+          <div className="grid shadow-md border rounded-t-md bg-gray-300  grid-cols-8 gap-3 px-2 py-2 font-black uppercase ">
             <div
               className="
             "
@@ -521,7 +545,7 @@ const QASupervisorView = () => {
 
             <div className="flex justify-center"></div>
           </div>
-          <div className="flex  flex-col overflow-auto h-[72vh] rounded-b-md">
+          <div className="flex  flex-col overflow-auto h-full rounded-b-md">
             {filteredUsers?.length === 0 ? (
               <motion.div
                 className="flex justify-center italic items-center text-gray-300 font-bold h-[200px] text-xl"
@@ -548,7 +572,11 @@ const QASupervisorView = () => {
                   >
                     {user.departments
                       .map((dept) => newDeptMap[dept])
-                      .join(", ")}
+                      .join(", ") || (
+                      <div className="italic text-gray-400 text-xs">
+                        No campaign
+                      </div>
+                    )}
                   </div>
                   <div
                     className="truncate"
@@ -558,7 +586,11 @@ const QASupervisorView = () => {
                   >
                     {user.buckets
                       .map((bucket) => newBucketMap[bucket])
-                      .join(", ")}
+                      .join(", ") || (
+                      <div className="italic text-gray-400 text-xs">
+                        No bucket
+                      </div>
+                    )}
                   </div>
                   <div className="justify-center flex">
                     {user.active ? (
@@ -575,7 +607,7 @@ const QASupervisorView = () => {
                     )}
                   </div>
                   <div
-                    className="border relative border-black flex px-3 justify-between items-center rounded-sm cursor-pointer hover:bg-gray-200 bg-gray-100 shadow-md py-1 relative"
+                    className="border border-black flex px-3 justify-between items-center rounded-sm cursor-pointer hover:bg-gray-200 bg-gray-100 shadow-md py-1 relative"
                     ref={(node) => {
                       scoreCardDropdownRefs.current[user._id] = node;
                     }}
@@ -610,7 +642,9 @@ const QASupervisorView = () => {
                           strokeWidth="3"
                           stroke="currentColor"
                           className={`size-4 transition-transform ${
-                            activeScoreCardUserId === user._id ? "rotate-90" : ""
+                            activeScoreCardUserId === user._id
+                              ? "rotate-90"
+                              : ""
                           }`}
                         >
                           <path
@@ -636,9 +670,13 @@ const QASupervisorView = () => {
                               type="button"
                               key={item}
                               className="w-full even:bg-gray-100 truncate odd:bg-gray-200 text-left px-3 py-2 text-sm cursor-pointer hover:bg-gray-300 border-b last:border-b-0"
-                              onClick={() => handleScoreCardSelect(user._id, item)}
+                              onClick={() =>
+                                handleScoreCardSelect(user._id, item)
+                              }
                               role="option"
-                              aria-selected={scoreCardSelections[user._id] === item}
+                              aria-selected={
+                                scoreCardSelections[user._id] === item
+                              }
                             >
                               {item}
                             </button>
@@ -719,7 +757,7 @@ const QASupervisorView = () => {
         </motion.div>
         <AnimatePresence>
           {update && (
-            <div className="absolute top-0  left-0 flex justify-center items-center w-full h-full overflow-hidden">
+            <div className="absolute top-0 z-20 left-0 flex flex-col justify-center items-center w-full h-full overflow-hidden">
               <motion.div
                 className="w-full flex h-full overflow-hidden bg-[#00000050] backdrop-blur-sm relative z-10 cursor-pointer "
                 onClick={() => {
@@ -735,141 +773,160 @@ const QASupervisorView = () => {
                 exit={{ opacity: 0 }}
               ></motion.div>
               <motion.div
-                className="bg-white absolute z-20 h-9/10 w-6/10 p-10 overflow-hidden flex flex-col rounded-md shadow-md"
+                className="bg-white absolute border z-20 h-9/10 w-6/10 overflow-hidden flex flex-col rounded-md shadow-md"
                 initial={{ opacity: 0, scale: 0.8 }}
                 animate={{ opacity: 1, scale: 1 }}
                 exit={{ opacity: 0, scale: 0.5 }}
               >
-                <div className="text-xl lg:text-3xl uppercase text-center font-black">
-                  Select the campaign and buckets
-                </div>
-                <h1 className="text-center capitalize font-sans text-gray-400 pb-2 font-normal italic text-sm lg:text-xl ">
-                  Username: {userId.userId?.name}
-                </h1>
-                {required && (
-                  <h1 className="text-center text-sm text-red-500">
-                    {userId.departments.length <= 0 &&
-                      userId.buckets.length > 0 &&
-                      "Please select Department"}
-                    {userId.departments.length > 0 &&
-                      userId.buckets.length <= 0 &&
-                      "Please select Buckets"}
-                    {userId.departments.length <= 0 &&
-                      userId.buckets.length <= 0 &&
-                      "Please select Department and Bucket"}
+                <div className="bg-gray-400 px-10 py-1 border-b border-black">
+                  <div className="text-xl lg:text-3xl uppercase text-center font-black">
+                    Select the campaign and buckets
+                  </div>
+                  <h1 className="text-center capitalize font-sans text-black  font-normal text-sm lg:text-md ">
+                    Username: {userId.userId?.name}
                   </h1>
-                )}
-                <div className="grid grid-cols-2  lg:text-xl font-semibold">
-                  <div className="text-center">Campaign</div>
-
-                  <div className="text-center ">Buckets</div>
                 </div>
-                <div className="flex flex-col h-full  overflow-hidden relative">
-                  <div className="grid grid-cols-2 gap-3 text-sm lg:text-lg h-full overflow-hidden">
-                    <div className="overflow-auto mt-2 flex pr-2 flex-col gap-1">
-                      {deptData?.getDepts?.map((dept) => {
-                        return (
-                          dept.name !== "ADMIN" && (
-                            <label
-                              key={dept.id}
-                              className="flex bg-gray-200 border px-3 rounded-sm hover:bg-gray-300 transition-all gap-2 items-center"
-                            >
-                              <input
-                                type="checkbox"
-                                id={dept.id}
-                                checked={userId.departments.includes(dept.id)}
-                                onChange={(e) => {
-                                  const checked = e.target.checked;
-                                  setUserId((prev) => ({
-                                    ...prev,
-                                    departments: checked
-                                      ? [...prev.departments, dept.id]
-                                      : prev.departments.filter(
-                                          (id) => id !== dept.id
-                                        ),
-                                  }));
-                                }}
-                              />
 
-                              <label htmlFor={dept.id} className="capitalize">
-                                {dept.name.replace(/_/g, " ")}
-                              </label>
-                            </label>
-                          )
-                        );
-                      })}
+                <div className="p-5 flex flex-col max-h-[90%]">
+                  {required && (
+                    <h1 className="text-center text-sm text-red-500">
+                      {userId.departments.length <= 0 &&
+                        userId.buckets.length > 0 &&
+                        "Please select Department"}
+                      {userId.departments.length > 0 &&
+                        userId.buckets.length <= 0 &&
+                        "Please select Buckets"}
+                      {userId.departments.length <= 0 &&
+                        userId.buckets.length <= 0 &&
+                        "Please select Department and Bucket"}
+                    </h1>
+                  )}
+                  <div className="grid grid-cols-2 gap-3 lg:text-xl font-semibold">
+                    <div className="text-center border py-1 bg-gray-400 rounded-t-md font-black uppercase">
+                      Campaign
                     </div>
-                    <div className="overflow-hidden h-full flex-col">
-                      {loading ? (
-                        <div className="h-full flex items-center justify-center">
-                          <VscLoading className="animate-spin text-5xl" />
-                        </div>
-                      ) : userId.departments.length === 0 ? (
-                        <div className="text-gray-500 text-center mt-2 italic">
-                          No campaign selected
-                        </div>
-                      ) : (
-                        <div className="flex  flex-col gap-1 h-full overflow-auto gap-x-3 py-2 ">
-                          {deptBucketData?.getDepartmentBucket?.map(
-                            (bucket) => (
+
+                    <div className="text-center border py-1 bg-gray-400 rounded-t-md font-black uppercase">
+                      Buckets
+                    </div>
+                  </div>
+                  <div className="flex flex-col h-full  overflow-hidden relative">
+                    <div className="grid grid-cols-2 gap-3 text-sm lg:text-lg h-full overflow-hidden">
+                      <div className="flex border-x border-b rounded-b-sm p-2 bg-gray-200 flex-col gap-1 h-full overflow-auto gap-x-3 py-2 ">
+                        {deptData?.getDepts?.map((dept) => {
+                          return (
+                            dept.name !== "ADMIN" && (
                               <label
-                                key={bucket._id}
-                                className="flex bg-gray-200 hover:bg-gray-300 transition-all border px-3 rounded-sm items-center gap-2"
+                                key={dept.id}
+                                className="flex bg-gray-100 cursor-pointer border px-3 rounded-sm hover:bg-gray-300 transition-all gap-2 items-center"
                               >
                                 <input
                                   type="checkbox"
-                                  id={bucket._id}
-                                  checked={userId.buckets.includes(bucket._id)}
+                                  id={dept.id}
+                                  checked={userId.departments.includes(dept.id)}
                                   onChange={(e) => {
                                     const checked = e.target.checked;
                                     setUserId((prev) => ({
                                       ...prev,
-                                      buckets: checked
-                                        ? [...prev.buckets, bucket._id]
-                                        : prev.buckets.filter(
-                                            (id) => id !== bucket._id
+                                      departments: checked
+                                        ? [...prev.departments, dept.id]
+                                        : prev.departments.filter(
+                                            (id) => id !== dept.id
                                           ),
                                     }));
                                   }}
                                 />
-                                <label htmlFor={bucket._id}>
-                                  {bucket.name}
+
+                                <label htmlFor={dept.id} className="capitalize">
+                                  {dept.name.replace(/_/g, " ")}
                                 </label>
                               </label>
                             )
-                          )}
-                        </div>
-                      )}
+                          );
+                        })}
+                      </div>
+                      <div className="overflow-hidden h-full flex-col">
+                        {loading ? (
+                          <div className="h-full flex items-center justify-center">
+                            <VscLoading className="animate-spin text-5xl" />
+                          </div>
+                        ) : userId.departments.length === 0 ? (
+                          <div className="text-gray-500 border-black border-x border-b rounded-b-md text-sm text-center py-2 italic">
+                            No campaign selected
+                          </div>
+                        ) : (
+                          <div className="flex border-x border-b rounded-b-sm p-2 bg-gray-200 flex-col gap-1 h-full overflow-auto gap-x-3 py-2 ">
+                            {deptBucketData?.getDepartmentBucket?.map(
+                              (bucket) => (
+                                <label
+                                  key={bucket._id}
+                                  className="flex bg-gray-100 cursor-pointer hover:bg-gray-300 transition-all border px-3 rounded-sm items-center gap-2"
+                                >
+                                  <input
+                                    type="checkbox"
+                                    id={bucket._id}
+                                    checked={userId.buckets.includes(
+                                      bucket._id
+                                    )}
+                                    onChange={(e) => {
+                                      const checked = e.target.checked;
+                                      setUserId((prev) => ({
+                                        ...prev,
+                                        buckets: checked
+                                          ? [...prev.buckets, bucket._id]
+                                          : prev.buckets.filter(
+                                              (id) => id !== bucket._id
+                                            ),
+                                      }));
+                                    }}
+                                  />
+                                  <label htmlFor={bucket._id}>
+                                    {bucket.name}
+                                  </label>
+                                </label>
+                              )
+                            )}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
 
-                <div className=" flex justify-end items-end mt-3">
-                  <div
-                    className="bg-blue-500  flex gap-2 items-center shadow-md border-2 border-blue-800 font-black text-blue-800  uppercase cursor-pointer hover:bg-blue-600 transition-all px-4 py-2 rounded-lg"
-                    onClick={handleUpdateUser}
-                  >
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                      strokeWidth="3"
-                      stroke="currentColor"
-                      className="size-5"
+                  <div className=" flex justify-end items-end mt-3">
+                    <div
+                      className="bg-blue-500  flex gap-2 items-center shadow-md border-2 border-blue-800 font-black text-white  uppercase cursor-pointer hover:bg-blue-600 transition-all px-4 py-2 rounded-lg"
+                      onClick={handleUpdateUser}
                     >
-                      <path
-                        strokeLinecap="round"
-                        strokeLinejoin="round"
-                        d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-                      />
-                    </svg>
-                    Update
+                      <svg
+                        xmlns="http://www.w3.org/2000/svg"
+                        fill="none"
+                        viewBox="0 0 24 24"
+                        strokeWidth="3"
+                        stroke="currentColor"
+                        className="size-5"
+                      >
+                        <path
+                          strokeLinecap="round"
+                          strokeLinejoin="round"
+                          d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
+                        />
+                      </svg>
+                      Update
+                    </div>
                   </div>
                 </div>
               </motion.div>
             </div>
           )}
         </AnimatePresence>
+
+        <Pagination
+          value={page}
+          onChangeValue={(e) => setPage(e)}
+          onKeyDownValue={(e) => dispatch(setAdminUsersPage(e))}
+          totalPage={totalPage}
+          currentPage={adminUsersPage}
+        />
       </div>
       {confirm && <Confirmation {...modalProps} />}
     </div>

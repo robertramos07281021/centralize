@@ -9,7 +9,6 @@ const modifyReportResolver = {
       try {
         return await ModifyRecord.find({ user: id });
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

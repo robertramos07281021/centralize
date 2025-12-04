@@ -11,7 +11,6 @@ const groupResolver = {
         const getAllGroup = await Group.find({ createdBy: user._id });
         return getAllGroup;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -22,7 +21,6 @@ const groupResolver = {
         const members = await User.find({ _id: { $in: parent.members } });
         return members;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -34,7 +32,6 @@ const groupResolver = {
         await Group.create({ name, description, createdBy: user._id });
         return { success: true, message: `Group successfully created` };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -44,7 +41,6 @@ const groupResolver = {
         await Group.findByIdAndUpdate(id, { $set: { name, description } });
         return { success: true, message: `Group successfully updated` };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -67,7 +63,6 @@ const groupResolver = {
           message: "Group successfully deleted",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -102,7 +97,6 @@ const groupResolver = {
           message: `Member successfully added`,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -136,7 +130,6 @@ const groupResolver = {
           message: `Member successfully deleted`,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -175,7 +168,6 @@ const groupResolver = {
           message: "Task successfully added",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -205,7 +197,6 @@ const groupResolver = {
           message: "Assigned successfully removed",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

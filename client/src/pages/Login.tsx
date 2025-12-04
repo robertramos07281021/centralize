@@ -237,7 +237,6 @@ const Login = () => {
       }
     },
     onError: async (error) => {
-      console.log(error);
       await persistor.purge();
       const errorMessage = ["Invalid", "Already", "Lock"];
       if (!errorMessage.includes(error.message)) {
@@ -335,7 +334,7 @@ const Login = () => {
       <motion.form
         ref={loginForm}
         onSubmit={handleSubmitLogin}
-        className="bg-white/70 backdrop-blur-lg relative border-2 border-gray-900 w-96 min-h-96 py-10 rounded-xl z-50 flex items-center justify-center flex-col gap-10 shadow-2xl shadow-black/80"
+        className="bg-white/70 backdrop-blur-lg relative border border-gray-900 w-96 min-h-96 py-10 rounded-xl z-50 flex items-center justify-center flex-col gap-10 shadow-2xl shadow-black/80"
         noValidate
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
@@ -383,7 +382,7 @@ const Login = () => {
                 placeholder="Ex. JohnDoe"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
-                className="bg-gray-50 focus:outline-none border shadow-md text-gray-900 text-sm rounded-lg focus:ring-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
+                className="bg-gray-50 focus:outline-none border shadow-md text-gray-900 text-sm rounded-sm focus:ring-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                 required
               />
             </label>
@@ -400,7 +399,7 @@ const Login = () => {
                 autoComplete="off"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
-                className="bg-gray-50 border focus:outline-none shadow-md  text-gray-900 text-sm rounded-lg focus:ring-blue-500
+                className="bg-gray-50 border focus:outline-none shadow-md  text-gray-900 text-sm rounded-sm focus:ring-blue-500
                 
                 
                 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
@@ -422,7 +421,7 @@ const Login = () => {
           <div className="flex justify-center">
             <button
               type="submit"
-              className="text-white w-full transition-all cursor-pointer border-2 border-blue-800 bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-4 focus:ring-blue-300 font-medium rounded-md px-8 py-2.5 text-center dark:bg-blue-600 dark:hover:bg-blue-700 dark:focus:ring-blue-800"
+              className="text-white uppercase w-full transition-all hover:rounded-2xl cursor-pointer border-2 border-blue-800 bg-blue-600 hover:bg-blue-700 font-black rounded-md px-8 py-2.5 text-center "
             >
               Login
             </button>

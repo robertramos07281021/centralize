@@ -1,4 +1,4 @@
-import React from 'react'
+
 
 const QAScoreCardAssign = () => {
   return (

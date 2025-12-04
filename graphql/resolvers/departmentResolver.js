@@ -12,7 +12,6 @@ const deptResolver = {
         const result = await Department.find();
         return result;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -23,7 +22,6 @@ const deptResolver = {
         if (!res) throw new CustomError("Department not exists", 404);
         return res;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -36,7 +34,6 @@ const deptResolver = {
         const res = await Department.find({ branch: findBranch.name });
         return res || [];
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -46,17 +43,21 @@ const deptResolver = {
         const res = await Department.find({ aom: user._id });
         return res;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
     getDepartmentBucket: async (_, { depts }) => {
       try {
+        
+        if(!depts) return null 
+
         const deptsRes = (
           await Department.find({
             _id: { $in: depts.map((d) => new mongoose.Types.ObjectId(d)) },
           })
         ).map((d) => d.name);
+
+  
         if (deptsRes.length < 1) {
           throw new CustomError("No Campaign selected", 404);
         }
@@ -64,7 +65,6 @@ const deptResolver = {
 
         return buckets;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -75,7 +75,6 @@ const deptResolver = {
         const aom = await User.findById(parent.aom);
         return aom;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -113,7 +112,6 @@ const deptResolver = {
 
         return { success: true, message: "Department successfully created" };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -144,7 +142,6 @@ const deptResolver = {
 
         return { success: true, message: "Department successfully updated" };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -160,7 +157,6 @@ const deptResolver = {
         }
         return { success: true, message: "Department successfully deleted" };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

@@ -21,6 +21,10 @@ const scoreCardTypeDefs = gql`
   type ScoreCardSummary {
     _id: ID!
     agent: User
+    qa: User
+    department: Department
+    month: String!
+    number: String!
     typeOfScoreCard: String!
     totalScore: Float
     dateAndTimeOfCall: String!

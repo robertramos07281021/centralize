@@ -1,12 +1,7 @@
 import { useQuery } from "@apollo/client";
-import { ChartOptions } from "chart.js";
 import gql from "graphql-tag";
-import { useEffect, useMemo } from "react";
-import { Doughnut } from "react-chartjs-2";
+import { useEffect } from "react";
 import { RootState } from "../../redux/store";
-
-import { GoDotFill } from "react-icons/go";
-import { Bucket } from "./TlDashboard";
 import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
@@ -27,11 +22,30 @@ const TARGET_PER_BUCKET = gql`
   }
 `;
 
-const TL_BUCKET = gql`
-  query GetDeptBucket {
-    getDeptBucket {
-      _id
-      name
+type NoPTPCollection = {
+  count: number;
+  amount: number;
+};
+
+const NO_PTP_COLLECTION = gql`
+  query noPTPCollection($bucket: ID, $interval: String) {
+    noPTPCollection(bucket: $bucket, interval: $interval) {
+      count
+      amount
+    }
+  }
+`;
+
+type PaidType = {
+  count: number;
+  amount: number;
+};
+
+const PAID_DAILY = gql`
+  query getTLPaidTotals($input: Input) {
+    getTLPaidTotals(input: $input) {
+      count
+      amount
     }
   }
 `;
@@ -41,7 +55,6 @@ const Targets = () => {
     (state: RootState) => state.auth
   );
   const location = useLocation();
-
   const pathName = location.pathname.slice(1);
   const isTLDashboard = ["tl-dashboard", "aom-dashboard"]?.includes(pathName);
 
@@ -53,148 +66,282 @@ const Targets = () => {
     notifyOnNetworkStatusChange: true,
   });
 
-  const { data: tlBucketData, refetch: deptBucketRefetch } = useQuery<{
-    getDeptBucket: Bucket[];
-  }>(TL_BUCKET, { notifyOnNetworkStatusChange: true });
+  const { data: noPTPCollection, refetch: noPTPCollectionRefetch } = useQuery<{
+    noPTPCollection: NoPTPCollection;
+  }>(NO_PTP_COLLECTION, {
+    variables: { bucket: selectedBucket, interval: intervalTypes },
+    skip: !isTLDashboard,
+    notifyOnNetworkStatusChange: true,
+  });
 
-  const bucketObject: { [key: string]: string } = useMemo(() => {
-    const tlBuckets = tlBucketData?.getDeptBucket || [];
-    return Object.fromEntries(tlBuckets.map((e) => [e._id, e.name]));
-  }, [tlBucketData]);
-  const newTargetdata = targetsData?.getTargetPerCampaign || null;
-
-  const findBucket = tlBucketData?.getDeptBucket.find(
-    (bucket) => bucket._id === selectedBucket
-  );
+  const { data: paidData, refetch: paidDataRefetch } = useQuery<{
+    getTLPaidTotals: PaidType;
+  }>(PAID_DAILY, {
+    variables: {
+      input: { bucket: selectedBucket, interval: intervalTypes },
+      skip: !isTLDashboard,
+    },
+    notifyOnNetworkStatusChange: true,
+  });
 
   useEffect(() => {
     const timer = async () => {
       await refetch();
-      await deptBucketRefetch();
+      await noPTPCollectionRefetch();
+      await paidDataRefetch();
     };
     if (selectedBucket) {
       timer();
     }
   }, [selectedBucket, intervalTypes]);
 
-  const variance = newTargetdata
-    ? newTargetdata?.target - newTargetdata?.collected
-    : 0;
-  const callfileVariance = newTargetdata
-    ? (newTargetdata.collected / newTargetdata.totalPrincipal) * 100
-    : 0;
-
-  const data = {
-    labels: ["Collected", "Target Variance", "Endorsement Variance"],
-    datasets: [
-      {
-        label: "Amount",
-        data: [newTargetdata?.collected || 0, variance],
-        backgroundColor: [
-          "oklch(54.6% 0.245 262.881)",
-          variance > 0 ? "oklch(70.5% 0.213 47.604)" : "green",
-          "oklch(63.7% 0.237 25.331)",
-        ],
-        borderColor: [
-          "oklch(54.6% 0.245 262.881)",
-          variance > 0 ? "oklch(70.5% 0.213 47.604)" : "green",
-          "oklch(63.7% 0.237 25.331)",
-        ],
-        borderWidth: 1,
-      },
-    ],
-  };
-
-  const options: ChartOptions<"doughnut"> = {
-    plugins: {
-      datalabels: {
-        color: "oklch(0 0 0)",
-        font: {
-          weight: "bold",
-          size: 14,
-        } as const,
-        formatter: (value: number) => {
-          const percent = newTargetdata
-            ? (value / newTargetdata?.target) * 100
-            : 0;
-          return isNaN(percent) || value < 1 ? "" : percent.toFixed(2) + "%";
-        },
-      },
-      legend: {
-        position: "bottom" as const,
-        display: false,
-      },
-      title: {
-        display: true,
-        font: {
-          size: 12,
-          family: "Arial",
-          weight: "bold",
-        },
-        text: [
-          `${bucketObject[selectedBucket as keyof typeof bucketObject]} ${
-            !findBucket?.principal ? ` - ${intervalTypes?.toUpperCase()}` : ""
-          } `,
-
-          `${
-            newTargetdata
-              ? newTargetdata?.collected?.toLocaleString("en-PH", {
-                  style: "currency",
-                  currency: "PHP",
-                })
-              : 0
-          } / ${
-            newTargetdata
-              ? newTargetdata?.totalPrincipal?.toLocaleString("en-PH", {
-                  style: "currency",
-                  currency: "PHP",
-                }) ||
-                newTargetdata?.collected?.toLocaleString("en-PH", {
-                  style: "currency",
-                  currency: "PHP",
-                })
-              : 0
-          } - ${isNaN(callfileVariance) ? (0).toFixed(2) : callfileVariance?.toFixed(2)}%`,
-
-          `Target - ${
-            newTargetdata
-              ? newTargetdata?.target?.toLocaleString("en-PH", {
-                  style: "currency",
-                  currency: "PHP",
-                })
-              : 0
-          }    Variance - ${variance?.toLocaleString("en-PH", {
-            style: "currency",
-            currency: "PHP",
-          })}`,
-        ],
-      },
-      tooltip: {
-        callbacks: {
-          label: function (context) {
-            const currentValue = context.raw as number;
-            const percentage = newTargetdata
-              ? ((currentValue / newTargetdata?.target) * 100).toFixed(2)
-              : 0;
-            return `Value: ${currentValue.toLocaleString("en-PH", {
-              style: "currency",
-              currency: "PHP",
-            })} - ${percentage}%`;
-          },
-        },
-      },
-    },
-    responsive: true,
-    maintainAspectRatio: false,
-  };
-
   return (
-    <motion.div className="col-span-2 flex bg-white rounded-sm border-gray-500 border"
-      initial={{y: 20, opacity: 0  }}
-      animate={{y: 0, opacity: 1}}
-      transition={{delay: 0.8}}
+    <motion.div
+      className="col-span-2 flex bg-gray-100 row-span-13 rounded-lg border-gray-500 border h-full overflow-auto py-2 px-2 flex-col justify-between col-start-7 row-start-1"
+      initial={{ y: 20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.8 }}
     >
-      <div className="flex-wrap flex items-center w-full h-full justify-center">
+      <div className=" border border-yellow-500 rounded-b-md rounded-t-md overflow-hidden flex flex-col items-center text-xs">
+        <div className="uppercase text-yellow-800 border-b border-yellow-500 font-black py-1 bg-yellow-200 w-full text-center">
+          Collected
+        </div>
+        <div className="p-2 w-full bg-yellow-100 ">
+          <div className="w-full border border-yellow-500 h-2 bg-white rounded-full relative text-sm">
+            <div
+              className="bg-yellow-500 rounded border-r border-yellow-500 h-full"
+              style={{
+                width: `${
+                  (Number(targetsData?.getTargetPerCampaign.collected) /
+                    Number(targetsData?.getTargetPerCampaign?.totalPrincipal)) *
+                  100
+                }%`,
+              }}
+            ></div>
+          </div>
+          <p className=" text-center">
+            <span className="px-1">
+              {targetsData?.getTargetPerCampaign.collected.toLocaleString(
+                "en-PH",
+                {
+                  style: "currency",
+                  currency: "PHP",
+                }
+              )}
+            </span>{" "}
+            /
+            <span className="px-1">
+              {targetsData?.getTargetPerCampaign?.totalPrincipal?.toLocaleString(
+                "en-PH",
+                {
+                  style: "currency",
+                  currency: "PHP",
+                }
+              )}
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <div>
+        <div className="uppercase text-center font-black text-lg">
+          {intervalTypes}
+        </div>
+
+        <div className="h-auto border flex flex-col border-blue-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
+          <div className="uppercase font-black text-blue-800 border-b border-blue-600 py-1 bg-blue-200 w-full text-center">
+            Amount Collected with KEPT
+          </div>
+          <div className="p-2 w-full bg-blue-100">
+            <div className="w-full border shadow-sm border-blue-600 h-2 rounded-full relative">
+              <div
+                className="bg-blue-500 rounded border-r border-blue-600 h-full"
+                style={{
+                  width: `${
+                    (Number(targetsData?.getTargetPerCampaign.collected) /
+                      Number(targetsData?.getTargetPerCampaign?.target)) *
+                    100
+                  }%`,
+                }}
+              ></div>
+            </div>
+            <p className=" text-center">
+              <span className="px-1">
+                {targetsData?.getTargetPerCampaign.collected.toLocaleString(
+                  "en-PH",
+                  {
+                    style: "currency",
+                    currency: "PHP",
+                  }
+                )}
+              </span>{" "}
+              /
+              <span className="px-1">
+                {targetsData?.getTargetPerCampaign?.target?.toLocaleString(
+                  "en-PH",
+                  {
+                    style: "currency",
+                    currency: "PHP",
+                  }
+                )}
+              </span>
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div className="h-auto border flex flex-col border-red-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
+        <p className="uppercase font-black text-red-800 border-b border-red-600 py-1 bg-red-200 w-full text-center">
+          Cured
+        </p>
+        <div className="p-2 bg-red-100 w-full">
+          <div className="w-full border bg-white shadow-sm border-red-500 rounded-full h-2">
+            <div
+              className="bg-red-500 rounded border-r border-red-500 h-full"
+              style={{
+                width: `${
+                  (Number(targetsData?.getTargetPerCampaign.collected) /
+                    Number(targetsData?.getTargetPerCampaign?.target)) *
+                  100
+                }%`,
+              }}
+            ></div>
+          </div>
+          <p className=" text-center">
+            <span className="px-1">
+              {targetsData?.getTargetPerCampaign.collected.toLocaleString(
+                "en-PH",
+                {
+                  style: "currency",
+                  currency: "PHP",
+                }
+              )}
+            </span>{" "}
+            /
+            <span className="px-1">
+              {targetsData?.getTargetPerCampaign?.target?.toLocaleString(
+                "en-PH",
+                {
+                  style: "currency",
+                  currency: "PHP",
+                }
+              )}
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <div className="h-auto border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
+        <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
+          Total PTP
+        </p>
+        <div className="flex gap-2 w-full justify-center">
+          <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
+            <p>Count: </p>
+            <p>1</p>
+          </div>
+          <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100">
+            <p className="">Amount: </p>
+            <p>10000</p>
+          </div>
+        </div>
+      </div>
+      <div className="h-auto border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
+        <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
+          Existing PTP
+        </p>
+        <div className="flex gap-2 w-full justify-center">
+          <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
+            <p className="w-full">Count: </p>
+            <p>1</p>
+          </div>
+          <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100">
+            <p className="">Amount: </p>
+            <p>10000</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="h-auto border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
+        <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
+          PTP to Confirm Paid
+        </p>
+        <div className="flex gap-2 w-full justify-center">
+          <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
+            <p className="w-full">Count: </p>
+            <p>1</p>
+          </div>
+          <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100">
+            <p className="">Amount:</p>
+            <p>10000</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="h-auto border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
+        <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
+          Confirm Paid
+        </p>
+        <div className="flex gap-2 w-full justify-center">
+          <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
+            <p className="w-full">Count: </p>
+            <p>1</p>
+          </div>
+          <div className="w-full flex py-1  font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100">
+            <p className="">Amount:</p>
+            <p>10000</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="h-auto border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
+        <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
+          No PTP Payment
+        </p>
+        <div className="flex gap-2 w-full justify-center">
+          <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
+            <p className="w-full">Count: </p>
+            <p>{noPTPCollection?.noPTPCollection?.count || 0}</p>
+          </div>
+          <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100">
+            <p className="">Amount: </p>
+            <p>
+              {(noPTPCollection?.noPTPCollection?.amount || 0).toLocaleString(
+                "en-PH",
+                {
+                  style: "currency",
+                  currency: "PHP",
+                }
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="h-auto border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
+        <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
+          Total Amount Collected
+        </p>
+        <div className="flex gap-2 w-full justify-center">
+          <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
+            <p className="w-full">Count:</p>
+            <p>{paidData?.getTLPaidTotals?.count || 0}</p>
+          </div>
+          <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100">
+            <p className="">Amount: </p>
+            <p>
+              {(paidData?.getTLPaidTotals?.amount || 0).toLocaleString(
+                "en-PH",
+                {
+                  style: "currency",
+                  currency: "PHP",
+                }
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
+
+      {/* <div className="flex-wrap flex items-center w-full h-full justify-center">
         <div className={`flex x justify-center w-full h-full relative`}>
           <GoDotFill
             className={`absolute z-20 top-1 left-1 text-5xl ${
@@ -216,7 +363,7 @@ const Targets = () => {
           />
           <Doughnut data={data} className="bg-gray-100 px-5 rounded-sm" options={options} />
         </div>
-      </div>
+      </div> */}
     </motion.div>
   );
 };

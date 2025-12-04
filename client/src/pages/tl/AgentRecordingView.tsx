@@ -1,4 +1,4 @@
-import { useMutation, useQuery } from "@apollo/client";
+import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { useSelector } from "react-redux";
 import { Navigate, useLocation } from "react-router-dom";
@@ -137,6 +137,12 @@ type SearchRecordings = {
   dispotype: string[];
 };
 
+const AGENT_RECORDING_LAG = gql`
+  query findLagRecording($name: String, $_id: ID) {
+    findLagRecording(name: $name, _id: $_id)
+  }
+`;
+
 const AgentRecordingView = () => {
   const location = useLocation();
   const dispatch = useAppDispatch();
@@ -151,8 +157,6 @@ const AgentRecordingView = () => {
     to: "",
     dispotype: [],
   });
-
-  
 
   const [triggeredSearch, setTriggeredSearch] = useState<SearchRecordings>({
     search: "",
@@ -184,19 +188,19 @@ const AgentRecordingView = () => {
     skip: !isAgentRecordings,
   });
 
-  useEffect(() => {
-    const refetching = async () => {
-      await refetch();
-    };
-    refetching();
-  }, [ccsCall]);
+  const [getLagRecording] = useLazyQuery<{ findLagRecording: number }>(
+    AGENT_RECORDING_LAG,
+    {
+      notifyOnNetworkStatusChange: true,
+    }
+  );
 
   useEffect(() => {
     const refetching = async () => {
       await refetch();
     };
     refetching();
-  }, []);
+  }, [ccsCall]);
 
   const [openRecordingsBox, setOpenRecordingsBox] = useState<string | null>(
     null
@@ -220,22 +224,14 @@ const AgentRecordingView = () => {
       setPage("1");
       dispatch(setAgentRecordingPage(1));
     }
-  }, [triggeredSearch.search]);
+  }, [triggeredSearch.search, location.pathname]);
 
   useEffect(() => {
-    dispatch(setAgentRecordingPage(1));
-  }, [location.pathname]);
-
-  useEffect(() => {
-    try {
-      if (recordings) {
-        const totalPage = Math.ceil(
-          recordings?.getAgentDispositionRecords?.total / limit
-        );
-        setTotalPage(totalPage);
-      }
-    } catch (error) {
-    } finally {
+    if (recordings) {
+      const totalPage = Math.ceil(
+        recordings?.getAgentDispositionRecords?.total / limit
+      );
+      setTotalPage(totalPage);
     }
   }, [recordings]);
 
@@ -285,7 +281,7 @@ const AgentRecordingView = () => {
       }
     },
     onError: (err) => {
-      console.log(err)
+      console.log(err);
       dispatch(setServerError(true));
     },
   });
@@ -327,6 +323,43 @@ const AgentRecordingView = () => {
     [setDataSearch]
   );
 
+  const [lagRecords, setLagRecords] = useState<{ [key: string]: any }>({});
+
+  useEffect(() => {
+    if (!recordings) return;
+
+    recordings?.getAgentDispositionRecords?.dispositions?.forEach((rec) => {
+      const callId = rec.callId?.split(".mp3_");
+      if (!callId) return;
+
+      const name = callId[0];
+      const flag = Number(callId[1]);
+
+      // Fire only if flag=0 and not yet fetched
+      if (flag === 0 && !lagRecords[name]) {
+        getLagRecording({
+          variables: { name: `${name}.mp3`, _id: rec._id },
+        }).then((res) => {
+          console.log(res);
+          setLagRecords((prev) => ({
+            ...prev,
+            [name]: res.data?.findLagRecording,
+          }));
+        });
+      }
+    });
+  }, [recordings]);
+
+  console.log(lagRecords);
+  function formatDuration(value: string) {
+    // Remove any spaces and normalize
+    const seconds = parseInt(value, 10);
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+
+    return `${mins}:${secs.toString().padStart(2, "0")}`;
+  }
+
   function fileSizeToDuration(fileSizeBytes: number) {
     const bytesPerSecond = (16 * 1000) / 8;
     const seconds = Math.floor(fileSizeBytes / bytesPerSecond);
@@ -336,7 +369,9 @@ const AgentRecordingView = () => {
     return `${minutes}:${remainingSeconds.toString().padStart(2, "0")}`;
   }
 
-  return ["QA", "TL", "MIS", "QASUPERVISOR"].includes(userLogged?.type || "") ? (
+  return ["QA", "TL", "MIS", "QASUPERVISOR"].includes(
+    userLogged?.type || ""
+  ) ? (
     <Wrapper>
       <Navbar />
       <div
@@ -492,7 +527,7 @@ const AgentRecordingView = () => {
             animate={{ y: 0, opacity: 1 }}
             transition={{ delay: 0.4 }}
           >
-            <div className="border rounded-t-md lg:text-sm  border-gray-600 flex font-black uppercase 2xl:text-lg sticky top-0 z-20 bg-gray-300 text-gray-800">
+            <div className="border rounded-t-md lg:text-sm  border-gray-600 flex font-black uppercase 2xl:text-md sticky top-0 z-20 bg-gray-300 text-gray-800">
               <div className="  text-left wlw  w-full justify-center px-4 grid grid-cols-12 gap-3 items-center py-3">
                 <div className="">Name</div>
                 <div className="">deadcalls </div>
@@ -528,12 +563,17 @@ const AgentRecordingView = () => {
                     <div>
                       {recordings?.getAgentDispositionRecords?.dispositions?.map(
                         (e, index) => {
+                          const callId = e.callId?.split(".mp3_");
                           const callRecord =
                             e.recordings?.length > 0
                               ? [...e.recordings].sort(
                                   (a, b) => b.size - a.size
                                 )
                               : [];
+
+                          console.log(
+                            callId[1]
+                          );
                           return (
                             <motion.div
                               key={e._id}
@@ -609,19 +649,32 @@ const AgentRecordingView = () => {
                                   <div>
                                     {ccsCall ? (
                                       <div className="flex justify-end items-center w-full">
+                                        {
+                                          Number(callId[1]) > 0 ? (
                                         <div
                                           onClick={() =>
-                                            onDLRecordings(e._id, e.callId)
+                                            onDLRecordings(
+                                              e._id,
+                                              `${callId[0]}.mp3`
+                                            )
                                           }
                                           className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
                                         >
                                           <FaDownload color="white" />
                                           <p className="text-white">
-                                            {fileSizeToDuration(
-                                              callRecord[0]?.size
-                                            )}{" "}
+                                            {Number(callId[1]) > 0
+                                              ? formatDuration(callId[1])
+                                              : fileSizeToDuration(
+                                                  lagRecords[callId[0]]
+                                                )}
                                           </p>
                                         </div>
+
+                                          ) : (
+                                            <div></div>
+                                          )
+                                        }
+
                                       </div>
                                     ) : (
                                       <>

@@ -7,7 +7,6 @@ const branchResolver = {
       try {
         return await Branch.find({}) 
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -16,7 +15,6 @@ const branchResolver = {
         const res = await Branch.findOne({name}) 
         return res 
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500)
       }
     }
@@ -28,7 +26,6 @@ const branchResolver = {
         await Branch.create({name})
         return {message: "Successfully created branch", success: true}
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -39,7 +36,6 @@ const branchResolver = {
         if(!updateBranch) throw new CustomError("Branch not found",404)
         return {message: "Branch successfully updated",success: true}
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500)
       }
     },
@@ -50,7 +46,6 @@ const branchResolver = {
         if(!deleteBranch) throw new CustomError("Branch not found",404)
         return {message: "Branch successfully deleted",success: true}
       } catch (error) {
-         console.log(error)
         throw new CustomError(error.message, 500)
       }
     }

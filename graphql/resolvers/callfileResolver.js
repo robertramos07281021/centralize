@@ -361,7 +361,6 @@ const callfileResolver = {
           count: total | 0,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -393,7 +392,233 @@ const callfileResolver = {
         ]);
         return findActiveCallfile;
       } catch (error) {
-        console.log(error);
+        throw new CustomError(error.message, 500);
+      }
+    },
+
+    getCallfileDispositions: async (
+      _,
+      { callfileId, dateFrom, dateTo },
+      { user }
+    ) => {
+      try {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
+        if (!mongoose.Types.ObjectId.isValid(callfileId)) {
+          throw new CustomError("Invalid callfile id", 400);
+        }
+
+        const matchFilters = {
+          callfile: new mongoose.Types.ObjectId(callfileId),
+        };
+
+        if (dateFrom) {
+          const fromDate = new Date(dateFrom);
+          if (Number.isNaN(fromDate.getTime())) {
+            throw new CustomError("Invalid dateFrom", 400);
+          }
+          matchFilters.createdAt = {
+            ...(matchFilters.createdAt || {}),
+            $gte: fromDate,
+          };
+        }
+
+        if (dateTo) {
+          const toDate = new Date(dateTo);
+          if (Number.isNaN(toDate.getTime())) {
+            throw new CustomError("Invalid dateTo", 400);
+          }
+          toDate.setHours(23, 59, 59, 999);
+          matchFilters.createdAt = {
+            ...(matchFilters.createdAt || {}),
+            $lte: toDate,
+          };
+        }
+
+        const dispositions = await Disposition.aggregate([
+          {
+            $match: {
+              ...matchFilters,
+            },
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispoType",
+            },
+          },
+          {
+            $unwind: {
+              path: "$dispoType",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $group: {
+              _id: {
+                code: "$dispoType.code",
+                name: "$dispoType.name",
+              },
+              count: { $sum: 1 },
+              amount: {
+                $sum: {
+                  $cond: [{ $ifNull: ["$amount", false] }, "$amount", 0],
+                },
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              code: "$_id.code",
+              name: "$_id.name",
+              count: 1,
+              amount: 1,
+            },
+          },
+          {
+            $sort: {
+              count: -1,
+              code: 1,
+            },
+          },
+        ]);
+
+        return dispositions;
+      } catch (error) {
+        throw new CustomError(error.message, 500);
+      }
+    },
+
+    getAgentCallfileDispositions: async (
+      _,
+      { agentId, bucketId, callfileId, dateFrom, dateTo },
+      { user }
+    ) => {
+      try {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
+        if (!mongoose.Types.ObjectId.isValid(agentId)) {
+          throw new CustomError("Invalid agent id", 400);
+        }
+
+        const matchFilters = {
+          user: new mongoose.Types.ObjectId(agentId),
+        };
+
+        if (callfileId) {
+          if (!mongoose.Types.ObjectId.isValid(callfileId)) {
+            throw new CustomError("Invalid callfile id", 400);
+          }
+          matchFilters.callfile = new mongoose.Types.ObjectId(callfileId);
+        } else if (bucketId) {
+          if (!mongoose.Types.ObjectId.isValid(bucketId)) {
+            throw new CustomError("Invalid bucket id", 400);
+          }
+
+          const bucketCallfiles = await Callfile.find({
+            bucket: new mongoose.Types.ObjectId(bucketId),
+          }).select("_id");
+
+          if (!bucketCallfiles.length) {
+            return [];
+          }
+
+          matchFilters.callfile = {
+            $in: bucketCallfiles.map((cf) => cf._id),
+          };
+        } else {
+          const validBuckets = (user.buckets ?? []).filter((id) =>
+            mongoose.Types.ObjectId.isValid(id)
+          );
+
+          if (!validBuckets.length) {
+            return [];
+          }
+
+          matchFilters.bucket = {
+            $in: validBuckets.map((id) => new mongoose.Types.ObjectId(id)),
+          };
+        }
+
+        if (dateFrom) {
+          const fromDate = new Date(dateFrom);
+          if (Number.isNaN(fromDate.getTime())) {
+            throw new CustomError("Invalid dateFrom", 400);
+          }
+          matchFilters.createdAt = {
+            ...(matchFilters.createdAt || {}),
+            $gte: fromDate,
+          };
+        }
+
+        if (dateTo) {
+          const toDate = new Date(dateTo);
+          if (Number.isNaN(toDate.getTime())) {
+            throw new CustomError("Invalid dateTo", 400);
+          }
+          toDate.setHours(23, 59, 59, 999);
+          matchFilters.createdAt = {
+            ...(matchFilters.createdAt || {}),
+            $lte: toDate,
+          };
+        }
+
+        const dispositions = await Disposition.aggregate([
+          {
+            $match: {
+              ...matchFilters,
+            },
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispoType",
+            },
+          },
+          {
+            $unwind: {
+              path: "$dispoType",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $group: {
+              _id: {
+                code: "$dispoType.code",
+                name: "$dispoType.name",
+              },
+              count: { $sum: 1 },
+              amount: {
+                $sum: {
+                  $cond: [{ $ifNull: ["$amount", false] }, "$amount", 0],
+                },
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              code: "$_id.code",
+              name: "$_id.name",
+              count: 1,
+              amount: 1,
+            },
+          },
+          {
+            $sort: {
+              count: -1,
+              code: 1,
+            },
+          },
+        ]);
+
+        return dispositions;
+      } catch (error) {
         throw new CustomError(error.message, 500);
       }
     },
@@ -883,6 +1108,7 @@ const callfileResolver = {
 
           return `${month} ${day}, ${year} ${hours}:${minutes} ${ampm}`;
         }
+        
         function formatDateTimeForPenetration(date) {
           if (!date) return "";
           const newdate = date.slice(0, 8); // 20251119
@@ -1076,7 +1302,7 @@ const callfileResolver = {
 
         return `http://${process.env.MY_IP}:4000/tmp/${findCallfile.name}_${timestamp}.csv`;
       } catch (error) {
-        console.log(error);
+
         throw new CustomError(error.message, 500);
       }
     },
@@ -1273,7 +1499,6 @@ const callfileResolver = {
 
         return customerAccounts;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1561,7 +1786,6 @@ const callfileResolver = {
 
         return newMap || null;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1655,7 +1879,6 @@ const callfileResolver = {
 
         return newDataCollected;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1703,7 +1926,7 @@ const callfileResolver = {
           total: totals,
         };
       } catch (error) {
-        console.log(error);
+  
         throw new CustomError(error.message, 500);
       }
     },
@@ -1713,7 +1936,6 @@ const callfileResolver = {
       try {
         return await Callfile.findById(parent.callfile).populate("finished_by");
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1765,7 +1987,6 @@ const callfileResolver = {
           message: "Callfile successfully finished",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1793,7 +2014,6 @@ const callfileResolver = {
           message: "Callfile successfully deleted",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1810,7 +2030,6 @@ const callfileResolver = {
           success: true,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1821,6 +2040,7 @@ const callfileResolver = {
     ) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
+
         const paidDispo = await DispoType.findOne({ code: "PAID" });
         const ptpDispo = await DispoType.findOne({ code: "PTP" });
         const callfile = await Callfile.findById(_id);
@@ -1830,6 +2050,7 @@ const callfileResolver = {
         });
 
         for (const i of selectives) {
+          
           if (!i.amount) return null;
 
           const res = await CustomerAccount.findOne({
@@ -1952,7 +2173,6 @@ const callfileResolver = {
           message: "Successfully added selectives",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

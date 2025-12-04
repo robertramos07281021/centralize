@@ -16,27 +16,34 @@ const AllBucket = gql`
 const NeedToLoginVici = () => {
   const { userLogged } = useSelector((state: RootState) => state.auth);
 
-  const {data, refetch} = useQuery<{ getAllBucket:{viciIp: string, _id:string}[]}>(AllBucket, {
-    notifyOnNetworkStatusChange: true
-  })
+  const { data, refetch } = useQuery<{
+    getAllBucket: { viciIp: string; _id: string }[];
+  }>(AllBucket, {
+    notifyOnNetworkStatusChange: true,
+  });
 
-  useEffect(()=> {
-    const refetching = async() => {
-      await refetch()
-    }
-    refetching()
-  },[])
-
+  useEffect(() => {
+    const refetching = async () => {
+      await refetch();
+    };
+    refetching();
+  }, []);
 
   const userBucket =
     userLogged && userLogged?.buckets?.length > 0
-      ? new Array(...new Set(userLogged?.buckets.map((x) => data?.getAllBucket.find(d=> d._id === x)?.viciIp )))
+      ? new Array(
+          ...new Set(
+            userLogged?.buckets.map(
+              (x) => data?.getAllBucket.find((d) => d._id === x)?.viciIp
+            )
+          )
+        )
       : [];
 
   return (
     <div className="h-full  w-full relative flex items-center oveflow-hidden justify-center">
       <div className=" w-full overflow-hidden h-full">
-        <img className=" object-cover h-full w-full " src="/BGBernLogo.jpg"/>
+        <img className=" object-cover h-full w-full " src="/BGBernLogo.jpg" />
       </div>
       <div className="top-0 left-0 absolute z-20 flex flex-col w-full h-full bg-blue-600/40 justify-center items-center text-white backdrop-blur-sm ">
         <div className=" text-2xl xl:text-7xl text-shadow-md uppercase animate-bounce font-black text-center flex">
@@ -45,10 +52,15 @@ const NeedToLoginVici = () => {
         <div className=" text-base xl:text-2xl text-shadow-md uppercase animate-bounce font-black text-center flex">
           doesn't know where to login?
         </div>
-        <div className="flex flex-col">
-          {userBucket.map((x,index) => {
+        <div className="flex flex-col gap-2">
+          {userBucket.map((x, index) => {
             return (
-              <a href={`http://${x}`} target="_blank" key={index} className=" text-sm xl:text-2xl hover:text-line">
+              <a
+                href={`http://${x}`}
+                target="_blank"
+                key={index}
+                className=" hover:bg-gray-100/80 border-gray-800 hover:rounded-4xl shadow-sm transition-all bg-gray-100/60 px-5 py-2 text-black border rounded-md text-sm xl:text-2xl"
+              >
                 {`http://${x}`}
               </a>
             );

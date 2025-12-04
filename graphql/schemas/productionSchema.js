@@ -127,18 +127,25 @@ const productionTypeDefs = gql`
     existing: Boolean
   }
 
-
+  type ProdSummary {
+    createdAt: DateTime
+    prod: [ProdHistory]
+  }
 
   type Production {
-    _id: ID!
     user: Users
-    prod_history: [ProdHistory]
-    createdAt: DateTime
+    prod_history: [ProdSummary]
     total: Float
     average: Float
     longest: Float
   }
 
+  type PtpAndConfirmPaid {
+    ptp: Int,
+    ptp_amount: Float,
+    paid: Int,
+    paid_amount: Float
+  }
 
 
   extend type Query {
@@ -172,6 +179,7 @@ const productionTypeDefs = gql`
     monthlyWeeklyCollected: Collected
     getAllAgentProductions(bucketId: ID, from: String, to: String): [Production]
     checkAgentIfHaveProd(bucket: ID, interval: String ):[ID]
+    ptpAndConfirmPaid(bucket: ID, interval: String):PtpAndConfirmPaid
   }
 
   type Mutation {

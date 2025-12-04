@@ -260,7 +260,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const validForCampaignAndBucket = ["AGENT", "TL", "MIS", "ADMIN"];
+  const validForCampaignAndBucket = ["AGENT", "TL", "MIS", "ADMIN", "QA", "QASUPERVISOR"];
 
   const { data: branchesData, refetch: branchRefetch } = useQuery<{
     getBranches: Branch[];

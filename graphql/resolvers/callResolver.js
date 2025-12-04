@@ -397,7 +397,6 @@ const callResolver = {
         const res = await CustomerAccount.aggregate(pipeline);
         return res[0] || null;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -409,8 +408,7 @@ const callResolver = {
         if (!findUser) throw new CustomError("User not found", 401);
 
         if (findUser?.vici_id?.trim() === "") {
-          console.log(findUser.name)
-          throw new CustomError("Please enter vicidial id", 401);
+          return null
         }
 
         const newBucketMap = findUser?.buckets.map((y) => y.canCall);
@@ -432,7 +430,6 @@ const callResolver = {
           return false;
         }
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -485,7 +482,6 @@ const callResolver = {
       // console.log(chechIfisOnline)
         return chechIfisOnline?.find((x) => !x.includes("ERROR"));
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -499,7 +495,6 @@ const callResolver = {
 
         return await getLoggedInUser(selectedBucket.viciIp);
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -517,7 +512,6 @@ const callResolver = {
         const callfilesBoolean = userCallfiles.map((ucf) => ucf.autoDial);
         return callfilesBoolean.includes(true);
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -693,7 +687,6 @@ const callResolver = {
 
         return findRandomCustomer.length === 0;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -705,7 +698,6 @@ const callResolver = {
 
         return res;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -736,7 +728,6 @@ const callResolver = {
         );
         return `Call initiated successfully: ${JSON.stringify(res)}`;
       } catch (error) {
-        console.log(error);
         throw new CustomError(err.message, 500);
       }
     },
@@ -780,7 +771,6 @@ const callResolver = {
           message: "Callfile successfully updated",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error, 500);
       }
     },
@@ -809,7 +799,6 @@ const callResolver = {
           message: "Successfully end call",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -868,7 +857,6 @@ const callResolver = {
 
         return `${campaign_ID}_${newDate}-${time}_${findUser?.vici_id}_${mobile}-all.mp3_${duration}`;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -904,7 +892,6 @@ const callResolver = {
 
         return res;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -926,7 +913,6 @@ const callResolver = {
           message: "Callfile successfully reset dial next call",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

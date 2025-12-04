@@ -30,7 +30,7 @@ const userResolvers = {
         });
         return findUser;
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -49,7 +49,7 @@ const userResolvers = {
           total: res[0].total.length > 0 ? res[0].total[0].totalUser : 0,
         };
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -57,12 +57,12 @@ const userResolvers = {
       try {
         return await User.findById(id);
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
     getMe: async (_, __, { user }) => {
-      if (!user) throw new CustomError("Not authenticated", 401);
+      if (!user) throw new CustomError("Unauthorized", 401);
 
       return user;
     },
@@ -70,7 +70,7 @@ const userResolvers = {
       try {
         return await User.find({ type: "AOM" });
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -150,7 +150,7 @@ const userResolvers = {
           total: total,
         };
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -174,7 +174,7 @@ const userResolvers = {
 
         return { users, total };
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -198,7 +198,7 @@ const userResolvers = {
 
         return agents;
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -216,7 +216,7 @@ const userResolvers = {
 
         return agent;
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -229,7 +229,7 @@ const userResolvers = {
         });
         return agents;
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -245,7 +245,7 @@ const userResolvers = {
 
         return assigned;
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -309,7 +309,7 @@ const userResolvers = {
 
         return aomFTEs;
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -360,7 +360,7 @@ const userResolvers = {
 
         return UserHelper;
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -379,7 +379,7 @@ const userResolvers = {
         ]);
         return findUserTLs;
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -390,7 +390,7 @@ const userResolvers = {
         const buckets = await Bucket.find({ _id: { $in: parent.buckets } });
         return buckets;
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -402,7 +402,7 @@ const userResolvers = {
 
         return departments;
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -411,7 +411,6 @@ const userResolvers = {
     createUser: async (_, { createInput }, { user }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
-
         const {
           name,
           username,
@@ -473,18 +472,18 @@ const userResolvers = {
           message: "New Account Created",
         };
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
 
-    updatePassword: async (_, { password, confirmPass }, { user }) => {
+    updatePassword: async (_, { _id, password, confirmPass }) => {
       try {
-        if (!user) throw new CustomError("Unauthorized", 401);
+        if (!_id) throw new CustomError("Unauthorized", 401);
 
         if (confirmPass !== password) throw new CustomError("Not Match", 401);
 
-        const userChangePass = await User.findById(user.id);
+        const userChangePass = await User.findById(_id);
 
         if (!userChangePass) throw new CustomError("User not found", 404);
 
@@ -503,7 +502,6 @@ const userResolvers = {
 
         return userChangePass;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -615,7 +613,6 @@ const userResolvers = {
           token,
         };
       } catch (error) {
-        console.log(error)
         throw new CustomError(error.message, 500);
       }
     },
@@ -623,11 +620,10 @@ const userResolvers = {
       try {
         if (!user) throw new CustomError("Logout: Unauthorized", 401);
 
-        if(user.handsOn) {
-          await CustomerAccount.findByIdAndUpdate(
-            user.handsOn,
-            { $set: { on_hands: false } }
-          );
+        if (user.handsOn) {
+          await CustomerAccount.findByIdAndUpdate(user.handsOn, {
+            $set: { on_hands: false },
+          });
         }
 
         const findUser = await User.findByIdAndUpdate(
@@ -674,7 +670,6 @@ const userResolvers = {
         }
 
         res.clearCookie("connect.sid");
-        res.clearCookie("token");
 
         const bucket =
           findUser?.buckets?.length > 0
@@ -721,7 +716,6 @@ const userResolvers = {
           user: user,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -764,7 +758,6 @@ const userResolvers = {
           user: updateUser,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -785,15 +778,18 @@ const userResolvers = {
           user: findUser,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
     logoutToPersist: async (_, { id }, { res }) => {
       try {
-        const findUser = await User.findByIdAndUpdate(id, {
-          $set: { isOnline: false },
-        });
+        const findUser = await User.findByIdAndUpdate(
+          id,
+          {
+            $set: { isOnline: false },
+          },
+          { new: true }
+        );
 
         if (!findUser) {
           throw CustomError("User not found", 404);
@@ -830,14 +826,12 @@ const userResolvers = {
         }
 
         res.clearCookie("connect.sid");
-        res.clearCookie("token");
 
         return {
           success: true,
           message: "Successfully logout",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -870,7 +864,6 @@ const userResolvers = {
           user: unlockUser,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -892,33 +885,35 @@ const userResolvers = {
 
         if (!logoutUser) throw new CustomError("User not found", 404);
 
-        const start = new Date();
-        start.setHours(0, 0, 0, 0);
+        if (logoutUser.type === "AGENT") {
+          const start = new Date();
+          start.setHours(0, 0, 0, 0);
 
-        const end = new Date();
-        end.setHours(23, 59, 59, 999);
+          const end = new Date();
+          end.setHours(23, 59, 59, 999);
 
-        const userProd = await Production.findOne({
-          user: logoutUser._id,
-          createdAt: { $gt: start, $lte: end },
-        });
+          const userProd = await Production.findOne({
+            user: logoutUser._id,
+            createdAt: { $gt: start, $lte: end },
+          });
 
-        const dateToday = new Date();
+          const dateToday = new Date();
 
-        userProd.prod_history.forEach((x) => {
-          if (x.existing === true) {
-            x.existing = false;
-            x.end = dateToday;
-          }
-        });
+          userProd?.prod_history?.forEach((x) => {
+            if (x.existing === true) {
+              x.existing = false;
+              x.end = dateToday;
+            }
+          });
 
-        userProd.prod_history.push({
-          type: "LOGOUT",
-          start: dateToday,
-          existing: true,
-        });
+          userProd.prod_history.push({
+            type: "LOGOUT",
+            start: dateToday,
+            existing: true,
+          });
 
-        await userProd.save();
+          await userProd.save();
+        }
 
         const bucket =
           userBuckets > 0
@@ -935,7 +930,6 @@ const userResolvers = {
           user: logoutUser,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -952,7 +946,6 @@ const userResolvers = {
           message: "Password is valid",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -968,7 +961,6 @@ const userResolvers = {
           message: "User successfully deleted",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -992,7 +984,6 @@ const userResolvers = {
           user: updateUser,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1015,7 +1006,6 @@ const userResolvers = {
           message: "User successfully updated",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

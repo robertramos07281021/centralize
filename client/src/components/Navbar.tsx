@@ -155,14 +155,14 @@ const Navbar = () => {
     notifyOnNetworkStatusChange: true,
   });
 
-  useEffect(()=> {
-    if(!userLogged) {
-      if(window.mySocket) {
-        console.log(window.mySocket)
+  useEffect(() => {
+    if (!userLogged) {
+      if (window.mySocket) {
+        console.log(window.mySocket);
       }
-      persistor.purge()
+      persistor.purge();
     }
-  },[userLogged])
+  }, [userLogged]);
 
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
   const { data: agentBucketsData, refetch: agentBucketRefetch } = useQuery<{
@@ -262,7 +262,10 @@ const Navbar = () => {
       dispatch(setLogout());
       navigate("/");
     },
-    onError: () => {
+    onError: async () => {
+      await persistor.purge();
+      dispatch(setLogout());
+      navigate("/");
       dispatch(setServerError(true));
     },
   });
@@ -303,10 +306,19 @@ const Navbar = () => {
   }>(LOGOUT_USING_PERSIST, {
     onCompleted: async () => {
       await persistor.purge();
+      if (selectedCustomer) {
+        await deselectTask({ variables: { id: selectedCustomer?._id } });
+      }
       dispatch(setLogout());
       navigate("/");
     },
-    onError: () => {
+    onError: async () => {
+      if (selectedCustomer) {
+        await deselectTask({ variables: { id: selectedCustomer?._id } });
+      }
+      await persistor.purge();
+      dispatch(setLogout());
+      navigate("/");
       dispatch(setServerError(true));
     },
   });
@@ -334,10 +346,7 @@ const Navbar = () => {
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (error) {
-        if (
-          error?.message === "Not authenticated" ||
-          error?.message === "Unauthorized"
-        ) {
+        if (error?.message === "Unauthorized") {
           setConfirmation(true);
           setModalProps({
             no: () => {
@@ -436,9 +445,9 @@ const Navbar = () => {
 
   const persistedKey = "persist:root";
 
-  window.addEventListener("storage", async(e) => {
+  window.addEventListener("storage", async (e) => {
     if (e.key === persistedKey && !localStorage.getItem(persistedKey)) {
-      await logout()
+      await logout();
     }
   });
 

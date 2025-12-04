@@ -2,53 +2,11 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { gql, useLazyQuery, useMutation, useQuery } from "@apollo/client";
 import { useSelector } from "react-redux";
-import html2canvas from "html2canvas";
-import jsPDF from "jspdf";
-import { RootState } from "../redux/store";
+import { RootState, useAppDispatch } from "../redux/store";
 import { scoreCardDropdownOptions } from "../middleware/exports";
+import { setSuccess } from "../redux/slices/authSlice";
 
 const SCORE_CARD_EXPORT_ROOT_ID = "score-card-export-root";
-const COLOR_PROPS: Array<
-  | "color"
-  | "backgroundColor"
-  | "borderTopColor"
-  | "borderRightColor"
-  | "borderBottomColor"
-  | "borderLeftColor"
-> = [
-  "color",
-  "backgroundColor",
-  "borderTopColor",
-  "borderRightColor",
-  "borderBottomColor",
-  "borderLeftColor",
-];
-
-const applyInlineColorFallbacks = (root: HTMLElement) => {
-  const docView = root.ownerDocument.defaultView;
-  if (!docView) {
-    return;
-  }
-
-  const elements: HTMLElement[] = [
-    root,
-    ...Array.from(root.querySelectorAll<HTMLElement>("*")),
-  ];
-  elements.forEach((element) => {
-    const computed = docView.getComputedStyle(element);
-    COLOR_PROPS.forEach((prop) => {
-      const value = computed[prop];
-      if (
-        typeof value === "string" &&
-        value &&
-        value !== "transparent" &&
-        value !== "rgba(0, 0, 0, 0)"
-      ) {
-        element.style[prop] = value;
-      }
-    });
-  });
-};
 
 const MONTHS = [
   "January",
@@ -519,12 +477,8 @@ const DefaultScoreCard = () => {
   const [callNumber, setCallNumber] = useState("");
   const [highlights, setHighlights] = useState("");
   const [commentsNote, setCommentsNote] = useState("");
-  const [isExportingPdf, setIsExportingPdf] = useState(false);
+  // const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
-  const [saveFeedback, setSaveFeedback] = useState<{
-    type: "success" | "error";
-    message: string;
-  } | null>(null);
   const [pointValues, setPointValues] = useState<Record<string, string>>({});
   const [missedGuidelineValues, setMissedGuidelineValues] = useState<
     Record<string, string>
@@ -544,7 +498,7 @@ const DefaultScoreCard = () => {
     const map: Record<string, boolean> = {};
     REGULATORY_POINT_IDS.forEach((regId, idx) => {
       const missedId = REGULATORY_MISSED_GUIDELINE_IDS[idx];
-      map[missedId] = regulatorySelections[regId] === "YES";
+      map[missedId] = regulatorySelections[regId] !== "YES";
     });
     return map;
   }, [regulatorySelections]);
@@ -571,15 +525,25 @@ const DefaultScoreCard = () => {
     CREATE_SCORECARD_DATA,
     {
       onCompleted: () => {
-        setSaveFeedback({ type: "success", message: "Score card saved." });
+        showNotifier("Score card saved.");
       },
       onError: (error) => {
-        setSaveFeedback({ type: "error", message: error.message });
+        showNotifier(`INCORRECT: ${error.message}`, true);
       },
     }
   );
 
   const { userLogged } = useSelector((state: RootState) => state.auth);
+  const dispatch = useAppDispatch();
+  const showNotifier = (message: string, isMessage = false) => {
+    dispatch(
+      setSuccess({
+        success: true,
+        message,
+        isMessage,
+      })
+    );
+  };
   const LoginUser = userLogged?.name || "Unknown";
   const pointSnapshotsRef = useRef<Record<string, string>>({});
   const [disabledPoints, setDisabledPoints] = useState<Record<string, boolean>>(
@@ -589,12 +553,17 @@ const DefaultScoreCard = () => {
     Record<string, boolean>
   >({});
 
+  const hasRegulatoryFailure = useMemo(() => {
+    return Object.values(regulatorySelections).some((value) => value === "YES");
+  }, [regulatorySelections]);
+
   const totalScore = useMemo(() => {
-    return Object.values(pointValues).reduce((sum, value) => {
+    const rawScore = Object.values(pointValues).reduce((sum, value) => {
       const parsed = parseFloat(value);
       return sum + (Number.isNaN(parsed) ? 0 : parsed);
     }, 0);
-  }, [pointValues]);
+    return hasRegulatoryFailure ? 0 : rawScore;
+  }, [pointValues, hasRegulatoryFailure]);
 
   const scoreExceeded = totalScore > MAX_TOTAL_SCORE;
   const scoreDisplay = scoreExceeded ? "Score too much!" : totalScore;
@@ -640,18 +609,18 @@ const DefaultScoreCard = () => {
       >
     >((acc, field) => {
       const selectionValue = selectionSource[field.scoreId];
-      let calculatedPoints: number | null = null;
+      let resolvedPoints: number | null = null;
       if (includePoints) {
         if (pointMapper) {
           const mappedPoints = pointMapper(field, selectionValue);
-          calculatedPoints = mappedPoints ?? null;
+          resolvedPoints = mappedPoints ?? null;
         } else {
-          calculatedPoints = Number(pointValues[field.scoreId] ?? 0);
+          resolvedPoints = Number(pointValues[field.scoreId] ?? 0);
         }
       }
       acc[field.key] = {
         scores: scoreMapper(selectionValue),
-        points: calculatedPoints,
+        points: resolvedPoints,
         missedGuidlines:
           missedGuidelineValues[field.missedId ?? field.scoreId] ?? "",
       };
@@ -664,9 +633,13 @@ const DefaultScoreCard = () => {
     negotiationSkills: buildSectionEntries(NEGOTIATION_FIELD_CONFIG),
     closing: buildSectionEntries(CLOSING_FIELD_CONFIG),
     regulatoryAndCompliance: buildSectionEntries(REGULATORY_FIELD_CONFIG, {
-      includePoints: true,
       selectionMap: regulatorySelections,
-      pointMapper: (_, selection) => (selection === "YES" ? 1 : selection === "NO" ? 2 : 0),
+      pointMapper: (_, selection) => {
+        if (!selection) {
+          return null;
+        }
+        return selection === "YES" ? 1 : 2;
+      },
     }),
     comments: {
       highlights: highlights.trim(),
@@ -879,22 +852,15 @@ const DefaultScoreCard = () => {
       ...prev,
       [fieldId]: value,
     }));
-    if (value === "YES") {
-      const missedId = REGULATORY_SELECTION_TO_MISSED_MAP[fieldId];
-      if (missedId) {
-        handleMissedGuidelineChange(missedId, "");
-      }
+    const missedId = REGULATORY_SELECTION_TO_MISSED_MAP[fieldId];
+    if (missedId && value !== "YES") {
+      handleMissedGuidelineChange(missedId, "");
     }
   };
 
   const handleSave = async () => {
-    setSaveFeedback(null);
-
     if (!userLogged?._id) {
-      setSaveFeedback({
-        type: "error",
-        message: "Session expired. Please log in again.",
-      });
+      showNotifier("INCORRECT: Session expired. Please log in again.", true);
       return;
     }
 
@@ -905,10 +871,7 @@ const DefaultScoreCard = () => {
       !callDateTime ||
       !callNumber.trim()
     ) {
-      setSaveFeedback({
-        type: "error",
-        message: "Please complete all required fields.",
-      });
+      showNotifier("NOT READY: Please complete all required fields.", true);
       return;
     }
 
@@ -931,67 +894,6 @@ const DefaultScoreCard = () => {
       });
     } catch (error) {
       console.error(error);
-    }
-  };
-
-  const handleExportPdf = async () => {
-    if (isExportingPdf) {
-      return;
-    }
-    if (!scoreCardRef.current) {
-      setSaveFeedback({
-        type: "error",
-        message: "Unable to locate the score card for export.",
-      });
-      return;
-    }
-
-    try {
-      setIsExportingPdf(true);
-      const canvas = await html2canvas(scoreCardRef.current, {
-        scale: Math.min(2, window.devicePixelRatio || 1),
-        useCORS: true,
-        windowWidth: scoreCardRef.current.scrollWidth,
-        windowHeight: scoreCardRef.current.scrollHeight,
-        onclone: (clonedDoc) => {
-          const clonedCard = clonedDoc.getElementById(
-            SCORE_CARD_EXPORT_ROOT_ID
-          );
-          if (clonedCard) {
-            applyInlineColorFallbacks(clonedCard as HTMLElement);
-          }
-        },
-      });
-      const imgData = canvas.toDataURL("image/png");
-      const pdf = new jsPDF("p", "mm", "a4");
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      const imgWidth = pageWidth;
-      const imgHeight = (canvas.height * pageWidth) / canvas.width;
-
-      let heightLeft = imgHeight;
-      let position = 0;
-
-      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-      heightLeft -= pageHeight;
-
-      while (heightLeft > 0) {
-        position = heightLeft - imgHeight;
-        pdf.addPage();
-        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
-        heightLeft -= pageHeight;
-      }
-
-      const sanitizedAgent = (selectedAgent || "agent").replace(/\s+/g, "-");
-      pdf.save(`score-card-${sanitizedAgent}.pdf`);
-    } catch (error) {
-      console.error("Failed to export score card", error);
-      setSaveFeedback({
-        type: "error",
-        message: "Failed to export PDF. Please try again.",
-      });
-    } finally {
-      setIsExportingPdf(false);
     }
   };
 
@@ -1437,10 +1339,7 @@ const DefaultScoreCard = () => {
       URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error("Failed to export Excel", error);
-      setSaveFeedback({
-        type: "error",
-        message: "Failed to export Excel. Please try again.",
-      });
+      showNotifier("NOT READY: Failed to export Excel. Please try again.", true);
     } finally {
       setIsExportingExcel(false);
     }
@@ -1484,7 +1383,7 @@ const DefaultScoreCard = () => {
               type="button"
               onClick={handleExportExcel}
               disabled={isExportingExcel}
-              className={`font-black flex hover:shadow-none uppercase text-white px-4 py-2 rounded-sm shadow-md border-2 transition-all border-green-800 ${
+              className={`font-black flex hover:shadow-none uppercase text-white px-4 py-2 rounded-sm shadow-md border-2 transition-all border-green-900 ${
                 isExportingExcel
                   ? "bg-green-400 cursor-not-allowed"
                   : "bg-green-600 cursor-pointer hover:bg-green-700"
@@ -1499,7 +1398,7 @@ const DefaultScoreCard = () => {
                 <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
                 <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
               </svg>
-              {isExportingExcel ? "Exporting..." : "excel"}
+              {isExportingExcel ? "Exporting..." : "export to excel"}
             </button>
             <div
               role="button"
@@ -1530,17 +1429,6 @@ const DefaultScoreCard = () => {
           </div>
         </div>
         <div className="bg-gray-300 overflow-auto p-5 flex flex-col h-full">
-          {saveFeedback && (
-            <div
-              className={`mb-3 text-sm font-semibold ${
-                saveFeedback.type === "error"
-                  ? "text-red-600"
-                  : "text-green-700"
-              }`}
-            >
-              {saveFeedback.message}
-            </div>
-          )}
           <div className="flex justify-between">
             <div className="border rounded-md font-black uppercase text-sm shadow-md">
               <div className="grid grid-cols-2 border-b">

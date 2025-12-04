@@ -7,9 +7,9 @@ import { useQuery } from "@apollo/client";
 import { useEffect } from "react";
 
 type NoPTPCollection = {
-  count: number
-  amount: number
-}
+  count: number;
+  amount: number;
+};
 
 const NO_PTP_COLLECTION = gql`
   query noPTPCollection($bucket: ID, $interval: String) {
@@ -18,28 +18,40 @@ const NO_PTP_COLLECTION = gql`
       amount
     }
   }
-`
+`;
 const NoPTPPayment = () => {
-  const {intervalTypes, selectedBucket, userLogged} = useSelector((state:RootState)=> state.auth)
-  const location = useLocation()
-  const isTLDashboard = location.pathname.includes('tl-dashboard')
-  const {data:noPTPCollection, refetch, loading} = useQuery<{noPTPCollection:NoPTPCollection}>(NO_PTP_COLLECTION,{variables: {bucket: selectedBucket, interval: intervalTypes},skip: !isTLDashboard && !userLogged,notifyOnNetworkStatusChange: true})
-  
-  useEffect(()=> {
-    const timer = async()=> {
-      await refetch()
+  const { intervalTypes, selectedBucket, userLogged } = useSelector(
+    (state: RootState) => state.auth
+  );
+  const location = useLocation();
+  const isTLDashboard = location.pathname.includes("tl-dashboard");
+  const {
+    data: noPTPCollection,
+    refetch,
+    loading,
+  } = useQuery<{ noPTPCollection: NoPTPCollection }>(NO_PTP_COLLECTION, {
+    variables: { bucket: selectedBucket, interval: intervalTypes },
+    skip: !isTLDashboard && !userLogged,
+    notifyOnNetworkStatusChange: true,
+  });
+
+  useEffect(() => {
+    const timer = async () => {
+      await refetch();
+    };
+    if (selectedBucket) {
+      timer();
     }
-    if(selectedBucket) {
-      timer()
-    }
-  },[selectedBucket,intervalTypes])
-  const paidSelected = noPTPCollection?.noPTPCollection || null
+  }, [selectedBucket, intervalTypes]);
+  const paidSelected = noPTPCollection?.noPTPCollection || null;
 
   return (
-    <div className='border-purple-500 relative shadow-md border bg-white text-purple-800 rounded-sm flex flex-col'>
+    <div className="border-purple-500 relative shadow-md border bg-white text-purple-800 rounded-sm flex flex-col">
       <div
         className="absolute top-2 right-2 text-purple-800"
-        title={"PTP will start to calculate once you uploaded a selectives.\n No Selectives means no PTP."}
+        title={
+          "PTP will start to calculate once you uploaded a selectives.\n No Selectives means no PTP."
+        }
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
@@ -56,30 +68,40 @@ const NoPTPPayment = () => {
           />
         </svg>
       </div>
-      <div className='lg:text-xs bg-purple-400 2xl:text-lg font-black h-[50%] flex items-center justify-center border-b border-purple-500 '>
+      <div className="lg:text-xs bg-purple-400 2xl:text-lg font-black h-[50%] flex items-center justify-center border-b border-purple-500 ">
         <h1>
-          No PTP Payment <span className="text-[0.6rem] 2xl:text-xs font- capitalize">{`(${intervalTypes})`}</span> 
+          No PTP Payment{" "}
+          <span className="text-[0.6rem] 2xl:text-xs font- capitalize">{`(${intervalTypes})`}</span>
         </h1>
       </div>
-      <div className='h-[50%] w-full flex relative justify-between items-center  text-lg  2xl:text-xl'>
-        {
-          !loading ? 
+      <div className="h-[50%] w-full flex relative justify-between items-center  text-lg  2xl:text-xl">
+        {!loading ? (
           <>
             <div className="font-bold text-center px-2.5  absolute -top-3 right-2 bg-purple-100 border-purple-600 shadow-md border rounded-full">
               {paidSelected ? paidSelected.count : 0}
             </div>
             <div className="font-black flex w-full justify-center items-center gap-2 ">
-              <p>{paidSelected ? paidSelected.amount?.toLocaleString('en-PH', {style: 'currency',currency: 'PHP',}) : (0).toLocaleString('en-PH', {style: 'currency',currency: 'PHP',})}</p>
+              <p>
+                {paidSelected
+                  ? paidSelected.amount?.toLocaleString("en-PH", {
+                      style: "currency",
+                      currency: "PHP",
+                    })
+                  : (0).toLocaleString("en-PH", {
+                      style: "currency",
+                      currency: "PHP",
+                    })}
+              </p>
             </div>
           </>
-          :
+        ) : (
           <div className="flex justify-end w-full">
             <AiOutlineLoading3Quarters className="animate-spin" />
-          </div> 
-         } 
-      </div> 
+          </div>
+        )}
+      </div>
     </div>
-  )
-}
+  );
+};
 
-export default NoPTPPayment
+export default NoPTPPayment;

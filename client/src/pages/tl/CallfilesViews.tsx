@@ -642,7 +642,7 @@ const CallfilesViews: React.FC<Props> = ({
       dispatch(setServerError(true));
     }
   }, []);
-
+  console.log(excelData)
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [],
@@ -660,6 +660,7 @@ const CallfilesViews: React.FC<Props> = ({
 
   const [addSelective] = useMutation<{ addSelective: Success }>(ADD_SELECTIVE, {
     onCompleted: (data) => {
+      console.log(data)
       setFile([]);
       dispatch(
         setSuccess({
@@ -702,7 +703,7 @@ const CallfilesViews: React.FC<Props> = ({
       setRequired(true);
     }
   }, [setRequired, file, callfile, addSelective, setModalProps, excelData]);
-  
+
   const { data: isAutoDialFinished, refetch: IADFRefetching } = useQuery<{
     checkIfCallfileAutoIsDone: boolean;
   }>(CHECK_IF_AUTODIAL_FINISHED, {
@@ -788,7 +789,7 @@ const CallfilesViews: React.FC<Props> = ({
             {data?.getCallfiles?.result?.map((res, index) => {
               const date = new Date(res.callfile.createdAt);
               const today = new Date();
-
+              
               const diffTime = today.getTime() - date.getTime();
               const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
               const checkStatus = res.callfile.active && !res.callfile.endo;
@@ -1226,11 +1227,27 @@ const CallfilesViews: React.FC<Props> = ({
             ></motion.div>
 
             <motion.div
-              className="w-2/8 border-2 z-20 h-2/5 rounded-md flex flex-col overflow-hidden border-purple-800"
+              className="w-2/8 border-2 z-20 relative h-2/5 rounded-md flex flex-col overflow-hidden border-purple-800"
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
             >
+              <div className="top-2 text-white right-2 absolute" title="Before uploading the selectives file, make sure the file name has no dot ">
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="1.5"
+                  stroke="currentColor"
+                  className="size-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"
+                  />
+                </svg>
+              </div>
               <h1 className="px-2 py-4 text-3xl bg-purple-700 font-black text-white text-center uppercase">
                 Add Selectives
               </h1>

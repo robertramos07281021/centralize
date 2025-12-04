@@ -42,6 +42,8 @@ const scoreCardResolver = {
           .sort({ createdAt: -1 })
           .limit(100)
           .populate({ path: "agentName", select: "name type" })
+          .populate({ path: "assignedQA", select: "name type" })
+          .populate({ path: "department", select: "name" })
           .lean();
 
         const normalizedSearch = search?.trim().toLowerCase();
@@ -64,6 +66,8 @@ const scoreCardResolver = {
         return filteredRecords.map((record) => {
           const {
             agentName,
+            assignedQA,
+            department,
             dateAndTimeOfCall,
             createdAt,
             updatedAt,
@@ -75,12 +79,13 @@ const scoreCardResolver = {
             createdAt: serializeDate(createdAt),
             updatedAt: serializeDate(updatedAt),
             agent: agentName ?? null,
+            qa: assignedQA ?? null,
+            department: department ?? null,
           };
         });
 
 
       } catch (error) {
-        console.log(error);
         if (error instanceof CustomError) {
           throw error;
         }
@@ -152,7 +157,6 @@ const scoreCardResolver = {
 
         return createdRecord;
       } catch (error) {
-        console.log(error);
         if (error instanceof CustomError) {
           throw error;
         }

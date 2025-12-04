@@ -95,7 +95,7 @@ const DailyFTE = () => {
 
   return (
     <motion.div
-      className=" col-span-2 rounded-xl grid grid-cols-3 gap-2"
+      className=" col-span-3 rounded-xl grid grid-cols-3 gap-2"
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ type: "spring", duration: 1 }}

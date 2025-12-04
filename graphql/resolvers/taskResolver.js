@@ -144,7 +144,7 @@ const taskResolver = {
 
         return myTask;
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -287,7 +287,7 @@ const taskResolver = {
           task: customerAccounts,
         };
       } catch (error) {
-        console.log(error);
+        
         throw new CustomError(error.message, 500);
       }
     },
@@ -331,13 +331,12 @@ const taskResolver = {
           message: "Successfully selected",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
     deselectTask: async (_, { id }, { user, PUBSUB_EVENTS, pubsub }) => {
       try {
-        if (!user) throw new CustomError("DeselectTask: Unauthorized", 401);
+        if (!user) throw new CustomError("Unauthorized", 401);
 
         const ca = await CustomerAccount.findByIdAndUpdate(
           id,
@@ -371,7 +370,7 @@ const taskResolver = {
           message: "Successfully deselected",
         };
       } catch (error) {
-        console.log(error);
+      
         throw new CustomError(error.message, 500);
       }
     },
@@ -400,7 +399,7 @@ const taskResolver = {
           message: "Successfully transfer to team leader",
         };
       } catch (error) {
-        console.log(error);
+        ;
         throw new CustomError(error.message, 500);
       }
     },
@@ -413,7 +412,7 @@ const taskResolver = {
           message: "Customers Account Successfully update",
         };
       } catch (error) {
-        console.log(error);
+      
         throw new CustomError(error.message, 500);
       }
     },

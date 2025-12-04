@@ -752,7 +752,6 @@ const CustomerDisposition = () => {
 
   const checkIfAgentIsInline = data?.checkIfAgentIsInline;
 
-
   // useEffect(() => {
   //   if (
   //     checkIfAgentIsInline?.includes("PAUSE") &&
@@ -1213,7 +1212,8 @@ const CustomerDisposition = () => {
     <div className="overflow-hidden flex flex-col relative">
       {readyForBreak && (
         <div className="absolute top-10 z-20  left-0 translate-x-1/2 text-center py-2 w-1/2 text-2xl border-2 border-red-500 rounded-xl bg-red-200 font-bold text-red-600">
-          You are on <span className="underline">{readyForBreak} Break</span>  after this session!
+          You are on <span className="underline">{readyForBreak} Break</span>{" "}
+          after this session!
         </div>
       )}
       <div className="oveflow-hidden flex h-full w-full ">
@@ -1583,9 +1583,7 @@ const CustomerDisposition = () => {
                                     setReadyForBreak(e.value as BreakEnum)
                                   );
                                 } else {
-                                  dispatch(
-                                    setReadyForBreak(null)
-                                  );
+                                  dispatch(setReadyForBreak(null));
                                 }
                               }}
                               className="px-7 py-1 border-r last:border-b-0 cursor-pointer text-black border-b transition-all border-gray-300 odd:bg-gray-100 even:bg-white hover:bg-gray-200 whitespace-nowrap"

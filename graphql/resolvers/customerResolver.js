@@ -41,7 +41,6 @@ const customerResolver = {
           ]);
           return searchQuery;
         } catch (error) {
-          console.log(error);
           throw new CustomError(error.message, 500);
         }
       }
@@ -64,7 +63,6 @@ const customerResolver = {
               : 0,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -274,7 +272,6 @@ const customerResolver = {
 
         return accounts;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -551,7 +548,6 @@ const customerResolver = {
 
         return newResult;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -714,7 +710,6 @@ const customerResolver = {
           totalCountCustomerAccounts: allAccounts,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -734,7 +729,6 @@ const customerResolver = {
           })) || 0
         );
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1011,7 +1005,6 @@ const customerResolver = {
 
         return newMonthlyTarget;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1093,7 +1086,6 @@ const customerResolver = {
 
         return otherCustomer;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1122,7 +1114,6 @@ const customerResolver = {
         const user = await User.findById(parent.assigned);
         return user;
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1280,7 +1271,6 @@ const customerResolver = {
           message: "Callfile successfully created",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1329,7 +1319,6 @@ const customerResolver = {
           customer,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1359,7 +1348,6 @@ const customerResolver = {
           customer,
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
