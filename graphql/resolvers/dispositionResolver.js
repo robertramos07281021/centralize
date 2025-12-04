@@ -1297,7 +1297,7 @@ const dispositionResolver = {
             (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
         } else if (input.interval === "callfile") {
           filter["callfile"] = new mongoose.Types.ObjectId(
-            existingCallfile._id
+            existingCallfile?._id
           );
         }
 
@@ -1384,7 +1384,7 @@ const dispositionResolver = {
         ).map((cf) => new mongoose.Types.ObjectId(cf._id));
 
         const existingCallfile = await Callfile.findOne({
-          bucket: selectedBucket._id,
+          bucket: selectedBucket?._id,
           active: true,
         });
 
@@ -1424,7 +1424,7 @@ const dispositionResolver = {
             (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
         } else if (interval === "callfile") {
           filter["callfile"] = new mongoose.Types.ObjectId(
-            existingCallfile._id
+            existingCallfile?._id
           );
         }
 

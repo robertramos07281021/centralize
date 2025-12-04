@@ -174,8 +174,6 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
 
   const [createUser] = useMutation(CREATE_ACCOUNT, {
     onCompleted: (res) => {
-      console.log("Mutation completed:", res);
-
       if (res?.createUser?.success) {
         reset();
         dispatch(
@@ -230,10 +228,8 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
   const validateOther = () => data.name && data.username;
 
   const handleCreateUser = useCallback(async () => {
-    console.log("Creating user with input:", data);
     try {
-      const res = await createUser({ variables: { createInput: data } });
-      console.log("createUser mutation result:", res);
+      await createUser({ variables: { createInput: data } });
     } catch (err) {
       console.error("createUser mutation failed:", err);
     }

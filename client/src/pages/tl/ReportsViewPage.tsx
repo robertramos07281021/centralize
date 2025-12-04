@@ -7,8 +7,8 @@ import RFDReportTables from "./RFDReportTables";
 import ReportsTables from "./ReportsTables";
 import { useLocation } from "react-router-dom";
 import { motion } from "framer-motion";
-import { useSelector } from "react-redux";
-import { RootState, useAppDispatch } from "../../redux/store";
+
+import { useAppDispatch } from "../../redux/store";
 import { setIsReport } from "../../redux/slices/authSlice";
 
 const GET_DISPOSITION_REPORTS = gql`
@@ -111,11 +111,9 @@ type Props = {
 };
 
 const ReportsViewPage: React.FC<Props> = ({ search }) => {
-  const { isReport } = useSelector((state: RootState) => state.auth);
   const location = useLocation();
   const [searchFilter, setSearchFilter] = useState<SearchFilter>();
   const dispatch = useAppDispatch();
-  console.log(isReport)
   useEffect(() => {
     setSearchFilter({
       agent: search.searchAgent,

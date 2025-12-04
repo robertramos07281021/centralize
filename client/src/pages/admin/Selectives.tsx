@@ -98,7 +98,6 @@ const Selectives = () => {
     skip: isSelectivePage,
   });
 
-  console.log(selectivesData, "<< SELECTIVES DATA");
 
   useEffect(() => {
     if (selectivesData) {
@@ -126,7 +125,7 @@ const Selectives = () => {
     refetching();
   }, []);
 
-  console.log(selectivesData, "<< SELECTIVES DATA");
+  
 
   const selectivesList =
     selectivesData?.getAllSelectives?.selectives ?? [];

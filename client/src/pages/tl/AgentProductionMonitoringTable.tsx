@@ -101,7 +101,6 @@ const AgentProductionMonitoringTable = () => {
     notifyOnNetworkStatusChange: true,
     skip: !isTLDashboard,
   });
-  console.log(withProdAgentData)
 
   useEffect(() => {
     const refetching = async () => {

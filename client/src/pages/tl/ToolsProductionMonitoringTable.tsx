@@ -44,7 +44,6 @@ const ToolsProductionMonitoringTable = () => {
   });
   const toolsData = data?.getToolsProduction || [];
   
-  console.log(toolsData)
   useEffect(() => {
     const refetching = async () => {
       await refetch();

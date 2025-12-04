@@ -90,7 +90,6 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
     ? checkingOnly[0]._id === findExisting?._id
     : null;
 
-  console.log(findExisting);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {

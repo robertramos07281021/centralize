@@ -113,7 +113,6 @@ const ReportsComponents = forwardRef<
     notifyOnNetworkStatusChange: true,
   });
 
-  // console.log(dispotypeData);
 
   const { data: productionReportData, refetch } = useQuery<{
     ProductionReport: ProductionReport;

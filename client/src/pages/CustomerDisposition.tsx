@@ -874,7 +874,6 @@ const CustomerDisposition = () => {
   const [getCallRecording, { loading: getCallingRecordingLoading }] =
     useMutation<{ getCallRecording: string }>(GET_RECORDING, {
       onCompleted: (data) => {
-        console.log(data);
         dispatch(setCallUniqueId(data.getCallRecording));
       },
     });

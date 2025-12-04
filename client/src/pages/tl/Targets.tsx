@@ -112,7 +112,7 @@ const Targets = () => {
               className="bg-yellow-500 rounded border-r border-yellow-500 h-full"
               style={{
                 width: `${
-                  (Number(targetsData?.getTargetPerCampaign.collected) /
+                  (Number(targetsData?.getTargetPerCampaign?.collected) /
                     Number(targetsData?.getTargetPerCampaign?.totalPrincipal)) *
                   100
                 }%`,
@@ -121,7 +121,7 @@ const Targets = () => {
           </div>
           <p className=" text-center">
             <span className="px-1">
-              {targetsData?.getTargetPerCampaign.collected.toLocaleString(
+              {targetsData?.getTargetPerCampaign?.collected?.toLocaleString(
                 "en-PH",
                 {
                   style: "currency",
@@ -158,7 +158,7 @@ const Targets = () => {
                 className="bg-blue-500 rounded border-r border-blue-600 h-full"
                 style={{
                   width: `${
-                    (Number(targetsData?.getTargetPerCampaign.collected) /
+                    (Number(targetsData?.getTargetPerCampaign?.collected) /
                       Number(targetsData?.getTargetPerCampaign?.target)) *
                     100
                   }%`,
@@ -167,7 +167,7 @@ const Targets = () => {
             </div>
             <p className=" text-center">
               <span className="px-1">
-                {targetsData?.getTargetPerCampaign.collected.toLocaleString(
+                {targetsData?.getTargetPerCampaign?.collected?.toLocaleString(
                   "en-PH",
                   {
                     style: "currency",
@@ -200,7 +200,7 @@ const Targets = () => {
               className="bg-red-500 rounded border-r border-red-500 h-full"
               style={{
                 width: `${
-                  (Number(targetsData?.getTargetPerCampaign.collected) /
+                  (Number(targetsData?.getTargetPerCampaign?.collected) /
                     Number(targetsData?.getTargetPerCampaign?.target)) *
                   100
                 }%`,
@@ -209,7 +209,7 @@ const Targets = () => {
           </div>
           <p className=" text-center">
             <span className="px-1">
-              {targetsData?.getTargetPerCampaign.collected.toLocaleString(
+              {targetsData?.getTargetPerCampaign?.collected?.toLocaleString(
                 "en-PH",
                 {
                   style: "currency",

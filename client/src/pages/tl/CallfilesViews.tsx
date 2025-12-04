@@ -290,7 +290,6 @@ const CallfilesViews: React.FC<Props> = ({
             setUploading();
           }
         } catch (error) {
-          console.log(error);
           dispatch(setServerError(true));
         }
       });
@@ -642,7 +641,6 @@ const CallfilesViews: React.FC<Props> = ({
       dispatch(setServerError(true));
     }
   }, []);
-  console.log(excelData)
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [],
@@ -660,7 +658,6 @@ const CallfilesViews: React.FC<Props> = ({
 
   const [addSelective] = useMutation<{ addSelective: Success }>(ADD_SELECTIVE, {
     onCompleted: (data) => {
-      console.log(data)
       setFile([]);
       dispatch(
         setSuccess({
@@ -672,8 +669,7 @@ const CallfilesViews: React.FC<Props> = ({
       setCallfile(null);
       setExcelData([]);
     },
-    onError: (error) => {
-      console.log(error);
+    onError: () => {
       dispatch(setServerError(true));
     },
   });
@@ -789,7 +785,7 @@ const CallfilesViews: React.FC<Props> = ({
             {data?.getCallfiles?.result?.map((res, index) => {
               const date = new Date(res.callfile.createdAt);
               const today = new Date();
-              
+
               const diffTime = today.getTime() - date.getTime();
               const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
               const checkStatus = res.callfile.active && !res.callfile.endo;

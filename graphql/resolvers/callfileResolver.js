@@ -1560,10 +1560,10 @@ const callfileResolver = {
             });
         } else if (interval === "callfile") {
           filter["callfile"] = new mongoose.Types.ObjectId(
-            existingCallfile._id
+            existingCallfile?._id
           );
           secondFilter["callfile"] = new mongoose.Types.ObjectId(
-            existingCallfile._id
+            existingCallfile?._id
           );
         }
 

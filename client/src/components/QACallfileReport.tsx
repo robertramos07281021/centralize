@@ -171,8 +171,6 @@ const QACallfileReport = () => {
     GET_DEPARTMENT_AGENT
   );
 
-  console.log(agentSelector);
-
   const filteredAgents = useMemo(() => {
     const agents = agentSelector?.findAgents ?? [];
     return agents.filter((agent) => {

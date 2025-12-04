@@ -155,15 +155,6 @@ const Navbar = () => {
     notifyOnNetworkStatusChange: true,
   });
 
-  useEffect(() => {
-    if (!userLogged) {
-      if (window.mySocket) {
-        console.log(window.mySocket);
-      }
-      persistor.purge();
-    }
-  }, [userLogged]);
-
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
   const { data: agentBucketsData, refetch: agentBucketRefetch } = useQuery<{
     getTLBucket: { canCall: boolean }[];

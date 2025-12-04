@@ -234,8 +234,6 @@ const ScoreCardOverview = () => {
           {Object.entries(section).map(([key, entry]) => {
             const entryPoins = entry.points ?? 7;
 
-            console.log(entryPoins, "<<< entry points");
-
             return (
               <div
                 key={key}
