@@ -360,7 +360,7 @@ const AgentAttendanceLogs = () => {
             exit={{ opacity: 0 }}
           ></motion.div>
           <motion.div
-            className="bg-white z-20 w-full max-w-2/3 h-8/12 border p-6 rounded-md shadow-md flex flex-col gap-4"
+            className="bg-white z-20 w-full lg:max-w-2/3 lg:h-8/12 border p-6 rounded-md shadow-md flex flex-col gap-4"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}

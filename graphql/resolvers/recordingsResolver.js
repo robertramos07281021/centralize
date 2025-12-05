@@ -152,7 +152,7 @@ const recordingsResolver = {
         const remotePath = `${remoteDir}/${name}`;
 
         const files = await client.list(remotePath);
-        
+          
         
       
         return files[0].size;
@@ -166,7 +166,7 @@ const recordingsResolver = {
   },
 
   Mutation: {
-    findRecordings: async (_, { name, _id }) => {
+    findRecordings: async (_, { name, _id, ccsCall }) => {
       const client = new ftp.Client();
       try {
         const months = [
@@ -306,17 +306,19 @@ const recordingsResolver = {
             : isShopee;
 
         const remoteDir =
-          findDispo.dialer === "vici" ? ifATOME : `${remoteDirIssabel}`;
+          (findDispo.dialer === "vici" || ccsCall) ? ifATOME : `${remoteDirIssabel}`;
         const remotePath = `${remoteDir}/${name}`;
         const localPath = `./recordings/${name}`;
         await client.downloadTo(localPath, remotePath);
         const toDownload = `http://${process.env.MY_IP}:4000/recordings/${name}`;
+        
         return {
           success: true,
           url: toDownload,
           message: "Successfully downloaded",
         };
       } catch (err) {
+        console.log(err)
         throw new CustomError(
           err.message || "Unable to download recording",
           500

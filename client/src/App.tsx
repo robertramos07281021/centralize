@@ -27,7 +27,7 @@ import SetupView from "./pages/admin/SetupView";
 import UserView from "./pages/admin/UserView";
 import CustomerDisposition from "./pages/CustomerDisposition";
 import StatisticsView from "./pages/agent/StatisticsView";
-import BacklogManagementView from "./pages/tl/BacklogManagementView";
+import CallfileAndAgentReport from "./pages/tl/CallfileAndAgentReport.tsx";
 import TaskManagerView from "./pages/tl/TaskManagerView";
 import Reports from "./pages/aom/Reports";
 import AgentReport from "./pages/agent/AgentReport";
@@ -62,6 +62,7 @@ import QASVCallAllAgentLogs from "./pages/qasupervisor/QASVCallAllAgentLogs.tsx"
 import UBMortgageScoreCard from "./components/UBMortgageScoreCard.tsx";
 import Guidlines from "./components/Guidlines.tsx";
 import ScoreCardOverview from "./components/ScoreCardOverview.tsx";
+
 Chart.register(
   ...registerables,
   ChartDataLabels,
@@ -82,7 +83,7 @@ function App() {
         <Route path="/change-password" element={<ChangePassword />} />
         <Route path="/agent-recordings" element={<AgentRecordingView />} />
         <Route path="/break-view" element={<BreakView />} />
-          <Route path="/score-card-temporary" element={<DefaultScoreCard />} />
+        <Route path="/score-card-temporary" element={<DefaultScoreCard />} />
 
         <Route element={<AdminRoute />}>
           <Route path="/selectives" element={<Selectives />} />
@@ -132,7 +133,7 @@ function App() {
           <Route path="/agent-production" element={<AgentView />} />
           <Route path="/tl-task-manager" element={<TaskManagerView />} />
           <Route path="/tl-cip" element={<CustomerDisposition />} />
-          <Route path="/tl-reports" element={<BacklogManagementView />} />
+          <Route path="/tl-reports" element={<CallfileAndAgentReport />} />
           <Route path="/call-agents-logs" element={<CallLogs />} />
         </Route>
 
@@ -156,13 +157,13 @@ function App() {
           />
           <Route path="/score-card" element={<DefaultScoreCard />} />
         </Route>
-        
+
         <Route element={<QASVRoute />}>
           <Route
             path="/qasv-call-all-agent-logs"
             element={<QASVCallAllAgentLogs />}
           />
-          <Route 
+          <Route
             path="/qasv-agent-attendance"
             element={<AgentAttendanceLogs />}
           />
@@ -173,7 +174,10 @@ function App() {
           <Route path="/default-score-card" element={<DefaultScoreCard />} />
           <Route path="/eastwest-score-card" element={<EastwestScoreCard />} />
           <Route path="/ub-score-card" element={<UBScoreCard />} />
-          <Route path="/ub-mortgage-score-card" element={<UBMortgageScoreCard />} />
+          <Route
+            path="/ub-mortgage-score-card"
+            element={<UBMortgageScoreCard />}
+          />
           <Route path="/guidlines" element={<Guidlines />} />
           <Route path="/qasv-recordings" element={<QASVAgentRecordings />} />
           <Route path="/scorecard-overview" element={<ScoreCardOverview />} />

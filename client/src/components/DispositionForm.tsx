@@ -162,6 +162,7 @@ enum RFD {
   BUSSCLOSE = "Business Closed",
 }
 
+
 enum Payment {
   FULL = "full",
   PARTIAL = "partial",
@@ -690,10 +691,10 @@ const DispositionForm: React.FC<Props> = ({
     const isPaidWithSelective = dispo === paidId && hasSelective;
     
     return !!(
-      Number(balance) >= 0 ||
-      notAssigned ||
+      (Number(balance) >= 0 && dispo !== paidId && !hasSelective ) &&
+      (notAssigned ||
       isPTPAndAssignedToUser ||
-      isPaidWithSelective
+      isPaidWithSelective)
     );
   }
 

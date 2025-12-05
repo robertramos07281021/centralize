@@ -63,6 +63,7 @@ const userTypeDefs = gql`
     vici_id: String
     departmentDetails: Department
     handsOn: ID
+    scoreCardType: String
   }
 
   type PaginatedUsers {
@@ -162,6 +163,7 @@ const userTypeDefs = gql`
     userId: ID!
     departments: [ID]
     buckets: [ID]
+    scoreCardType: String
   }
 
   type Mutation {

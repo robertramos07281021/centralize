@@ -656,8 +656,9 @@ const CallfilesViews: React.FC<Props> = ({
     },
   });
 
-  const [addSelective] = useMutation<{ addSelective: Success }>(ADD_SELECTIVE, {
+  const [addSelective, {loading:AddSelectiveLoading}] = useMutation<{ addSelective: Success }>(ADD_SELECTIVE, {
     onCompleted: (data) => {
+      console.log(data)
       setFile([]);
       dispatch(
         setSuccess({
@@ -739,7 +740,8 @@ const CallfilesViews: React.FC<Props> = ({
     finishingLoading ||
     loading ||
     setCallfileTargetLoading ||
-    autodialLoading;
+    autodialLoading || 
+    AddSelectiveLoading;
 
   if (isLoading) return <Loading />;
 

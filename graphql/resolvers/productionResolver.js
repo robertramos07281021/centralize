@@ -970,29 +970,33 @@ const productionResolver = {
         filtered["dialer"] = { $in: dialer };
       }
 
-      if (from && to) {
-        const dateStart = new Date(from);
-        dateStart.setHours(0, 0, 0, 0);
-        const dateEnd = new Date(to);
-        dateEnd.setHours(23, 59, 59, 999);
-        filtered["createdAt"] = { $gte: dateStart, $lt: dateEnd };
-      } else if (from || to) {
-        const dateStart = new Date(from || to);
-        dateStart.setHours(0, 0, 0, 0);
-        const dateEnd = new Date(from || to);
-        dateEnd.setHours(23, 59, 59, 999);
-        filtered["createdAt"] = { $gte: dateStart, $lt: dateEnd };
-      } else {
-        filtered["createdAt"] = { $lt: today };
-      }
-
       if (ccsCalls) {
+        
+        const CCSCallFiltered = {
+          callId: { $exists: true },
+          callId: { $ne: null },
+          user: new mongoose.Types.ObjectId(agentID),
+        };
+
+        if (from && to) {
+          const dateStart = new Date(from);
+          dateStart.setHours(0, 0, 0, 0);
+          const dateEnd = new Date(to);
+          dateEnd.setHours(23, 59, 59, 999);
+          CCSCallFiltered["createdAt"] = { $gte: dateStart, $lte: dateEnd };
+        } else if (from || to) {
+          const dateStart = new Date(from || to);
+          dateStart.setHours(0, 0, 0, 0);
+          const dateEnd = new Date(from || to);
+          dateEnd.setHours(23, 59, 59, 999);
+          CCSCallFiltered["createdAt"] = { $gte: dateStart, $lte: dateEnd };
+        } else if (!from && !to) {
+          CCSCallFiltered["createdAt"] = { $lte: today };
+        }
+  
         const forFiltering = await Disposition.aggregate([
           {
-            $match: {
-              callId: { $exists: true },
-              callId: { $ne: null },
-            },
+            $match: CCSCallFiltered,
           },
           {
             $lookup: {
@@ -1050,7 +1054,21 @@ const productionResolver = {
             $unwind: { path: "$dispo_user", preserveNullAndEmptyArrays: true },
           },
           {
-            $match: filtered,
+            $match: {
+              $or: [
+                {
+                  "customer.contact_no": {
+                    $elemMatch: { $regex: search, $options: "i" },
+                  },
+                },
+                {
+                  "customer.fullName": { $regex: search, $options: "i" },
+                },
+                {
+                  dialer: { $regex: search, $options: "i" },
+                },
+              ],
+            },
           },
           { $sort: { createdAt: -1 } },
           {
@@ -1093,6 +1111,7 @@ const productionResolver = {
             },
           },
         ]);
+    
 
         const newMapForDispoCode =
           forFiltering[0]?.metadata?.length > 0
@@ -1430,6 +1449,7 @@ const productionResolver = {
             total: total,
           };
         } catch (error) {
+          console.log(error);
           throw new CustomError(error.message, 500);
         } finally {
           client.close();

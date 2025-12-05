@@ -58,16 +58,16 @@ const TLAgentProduction = () => {
           </h1>
         </div>
         {intervalTypes === IntervalsTypes.MONTHLY && (
-          <div className="flex gap-5">
+          <div className="flex gap-5 text-gray-800">
             <div className="flex gap-2 items-center">
               <p>From</p>
-              <div className="bg-gray-300 border border-gray-600 rounded-md flex gap-2 items-center">
+              <div className="bg-gray-100 border border-gray-800 shadow-md rounded-md flex gap-2 items-center">
                 <input className="px-3 py-1" type="date" />
               </div>
             </div>
             <div className="flex gap-2 items-center">
               <p>To</p>
-              <div className="bg-gray-300 border border-gray-600 rounded-md ">
+              <div className="bg-gray-100 border border-gray-800 shadow-md  rounded-md ">
                 <input className="px-3 py-1" type="date" />
               </div>
             </div>

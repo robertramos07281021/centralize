@@ -7,59 +7,6 @@ import { useAppDispatch } from "../redux/store";
 import { setServerError, setSuccess } from "../redux/slices/authSlice";
 import { chunk } from "lodash";
 
-// type ExcelData = {
-//   address: string;
-//   address_2: string;
-//   address_3: string;
-//   admin_fee_os: number;
-//   bill_due_date: string;
-//   birthday: string;
-//   endorsement_date: string;
-//   grass_date: string;
-//   case_id: string;
-//   contact: string;
-//   contact_2: string;
-//   contact_3: string;
-//   platform_user_id: string;
-//   credit_user_id: string;
-//   customer_name: string;
-//   dpd_grp: string;
-//   dst_fee_os: number;
-//   balance: number;
-//   email: string;
-//   email_2: string;
-//   email_3: string;
-//   gender: string;
-//   grass_region: string;
-//   interest_os: number;
-//   late_charge_os: number;
-//   max_dpd: number;
-//   penalty_interest_os: number;
-//   principal_os: number;
-//   tagging: string;
-//   total_os: number;
-//   collectorID: string;
-//   txn_fee_os: number;
-//   late_charge_waive_fee_os: number;
-//   vendor_endorsement: string;
-//   emergencyContactName: number;
-//   emergencyContactMobile: string;
-//   dpd: number;
-//   mpd: number;
-//   batch_no: string;
-//   cf: number;
-//   pastdue_amount: number;
-//   mo_amort: number;
-//   writeoff_balance: number;
-//   overall_balance: number;
-//   mo_balance: number;
-//  partial_payment_w_service_fee;
-// new_tad_with_sf;
-// new_pay_off;
-// service_fee;
-
-// };
-
 const CREATE_CUSTOMER = gql`
   mutation createCustomer(
     $input: [CustomerData]
@@ -171,28 +118,24 @@ const Uploader: React.FC<modalProps> = ({
           function normalizePHNumber(contact: string) {
             if (!contact) return "";
 
-            // Remove spaces, dashes, parentheses
             let cleaned = String(contact ?? "").replace(/[+\-\s()]/g, "");
 
-            // If there’s a slash (multiple numbers), take the first one
             if (cleaned.includes("/")) {
               cleaned = cleaned?.split("/")[0];
             }
 
-            // Mobile numbers
             if (/^(09\d{9})$/.test(cleaned)) {
-              return cleaned; // already starts with 0
+              return cleaned;
             }
             if (/^639\d{9}$/.test(cleaned)) {
-              return "0" + cleaned.slice(2); // add leading 0
+              return "0" + cleaned.slice(2);
             }
             if (/^\+639\d{9}$/.test(contact)) {
-              return "0" + cleaned.slice(3); // add leading 0
+              return "0" + cleaned.slice(3);
             }
 
-            // Landline numbers
             if (/^0\d{1,2}\d{7}$/.test(cleaned)) {
-              return cleaned; // already starts with 0
+              return cleaned;
             }
             if (/^63\d{1,2}\d{7}$/.test(cleaned)) {
               return "0" + cleaned.slice(2);
@@ -201,7 +144,6 @@ const Uploader: React.FC<modalProps> = ({
               return "0" + cleaned.slice(3);
             }
 
-            // fallback
             return cleaned;
           }
 
@@ -277,11 +219,11 @@ const Uploader: React.FC<modalProps> = ({
             rows["case_id"] = String(case_id).trim().replace(/^-/, "");
           }
           if (!isNaN(Number(dpd))) {
-            rows["dpd"] = Number(dpd);
+            rows["dpd"] = Math.round(dpd);
           }
 
           if (!isNaN(Number(max_dpd))) {
-            rows["max_dpd"] = Number(dpd);
+            rows["max_dpd"] = Math.round(dpd);
           }
 
           if (grass_date) {
@@ -412,37 +354,7 @@ const Uploader: React.FC<modalProps> = ({
     },
   });
 
-  const [createCustomer] = useMutation(CREATE_CUSTOMER, {
-    onError: (error) => {
-      const errorMessage = error.message;
-      console.log(error);
-      if (errorMessage?.includes("Not Included")) {
-        dispatch(
-          setSuccess({
-            success: true,
-            message: "There is a buckets not included",
-            isMessage: false,
-          })
-        );
-        setExcelData([]);
-        setFile([]);
-        setConfirm(false);
-      } else if (errorMessage.includes("E11000")) {
-        dispatch(
-          setSuccess({
-            success: true,
-            message: "Duplicate file name",
-            isMessage: false,
-          })
-        );
-        setExcelData([]);
-        setFile([]);
-      } else {
-        dispatch(setServerError(true));
-      }
-      setLoading(false);
-    },
-  });
+  const [createCustomer] = useMutation(CREATE_CUSTOMER);
 
   const [confirm, setConfirm] = useState<boolean>(false);
 
@@ -464,31 +376,59 @@ const Uploader: React.FC<modalProps> = ({
     const chunks = chunk(excelData, CHUNK_SIZE);
 
     setLoading(true);
-    try {
-      for (let i = 0; i < chunks.length; i += CONCURRENT_CHUNKS) {
-        const batch = chunks.slice(i, i + CONCURRENT_CHUNKS);
 
-        // Map each chunk to a createCustomer mutation
-        const promises = batch.map((chunkData) =>
-          createCustomer({
-            variables: {
-              input: chunkData,
-              callfile: file[0].name.split(".")[0],
-              bucket: bucket ?? "",
-            },
-          })
-        );
+    const status: any[] = [];
+    for (let i = 0; i < chunks.length; i += CONCURRENT_CHUNKS) {
+      const batch = chunks.slice(i, i + CONCURRENT_CHUNKS);
 
-        // Wait for all to settle before next batch
-        const results = await Promise.allSettled(promises);
+      const promises = batch.map((chunkData) =>
+        createCustomer({
+          variables: {
+            input: chunkData,
+            callfile: file[0].name.split(".")[0],
+            bucket: bucket ?? "",
+          },
+        })
+      );
 
-        // Optional: handle errors per chunk without stopping the rest
-        results.forEach((res, idx) => {
-          if (res.status === "rejected") {
-            console.error(`Chunk ${i + idx} failed:`, res.reason);
-          }
-        });
-      }
+      const results = await Promise.allSettled(promises);
+
+      results.forEach((res) => {
+        if (res.status === "rejected") status.push(res.reason);
+      });
+    }
+
+    if (
+      status.map((x) => String(x).includes("E11000")).some((x) => x === true)
+    ) {
+      dispatch(
+        setSuccess({
+          success: true,
+          message: "Duplicate file name",
+          isMessage: false,
+        })
+      );
+      setExcelData([]);
+      setFile([]);
+      setConfirm(false);
+      setLoading(false);
+    } else if (
+      status
+        .map((x) => String(x).includes("Not Included"))
+        .some((x) => x === true)
+    ) {
+      dispatch(
+        setSuccess({
+          success: true,
+          message: "There is a buckets not included",
+          isMessage: false,
+        })
+      );
+      setLoading(false);
+      setExcelData([]);
+      setFile([]);
+      setConfirm(false);
+    } else {
       setConfirm(false);
       setExcelData([]);
       setFile([]);
@@ -497,8 +437,6 @@ const Uploader: React.FC<modalProps> = ({
       successUpload?.();
       onSuccess?.();
       setLoading(false);
-    } catch (error) {
-      console.log(error);
     }
   }, [
     createCustomer,

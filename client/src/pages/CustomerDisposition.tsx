@@ -440,7 +440,6 @@ const SearchResult = memo(
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
     }, [data, onClick]);
-
     useEffect(() => {
       if (!data) {
         setSelectedIndex(0);
@@ -463,7 +462,7 @@ const SearchResult = memo(
         {data.slice(0, 50).map((customer, index) => {
           return (
             <div
-              key={index}
+              key={customer._id}
               ref={(el) => {
                 refs.current[index] = el;
               }}
@@ -606,12 +605,10 @@ const CustomerDisposition = () => {
   } = useSelector((state: RootState) => state.auth);
   const [manualDial, setManualDial] = useState<string | null>(null);
   const [isUpdate, setIsUpdate] = useState<boolean>(false);
-  const [isSearch, setIsSearch] = useState<boolean>(true);
+  const [isSearch, setIsSearch] = useState<Search[] | null>(null);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isRPC, setIsRPC] = useState<boolean>(false);
-  // const { data: agentBucketData } = useQuery<{
-  //   getDeptBucket: Bucket;
-  // }>(GET_AGENT_BUCKET);
+
   const [search, setSearch] = useState<string>("");
   const [breaker, setBreaker] = useState(false);
   const [dial, setDial] = useState(false);
@@ -627,6 +624,12 @@ const CustomerDisposition = () => {
     }
   }, [readyForBreak, selectedCustomer]);
 
+  useEffect(()=> {
+    if(search.trim() === "") {
+      setIsSearch(null)
+    }
+  },[search])
+
   const { data: bucketData, refetch: bucketsRefetch } = useQuery<{
     getAllBucket: BucketCanCall[];
   }>(ALL_BUCKET, {
@@ -637,20 +640,13 @@ const CustomerDisposition = () => {
     ?.filter((x) => userLogged?.buckets?.includes(x._id))
     .map((bucket) => bucket.canCall);
 
-  const { data: searchData, refetch } = useQuery<{ search: Search[] }>(SEARCH, {
-    skip: isSearch,
-    fetchPolicy: "network-only",
+  const { refetch } = useQuery<{ search: Search[] }>(SEARCH, {
+    skip: !isSearch,
     notifyOnNetworkStatusChange: true,
   });
   const { data: dispotypes } = useQuery<{ getDispositionTypes: Dispotype[] }>(
     DISPOTYPES
   );
-  // const [amountData, setAmountData] = useState({
-  //   amount: 0,
-  //   disposition: "",
-  //   // add other fields if needed
-  // });
-  // const [presetAmount, setPresetAmount] = useState<string | null>(null);
   const [presetSelection, setPresetSelection] = useState<PresetSelection>({
     amount: null,
     label: null,
@@ -694,18 +690,16 @@ const CustomerDisposition = () => {
     (dt) => dt.code === "PAID"
   );
 
-  const length = searchData?.search?.length || 0;
-
   const debouncedSearch = useMemo(() => {
     return debounce(async (val: string) => {
       if (val && val.trim() !== "") {
-        await refetch({ search: val });
+        const res = await refetch({ search: val });
+        setIsSearch(res.data.search);
       }
     }, 500);
   }, [refetch]);
 
   const handleSearchChange = (val: string) => {
-    setIsSearch(false);
     setSearch(val);
     debouncedSearch(val);
   };
@@ -720,15 +714,28 @@ const CustomerDisposition = () => {
     onCompleted: () => {
       setSearch("");
     },
-    onError: () => {
-      dispatch(setServerError(true));
+    onError: (err) => {
+      if (err.message.includes("Already taken")) {
+        dispatch(setSelectedCustomer(null));
+        dispatch(
+          setSuccess({
+            success: true,
+            message: "Customer already taken by other agent",
+            isMessage: false,
+          })
+        );
+      }
     },
   });
 
   const onClickSearch = useCallback(
     async (customer: Search) => {
-      await selectTask({ variables: { id: customer._id } });
-      dispatch(setSelectedCustomer(customer));
+      const res = await selectTask({ variables: { id: customer._id } });
+      setIsSearch(null);
+      setSearch("")
+      if (!res.errors) {
+        dispatch(setSelectedCustomer(customer));
+      }
     },
     [selectTask, dispatch]
   );
@@ -1011,15 +1018,6 @@ const CustomerDisposition = () => {
     }, 1000);
   }, [selectedCustomer, search, isAutoDialData?.isAutoDial, breakValue]);
 
-  // console.log(data?.checkIfAgentIsInline)
-  // console.log(data?.checkIfAgentIsInline);
-
-  //me 09126448847
-  //inbound 09285191305
-  //endrian 09694827149
-  // const mobileNo =
-  //   userLogged?.username === "RRamos" ? "09285191305" : "09694827149";
-
   function normalizePhilippineNumber(rawNumber: string): string | null {
     if (!rawNumber) return null;
 
@@ -1070,8 +1068,6 @@ const CustomerDisposition = () => {
     const newPhone = normalizePhilippineNumber(phoneNumber);
 
     if (!newPhone) return;
-
-    // const checkForCallStatus = checkIfAgentIsInline?.split("|")
 
     if (
       checkIfAgentIsInline?.includes("INCALL") ||
@@ -1292,7 +1288,7 @@ const CustomerDisposition = () => {
                   </div>
 
                   <div className="px-5 flex flex-col w-full py-5">
-                    {!selectedCustomer?._id && (
+                    {!selectedCustomer && (
                       <div className="relative w-full flex justify-center">
                         {!isAutoDialData?.isAutoDial && (
                           <input
@@ -1307,17 +1303,22 @@ const CustomerDisposition = () => {
                             className=" w-full p-2 text-sm  text-gray-900 border border-gray-600 rounded-sm bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
                           />
                         )}
-                        <div
-                          className={`${
-                            length > 0 && search ? "" : "hidden"
-                          } absolute max-h-96 border border-gray-600 w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-sm top-10`}
-                        >
-                          <SearchResult
-                            data={searchData?.search || []}
-                            search={search}
-                            onClick={onClickSearch}
-                          />
-                        </div>
+                        {isSearch && isSearch?.length > 0 && (
+                          <div
+                            className={`absolute max-h-96 border border-gray-600 w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-sm top-10`}
+                          >
+                            <SearchResult
+                              data={isSearch || []}
+                              search={search}
+                              onClick={onClickSearch}
+                            />
+                          </div>
+                        )}
+                        {isSearch && isSearch.length <= 0 && (
+                          <div className="w-full h-auto top-10 absolute p-2 italic border text-slate-700 font-medium text-sm bg-gray-200 shadow shadow-black/50 rounded">
+                            No file was found, or another agent has already taken the customer.
+                          </div>
+                        )}
                       </div>
                     )}
                     <FieldDisplay

@@ -265,11 +265,15 @@ const ScoreCardOverview = () => {
                   )}
                 </div>
                 <div className="text-gray-700 flex gap-2 items-center">
-                  <span className="font-medium text-black">Points:</span>
+                  <span className="font-medium text-black">Pointds:</span>
                   <div
                     className={` ${
                       entryPoins === 0
                         ? "bg-red-600 border-red-900"
+                        : entryPoins === 1
+                        ? "bg-red-600 border-red-900"
+                        : entryPoins < 3
+                        ? "bg-green-600 border-green-900"
                         : entryPoins < 20
                         ? "bg-green-600 border-green-900"
                         : "bg-red-600 border-red-900"
@@ -518,7 +522,12 @@ const ScoreCardOverview = () => {
         valueCell.alignment = { horizontal: "left", vertical: "middle" };
         applyBorderRange(rowIndex, rowIndex, 2, 7);
       });
-      applyOuterBorder(infoRowsStart, infoRowsStart + infoRows.length - 1, 2, 7);
+      applyOuterBorder(
+        infoRowsStart,
+        infoRowsStart + infoRows.length - 1,
+        2,
+        7
+      );
 
       worksheet.mergeCells("H6:H12");
       const totalLabelCells = worksheet.getCell("H6");
@@ -594,7 +603,10 @@ const ScoreCardOverview = () => {
         { range: `D${criteriaHeaderRow}:G${headerRowEnd}`, label: "Category" },
         { range: `H${criteriaHeaderRow}:H${headerRowEnd}`, label: "Scores" },
         { range: `I${criteriaHeaderRow}:I${headerRowEnd}`, label: "Points" },
-        { range: `J${criteriaHeaderRow}:J${headerRowEnd}`, label: "Missed Guideline" },
+        {
+          range: `J${criteriaHeaderRow}:J${headerRowEnd}`,
+          label: "Missed Guideline",
+        },
       ];
       headerRanges.forEach(({ range, label }) => {
         worksheet.mergeCells(range);
@@ -638,8 +650,13 @@ const ScoreCardOverview = () => {
       criteriaRows.forEach((rowValues, index) => {
         const excelRowIndex = firstDataRow + index;
         const rowColor = index % 2 === 0 ? tableLight : lightBlue;
-        const [criteriaLabel, categoryLabel, scoreValue, pointValue, missedValue] =
-          rowValues;
+        const [
+          criteriaLabel,
+          categoryLabel,
+          scoreValue,
+          pointValue,
+          missedValue,
+        ] = rowValues;
         const isCommentRow = excelRowIndex >= commentStartRow;
         if (typeof criteriaLabel === "string" && criteriaLabel) {
           sectionRanges.push({
@@ -776,12 +793,16 @@ const ScoreCardOverview = () => {
       const downloadUrl = URL.createObjectURL(blob);
       const link = document.createElement("a");
       link.href = downloadUrl;
-      link.download = `score-card-${sanitizedAgent || "agent"}-${timestamp}.xlsx`;
+      link.download = `score-card-${
+        sanitizedAgent || "agent"
+      }-${timestamp}.xlsx`;
       link.click();
       URL.revokeObjectURL(downloadUrl);
     } catch (error) {
       console.error("Failed to export score card", error);
-      window.alert("Unable to export this score card right now. Please try again.");
+      window.alert(
+        "Unable to export this score card right now. Please try again."
+      );
     } finally {
       setIsExportingExcel(false);
     }

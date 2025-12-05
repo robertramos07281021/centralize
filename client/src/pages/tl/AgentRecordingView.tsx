@@ -106,8 +106,8 @@ type Agent = {
 };
 
 const DL_RECORDINGS = gql`
-  mutation findRecordings($_id: ID!, $name: String!) {
-    findRecordings(_id: $_id, name: $name) {
+  mutation findRecordings($_id: ID!, $name: String!, $ccsCall: Boolean) {
+    findRecordings(_id: $_id, name: $name, ccsCall:$ccsCall ) {
       success
       message
       url
@@ -289,7 +289,7 @@ const AgentRecordingView = () => {
   const onDLRecordings = useCallback(
     async (_id: string, name: string) => {
       setIsLoading(_id);
-      await findRecordings({ variables: { _id, name } });
+      await findRecordings({ variables: { _id, name, ccsCall } });
     },
     [setIsLoading, findRecordings]
   );
@@ -350,7 +350,6 @@ const AgentRecordingView = () => {
     });
   }, [recordings]);
 
-  console.log(lagRecords);
   function formatDuration(value: string) {
     // Remove any spaces and normalize
     const seconds = parseInt(value, 10);
@@ -571,9 +570,6 @@ const AgentRecordingView = () => {
                                 )
                               : [];
 
-                          console.log(
-                            callId[1]
-                          );
                           return (
                             <motion.div
                               key={e._id}
@@ -671,7 +667,24 @@ const AgentRecordingView = () => {
                                         </div>
 
                                           ) : (
-                                            <div></div>
+                                            <div
+                                          onClick={() =>
+                                            onDLRecordings(
+                                              e._id,
+                                              `${callId[0]}.mp3`
+                                            )
+                                          }
+                                          className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
+                                        >
+                                          <FaDownload color="white" />
+                                          <p className="text-white">
+                                            {/* {Number(callId[1]) > 0
+                                              ? formatDuration(callId[1])
+                                              : fileSizeToDuration(
+                                                  lagRecords[callId[0]]
+                                                )} */}
+                                          </p>
+                                        </div>
                                           )
                                         }
 

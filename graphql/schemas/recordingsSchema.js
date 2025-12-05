@@ -6,7 +6,7 @@ const recordingTypeDefs = gql`
   }
 
   type Mutation {
-    findRecordings(name:String!,_id:ID!):Success
+    findRecordings(name:String!,_id:ID!, ccsCall: Boolean):Success
     deleteRecordings(filename: String):Success
   }
 `

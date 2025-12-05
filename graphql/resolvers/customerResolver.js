@@ -71,10 +71,6 @@ const customerResolver = {
         if (!search) {
           return [];
         }
-        // function escapeRegex(str) {
-        //   return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        // }
-        // const regex = new RegExp("^" + escapeRegex(search), "i");
 
         const searchValue = search;
 
@@ -97,7 +93,7 @@ const customerResolver = {
           "ITP",
           "PAID",
         ];
-
+      
         const accounts = await Customer.aggregate([
           {
             $match: {
@@ -160,7 +156,6 @@ const customerResolver = {
               },
               "ca.on_hands": false,
               "account_callfile.active": { $eq: true },
-              "account_callfile.endo": { $exists: false },
             },
           },
           {
@@ -1151,7 +1146,7 @@ const customerResolver = {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        let newCallfile = await Callfile.findOne({ name: callfile });
+        let newCallfile = await Callfile.findOne({ name: callfile, active: true, bucket: findBucket._id });
 
         if (!newCallfile) {
           newCallfile = await Callfile.create({
@@ -1170,8 +1165,7 @@ const customerResolver = {
             },
           });
         }
-        if (newCallfile.createdAt < today) throw new CustomError("E11000", 401);
-        
+
         const customerDocs = input.map((e) => ({
           fullName: e.customer_name,
           platform_customer_id: e.platform_user_id || null,

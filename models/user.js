@@ -121,6 +121,10 @@ const userSchema = new Schema(
       type: Boolean,
       default: false
     },
+    scoreCardType: {
+      type: String,
+      default: "Default Score Card",
+    },
   },
   { timestamps: true }
 );

@@ -45,6 +45,7 @@ const GET_USERS = gql`
         isOnline
         isLock
         departments
+        scoreCardType
       }
       total
     }
@@ -102,6 +103,7 @@ type User = {
   active: boolean;
   isOnline: boolean;
   isLock: boolean;
+  scoreCardType?: string;
 };
 
 type GetUser = {
@@ -212,6 +214,8 @@ const QASupervisorView = () => {
     notifyOnNetworkStatusChange: true,
   });
 
+  console.log("usersData", usersData);
+
   useEffect(() => {
     if (usersData) {
       const searchExistingPages = Math.ceil(
@@ -219,6 +223,20 @@ const QASupervisorView = () => {
       );
       setTotalPage(searchExistingPages);
     }
+  }, [usersData]);
+
+  useEffect(() => {
+    if (!usersData?.getQAUsers?.users) return;
+
+    const selections = usersData.getQAUsers.users.reduce(
+      (acc, qaUser) => {
+        acc[qaUser._id] = qaUser.scoreCardType || SCORE_CARD_ITEMS[0];
+        return acc;
+      },
+      {} as Record<string, string>
+    );
+
+    setScoreCardSelections(selections);
   }, [usersData]);
 
 
@@ -280,6 +298,24 @@ const QASupervisorView = () => {
         buckets: [],
       });
       setUpdate(false);
+      dispatch(setServerError(true));
+    },
+  });
+
+  const [persistScoreCardSelection] = useMutation<{
+    updateQAUser: { success: boolean; message: string };
+  }>(UPDATE_QA_USER, {
+    onCompleted: async (data) => {
+      dispatch(
+        setSuccess({
+          success: data.updateQAUser.success,
+          message: data.updateQAUser.message,
+          isMessage: false,
+        })
+      );
+      await usersRefetch();
+    },
+    onError: () => {
       dispatch(setServerError(true));
     },
   });
@@ -368,13 +404,35 @@ const QASupervisorView = () => {
     [setModalProps, setConfirm, unlockUser]
   );
 
-  const handleScoreCardSelect = (id: string, scoreCard: string) => {
-    setScoreCardSelections((prev) => ({
-      ...prev,
-      [id]: scoreCard,
-    }));
-    setActiveScoreCardUserId(null);
-  };
+  const handleScoreCardSelect = useCallback(
+    async (id: string, scoreCard: string) => {
+      setScoreCardSelections((prev) => ({
+        ...prev,
+        [id]: scoreCard,
+      }));
+      setActiveScoreCardUserId(null);
+
+      const selectedUser = usersData?.getQAUsers?.users.find(
+        (qaUser) => qaUser._id === id
+      );
+
+      try {
+        await persistScoreCardSelection({
+          variables: {
+            input: {
+              userId: id,
+              departments: selectedUser?.departments ?? [],
+              buckets: selectedUser?.buckets ?? [],
+              scoreCardType: scoreCard,
+            },
+          },
+        });
+      } catch (_error) {
+        // handled by onError callback
+      }
+    },
+    [persistScoreCardSelection, usersData]
+  );
 
   if (usersLoading || updateLoading) return <Loading />;
 
@@ -607,14 +665,14 @@ const QASupervisorView = () => {
                     )}
                   </div>
                   <div
-                    className="border border-black flex px-3 justify-between items-center rounded-sm cursor-pointer hover:bg-gray-200 bg-gray-100 shadow-md py-1 relative"
+                    className="border border-black flex  justify-between items-center rounded-sm cursor-pointer hover:bg-gray-200 bg-gray-100 shadow-md relative"
                     ref={(node) => {
                       scoreCardDropdownRefs.current[user._id] = node;
                     }}
                   >
                     <button
                       type="button"
-                      className="w-full flex cursor-pointer  justify-between items-center gap-2"
+                      className="w-full flex cursor-pointer px-3 py-1 justify-between items-center gap-2"
                       onClick={() =>
                         setActiveScoreCardUserId((prev) =>
                           prev === user._id ? null : user._id

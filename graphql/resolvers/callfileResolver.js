@@ -2050,12 +2050,12 @@ const callfileResolver = {
         });
 
         for (const i of selectives) {
-          
+          console.log(i)
           if (!i.amount) return null;
 
           const res = await CustomerAccount.findOne({
             case_id: String(i.account_no),
-            callfile: new mongoose.Types.ObjectId(callfile._id),
+            callfile: new mongoose.Types.ObjectId(callfile?._id),
           }).populate("current_disposition");
 
           if (!res) {
@@ -2173,6 +2173,7 @@ const callfileResolver = {
           message: "Successfully added selectives",
         };
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500);
       }
     },

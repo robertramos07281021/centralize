@@ -990,14 +990,29 @@ const userResolvers = {
     updateQAUser: async (_, { input }, { user }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
-        const { userId, departments, buckets } = input;
+        const { userId, departments, buckets, scoreCardType } = input;
 
-        const updatedUser = await User.findByIdAndUpdate(userId, {
-          $set: {
-            departments: departments,
-            buckets: buckets,
-          },
-        });
+        const updateFields = {};
+        if (typeof departments !== "undefined") {
+          updateFields.departments = departments;
+        }
+        if (typeof buckets !== "undefined") {
+          updateFields.buckets = buckets;
+        }
+        if (typeof scoreCardType !== "undefined") {
+          updateFields.scoreCardType = scoreCardType;
+        }
+
+        if (Object.keys(updateFields).length === 0) {
+          throw new CustomError("No fields provided", 400);
+        }
+
+        const updatedUser = await User.findByIdAndUpdate(
+          userId,
+          {
+            $set: updateFields,
+          }
+        );
 
         if (!updatedUser) throw new CustomError("User not found", 401);
 

@@ -52,6 +52,12 @@ const REGULATORY_SELECTION_TO_MISSED_MAP = REGULATORY_POINT_IDS.reduce(
   },
   {} as Record<string, string>
 );
+
+const createDefaultRegulatorySelections = () =>
+  REGULATORY_POINT_IDS.reduce<Record<string, string>>((acc, id) => {
+    acc[id] = "N/A";
+    return acc;
+  }, {});
 type SectionFieldConfig = {
   key: string;
   scoreId: string;
@@ -198,7 +204,8 @@ type InputColumnProps = {
 
 type NumericInputColumnProps = InputColumnProps & {
   ids?: string[];
-  onSelectionChange?: (id: string, value: string) => void;
+  onSelectionChange?: (id: string, value: SelectionValue) => void;
+  defaultValue?: SelectionValue;
 };
 
 type TextAreaInputColumnProps = InputColumnProps & {
@@ -222,12 +229,25 @@ const NumericInputColumn = ({
   className = "",
   ids,
   onSelectionChange,
+  defaultValue = "N/A",
 }: NumericInputColumnProps) => {
-  const [selected, setSelected] = useState<(string | null)[]>(() =>
-    Array(rows).fill("N/A")
+  const [selected, setSelected] = useState<SelectionValue[]>(() =>
+    Array(rows).fill(defaultValue)
   );
+  const defaultsAppliedRef = useRef(false);
 
-  const buttons = [
+  useEffect(() => {
+    if (defaultsAppliedRef.current || !onSelectionChange) {
+      return;
+    }
+    defaultsAppliedRef.current = true;
+    Array.from({ length: rows }).forEach((_, idx) => {
+      const rowId = ids?.[idx] ?? `${idx}`;
+      onSelectionChange(rowId, defaultValue);
+    });
+  }, [defaultValue, ids, onSelectionChange, rows]);
+
+  const buttons: { label: string; value: SelectionValue; classes: string }[] = [
     {
       label: "YES",
       value: "YES",
@@ -477,8 +497,8 @@ const DefaultScoreCard = () => {
   const [callNumber, setCallNumber] = useState("");
   const [highlights, setHighlights] = useState("");
   const [commentsNote, setCommentsNote] = useState("");
-  // const [isExportingPdf, setIsExportingPdf] = useState(false);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
+  const [formResetKey, setFormResetKey] = useState(0);
   const [pointValues, setPointValues] = useState<Record<string, string>>({});
   const [missedGuidelineValues, setMissedGuidelineValues] = useState<
     Record<string, string>
@@ -488,12 +508,7 @@ const DefaultScoreCard = () => {
   >({});
   const [regulatorySelections, setRegulatorySelections] = useState<
     Record<string, string>
-  >(() =>
-    REGULATORY_POINT_IDS.reduce<Record<string, string>>((acc, id) => {
-      acc[id] = "N/A";
-      return acc;
-    }, {})
-  );
+  >(createDefaultRegulatorySelections);
   const regulatoryMissedDisabledMap = useMemo(() => {
     const map: Record<string, boolean> = {};
     REGULATORY_POINT_IDS.forEach((regId, idx) => {
@@ -506,6 +521,29 @@ const DefaultScoreCard = () => {
   const deptFieldRef = useRef<HTMLDivElement | null>(null);
   const agentFieldRef = useRef<HTMLDivElement | null>(null);
   const scoreCardRef = useRef<HTMLDivElement | null>(null);
+
+  const resetScoreCard = () => {
+    setSelectedMonth("");
+    setMonthMenuOpen(false);
+    setSelectedDept("");
+    setSelectedDeptId("");
+    setDeptMenuOpen(false);
+    setSelectedAgent("");
+    setSelectedAgentId("");
+    setAgentMenuOpen(false);
+    setCallDateTime("");
+    setCallNumber("");
+    setHighlights("");
+    setCommentsNote("");
+    setPointValues({});
+    setMissedGuidelineValues({});
+    setScoreSelections({});
+    setRegulatorySelections(createDefaultRegulatorySelections());
+    setDisabledPoints({});
+    setDisabledMissedGuidelines({});
+    pointSnapshotsRef.current = {};
+    setFormResetKey((prev) => prev + 1);
+  };
 
   const { data: deptData, loading: deptLoading } = useQuery<{
     getDepts: { id: string; name: string }[];
@@ -552,6 +590,7 @@ const DefaultScoreCard = () => {
   const [disabledMissedGuidelines, setDisabledMissedGuidelines] = useState<
     Record<string, boolean>
   >({});
+  const isProcessing = saveLoading || isExportingExcel;
 
   const hasRegulatoryFailure = useMemo(() => {
     return Object.values(regulatorySelections).some((value) => value === "YES");
@@ -566,14 +605,20 @@ const DefaultScoreCard = () => {
   }, [pointValues, hasRegulatoryFailure]);
 
   const scoreExceeded = totalScore > MAX_TOTAL_SCORE;
+  const scoreFailed = hasRegulatoryFailure;
   const scoreDisplay = scoreExceeded ? "Score too much!" : totalScore;
-  const scoreColorClass = scoreExceeded
+  const scoreColorClass = scoreFailed
+    ? "text-red-600"
+    : scoreExceeded
     ? "text-red-600"
     : totalScore < 75
     ? "text-red-600"
     : totalScore < 87
     ? "text-yellow-500"
     : "text-green-600";
+  const scoreDisplayClass = scoreExceeded
+    ? "uppercase text-red-600 text-2xl"
+    : "";
 
   const mapSelectionToScoreValue = (selection?: string) => {
     const normalizedSelection: SelectionValue =
@@ -670,6 +715,10 @@ const DefaultScoreCard = () => {
       options?: {
         includePoints?: boolean;
         selectionMap?: Record<string, string>;
+        pointValueResolver?: (
+          field: SectionFieldConfig,
+          selectionLabel: string
+        ) => string | undefined;
       }
     ) => {
       const includePoints = options?.includePoints !== false;
@@ -678,9 +727,15 @@ const DefaultScoreCard = () => {
         const selectionLabel = selectionSource[field.scoreId] ?? "N/A";
         const missedValue =
           missedGuidelineValues[field.missedId ?? field.scoreId] ?? "";
-        const pointsValue = includePoints
-          ? pointValues[field.scoreId] ?? ""
-          : "";
+        let pointsValue = "";
+        if (includePoints) {
+          if (options?.pointValueResolver) {
+            pointsValue =
+              options.pointValueResolver(field, selectionLabel) ?? "";
+          } else {
+            pointsValue = pointValues[field.scoreId] ?? "";
+          }
+        }
         rows.push([
           index === 0 ? sectionLabel : "",
           field.key
@@ -700,8 +755,10 @@ const DefaultScoreCard = () => {
     pushRows("Negotiation Skills", NEGOTIATION_FIELD_CONFIG);
     pushRows("Closing", CLOSING_FIELD_CONFIG);
     pushRows("Regulatory and Compliance", REGULATORY_FIELD_CONFIG, {
-      includePoints: false,
+      includePoints: true,
       selectionMap: regulatorySelections,
+      pointValueResolver: (_, selectionLabel) =>
+        selectionLabel === "YES" ? "Auto fail" : "",
     });
 
     return rows;
@@ -858,10 +915,10 @@ const DefaultScoreCard = () => {
     }
   };
 
-  const handleSave = async () => {
+  const handleSave = async (): Promise<boolean> => {
     if (!userLogged?._id) {
       showNotifier("INCORRECT: Session expired. Please log in again.", true);
-      return;
+      return false;
     }
 
     if (
@@ -872,11 +929,11 @@ const DefaultScoreCard = () => {
       !callNumber.trim()
     ) {
       showNotifier("NOT READY: Please complete all required fields.", true);
-      return;
+      return false;
     }
 
+    const scoreDetailsPayload = buildScoreDetailsPayload();
     try {
-      const scoreDetailsPayload = buildScoreDetailsPayload();
       await createScoreCardData({
         variables: {
           input: {
@@ -892,18 +949,34 @@ const DefaultScoreCard = () => {
           },
         },
       });
+      return true;
     } catch (error) {
       console.error(error);
+      return false;
     }
   };
 
-  const handleExportExcel = async () => {
-    if (isExportingExcel) {
+  const handleSaveAndExport = async () => {
+    if (saveLoading || isExportingExcel) {
       return;
     }
+    const saved = await handleSave();
+    if (!saved) {
+      return;
+    }
+    const exported = await handleExportExcel();
+    if (exported) {
+      resetScoreCard();
+    }
+  };
 
+  const handleExportExcel = async (): Promise<boolean> => {
+    if (isExportingExcel) {
+      return false;
+    }
+
+    setIsExportingExcel(true);
     try {
-      setIsExportingExcel(true);
       const excelModule = await import("exceljs/dist/exceljs.min.js");
       const ExcelJS = excelModule.default ?? excelModule;
       const workbook = new ExcelJS.Workbook();
@@ -948,6 +1021,7 @@ const DefaultScoreCard = () => {
       const headerBlue = "FF366092";
       const lightBlue = "FFE6EEF8";
       const tableLight = "FFF2F6FB";
+      const failRed = "FFB91C1C";
       const borderColor = "000";
       const white = "FFFFFFFF";
       const borderTemplate = {
@@ -1140,11 +1214,14 @@ const DefaultScoreCard = () => {
 
       worksheet.mergeCells("I8:J11");
       const totalScoreCell = worksheet.getCell("I8");
-      totalScoreCell.value = scoreExceeded ? "Check Score" : totalScore || 0;
+      const totalScoreExportDisplay = scoreExceeded
+        ? "Check Score"
+        : totalScore || 0;
+      totalScoreCell.value = totalScoreExportDisplay;
       totalScoreCell.font = {
         bold: true,
         size: 26,
-        color: { argb: brandBlue },
+        color: { argb: scoreFailed ? failRed : brandBlue },
       };
       totalScoreCell.alignment = { horizontal: "center", vertical: "middle" };
       totalScoreCell.fill = {
@@ -1248,6 +1325,15 @@ const DefaultScoreCard = () => {
             pattern: "solid",
             fgColor: { argb: rowColor },
           };
+          if (
+            typeof pointValue === "string" &&
+            pointValue.toLowerCase() === "failed"
+          ) {
+            pointsCell.font = {
+              bold: true,
+              color: { argb: failRed },
+            };
+          }
 
           const missedCell = worksheet.getCell(`J${excelRowIndex}`);
           missedCell.value = missedValue ?? "";
@@ -1337,16 +1423,18 @@ const DefaultScoreCard = () => {
       link.download = `score-card-${sanitizedAgent}.xlsx`;
       link.click();
       URL.revokeObjectURL(downloadUrl);
+      return true;
     } catch (error) {
       console.error("Failed to export Excel", error);
       showNotifier("NOT READY: Failed to export Excel. Please try again.", true);
+      return false;
     } finally {
       setIsExportingExcel(false);
     }
   };
 
   return (
-    <div className="p-10 flex flex-col  text-black w-full h-[90vh]">
+    <div className="p-5 flex flex-col  text-black w-full h-full max-h-[90vh]">
       <motion.div
         ref={scoreCardRef}
         id={SCORE_CARD_EXPORT_ROOT_ID}
@@ -1355,80 +1443,38 @@ const DefaultScoreCard = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 100 }}
       >
-        <div className=" font-black  border-b items-center justify-center flex relative  uppercase bg-gray-400 text-2xl text-center py-3 w-full text-black">
-          <div>QA Evaluation Page</div>
+        <div className="h-[8.4%] font-black  border-b items-center justify-center flex relative  uppercase bg-gray-400 text-2xl text-center py-3 w-full text-black">
+          <div className="">QA Evaluation Page</div>
           <div className="flex items-center absolute right-5 h-full gap-1 justify-end text-xs">
-            {/* <button
-              type="button"
-              onClick={handleExportPdf}
-              disabled={isExportingPdf}
-              className={`font-black flex justify-center w-full text-center hover:shadow-none uppercase text-white px-4 py-2 rounded-sm shadow-md border-2 transition-all border-red-800 ${
-                isExportingPdf
-                  ? "bg-red-400 cursor-not-allowed"
-                  : "bg-red-600 cursor-pointer hover:bg-red-700"
-              }`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="size-4 mr-2"
-              >
-                <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
-                <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
-              </svg>
-              {isExportingPdf ? "Exporting..." : "pdf"}
-            </button> */}
-            <button
-              type="button"
-              onClick={handleExportExcel}
-              disabled={isExportingExcel}
-              className={`font-black flex hover:shadow-none uppercase text-white px-4 py-2 rounded-sm shadow-md border-2 transition-all border-green-900 ${
-                isExportingExcel
-                  ? "bg-green-400 cursor-not-allowed"
-                  : "bg-green-600 cursor-pointer hover:bg-green-700"
-              }`}
-            >
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="currentColor"
-                className="size-4 mr-2"
-              >
-                <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
-                <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
-              </svg>
-              {isExportingExcel ? "Exporting..." : "export to excel"}
-            </button>
             <div
               role="button"
               tabIndex={0}
-              aria-disabled={saveLoading}
+              aria-disabled={isProcessing}
               className={` px-4 py-2  border-green-900 transition-all border-2 font-black uppercase rounded-sm shadow-md text-white ${
-                saveLoading
+                isProcessing
                   ? "bg-green-400 cursor-not-allowed"
                   : "bg-green-600 hover:bg-green-700 cursor-pointer"
               }`}
               onClick={() => {
-                if (!saveLoading) {
-                  void handleSave();
+                if (!isProcessing) {
+                  void handleSaveAndExport();
                 }
               }}
               onKeyDown={(event) => {
                 if (
-                  !saveLoading &&
+                  !isProcessing &&
                   (event.key === "Enter" || event.key === " ")
                 ) {
                   event.preventDefault();
-                  void handleSave();
+                  void handleSaveAndExport();
                 }
               }}
             >
-              {saveLoading ? "Saving..." : "Save"}
+              {isProcessing ? "Processing..." : "Save"}
             </div>
           </div>
         </div>
-        <div className="bg-gray-300 overflow-auto p-5 flex flex-col h-full">
+        <div className="bg-gray-300 h-[91.6%] p-5 flex flex-col">
           <div className="flex justify-between">
             <div className="border rounded-md font-black uppercase text-sm shadow-md">
               <div className="grid grid-cols-2 border-b">
@@ -1758,18 +1804,22 @@ const DefaultScoreCard = () => {
                   Total Score
                 </div>
                 <div
-                  className={`bg-gray-200 border-black text-7xl font-black border-x border-b flex items-center justify-center rounded-b-md w-full h-full overflow-hidden ${scoreColorClass}`}
+                  className={`bg-gray-200 border-black text-5xl font-black border-x border-b flex items-center justify-center rounded-b-md w-full h-full overflow-hidden ${scoreColorClass}`}
                 >
                   <AnimatePresence mode="wait" initial={false}>
                     <motion.span
-                      key={scoreExceeded ? "score-too-much" : totalScore}
+                      key={
+                        scoreFailed
+                          ? "score-failed"
+                          : scoreExceeded
+                          ? "score-too-much"
+                          : totalScore
+                      }
                       initial={{ y: 30, opacity: 0 }}
                       animate={{ y: 0, opacity: 1 }}
                       exit={{ y: -30, opacity: 0 }}
                       transition={{ duration: 0.25, ease: "easeInOut" }}
-                      className={` ${
-                        scoreExceeded ? "uppercase text-red-600 text-2xl" : ""
-                      } `}
+                      className={` ${scoreDisplayClass} `}
                     >
                       {scoreDisplay}
                     </motion.span>
@@ -1790,7 +1840,7 @@ const DefaultScoreCard = () => {
 
             <motion.div
               layout
-              className="bg-gray-100  overflow-auto max-h-[450px] rounded-b-md"
+              className="bg-gray-100  overflow-auto max-h-[480px] h-full rounded-b-md"
             >
               <div className="flex flex-col text-sm">
                 <div className="grid  border-x border-b grid-cols-5">
@@ -1809,10 +1859,12 @@ const DefaultScoreCard = () => {
                     </div>
 
                     <NumericInputColumn
+                      key={`opening-${formResetKey}`}
                       rows={2}
                       className="grid grid-rows-2 w-full border-r"
                       ids={["opening-question-1", "opening-question-2"]}
                       onSelectionChange={handleScoringSelection}
+                      defaultValue="YES"
                     />
 
                     <PointsInputColumn
@@ -1869,6 +1921,7 @@ const DefaultScoreCard = () => {
                   </div>
 
                   <NumericInputColumn
+                    key={`negotiation-${formResetKey}`}
                     rows={7}
                     className="grid grid-rows-7 border-r"
                     ids={[
@@ -1881,6 +1934,7 @@ const DefaultScoreCard = () => {
                       "negotiation-education",
                     ]}
                     onSelectionChange={handleScoringSelection}
+                    defaultValue="YES"
                   />
 
                   <PointsInputColumn
@@ -1939,10 +1993,12 @@ const DefaultScoreCard = () => {
                   </div>
 
                   <NumericInputColumn
+                    key={`closing-${formResetKey}`}
                     rows={2}
                     className="grid grid-rows-2 border-r"
                     ids={["closing-third-party", "closing-spiel"]}
                     onSelectionChange={handleScoringSelection}
+                    defaultValue="YES"
                   />
 
                   <PointsInputColumn
@@ -2013,6 +2069,7 @@ const DefaultScoreCard = () => {
                   </div>
 
                   <NumericInputColumn
+                    key={`regulatory-${formResetKey}`}
                     rows={8}
                     className="grid grid-rows-8 border-r"
                     ids={REGULATORY_POINT_IDS}

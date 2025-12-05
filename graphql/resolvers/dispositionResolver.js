@@ -828,6 +828,11 @@ const dispositionResolver = {
           await Callfile.find({ bucket: selectedBucket?._id }).lean()
         ).map((x) => new mongoose.Types.ObjectId(x._id));
         if (callfile.length <= 0) return null;
+        const existingCallfile = await Callfile.findOne({
+          bucket: selectedBucket._id,
+          active: true,
+        });
+
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -850,59 +855,22 @@ const dispositionResolver = {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         endOfMonth.setMilliseconds(-1);
 
-        let selectedInterval = {};
+        let filter = {};
+
         if (input.interval === "daily") {
-          selectedInterval["$gt"] = todayStart;
-          selectedInterval["$lte"] = todayEnd;
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
         } else if (input.interval === "weekly") {
-          selectedInterval["$gt"] = startOfWeek;
-          selectedInterval["$lte"] = endOfWeek;
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
         } else if (input.interval === "monthly") {
-          selectedInterval["$gt"] = startOfMonth;
-          selectedInterval["$lte"] = endOfMonth;
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+        } else if (input.interval === "callfile") {
+          filter["callfile"] = new mongoose.Types.ObjectId(
+            existingCallfile._id
+          );
         }
-
-        const existingCalllfile = await Callfile.findOne({
-          bucket: selectedBucket._id,
-          active: true,
-        });
-
-        const dispotypesPositive = (
-          await DispoType.find({ status: 1 }).lean()
-        ).map((dt) => new mongoose.Types.ObjectId(dt._id));
-
-        const customerAccount = await CustomerAccount.aggregate([
-          {
-            $match: {
-              $expr: { $gt: [{ $size: "$history" }, 0] },
-              callfile: { $eq: existingCalllfile?._id },
-            },
-          },
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "history",
-              foreignField: "_id",
-              as: "histories",
-            },
-          },
-          {
-            $addFields: {
-              histories: {
-                $filter: {
-                  input: "$histories",
-                  as: "h",
-                  cond: { $in: ["$$h.disposition", dispotypesPositive] },
-                },
-              },
-            },
-          },
-          {
-            $match: {
-              $expr: { $gt: [{ $size: "$histories" }, 0] },
-            },
-          },
-        ]);
 
         const PTP = await Disposition.aggregate([
           {
@@ -957,34 +925,8 @@ const dispositionResolver = {
           },
           {
             $match: {
-              createdAt: selectedInterval,
-              callfile: { $in: callfile },
-              $or: [
-                {
-                  $and: [
-                    {
-                      "customerAccount.case_id": {
-                        $nin: customerAccount.map((ca) => ca.case_id),
-                      },
-                    },
-                    { "accountCallfile.active": { $eq: false } },
-                  ],
-                },
-                { "accountCallfile.active": { $eq: true } },
-              ],
-              $or: [
-                {
-                  $and: [{ "dispotype.code": "PTP" }, { existing: true }],
-                },
-                {
-                  $and: [
-                    { "dispotype.code": "PAID" },
-                    { selectivesDispo: false },
-                    { ptp: true },
-                    { existing: true },
-                  ],
-                },
-              ],
+              ...filter,
+              $and: [{ "dispotype.code": "PTP" }, { existing: true }],
             },
           },
           {
@@ -1009,6 +951,7 @@ const dispositionResolver = {
 
         return PTP[0];
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -1249,7 +1192,7 @@ const dispositionResolver = {
     getTLDailyCollected: async (_, { input }) => {
       try {
         const selectedBucket = await Bucket.findById(input.bucket).lean();
-        
+
         if (!selectedBucket) return null;
 
         const callfile = (
@@ -1261,7 +1204,7 @@ const dispositionResolver = {
         });
 
         if (callfile.length <= 0) return null;
-        
+
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
