@@ -1354,19 +1354,29 @@ const dispositionResolver = {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         endOfMonth.setMilliseconds(-1);
 
-        let filter = { selectivesDispo: false };
+        let RPCfilter = { selectivesDispo: false };
+        let filter = {};
 
         if (interval === "daily") {
-          (filter["callfile"] = { $in: callfile }),
-            (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+          filter["callfile"] = { $in: callfile };
+          filter["createdAt"] = { $gt: todayStart, $lte: todayEnd };
+          RPCfilter["callfile"] = { $in: callfile };
+          RPCfilter["createdAt"] = { $gt: todayStart, $lte: todayEnd };
         } else if (interval === "weekly") {
-          (filter["callfile"] = { $in: callfile }),
-            (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+          RPCfilter["callfile"] = { $in: callfile };
+          RPCfilter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek };
+          filter["callfile"] = { $in: callfile };
+          filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek };
         } else if (interval === "monthly") {
-          (filter["callfile"] = { $in: callfile }),
-            (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+          filter["callfile"] = { $in: callfile };
+          filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth };
+          RPCfilter["callfile"] = { $in: callfile };
+          RPCfilter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth };
         } else if (interval === "callfile") {
           filter["callfile"] = new mongoose.Types.ObjectId(
+            existingCallfile?._id
+          );
+          RPCfilter["callfile"] = new mongoose.Types.ObjectId(
             existingCallfile?._id
           );
         }
@@ -1375,7 +1385,7 @@ const dispositionResolver = {
 
         const RPCCount = await Disposition.aggregate([
           {
-            $match: filter,
+            $match: RPCfilter,
           },
           {
             $lookup: {
@@ -1487,7 +1497,7 @@ const dispositionResolver = {
           },
           {
             $group: {
-              _id: "$user",
+              _id: "$dispo_user._id",
               ptp: {
                 $sum: {
                   $cond: [
@@ -1532,7 +1542,7 @@ const dispositionResolver = {
             },
           },
         ]);
-
+        
         const newResult = disposition.map((d) => {
           const userRPC = RPCCount.find(
             (rpc) => rpc?._id.toString() === d.user?.toString()
@@ -1878,11 +1888,10 @@ const dispositionResolver = {
         });
 
         const updateFields = {
-          on_hands: false,
           "features.alreadyCalled": true,
         };
 
-        const unsetFields = {};
+        const unsetFields = { on_hands: "" };
 
         if (
           isPTPDispo ||

@@ -37,8 +37,8 @@ enum Method {
   skip = "skip",
   call = "call",
   field = "field",
-  sms = 'sms',
-  email = 'email'
+  sms = "sms",
+  email = "email",
 }
 
 type inpuValueState = {
@@ -72,8 +72,8 @@ type CA = {
   skip: boolean;
   call: boolean;
   field: boolean;
-  sms: boolean,
-  email: boolean
+  sms: boolean;
+  email: boolean;
 };
 
 type Dispotype = {
@@ -125,9 +125,9 @@ const DispositionConfigurationView = () => {
   useEffect(() => {
     if (dispotypeData) {
       if (search) {
-        let filter = null
-        if(search.toLocaleLowerCase('active')) {
-          filter = dispotypeData.getDispositionTypes.filter(x=> x.active)
+        let filter = null;
+        if (search.toLocaleLowerCase("active")) {
+          filter = dispotypeData.getDispositionTypes.filter((x) => x.active);
         } else {
           filter = dispotypeData?.getDispositionTypes.filter(
             (e) =>
@@ -216,7 +216,7 @@ const DispositionConfigurationView = () => {
     Method.field,
     Method.skip,
     Method.sms,
-    Method.email
+    Method.email,
   ] as const;
 
   const [modalProps, setModalProps] = useState({
@@ -306,6 +306,14 @@ const DispositionConfigurationView = () => {
           no: () => {
             setOpenDisposition(false);
             setConfirm(false);
+            setInputValue({
+              name: "",
+              code: "",
+              status: 1,
+              rank: 0,
+            });
+            setSelectedBuckets([]);
+            setSelectedContactMethod([]);
           },
         });
       }
@@ -400,6 +408,14 @@ const DispositionConfigurationView = () => {
                   onClick={() => {
                     setOpenDisposition(false);
                     setIsUpdate(false);
+                    setInputValue({
+                      name: "",
+                      code: "",
+                      status: 1,
+                      rank: 0,
+                    });
+                    setSelectedBuckets([]);
+                    setSelectedContactMethod([]);
                   }}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}

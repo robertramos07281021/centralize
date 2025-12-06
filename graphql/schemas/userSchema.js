@@ -130,7 +130,8 @@ const userTypeDefs = gql`
     getCampaignAssigned(bucket: ID): Int
     getAOMCampaignFTE: [AOM_FTE]
     getHelperAgent: [Users]
-    getBucketTL: [Users]
+    getBucketTL(bucketId: ID): [Users]
+    getBucketTLByBucket(bucketId: ID!): [Users]
   }
 
   input CreatingAccount {

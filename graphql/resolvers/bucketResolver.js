@@ -2,7 +2,6 @@ import mongoose from "mongoose";
 import CustomError from "../../middlewares/errors.js";
 import Bucket from "../../models/bucket.js";
 import Department from "../../models/department.js";
-import Group from "../../models/group.js";
 
 const bucketResolver = {
   Query: {

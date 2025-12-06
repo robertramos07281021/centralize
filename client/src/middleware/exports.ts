@@ -171,13 +171,31 @@ export const accountsNavbar: { [key: string]: links[] } = {
     },
     {
       name: "Reports",
-      link: "/tl-reports",
-      tabs: null,
+      link: null,
+      tabs: [
+        {
+          name: "Callfile Performance",
+          link: "/tl-callfile-reports",
+        },
+        {
+          name: "Agent Performance",
+          link: "/tl-agent-reports",
+        },
+      ],
     },
     {
-      name: "Call Monitoring",
-      link: "/call-agents-logs",
-      tabs: null,
+      name: "Logs",
+      link: null,
+      tabs: [
+        {
+          name: "Agent Logs",
+          link: "/tl-agent-attendance",
+        },
+        {
+          name: "Call Monitoring",
+          link: "/call-agents-logs",
+        },
+      ],
     },
   ],
   MIS: [
@@ -303,8 +321,6 @@ export const accountsNavbar: { [key: string]: links[] } = {
           link: "/qasv-call-all-agent-logs",
         },
       ],
-
-      
     },
     {
       name: "Reports",
@@ -363,7 +379,7 @@ export enum BreakEnum {
   PROD = "PROD",
   WELCOME = "WELCOME",
   REPORT = "REPORT",
-  LOGOUT = 'LOGOUT'
+  LOGOUT = "LOGOUT",
 }
 
 type Breaks = {
@@ -509,27 +525,25 @@ export const scoreCardDropdownOptions: Record<string, string[]> = {
   ],
   "unfair-debt-collection-practices": [
     "1. Any infraction or violation under SEC: SEC – Unfair Debt Collection Practices / BSP: BSP Circular 454 Sec 7",
-    "2. When Agent obtains sensitive, personal information including but not limited to Medical, Political, Marital, Religious belief, connections and affiliations"
+    "2. When Agent obtains sensitive, personal information including but not limited to Medical, Political, Marital, Religious belief, connections and affiliations",
   ],
   "information-accuracy": [
     "1. Agent must provide correct information from the amount due, policies and procedures of the Financial Companies/Lending Companies",
     "2. When an Agent provides false information intended to deceive the customers just to gain payment",
-    "3. Whether intentional or unintentional as long as the agent provides false information unless the agent was able to correct his/her statement on the same call and was acknowledged and understood by the customer."
+    "3. Whether intentional or unintentional as long as the agent provides false information unless the agent was able to correct his/her statement on the same call and was acknowledged and understood by the customer.",
   ],
   "call-recording-statement": [
-    "1. Agents must state the call recording statement on the onset of the call"
+    "1. Agents must state the call recording statement on the onset of the call",
   ],
   "incomplete-attempt-to-negotiate": [
     "1. Agent should attempt to negotiate accounts in every call as possible",
-    "2. Agent must complete the negotiation process."
+    "2. Agent must complete the negotiation process.",
   ],
   "call-avoidance-early-termination": [
     "1. Agent deliberately ended the call while the customer is talking.",
-    "2. Agent does not respond to the customer until the customer disconnected the call, unless there is a technical issue.", 
+    "2. Agent does not respond to the customer until the customer disconnected the call, unless there is a technical issue.",
     "3. Agent intentionally ended the call after delivering the opening spiel or at any part of the call.",
-    "4. Agent should release the call for not more than 1 minute after the customer acknowledges the closing spiel."
+    "4. Agent should release the call for not more than 1 minute after the customer acknowledges the closing spiel.",
   ],
-  "professionalism": [
-    "1. Agent shows disrespect and or rudeness to customer."
-  ],
+  professionalism: ["1. Agent shows disrespect and or rudeness to customer."],
 };

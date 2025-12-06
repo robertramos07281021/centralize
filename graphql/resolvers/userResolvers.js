@@ -30,7 +30,6 @@ const userResolvers = {
         });
         return findUser;
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -49,7 +48,6 @@ const userResolvers = {
           total: res[0].total.length > 0 ? res[0].total[0].totalUser : 0,
         };
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -57,7 +55,6 @@ const userResolvers = {
       try {
         return await User.findById(id);
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -70,7 +67,6 @@ const userResolvers = {
       try {
         return await User.find({ type: "AOM" });
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -150,7 +146,6 @@ const userResolvers = {
           total: total,
         };
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -174,7 +169,6 @@ const userResolvers = {
 
         return { users, total };
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -198,7 +192,6 @@ const userResolvers = {
 
         return agents;
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -216,7 +209,6 @@ const userResolvers = {
 
         return agent;
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -229,7 +221,6 @@ const userResolvers = {
         });
         return agents;
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -245,7 +236,6 @@ const userResolvers = {
 
         return assigned;
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -309,7 +299,6 @@ const userResolvers = {
 
         return aomFTEs;
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -360,7 +349,6 @@ const userResolvers = {
 
         return UserHelper;
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -379,10 +367,28 @@ const userResolvers = {
         ]);
         return findUserTLs;
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
+      getBucketTLByBucket: async (_, { bucketId }) => {
+        try {
+          if (!bucketId) {
+            return [];
+          }
+
+          const bucketObjectId = new mongoose.Types.ObjectId(bucketId);
+
+          const tls = await User.find({
+            type: { $eq: "TL" },
+            buckets: { $in: [bucketObjectId] },
+            active: true,
+          }).select("_id name buckets");
+
+          return tls;
+        } catch (error) {
+          throw new CustomError(error.message, 500);
+        }
+      },
   },
   DeptUser: {
     buckets: async (parent) => {
@@ -390,7 +396,6 @@ const userResolvers = {
         const buckets = await Bucket.find({ _id: { $in: parent.buckets } });
         return buckets;
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -402,7 +407,6 @@ const userResolvers = {
 
         return departments;
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -472,7 +476,6 @@ const userResolvers = {
           message: "New Account Created",
         };
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -1007,12 +1010,9 @@ const userResolvers = {
           throw new CustomError("No fields provided", 400);
         }
 
-        const updatedUser = await User.findByIdAndUpdate(
-          userId,
-          {
-            $set: updateFields,
-          }
-        );
+        const updatedUser = await User.findByIdAndUpdate(userId, {
+          $set: updateFields,
+        });
 
         if (!updatedUser) throw new CustomError("User not found", 401);
 

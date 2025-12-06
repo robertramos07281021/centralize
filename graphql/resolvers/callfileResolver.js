@@ -1108,7 +1108,7 @@ const callfileResolver = {
 
           return `${month} ${day}, ${year} ${hours}:${minutes} ${ampm}`;
         }
-        
+
         function formatDateTimeForPenetration(date) {
           if (!date) return "";
           const newdate = date.slice(0, 8); // 20251119
@@ -1302,7 +1302,6 @@ const callfileResolver = {
 
         return `http://${process.env.MY_IP}:4000/tmp/${findCallfile.name}_${timestamp}.csv`;
       } catch (error) {
-
         throw new CustomError(error.message, 500);
       }
     },
@@ -1838,7 +1837,7 @@ const callfileResolver = {
         if (interval === "daily") {
           (filter["callfile"] = { $in: callfile }),
             (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
-          newDataCollected["target"] = (Number(existingCallfile?.target) / 4) / 6;
+          newDataCollected["target"] = Number(existingCallfile?.target) / 4 / 6;
         } else if (interval === "weekly") {
           (filter["callfile"] = { $in: callfile }),
             (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
@@ -1875,7 +1874,6 @@ const callfileResolver = {
         ]);
 
         newDataCollected["collected"] = findCustomerCallfile[0]?.collected || 0;
-
 
         return newDataCollected;
       } catch (error) {
@@ -1926,7 +1924,6 @@ const callfileResolver = {
           total: totals,
         };
       } catch (error) {
-  
         throw new CustomError(error.message, 500);
       }
     },
@@ -1968,8 +1965,12 @@ const callfileResolver = {
         await CustomerAccount.updateMany(
           { callfile: new mongoose.Types.ObjectId(finishedCallfile._id) },
           {
-            $unset: { assigned: "", assigned_date: "", assignedModel: "" },
-            $set: { on_hands: false },
+            $unset: {
+              assigned: "",
+              assigned_date: "",
+              assignedModel: "",
+              on_hands: "",
+            },
           }
         );
 
@@ -2043,16 +2044,19 @@ const callfileResolver = {
 
         const paidDispo = await DispoType.findOne({ code: "PAID" });
         const ptpDispo = await DispoType.findOne({ code: "PTP" });
-        const callfile = await Callfile.findById(_id);
+        const callfile = await Callfile.findById(_id).populate('bucket');
         const newSelective = new Selective({
           name: selectiveName,
           callfile: callfile._id,
         });
+        
+        const bucket = callfile.bucket
+
+        const checkIfIsNaN = selectives.map(x=> isNaN(x.amount)).some(y=> y === true)
+
+        if(checkIfIsNaN) throw new CustomError('Please check the amount of selective',401)
 
         for (const i of selectives) {
-          console.log(i)
-          if (!i.amount) return null;
-
           const res = await CustomerAccount.findOne({
             case_id: String(i.account_no),
             callfile: new mongoose.Types.ObjectId(callfile?._id),
@@ -2069,12 +2073,12 @@ const callfileResolver = {
               new Date(res?.current_disposition?.createdAt) <= threeDaysAgo;
 
             const data = {
-              customer_account: res._id,
+              customer_account: res?._id,
               amount: i.amount,
-              disposition: paidDispo._id,
+              disposition: paidDispo?._id,
               selectivesDispo: true,
-              selectiveFiles: newSelective._id,
-              callfile: callfile,
+              selectiveFiles: newSelective?._id,
+              callfile: callfile?._id,
               existing: true,
               contact_method: res?.current_disposition?.contact_method,
             };
@@ -2102,7 +2106,7 @@ const callfileResolver = {
             ) {
               data["createdAt"] = new Date(res?.current_disposition?.createdAt);
               data["ptp"] = true;
-              if (!cdCreatedAt) {
+              if (!cdCreatedAt || bucket?.principal) {
                 data["user"] = res?.current_disposition?.user;
               }
             }
@@ -2112,7 +2116,7 @@ const callfileResolver = {
             } else {
               data["payment"] = "partial";
             }
-
+            
             const newDispo = new Disposition(data);
 
             if (res?.current_disposition) {
@@ -2140,7 +2144,9 @@ const callfileResolver = {
               },
               $inc: {
                 balance:
-                  res?.balance - Number(i.amount) < 0 ? 0 : -Number(i.amount),
+                  res?.balance - Number(i.amount) < 0
+                    ? -Number(res?.balance)
+                    : -Number(i.amount),
                 paid_amount: Number(i.amount),
               },
               $push: {
@@ -2157,7 +2163,7 @@ const callfileResolver = {
 
         await newSelective.save();
 
-        const users = (await User.find({ buckets: callfile.bucket })).map((u) =>
+        const users = (await User.find({ buckets: bucket?._id })).map((u) =>
           String(u._id)
         );
 
@@ -2173,7 +2179,7 @@ const callfileResolver = {
           message: "Successfully added selectives",
         };
       } catch (error) {
-        console.log(error)
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

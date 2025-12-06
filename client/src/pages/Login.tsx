@@ -49,6 +49,7 @@ const LOGIN = gql`
           weekly
           monthly
         }
+        scoreCardType
       }
     }
   }
@@ -92,6 +93,7 @@ type User = {
   targets: Targets;
   isOnline: boolean;
   vici_id: string;
+  scoreCardType?: string;
 };
 
 type Login = {

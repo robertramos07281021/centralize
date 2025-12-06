@@ -55,7 +55,7 @@ const REGULATORY_SELECTION_TO_MISSED_MAP = REGULATORY_POINT_IDS.reduce(
 
 const createDefaultRegulatorySelections = () =>
   REGULATORY_POINT_IDS.reduce<Record<string, string>>((acc, id) => {
-    acc[id] = "N/A";
+    acc[id] = "N?A";
     return acc;
   }, {});
 type SectionFieldConfig = {
@@ -229,7 +229,7 @@ const NumericInputColumn = ({
   className = "",
   ids,
   onSelectionChange,
-  defaultValue = "N/A",
+  defaultValue = "NO",
 }: NumericInputColumnProps) => {
   const [selected, setSelected] = useState<SelectionValue[]>(() =>
     Array(rows).fill(defaultValue)
@@ -484,7 +484,16 @@ const PointsInputColumn = ({
   </div>
 );
 
-const DefaultScoreCard = () => {
+type DefaultScoreCardProps = {
+  scoreCardType?: string | null;
+};
+
+const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
+  const normalizedScoreCardType = scoreCardType?.trim();
+  const activeScoreCardType =
+    normalizedScoreCardType && normalizedScoreCardType.length > 0
+      ? normalizedScoreCardType
+      : SCORE_CARD_TYPE;
   const [isMonthMenuOpen, setMonthMenuOpen] = useState(false);
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [isDeptMenuOpen, setDeptMenuOpen] = useState(false);
@@ -555,7 +564,8 @@ const DefaultScoreCard = () => {
   const [fetchAgents, { data: agentData, loading: agentLoading }] =
     useLazyQuery<{ getAgentsByDepartment: { _id: string; name: string }[] }>(
       GET_DEPT_AGENTS,
-      { fetchPolicy: "network-only" }
+      { fetchPolicy: "network-only",
+       }
     );
   const agents = agentData?.getAgentsByDepartment ?? [];
 
@@ -943,7 +953,7 @@ const DefaultScoreCard = () => {
             dateAndTimeOfCall: new Date(callDateTime).toISOString(),
             number: callNumber.trim(),
             assignedQA: userLogged._id,
-            typeOfScoreCard: SCORE_CARD_TYPE,
+            typeOfScoreCard: activeScoreCardType,
             scoreDetails: scoreDetailsPayload,
             totalScore,
           },
@@ -1013,9 +1023,6 @@ const DefaultScoreCard = () => {
         { key: "colJ", width: 10 },
         { key: "colK", width: 7 },
       ];
-
-      			
-
 
       const brandBlue = "FF2F5597";
       const headerBlue = "FF366092";
@@ -1159,7 +1166,12 @@ const DefaultScoreCard = () => {
         valueCell.alignment = { horizontal: "left", vertical: "middle" };
         applyBorderRange(rowIndex, rowIndex, 2, 7);
       });
-      applyOuterBorder(infoRowsStart, infoRowsStart + infoRows.length - 1, 2, 7);
+      applyOuterBorder(
+        infoRowsStart,
+        infoRowsStart + infoRows.length - 1,
+        2,
+        7
+      );
 
       worksheet.mergeCells("H6:H12");
       const totalLabelCells = worksheet.getCell("H6");
@@ -1189,7 +1201,7 @@ const DefaultScoreCard = () => {
         left: thickBorderTemplate,
       };
 
-       worksheet.mergeCells("A42:K42");
+      worksheet.mergeCells("A42:K42");
       const rightBorderCellc = worksheet.getCell("A42");
       rightBorderCellc.fill = {
         type: "pattern",
@@ -1239,7 +1251,10 @@ const DefaultScoreCard = () => {
         { range: `D${criteriaHeaderRow}:G${headerRowEnd}`, label: "Category" },
         { range: `H${criteriaHeaderRow}:H${headerRowEnd}`, label: "Scores" },
         { range: `I${criteriaHeaderRow}:I${headerRowEnd}`, label: "Points" },
-        { range: `J${criteriaHeaderRow}:J${headerRowEnd}`, label: "Missed Guideline" },
+        {
+          range: `J${criteriaHeaderRow}:J${headerRowEnd}`,
+          label: "Missed Guideline",
+        },
       ];
       headerRanges.forEach(({ range, label }) => {
         worksheet.mergeCells(range);
@@ -1284,7 +1299,13 @@ const DefaultScoreCard = () => {
       criteriaRows.forEach((rowValues, index) => {
         const excelRowIndex = firstDataRow + index;
         const rowColor = index % 2 === 0 ? tableLight : lightBlue;
-        const [criteriaLabel, categoryLabel, scoreValue, pointValue, missedValue] = rowValues;
+        const [
+          criteriaLabel,
+          categoryLabel,
+          scoreValue,
+          pointValue,
+          missedValue,
+        ] = rowValues;
         const isCommentRow = excelRowIndex >= commentStartRow;
         if (typeof criteriaLabel === "string" && criteriaLabel) {
           sectionRanges.push({
@@ -1301,7 +1322,11 @@ const DefaultScoreCard = () => {
           worksheet.mergeCells(`D${excelRowIndex}:G${excelRowIndex}`);
           const categoryCell = worksheet.getCell(`D${excelRowIndex}`);
           categoryCell.value = categoryLabel ?? "";
-          categoryCell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+          categoryCell.alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
           categoryCell.fill = {
             type: "pattern",
             pattern: "solid",
@@ -1337,7 +1362,11 @@ const DefaultScoreCard = () => {
 
           const missedCell = worksheet.getCell(`J${excelRowIndex}`);
           missedCell.value = missedValue ?? "";
-          missedCell.alignment = { horizontal: "left", vertical: "middle", wrapText: true };
+          missedCell.alignment = {
+            horizontal: "left",
+            vertical: "middle",
+            wrapText: true,
+          };
           missedCell.fill = {
             type: "pattern",
             pattern: "solid",
@@ -1426,7 +1455,10 @@ const DefaultScoreCard = () => {
       return true;
     } catch (error) {
       console.error("Failed to export Excel", error);
-      showNotifier("NOT READY: Failed to export Excel. Please try again.", true);
+      showNotifier(
+        "NOT READY: Failed to export Excel. Please try again.",
+        true
+      );
       return false;
     } finally {
       setIsExportingExcel(false);

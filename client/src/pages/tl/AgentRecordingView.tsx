@@ -107,7 +107,7 @@ type Agent = {
 
 const DL_RECORDINGS = gql`
   mutation findRecordings($_id: ID!, $name: String!, $ccsCall: Boolean) {
-    findRecordings(_id: $_id, name: $name, ccsCall:$ccsCall ) {
+    findRecordings(_id: $_id, name: $name, ccsCall: $ccsCall) {
       success
       message
       url
@@ -645,49 +645,51 @@ const AgentRecordingView = () => {
                                   <div>
                                     {ccsCall ? (
                                       <div className="flex justify-end items-center w-full">
-                                        {
-                                          Number(callId[1]) > 0 ? (
-                                        <div
-                                          onClick={() =>
-                                            onDLRecordings(
-                                              e._id,
-                                              `${callId[0]}.mp3`
-                                            )
-                                          }
-                                          className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
-                                        >
-                                          <FaDownload color="white" />
-                                          <p className="text-white">
-                                            {Number(callId[1]) > 0
-                                              ? formatDuration(callId[1])
-                                              : fileSizeToDuration(
-                                                  lagRecords[callId[0]]
-                                                )}
-                                          </p>
-                                        </div>
-
-                                          ) : (
-                                            <div
-                                          onClick={() =>
-                                            onDLRecordings(
-                                              e._id,
-                                              `${callId[0]}.mp3`
-                                            )
-                                          }
-                                          className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
-                                        >
-                                          <FaDownload color="white" />
-                                          <p className="text-white">
-                                            {/* {Number(callId[1]) > 0
-                                              ? formatDuration(callId[1])
-                                              : fileSizeToDuration(
-                                                  lagRecords[callId[0]]
-                                                )} */}
-                                          </p>
-                                        </div>
-                                          )
-                                        }
-
+                                        {Number(callId[1]) > 0 ? (
+                                          <div
+                                            onClick={() =>
+                                              onDLRecordings(
+                                                e._id,
+                                                `${callId[0]}.mp3`
+                                              )
+                                            }
+                                            className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
+                                          >
+                                            <FaDownload color="white" />
+                                            <p className="text-white">
+                                              {Number(callId[1]) > 0
+                                                ? formatDuration(callId[1])
+                                                : fileSizeToDuration(
+                                                    lagRecords[callId[0]]
+                                                  )}
+                                            </p>
+                                          </div>
+                                        ) : (
+                                          <>
+                                            {fileSizeToDuration(
+                                              lagRecords[callId[0]]
+                                            ).includes("NaN") ? (
+                                              <div>No Recordings</div>
+                                            ) : (
+                                              <div
+                                                onClick={() =>
+                                                  onDLRecordings(
+                                                    e._id,
+                                                    `${callId[0]}.mp3`
+                                                  )
+                                                }
+                                                className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
+                                              >
+                                                <FaDownload color="white" />
+                                                <p className="text-white">
+                                                  {fileSizeToDuration(
+                                                    lagRecords[callId[0]]
+                                                  )}
+                                                </p>
+                                              </div>
+                                            )}
+                                          </>
+                                        )}
                                       </div>
                                     ) : (
                                       <>

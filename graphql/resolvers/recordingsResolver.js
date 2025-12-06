@@ -10,7 +10,7 @@ const recordingsResolver = {
     findLagRecording: async (_, { name,_id }) => {
       const client = new ftp.Client();
       try {
-     
+        console.log(name)
         const months = [
           "January",
           "February",
@@ -148,13 +148,9 @@ const recordingsResolver = {
             : isShopee;
 
         const remoteDir =
-          findDispo.dialer === "vici" ? ifATOME : `${remoteDirIssabel}`;
+          (findDispo.dialer === "vici" || !findDispo?.dialer) ? ifATOME : `${remoteDirIssabel}`;
         const remotePath = `${remoteDir}/${name}`;
-
         const files = await client.list(remotePath);
-          
-        
-      
         return files[0].size;
       } catch (err) {
   
@@ -167,6 +163,7 @@ const recordingsResolver = {
 
   Mutation: {
     findRecordings: async (_, { name, _id, ccsCall }) => {
+
       const client = new ftp.Client();
       try {
         const months = [

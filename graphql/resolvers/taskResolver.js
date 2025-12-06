@@ -19,7 +19,7 @@ const taskResolver = {
           {
             $match: {
               assigned: new mongoose.Types.ObjectId(user._id),
-              on_hands: false,
+              on_hands: null,
               bucket: {
                 $in: user.buckets.map((x) => new mongoose.Types.ObjectId(x)),
               },
@@ -163,7 +163,7 @@ const taskResolver = {
             $match: {
               assignedModel: "Group",
               assigned: new mongoose.Types.ObjectId(myGroup._id),
-              on_hands: false,
+              on_hands: null,
             },
           },
           {
@@ -296,9 +296,10 @@ const taskResolver = {
     selectTask: async (_, { id }, { user, pubsub, PUBSUB_EVENTS }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
+        const findUserAccount = await User.findById(user._id)
 
         const ca = await CustomerAccount.findById(id);
-
+        
         if (!ca) throw new CustomError("Customer account not found", 404);
 
         const findGroup = await Group.findById(ca.assigned);
@@ -311,17 +312,17 @@ const taskResolver = {
 
         if (ca.on_hands) throw new CustomError("Already taken");
 
-        ca.on_hands = true;
+        ca.on_hands = findUserAccount._id;
 
         await ca.save();
 
-        await User.findByIdAndUpdate(user._id, {
+        await User.findByIdAndUpdate(findUserAccount._id, {
           $set: { handsOn: ca._id },
         });
 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
-            members: [...new Set([...assigned, user._id])],
+            members: [...new Set([...assigned, findUserAccount._id])],
             message: "TASK_SELECTION",
           },
         });
@@ -340,7 +341,7 @@ const taskResolver = {
 
         const ca = await CustomerAccount.findByIdAndUpdate(
           id,
-          { $set: { on_hands: false } },
+          { $unset: { on_hands: "" } },
           { new: true }
         );
 

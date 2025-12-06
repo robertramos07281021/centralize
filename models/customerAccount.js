@@ -69,8 +69,8 @@ const customerAccountSchema = new Schema(
       type: String,
     },
     on_hands: {
-      type: Boolean,
-      default: false,
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
     },
     features: {
       branch: {

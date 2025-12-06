@@ -16,6 +16,7 @@ type User = {
   targets: Targets;
   isOnline: boolean;
   vici_id: string;
+  scoreCardType?: string;
 };
 
 type search = {
@@ -81,6 +82,7 @@ type UserState = {
   isRing: boolean;
   mobileToCall: string | null;
   readyForBreak: BreakEnum | null
+  scoreCardType: string | null
 };
 
 const initialState: UserState = {
@@ -125,7 +127,8 @@ const initialState: UserState = {
   bucketCanCall: false,
   isRing: false,
   mobileToCall: null,
-  readyForBreak: null
+  readyForBreak: null,
+  scoreCardType: null
 };
 
 export const authSlice = createSlice({
@@ -239,7 +242,10 @@ export const authSlice = createSlice({
     },
     setReadyForBreak: (state,action: PayloadAction<BreakEnum | null> ) => {
       state.readyForBreak = action.payload
-    }
+    },
+    setScoreCardType: (state, action: PayloadAction<string | null>) => {
+      state.scoreCardType = action.payload;
+    },
   },
 });
 
@@ -278,6 +284,7 @@ export const {
   setIsRing,
   setMobileToCall,
   setIsReport,
-  setReadyForBreak
+  setReadyForBreak,
+  setScoreCardType
 } = authSlice.actions;
 export default authSlice.reducer;

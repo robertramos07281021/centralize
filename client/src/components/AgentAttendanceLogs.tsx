@@ -83,7 +83,7 @@ const AgentAttendanceLogs = () => {
 
   const bucketOptions = useMemo(() => {
     const allBuckets = bucketsData?.getAllBucket ?? [];
-    if (userType === "QA") {
+    if (userType === "QA" || userType === "TL") {
       const allowed = new Set(userLogged?.buckets ?? []);
       return allBuckets.filter((bucket) => allowed.has(bucket._id));
     }

@@ -656,24 +656,36 @@ const CallfilesViews: React.FC<Props> = ({
     },
   });
 
-  const [addSelective, {loading:AddSelectiveLoading}] = useMutation<{ addSelective: Success }>(ADD_SELECTIVE, {
-    onCompleted: (data) => {
-      console.log(data)
+  const [addSelective, { loading: AddSelectiveLoading }] = useMutation<{
+    addSelective: Success;
+  }>(ADD_SELECTIVE, {
+    onCompleted: async (data) => {
+      await refetch();
       setFile([]);
-      dispatch(
-        setSuccess({
-          success: data.addSelective.success,
-          message: data.addSelective.message,
-          isMessage: false,
-        })
-      );
       setCallfile(null);
       setExcelData([]);
+      if(!loading) {
+        dispatch(
+          setSuccess({
+            success: data.addSelective.success,
+            message: data.addSelective.message,
+            isMessage: false,
+          })
+        );
+      }
     },
-    onError: () => {
-      dispatch(setServerError(true));
+    onError: async(err) => {
+      if (err.message.includes("check the amount")) {
+        setFile([]);
+        await refetch();
+        setCallfile(null);
+        setExcelData([]);
+      } else {
+        dispatch(setServerError(true));
+      }
     },
   });
+
   const submitSetSelective = useCallback(() => {
     if (file.length > 0) {
       setRequired(false);
@@ -740,7 +752,7 @@ const CallfilesViews: React.FC<Props> = ({
     finishingLoading ||
     loading ||
     setCallfileTargetLoading ||
-    autodialLoading || 
+    autodialLoading ||
     AddSelectiveLoading;
 
   if (isLoading) return <Loading />;
@@ -1230,7 +1242,10 @@ const CallfilesViews: React.FC<Props> = ({
               animate={{ scale: 1, opacity: 1 }}
               exit={{ opacity: 0, scale: 0.8 }}
             >
-              <div className="top-2 text-white right-2 absolute" title="Before uploading the selectives file, make sure the file name has no dot ">
+              <div
+                className="top-2 text-white right-2 absolute"
+                title="Before uploading the selectives file, make sure the file name has no dot "
+              >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"

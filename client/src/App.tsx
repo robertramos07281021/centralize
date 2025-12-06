@@ -48,12 +48,14 @@ import QASVRoute from "./routes/QASVRoute.tsx";
 import QASVSupervisor from "./pages/qasupervisor/QASVSupervisor.tsx";
 import QASupervisorDashboard from "./pages/qasupervisor/QASupervisorDashboard.tsx";
 import CallLogs from "./pages/tl/CallLogs.tsx";
-import CallAllAgentLogs from "./pages/admin/CallAllAgentLogs.tsx";
+import CallAllAgentLogs from "./components/CallAllAgentLogs.tsx";
 import AgentAttendanceLogs from "./components/AgentAttendanceLogs.tsx";
 import Selectives from "./pages/admin/Selectives.tsx";
 import CallQALogs from "./pages/qa/QACallLogs.tsx";
-import QAAgentReportLogs from "./components/QAAgentReportLogs.tsx";
-import QACallfileReport from "./components/QACallfileReport.tsx";
+import QAAgentReportLogs from "./components/AgentReportLogs.tsx";
+import AgentReportLogs from "./components/AgentReportLogs.tsx";
+import CallfileReportLogs from "./components/CallfileReport.tsx";
+import QACallfileReport from "./components/CallfileReport.tsx";
 import DefaultScoreCard from "./components/ScoreCard.tsx";
 import UBScoreCard from "./components/UBScoreCard.tsx";
 import EastwestScoreCard from "./components/EastwestScoreCard.tsx";
@@ -62,6 +64,7 @@ import QASVCallAllAgentLogs from "./pages/qasupervisor/QASVCallAllAgentLogs.tsx"
 import UBMortgageScoreCard from "./components/UBMortgageScoreCard.tsx";
 import Guidlines from "./components/Guidlines.tsx";
 import ScoreCardOverview from "./components/ScoreCardOverview.tsx";
+import QAScoreCardAssign from "./pages/qa/QAScoreCardAssign.tsx";
 
 Chart.register(
   ...registerables,
@@ -84,7 +87,7 @@ function App() {
         <Route path="/agent-recordings" element={<AgentRecordingView />} />
         <Route path="/break-view" element={<BreakView />} />
         <Route path="/score-card-temporary" element={<DefaultScoreCard />} />
-
+        
         <Route element={<AdminRoute />}>
           <Route path="/selectives" element={<Selectives />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
@@ -130,11 +133,14 @@ function App() {
             path="/tl-production-manager"
             element={<ProductionManagerView />}
           />
+          <Route path="/tl-agent-reports" element={<AgentReportLogs />} />
+          <Route path="/tl-callfile-reports" element={<CallfileReportLogs />} />
           <Route path="/agent-production" element={<AgentView />} />
           <Route path="/tl-task-manager" element={<TaskManagerView />} />
           <Route path="/tl-cip" element={<CustomerDisposition />} />
           <Route path="/tl-reports" element={<CallfileAndAgentReport />} />
           <Route path="/call-agents-logs" element={<CallLogs />} />
+          <Route path="/tl-agent-attendance" element={<AgentAttendanceLogs />} />
         </Route>
 
         <Route element={<CeoRoute />}>
@@ -155,7 +161,7 @@ function App() {
             path="/qa-agent-attendance"
             element={<AgentAttendanceLogs />}
           />
-          <Route path="/score-card" element={<DefaultScoreCard />} />
+          <Route path="/score-card" element={<QAScoreCardAssign />} />
         </Route>
 
         <Route element={<QASVRoute />}>
@@ -182,6 +188,7 @@ function App() {
           <Route path="/qasv-recordings" element={<QASVAgentRecordings />} />
           <Route path="/scorecard-overview" element={<ScoreCardOverview />} />
         </Route>
+
       </Routes>
     </BrowserRouter>
   );

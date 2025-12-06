@@ -664,6 +664,7 @@ const QACallfileReport = () => {
                             setSelectedCallfile(null);
                             setBucketSearchTerm("");
                             setIsBucketOpen(false);
+                            setIsCallfileOpen(true);
                           }}
                           className="px-3 hover:bg-gray-300 odd:bg-gray-100 even:bg-white border-b border-gray-300 last:border-b-0 cursor-pointer py-1"
                           key={bucket._id}

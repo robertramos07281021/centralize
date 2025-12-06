@@ -624,11 +624,11 @@ const CustomerDisposition = () => {
     }
   }, [readyForBreak, selectedCustomer]);
 
-  useEffect(()=> {
-    if(search.trim() === "") {
-      setIsSearch(null)
+  useEffect(() => {
+    if (search.trim() === "") {
+      setIsSearch(null);
     }
-  },[search])
+  }, [search]);
 
   const { data: bucketData, refetch: bucketsRefetch } = useQuery<{
     getAllBucket: BucketCanCall[];
@@ -732,7 +732,7 @@ const CustomerDisposition = () => {
     async (customer: Search) => {
       const res = await selectTask({ variables: { id: customer._id } });
       setIsSearch(null);
-      setSearch("")
+      setSearch("");
       if (!res.errors) {
         dispatch(setSelectedCustomer(customer));
       }
@@ -1316,7 +1316,8 @@ const CustomerDisposition = () => {
                         )}
                         {isSearch && isSearch.length <= 0 && (
                           <div className="w-full h-auto top-10 absolute p-2 italic border text-slate-700 font-medium text-sm bg-gray-200 shadow shadow-black/50 rounded">
-                            No file was found, or another agent has already taken the customer.
+                            No file was found, or another agent has already
+                            taken the customer.
                           </div>
                         )}
                       </div>

@@ -63,13 +63,10 @@ import { fileURLToPath } from "url";
 import scoreCardResolver from "./graphql/resolvers/scoreCardResolver.js";
 import scoreCardTypeDefs from "./graphql/schemas/scoreCardSchema.js";
 
-
-
 const __filename = fileURLToPath(import.meta.url);
 
 // Equivalent of __dirname
 const __dirname = path.dirname(__filename);
-
 
 const connectedUsers = new Map();
 
@@ -79,9 +76,6 @@ function getMillisecondsUntilEndOfDay() {
   endOfDay.setHours(23, 59, 59, 999);
   return endOfDay.getTime() - now.getTime();
 }
-
-
-
 
 const app = express();
 connectDB();
@@ -95,7 +89,6 @@ const allowedOrigins = [
 app.use(
   cors({
     origin: function (origin, callback) {
-    
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -124,7 +117,6 @@ const sessionStore = MongoStore.create({
   collectionName: "sessions",
   ttl: secondsUntilMidnight,
 });
-
 
 const sessionMiddleware = session({
   secret: process.env.SECRET,
@@ -180,7 +172,7 @@ cron.schedule(
         { $project: { _id: 1, user: "$cd.user" } },
       ])
         .allowDiskUse(true)
-        .cursor({ batchSize: 500 })
+        .cursor({ BATCH_SIZE: 500 })
         .exec();
 
       const BATCH_SIZE = 500;
@@ -313,7 +305,7 @@ useServer(
       if (!authHeader || !authHeader.startsWith("Bearer ")) {
         throw new CustomError("Missing Token", 401);
       }
- 
+
       const token = authHeader.split(" ")[1];
       let user = null;
 
@@ -325,7 +317,7 @@ useServer(
 
         const socket = ctx.extra.socket;
         let entry = connectedUsers.get(userId);
-        
+
         if (!entry) {
           connectedUsers.set(userId, {
             sockets: new Set([socket]),
@@ -338,7 +330,6 @@ useServer(
             entry.cleanupTimer = null;
           }
         }
-
       } catch (err) {
         console.log("WebSocket token error:", err.message);
       }
@@ -359,9 +350,19 @@ useServer(
           const latest = connectedUsers.get(userId);
           if (!latest || latest.sockets.size === 0) {
             connectedUsers.delete(userId);
+            const userAccounts = await User.findById(userId);
+
+            if (userAccounts.handsOn) {
+              await CustomerAccount.findByIdAndUpdate(userAccounts.handsOn, {
+                $unset: {
+                  on_hands: "",
+                },
+              });
+            }
+
             const res = await User.findByIdAndUpdate(
-              userId,
-              { isOnline: false },
+              userAccounts._id,
+              { $set: { isOnline: false },$unset: {handsOn: ""} },
               { new: true }
             ).populate("buckets");
 

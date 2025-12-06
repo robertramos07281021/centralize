@@ -261,7 +261,7 @@ const callResolver = {
           // --- Early filter ---
           {
             $match: {
-              on_hands: false,
+              on_hands: null,
               bucket: { $in: allowedBuckets },
               $or: [{ assigned: null }, { assigned: { $exists: false } }],
               callfile: { $in: callfileFilter },
@@ -549,7 +549,7 @@ const callResolver = {
         const findRandomCustomer = await CustomerAccount.aggregate([
           {
             $match: {
-              on_hands: false,
+              on_hands: null,
               callfile: findCallfile._id,
               $or: [
                 { assigned: { $eq: null } },

@@ -41,6 +41,7 @@ type UserInfo = {
   user_id: string;
   isOnline: boolean;
   targets: Targets;
+  scoreCardType?: string;
 };
 
 const myUserInfos = gql`
@@ -59,6 +60,7 @@ const myUserInfos = gql`
         weekly
         monthly
       }
+      scoreCardType
     }
   }
 `;
@@ -153,6 +155,7 @@ const Navbar = () => {
   const modalRef = useRef<HTMLDivElement>(null);
   const { data, error, refetch } = useQuery<{ getMe: UserInfo }>(myUserInfos, {
     notifyOnNetworkStatusChange: true,
+    pollInterval: 3000
   });
 
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
@@ -412,6 +415,8 @@ const Navbar = () => {
               weekly: 0,
               monthly: 0,
             },
+            scoreCardType:
+              data?.getMe?.scoreCardType ?? userLogged?.scoreCardType,
           })
         );
         if (!data?.getMe?.isOnline) {

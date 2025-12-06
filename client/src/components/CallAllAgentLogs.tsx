@@ -143,6 +143,7 @@ const CallAllAgentLogs = () => {
 
   return (
     <div className="w-full relative px-10 gap-2 pt-2 pb-5 h-[91vh] flex flex-col">
+
       <div className="flex justify-between">
         <div className="flex items-center gap-3">
           <div className="">

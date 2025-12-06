@@ -93,7 +93,7 @@ const customerResolver = {
           "ITP",
           "PAID",
         ];
-      
+
         const accounts = await Customer.aggregate([
           {
             $match: {
@@ -154,7 +154,7 @@ const customerResolver = {
               "account_bucket._id": {
                 $in: user.buckets.map((x) => new mongoose.Types.ObjectId(x)),
               },
-              "ca.on_hands": false,
+              "ca.on_hands": null,
               "account_callfile.active": { $eq: true },
             },
           },
@@ -1133,6 +1133,7 @@ const customerResolver = {
       { user, pubsub, PUBSUB_EVENTS }
     ) => {
       if (!user) throw new CustomError("Unauthorized", 401);
+
       try {
         const findBucket = await Bucket.findById(bucket);
         if (!findBucket) throw new CustomError("Bucket not found", 404);
@@ -1146,7 +1147,11 @@ const customerResolver = {
         const today = new Date();
         today.setHours(0, 0, 0, 0);
 
-        let newCallfile = await Callfile.findOne({ name: callfile, active: true, bucket: findBucket._id });
+        let newCallfile = await Callfile.findOne({
+          name: callfile.toUpperCase(),
+          active: true,
+          bucket: findBucket?._id,
+        });
 
         if (!newCallfile) {
           newCallfile = await Callfile.create({
@@ -1157,13 +1162,17 @@ const customerResolver = {
             totalOB: callfileOB,
           });
         } else {
-          await Callfile.findByIdAndUpdate(newCallfile._id, {
-            $inc: {
-              totalAccounts: input.length,
-              totalPrincipal: callfilePrincipal,
-              totalOB: callfileOB,
+          await Callfile.findByIdAndUpdate(
+            newCallfile._id,
+            {
+              $inc: {
+                totalAccounts: input.length,
+                totalPrincipal: callfilePrincipal,
+                totalOB: callfileOB,
+              },
             },
-          });
+            { new: true }
+          );
         }
 
         const customerDocs = input.map((e) => ({
@@ -1232,7 +1241,7 @@ const customerResolver = {
               vendor_endorsement: e.vendor_endorsement,
               grass_date: e.grass_date,
             },
-            on_hands: false,
+            on_hands: null,
           };
         });
 

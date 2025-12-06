@@ -464,16 +464,6 @@ const QASupervisorView = () => {
   return (
     <div className="h-full relative overflow-hidden">
       <div className=" w-full h-full flex flex-col px-5 pt-5">
-        {/* <div className="px-5 flex justify-end pt-4">
-          <select
-            name="campaign"
-            id="campaign"
-            className="px-6 text-center border border-slate-500 rounded py-1.5"
-          >
-            <option value="">Selecte Campaign</option>
-            <option>dsa</option>
-          </select>
-        </div> */}
         <div className="flex justify-between">
           <div className="uppercase text-2xl font-black">QA Account</div>
           <div className="flex items-center gap-3">

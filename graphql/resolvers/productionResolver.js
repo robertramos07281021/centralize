@@ -933,7 +933,6 @@ const productionResolver = {
       { agentID, limit, page, from, to, search, dispotype, ccsCalls }
     ) => {
       const client = new ftp.Client();
-
       const skip = (page - 1) * limit;
       const today = new Date();
       today.setHours(0, 0, 0, 0);
@@ -950,9 +949,7 @@ const productionResolver = {
         ],
         $or: [
           {
-            "customer.contact_no": {
-              $elemMatch: { $regex: search, $options: "i" },
-            },
+            "customer.contact_no": search,
           },
           {
             "customer.fullName": { $regex: search, $options: "i" },
@@ -971,7 +968,6 @@ const productionResolver = {
       }
 
       if (ccsCalls) {
-        
         const CCSCallFiltered = {
           callId: { $exists: true },
           callId: { $ne: null },
@@ -993,7 +989,27 @@ const productionResolver = {
         } else if (!from && !to) {
           CCSCallFiltered["createdAt"] = { $lte: today };
         }
-  
+
+        const secondFilter = {
+          $or: [
+            {
+              "customer.contact_no": {
+                $elemMatch: { $regex: search, $options: "i" },
+              },
+            },
+            {
+              "customer.fullName": { $regex: search, $options: "i" },
+            },
+            {
+              dialer: { $regex: search, $options: "i" },
+            },
+          ],
+        };
+
+        if (dispotype.length > 0) {
+          secondFilter["dispotype.code"] = { $in: dispotype };
+        }
+
         const forFiltering = await Disposition.aggregate([
           {
             $match: CCSCallFiltered,
@@ -1054,21 +1070,7 @@ const productionResolver = {
             $unwind: { path: "$dispo_user", preserveNullAndEmptyArrays: true },
           },
           {
-            $match: {
-              $or: [
-                {
-                  "customer.contact_no": {
-                    $elemMatch: { $regex: search, $options: "i" },
-                  },
-                },
-                {
-                  "customer.fullName": { $regex: search, $options: "i" },
-                },
-                {
-                  dialer: { $regex: search, $options: "i" },
-                },
-              ],
-            },
+            $match: secondFilter,
           },
           { $sort: { createdAt: -1 } },
           {
@@ -1111,20 +1113,20 @@ const productionResolver = {
             },
           },
         ]);
-    
 
         const newMapForDispoCode =
-          forFiltering[0]?.metadata?.length > 0
-            ? forFiltering[0]?.metadata[0]?.dispotypeCodes
-            : [];
+        forFiltering[0]?.metadata?.length > 0
+        ? forFiltering[0]?.metadata[0]?.dispotypeCodes
+        : [];
         const total =
-          forFiltering[0]?.metadata?.length > 0
-            ? forFiltering[0]?.metadata[0]?.total
-            : 0;
-
+        forFiltering[0]?.metadata?.length > 0
+        ? forFiltering[0]?.metadata[0]?.total
+        : 0;
+        
         const data =
-          forFiltering[0]?.data?.length > 0 ? forFiltering[0]?.data : [];
-
+        forFiltering[0]?.data?.length > 0 ? forFiltering[0]?.data : [];
+        
+        // console.log(data.map(x=> x.callId))
         return {
           dispositions: data || [],
           dispocodes: newMapForDispoCode,

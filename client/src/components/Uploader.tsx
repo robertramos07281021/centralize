@@ -127,9 +127,11 @@ const Uploader: React.FC<modalProps> = ({
             if (/^(09\d{9})$/.test(cleaned)) {
               return cleaned;
             }
+
             if (/^639\d{9}$/.test(cleaned)) {
               return "0" + cleaned.slice(2);
             }
+
             if (/^\+639\d{9}$/.test(contact)) {
               return "0" + cleaned.slice(3);
             }
@@ -137,9 +139,11 @@ const Uploader: React.FC<modalProps> = ({
             if (/^0\d{1,2}\d{7}$/.test(cleaned)) {
               return cleaned;
             }
+
             if (/^63\d{1,2}\d{7}$/.test(cleaned)) {
               return "0" + cleaned.slice(2);
             }
+            
             if (/^\+63\d{1,2}\d{7}$/.test(contact)) {
               return "0" + cleaned.slice(3);
             }
@@ -366,7 +370,6 @@ const Uploader: React.FC<modalProps> = ({
   });
 
   const [required, setRequired] = useState<boolean>(false);
-
   const [loading, setLoading] = useState<boolean>(false);
 
   const creatingCustomer = useCallback(async () => {
@@ -378,15 +381,15 @@ const Uploader: React.FC<modalProps> = ({
     setLoading(true);
 
     const status: any[] = [];
+
     for (let i = 0; i < chunks.length; i += CONCURRENT_CHUNKS) {
       const batch = chunks.slice(i, i + CONCURRENT_CHUNKS);
-
       const promises = batch.map((chunkData) =>
         createCustomer({
           variables: {
             input: chunkData,
-            callfile: file[0].name.split(".")[0],
-            bucket: bucket ?? "",
+            callfile: file[0]?.name?.split(".")[0],
+            bucket: bucket,
           },
         })
       );
@@ -394,49 +397,61 @@ const Uploader: React.FC<modalProps> = ({
       const results = await Promise.allSettled(promises);
 
       results.forEach((res) => {
-        if (res.status === "rejected") status.push(res.reason);
+        status.push(res);
       });
     }
-
-    if (
-      status.map((x) => String(x).includes("E11000")).some((x) => x === true)
-    ) {
-      dispatch(
-        setSuccess({
-          success: true,
-          message: "Duplicate file name",
-          isMessage: false,
-        })
-      );
-      setExcelData([]);
-      setFile([]);
-      setConfirm(false);
-      setLoading(false);
-    } else if (
-      status
-        .map((x) => String(x).includes("Not Included"))
-        .some((x) => x === true)
-    ) {
-      dispatch(
-        setSuccess({
-          success: true,
-          message: "There is a buckets not included",
-          isMessage: false,
-        })
-      );
-      setLoading(false);
-      setExcelData([]);
-      setFile([]);
-      setConfirm(false);
-    } else {
-      setConfirm(false);
-      setExcelData([]);
-      setFile([]);
-      setRequired(false);
-      bucketRequired(false);
-      successUpload?.();
-      onSuccess?.();
-      setLoading(false);
+          
+    if (chunks.length === status.length) {
+      if (
+        status
+          .map((x) =>
+            x.status === "rejected"
+              ? String(x.reason).includes("E11000")
+              : false
+          )
+          .some((x) => x === true)
+      ) {
+        dispatch(
+          setSuccess({
+            success: true,
+            message: "Duplicate file name",
+            isMessage: false,
+          })
+        );
+        setExcelData([]);
+        setFile([]);
+        setConfirm(false);
+        setLoading(false);
+      } else if (
+        status
+          .map((x) =>
+            x.status === "rejected"
+              ? String(x.reason).includes("Not Include")
+              : false
+          )
+          .some((x) => x === true)
+      ) {
+        dispatch(
+          setSuccess({
+            success: true,
+            message: "There is a buckets not included",
+            isMessage: false,
+          })
+        );
+        setLoading(false);
+        setExcelData([]);
+        setFile([]);
+        setConfirm(false);
+      } else {
+        setConfirm(false);
+        setExcelData([]);
+        setFile([]);
+        setRequired(false);
+        bucketRequired(false);
+        successUpload?.();
+        onSuccess?.();
+        setLoading(false);
+      }
     }
   }, [
     createCustomer,
