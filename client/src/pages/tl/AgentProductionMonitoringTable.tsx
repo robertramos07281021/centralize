@@ -132,8 +132,8 @@ const AgentProductionMonitoringTable = () => {
           <AiOutlineLoading3Quarters className="animate-spin text-4xl" />
         </div>
       ) : (
-        <div className="w-full h-full ">
-          <div className="w-full h-full text-gray-600 table-fixed">
+        <div className="w-full h-full overflow-hidden">
+          <div className="w-full h-full flex flex-col text-gray-600 table-fixed overflow-hidden">
             <div className="bg-gray-300 sticky top-0 border-white">
               <div className="grid border-y border-gray-500 grid-cols-7 gap-2 items-center font-black uppercase">
                 <div></div>
@@ -145,7 +145,7 @@ const AgentProductionMonitoringTable = () => {
                 <div>Variance</div>
               </div>
             </div>
-            <div className="  overflow-auto  flex flex-col h-full">
+            <div className=" overflow-auto flex flex-col h-full">
               {bucketAgents?.map((x, index) => {
                 const findAgent = agentDailyProd?.agentDispoDaily
                   ? agentDailyProd?.agentDispoDaily.find(

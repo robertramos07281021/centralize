@@ -141,12 +141,9 @@ const productionTypeDefs = gql`
   }
 
   type PtpAndConfirmPaid {
-    ptp: Int,
-    ptp_amount: Float,
-    paid: Int,
-    paid_amount: Float
+    count: Int,
+    amount: Float,
   }
-
 
   extend type Query {
     productions: [Production]
@@ -179,7 +176,8 @@ const productionTypeDefs = gql`
     monthlyWeeklyCollected: Collected
     getAllAgentProductions(bucketId: ID, from: String, to: String): [Production]
     checkAgentIfHaveProd(bucket: ID, interval: String ):[ID]
-    ptpAndConfirmPaid(bucket: ID, interval: String):PtpAndConfirmPaid
+    ptpToConfirmPaid(bucket: ID, interval: String):PtpAndConfirmPaid
+    confirmPaid(bucket: ID, interval: String):PtpAndConfirmPaid
   }
 
   type Mutation {

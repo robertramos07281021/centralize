@@ -951,7 +951,6 @@ const dispositionResolver = {
 
         return PTP[0];
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -962,9 +961,13 @@ const dispositionResolver = {
         if (!selectedBucket) return null;
 
         const callfile = (
-          await Callfile.find({ bucket: selectedBucket._id }).lean()
+          await Callfile.find({ bucket: selectedBucket?._id }).lean()
         ).map((x) => new mongoose.Types.ObjectId(x._id));
         if (callfile.length <= 0) return null;
+        const existingCallfile = await Callfile.findOne({
+          bucket: selectedBucket._id,
+          active: true,
+        });
 
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
@@ -988,18 +991,70 @@ const dispositionResolver = {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         endOfMonth.setMilliseconds(-1);
 
-        let selectedInterval = {};
+        let filter = {
+          "dispotype.code": "PAID",
+          ptp: true,
+          selectivesDispo: true,
+        };
 
         if (input.interval === "daily") {
-          selectedInterval["$gt"] = todayStart;
-          selectedInterval["$lte"] = todayEnd;
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
         } else if (input.interval === "weekly") {
-          selectedInterval["$gt"] = startOfWeek;
-          selectedInterval["$lte"] = endOfWeek;
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
         } else if (input.interval === "monthly") {
-          selectedInterval["$gt"] = startOfMonth;
-          selectedInterval["$lte"] = endOfMonth;
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+        } else if (input.interval === "callfile") {
+          filter["callfile"] = new mongoose.Types.ObjectId(
+            existingCallfile?._id
+          );
         }
+
+        // const selectedBucket = await Bucket.findById(input.bucket).lean();
+
+        // if (!selectedBucket) return null;
+
+        // const callfile = (
+        //   await Callfile.find({ bucket: selectedBucket._id }).lean()
+        // ).map((x) => new mongoose.Types.ObjectId(x._id));
+        // if (callfile.length <= 0) return null;
+
+        // const todayStart = new Date();
+        // todayStart.setHours(0, 0, 0, 0);
+
+        // const todayEnd = new Date();
+        // todayEnd.setHours(23, 59, 59, 999);
+
+        // const now = new Date();
+        // const currentDay = now.getDay();
+        // const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+        // const startOfWeek = new Date(now);
+        // startOfWeek.setDate(now.getDate() + diffToMonday);
+        // startOfWeek.setHours(0, 0, 0, 0);
+
+        // const endOfWeek = new Date(startOfWeek);
+        // endOfWeek.setDate(startOfWeek.getDate() + 7);
+        // endOfWeek.setMilliseconds(-1);
+
+        // const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        // const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        // endOfMonth.setMilliseconds(-1);
+
+        // let selectedInterval = {};
+
+        // if (input.interval === "daily") {
+        //   selectedInterval["$gt"] = todayStart;
+        //   selectedInterval["$lte"] = todayEnd;
+        // } else if (input.interval === "weekly") {
+        //   selectedInterval["$gt"] = startOfWeek;
+        //   selectedInterval["$lte"] = endOfWeek;
+        // } else if (input.interval === "monthly") {
+        //   selectedInterval["$gt"] = startOfMonth;
+        //   selectedInterval["$lte"] = endOfMonth;
+        // }
 
         const PTPKept = await Disposition.aggregate([
           {
@@ -1039,13 +1094,7 @@ const dispositionResolver = {
             $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
           },
           {
-            $match: {
-              createdAt: selectedInterval,
-              "dispotype.code": "PAID",
-              ptp: true,
-              selectivesDispo: true,
-              callfile: { $in: callfile },
-            },
+            $match: filter,
           },
           {
             $group: {
@@ -1073,15 +1122,19 @@ const dispositionResolver = {
     },
     getTLPaidTotals: async (_, { input }) => {
       try {
-        const selectedBucket = await Bucket.findById(input.bucket).lean();
+        const { bucket, interval } = input;
+
+        const selectedBucket = await Bucket.findById(bucket).lean();
+
         if (!selectedBucket) return null;
-
         const callfile = (
-          await Callfile.find({ bucket: selectedBucket._id })
-        ).map((x) => new mongoose.Types.ObjectId(x._id));
-
-        if (callfile.length < 1) return null;
-
+          await Callfile.find({ bucket: selectedBucket._id }).lean()
+        ).map((cf) => new mongoose.Types.ObjectId(cf._id));
+        const existingCallfile = await Callfile.findOne({
+          bucket: selectedBucket._id,
+          active: true,
+        });
+        if (callfile.length <= 0) return null;
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -1104,17 +1157,70 @@ const dispositionResolver = {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         endOfMonth.setMilliseconds(-1);
 
-        let selectedInterval = {};
-        if (input.interval === "daily") {
-          selectedInterval["$gt"] = todayStart;
-          selectedInterval["$lte"] = todayEnd;
-        } else if (input.interval === "weekly") {
-          selectedInterval["$gt"] = startOfWeek;
-          selectedInterval["$lte"] = endOfWeek;
-        } else if (input.interval === "monthly") {
-          selectedInterval["$gt"] = startOfMonth;
-          selectedInterval["$lte"] = endOfMonth;
+        const ptpPaid = await DispoType.findOne({ code: "PAID" });
+
+        let filter = {
+          "dispotype.code": "PAID",
+          selectivesDispo: true,
+        };
+
+        if (interval === "daily") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+        } else if (interval === "weekly") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+        } else if (interval === "monthly") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+        } else if (interval === "callfile") {
+          filter["callfile"] = new mongoose.Types.ObjectId(
+            existingCallfile._id
+          );
         }
+
+        // const selectedBucket = await Bucket.findById(input.bucket).lean();
+        // if (!selectedBucket) return null;
+
+        // const callfile = (
+        //   await Callfile.find({ bucket: selectedBucket._id })
+        // ).map((x) => new mongoose.Types.ObjectId(x._id));
+
+        // if (callfile.length < 1) return null;
+
+        // const todayStart = new Date();
+        // todayStart.setHours(0, 0, 0, 0);
+
+        // const todayEnd = new Date();
+        // todayEnd.setHours(23, 59, 59, 999);
+
+        // const now = new Date();
+        // const currentDay = now.getDay();
+        // const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+        // const startOfWeek = new Date(now);
+        // startOfWeek.setDate(now.getDate() + diffToMonday);
+        // startOfWeek.setHours(0, 0, 0, 0);
+
+        // const endOfWeek = new Date(startOfWeek);
+        // endOfWeek.setDate(startOfWeek.getDate() + 7);
+        // endOfWeek.setMilliseconds(-1);
+
+        // const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        // const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        // endOfMonth.setMilliseconds(-1);
+
+        // let selectedInterval = {};
+        // if (input.interval === "daily") {
+        //   selectedInterval["$gt"] = todayStart;
+        //   selectedInterval["$lte"] = todayEnd;
+        // } else if (input.interval === "weekly") {
+        //   selectedInterval["$gt"] = startOfWeek;
+        //   selectedInterval["$lte"] = endOfWeek;
+        // } else if (input.interval === "monthly") {
+        //   selectedInterval["$gt"] = startOfMonth;
+        //   selectedInterval["$lte"] = endOfMonth;
+        // }
 
         const paid = await Disposition.aggregate([
           {
@@ -1154,12 +1260,7 @@ const dispositionResolver = {
             $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
           },
           {
-            $match: {
-              createdAt: selectedInterval,
-              "dispotype.code": "PAID",
-              selectivesDispo: true,
-              callfile: { $in: callfile },
-            },
+            $match: filter,
           },
           {
             $group: {
@@ -1560,16 +1661,20 @@ const dispositionResolver = {
     },
     getTargetPerCampaign: async (_, { bucket, interval }) => {
       try {
-        const buckets = await Bucket.findById(bucket);
-        if (!buckets) return null;
+        const selectedBucket = await Bucket.findById(bucket).lean();
 
-        const callfile = await Callfile.findOne({
-          bucket: buckets._id,
-          active: { $eq: true },
+        if (!selectedBucket) return null;
+
+        const callfile = (
+          await Callfile.find({ bucket: selectedBucket._id }).lean()
+        ).map((cf) => new mongoose.Types.ObjectId(cf._id));
+
+        const existingCallfile = await Callfile.findOne({
+          bucket: selectedBucket._id,
+          active: true,
         });
 
-        if (!callfile) return null;
-
+        if (callfile.length <= 0) return null;
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
 
@@ -1592,25 +1697,88 @@ const dispositionResolver = {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         endOfMonth.setMilliseconds(-1);
 
-        let selectedInterval = {};
+        let filter = {
+          "dispotype.code": { $eq: "PAID" },
+          selectivesDispo: { $eq: true },
+        };
+
         let newDataCollected = {};
-        if (interval === "daily" || buckets.principal) {
-          selectedInterval["$gt"] = todayStart;
-          selectedInterval["$lte"] = todayEnd;
-          newDataCollected["target"] = Number(callfile.target) / 4 / 6;
-        } else if (interval === "weekly" && !buckets.principal) {
-          selectedInterval["$gt"] = startOfWeek;
-          selectedInterval["$lte"] = endOfWeek;
-          newDataCollected["target"] = Number(callfile.target) / 4;
-        } else if (interval === "monthly" && !buckets.principal) {
-          selectedInterval["$gt"] = startOfMonth;
-          selectedInterval["$lte"] = endOfMonth;
-          newDataCollected["target"] = Number(callfile.target);
+
+        if (interval === "daily") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+          newDataCollected["target"] = Number(existingCallfile.target) / 4 / 6;
+        } else if (interval === "weekly") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+          newDataCollected["target"] = Number(existingCallfile.target) / 4;
+        } else if (interval === "monthly") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+          newDataCollected["target"] = Number(existingCallfile.target);
+        } else if (interval === "callfile") {
+          newDataCollected["target"] = Number(existingCallfile.target);
+          filter["callfile"] = new mongoose.Types.ObjectId(
+            existingCallfile._id
+          );
         }
+
+        // const buckets = await Bucket.findById(bucket);
+        // if (!buckets) return null;
+
+        // const callfile = await Callfile.findOne({
+        //   bucket: buckets._id,
+        //   active: { $eq: true },
+        // });
+
+        // if (!callfile) return null;
+
+        // const todayStart = new Date();
+        // todayStart.setHours(0, 0, 0, 0);
+
+        // const todayEnd = new Date();
+        // todayEnd.setHours(23, 59, 59, 999);
+
+        // const now = new Date();
+        // const currentDay = now.getDay();
+        // const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+        // const startOfWeek = new Date(now);
+        // startOfWeek.setDate(now.getDate() + diffToMonday);
+        // startOfWeek.setHours(0, 0, 0, 0);
+
+        // const endOfWeek = new Date(startOfWeek);
+        // endOfWeek.setDate(startOfWeek.getDate() + 7);
+        // endOfWeek.setMilliseconds(-1);
+
+        // const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        // const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        // endOfMonth.setMilliseconds(-1);
+
+        // let selectedInterval = {};
+        // let newDataCollected = {};
+        // if (interval === "daily" || buckets.principal) {
+        //   selectedInterval["$gt"] = todayStart;
+        //   selectedInterval["$lte"] = todayEnd;
+        //   newDataCollected["target"] = Number(callfile.target) / 4 / 6;
+        // } else if (interval === "weekly" && !buckets.principal) {
+        //   selectedInterval["$gt"] = startOfWeek;
+        //   selectedInterval["$lte"] = endOfWeek;
+        //   newDataCollected["target"] = Number(callfile.target) / 4;
+        // } else if (interval === "monthly" && !buckets.principal) {
+        //   selectedInterval["$gt"] = startOfMonth;
+        //   selectedInterval["$lte"] = endOfMonth;
+        //   newDataCollected["target"] = Number(callfile.target);
+        // }
 
         let result = {};
 
-        if (buckets.principal) {
+        if (selectedBucket.principal) {
+          const existingCallfile = await Callfile.findOne({
+            bucket: selectedBucket._id,
+            active: { $eq: true },
+          }).lean();
+
           const customerAccount = await CustomerAccount.aggregate([
             {
               $lookup: {
@@ -1650,9 +1818,10 @@ const dispositionResolver = {
             },
             {
               $match: {
-                callfile: { $eq: new mongoose.Types.ObjectId(callfile._id) },
+                callfile: {
+                  $eq: new mongoose.Types.ObjectId(existingCallfile._id),
+                },
                 current_disposition: { $exists: true },
-                createdAt: selectedInterval,
               },
             },
             {
@@ -1685,26 +1854,8 @@ const dispositionResolver = {
             };
           })[0];
         } else {
-          const existingCallfile = await Callfile.findOne({
-            bucket: buckets._id,
-            active: { $eq: true },
-          }).lean();
-
-          const AllBucketCallfile = (
-            await Callfile.find({ bucket: buckets._id }).lean()
-          ).map((bucket) => bucket._id);
 
           const findDisposition = await Disposition.aggregate([
-            {
-              $match: {
-                callfile: {
-                  $in: AllBucketCallfile.map(
-                    (e) => new mongoose.Types.ObjectId(e)
-                  ),
-                },
-                createdAt: selectedInterval,
-              },
-            },
             {
               $lookup: {
                 from: "dispotypes",
@@ -1717,12 +1868,8 @@ const dispositionResolver = {
               $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
             },
             {
-              $match: {
-                "dispotype.code": { $eq: "PAID" },
-                selectivesDispo: { $eq: true },
-              },
+              $match: filter,
             },
-
             {
               $facet: {
                 allCallfile: [
@@ -1773,14 +1920,14 @@ const dispositionResolver = {
 
           const totalPrincipal =
             findDisposition[0].activeCallfile?.length > 0
-              ? callfile.totalPrincipal +
+              ? existingCallfile.totalPrincipal +
                 (findDisposition[0].activeCallfile[0].collected || 0)
-              : callfile.totalPrincipal;
+              : existingCallfile.totalPrincipal;
 
           result = {
             collected: collected,
-            target: newDataCollected.target,
             totalPrincipal: totalPrincipal,
+            target: newDataCollected.target,
           };
         }
 

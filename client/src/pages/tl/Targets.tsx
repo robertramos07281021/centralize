@@ -50,6 +50,29 @@ const PAID_DAILY = gql`
   }
 `;
 
+const PTP_TO_COMFIRM_PAID = gql`
+  query ptpToConfirmPaid($bucket: ID, $interval: String) {
+    ptpToConfirmPaid(bucket: $bucket, interval: $interval) {
+      count
+      amount
+    }
+  }
+`;
+
+const CONFIRM_PAID = gql`
+  query confirmPaid($bucket: ID, $interval: String) {
+    confirmPaid(bucket: $bucket, interval: $interval) {
+      amount
+      count
+    }
+  }
+`;
+
+type PtpAndConfirmPaid = {
+  count: number;
+  amount: number;
+};
+
 const Targets = () => {
   const { intervalTypes, selectedBucket } = useSelector(
     (state: RootState) => state.auth
@@ -79,8 +102,24 @@ const Targets = () => {
   }>(PAID_DAILY, {
     variables: {
       input: { bucket: selectedBucket, interval: intervalTypes },
-      skip: !isTLDashboard,
     },
+    skip: !isTLDashboard,
+    notifyOnNetworkStatusChange: true,
+  });
+
+  const { data: ptpToConfirmData, refetch: ptpToConfirmRefetch } = useQuery<{
+    ptpToConfirmPaid: PtpAndConfirmPaid;
+  }>(PTP_TO_COMFIRM_PAID, {
+    variables: { bucket: selectedBucket, interval: intervalTypes },
+    skip: !isTLDashboard,
+    notifyOnNetworkStatusChange: true,
+  });
+
+  const { data: confirmPaidData, refetch: confirmPaidRefetch } = useQuery<{
+    confirmPaid: PtpAndConfirmPaid;
+  }>(CONFIRM_PAID, {
+    variables: { bucket: selectedBucket, interval: intervalTypes },
+    skip: !isTLDashboard,
     notifyOnNetworkStatusChange: true,
   });
 
@@ -89,6 +128,8 @@ const Targets = () => {
       await refetch();
       await noPTPCollectionRefetch();
       await paidDataRefetch();
+      await ptpToConfirmRefetch();
+      await confirmPaidRefetch()
     };
     if (selectedBucket) {
       timer();
@@ -190,7 +231,7 @@ const Targets = () => {
         </div>
       </div>
 
-      <div className="h-auto border flex flex-col border-red-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
+      {/* <div className="h-auto border flex flex-col border-red-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
         <p className="uppercase font-black text-red-800 border-b border-red-600 py-1 bg-red-200 w-full text-center">
           Cured
         </p>
@@ -229,84 +270,21 @@ const Targets = () => {
             </span>
           </p>
         </div>
-      </div>
+      </div> */}
 
-      <div className="h-auto border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
-        <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
-          Total PTP
-        </p>
-        <div className="flex gap-2 w-full justify-center">
-          <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
-            <p>Count: </p>
-            <p>1</p>
-          </div>
-          <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100">
-            <p className="">Amount: </p>
-            <p>10000</p>
-          </div>
-        </div>
-      </div>
-      <div className="h-auto border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
-        <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
-          Existing PTP
-        </p>
-        <div className="flex gap-2 w-full justify-center">
-          <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
-            <p className="w-full">Count: </p>
-            <p>1</p>
-          </div>
-          <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100">
-            <p className="">Amount: </p>
-            <p>10000</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="h-auto border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
+      <div className="h-2/20 border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
         <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
           PTP to Confirm Paid
         </p>
-        <div className="flex gap-2 w-full justify-center">
+        <div className="flex gap-2 w-full justify-center h-full">
           <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
             <p className="w-full">Count: </p>
-            <p>1</p>
+            <p>{ptpToConfirmData?.ptpToConfirmPaid?.count}</p>
           </div>
-          <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100">
+          <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100 h-full items-center">
             <p className="">Amount:</p>
-            <p>10000</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="h-auto border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
-        <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
-          Confirm Paid
-        </p>
-        <div className="flex gap-2 w-full justify-center">
-          <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
-            <p className="w-full">Count: </p>
-            <p>1</p>
-          </div>
-          <div className="w-full flex py-1  font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100">
-            <p className="">Amount:</p>
-            <p>10000</p>
-          </div>
-        </div>
-      </div>
-
-      <div className="h-auto border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
-        <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
-          No PTP Payment
-        </p>
-        <div className="flex gap-2 w-full justify-center">
-          <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
-            <p className="w-full">Count: </p>
-            <p>{noPTPCollection?.noPTPCollection?.count || 0}</p>
-          </div>
-          <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100">
-            <p className="">Amount: </p>
             <p>
-              {(noPTPCollection?.noPTPCollection?.amount || 0).toLocaleString(
+              {ptpToConfirmData?.ptpToConfirmPaid?.amount?.toLocaleString(
                 "en-PH",
                 {
                   style: "currency",
@@ -317,19 +295,65 @@ const Targets = () => {
           </div>
         </div>
       </div>
-      <div className="h-auto border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
+
+      <div className="h-2/20 border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
+        <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
+          Confirm Paid
+        </p>
+        <div className="flex gap-2 w-full justify-center h-full">
+          <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
+            <p className="w-full">Count: </p>
+            <p>{confirmPaidData?.confirmPaid?.count || 0}</p>
+          </div>
+          <div className="w-full flex py-1  font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100 h-full items-center">
+            <p className="">Amount:</p>
+            <p>{confirmPaidData?.confirmPaid?.amount?.toLocaleString(
+                "en-PH",
+                {
+                  style: "currency",
+                  currency: "PHP",
+                }
+              )}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="h-2/20 border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
+        <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
+          No PTP Payment
+        </p>
+        <div className="flex gap-2 w-full justify-center h-full">
+          <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
+            <p className="w-full">Count: </p>
+            <p>{noPTPCollection?.noPTPCollection?.count || 0}</p>
+          </div>
+          <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100 h-full items-center">
+            <p className="">Amount: </p>
+            <p>
+              {(noPTPCollection?.noPTPCollection?.amount || 0)?.toLocaleString(
+                "en-PH",
+                {
+                  style: "currency",
+                  currency: "PHP",
+                }
+              )}
+            </p>
+          </div>
+        </div>
+      </div>
+      <div className="h-2/20 border relative w-full flex flex-col  border-violet-600 rounded-t-md rounded-b-md overflow-hidden items-center text-xs">
         <p className="uppercase font-black text-violet-800 border-b border-violet-600 py-1 bg-violet-200 w-full text-right pr-5">
           Total Amount Collected
         </p>
-        <div className="flex gap-2 w-full justify-center">
+        <div className="flex gap-2 w-full justify-center h-full">
           <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
             <p className="w-full">Count:</p>
             <p>{paidData?.getTLPaidTotals?.count || 0}</p>
           </div>
-          <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100">
-            <p className="">Amount: </p>
+          <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100 items-center h-full">
+            <p >Amount: </p>
             <p>
-              {(paidData?.getTLPaidTotals?.amount || 0).toLocaleString(
+              {(paidData?.getTLPaidTotals?.amount || 0)?.toLocaleString(
                 "en-PH",
                 {
                   style: "currency",

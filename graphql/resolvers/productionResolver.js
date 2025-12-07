@@ -10,6 +10,7 @@ import DispoType from "../../models/dispoType.js";
 import "dotenv/config.js";
 import Bucket from "../../models/bucket.js";
 import Callfile from "../../models/callfile.js";
+import { hex } from "framer-motion";
 
 const productionResolver = {
   DateTime,
@@ -799,134 +800,217 @@ const productionResolver = {
         throw new CustomError(error.message, 500);
       }
     },
-    ptpAndConfirmPaid: async (_, { bucket, interval }) => {
-      const selectedBucket = await Bucket.findById(bucket).lean();
+    ptpToConfirmPaid: async (_, { bucket, interval }) => {
+      try {
+        const selectedBucket = await Bucket.findById(bucket).lean();
 
-      if (!selectedBucket) return null;
+        if (!selectedBucket) return null;
+        const callfile = (
+          await Callfile.find({ bucket: selectedBucket._id }).lean()
+        ).map((cf) => new mongoose.Types.ObjectId(cf._id));
+        const existingCallfile = await Callfile.findOne({
+          bucket: selectedBucket._id,
+          active: true,
+        });
+        if (callfile.length <= 0) return null;
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
 
-      const callfile = (
-        await Callfile.find({ bucket: selectedBucket._id }).lean()
-      ).map((cf) => new mongoose.Types.ObjectId(cf._id));
-      const existingCallfile = await Callfile.findOne({
-        bucket: selectedBucket._id,
-        active: true,
-      });
-      if (callfile.length <= 0) return null;
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
 
-      const todayEnd = new Date();
-      todayEnd.setHours(23, 59, 59, 999);
+        const now = new Date();
+        const currentDay = now.getDay();
+        const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
 
-      const now = new Date();
-      const currentDay = now.getDay();
-      const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() + diffToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
 
-      const startOfWeek = new Date(now);
-      startOfWeek.setDate(now.getDate() + diffToMonday);
-      startOfWeek.setHours(0, 0, 0, 0);
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        endOfWeek.setMilliseconds(-1);
 
-      const endOfWeek = new Date(startOfWeek);
-      endOfWeek.setDate(startOfWeek.getDate() + 7);
-      endOfWeek.setMilliseconds(-1);
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
 
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-      endOfMonth.setMilliseconds(-1);
+        const ptpPaid = await DispoType.findOne({ code: "PTP"});
 
-      const ptpPaid = (
-        await DispoType.find({ code: { $in: ["PTP", "PAID"] } })
-      ).map((x) => new mongoose.Types.ObjectId(x._id));
+        let filter = { disposition: ptpPaid._id };
 
-      let filter = { selectivesDispo: false, disposition: { $in: ptpPaid } };
+        if (interval === "daily") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+        } else if (interval === "weekly") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+        } else if (interval === "monthly") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+        } else if (interval === "callfile") {
+          filter["callfile"] = new mongoose.Types.ObjectId(
+            existingCallfile._id
+          );
+        }
 
-      if (interval === "daily") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
-      } else if (interval === "weekly") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
-      } else if (interval === "monthly") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
-      } else if (interval === "callfile") {
-        filter["callfile"] = new mongoose.Types.ObjectId(existingCallfile._id);
+        const findDispo = await Disposition.aggregate([
+          {
+            $match: filter,
+          },
+          {
+            $lookup: {
+              from: "dispositions",
+              localField: "paidDispo",
+              foreignField: "_id",
+              as: "pd",
+            },
+          },
+          {
+            $unwind: { path: "$pd", preserveNullAndEmptyArrays: true },
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "pd.disposition",
+              foreignField: "_id",
+              as: "pd_dispotype",
+            },
+          },
+          {
+            $unwind: {
+              path: "$pd_dispotype",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $lookup: {
+              from: "dispotypes",
+              localField: "disposition",
+              foreignField: "_id",
+              as: "dispotype",
+            },
+          },
+          {
+            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
+          },
+          {
+            $match: {
+              "pd.selectivesDispo": false,
+              "pd_dispotype.code": 'PAID',
+              "pd.existing": true
+            },
+          },
+          {
+            $group: {
+              _id: 0,
+              count: {
+                $sum: 1,
+              },
+              amount: {
+                $sum: "$amount",
+              },
+            },
+          },
+          {
+            $project: {
+              _id: 0,
+              count: 1,
+              amount: 1,
+            },
+          },
+        ]);
+
+
+        return findDispo[0] ?? {count: 0, amount: 0};
+      } catch (err) {
+        throw new CustomError(err.message, 500);
       }
+    },
 
-      const findDispo = await Disposition.aggregate([
-        {
-          $match: filter,
-        },
-        {
-          $lookup: {
-            from: "dispositions",
-            localField: "paid_dispo",
-            foreignField: "_id",
-            as: "pd",
+    confirmPaid: async(_,{bucket,interval})=> {
+      try {
+        const selectedBucket = await Bucket.findById(bucket).lean();
+
+        if (!selectedBucket) return null;
+        const callfile = (
+          await Callfile.find({ bucket: selectedBucket._id }).lean()
+        ).map((cf) => new mongoose.Types.ObjectId(cf._id));
+        const existingCallfile = await Callfile.findOne({
+          bucket: selectedBucket._id,
+          active: true,
+        });
+        if (callfile.length <= 0) return null;
+        const todayStart = new Date();
+        todayStart.setHours(0, 0, 0, 0);
+
+        const todayEnd = new Date();
+        todayEnd.setHours(23, 59, 59, 999);
+
+        const now = new Date();
+        const currentDay = now.getDay();
+        const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() + diffToMonday);
+        startOfWeek.setHours(0, 0, 0, 0);
+
+        const endOfWeek = new Date(startOfWeek);
+        endOfWeek.setDate(startOfWeek.getDate() + 7);
+        endOfWeek.setMilliseconds(-1);
+
+        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+        endOfMonth.setMilliseconds(-1);
+
+        const ptpPaid = await DispoType.findOne({ code: "PAID"});
+
+        let filter = { disposition: ptpPaid._id, selectivesDispo: false, existing: true };
+
+        if (interval === "daily") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+        } else if (interval === "weekly") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+        } else if (interval === "monthly") {
+          (filter["callfile"] = { $in: callfile }),
+            (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+        } else if (interval === "callfile") {
+          filter["callfile"] = new mongoose.Types.ObjectId(
+            existingCallfile._id
+          );
+        }
+
+        const confirmPaid = await Disposition.aggregate([
+          {
+            $match: filter,
           },
-        },
-        {
-          $unwind: { path: "$pd", preserveNullAndEmptyArrays: true },
-        },
-        {
-          $lookup: {
-            from: "dispotypes",
-            localField: "disposition",
-            foreignField: "_id",
-            as: "dispotype",
-          },
-        },
-        {
-          $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
-        },
-        {
-          $group: {
-            _id: null,
-            ptp: {
-              $sum: {
-                $cond: [
-                  {
-                    $and: [
-                      { $ne: ["$pd", undefined] },
-                      { $ne: ["$pd", null] },
-                      { $ne: ["$pd", ""] },
-                      { $eq: ["$dispotype.code", "PTP"] },
-                    ],
-                  },
-                  1,
-                  0,
-                ],
+          {
+            $group: {
+              _id: 0,
+              count: {
+                $sum: 1,
               },
-            },
-            ptp_amount: {
-              $sum: {
-                $cond: [
-                  {
-                    $and: [
-                      { $ne: ["$pd", undefined] },
-                      { $ne: ["$pd", null] },
-                      { $ne: ["$pd", ""] },
-                      { $eq: ["$dispotype.code", "PTP"] },
-                    ],
-                  },
-                  "$amount",
-                  0,
-                ],
-              },
-            },
-            paid: {
-              $sum: {
-                $cond: [{ $eq: ["$dispotype.code", "PAID"] }, 1, 0],
-              },
-            },
-            paid_amount: {
-              $sum: {
-                $cond: [{ $eq: ["$dispotype.code", "PAID"] }, "$amount", 0],
+              amount: {
+                $sum: "$amount",
               },
             },
           },
-        },
-      ]);
+          {
+            $project: {
+              _id: 0,
+              count: 1,
+              amount: 1,
+            },
+          },
+        ]);
+
+        return confirmPaid[0];
+      } catch (err) {
+        throw new CustomError(err.message, 500);
+
+      }
     },
     getAgentDispositionRecords: async (
       _,
@@ -1115,18 +1199,17 @@ const productionResolver = {
         ]);
 
         const newMapForDispoCode =
-        forFiltering[0]?.metadata?.length > 0
-        ? forFiltering[0]?.metadata[0]?.dispotypeCodes
-        : [];
+          forFiltering[0]?.metadata?.length > 0
+            ? forFiltering[0]?.metadata[0]?.dispotypeCodes
+            : [];
         const total =
-        forFiltering[0]?.metadata?.length > 0
-        ? forFiltering[0]?.metadata[0]?.total
-        : 0;
-        
+          forFiltering[0]?.metadata?.length > 0
+            ? forFiltering[0]?.metadata[0]?.total
+            : 0;
+
         const data =
-        forFiltering[0]?.data?.length > 0 ? forFiltering[0]?.data : [];
-        
-        // console.log(data.map(x=> x.callId))
+          forFiltering[0]?.data?.length > 0 ? forFiltering[0]?.data : [];
+
         return {
           dispositions: data || [],
           dispocodes: newMapForDispoCode,
@@ -1451,7 +1534,6 @@ const productionResolver = {
             total: total,
           };
         } catch (error) {
-          console.log(error);
           throw new CustomError(error.message, 500);
         } finally {
           client.close();
