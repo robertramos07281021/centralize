@@ -426,7 +426,7 @@ const DispositionForm: React.FC<Props> = ({
   const [createDisposition, {loading: dispoLoading}] = useMutation<{ createDisposition: Success }>(
     CREATE_DISPOSITION,
     {
-      onCompleted: (res) => {
+      onCompleted: async(res) => {
         dispatch(
           setSuccess({
             success: res.createDisposition.success,
@@ -434,17 +434,13 @@ const DispositionForm: React.FC<Props> = ({
             isMessage: false,
           })
         );
+        await deselectTask({ variables: { id: selectedCustomer?._id } });
         setLoading(false)
-        resetForm();
-        updateOf();
-        dispatch(setDeselectCustomer());
       },
       onError: async () => {
         await deselectTask({ variables: { id: selectedCustomer?._id } });
-        
         dispatch(setServerError(true));
       },
-    
     }
   );
 

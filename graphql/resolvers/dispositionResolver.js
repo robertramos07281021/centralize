@@ -868,7 +868,7 @@ const dispositionResolver = {
             (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
         } else if (input.interval === "callfile") {
           filter["callfile"] = new mongoose.Types.ObjectId(
-            existingCallfile._id
+            existingCallfile?._id
           );
         }
 
@@ -1542,7 +1542,7 @@ const dispositionResolver = {
             },
           },
         ]);
-        
+
         const newResult = disposition.map((d) => {
           const userRPC = RPCCount.find(
             (rpc) => rpc?._id.toString() === d.user?.toString()
@@ -1891,7 +1891,7 @@ const dispositionResolver = {
           "features.alreadyCalled": true,
         };
 
-        const unsetFields = { on_hands: "" };
+        const unsetFields = {};
 
         if (
           isPTPDispo ||

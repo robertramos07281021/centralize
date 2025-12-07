@@ -172,8 +172,7 @@ cron.schedule(
         { $project: { _id: 1, user: "$cd.user" } },
       ])
         .allowDiskUse(true)
-        .cursor({ BATCH_SIZE: 500 })
-        .exec();
+        .cursor({ batchSize: 500 })
 
       const BATCH_SIZE = 500;
       let batchIds = [];
