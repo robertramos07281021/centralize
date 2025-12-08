@@ -995,6 +995,7 @@ const dispositionResolver = {
           "dispotype.code": "PAID",
           ptp: true,
           selectivesDispo: true,
+          user: {$ne: null}
         };
 
         if (input.interval === "daily") {
@@ -1011,50 +1012,6 @@ const dispositionResolver = {
             existingCallfile?._id
           );
         }
-
-        // const selectedBucket = await Bucket.findById(input.bucket).lean();
-
-        // if (!selectedBucket) return null;
-
-        // const callfile = (
-        //   await Callfile.find({ bucket: selectedBucket._id }).lean()
-        // ).map((x) => new mongoose.Types.ObjectId(x._id));
-        // if (callfile.length <= 0) return null;
-
-        // const todayStart = new Date();
-        // todayStart.setHours(0, 0, 0, 0);
-
-        // const todayEnd = new Date();
-        // todayEnd.setHours(23, 59, 59, 999);
-
-        // const now = new Date();
-        // const currentDay = now.getDay();
-        // const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
-
-        // const startOfWeek = new Date(now);
-        // startOfWeek.setDate(now.getDate() + diffToMonday);
-        // startOfWeek.setHours(0, 0, 0, 0);
-
-        // const endOfWeek = new Date(startOfWeek);
-        // endOfWeek.setDate(startOfWeek.getDate() + 7);
-        // endOfWeek.setMilliseconds(-1);
-
-        // const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        // const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-        // endOfMonth.setMilliseconds(-1);
-
-        // let selectedInterval = {};
-
-        // if (input.interval === "daily") {
-        //   selectedInterval["$gt"] = todayStart;
-        //   selectedInterval["$lte"] = todayEnd;
-        // } else if (input.interval === "weekly") {
-        //   selectedInterval["$gt"] = startOfWeek;
-        //   selectedInterval["$lte"] = endOfWeek;
-        // } else if (input.interval === "monthly") {
-        //   selectedInterval["$gt"] = startOfMonth;
-        //   selectedInterval["$lte"] = endOfMonth;
-        // }
 
         const PTPKept = await Disposition.aggregate([
           {
@@ -1157,7 +1114,6 @@ const dispositionResolver = {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         endOfMonth.setMilliseconds(-1);
 
-        const ptpPaid = await DispoType.findOne({ code: "PAID" });
 
         let filter = {
           "dispotype.code": "PAID",
@@ -1178,49 +1134,6 @@ const dispositionResolver = {
             existingCallfile._id
           );
         }
-
-        // const selectedBucket = await Bucket.findById(input.bucket).lean();
-        // if (!selectedBucket) return null;
-
-        // const callfile = (
-        //   await Callfile.find({ bucket: selectedBucket._id })
-        // ).map((x) => new mongoose.Types.ObjectId(x._id));
-
-        // if (callfile.length < 1) return null;
-
-        // const todayStart = new Date();
-        // todayStart.setHours(0, 0, 0, 0);
-
-        // const todayEnd = new Date();
-        // todayEnd.setHours(23, 59, 59, 999);
-
-        // const now = new Date();
-        // const currentDay = now.getDay();
-        // const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
-
-        // const startOfWeek = new Date(now);
-        // startOfWeek.setDate(now.getDate() + diffToMonday);
-        // startOfWeek.setHours(0, 0, 0, 0);
-
-        // const endOfWeek = new Date(startOfWeek);
-        // endOfWeek.setDate(startOfWeek.getDate() + 7);
-        // endOfWeek.setMilliseconds(-1);
-
-        // const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        // const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-        // endOfMonth.setMilliseconds(-1);
-
-        // let selectedInterval = {};
-        // if (input.interval === "daily") {
-        //   selectedInterval["$gt"] = todayStart;
-        //   selectedInterval["$lte"] = todayEnd;
-        // } else if (input.interval === "weekly") {
-        //   selectedInterval["$gt"] = startOfWeek;
-        //   selectedInterval["$lte"] = endOfWeek;
-        // } else if (input.interval === "monthly") {
-        //   selectedInterval["$gt"] = startOfMonth;
-        //   selectedInterval["$lte"] = endOfMonth;
-        // }
 
         const paid = await Disposition.aggregate([
           {
@@ -1426,12 +1339,11 @@ const dispositionResolver = {
         const callfile = (
           await Callfile.find({ bucket: selectedBucket._id }).lean()
         ).map((cf) => new mongoose.Types.ObjectId(cf._id));
-
         const existingCallfile = await Callfile.findOne({
           bucket: selectedBucket?._id,
           active: true,
         });
-
+     
         if (callfile.length <= 0) return null;
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
@@ -1482,6 +1394,7 @@ const dispositionResolver = {
           );
         }
 
+  
         const rpcCount = ["PTP", "PAID", "UNEG", "DISP", "RTP", "FFUP"];
 
         const RPCCount = await Disposition.aggregate([
@@ -1582,7 +1495,7 @@ const dispositionResolver = {
           {
             $match: {
               "dispotype.code": { $in: ["PTP", "PAID"] },
-              "dispo_user.type": "AGENT",
+              // "dispo_user.type": "AGENT",
             },
           },
           {
@@ -1643,7 +1556,7 @@ const dispositionResolver = {
             },
           },
         ]);
-
+    
         const newResult = disposition.map((d) => {
           const userRPC = RPCCount.find(
             (rpc) => rpc?._id.toString() === d.user?.toString()
@@ -1722,54 +1635,6 @@ const dispositionResolver = {
             existingCallfile._id
           );
         }
-
-        // const buckets = await Bucket.findById(bucket);
-        // if (!buckets) return null;
-
-        // const callfile = await Callfile.findOne({
-        //   bucket: buckets._id,
-        //   active: { $eq: true },
-        // });
-
-        // if (!callfile) return null;
-
-        // const todayStart = new Date();
-        // todayStart.setHours(0, 0, 0, 0);
-
-        // const todayEnd = new Date();
-        // todayEnd.setHours(23, 59, 59, 999);
-
-        // const now = new Date();
-        // const currentDay = now.getDay();
-        // const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
-
-        // const startOfWeek = new Date(now);
-        // startOfWeek.setDate(now.getDate() + diffToMonday);
-        // startOfWeek.setHours(0, 0, 0, 0);
-
-        // const endOfWeek = new Date(startOfWeek);
-        // endOfWeek.setDate(startOfWeek.getDate() + 7);
-        // endOfWeek.setMilliseconds(-1);
-
-        // const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        // const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-        // endOfMonth.setMilliseconds(-1);
-
-        // let selectedInterval = {};
-        // let newDataCollected = {};
-        // if (interval === "daily" || buckets.principal) {
-        //   selectedInterval["$gt"] = todayStart;
-        //   selectedInterval["$lte"] = todayEnd;
-        //   newDataCollected["target"] = Number(callfile.target) / 4 / 6;
-        // } else if (interval === "weekly" && !buckets.principal) {
-        //   selectedInterval["$gt"] = startOfWeek;
-        //   selectedInterval["$lte"] = endOfWeek;
-        //   newDataCollected["target"] = Number(callfile.target) / 4;
-        // } else if (interval === "monthly" && !buckets.principal) {
-        //   selectedInterval["$gt"] = startOfMonth;
-        //   selectedInterval["$lte"] = endOfMonth;
-        //   newDataCollected["target"] = Number(callfile.target);
-        // }
 
         let result = {};
 

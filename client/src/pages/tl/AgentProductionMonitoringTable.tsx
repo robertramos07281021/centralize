@@ -1,6 +1,6 @@
 import gql from "graphql-tag";
 import { useQuery } from "@apollo/client";
-import {  useEffect } from "react";
+import { useEffect } from "react";
 import { RootState } from "../../redux/store";
 import { useSelector } from "react-redux";
 import { useLocation } from "react-router-dom";
@@ -136,7 +136,9 @@ const AgentProductionMonitoringTable = () => {
           <div className="w-full h-full flex flex-col text-gray-600 table-fixed overflow-hidden">
             <div className="bg-gray-300 sticky top-0 border-white">
               <div className="grid border-y border-gray-500 grid-cols-7 gap-2 items-center font-black uppercase">
-                <div></div>
+                <div className="px-2 flex">
+                
+                </div>
                 <div className="py-1.5">RPC</div>
                 <div>PTP</div>
                 <div>Kept</div>
@@ -180,6 +182,7 @@ const AgentProductionMonitoringTable = () => {
                         className="truncate py-2 lg:text-xs 2xl:text-sm text-left pl-2 capitalize text-nowrap"
                         title={x.name}
                       >
+
                         {x.name}
                       </div>
                       <div>

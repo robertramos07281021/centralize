@@ -147,7 +147,6 @@ const NavbarExtn = () => {
 
   const canCallMap = agentBucketsData?.getTLBucket.map((x) => x.canCall);
 
-
   useEffect(() => {
     if (isDuplicate) {
       alert("You already have this app open. Redirecting...");
@@ -298,7 +297,9 @@ const NavbarExtn = () => {
     await endAndDispoCall();
     dispatch(setIsRing(false));
     setConfirm(false);
-    if (targetPath) navigate(targetPath);
+    if (targetPath) {
+      navigate(targetPath);
+    }
   }, [endAndDispoCall, targetPath, navigate, dispatch]);
 
   const navClick = async (link: string) => {
@@ -333,7 +334,7 @@ const NavbarExtn = () => {
         <div className="border-b select-none border-blue-400 flex items-center justify-center text-base font-medium text-slate-500 bg-white print:hidden">
           {accountsNavbar[userType].map((an, index) => {
             const callLogs = an.name.trim().toLowerCase() === "call monitoring";
-            
+
             if (callLogs && !canCallMap?.includes(true)) return null;
 
             return (

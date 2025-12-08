@@ -133,8 +133,16 @@ const CustomerExtnResolver = {
 
         let filter = {
           "dispotype.code": "PAID",
-          ptp: false,
           selectivesDispo: true,
+          $or: [
+            { ptp: false },
+            {
+              $and: [
+                { ptp: true },
+                { user: { $exists: false } },
+              ],
+            },
+          ],
         };
 
         if (interval === "daily") {
@@ -217,6 +225,7 @@ const CustomerExtnResolver = {
 
         return paid[0];
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

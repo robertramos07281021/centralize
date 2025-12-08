@@ -254,12 +254,14 @@ const Navbar = () => {
     onCompleted: async () => {
       await persistor.purge();
       dispatch(setLogout());
-      navigate("/");
+      navigate("/",{replace: true});
+      window.location.reload()
     },
     onError: async () => {
       await persistor.purge();
       dispatch(setLogout());
-      navigate("/");
+      navigate("/",{replace: true});
+      window.location.reload()
       dispatch(setServerError(true));
     },
   });
@@ -304,7 +306,8 @@ const Navbar = () => {
         await deselectTask({ variables: { id: selectedCustomer?._id } });
       }
       dispatch(setLogout());
-      navigate("/");
+      navigate("/",{replace: true});
+      window.location.reload()
     },
     onError: async () => {
       if (selectedCustomer) {
@@ -312,7 +315,8 @@ const Navbar = () => {
       }
       await persistor.purge();
       dispatch(setLogout());
-      navigate("/");
+      navigate("/", {replace: true});
+      window.location.reload()
       dispatch(setServerError(true));
     },
   });
@@ -370,7 +374,8 @@ const Navbar = () => {
 
   useEffect(() => {
     if (breakValue !== BreakEnum.PROD && userLogged?.type === "AGENT") {
-      navigate("/break-view");
+      navigate("/break-view",{replace: true});
+      window.location.reload()
     }
   }, [breakValue, navigate]);
 

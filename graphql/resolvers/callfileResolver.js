@@ -1736,6 +1736,7 @@ const callfileResolver = {
                         { $eq: ["$dispotype.code", "PAID"] },
                         { $eq: ["$ptp", true] },
                         { $eq: ["$selectivesDispo", true] },
+                        { $ne: [{ $ifNull: ["$user", null] }, null] },
                       ],
                     },
                     "$amount",
@@ -1770,12 +1771,14 @@ const callfileResolver = {
           },
         ]);
 
-        const newMap = findCustomersCallfile.map((result) => {
+        const newMap = findCustomersCallfile.filter(x=> x.contact_method !== null).map((result) => {
+
           const checkTools = TotalRPC.find(
             (x) => x._id === result.contact_method
           );
           const isThier = checkTools ? checkTools : 0;
 
+       
           return {
             ...result,
             contact_method: result.contact_method,
@@ -2044,17 +2047,20 @@ const callfileResolver = {
 
         const paidDispo = await DispoType.findOne({ code: "PAID" });
         const ptpDispo = await DispoType.findOne({ code: "PTP" });
-        const callfile = await Callfile.findById(_id).populate('bucket');
+        const callfile = await Callfile.findById(_id).populate("bucket");
         const newSelective = new Selective({
           name: selectiveName,
           callfile: callfile._id,
         });
-        
-        const bucket = callfile.bucket
 
-        const checkIfIsNaN = selectives.map(x=> isNaN(x.amount)).some(y=> y === true)
+        const bucket = callfile.bucket;
 
-        if(checkIfIsNaN) throw new CustomError('Please check the amount of selective',401)
+        const checkIfIsNaN = selectives
+          .map((x) => isNaN(x.amount))
+          .some((y) => y === true);
+
+        if (checkIfIsNaN)
+          throw new CustomError("Please check the amount of selective", 401);
 
         for (const i of selectives) {
           const res = await CustomerAccount.findOne({
@@ -2080,7 +2086,6 @@ const callfileResolver = {
               selectiveFiles: newSelective?._id,
               callfile: callfile?._id,
               existing: true,
-              contact_method: res?.current_disposition?.contact_method,
             };
 
             if (i.date && i.date !== "undefined") {
@@ -2095,6 +2100,7 @@ const callfileResolver = {
             ) {
               data["user"] = res?.current_disposition?.user;
               data["createdAt"] = new Date(res?.current_disposition?.createdAt);
+              data["contact_method"] = res?.current_disposition?.contact_method;
               data["ptp"] = res?.current_disposition?.ptp;
             }
 
@@ -2102,13 +2108,13 @@ const callfileResolver = {
               res?.current_disposition &&
               res?.current_disposition?.disposition?.toString() ===
                 ptpDispo?._id?.toString() &&
-              !res?.current_disposition?.selectivesDispo
+              !res?.current_disposition?.selectivesDispo &&
+              (!cdCreatedAt || bucket?.principal)
             ) {
               data["createdAt"] = new Date(res?.current_disposition?.createdAt);
+              data["contact_method"] = res?.current_disposition?.contact_method;
               data["ptp"] = true;
-              if (!cdCreatedAt || bucket?.principal) {
-                data["user"] = res?.current_disposition?.user;
-              }
+              data["user"] = res?.current_disposition?.user;
             }
 
             if (res.balance === i.amount) {
@@ -2116,7 +2122,7 @@ const callfileResolver = {
             } else {
               data["payment"] = "partial";
             }
-            
+
             const newDispo = new Disposition(data);
 
             if (res?.current_disposition) {

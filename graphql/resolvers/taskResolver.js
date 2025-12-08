@@ -144,7 +144,6 @@ const taskResolver = {
 
         return myTask;
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -287,7 +286,6 @@ const taskResolver = {
           task: customerAccounts,
         };
       } catch (error) {
-        
         throw new CustomError(error.message, 500);
       }
     },
@@ -296,33 +294,41 @@ const taskResolver = {
     selectTask: async (_, { id }, { user, pubsub, PUBSUB_EVENTS }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
-        const findUserAccount = await User.findById(user._id)
+        const userAccount = await User.findById(user._id);
 
         const ca = await CustomerAccount.findById(id);
-        
+
         if (!ca) throw new CustomError("Customer account not found", 404);
 
-        const findGroup = await Group.findById(ca.assigned);
+        if (ca.on_hands) {
+          if (String(ca.on_hands) === String(userAccount._id)) {
+            throw new CustomError("You already selected this customer");
+          }
+          throw new CustomError("Already taken by another agent");
+        }
 
-        const assigned = ca.assignedModel
-          ? ca.assignedModel === "Group"
-            ? findGroup.members
-            : [ca.assigned]
-          : [];
+        let assignedMembers = [];
+        if (ca.assignedModel === "Group") {
+          const group = await Group.findById(ca.assigned);
+          assignedMembers = group ? [...group.members] : [];
+        } else if (ca.assigned) {
+          assignedMembers = [ca.assigned];
+        }
 
-        if (ca.on_hands) throw new CustomError("Already taken");
-
-        ca.on_hands = findUserAccount._id;
-
+        ca.on_hands = userAccount._id;
         await ca.save();
 
-        await User.findByIdAndUpdate(findUserAccount._id, {
+        await User.findByIdAndUpdate(userAccount._id, {
           $set: { handsOn: ca._id },
         });
 
+        const notifyMembers = [
+          ...new Set([...assignedMembers, userAccount._id]),
+        ];
+
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
-            members: [...new Set([...assigned, findUserAccount._id])],
+            members: notifyMembers,
             message: "TASK_SELECTION",
           },
         });
@@ -337,41 +343,81 @@ const taskResolver = {
     },
     deselectTask: async (_, { id }, { user, PUBSUB_EVENTS, pubsub }) => {
       try {
+        // if (!user) throw new CustomError("Unauthorized", 401);
+
+        // const findCustomerAccount = await CustomerAccount.findById(id);
+
+        // if(!findCustomerAccount) throw new CustomError("Customer account not found", 404);
+
+        // await User.findByIdAndUpdate(findCustomerAccount?.on_hands, {
+        //   $unset: { handsOn: "" },
+        // });
+
+        // const ca = await CustomerAccount.findByIdAndUpdate(
+        //   findCustomerAccount._id,
+        //   { $unset: { on_hands: "" } },
+        //   { new: true }
+        // );
+
+        // if (!ca) throw new CustomError("Customer account not found", 404);
+
+        // const group = await Group.findById(ca.assigned);
+
+        // const assigned = ca?.assigned
+        //   ? group
+        //     ? [...group.members]
+        //     : [ca.assigned]
+        //   : [];
+
+        // await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
+        //   somethingChanged: {
+        //     members: assigned,
+        //     message: "TASK_SELECTION",
+        //   },
+        // });
+
+        // return {
+        //   success: true,
+        //   message: "Successfully deselected",
+        // };
+
         if (!user) throw new CustomError("Unauthorized", 401);
 
+        const caBefore = await CustomerAccount.findById(id);
+
+        if (!caBefore) throw new CustomError("Customer account not found", 404);
+       
+        // Clear user's handsOn
+        if (caBefore.on_hands) {
+          await User.findByIdAndUpdate(caBefore.on_hands, {
+            $unset: { handsOn: "" },
+          });
+        }
+
+        // Clear customer's on_hands
         const ca = await CustomerAccount.findByIdAndUpdate(
           id,
           { $unset: { on_hands: "" } },
           { new: true }
         );
 
-        if (!ca) throw new CustomError("Customer account not found", 404);
-
-        const group = await Group.findById(ca.assigned);
-
-        const assigned = ca?.assigned
-          ? group
-            ? [...group.members]
-            : [ca.assigned]
-          : [];
-
-        await User.findByIdAndUpdate(user._id, {
-          $unset: { handsOn: "" },
-        });
+        // Determine members to notify
+        let assignedMembers = [];
+        if (ca.assignedModel === "Group") {
+          const group = await Group.findById(ca.assigned);
+          assignedMembers = group ? [...group.members] : [];
+        } else if (ca.assigned) {
+          assignedMembers = [ca.assigned];
+        }
 
         await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
           somethingChanged: {
-            members: assigned,
+            members: assignedMembers,
             message: "TASK_SELECTION",
           },
         });
-
-        return {
-          success: true,
-          message: "Successfully deselected",
-        };
+        return { success: true, message: "Successfully deselected" };
       } catch (error) {
-      
         throw new CustomError(error.message, 500);
       }
     },
@@ -400,7 +446,6 @@ const taskResolver = {
           message: "Successfully transfer to team leader",
         };
       } catch (error) {
-        ;
         throw new CustomError(error.message, 500);
       }
     },
@@ -413,7 +458,6 @@ const taskResolver = {
           message: "Customers Account Successfully update",
         };
       } catch (error) {
-      
         throw new CustomError(error.message, 500);
       }
     },

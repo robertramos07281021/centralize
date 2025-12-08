@@ -91,7 +91,7 @@ const ToolsProductionMonitoringTable = () => {
               <div className="py-1.5">RPC</div>
               <div>PTP</div>
               <div>Kept</div>
-              <div>Amount Collected</div>
+              <div>No PTP PAYMENT</div>
             </div>
           </div>
           <div className="text-center grid grid-rows-6 h-full">

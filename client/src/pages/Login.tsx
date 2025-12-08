@@ -224,6 +224,7 @@ const Login = () => {
       dispatch(setMyToken(res?.login?.token));
       if (!res?.login?.user?.change_password) {
         navigate("/change-password", { state: res?.login?.user });
+        window.location.reload()
       } else {
         if (res.login.user.type === "AGENT") {
           dispatch(setBreakValue(res.login.prodStatus));
@@ -233,8 +234,10 @@ const Login = () => {
               ? userRoutes[res.login.user.type as keyof typeof userRoutes]
               : "/break-view";
           navigate(navigateString);
+          window.location.reload()
         } else {
           navigate(userRoutes[res.login.user.type as keyof typeof userRoutes]);
+          window.location.reload()
         }
       }
     },
