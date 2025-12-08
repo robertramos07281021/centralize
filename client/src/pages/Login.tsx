@@ -24,6 +24,7 @@ import Loading from "./Loading";
 import { useSelector } from "react-redux";
 import { BreakEnum } from "../middleware/exports";
 import { persistor } from "../redux/store";
+import { replace } from "lodash";
 
 const LOGIN = gql`
   mutation login($username: String!, $password: String!) {
@@ -223,8 +224,8 @@ const Login = () => {
       dispatch(setUserLogged(res?.login?.user));
       dispatch(setMyToken(res?.login?.token));
       if (!res?.login?.user?.change_password) {
-        navigate("/change-password", { state: res?.login?.user });
-        window.location.reload()
+        navigate("/change-password", { state: res?.login?.user ,replace: true});
+        window.location.reload();
       } else {
         if (res.login.user.type === "AGENT") {
           dispatch(setBreakValue(res.login.prodStatus));
@@ -233,11 +234,13 @@ const Login = () => {
             res.login.prodStatus === BreakEnum.PROD
               ? userRoutes[res.login.user.type as keyof typeof userRoutes]
               : "/break-view";
-          navigate(navigateString);
-          window.location.reload()
+          navigate(navigateString, { replace: true });
+          window.location.reload();
         } else {
-          navigate(userRoutes[res.login.user.type as keyof typeof userRoutes]);
-          window.location.reload()
+          navigate(userRoutes[res.login.user.type as keyof typeof userRoutes], {
+            replace: true,
+          });
+          window.location.reload();
         }
       }
     },
@@ -308,7 +311,10 @@ const Login = () => {
   useEffect(() => {
     if (userLogged && userLogged.change_password) {
       const userType = userLogged.type as keyof typeof userRoutes;
-      if (userRoutes[userType]) navigate(userRoutes[userType]);
+      if (userRoutes[userType]) {
+        navigate(userRoutes[userType], { replace: true });
+        window.location.reload();
+      }
     }
   }, [userLogged, userRoutes, navigate]);
 
