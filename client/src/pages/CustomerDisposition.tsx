@@ -710,7 +710,7 @@ const CustomerDisposition = () => {
     };
   }, [debouncedSearch]);
 
-  const [selectTask] = useMutation(SELECT_TASK, {
+  const [selectTask, {loading: selectTaskLoading}] = useMutation(SELECT_TASK, {
     onCompleted: () => {
       setSearch("");
     },
@@ -731,9 +731,9 @@ const CustomerDisposition = () => {
   const onClickSearch = useCallback(
     async (customer: Search) => {
       const res = await selectTask({ variables: { id: customer._id } });
-      setIsSearch(null);
-      setSearch("");
       if (!res.errors) {
+        setIsSearch(null);
+        setSearch("");
         dispatch(setSelectedCustomer(customer));
       }
     },
@@ -770,14 +770,16 @@ const CustomerDisposition = () => {
   // }, [checkIfAgentIsInline]);
 
   const clearSelectedCustomer = useCallback(async () => {
-    await deselectTask({ variables: { id: selectedCustomer?._id } });
-    setSearch("");
-    dispatch(setIsRing(false));
-    if (
-      !checkIfAgentIsInline?.includes("PAUSE") &&
-      canCallBuckets?.includes(true)
-    ) {
-      await endAndDispoCall();
+    const res = await deselectTask({ variables: { id: selectedCustomer?._id } });
+    if(!res?.errors) {
+      setSearch("");
+      dispatch(setIsRing(false));
+      if (
+        !checkIfAgentIsInline?.includes("PAUSE") &&
+        canCallBuckets?.includes(true)
+      ) {
+        await endAndDispoCall();
+      }
     }
   }, [
     selectedCustomer,
@@ -913,8 +915,10 @@ const CustomerDisposition = () => {
 
     if (res.data.randomCustomer) {
       setRandomLoading(false);
-      await selectTask({ variables: { id: res?.data?.randomCustomer?._id } });
-      dispatch(setSelectedCustomer(res?.data?.randomCustomer));
+      const selectionRes = await selectTask({ variables: { id: res?.data?.randomCustomer?._id } });
+      if(!selectionRes.errors) {
+        dispatch(setSelectedCustomer(res?.data?.randomCustomer));
+      }
     } else {
       setRandomLoading(false);
       dispatch(
@@ -1008,11 +1012,13 @@ const CustomerDisposition = () => {
             })
           );
         } else {
-          dispatch(setIsRing(true));
-          await selectTask({
+          const selectTaskres = await selectTask({
             variables: { id: res?.data?.randomCustomer?._id },
           });
-          dispatch(setSelectedCustomer(res?.data?.randomCustomer));
+          if(!selectTaskres.errors) {
+            dispatch(setIsRing(true));
+            dispatch(setSelectedCustomer(res?.data?.randomCustomer));
+          }
         }
       }
     }, 1000);
@@ -1194,7 +1200,7 @@ const CustomerDisposition = () => {
     }
   }, [data, dispatch]);
 
-  const isLoading = loading;
+  const isLoading = loading || selectTaskLoading;
 
   if (isLoading) return <Loading />;
 

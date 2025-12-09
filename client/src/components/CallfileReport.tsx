@@ -591,6 +591,13 @@ const QACallfileReport = () => {
     }
   };
 
+  useEffect(() => {
+    const today = new Date();
+    const formattedToday = today.toISOString().split("T")[0];
+    setDateFrom(formattedToday);
+    setDateTo(formattedToday);
+  }, []);
+
   return (
     <div className="flex flex-row h-full max-h-[90vh] p-10 gap-2  ">
       <motion.div

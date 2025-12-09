@@ -444,6 +444,13 @@ const QAAgentReportLogs = () => {
     return selectedDispositions.map((key) => labelMap[key] ?? key).join(", ");
   };
 
+   useEffect(() => {
+    const today = new Date();
+    const formattedToday = today.toISOString().split("T")[0];
+    setDateFrom(formattedToday);
+    setDateTo(formattedToday);
+  }, []);
+
   const handleExport = async () => {
     if (!hasDispositionResults) {
       window.alert(
@@ -469,7 +476,7 @@ const QAAgentReportLogs = () => {
         properties: { defaultRowHeight: 20 },
       });
 
-      worksheet.addRow(["QA Agent Disposition Report"]);
+      worksheet.addRow(["Agent Disposition Report"]);
       worksheet.mergeCells(1, 1, 1, 6);
       worksheet.getCell("A1").font = { bold: true, size: 14 };
 

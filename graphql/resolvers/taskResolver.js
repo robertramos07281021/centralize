@@ -294,6 +294,7 @@ const taskResolver = {
     selectTask: async (_, { id }, { user, pubsub, PUBSUB_EVENTS }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
+
         const userAccount = await User.findById(user._id);
 
         const ca = await CustomerAccount.findById(id);
@@ -315,7 +316,7 @@ const taskResolver = {
           assignedMembers = [ca.assigned];
         }
 
-        ca.on_hands = userAccount._id;
+        ca.on_hands = userAccount?._id;
         await ca.save();
 
         await User.findByIdAndUpdate(userAccount._id, {
@@ -343,44 +344,7 @@ const taskResolver = {
     },
     deselectTask: async (_, { id }, { user, PUBSUB_EVENTS, pubsub }) => {
       try {
-        // if (!user) throw new CustomError("Unauthorized", 401);
-
-        // const findCustomerAccount = await CustomerAccount.findById(id);
-
-        // if(!findCustomerAccount) throw new CustomError("Customer account not found", 404);
-
-        // await User.findByIdAndUpdate(findCustomerAccount?.on_hands, {
-        //   $unset: { handsOn: "" },
-        // });
-
-        // const ca = await CustomerAccount.findByIdAndUpdate(
-        //   findCustomerAccount._id,
-        //   { $unset: { on_hands: "" } },
-        //   { new: true }
-        // );
-
-        // if (!ca) throw new CustomError("Customer account not found", 404);
-
-        // const group = await Group.findById(ca.assigned);
-
-        // const assigned = ca?.assigned
-        //   ? group
-        //     ? [...group.members]
-        //     : [ca.assigned]
-        //   : [];
-
-        // await pubsub.publish(PUBSUB_EVENTS.SOMETHING_CHANGED_TOPIC, {
-        //   somethingChanged: {
-        //     members: assigned,
-        //     message: "TASK_SELECTION",
-        //   },
-        // });
-
-        // return {
-        //   success: true,
-        //   message: "Successfully deselected",
-        // };
-
+    
         if (!user) throw new CustomError("Unauthorized", 401);
 
         const caBefore = await CustomerAccount.findById(id);

@@ -261,7 +261,7 @@ const callResolver = {
           // --- Early filter ---
           {
             $match: {
-              on_hands: null,
+              $or: [{ on_hands: null }, { on_hands: { $exists: false } }],
               bucket: { $in: allowedBuckets },
               $or: [{ assigned: null }, { assigned: { $exists: false } }],
               callfile: { $in: callfileFilter },
@@ -400,15 +400,15 @@ const callResolver = {
         throw new CustomError(error.message, 500);
       }
     },
-    checkUserIsOnlineOnVici: async (_, { _id }, {user}) => {
+    checkUserIsOnlineOnVici: async (_, { _id }, { user }) => {
       try {
-        if(!user) return null
+        if (!user) return null;
 
         const findUser = await User.findById(_id).populate("buckets");
         if (!findUser) throw new CustomError("User not found", 401);
 
         if (findUser?.vici_id?.trim() === "") {
-          return null
+          return null;
         }
 
         const newBucketMap = findUser?.buckets.map((y) => y.canCall);
@@ -450,7 +450,7 @@ const callResolver = {
         const chechIfisOnline = await Promise.all(
           bucket.map(async (x) => {
             const res = await checkIfAgentIsInlineOnVici(findUser?.vici_id, x);
-         
+
             // const resTheSecond = await checkingLiveCall(x, findUser?.vici_id)
             // // console.log(resTheSecond)
             // if (res.includes("PAUSE") || res.includes("INCALL")) {
@@ -465,7 +465,7 @@ const callResolver = {
             //     return res;
             //   }
             // }
-            return res
+            return res;
           })
         );
 
@@ -479,7 +479,7 @@ const callResolver = {
 
         //   return chechIfisOnline?.find((x) => !x.includes("ERROR"))
         // }
-      // console.log(chechIfisOnline)
+        // console.log(chechIfisOnline)
         return chechIfisOnline?.find((x) => !x.includes("ERROR"));
       } catch (error) {
         throw new CustomError(error.message, 500);

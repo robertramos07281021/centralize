@@ -332,7 +332,7 @@ const DispositionForm: React.FC<Props> = ({
     GET_AGENT_BUCKET
   );
 
-  const [updateRPC, { loading: updateRPCLoading }] = useMutation<{
+  const [updateRPC] = useMutation<{
     updateRPC: {
       success: boolean;
       message: string;
@@ -491,7 +491,7 @@ const DispositionForm: React.FC<Props> = ({
   });
 
   useEffect(() => {
-    if (!dispoLoading) {
+    if (!dispoLoading ) {
       setLoading(dispoLoading);
     }
   }, [dispoLoading]);
@@ -509,7 +509,7 @@ const DispositionForm: React.FC<Props> = ({
     },
     onError: async () => {
       await deselectTask({ variables: { id: selectedCustomer?._id } });
-      // dispatch(setServerError(true));
+      dispatch(setServerError(true));
     },
   });
   // ======================================================================================

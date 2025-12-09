@@ -370,25 +370,25 @@ const userResolvers = {
         throw new CustomError(error.message, 500);
       }
     },
-      getBucketTLByBucket: async (_, { bucketId }) => {
-        try {
-          if (!bucketId) {
-            return [];
-          }
-
-          const bucketObjectId = new mongoose.Types.ObjectId(bucketId);
-
-          const tls = await User.find({
-            type: { $eq: "TL" },
-            buckets: { $in: [bucketObjectId] },
-            active: true,
-          }).select("_id name buckets");
-
-          return tls;
-        } catch (error) {
-          throw new CustomError(error.message, 500);
+    getBucketTLByBucket: async (_, { bucketId }) => {
+      try {
+        if (!bucketId) {
+          return [];
         }
-      },
+
+        const bucketObjectId = new mongoose.Types.ObjectId(bucketId);
+
+        const tls = await User.find({
+          type: { $eq: "TL" },
+          buckets: { $in: [bucketObjectId] },
+          active: true,
+        }).select("_id name buckets");
+
+        return tls;
+      } catch (error) {
+        throw new CustomError(error.message, 500);
+      }
+    },
   },
   DeptUser: {
     buckets: async (parent) => {
@@ -578,22 +578,22 @@ const userResolvers = {
 
         const dateToday = new Date();
 
-        if (user.type === "AGENT") {
-          if (!findProd) {
+        if (user?.type === "AGENT") {
+          if (!findProd || findProd?.prod_history?.length <= 0) {
             type = "WELCOME";
           } else {
             type = "PROD";
             const existingProd = findProd?.prod_history?.find(
               (e) => e.existing === true
             );
-            if (existingProd.type === "LOGOUT") {
+            if (existingProd?.type === "LOGOUT") {
               findProd?.prod_history.forEach((x) => {
                 if (x.existing) {
                   x.end = dateToday;
                   x.existing = false;
                 }
               });
-              findProd.prod_history.push({
+              findProd?.prod_history?.push({
                 type: "PROD",
                 existing: true,
                 start: dateToday,
@@ -603,7 +603,7 @@ const userResolvers = {
           }
           user.attempt_login = 0;
         }
-        user.features.token = token
+        user.features.token = token;
         user.isOnline = true;
         await user.save();
 
@@ -614,6 +614,7 @@ const userResolvers = {
           token,
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -652,22 +653,24 @@ const userResolvers = {
             createdAt: { $gt: start, $lte: end },
           });
 
-          const dateToday = new Date();
+          if (userProd?.prod_history.length > 0) {
+            const dateToday = new Date();
 
-          userProd.prod_history.forEach((x) => {
-            if (x.existing === true) {
-              x.existing = false;
-              x.end = dateToday;
-            }
-          });
+            userProd.prod_history.forEach((x) => {
+              if (x.existing === true) {
+                x.existing = false;
+                x.end = dateToday;
+              }
+            });
 
-          userProd.prod_history.push({
-            type: "LOGOUT",
-            start: dateToday,
-            existing: true,
-          });
+            userProd.prod_history.push({
+              type: "LOGOUT",
+              start: dateToday,
+              existing: true,
+            });
 
-          await userProd.save();
+            await userProd.save();
+          }
         }
 
         res.clearCookie("connect.sid");
@@ -682,7 +685,7 @@ const userResolvers = {
             ? findUser?.buckets.map((x) => x.canCall)
             : [];
 
-        if (canCall.includes(true)) {
+        if (canCall.some(x=> x === true)) {
           await logoutVici(findUser.vici_id, bucket[0]);
         }
 
@@ -784,6 +787,7 @@ const userResolvers = {
     },
     logoutToPersist: async (_, { id }, { res }) => {
       try {
+
         const findUser = await User.findByIdAndUpdate(
           id,
           {
@@ -808,22 +812,24 @@ const userResolvers = {
             createdAt: { $gt: start, $lte: end },
           });
 
-          const dateToday = new Date();
+          if (userProd?.prod_history?.length > 0) {
+            const dateToday = new Date();
 
-          userProd.prod_history.forEach((x) => {
-            if (x.existing === true) {
-              x.existing = false;
-              x.end = dateToday;
-            }
-          });
+            userProd.prod_history.forEach((x) => {
+              if (x.existing === true) {
+                x.existing = false;
+                x.end = dateToday;
+              }
+            });
 
-          userProd.prod_history.push({
-            type: "LOGOUT",
-            start: dateToday,
-            existing: true,
-          });
+            userProd.prod_history.push({
+              type: "LOGOUT",
+              start: dateToday,
+              existing: true,
+            });
 
-          await userProd.save();
+            await userProd.save();
+          }
         }
 
         res.clearCookie("connect.sid");
@@ -898,33 +904,40 @@ const userResolvers = {
             createdAt: { $gt: start, $lte: end },
           });
 
-          const dateToday = new Date();
+          if (userProd.prod_history.length > 0) {
+            const dateToday = new Date();
 
-          userProd?.prod_history?.forEach((x) => {
-            if (x.existing === true) {
-              x.existing = false;
-              x.end = dateToday;
-            }
-          });
+            userProd?.prod_history?.forEach((x) => {
+              if (x.existing === true) {
+                x.existing = false;
+                x.end = dateToday;
+              }
+            });
 
-          userProd.prod_history.push({
-            type: "LOGOUT",
-            start: dateToday,
-            existing: true,
-          });
+            userProd.prod_history.push({
+              type: "LOGOUT",
+              start: dateToday,
+              existing: true,
+            });
 
-          await userProd.save();
+            await userProd.save();
+
+          }
         }
-
+        
         const bucket =
-          userBuckets > 0
-            ? new Array(...new Set(userBuckets.map((x) => x.viciIp)))
-            : [];
-
-        await logoutVici(logoutUser.vici_id, bucket[0]);
-
+        userBuckets > 0
+        ? new Array(...new Set(userBuckets.map((x) => x.viciIp)))
+        : [];
+        
+        const userBucketsCanCall = userBuckets
+        .map((x) => x.canCall)
+        .some((y) => y === true);
+        if (userBucketsCanCall) {
+          await logoutVici(logoutUser.vici_id, bucket[0]);
+        }
+        
         await ModifyRecord.create({ name: "Logout", user: logoutUser._id });
-
         return {
           success: true,
           message: "Successfully logout",

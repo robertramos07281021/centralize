@@ -83,8 +83,6 @@ const scoreCardResolver = {
             department: department ?? null,
           };
         });
-
-
       } catch (error) {
         if (error instanceof CustomError) {
           throw error;
@@ -162,6 +160,14 @@ const scoreCardResolver = {
         }
         throw new CustomError(error.message, 500);
       }
+    },
+
+    createUBScoreCardData: async (_, { input }, context) => {
+      return scoreCardResolver.Mutation.createScoreCardData(
+        _,
+        { input: { ...input, typeOfScoreCard: "UB Score Card" } },
+        context
+      );
     },
   },
 };

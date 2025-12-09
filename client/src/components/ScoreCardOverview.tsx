@@ -40,6 +40,8 @@ type ScoreSection = Record<string, ScoreEntry>;
 
 type ScoreDetails = {
   opening?: ScoreSection | null;
+  closingTheCall?: ScoreSection | null;
+  collectionCallProper?: ScoreSection | null;
   negotiationSkills?: ScoreSection | null;
   closing?: ScoreSection | null;
   regulatoryAndCompliance?: ScoreSection | null;
@@ -73,12 +75,17 @@ type ScoreCardSummary = {
   } | null;
 };
 
+
 const ScoreCardOverview = () => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [isOpenDefaultScoreCard, setIsOpenDefaultScoreCard] =
+    useState<boolean>(false);
+  const [isOpenUBScoreCard, setIsOpenUBScoreCard] = useState<boolean>(false);
   const [selectedScoreCard, setSelectedScoreCard] =
     useState<ScoreCardSummary | null>(null);
+
+    
   const [isExportingExcel, setIsExportingExcel] = useState<boolean>(false);
 
   const variables = useMemo(() => {
@@ -93,6 +100,10 @@ const ScoreCardOverview = () => {
     variables,
     fetchPolicy: "network-only",
   });
+  GET_SCORECARD_SUMMARIES;
+
+
+  console.log("ScoreCardOverview data:", data);
 
   const scorecards: ScoreCardSummary[] = data?.getScoreCardSummaries ?? [];
 
@@ -265,7 +276,7 @@ const ScoreCardOverview = () => {
                   )}
                 </div>
                 <div className="text-gray-700 flex gap-2 items-center">
-                  <span className="font-medium text-black">Pointds:</span>
+                  <span className="font-medium text-black">Points:</span>
                   <div
                     className={` ${
                       entryPoins === 0
@@ -307,8 +318,18 @@ const ScoreCardOverview = () => {
   };
 
   const closeModal = () => {
-    setIsOpen(false);
+    setIsOpenDefaultScoreCard(false);
     setSelectedScoreCard(null);
+  };
+
+  const openScoreCardModal = (scoreCardType: string) => {
+    if (scoreCardType === "UB Score Card") {
+      setIsOpenUBScoreCard(true);
+    } else if (scoreCardType === "Default Score Card") {
+      setIsOpenDefaultScoreCard(true);
+    } else {
+      console.log("walang card type");
+    }
   };
 
   const handleExportExcel = async () => {
@@ -915,7 +936,7 @@ const ScoreCardOverview = () => {
                           transition={{ duration: 0.2, delay: index * 0.1 }}
                           onClick={() => {
                             setSelectedScoreCard(entry);
-                            setIsOpen(true);
+                            openScoreCardModal(entry.typeOfScoreCard);
                           }}
                         >
                           <div className="font-semibold first-letter:uppercase text-gray-800">
@@ -953,7 +974,7 @@ const ScoreCardOverview = () => {
         </div>
       </motion.div>
       <AnimatePresence>
-        {isOpen && selectedScoreCard && (
+        {isOpenDefaultScoreCard && selectedScoreCard && (
           <motion.div
             className="absolute top-0 left-0 w-full items-center justify-center flex h-full"
             initial={{ opacity: 0 }}
@@ -1075,6 +1096,150 @@ const ScoreCardOverview = () => {
                   selectedScoreCard.scoreDetails?.regulatoryAndCompliance
                 )}
 
+                {selectedScoreCard.scoreDetails?.comments && (
+                  <div className="mt-2 shadow-md">
+                    <div className="font-black bg-gray-300 rounded-t-md py-1 w-full border text-center uppercase text-xl text-black">
+                      Comments
+                    </div>
+                    <div className="border-x border-b rounded-b-md border-black text-sm text-gray-700 space-y-2 bg-gray-50">
+                      <div className="border-b px-3 py-2">
+                        <span className="font-semibold ">Highlights:</span>{" "}
+                        {selectedScoreCard.scoreDetails.comments?.highlights?.trim() ||
+                          "-"}
+                      </div>
+                      <div className="px-3 py-2 ">
+                        <span className="font-semibold">Comments:</span>{" "}
+                        {selectedScoreCard.scoreDetails.comments?.comments?.trim() ||
+                          "-"}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isOpenUBScoreCard && selectedScoreCard && (
+          <motion.div
+            className="absolute top-0 left-0 w-full items-center justify-center flex h-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
+              className="w-full h-full  absolute items-center justify-center flex bg-black/40 backdrop-blur-sm"
+              onClick={() => setIsOpenUBScoreCard(false)}
+            ></div>
+            <motion.div
+              className="bg-white z-20 border flex flex-col relative rounded-md p-6 max-w-3xl  max-h-[80vh] "
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+            >
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void handleExportExcel();
+                }}
+                disabled={isExportingExcel}
+                className={`absolute bottom-2 cursor-pointer -right-14 flex items-center gap-2 px-3 py-2 border-2 rounded-sm font-black uppercase text-white transition ${
+                  isExportingExcel
+                    ? "bg-green-400 cursor-not-allowed border-green-700"
+                    : "bg-green-600 hover:bg-green-700 border-green-800"
+                }`}
+                title="Export to Excel"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="size-4"
+                >
+                  <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
+                  <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                </svg>
+              </button>
+
+              <div className=" flex absolute top-2 -right-10 justify-end">
+                <button
+                  type="button"
+                  onClick={() => setIsOpenUBScoreCard(false)}
+                  className="p-1 transition-all shadow-md border-2 border-red-800 bg-red-600 hover:bg-red-700 cursor-pointer text-white rounded-full uppercase text-xs font-black"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                    className="size-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18 18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="flex flex-col overflow-auto pr-2 h-full">
+                <div className="flex mt-2 justify-between items-start gap-4 flex-wrap">
+                  <div>
+                    <div className="text-xl first-letter:uppercase font-black text-gray-900">
+                      {selectedScoreCard.agent?.name || "Unknown Agent"}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {selectedScoreCard.typeOfScoreCard}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Created: {formatDate(selectedScoreCard.createdAt)}
+                    </div>
+                  </div>
+                  <div className="text-right border overflow-hidden shadow-md flex flex-col justify-center  rounded-sm bg-gray-200">
+                    <div className="text-3xl py-2 font-black text-center text-gray-900">
+                      {selectedScoreCard.totalScore != null
+                        ? selectedScoreCard.totalScore.toFixed(1)
+                        : "-"}
+                    </div>
+                    <div className="text-xs border-t px-5 py-2 font-black bg-gray-400 text-black uppercase">
+                      Total Score
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm text-gray-800">
+                  <div>
+                    <span className="font-black uppercase text-black">
+                      Call Date:
+                    </span>{" "}
+                    {formatDate(selectedScoreCard.dateAndTimeOfCall)}
+                  </div>
+                  <div>
+                    <span className="font-black uppercase text-black">
+                      Scorecard Type:
+                    </span>{" "}
+                    {selectedScoreCard.typeOfScoreCard}
+                  </div>
+                </div>
+
+                {renderSection(
+                  "Opening",
+                  selectedScoreCard.scoreDetails?.opening
+                )}
+                {renderSection(
+                  "Closing",
+                  selectedScoreCard.scoreDetails?.collectionCallProper
+                )}
+                {renderSection(
+                  "Closing The Call",
+                  selectedScoreCard.scoreDetails?.closingTheCall
+                )}
+              
                 {selectedScoreCard.scoreDetails?.comments && (
                   <div className="mt-2 shadow-md">
                     <div className="font-black bg-gray-300 rounded-t-md py-1 w-full border text-center uppercase text-xl text-black">

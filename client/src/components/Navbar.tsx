@@ -268,14 +268,14 @@ const Navbar = () => {
     onCompleted: async () => {
       await persistor.purge();
       dispatch(setLogout());
-      navigate("/");
+      navigate("/", { replace: true });
+      window.location.reload();
     },
     onError: async () => {
       await persistor.purge();
       dispatch(setLogout());
-      navigate("/");
-
-      dispatch(setServerError(true));
+      navigate("/", { replace: true });
+      window.location.reload();
     },
   });
 
@@ -294,9 +294,13 @@ const Navbar = () => {
       no: () => setConfirmation(false),
       yes: async () => {
         if (selectedCustomer) {
-          await deselectTask({ variables: { id: selectedCustomer?._id } });
+          const res =  await deselectTask({ variables: { id: selectedCustomer?._id } });
+          if(!res.errors) {
+            await logout();
+          }
+        } else {
+          await logout()
         }
-        await logout();
       },
       message: "Are you sure you want to logout?",
       toggle: "LOGOUT",
@@ -316,21 +320,36 @@ const Navbar = () => {
     onCompleted: async () => {
       await persistor.purge();
       if (selectedCustomer) {
-        await deselectTask({ variables: { id: selectedCustomer?._id } });
+        const res = await deselectTask({
+          variables: { id: selectedCustomer?._id },
+        });
+        if (!res?.errors) {
+          dispatch(setLogout());
+          navigate("/", { replace: true });
+          window.location.reload();
+        }
+      } else {
+        dispatch(setLogout());
+        navigate("/", { replace: true });
+        window.location.reload();
       }
-      dispatch(setLogout());
-      navigate("/", { replace: true });
-      window.location.reload();
     },
     onError: async () => {
-      if (selectedCustomer) {
-        await deselectTask({ variables: { id: selectedCustomer?._id } });
-      }
       await persistor.purge();
-      dispatch(setLogout());
-      navigate("/", { replace: true });
-      window.location.reload();
-      dispatch(setServerError(true));
+      if (selectedCustomer) {
+        const res = await deselectTask({
+          variables: { id: selectedCustomer?._id },
+        });
+        if (!res?.errors) {
+          dispatch(setLogout());
+          navigate("/", { replace: true });
+          window.location.reload();
+        }
+      } else {
+        dispatch(setLogout());
+        navigate("/", { replace: true });
+        window.location.reload();
+      }
     },
   });
 
@@ -353,6 +372,23 @@ const Navbar = () => {
     }
     await logoutToPersist({ variables: { id: userLogged?._id } });
   }, [deselectTask, logoutToPersist, selectedCustomer, userLogged]);
+
+  const accountLoginByOtherUser = useCallback(async () => {
+    if (selectedCustomer) {
+      const res = await deselectTask({
+        variables: { id: selectedCustomer?._id },
+      });
+      if (!res.errors) {
+        dispatch(setLogout());
+        navigate("/", { replace: true });
+        window.location.reload();
+      }
+    } else {
+      dispatch(setLogout());
+      navigate("/", { replace: true });
+      window.location.reload();
+    }
+  }, [deselectTask, selectedCustomer]);
 
   useEffect(() => {
     const timer = setTimeout(async () => {
@@ -379,8 +415,7 @@ const Navbar = () => {
 
   useEffect(() => {
     if (breakValue !== BreakEnum.PROD && userLogged?.type === "AGENT") {
-      navigate("/break-view", { replace: true });
-      window.location.reload();
+      navigate("/break-view");
     }
   }, [breakValue, navigate]);
 
@@ -389,10 +424,12 @@ const Navbar = () => {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     if (e.target.checked) {
-      setPopUpBreak(false);
-      setPopUpUser(false);
-      dispatch(setBreakValue(BreakEnum[value as keyof typeof BreakEnum]));
-      await updateProduction({ variables: { type: value } });
+      const res = await updateProduction({ variables: { type: value } });
+      if(!res.errors) {
+        setPopUpBreak(false);
+        setPopUpUser(false);
+        dispatch(setBreakValue(BreakEnum[value as keyof typeof BreakEnum]));
+      }
     }
   };
 
@@ -433,19 +470,13 @@ const Navbar = () => {
         if (
           data?.getMe?.features?.token &&
           data?.getMe?.features?.token !== myToken &&
-          Boolean(userLogged) &&
-          Boolean(myToken)
+          userLogged &&
+          myToken
         ) {
           setConfirmation(true);
           setModalProps({
-            no: () => {
-              setConfirmation(false);
-              forceLogout();
-            },
-            yes: () => {
-              setConfirmation(false);
-              forceLogout();
-            },
+            no: accountLoginByOtherUser,
+            yes: accountLoginByOtherUser,
             message: "You have been force to logout!",
             toggle: "IDLE",
           });

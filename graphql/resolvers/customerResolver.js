@@ -68,6 +68,7 @@ const customerResolver = {
     },
     search: async (_, { search }, { user }) => {
       try {
+        if (!user) throw CustomError("Unauthorized", 401);
         if (!search) {
           return [];
         }
@@ -96,31 +97,58 @@ const customerResolver = {
 
         const accounts = await Customer.aggregate([
           {
-            $match: {
-              $or: [
-                // { fullName: regex },
-                // { contact_no: { $elemMatch: { $regex: regex } } },
-                // { emails: { $elemMatch: { $regex: regex } } },
-                // { addresses: { $elemMatch: { $regex: regex } } },
-                { fullName: searchValue },
-                { contact_no: searchValue }, // matches array elements
-                { emails: searchValue }, // matches array elements
-                { addresses: searchValue },
-              ],
-            },
+            $match: { $text: { $search: `"${searchValue}"` } },
           },
-          { $limit: 50 },
           {
             $lookup: {
               from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
+              let: { cus_account: "$customer_account" },
+              pipeline: [
+                { $match: { $expr: { $eq: ["$_id", "$$cus_account"] } } },
+                {
+                  $match: {
+                    $or: [
+                      {
+                        on_hands: null,
+                        on_hands: { $exists: false },
+                      },
+                    ],
+                  },
+                },
+              ],
               as: "ca",
             },
           },
           {
             $unwind: { path: "$ca", preserveNullAndEmptyArrays: true },
           },
+          {
+            $lookup: {
+              from: "callfiles",
+              let: { callfileId: "$ca.callfile" },
+              pipeline: [
+                { $match: { $expr: { $eq: ["$_id", "$$callfileId"] } } },
+                { $match: { active: true } },
+                {
+                  $match: {
+                    bucket: {
+                      $in: user.buckets.map(
+                        (x) => new mongoose.Types.ObjectId(x)
+                      ),
+                    },
+                  },
+                },
+              ],
+              as: "account_callfile",
+            },
+          },
+          {
+            $unwind: {
+              path: "$account_callfile",
+              preserveNullAndEmptyArrays: false,
+            },
+          },
+          { $limit: 50 },
           {
             $lookup: {
               from: "buckets",
@@ -133,29 +161,6 @@ const customerResolver = {
             $unwind: {
               path: "$account_bucket",
               preserveNullAndEmptyArrays: true,
-            },
-          },
-          {
-            $lookup: {
-              from: "callfiles",
-              localField: "ca.callfile",
-              foreignField: "_id",
-              as: "account_callfile",
-            },
-          },
-          {
-            $unwind: {
-              path: "$account_callfile",
-              preserveNullAndEmptyArrays: true,
-            },
-          },
-          {
-            $match: {
-              "account_bucket._id": {
-                $in: user.buckets.map((x) => new mongoose.Types.ObjectId(x)),
-              },
-              "ca.on_hands": null,
-              "account_callfile.active": { $eq: true },
             },
           },
           {
@@ -264,9 +269,9 @@ const customerResolver = {
             },
           },
         ]);
-
         return accounts;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

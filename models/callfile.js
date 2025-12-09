@@ -2,6 +2,7 @@ import mongoose from "mongoose";
 import CustomerAccount from "./customerAccount.js";
 import Customer from "./customer.js";
 import CustomError from "../middlewares/errors.js";
+import Disposition from "./disposition.js";
 
 const Schema = mongoose.Schema;
 
@@ -99,6 +100,7 @@ callFileSchema.post("findOneAndDelete", async (data) => {
       );
       await Customer.deleteMany({ _id: { $in: customerIds } });
       await CustomerAccount.deleteMany({ callfile: data._id });
+      await Disposition.deleteMany({callfile: data._id})
     }
   } catch (error) {
     throw new CustomError(error.message, 500);
