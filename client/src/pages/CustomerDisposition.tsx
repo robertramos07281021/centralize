@@ -858,7 +858,7 @@ const CustomerDisposition = () => {
   });
 
   const callbackUpdateRPC = useCallback(async () => {
-    await updateRPC({ variables: { id: selectedCustomer?.customer_info._id } });
+    await updateRPC({ variables: { id: selectedCustomer?.customer_info?._id } });
   }, [updateRPC, selectedCustomer]);
 
   const callbackNo = useCallback(() => {

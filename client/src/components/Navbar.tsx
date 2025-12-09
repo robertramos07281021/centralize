@@ -29,6 +29,10 @@ type Targets = {
   monthly: number;
 };
 
+type Features = {
+  token: string;
+};
+
 type UserInfo = {
   _id: string;
   type: "AGENT" | "ADMIN" | "AOM" | "TL" | "CEO" | "OPERATION" | "MIS";
@@ -42,6 +46,7 @@ type UserInfo = {
   isOnline: boolean;
   targets: Targets;
   scoreCardType?: string;
+  features: Features;
 };
 
 const myUserInfos = gql`
@@ -61,6 +66,9 @@ const myUserInfos = gql`
         monthly
       }
       scoreCardType
+      features {
+        token
+      }
     }
   }
 `;
@@ -150,12 +158,18 @@ const Navbar = () => {
   const dispatch = useAppDispatch();
   const location = useLocation();
 
-  const { userLogged, selectedCustomer, breakValue, serverError, success } =
-    useSelector((state: RootState) => state.auth);
+  const {
+    userLogged,
+    selectedCustomer,
+    breakValue,
+    serverError,
+    success,
+    myToken,
+  } = useSelector((state: RootState) => state.auth);
   const modalRef = useRef<HTMLDivElement>(null);
   const { data, error, refetch } = useQuery<{ getMe: UserInfo }>(myUserInfos, {
     notifyOnNetworkStatusChange: true,
-    pollInterval: 3000
+    pollInterval: 3000,
   });
 
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
@@ -254,14 +268,13 @@ const Navbar = () => {
     onCompleted: async () => {
       await persistor.purge();
       dispatch(setLogout());
-      navigate("/",{replace: true});
-      window.location.reload()
+      navigate("/");
     },
     onError: async () => {
       await persistor.purge();
       dispatch(setLogout());
-      navigate("/",{replace: true});
-      window.location.reload()
+      navigate("/");
+
       dispatch(setServerError(true));
     },
   });
@@ -306,8 +319,8 @@ const Navbar = () => {
         await deselectTask({ variables: { id: selectedCustomer?._id } });
       }
       dispatch(setLogout());
-      navigate("/",{replace: true});
-      window.location.reload()
+      navigate("/", { replace: true });
+      window.location.reload();
     },
     onError: async () => {
       if (selectedCustomer) {
@@ -315,8 +328,8 @@ const Navbar = () => {
       }
       await persistor.purge();
       dispatch(setLogout());
-      navigate("/", {replace: true});
-      window.location.reload()
+      navigate("/", { replace: true });
+      window.location.reload();
       dispatch(setServerError(true));
     },
   });
@@ -362,20 +375,12 @@ const Navbar = () => {
       }
     }, 1000);
     return () => clearTimeout(timer);
-  }, [
-    error,
-    navigate,
-    dispatch,
-    logoutToPersist,
-    userLogged,
-    deselectTask,
-    selectedCustomer,
-  ]);
+  }, [error]);
 
   useEffect(() => {
     if (breakValue !== BreakEnum.PROD && userLogged?.type === "AGENT") {
-      navigate("/break-view",{replace: true});
-      window.location.reload()
+      navigate("/break-view", { replace: true });
+      window.location.reload();
     }
   }, [breakValue, navigate]);
 
@@ -424,7 +429,13 @@ const Navbar = () => {
               data?.getMe?.scoreCardType ?? userLogged?.scoreCardType,
           })
         );
-        if (!data?.getMe?.isOnline) {
+
+        if (
+          data?.getMe?.features?.token &&
+          data?.getMe?.features?.token !== myToken &&
+          Boolean(userLogged) &&
+          Boolean(myToken)
+        ) {
           setConfirmation(true);
           setModalProps({
             no: () => {

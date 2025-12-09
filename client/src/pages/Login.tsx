@@ -24,7 +24,6 @@ import Loading from "./Loading";
 import { useSelector } from "react-redux";
 import { BreakEnum } from "../middleware/exports";
 import { persistor } from "../redux/store";
-import { replace } from "lodash";
 
 const LOGIN = gql`
   mutation login($username: String!, $password: String!) {
@@ -50,7 +49,6 @@ const LOGIN = gql`
           weekly
           monthly
         }
-        scoreCardType
       }
     }
   }
@@ -94,7 +92,6 @@ type User = {
   targets: Targets;
   isOnline: boolean;
   vici_id: string;
-  scoreCardType?: string;
 };
 
 type Login = {
@@ -224,8 +221,7 @@ const Login = () => {
       dispatch(setUserLogged(res?.login?.user));
       dispatch(setMyToken(res?.login?.token));
       if (!res?.login?.user?.change_password) {
-        navigate("/change-password", { state: res?.login?.user ,replace: true});
-        window.location.reload();
+        navigate("/change-password", { state: res?.login?.user });
       } else {
         if (res.login.user.type === "AGENT") {
           dispatch(setBreakValue(res.login.prodStatus));
@@ -234,13 +230,9 @@ const Login = () => {
             res.login.prodStatus === BreakEnum.PROD
               ? userRoutes[res.login.user.type as keyof typeof userRoutes]
               : "/break-view";
-          navigate(navigateString, { replace: true });
-          window.location.reload();
+          navigate(navigateString);
         } else {
-          navigate(userRoutes[res.login.user.type as keyof typeof userRoutes], {
-            replace: true,
-          });
-          window.location.reload();
+          navigate(userRoutes[res.login.user.type as keyof typeof userRoutes]);
         }
       }
     },
@@ -311,10 +303,7 @@ const Login = () => {
   useEffect(() => {
     if (userLogged && userLogged.change_password) {
       const userType = userLogged.type as keyof typeof userRoutes;
-      if (userRoutes[userType]) {
-        navigate(userRoutes[userType], { replace: true });
-        window.location.reload();
-      }
+      if (userRoutes[userType]) navigate(userRoutes[userType]);
     }
   }, [userLogged, userRoutes, navigate]);
 

@@ -5,11 +5,13 @@ import { RootState, useAppDispatch } from "../redux/store";
 import { gql, useMutation, useQuery } from "@apollo/client";
 import {
   setDeselectCustomer,
+  setSelectedCustomer,
   setServerError,
   setSuccess,
 } from "../redux/slices/authSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import { PresetSelection } from "./AccountInfo";
+import { CustomerRegistered } from "../middleware/types.ts";
 
 type Data = {
   amount: string | null;
@@ -59,6 +61,25 @@ const GET_DISPOSITION_TYPES = gql`
         sms
         email
       }
+    }
+  }
+`;
+
+const UPDATE_RPC = gql`
+  mutation updateRPC($id: ID!) {
+    updateRPC(id: $id) {
+      message
+      customer {
+        fullName
+        dob
+        gender
+        contact_no
+        emails
+        addresses
+        _id
+        isRPC
+      }
+      success
     }
   }
 `;
@@ -115,9 +136,9 @@ const USER_TL = gql`
 `;
 
 type Bucket = {
-  _id: string
+  _id: string;
   name: string;
-  canCall: boolean
+  canCall: boolean;
 };
 
 type TL = {
@@ -161,7 +182,6 @@ enum RFD {
   TBC = "Temporary Business Closed",
   BUSSCLOSE = "Business Closed",
 }
-
 
 enum Payment {
   FULL = "full",
@@ -230,7 +250,7 @@ type Props = {
   inlineData: string;
   canCall: boolean;
   onPresetAmountChange: (value: PresetSelection) => void;
-  setLoading: (e:boolean) => void
+  setLoading: (e: boolean) => void;
 };
 
 const IFBANK = ({ label }: { label: string }) => {
@@ -271,7 +291,7 @@ type User = { _id: string };
 type DispoType = { id: string };
 type Customer = {
   assigned?: string;
-  balance?: number
+  balance?: number;
   current_disposition?: {
     disposition?: string;
     selectivesDispo?: boolean;
@@ -283,7 +303,7 @@ const DispositionForm: React.FC<Props> = ({
   inlineData,
   canCall,
   onPresetAmountChange,
-  setLoading
+  setLoading,
 }) => {
   const { selectedCustomer, userLogged, callUniqueId, isRing, onCall } =
     useSelector((state: RootState) => state.auth);
@@ -300,7 +320,6 @@ const DispositionForm: React.FC<Props> = ({
     (x) => x.existing === true
   );
 
-  
   const neverChangeContactMethod = ["PTP", "UNEG", "PAID", "DEC", "RTP", "ITP"];
   const dispoNeverChangeContactMethod = disposition?.getDispositionTypes
     .filter((x) => neverChangeContactMethod.includes(x.code))
@@ -312,6 +331,33 @@ const DispositionForm: React.FC<Props> = ({
   const { data: agentBucketData } = useQuery<{ getDeptBucket: Bucket[] }>(
     GET_AGENT_BUCKET
   );
+
+  const [updateRPC, { loading: updateRPCLoading }] = useMutation<{
+    updateRPC: {
+      success: boolean;
+      message: string;
+      customer: CustomerRegistered;
+    };
+  }>(UPDATE_RPC, {
+    onCompleted: async (res) => {
+      if (selectedCustomer) {
+        dispatch(
+          setSuccess({
+            success: res.updateRPC.success,
+            message: res.updateRPC.message,
+            isMessage: false,
+          })
+        );
+        dispatch(
+          setSelectedCustomer({
+            ...selectedCustomer,
+            customer_info: res.updateRPC.customer,
+          })
+        );
+      }
+    },
+  });
+
   const [required, setRequired] = useState(false);
   const [confirm, setConfirm] = useState(false);
   const [escalateTo, setEscalateTo] = useState<boolean>(false);
@@ -335,8 +381,9 @@ const DispositionForm: React.FC<Props> = ({
     );
   }, [disposition]);
 
-
-  const checkIfCanCall = agentBucketData?.getDeptBucket.map(x => x.canCall).includes(true)
+  const checkIfCanCall = agentBucketData?.getDeptBucket
+    .map((x) => x.canCall)
+    .includes(true);
 
   const [data, setData] = useState<Data>({
     amount: null,
@@ -423,32 +470,31 @@ const DispositionForm: React.FC<Props> = ({
     },
   });
 
-  const [createDisposition, {loading: dispoLoading}] = useMutation<{ createDisposition: Success }>(
-    CREATE_DISPOSITION,
-    {
-      onCompleted: async(res) => {
-        dispatch(
-          setSuccess({
-            success: res.createDisposition.success,
-            message: res.createDisposition.message,
-            isMessage: false,
-          })
-        );
-        await deselectTask({ variables: { id: selectedCustomer?._id } });
-        setLoading(false)
-      },
-      onError: async () => {
-        await deselectTask({ variables: { id: selectedCustomer?._id } });
-        dispatch(setServerError(true));
-      },
-    }
-  );
+  const [createDisposition, { loading: dispoLoading }] = useMutation<{
+    createDisposition: Success;
+  }>(CREATE_DISPOSITION, {
+    onCompleted: async (res) => {
+      dispatch(
+        setSuccess({
+          success: res.createDisposition.success,
+          message: res.createDisposition.message,
+          isMessage: false,
+        })
+      );
+      await deselectTask({ variables: { id: selectedCustomer?._id } });
+      setLoading(false);
+    },
+    onError: async () => {
+      await deselectTask({ variables: { id: selectedCustomer?._id } });
+      dispatch(setServerError(true));
+    },
+  });
 
-  useEffect(()=> {
-    if(!dispoLoading){
-      setLoading(dispoLoading)
+  useEffect(() => {
+    if (!dispoLoading) {
+      setLoading(dispoLoading);
     }
-  },[dispoLoading])
+  }, [dispoLoading]);
 
   const [tlEscalation] = useMutation<{ tlEscalation: Success }>(TL_ESCATATION, {
     onCompleted: async (res) => {
@@ -528,7 +574,6 @@ const DispositionForm: React.FC<Props> = ({
   });
 
   const creatingDispo = useCallback(async () => {
-
     await createDisposition({
       variables: {
         input: {
@@ -539,12 +584,19 @@ const DispositionForm: React.FC<Props> = ({
       },
     });
     setConfirm(false);
-
   }, [data, selectedCustomer, createDisposition, callUniqueId]);
-  
+
   const noCallback = useCallback(() => {
     setConfirm(false);
   }, [setConfirm]);
+
+  const callbackUpdateRPC = useCallback(async () => {
+    await updateRPC({
+      variables: { id: selectedCustomer?.customer_info?._id },
+    });
+
+    creatingDispo();
+  }, [updateRPC, selectedCustomer, creatingDispo]);
 
   const handleSubmitForm = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
@@ -577,12 +629,26 @@ const DispositionForm: React.FC<Props> = ({
 
         setRequired(false);
         setConfirm(true);
-        setModalProps({
-          message: "Do you want to create the disposition? ",
-          toggle: "CREATE",
-          yes: creatingDispo,
-          no: noCallback,
-        });
+        const positiveDispo = disposition?.getDispositionTypes.filter(x=> ['PTP','PAID','UNEG'].includes(x.code)).map(y=> y.id)
+
+        if (
+          !selectedCustomer?.customer_info.isRPC &&
+          positiveDispo?.includes(data?.disposition as string)
+        ) {
+          setModalProps({
+            message: "This one is not RPC? if lets create the disposition...",
+            toggle: "CREATE",
+            yes: callbackUpdateRPC,
+            no: creatingDispo,
+          });
+        } else {
+          setModalProps({
+            message: "Do you want to create the disposition? ",
+            toggle: "CREATE",
+            yes: creatingDispo,
+            no: noCallback,
+          });
+        }
       }
     },
     [setRequired, setConfirm, setModalProps, Form, creatingDispo, noCallback]
@@ -675,22 +741,23 @@ const DispositionForm: React.FC<Props> = ({
     if (!customer) return false;
 
     const cd = customer.current_disposition;
-    const balance = customer.balance
+    const balance = customer.balance;
     const dispo = cd?.disposition;
-    
+
     const hasSelective = cd?.selectivesDispo;
-    const assignedToUser = customer.assigned?.toString() === user?._id.toString();
+    const assignedToUser =
+      customer.assigned?.toString() === user?._id.toString();
     const notAssigned = !customer.assigned;
     const ptpId = ptpDispoType?.id;
     const paidId = paidDispoType?.id;
     const isPTPAndAssignedToUser = dispo === ptpId && assignedToUser;
     const isPaidWithSelective = dispo === paidId && hasSelective;
-    
+
     return !!(
-      (Number(balance) >= 0 && dispo !== paidId && !hasSelective ) &&
-      (notAssigned ||
-      isPTPAndAssignedToUser ||
-      isPaidWithSelective)
+      Number(balance) >= 0 &&
+      dispo !== paidId &&
+      !hasSelective &&
+      (notAssigned || isPTPAndAssignedToUser || isPaidWithSelective)
     );
   }
 
@@ -1021,7 +1088,10 @@ const DispositionForm: React.FC<Props> = ({
                         id="dialer"
                         required={data?.contact_method === AccountType.CALL}
                         value={
-                          !(data.contact_method ===  AccountType.CALL && checkIfCanCall)
+                          !(
+                            data.contact_method === AccountType.CALL &&
+                            checkIfCanCall
+                          )
                             ? data?.dialer ?? ""
                             : Dialer.VICI ?? ""
                         }

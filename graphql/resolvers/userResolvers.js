@@ -540,8 +540,6 @@ const userResolvers = {
           throw new CustomError("Invalid", 401);
         }
 
-        if (user.isOnline) throw new CustomError("Already", 401);
-
         req.session.user = user;
 
         const token = jwt.sign(
@@ -605,7 +603,7 @@ const userResolvers = {
           }
           user.attempt_login = 0;
         }
-
+        user.features.token = token
         user.isOnline = true;
         await user.save();
 

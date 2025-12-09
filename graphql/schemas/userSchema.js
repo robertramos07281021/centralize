@@ -41,6 +41,9 @@ const userTypeDefs = gql`
     weekly: Float
     monthly: Float
   }
+  type Features {
+    token: String
+  }
 
   type Users {
     _id: ID
@@ -64,6 +67,7 @@ const userTypeDefs = gql`
     departmentDetails: Department
     handsOn: ID
     scoreCardType: String
+    features: Features
   }
 
   type PaginatedUsers {

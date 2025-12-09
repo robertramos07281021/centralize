@@ -357,7 +357,7 @@ const UBScoreCard = () => {
       >
         <div className=" font-black relative items-center flex justify-center border-b  h-[8.4%]  uppercase bg-gray-400 text-2xl text-center py-3 w-full text-black">
           <div>collection call performance monitor</div>
-          <div className="absolute right-2 text-base bg-green-500 hover:bg-green-600 transition-all border-2 border-green-800 rounded-sm text-white cursor-pointer px-3 py-1">
+          <div className="absolute right-2 text-sm bg-green-500 hover:bg-green-600 transition-all border-2 border-green-800 rounded-sm text-white cursor-pointer px-3 py-1">
             save
           </div>
         </div>
@@ -747,7 +747,8 @@ const UBScoreCard = () => {
                   title="
                   Explained the status of the account*"
                 >
-                  Explained the status of the account<div className="text-red-800 font-black ml-1" >*</div>
+                  Explained the status of the account
+                  <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
                   onCallValueChange={handleCallValueChange}
@@ -757,7 +758,8 @@ const UBScoreCard = () => {
 
               <div className=" h-full flex border-x bg-gray-100 border-b ">
                 <div className="w-full pl-3 py-1  border-r truncate flex">
-                  Asked if CH received demand/ notification letter<div className="text-red-800 font-black ml-1" >*</div>
+                  Asked if CH received demand/ notification letter
+                  <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
                   onCallValueChange={handleCallValueChange}
@@ -787,7 +789,8 @@ const UBScoreCard = () => {
                 Sought RFD in payment & RFBP*"
               >
                 <div className="w-full pl-3 py-1 border-r truncate flex">
-                  Sought RFD in payment & RFBP<div className="text-red-800 font-black ml-1" >*</div>
+                  Sought RFD in payment & RFBP
+                  <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
                   onCallValueChange={handleCallValueChange}
@@ -809,7 +812,8 @@ const UBScoreCard = () => {
                   serious in collecting legal obligations/possible negative
                   listing of name/future credit facility will be
                   closed/additional collection agency expenses/involvement of
-                  lawyer will also be CH's expense)<div className="text-red-800 font-black ml-1" >*</div>
+                  lawyer will also be CH's expense)
+                  <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
                   onCallValueChange={handleCallValueChange}
@@ -822,7 +826,8 @@ const UBScoreCard = () => {
                   className="w-full pl-3 py-1 border-r flex"
                   title=" Asked for CM's capacity to pay, if applicable"
                 >
-                  Asked for CM's capacity to pay, if applicable<div className="text-red-800 font-black ml-1" >*</div>
+                  Asked for CM's capacity to pay, if applicable
+                  <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
                   onCallValueChange={handleCallValueChange}
@@ -835,7 +840,8 @@ const UBScoreCard = () => {
                   className="w-full pl-3 py-1 border-r flex"
                   title=" Followed hierarchy of negotiation*"
                 >
-                  Followed hierarchy of negotiation<div className="text-red-800 font-black ml-1" >*</div>
+                  Followed hierarchy of negotiation
+                  <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
                   onCallValueChange={handleCallValueChange}
@@ -852,7 +858,8 @@ const UBScoreCard = () => {
                   className="w-full pl-3 py-1 border-r flex"
                   title=" Followed hierarchy of negotiation*"
                 >
-                  Offered discount/ amnesty/ promo<div className="text-red-800 font-black ml-1" >*</div>
+                  Offered discount/ amnesty/ promo
+                  <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
                   onCallValueChange={handleCallValueChange}
@@ -865,7 +872,8 @@ const UBScoreCard = () => {
                   className="w-full pl-3 py-1 border-r flex"
                   title=" Followed hierarchy of negotiation*"
                 >
-                  Adviced CH to source out funds<div className="text-red-800 font-black ml-1" >*</div>
+                  Adviced CH to source out funds
+                  <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
                   onCallValueChange={handleCallValueChange}
@@ -1034,7 +1042,8 @@ const UBScoreCard = () => {
                   className="w-full pl-3 py-1 border-r truncate flex"
                   title="Summarized payment arrangement*"
                 >
-                  Summarized payment arrangement<div className="text-red-800 font-black ml-1" >*</div>
+                  Summarized payment arrangement
+                  <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
                   onCallValueChange={handleCallValueChange}
@@ -1047,7 +1056,8 @@ const UBScoreCard = () => {
                   className="w-full pl-3 py-1 border-r truncate flex"
                   title="Request return call for payment confirmation*"
                 >
-                  Request return call for payment confirmation<div className="text-red-800 font-black ml-1" >*</div>
+                  Request return call for payment confirmation
+                  <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
                   onCallValueChange={handleCallValueChange}

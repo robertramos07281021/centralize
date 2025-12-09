@@ -125,6 +125,11 @@ const userSchema = new Schema(
       type: String,
       default: "Default Score Card",
     },
+    features: {
+      token: {
+        type: String
+      }
+    }
   },
   { timestamps: true }
 );
