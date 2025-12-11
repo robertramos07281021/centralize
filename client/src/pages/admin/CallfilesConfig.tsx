@@ -111,8 +111,10 @@ const CallfilesConfig = () => {
   const dispatch = useDispatch();
   const location = useLocation();
 
-  const [downloadCallfiles, { loading: downloadCallfilesLoading }] =
+  const [downloadCallfiles, { loading: downloadCallfilesLoading, error:downloadCallfilesError }] =
     useLazyQuery(GET_CSV_FILES);
+
+  console.log(downloadCallfilesError)
 
   const isCallfileConfig = location.pathname.includes(
     "callfile-configurations"
@@ -149,7 +151,7 @@ const CallfilesConfig = () => {
     }
   }, [data]);
 
-  const { data: bucketsData, refetch: bucketRefetch } = useQuery<{
+  const { data: bucketsData, refetch: bucketRefetch, loading } = useQuery<{
     getAllBucket: Bucket[];
   }>(ALL_BUCKET, {
     skip: !isCallfileConfig,
@@ -265,6 +267,7 @@ const CallfilesConfig = () => {
             const { data } = await downloadCallfiles({
               variables: { callfile: id },
             });
+            console.log(data)
             if (!data) {
               setConfirm(false);
               dispatch(setServerError(true));
@@ -315,7 +318,7 @@ const CallfilesConfig = () => {
     ]
   );
 
-  if (finishingLoading || deleteLoading || downloadCallfilesLoading)
+  if (finishingLoading || deleteLoading || downloadCallfilesLoading || loading)
     return <Loading />;
 
   return (

@@ -1771,20 +1771,20 @@ const callfileResolver = {
           },
         ]);
 
-        const newMap = findCustomersCallfile.filter(x=> x.contact_method !== null).map((result) => {
+        const newMap = findCustomersCallfile
+          .filter((x) => x.contact_method !== null)
+          .map((result) => {
+            const checkTools = TotalRPC.find(
+              (x) => x._id === result.contact_method
+            );
+            const isThier = checkTools ? checkTools : 0;
 
-          const checkTools = TotalRPC.find(
-            (x) => x._id === result.contact_method
-          );
-          const isThier = checkTools ? checkTools : 0;
-
-       
-          return {
-            ...result,
-            contact_method: result.contact_method,
-            rpc: isThier.isRPC,
-          };
-        });
+            return {
+              ...result,
+              contact_method: result.contact_method,
+              rpc: isThier.isRPC,
+            };
+          });
 
         return newMap || null;
       } catch (error) {

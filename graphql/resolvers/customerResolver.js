@@ -23,28 +23,23 @@ const customerResolver = {
       }
     },
     findCustomer: async (_, { fullName, dob, email, contact_no }) => {
-      {
-        try {
-          const searchQuery = await Customer.aggregate([
-            {
-              $match: [
-                { fullName: { $regex: fullName, $options: "i" } },
-                { dob: { $regex: dob, $options: "i" } },
-                { email: { $elemMatch: { $regex: email, $options: "i" } } },
-                {
-                  contact_no: {
-                    $elemMatch: { $regex: contact_no, $options: "i" },
-                  },
-                },
-              ],
+      try {
+        const searchQuery = await Customer.aggregate([
+          {
+            $match: {
+              fullName: { $regex: fullName, $options: "i" },
+              dob: { $regex: dob, $options: "i" },
+              email: { $elemMatch: { $regex: email, $options: "i" } },
+              contact_no: { $elemMatch: { $regex: contact_no, $options: "i" } },
             },
-          ]);
-          return searchQuery;
-        } catch (error) {
-          throw new CustomError(error.message, 500);
-        }
+          },
+        ]);
+        return searchQuery;
+      } catch (error) {
+        throw new CustomError(error.message, 500);
       }
     },
+
     getCustomers: async (_, { page }) => {
       try {
         const customers = await Customer.aggregate([
@@ -74,7 +69,6 @@ const customerResolver = {
         }
 
         const searchValue = search;
-
         const startOfTheDay = new Date();
         startOfTheDay.setHours(0, 0, 0, 0);
         const endOfTheDay = new Date();
@@ -105,23 +99,11 @@ const customerResolver = {
               let: { cus_account: "$customer_account" },
               pipeline: [
                 { $match: { $expr: { $eq: ["$_id", "$$cus_account"] } } },
-                {
-                  $match: {
-                    $or: [
-                      {
-                        on_hands: null,
-                        on_hands: { $exists: false },
-                      },
-                    ],
-                  },
-                },
               ],
               as: "ca",
             },
           },
-          {
-            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true },
-          },
+          { $unwind: { path: "$ca", preserveNullAndEmptyArrays: true } },
           {
             $lookup: {
               from: "callfiles",
@@ -148,7 +130,27 @@ const customerResolver = {
               preserveNullAndEmptyArrays: false,
             },
           },
-          { $limit: 50 },
+          {
+            $lookup: {
+              from: "users",
+              localField: "ca.on_hands",
+              foreignField: "_id",
+              as: "on_hands_user",
+            },
+          },
+          {
+            $unwind: {
+              path: "$on_hands_user",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $match: {
+              $expr: {
+                $ne: ["$on_hands_user.handsOn", "$ca._id"],
+              },
+            },
+          },
           {
             $lookup: {
               from: "buckets",
@@ -163,6 +165,7 @@ const customerResolver = {
               preserveNullAndEmptyArrays: true,
             },
           },
+
           {
             $lookup: {
               from: "dispositions",
@@ -171,9 +174,7 @@ const customerResolver = {
               as: "cd",
             },
           },
-          {
-            $unwind: { path: "$cd", preserveNullAndEmptyArrays: true },
-          },
+          { $unwind: { path: "$cd", preserveNullAndEmptyArrays: true } },
           {
             $lookup: {
               from: "dispotypes",
@@ -182,9 +183,7 @@ const customerResolver = {
               as: "dispotype",
             },
           },
-          {
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
-          },
+          { $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } },
           {
             $lookup: {
               from: "users",
@@ -193,9 +192,7 @@ const customerResolver = {
               as: "user",
             },
           },
-          {
-            $unwind: { path: "$user", preserveNullAndEmptyArrays: true },
-          },
+          { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
           {
             $lookup: {
               from: "dispositions",

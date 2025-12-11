@@ -1,4 +1,5 @@
 import { gql, useQuery } from "@apollo/client";
+import * as XLSX from "xlsx";
 import { useEffect, useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
@@ -127,7 +128,28 @@ const AgentAttendanceLogs = () => {
     if (Number.isNaN(parsed.getTime())) {
       return value;
     }
-    return parsed.toLocaleString().split(', ')[1];
+    return parsed.toLocaleString().split(", ")[1];
+  };
+
+  const handleExport = () => {
+    if (!prods || !prods.prod_history) return;
+    const rows: Array<{ [key: string]: string }> = [];
+    prods.prod_history.forEach((prodSummary) => {
+      const date = new Date(prodSummary.createdAt).toLocaleDateString();
+      prodSummary.prod.forEach((entry) => {
+        rows.push({
+          "Agent Name": prods.user?.name ?? "Unknown Agent",
+          "Date": date,
+          "Type": entry.type,
+          "Start": formatHistoryStart(entry.start),
+          "End": formatHistoryStart(entry.end),
+        });
+      });
+    });
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance Logs");
+    XLSX.writeFile(workbook, `Agent Attendance of ${prods.user?.name ?? "Unknown"}.xlsx`);
   };
 
   return (
@@ -142,7 +164,7 @@ const AgentAttendanceLogs = () => {
           <div className="flex justify-between mb-2">
             <div className="relative">
               <motion.div
-                className="bg-gray-200 justify-between cursor-pointer hover:bg-gray-300 transition-all px-3 flex gap-3 py-1 rounded-sm shadow-md border min-w-60"
+                className="bg-gray-200 justify-between cursor-pointer hover:bg-gray-300 transition-all px-3 flex gap-3 py-1 rounded-sm shadow-md border min-w-64"
                 onClick={() => {
                   if (bucketOptions.length === 0) return;
                   setIsBucketMenuOpen((prev) => !prev);
@@ -265,11 +287,12 @@ const AgentAttendanceLogs = () => {
           </div>
 
           <div className=" flex flex-col overflow-auto">
-            {getAllProdData && getAllProdData.getAllAgentProductions.length === 0 && (
-              <div className="text-center border-x border-b border-black rounded-b-md shadow-md bg-gray-100 text-gray-400 italic py-3">
-                No production data found.
-              </div>
-            )}
+            {getAllProdData &&
+              getAllProdData.getAllAgentProductions.length === 0 && (
+                <div className="text-center border-x border-b border-black rounded-b-md shadow-md bg-gray-100 text-gray-400 italic py-3">
+                  No production data found.
+                </div>
+              )}
             {getAllProdData?.getAllAgentProductions.map((prod, index) => {
               const userInfo = prod.user;
               const average = prod.average.toFixed(2);
@@ -360,13 +383,13 @@ const AgentAttendanceLogs = () => {
             exit={{ opacity: 0 }}
           ></motion.div>
           <motion.div
-            className="bg-white z-20 w-full lg:max-w-2/3 lg:h-8/12 border p-6 rounded-md shadow-md flex flex-col gap-4"
+            className="bg-white z-20 w-full lg:max-w-2/3 h-[80%] border p-6 rounded-md shadow-md flex flex-col"
             initial={{ scale: 0.8, opacity: 0 }}
             animate={{ scale: 1, opacity: 1 }}
             exit={{ scale: 0.8, opacity: 0 }}
             layout
           >
-            <div className="flex items-start justify-between gap-4">
+            <div className="flex items-start h-[10%] justify-between gap-4">
               <div className="">
                 <div className="text-lg font-black uppercase first-letter:uppercase ">
                   Agent name: {prods.user?.name ?? "Unknown Agent"}
@@ -394,80 +417,80 @@ const AgentAttendanceLogs = () => {
                 </svg>
               </button>
             </div>
+            <div className="flex  h-[10%] items-center justify-between">
+              <motion.div
+                className="text-sm font-semibold text-gray-700"
+                layout
+              >
+                Production History
+              </motion.div>
 
-            <div className="flex flex-col gap-3">
-              <div className="flex items-center justify-between">
-                <motion.div
-                  className="text-sm font-semibold text-gray-700"
-                  layout
+              <div className="flex gap-2 items-center">
+                <div className="rounded-sm  text-black font-bold">
+                  {(() => {
+                    if (!fromDate && !toDate) {
+                      return new Date().toLocaleDateString();
+                    } else if (fromDate && toDate) {
+                      return `From ${new Date(
+                        fromDate
+                      ).toLocaleDateString()} - To ${new Date(
+                        toDate
+                      ).toLocaleDateString()}`;
+                    } else if (fromDate || toDate) {
+                      const date = fromDate
+                        ? new Date(fromDate).toLocaleDateString()
+                        : toDate
+                        ? new Date(toDate).toLocaleDateString()
+                        : null;
+                      return date;
+                    }
+                  })()}
+                </div>
+                <div
+                  className="px-3 py-1 bg-blue-600 hover:bg-blue-700 border-2 border-blue-900 rounded-sm text-white cursor-pointer text-sm font-black uppercase"
+                  onClick={handleExport}
                 >
-                  Production History
-                </motion.div>
-
-                <div className="flex gap-2 items-center">
-                  <div className="rounded-sm  text-black font-bold">
-                    {(() => {
-                      if (!fromDate && !toDate) {
-                        return new Date().toLocaleDateString();
-                      } else if (fromDate && toDate) {
-                        return `From ${new Date(
-                          fromDate
-                        ).toLocaleDateString()} - To ${new Date(
-                          toDate
-                        ).toLocaleDateString()}`;
-                      } else if (fromDate || toDate) {
-                        const date = fromDate
-                          ? new Date(fromDate).toLocaleDateString()
-                          : toDate
-                          ? new Date(toDate).toLocaleDateString()
-                          : null;
-                        return date;
-                      }
-                    })()}
-                  </div>
-                  <div className="px-3 py-1 bg-blue-600 hover:bg-blue-700 border-2 border-blue-900 rounded-sm text-white cursor-pointer text-sm font-black uppercase">
-                    Export
-                  </div>
+                  Export
                 </div>
               </div>
+            </div>
 
-              <div>
+            <div className="flex h-[80%] flex-col gap-3">
+              <div className=" h-full flex flex-col">
                 <div className="justify-between text-xs bg-gray-300 py-2 border rounded-t-md pl-3 pr-8 uppercase font-black grid grid-cols-3">
                   <div>Agent Name</div>
                   <div className="text-end">Start</div>
                   <div className="text-end">End</div>
                 </div>
-                <div className="flex max-h-96 flex-col overflow-y-auto">
+                <div className="flex flex-col h-full overflow-auto">
                   {prods?.prod_history?.map((prod, index) => {
-
                     return (
                       <motion.div
                         key={index}
-                        className="border-x border-b odd:bg-gray-200 even:bg-gray-100 last:rounded-b-md last:shadow-md px-3 py-2 text-sm text-gray-800"
+                        className="border-x border-b flex flex-col h-full odd:bg-gray-200 even:bg-gray-100 last:rounded-b-md last:shadow-md px-3 py-2 text-sm text-gray-800"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ delay: index * 0.05 }}
                       >
-                        <div className="text-center text-black font-bold border-b">{new Date(prod.createdAt).toLocaleDateString()}</div>
-                        {
-                          prod.prod.map(x=> {
-                            return (
-                          <div className="grid grid-cols-3 items-center justify-between">
-                            <span className="font-semibold text-black uppercase">
-                              {x.type}
-                            </span>
-                            <span className="text-xs text-black text-end">
-                              {formatHistoryStart(x.start)}
-                            </span>
-                            <span className="text-xs text-black text-end">
-                              {formatHistoryStart(x.end)}
-                            </span>
-                          </div>
-
-                            )
-                          })
-                        }
+                        <div className="text-center text-black font-bold border-b">
+                          {new Date(prod.createdAt).toLocaleDateString()}
+                        </div>
+                        {prod.prod.map((x, index) => {
+                          return (
+                            <div key={index} className="grid grid-cols-3 h-full items-center justify-between">
+                              <span className="font-semibold text-black uppercase">
+                                {x.type}
+                              </span>
+                              <span className="text-xs text-black text-end">
+                                {formatHistoryStart(x.start)}
+                              </span>
+                              <span className="text-xs text-black text-end">
+                                {formatHistoryStart(x.end)}
+                              </span>
+                            </div>
+                          );
+                        })}
                       </motion.div>
                     );
                   })}

@@ -148,11 +148,13 @@ const NavbarExtn = () => {
   const canCallMap = agentBucketsData?.getTLBucket.map((x) => x.canCall);
 
   useEffect(() => {
-    if (isDuplicate) {
-      alert("You already have this app open. Redirecting...");
-      window.location.href = "about:blank";
+    if (!["QA", "QASUPERVISOR", "ADMIN"].includes(userLogged?.type ?? "")) {
+      if (isDuplicate) {
+        alert("You already have this app open. Redirecting...");
+        window.location.href = "about:blank";
+      }
     }
-  }, [isDuplicate]);
+  }, [isDuplicate, userLogged?.type]);
 
   useEffect(() => {
     const refetching = async () => {
@@ -336,14 +338,17 @@ const NavbarExtn = () => {
             const callLogs = an.name.trim().toLowerCase() === "call monitoring";
 
             if (callLogs && !canCallMap?.includes(true)) return null;
-
+            const hasLink = !!an.link;
             return (
-              <div
-                onClick={() => {
-                  if (an.link) {
-                    navClick(an.link);
-                  } else if (an.tabs) {
+              <a
+                href={an.link || "#"}
+                onClick={(e) => {
+                  if (!hasLink) {
+                    e.preventDefault();
                     setOpenIndex(index === openIndex ? null : index);
+                  } else {
+                    e.preventDefault(); 
+                    navClick(an.link!);
                   }
                 }}
                 key={index}
@@ -402,7 +407,7 @@ const NavbarExtn = () => {
                     <div className="absolute text-[0.6em] w-5 h-5 flex items-center justify-center rounded-full bg-red-500 -top-3 -right-1 z-40 animate-ping"></div>
                   </>
                 )}
-              </div>
+              </a>
             );
           })}
         </div>

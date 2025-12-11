@@ -1,6 +1,8 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { gql, useQuery } from "@apollo/client";
+import { useSelector } from "react-redux";
+import { RootState } from "../redux/store";
 
 const GET_SCORECARD_SUMMARIES = gql`
   query GetScoreCardSummaries($date: String, $search: String) {
@@ -75,17 +77,16 @@ type ScoreCardSummary = {
   } | null;
 };
 
-
 const ScoreCardOverview = () => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const { userLogged } = useSelector((state: RootState) => state.auth);
   const [isOpenDefaultScoreCard, setIsOpenDefaultScoreCard] =
     useState<boolean>(false);
   const [isOpenUBScoreCard, setIsOpenUBScoreCard] = useState<boolean>(false);
   const [selectedScoreCard, setSelectedScoreCard] =
     useState<ScoreCardSummary | null>(null);
 
-    
   const [isExportingExcel, setIsExportingExcel] = useState<boolean>(false);
 
   const variables = useMemo(() => {
@@ -101,7 +102,6 @@ const ScoreCardOverview = () => {
     fetchPolicy: "network-only",
   });
   GET_SCORECARD_SUMMARIES;
-
 
   console.log("ScoreCardOverview data:", data);
 
@@ -232,6 +232,8 @@ const ScoreCardOverview = () => {
     });
   };
 
+  console.log(selectedScoreCard?.typeOfScoreCard);
+
   const renderSection = (title: string, section?: ScoreSection | null) => {
     if (!section || Object.keys(section).length === 0) {
       return null;
@@ -242,7 +244,7 @@ const ScoreCardOverview = () => {
           {title}
         </div>
         <div className="divide-y">
-          {Object.entries(section).map(([key, entry]) => {
+          {Object.entries(section).map(([key, entry], i) => {
             const entryPoins = entry.points ?? 7;
 
             return (
@@ -251,7 +253,11 @@ const ScoreCardOverview = () => {
                 className="grid grid-cols-1 even:bg-gray-100 odd:bg-gray-200 last:border-b last:rounded-b-md border-x md:grid-cols-3 gap-2 px-3 py-2 text-xs md:text-sm"
               >
                 <div className="font-semibold uppercase text-black">
-                  {formatFieldLabel(key)}:
+                  {selectedScoreCard?.typeOfScoreCard === "UB Score Card" ? (
+                    <div>{formatFieldLabel(`Call: ${i + 1}`)}</div>
+                  ) : (
+                    <div>{formatFieldLabel(key)}</div>
+                  )}
                 </div>
                 <div className="text-gray-700 flex items-center gap-2">
                   <span className="font-medium text-black">Score:</span>{" "}
@@ -1134,7 +1140,7 @@ const ScoreCardOverview = () => {
               onClick={() => setIsOpenUBScoreCard(false)}
             ></div>
             <motion.div
-              className="bg-white z-20 border flex flex-col relative rounded-md p-6 max-w-3xl  max-h-[80vh] "
+              className="bg-white z-20 border flex flex-col relative rounded-md p-6 w-full max-w-[1000px]  max-h-[80vh] "
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
@@ -1239,7 +1245,7 @@ const ScoreCardOverview = () => {
                   "Closing The Call",
                   selectedScoreCard.scoreDetails?.closingTheCall
                 )}
-              
+
                 {selectedScoreCard.scoreDetails?.comments && (
                   <div className="mt-2 shadow-md">
                     <div className="font-black bg-gray-300 rounded-t-md py-1 w-full border text-center uppercase text-xl text-black">

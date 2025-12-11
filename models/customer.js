@@ -1,6 +1,7 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
+
 const customerSchema = new Schema(
   {
     platform_customer_id: {
@@ -8,6 +9,7 @@ const customerSchema = new Schema(
     },
     fullName: {
       type: String,
+      // index: true // single field index for direct queries
     },
     contact_no: [String],
     emails: [String],
@@ -41,6 +43,9 @@ const customerSchema = new Schema(
   },
   { timestamps: true }
 );
+
+// Compound text index for fast search on fullName, contact_no, emails
+customerSchema.index({ fullName: "text", contact_no: "text", emails: "text" });
 
 const Customer = mongoose.model("Customer", customerSchema);
 export default Customer;
