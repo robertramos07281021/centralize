@@ -344,13 +344,12 @@ const taskResolver = {
     },
     deselectTask: async (_, { id }, { user, PUBSUB_EVENTS, pubsub }) => {
       try {
-    
         if (!user) throw new CustomError("Unauthorized", 401);
 
         const caBefore = await CustomerAccount.findById(id);
 
         if (!caBefore) throw new CustomError("Customer account not found", 404);
-       
+
         // Clear user's handsOn
         if (caBefore.on_hands) {
           await User.findByIdAndUpdate(caBefore.on_hands, {
@@ -417,11 +416,101 @@ const taskResolver = {
       try {
         // const findSelectives = await Disposition.find({selectiveFiles: {$eq: new mongoose.Types.ObjectId("68da0371ee872f3ae955225b")}})
 
+        // const cursor = CustomerAccount.find().cursor();
+
+        // let operations = [];
+        // const batchSize = 2000;
+
+        // for (
+        //   let doc = await cursor.next();
+        //   doc != null;
+        //   doc = await cursor.next()
+        // ) {
+        //   operations.push({
+        //     updateOne: {
+        //       filter: { _id: doc.customer },
+        //       update: { $set: { callfile: doc.callfile } },
+        //     },
+        //   });
+
+        //   if (operations.length >= batchSize) {
+        //     await Customer.bulkWrite(operations, { ordered: false });
+        //     operations = [];
+        //   }
+        // }
+
+        // // Flush remaining ops
+        // if (operations.length > 0) {
+        //   await Customer.bulkWrite(operations, { ordered: false });
+        // }
+
+        // const customerIdsSet = new Set();
+        // const accCursor = CustomerAccount.find({}, { customer: 1 }).cursor();
+        
+        // for (
+        //   let doc = await accCursor.next();
+        //   doc != null;
+        //   doc = await accCursor.next()
+        // ) {
+        //   customerIdsSet.add(String(doc.customer));
+        // }
+        // // STEP 2: Scan Customer collection and delete missing ones
+        // const deleteCursor = Customer.find({}, { _id: 1 }).cursor();
+
+        // let deleteOps = [];
+        // const deleteBatchSize = 2000; // safe number
+
+        // for (
+        //   let doc = await deleteCursor.next();
+        //   doc != null;
+        //   doc = await deleteCursor.next()
+        // ) {
+        //   if (!customerIdsSet.has(String(doc._id))) {
+        //     deleteOps.push({
+        //       deleteOne: {
+        //         filter: { _id: doc._id },
+        //       },
+        //     });
+        //   }
+
+        //   // Execute batch
+        //   if (deleteOps.length >= deleteBatchSize) {
+        //     await Customer.bulkWrite(deleteOps, { ordered: false });
+        //     deleteOps = [];
+        //   }
+        // }
+
+        // // Flush remaining delete ops
+        // if (deleteOps.length > 0) {
+        //   await Customer.bulkWrite(deleteOps, { ordered: false });
+        // }
+
+        const findCustomer = await CustomerAccount.aggregate([
+          {
+            $lookup: {
+              from: "customers",
+              localField: "customer",
+              foreignField: "_id",
+              as: "cust",
+            },
+          },
+          {
+            $unwind: { path: "$cust", preserveNullAndEmptyArrays: true },
+          },
+          {
+            $match: {
+              "cust._id": {$eq: null}
+            }
+          }
+        ])
+        console.log(findCustomer)
+
         return {
           success: true,
           message: "Customers Account Successfully update",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

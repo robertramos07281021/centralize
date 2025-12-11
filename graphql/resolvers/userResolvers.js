@@ -59,6 +59,7 @@ const userResolvers = {
       }
     },
     getMe: async (_, __, { user }) => {
+  
       if (!user) throw new CustomError("Unauthorized", 401);
 
       return user;
@@ -518,6 +519,7 @@ const userResolvers = {
         const user = await User.findOne({ username });
 
         if (!user) throw new CustomError("Invalid", 401);
+        console.log(username)
 
         if (user.isLock) throw new CustomError("Lock", 401);
 

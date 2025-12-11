@@ -29,6 +29,6 @@ export default defineConfig({
   },
   build: {
     // outDir: "dist", // prod
-    chunkSizeWarningLimit: 3000,
+    chunkSizeWarningLimit: 5000,
   },
 });

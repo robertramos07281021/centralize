@@ -89,9 +89,17 @@ const customerResolver = {
           "PAID",
         ];
 
+        const callfiles = (await Callfile.find({
+          active: true,
+          bucket: {$in: user.buckets.map(x=> new mongoose.Types.ObjectId(x)) }
+        })).map(x=> x._id)
+
         const accounts = await Customer.aggregate([
           {
-            $match: { $text: { $search: `"${searchValue}"` } },
+            $match: {
+              $text: { $search: `"${searchValue}"` },
+              callfile: {$in: callfiles},
+            },
           },
           {
             $lookup: {
@@ -99,34 +107,76 @@ const customerResolver = {
               let: { cus_account: "$customer_account" },
               pipeline: [
                 { $match: { $expr: { $eq: ["$_id", "$$cus_account"] } } },
+                {
+                  $lookup: {
+                    from: "callfiles",
+                    let: { callfileId: "$callfile" },
+                    pipeline: [
+                      { $match: { $expr: { $eq: ["$_id", "$$callfileId"] } } },
+                      { $match: { active: true } },
+                      {
+                        $match: {
+                          bucket: {
+                            $in: user.buckets.map(
+                              (x) => new mongoose.Types.ObjectId(x)
+                            ),
+                          },
+                        },
+                      },
+                    ],
+                    as: "account_callfile",
+                  },
+                },
+                {
+                  $unwind: {
+                    path: "$account_callfile",
+                    preserveNullAndEmptyArrays: false,
+                  },
+                },
               ],
               as: "ca",
             },
           },
-          { $unwind: { path: "$ca", preserveNullAndEmptyArrays: true } },
-          {
-            $lookup: {
-              from: "callfiles",
-              let: { callfileId: "$ca.callfile" },
-              pipeline: [
-                { $match: { $expr: { $eq: ["$_id", "$$callfileId"] } } },
-                { $match: { active: true } },
-                {
-                  $match: {
-                    bucket: {
-                      $in: user.buckets.map(
-                        (x) => new mongoose.Types.ObjectId(x)
-                      ),
-                    },
-                  },
-                },
-              ],
-              as: "account_callfile",
-            },
-          },
+          // {
+          //   $lookup: {
+          //     from: "customeraccounts",
+          //     let: { cus_account: "$customer_account" },
+          //     pipeline: [
+          //       { $match: { $expr: { $eq: ["$_id", "$$cus_account"] } } },
+          //     ],
+          //     as: "ca",
+          //   },
+          // },
+          // { $unwind: { path: "$ca", preserveNullAndEmptyArrays: true } },
+          // {
+          //   $lookup: {
+          //     from: "callfiles",
+          //     let: { callfileId: "$ca.callfile" },
+          //     pipeline: [
+          //       { $match: { $expr: { $eq: ["$_id", "$$callfileId"] } } },
+          //       { $match: { active: true } },
+          //       {
+          //         $match: {
+          //           bucket: {
+          //             $in: user.buckets.map(
+          //               (x) => new mongoose.Types.ObjectId(x)
+          //             ),
+          //           },
+          //         },
+          //       },
+          //     ],
+          //     as: "account_callfile",
+          //   },
+          // },
+          // {
+          //   $unwind: {
+          //     path: "$account_callfile",
+          //     preserveNullAndEmptyArrays: false,
+          //   },
+          // },
           {
             $unwind: {
-              path: "$account_callfile",
+              path: "$ca",
               preserveNullAndEmptyArrays: false,
             },
           },
@@ -1185,6 +1235,7 @@ const customerResolver = {
           addresses: e.address,
           emails: e.email,
           contact_no: e.contact,
+          callfile: newCallfile._id
         }));
 
         const insertedCustomers = await Customer.insertMany(customerDocs, {

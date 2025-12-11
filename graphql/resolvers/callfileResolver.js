@@ -155,10 +155,11 @@ const callfileResolver = {
                         },
                       },
                     },
+
                     hasValidEmail: {
                       $anyElementTrue: {
                         $map: {
-                          input: "$customerInfo.emails",
+                          input: { $ifNull: ["$customerInfo.emails", []] },
                           as: "email",
                           in: {
                             $regexMatch: {
@@ -170,10 +171,11 @@ const callfileResolver = {
                         },
                       },
                     },
+
                     hasValidMobile: {
                       $anyElementTrue: {
                         $map: {
-                          input: "$customerInfo.contact_no",
+                          input: { $ifNull: ["$customer_info.contact_no", []] },
                           as: "num",
                           in: {
                             $or: [
@@ -736,21 +738,37 @@ const callfileResolver = {
             $addFields: {
               contact1: {
                 $cond: {
-                  if: { $gte: [{ $size: "$customer_info.contact_no" }, 1] },
+                  if: {
+                    $gte: [
+                      { $size: { $ifNull: ["$customer_info.contact_no", []] } },
+                      1,
+                    ],
+                  },
                   then: { $arrayElemAt: ["$customer_info.contact_no", 0] },
                   else: "",
                 },
               },
               contact2: {
                 $cond: {
-                  if: { $gte: [{ $size: "$customer_info.contact_no" }, 2] },
+                  if: {
+                    $gte: [
+                      { $size: { $ifNull: ["$customer_info.contact_no", []] } },
+                      2,
+                    ],
+                  },
                   then: { $arrayElemAt: ["$customer_info.contact_no", 1] },
                   else: "",
                 },
               },
+
               contact3: {
                 $cond: {
-                  if: { $gte: [{ $size: "$customer_info.contact_no" }, 3] },
+                  if: {
+                    $gte: [
+                      { $size: { $ifNull: ["$customer_info.contact_no", []] } },
+                      3,
+                    ],
+                  },
                   then: { $arrayElemAt: ["$customer_info.contact_no", 2] },
                   else: "",
                 },
@@ -761,21 +779,37 @@ const callfileResolver = {
             $addFields: {
               email1: {
                 $cond: {
-                  if: { $gte: [{ $size: "$customer_info.emails" }, 1] },
+                  if: {
+                    $gte: [
+                      { $size: { $ifNull: ["$customer_info.emails", []] } },
+                      1,
+                    ],
+                  },
                   then: { $arrayElemAt: ["$customer_info.emails", 0] },
                   else: "",
                 },
               },
               email2: {
                 $cond: {
-                  if: { $gte: [{ $size: "$customer_info.emails" }, 2] },
+                  if: {
+                    $gte: [
+                      { $size: { $ifNull: ["$customer_info.emails", []] } },
+                      2,
+                    ],
+                  },
                   then: { $arrayElemAt: ["$customer_info.emails", 1] },
                   else: "",
                 },
               },
+
               email3: {
                 $cond: {
-                  if: { $gte: [{ $size: "$customer_info.emails" }, 3] },
+                  if: {
+                    $gte: [
+                      { $size: { $ifNull: ["$customer_info.emails", []] } },
+                      3,
+                    ],
+                  },
                   then: { $arrayElemAt: ["$customer_info.emails", 2] },
                   else: "",
                 },
@@ -786,21 +820,37 @@ const callfileResolver = {
             $addFields: {
               address1: {
                 $cond: {
-                  if: { $gte: [{ $size: "$customer_info.addresses" }, 1] },
+                  if: {
+                    $gte: [
+                      { $size: { $ifNull: ["$customer_info.addresses", []] } },
+                      1,
+                    ],
+                  },
                   then: { $arrayElemAt: ["$customer_info.addresses", 0] },
                   else: "",
                 },
               },
               address2: {
                 $cond: {
-                  if: { $gte: [{ $size: "$customer_info.addresses" }, 2] },
+                  if: {
+                    $gte: [
+                      { $size: { $ifNull: ["$customer_info.addresses", []] } },
+                      2,
+                    ],
+                  },
                   then: { $arrayElemAt: ["$customer_info.addresses", 1] },
                   else: "",
                 },
               },
+
               address3: {
                 $cond: {
-                  if: { $gte: [{ $size: "$customer_info.addresses" }, 3] },
+                  if: {
+                    $gte: [
+                      { $size: { $ifNull: ["$customer_info.addresses", []] } },
+                      3,
+                    ],
+                  },
                   then: { $arrayElemAt: ["$customer_info.addresses", 2] },
                   else: "",
                 },
@@ -812,7 +862,7 @@ const callfileResolver = {
               hasValidMobile: {
                 $anyElementTrue: {
                   $map: {
-                    input: "$customer_info.contact_no",
+                    input: { $ifNull: ["$customer_info.contact_no", []] },
                     as: "num",
                     in: {
                       $or: [
@@ -915,7 +965,7 @@ const callfileResolver = {
               hasValidEmail: {
                 $anyElementTrue: {
                   $map: {
-                    input: "$customer_info.emails",
+                    input: { $ifNull: ["$customer_info.emails", []] },
                     as: "email",
                     in: {
                       $regexMatch: {
@@ -1144,6 +1194,7 @@ const callfileResolver = {
 
           return `${mins}:${secs.toString().padStart(2, "0")}`;
         }
+        
         const headers = [
           "contact1",
           "contact2",
@@ -1302,6 +1353,7 @@ const callfileResolver = {
 
         return `http://${process.env.MY_IP}:4000/tmp/${findCallfile.name}_${timestamp}.csv`;
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

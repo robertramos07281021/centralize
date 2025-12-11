@@ -15,7 +15,6 @@ import { RootState } from "../../redux/store";
 import CallReportTables from "./CallReportTables";
 import ReportsTables from "./ReportsTables";
 import RFDReportTables from "./RFDReportTables";
-import CallDoughnut from "./CallDoughnut";
 
 const GET_DISPOSITION_TYPES = gql`
   query getDispositionTypes {

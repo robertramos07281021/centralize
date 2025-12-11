@@ -1,7 +1,6 @@
 import mongoose from "mongoose";
 const Schema = mongoose.Schema;
 
-
 const customerSchema = new Schema(
   {
     platform_customer_id: {
@@ -9,7 +8,6 @@ const customerSchema = new Schema(
     },
     fullName: {
       type: String,
-      // index: true // single field index for direct queries
     },
     contact_no: [String],
     emails: [String],
@@ -22,23 +20,29 @@ const customerSchema = new Schema(
     },
     customer_account: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "CustomerAccount"
+      ref: "CustomerAccount",
     },
-    updatedBy: [{
-      user: {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "User"
+    updatedBy: [
+      {
+        user: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+        },
+        updatedType: {
+          type: String,
+        },
       },
-      updatedType: {
-        type: String,
-      }
-    }],
+    ],
+    callfile: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Callfile",
+    },
     isRPC: {
       type: Boolean,
-      default: false
+      default: false,
     },
     RPC_date: {
-      type: Date
+      type: Date,
     },
   },
   { timestamps: true }

@@ -7,22 +7,15 @@ export function getWsClient() {
   if (!wsClient) {
     const hostname = window.location.hostname;
     wsClient = createClient({
-      url: `ws://${hostname}:3000/graphql`, // dev
-      // url: `ws://172.16.24.31:4000/graphql`, // prod
+      url: `ws://${hostname}:4000/graphql`,
       connectionParams: () => {
         const token = store.getState().auth.myToken;
         return {
           authorization: token ? `Bearer ${token}` : '',
         };
       },
-      on: {
-        connected: (socket) => {
-          window.mySocket = socket
-        }
-      },
       lazy: true,
       retryAttempts: 3,
-      shouldRetry: () => true,
     });
   }
   return wsClient;

@@ -1,8 +1,6 @@
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { gql, useQuery } from "@apollo/client";
-import { useSelector } from "react-redux";
-import { RootState } from "../redux/store";
 
 const GET_SCORECARD_SUMMARIES = gql`
   query GetScoreCardSummaries($date: String, $search: String) {
@@ -40,10 +38,27 @@ type ScoreEntry = {
 
 type ScoreSection = Record<string, ScoreEntry>;
 
+type CallComment = {
+  call: number;
+  agent: string;
+  tl: string;
+  actionPlan: string;
+};
+
 type ScoreDetails = {
   opening?: ScoreSection | null;
   closingTheCall?: ScoreSection | null;
-  collectionCallProper?: ScoreSection | null;
+  collectionCallProper?: {
+    withContact?: {
+      establishingRapport?: ScoreSection | null;
+      listeningSkills?: ScoreSection | null;
+      negotiationSkills?: ScoreSection | null;
+      offeringSolutions?: ScoreSection | null;
+    };
+    withoutContact?: ScoreSection | null;
+    withOrWithoutContact?: ScoreSection | null;
+  };
+  callComments?: CallComment[];
   negotiationSkills?: ScoreSection | null;
   closing?: ScoreSection | null;
   regulatoryAndCompliance?: ScoreSection | null;
@@ -80,7 +95,6 @@ type ScoreCardSummary = {
 const ScoreCardOverview = () => {
   const [selectedDate, setSelectedDate] = useState<string>("");
   const [searchTerm, setSearchTerm] = useState<string>("");
-  const { userLogged } = useSelector((state: RootState) => state.auth);
   const [isOpenDefaultScoreCard, setIsOpenDefaultScoreCard] =
     useState<boolean>(false);
   const [isOpenUBScoreCard, setIsOpenUBScoreCard] = useState<boolean>(false);
@@ -232,32 +246,97 @@ const ScoreCardOverview = () => {
     });
   };
 
-  console.log(selectedScoreCard?.typeOfScoreCard);
+  const flattenQuestions = (obj: any): Array<any> => {
+    const result: Array<any> = [];
+    if (!obj) return result;
+    if (Array.isArray(obj)) {
+      obj.forEach((item) => {
+        result.push(...flattenQuestions(item));
+      });
+    } else if (typeof obj === "object") {
+      if ("question" in obj) {
+        result.push(obj);
+      } else {
+        Object.values(obj).forEach((value) => {
+          result.push(...flattenQuestions(value));
+        });
+      }
+    }
+    return result;
+  };
+
+  const renderUBSection = (title: string, section?: any) => {
+    const flatQuestions = flattenQuestions(section);
+    if (!flatQuestions || flatQuestions.length === 0) return null;
+    return (
+      <div key={title} className="mt-2">
+        <div
+          className="font-black bg-gray-300 rounded-t-md py-1 w-full border text-center uppercase text-xl text-black"
+          dangerouslySetInnerHTML={{ __html: title }}
+        ></div>
+        <div className="divide-y flex flex-col">
+          {flatQuestions.map((entry: any, idx: number) => (
+            <div
+              key={idx}
+              className="even:bg-gray-100 odd:bg-gray-200 last:border-b last:rounded-b-md border-x px-3 py-2 text-xs md:text-sm"
+            >
+              <div className="font-semibold uppercase text-black mb-1">
+                {entry.question}
+              </div>
+              <div className="flex justify-between gap-2">
+                {entry.calls &&
+                  Array.isArray(entry.calls) &&
+                  entry.calls.map((callValue: number, callIdx: number) => {
+                    return (
+                      <div key={callIdx} className="flex gap-2 items-center">
+                        <span className="font-semibold">
+                          Call {callIdx + 1}:
+                        </span>
+                        <span
+                          className={`mt-1 px-3 py-1 rounded font-black text-white text-shadow-2xs shadow-md border-2 ${
+                            callValue >= 1
+                              ? "bg-red-600 border-red-900"
+                              : "bg-green-600 border-green-900"
+                          }`}
+                        >
+                          {callValue}
+                        </span>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   const renderSection = (title: string, section?: ScoreSection | null) => {
-    if (!section || Object.keys(section).length === 0) {
-      return null;
-    }
+    if (!section || Object.keys(section).length === 0) return null;
+    const entries = Array.isArray(section)
+      ? section.map((entry, i) => [i.toString(), entry])
+      : Object.entries(section);
     return (
       <div key={title} className="mt-2">
         <div className="font-black bg-gray-300 rounded-t-md py-1 w-full border text-center uppercase text-xl text-black">
           {title}
         </div>
         <div className="divide-y">
-          {Object.entries(section).map(([key, entry], i) => {
-            const entryPoins = entry.points ?? 7;
-
+          {entries.map(([key, entry], i) => {
+            let entryPoints = entry.points ?? 7;
+            let score = entry.scores;
+            if (entry.calls) {
+              score = entry.calls[i];
+              entryPoints = score === 1 ? 2 : score === 0 ? 1 : 0;
+            }
             return (
               <div
                 key={key}
                 className="grid grid-cols-1 even:bg-gray-100 odd:bg-gray-200 last:border-b last:rounded-b-md border-x md:grid-cols-3 gap-2 px-3 py-2 text-xs md:text-sm"
               >
                 <div className="font-semibold uppercase text-black">
-                  {selectedScoreCard?.typeOfScoreCard === "UB Score Card" ? (
-                    <div>{formatFieldLabel(`Call: ${i + 1}`)}</div>
-                  ) : (
-                    <div>{formatFieldLabel(key)}</div>
-                  )}
+                  <div>{formatFieldLabel(key)}</div>
                 </div>
                 <div className="text-gray-700 flex items-center gap-2">
                   <span className="font-medium text-black">Score:</span>{" "}
@@ -282,27 +361,29 @@ const ScoreCardOverview = () => {
                   )}
                 </div>
                 <div className="text-gray-700 flex gap-2 items-center">
-                  <span className="font-medium text-black">Points:</span>
+                  <span className="font-medium text-black">Poindts:</span>
                   <div
                     className={` ${
-                      entryPoins === 0
+                      entryPoints === 0
                         ? "bg-red-600 border-red-900"
-                        : entryPoins === 1
+                        : entryPoints === 1
                         ? "bg-red-600 border-red-900"
-                        : entryPoins < 3
+                        : entryPoints < 3
                         ? "bg-green-600 border-green-900"
-                        : entryPoins < 20
+                        : entryPoints < 20
                         ? "bg-green-600 border-green-900"
                         : "bg-red-600 border-red-900"
                     } font-black text-white text-shadow-2xs shadow-md px-3 border-2 rounded-sm py-1 `}
                   >
-                    {!entry
-                      ? 0
-                      : entryPoins === 1
-                      ? "Failed"
-                      : entryPoins === 2
-                      ? "Passed"
-                      : formatPoints(entryPoins)}
+                    <div>
+                      {!entry
+                        ? 0
+                        : entryPoints === 1
+                        ? "Failed"
+                        : entryPoints === 2
+                        ? "Passed"
+                        : formatPoints(entryPoints)}
+                    </div>
                   </div>
                 </div>
                 <div className="md:col-span-3 text-gray-600">
@@ -328,13 +409,15 @@ const ScoreCardOverview = () => {
     setSelectedScoreCard(null);
   };
 
+  console.log(selectedScoreCard?.typeOfScoreCard, "<<");
+
   const openScoreCardModal = (scoreCardType: string) => {
     if (scoreCardType === "UB Score Card") {
+      setIsOpenDefaultScoreCard(false);
       setIsOpenUBScoreCard(true);
-    } else if (scoreCardType === "Default Score Card") {
-      setIsOpenDefaultScoreCard(true);
     } else {
-      console.log("walang card type");
+      setIsOpenUBScoreCard(false);
+      setIsOpenDefaultScoreCard(true);
     }
   };
 
@@ -836,7 +919,7 @@ const ScoreCardOverview = () => {
   };
 
   return (
-    <div className="p-10 flex w-full h-full relative gap-2">
+    <div className="p-10 flex w-full h-[90%] relative gap-2">
       <motion.div
         className="w-[30%] bg-gray-100 overflow-hidden text-gray-700 border-black rounded-md shadow-md h-full border flex flex-col"
         initial={{ opacity: 0, y: 30 }}
@@ -847,25 +930,25 @@ const ScoreCardOverview = () => {
           Overview
         </div>
         <div className="p-4 flex flex-col bg-gray-300 h-full gap-4 text-sm overflow-auto">
-          <div className="bg-white border rounded-md shadow-sm p-4">
+          <div className="bg-white border border-black rounded-md shadow-sm p-4">
             <div className="uppercase text-xs text-gray-500">average score</div>
             <div className="text-3xl font-black text-gray-800">
               {overviewStats.avgScore.toFixed(1)}
             </div>
           </div>
-          <div className="bg-white border rounded-md shadow-sm p-4">
+          <div className="bg-white border border-black rounded-md shadow-sm p-4">
             <div className="uppercase text-xs text-gray-500">highest score</div>
             <div className="text-3xl font-black text-gray-800">
               {overviewStats.highestScore.toFixed(1)}
             </div>
           </div>
-          <div className="bg-white border rounded-md shadow-sm p-4">
+          <div className="bg-white border border-black rounded-md shadow-sm p-4">
             <div className="uppercase text-xs text-gray-500">pass rate</div>
             <div className="text-3xl font-black text-gray-800">
               {overviewStats.passRate.toFixed(0)}%
             </div>
           </div>
-          <div className="bg-white border rounded-md shadow-sm p-4">
+          <div className="bg-white border border-black rounded-md shadow-sm p-4">
             <div className="uppercase text-xs text-gray-500">records shown</div>
             <div className="text-3xl font-black text-gray-800">
               {scorecards.length}
@@ -882,7 +965,7 @@ const ScoreCardOverview = () => {
         <div className="bg-gray-400 py-3  font-black uppercase text-center border-b text-2xl">
           Score card overview
         </div>
-        <div className="p-3 h-full flex flex-col gap-2">
+        <div className="p-3 flex h-full overflow-auto flex-col gap-2">
           <div className="flex justify-between gap-3 flex-wrap">
             <div className="border bg-gray-100 rounded-sm flex items-center px-3">
               <input
@@ -902,8 +985,8 @@ const ScoreCardOverview = () => {
               />
             </div>
           </div>
-          <div className="w-full h-[95%] border flex flex-col bg-gray-100 rounded-sm overflow-hidden">
-            <div className="grid grid-cols-6 uppercase gap-4 p-3 font-black border-b bg-gray-200">
+          <div className="w-full border flex flex-col bg-gray-100 rounded-sm overflow-hidden">
+            <div className="grid grid-cols-6  uppercase gap-4 p-3 font-black border-b bg-gray-200">
               <div>QA Name</div>
               <div>Agent Name</div>
               <div>Score Card Type</div>
@@ -917,17 +1000,17 @@ const ScoreCardOverview = () => {
               </div>
             )}
             {!error && (
-              <div className="flex flex-col h-full overflow-auto">
+              <div className="flex flex-col  overflow-auto">
                 {loading ? (
                   <div className="flex justify-center items-center h-full text-gray-500 italic">
                     Loading...
                   </div>
                 ) : scorecards.length === 0 ? (
-                  <div className="flex justify-center items-center h-full text-gray-400">
+                  <div className="flex justify-center items-center h-full py-2 text-gray-400">
                     No data available
                   </div>
                 ) : (
-                  <div className="flex flex-col divide-y">
+                  <div className="flex flex-col divide-y overflow-auto">
                     {scorecards.map((entry, index) => {
                       const badge = getStatusBadge(entry.totalScore);
                       const formattedDate = formatDate(
@@ -936,7 +1019,7 @@ const ScoreCardOverview = () => {
                       return (
                         <motion.div
                           key={entry._id}
-                          className="grid grid-cols-6 border-b border-gray-300 hover:bg-gray-200 even:bg-gray-100 cursor-pointer odd:bg-white gap-4 px-4 py-3 text-sm items-center bg-white"
+                          className="grid grid-cols-6 border-b  border-gray-300 hover:bg-gray-200 even:bg-gray-100 cursor-pointer odd:bg-white gap-4 px-4 py-3 text-sm items-center bg-white"
                           initial={{ opacity: 0 }}
                           animate={{ opacity: 1 }}
                           transition={{ duration: 0.2, delay: index * 0.1 }}
@@ -1140,7 +1223,7 @@ const ScoreCardOverview = () => {
               onClick={() => setIsOpenUBScoreCard(false)}
             ></div>
             <motion.div
-              className="bg-white z-20 border flex flex-col relative rounded-md p-6 w-full max-w-[1000px]  max-h-[80vh] "
+              className="bg-white z-20 border flex flex-col relative rounded-md p-6 max-w-3xl max-h-[80vh] "
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
@@ -1233,18 +1316,119 @@ const ScoreCardOverview = () => {
                   </div>
                 </div>
 
-                {renderSection(
+                {renderUBSection(
                   "Opening",
                   selectedScoreCard.scoreDetails?.opening
                 )}
-                {renderSection(
-                  "Closing",
+                {renderUBSection(
+                  "Collection Call Proper - with Contact</br>ESTABLISHING RAPPORT, EMPATHY & COURTESY",
                   selectedScoreCard.scoreDetails?.collectionCallProper
+                    ?.withContact?.establishingRapport
                 )}
-                {renderSection(
+
+                {renderUBSection(
+                  "Collection Call Proper - with Contact</br>listening Skills",
+                  selectedScoreCard.scoreDetails?.collectionCallProper
+                    ?.withContact?.listeningSkills
+                )}
+
+                {renderUBSection(
+                  "Collection Call Proper - with Contact</br>negotiation Skills",
+                  selectedScoreCard.scoreDetails?.collectionCallProper
+                    ?.withContact?.negotiationSkills
+                )}
+
+                {renderUBSection(
+                  "Collection Call Proper - with Contact</br>offering Solutions",
+                  selectedScoreCard.scoreDetails?.collectionCallProper
+                    ?.withContact?.offeringSolutions
+                )}
+
+                {renderUBSection(
+                  "Collection Call Proper - without Contact",
+                  selectedScoreCard.scoreDetails?.collectionCallProper
+                    ?.withoutContact
+                )}
+
+                {renderUBSection(
+                  "Collection Call Proper - with or without Contact",
+                  selectedScoreCard.scoreDetails?.collectionCallProper
+                    ?.withOrWithoutContact
+                )}
+
+                {renderUBSection(
                   "Closing The Call",
                   selectedScoreCard.scoreDetails?.closingTheCall
                 )}
+
+                {Array.isArray(selectedScoreCard.scoreDetails?.callComments) &&
+                  selectedScoreCard.scoreDetails.callComments.filter(Boolean)
+                    .length > 0 && (
+                    <div className="mt-2 shadow-md">
+                      <div className="font-black bg-gray-300 rounded-t-md py-1 w-full border text-center uppercase text-xl text-black">
+                        Call Comments
+                      </div>
+                      <div className="border-x border-b overflow-hidden rounded-b-md border-black text-sm text-gray-700 bg-gray-50 divide-y">
+                        {selectedScoreCard.scoreDetails.callComments
+                          .filter(Boolean)
+                          .map((comment: any, idx: number) => {
+                            const callNum =
+                              comment && typeof comment.call === "number"
+                                ? comment.call
+                                : idx + 1;
+                            return (
+                              <div
+                                key={idx}
+                                className="px-3 even:bg-gray-100 odd:bg-gray-200 py-2 flex flex-col gap-2"
+                              >
+                                <div className="col-span-1 font-semibold text-black">
+                                  Call {callNum}:
+                                </div>
+                                <div className="flex flex-col justify-between">
+                                  <div className="col-span-1 flex items-center">
+                                    <span className="font-semibold">
+                                      Comments of Agent:
+                                    </span>{" "}
+                                    {comment?.agent ? (
+                                      String(comment.agent)
+                                    ) : (
+                                      <div className="italic  ml-1 text-xs text-gray-400">
+                                        No comment
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="col-span-1 flex items-center">
+                                    <span className="font-semibold">
+                                      {" "}
+                                      Comments of Agency TL:
+                                    </span>{" "}
+                                    {comment?.tl ? (
+                                      String(comment.tl)
+                                    ) : (
+                                      <div className="italic ml-1 text-xs text-gray-400">
+                                        No comment
+                                      </div>
+                                    )}
+                                  </div>
+                                  <div className="col-span-1 flex items-center">
+                                    <span className="font-semibold">
+                                      Action Plan:
+                                    </span>{" "}
+                                    {comment?.actionPlan ? (
+                                      String(comment.actionPlan)
+                                    ) : (
+                                      <div className="italic ml-1 text-xs text-gray-400">
+                                        No comment
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
+                              </div>
+                            );
+                          })}
+                      </div>
+                    </div>
+                  )}
 
                 {selectedScoreCard.scoreDetails?.comments && (
                   <div className="mt-2 shadow-md">

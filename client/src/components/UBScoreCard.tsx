@@ -10,6 +10,8 @@ import {
 import { AnimatePresence, motion } from "framer-motion";
 import { month as MONTHS } from "../middleware/exports";
 import { gql, useQuery, useMutation } from "@apollo/client";
+import { useAppDispatch } from "../redux/store";
+import { setSuccess } from "../redux/slices/authSlice";
 
 const CREATE_UB_SCORECARD = gql`
   mutation CreateUBScoreCardData($input: UBScoreCardInput!) {
@@ -94,18 +96,19 @@ const ColumnInputGrid = ({
     columnIdx: number,
     event: ChangeEvent<HTMLInputElement>
   ) => {
-    if (!onCallValueChange) {
-      return;
-    }
+    if (!onCallValueChange) return;
+
     const callIndex = columnIdx - 1;
-    if (callIndex < 0 || callIndex >= callValuesRef.current.length) {
-      return;
-    }
-    const nextValue = parseNumericValue(event.target.value);
+    if (callIndex < 0 || callIndex >= callValuesRef.current.length) return;
+
+    const sanitized = event.target.value.replace(/[^0-9]/g, "");
+    event.target.value = sanitized; 
+
+    const nextValue = parseNumericValue(sanitized);
     const previousValue = callValuesRef.current[callIndex] ?? 0;
-    if (nextValue === previousValue) {
-      return;
-    }
+
+    if (nextValue === previousValue) return;
+
     callValuesRef.current[callIndex] = nextValue;
     onCallValueChange(callIndex, nextValue, previousValue);
   };
@@ -115,11 +118,13 @@ const ColumnInputGrid = ({
       {Array.from({ length: 6 }).map((_, idx) => (
         <div
           key={idx}
-          className="border-r flex flex-col border-black last:border-r-0 h-full"
+          className={`" ${
+            idx === 0 ? "" : defectValue ? "px-2" : isReadOnly ? "" : ""
+          } border-r flex flex-col border-black last:border-r-0 h-full "`}
         >
           {idx === 0 ? (
             <div
-              className={`w-full text-center font-normal ${
+              className={`w-full flex justify-center text-center items-center h-full font-normal ${
                 isReadOnly && defectValue == null ? staticCellClassName : ""
               } ${defectCellClassName}`}
             >
@@ -136,8 +141,14 @@ const ColumnInputGrid = ({
             />
           ) : (
             <input
-              className={` w-full outline-none ${inputClassName}`}
+              className={` w-full h-full outline-none ${inputClassName}`}
               inputMode="numeric"
+              type="number"
+              onKeyDown={(event) => {
+                if (["-", "+", "e", "E", "."].includes(event.key)) {
+                  event.preventDefault();
+                }
+              }}
               onChange={(event) => handleCallInputChange(idx, event)}
             />
           )}
@@ -199,7 +210,24 @@ const LabeledInputColumn = ({
   </div>
 );
 
-const CallCommentSection = ({ callNumber }: { callNumber: number }) => (
+type CallComment = {
+  call: number;
+  agent: string;
+  tl: string;
+  actionPlan: string;
+};
+
+type CallCommentSectionProps = {
+  callNumber: number;
+  value: CallComment;
+  onChange: (value: CallComment) => void;
+};
+
+const CallCommentSection = ({
+  callNumber,
+  value,
+  onChange,
+}: CallCommentSectionProps) => (
   <div className="flex w-full h-auto flex-col">
     <div className="grid uppercase grid-cols-4 border bg-gray-400 py-1 rounded-t-md gap-2">
       <div className="col-span-2 ml-2">{` CALL ${callNumber} COMMENTS OF AGENT`}</div>
@@ -208,19 +236,39 @@ const CallCommentSection = ({ callNumber }: { callNumber: number }) => (
     </div>
     <div className="grid uppercase bg-gray-100 grid-cols-4 items-center border-x border-b rounded-b-md gap-2">
       <div className="col-span-2 ml-2 py-1 flex items-center border-r h-full">
-        <input className="outline-none px-1 w-full" />
+        <input
+          className="outline-none px-1 w-full"
+          value={value.agent}
+          onChange={(e) => onChange({ ...value, agent: e.target.value })}
+        />
       </div>
       <div className=" flex items-center border-r h-full">
-        <input className="outline-none px-1 w-full" />
+        <input
+          className="outline-none px-1 w-full"
+          value={value.tl}
+          onChange={(e) => onChange({ ...value, tl: e.target.value })}
+        />
       </div>
       <div className=" flex items-center h-full">
-        <input className="outline-none px-1 w-full" />
+        <input
+          className="outline-none px-1 w-full"
+          value={value.actionPlan}
+          onChange={(e) => onChange({ ...value, actionPlan: e.target.value })}
+        />
       </div>
     </div>
   </div>
 );
 
 const UBScoreCard = () => {
+  const [callComments, setCallComments] = useState<CallComment[]>(() =>
+    Array.from({ length: 5 }, (_, idx) => ({
+      call: idx + 1,
+      agent: "",
+      tl: "",
+      actionPlan: "",
+    }))
+  );
   const [selectedMonth, setSelectedMonth] = useState<string>("");
   const [selectedCollectionOfficer, setSelectedCollectionOfficer] =
     useState<string>("");
@@ -228,14 +276,23 @@ const UBScoreCard = () => {
   const [isMonthMenuOpen, setMonthMenuOpen] = useState(false);
   const [isCollectionMenuOpen, setCollectionMenuOpen] = useState(false);
   const [isEvaluatorMenuOpen, setEvaluatorMenuOpen] = useState(false);
-  const [questionCallValues, setQuestionCallValues] = useState<{ [questionKey: string]: number[] }>({});
+  const [questionCallValues, setQuestionCallValues] = useState<{
+    [questionKey: string]: number[];
+  }>({});
   const [callContactStatuses, setCallContactStatuses] = useState<boolean[]>(
     () => Array(5).fill(true)
   );
   const monthFieldRef = useRef<HTMLDivElement | null>(null);
   const collectionFieldRef = useRef<HTMLDivElement | null>(null);
   const evaluatorFieldRef = useRef<HTMLDivElement | null>(null);
-  const [createUBScoreCardData] = useMutation(CREATE_UB_SCORECARD);
+  const [createUBScoreCardData] = useMutation(CREATE_UB_SCORECARD, {
+    onCompleted: () => {
+      showNotifier("Score card saved.");
+    },
+    onError: (error) => {
+      showNotifier(`INCORRECT: ${error.message}`, true);
+    },
+  });
 
   const handleCallValueChange = useCallback(
     (questionKey: string, callIndex: number, value: number) => {
@@ -256,10 +313,14 @@ const UBScoreCard = () => {
   }, [questionCallValues]);
 
   const callScores = useMemo(() => {
-    const firstKey = Object.keys(questionCallValues)[0];
-    const arr = firstKey ? questionCallValues[firstKey] : Array(5).fill(0);
-    return arr.map((value) => {
-      const rawScore = Math.max(0, 100 - value * DEFECT_PENALTY_PERCENT);
+    return Array.from({ length: 5 }).map((_, callIdx) => {
+      const totalDefectsForCall = Object.values(questionCallValues)
+        .map((arr) => arr[callIdx] ?? 0)
+        .reduce((sum, v) => sum + v, 0);
+      const rawScore = Math.max(
+        0,
+        100 - totalDefectsForCall * DEFECT_PENALTY_PERCENT
+      );
       return rawScore < SCORE_FLOOR_PERCENT ? 0 : rawScore;
     });
   }, [questionCallValues]);
@@ -328,6 +389,17 @@ const UBScoreCard = () => {
     setEvaluatorMenuOpen(false);
   };
 
+  const dispatch = useAppDispatch();
+  const showNotifier = (message: string, isMessage = false) => {
+    dispatch(
+      setSuccess({
+        success: true,
+        message,
+        isMessage,
+      })
+    );
+  };
+
   const { data: bucketUsersData } = useQuery<{
     getBucketUser: BucketUser[];
   }>(GET_BUCKET_USERS, {
@@ -374,11 +446,13 @@ const UBScoreCard = () => {
                   return alert("Please select a collection officer");
                 if (!selectedEvaluator)
                   return alert("Please select an evaluator");
-                const getCalls = (key: string) => questionCallValues[key] ?? Array(5).fill(0);
+                const getCalls = (key: string) =>
+                  questionCallValues[key] ?? Array(5).fill(0);
                 const scoreDetails = {
                   opening: [
                     {
-                      question: "Used appropriate greeting / Identified self and Agency (full Agency name)",
+                      question:
+                        "Used appropriate greeting / Identified self and Agency (full Agency name)",
                       calls: getCalls("opening-greeting"),
                     },
                     {
@@ -390,11 +464,13 @@ const UBScoreCard = () => {
                       calls: getCalls("opening-recorded"),
                     },
                     {
-                      question: "Mentioned CH/ Valid CP/Y's Full Name for outgoing calls to a registered number. Asked correct Positive Identifiers for incoming calls & calls to unregistered number.",
+                      question:
+                        "Mentioned CH/ Valid CP/Y's Full Name for outgoing calls to a registered number. Asked correct Positive Identifiers for incoming calls & calls to unregistered number.",
                       calls: getCalls("opening-fullname"),
                     },
                     {
-                      question: "Properly identified self, mentioned first and last name to CH/Valid CP/Y",
+                      question:
+                        "Properly identified self, mentioned first and last name to CH/Valid CP/Y",
                       calls: getCalls("opening-selfid"),
                     },
                   ],
@@ -406,11 +482,13 @@ const UBScoreCard = () => {
                           calls: getCalls("withContact-explainedStatus"),
                         },
                         askedNotification: {
-                          question: "Asked if CH received demand/ notification letter",
+                          question:
+                            "Asked if CH received demand/ notification letter",
                           calls: getCalls("withContact-askedNotification"),
                         },
                         showedEmpathy: {
-                          question: "Showed empathy and compassion as appropriate.",
+                          question:
+                            "Showed empathy and compassion as appropriate.",
                           calls: getCalls("withContact-showedEmpathy"),
                         },
                       },
@@ -422,11 +500,13 @@ const UBScoreCard = () => {
                       },
                       negotiationSkills: {
                         explainedConsequences: {
-                          question: "Explained consequences of non-payment, if applicable",
+                          question:
+                            "Explained consequences of non-payment, if applicable",
                           calls: getCalls("withContact-explainedConsequences"),
                         },
                         askedCapacity: {
-                          question: "Asked for CM's capacity to pay, if applicable",
+                          question:
+                            "Asked for CM's capacity to pay, if applicable",
                           calls: getCalls("withContact-askedCapacity"),
                         },
                         followedHierarchy: {
@@ -448,19 +528,25 @@ const UBScoreCard = () => {
                     withoutContact: {
                       establishingRapport: {
                         probedContactNumbers: {
-                          question: "Probed on BTC, ETA and other contact numbers",
-                          calls: getCalls("withoutContact-probedContactNumbers"),
+                          question:
+                            "Probed on BTC, ETA and other contact numbers",
+                          calls: getCalls(
+                            "withoutContact-probedContactNumbers"
+                          ),
                         },
                         usedTimeSchedule: {
-                          question: "Used time schedule and follow-up if applicable",
+                          question:
+                            "Used time schedule and follow-up if applicable",
                           calls: getCalls("withoutContact-usedTimeSchedule"),
                         },
                         askedPartyName: {
-                          question: "Asked for name of party, relation to client",
+                          question:
+                            "Asked for name of party, relation to client",
                           calls: getCalls("withoutContact-askedPartyName"),
                         },
                         leftUrgentMessage: {
-                          question: "Left URGENT message ang gave correct contact number",
+                          question:
+                            "Left URGENT message ang gave correct contact number",
                           calls: getCalls("withoutContact-leftUrgentMessage"),
                         },
                       },
@@ -468,27 +554,43 @@ const UBScoreCard = () => {
                     withOrWithoutContact: {
                       qualityOfCall: {
                         professionalTone: {
-                          question: "Used professional tone of voice (did not shout)",
-                          calls: getCalls("withOrWithoutContact-professionalTone"),
+                          question:
+                            "Used professional tone of voice (did not shout)",
+                          calls: getCalls(
+                            "withOrWithoutContact-professionalTone"
+                          ),
                         },
                         politeLanguage: {
-                          question: "Did not use unacceptable words/phrases and maintained polite/civil language",
-                          calls: getCalls("withOrWithoutContact-politeLanguage"),
+                          question:
+                            "Did not use unacceptable words/phrases and maintained polite/civil language",
+                          calls: getCalls(
+                            "withOrWithoutContact-politeLanguage"
+                          ),
                         },
                         updatedInfoSheet: {
-                          question: "Updated correct information and payment details on info sheet, if applicable",
-                          calls: getCalls("withOrWithoutContact-updatedInfoSheet"),
+                          question:
+                            "Updated correct information and payment details on info sheet, if applicable",
+                          calls: getCalls(
+                            "withOrWithoutContact-updatedInfoSheet"
+                          ),
                         },
                         adherenceToPolicy: {
-                          question: "Adherence to Policy(BSP, Code of Conduct, etc.)",
-                          calls: getCalls("withOrWithoutContact-adherenceToPolicy"),
+                          question:
+                            "Adherence to Policy(BSP, Code of Conduct, etc.)",
+                          calls: getCalls(
+                            "withOrWithoutContact-adherenceToPolicy"
+                          ),
                         },
                         gppIntegrityIssues: {
-                          question: "GPP / INTEGRITY ISSUES (Revealed and Collected debt from unauthorized CP)",
-                          calls: getCalls("withOrWithoutContact-gppIntegrityIssues"),
+                          question:
+                            "GPP / INTEGRITY ISSUES (Revealed and Collected debt from unauthorized CP)",
+                          calls: getCalls(
+                            "withOrWithoutContact-gppIntegrityIssues"
+                          ),
                         },
                         soundJudgment: {
-                          question: "Exercised sound judgment in determining the appropriate course of action.",
+                          question:
+                            "Exercised sound judgment in determining the appropriate course of action.",
                           calls: getCalls("withOrWithoutContact-soundJudgment"),
                         },
                       },
@@ -504,6 +606,7 @@ const UBScoreCard = () => {
                       calls: getCalls("closing-requestReturnCall"),
                     },
                   ],
+                  callComments,
                 };
 
                 try {
@@ -523,8 +626,14 @@ const UBScoreCard = () => {
                     },
                   });
                 } catch (err: any) {
-                  console.error("GraphQL error:", err);
-                  alert("Failed to save. Check console.");
+                  if (err.graphQLErrors && err.graphQLErrors.length > 0) {
+                    console.error("GraphQL Errors:", err.graphQLErrors);
+                  }
+                  if (err.networkError) {
+                    console.error("Network Error:", err.networkError);
+                  }
+                  console.error("Full Apollo Error:", err);
+                  alert("Failed to save. Check console for detailed error.");
                 }
               }}
             >
@@ -835,10 +944,13 @@ const UBScoreCard = () => {
                   className="w-full pl-3 py-1 border-r truncate"
                   title="Used appropriate greeting / Identified self and Agency (full Agency name)"
                 >
-                  Used appropriate greeting / Identified self and Agency (full Agency name)
+                  Used appropriate greeting / Identified self and Agency (full
+                  Agency name)
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("opening-greeting", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange("opening-greeting", callIdx, value)
+                  }
                   defectValue={2}
                 />
               </div>
@@ -848,7 +960,9 @@ const UBScoreCard = () => {
                   Mentioned UBP Disclaimer spiel
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("opening-disclaimer", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange("opening-disclaimer", callIdx, value)
+                  }
                   defectValue={6}
                 />
               </div>
@@ -861,7 +975,9 @@ const UBScoreCard = () => {
                   Mentioned Line is Recorded
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("opening-recorded", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange("opening-recorded", callIdx, value)
+                  }
                   inputClassName="whitespace-nowrap"
                   defectValue={5}
                 />
@@ -878,7 +994,9 @@ const UBScoreCard = () => {
                   incoming calls & calls to unregistered number.
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("opening-fullname", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange("opening-fullname", callIdx, value)
+                  }
                   defectValue={6}
                 />
               </div>
@@ -891,7 +1009,9 @@ const UBScoreCard = () => {
                   Valid CP/Y
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("opening-selfid", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange("opening-selfid", callIdx, value)
+                  }
                   defectValue={6}
                 />
               </div>
@@ -919,7 +1039,13 @@ const UBScoreCard = () => {
                   <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withContact-explainedStatus", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withContact-explainedStatus",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={1}
                 />
               </div>
@@ -930,7 +1056,13 @@ const UBScoreCard = () => {
                   <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withContact-askedNotification", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withContact-askedNotification",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={1}
                 />
               </div>
@@ -942,7 +1074,13 @@ const UBScoreCard = () => {
                   Showed empathy and compassion as appropriate.
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withContact-showedEmpathy", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withContact-showedEmpathy",
+                      callIdx,
+                      value
+                    )
+                  }
                   inputClassName="whitespace-nowrap"
                   defectValue={2}
                 />
@@ -961,7 +1099,13 @@ const UBScoreCard = () => {
                   <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withContact-soughtRFD", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withContact-soughtRFD",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={7}
                 />
               </div>
@@ -984,7 +1128,13 @@ const UBScoreCard = () => {
                   <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withContact-explainedConsequences", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withContact-explainedConsequences",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={1}
                 />
               </div>
@@ -998,7 +1148,13 @@ const UBScoreCard = () => {
                   <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withContact-askedCapacity", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withContact-askedCapacity",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={1}
                 />
               </div>
@@ -1012,7 +1168,13 @@ const UBScoreCard = () => {
                   <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withContact-followedHierarchy", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withContact-followedHierarchy",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={1}
                 />
               </div>
@@ -1030,7 +1192,13 @@ const UBScoreCard = () => {
                   <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withContact-offeredDiscount", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withContact-offeredDiscount",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={1}
                 />
               </div>
@@ -1044,7 +1212,13 @@ const UBScoreCard = () => {
                   <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withContact-advisedSourceFunds", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withContact-advisedSourceFunds",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={1}
                 />
               </div>
@@ -1065,7 +1239,13 @@ const UBScoreCard = () => {
                   Probed on BTC, ETA and other contact numbers
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withoutContact-probedContactNumbers", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withoutContact-probedContactNumbers",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={7}
                 />
               </div>
@@ -1075,7 +1255,13 @@ const UBScoreCard = () => {
                   Used time schedule and follow-up if applicable
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withoutContact-usedTimeSchedule", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withoutContact-usedTimeSchedule",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={6}
                 />
               </div>
@@ -1087,7 +1273,13 @@ const UBScoreCard = () => {
                   Asked for name of party, relation to client
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withoutContact-askedPartyName", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withoutContact-askedPartyName",
+                      callIdx,
+                      value
+                    )
+                  }
                   inputClassName="whitespace-nowrap"
                   defectValue={7}
                 />
@@ -1101,7 +1293,13 @@ const UBScoreCard = () => {
                   Left URGENT message ang gave correct contact number
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withoutContact-leftUrgentMessage", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withoutContact-leftUrgentMessage",
+                      callIdx,
+                      value
+                    )
+                  }
                   inputClassName="whitespace-nowrap"
                   defectValue={6}
                 />
@@ -1123,7 +1321,13 @@ const UBScoreCard = () => {
                   Used professional tone of voice (did not shout)
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withOrWithoutContact-professionalTone", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withOrWithoutContact-professionalTone",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={7}
                 />
               </div>
@@ -1134,7 +1338,13 @@ const UBScoreCard = () => {
                   polite/civil language
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withOrWithoutContact-politeLanguage", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withOrWithoutContact-politeLanguage",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={6}
                 />
               </div>
@@ -1147,7 +1357,13 @@ const UBScoreCard = () => {
                   if applicable
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withOrWithoutContact-updatedInfoSheet", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withOrWithoutContact-updatedInfoSheet",
+                      callIdx,
+                      value
+                    )
+                  }
                   inputClassName="whitespace-nowrap"
                   defectValue={7}
                 />
@@ -1161,7 +1377,13 @@ const UBScoreCard = () => {
                   Adherence to Policy(BSP, Code of Conduct, etc.)
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withOrWithoutContact-adherenceToPolicy", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withOrWithoutContact-adherenceToPolicy",
+                      callIdx,
+                      value
+                    )
+                  }
                   inputClassName="whitespace-nowrap"
                   defectValue={6}
                 />
@@ -1176,7 +1398,13 @@ const UBScoreCard = () => {
                   unauthorized CP)
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withOrWithoutContact-gppIntegrityIssues", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withOrWithoutContact-gppIntegrityIssues",
+                      callIdx,
+                      value
+                    )
+                  }
                   inputClassName="whitespace-nowrap"
                   defectValue={7}
                 />
@@ -1191,7 +1419,13 @@ const UBScoreCard = () => {
                   of action.
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("withOrWithoutContact-soundJudgment", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "withOrWithoutContact-soundJudgment",
+                      callIdx,
+                      value
+                    )
+                  }
                   inputClassName="whitespace-nowrap"
                   defectValue={6}
                 />
@@ -1214,7 +1448,13 @@ const UBScoreCard = () => {
                   <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("closing-summarizedPayment", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "closing-summarizedPayment",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={1}
                 />
               </div>
@@ -1228,7 +1468,13 @@ const UBScoreCard = () => {
                   <div className="text-red-800 font-black ml-1">*</div>
                 </div>
                 <ColumnInputGrid
-                  onCallValueChange={(callIdx, value) => handleCallValueChange("closing-requestReturnCall", callIdx, value)}
+                  onCallValueChange={(callIdx, value) =>
+                    handleCallValueChange(
+                      "closing-requestReturnCall",
+                      callIdx,
+                      value
+                    )
+                  }
                   defectValue={1}
                 />
               </div>
@@ -1304,11 +1550,11 @@ const UBScoreCard = () => {
                     renderCell={(columnIndex) => {
                       const callIdx = columnIndex - 1;
                       const perCallTotal = Object.values(questionCallValues)
-                        .map(arr => arr[callIdx] ?? 0)
+                        .map((arr) => arr[callIdx] ?? 0)
                         .reduce((sum, v) => sum + v, 0);
                       return (
                         <div
-                          className="w-full items-center flex rounded-sm border border-gray-300 bg-white px-2 py-1 text-center text-sm font-semibold"
+                          className="w-full items-center flex rounded-sm px-2 py-1 text-center text-sm font-semibold"
                           aria-label={`Call ${columnIndex} total defects`}
                         >
                           {perCallTotal.toString()}
@@ -1345,7 +1591,7 @@ const UBScoreCard = () => {
                 <div className="bg-gray-400 px-3 py-1 text-lg border-b">
                   Total score
                 </div>
-                <div className="h-full flex text-center text-2xl w-full">
+                <div className="h-full flex text-center bg-gray-200 text-2xl w-full">
                   <span
                     className={`inline-block w-full transition-all duration-500  h-full px-4 py-3 font-black  ${getScoreColorClasses(
                       overallScore
@@ -1359,7 +1605,18 @@ const UBScoreCard = () => {
 
             <div className="flex w-full h-auto gap-2 flex-col">
               {callLabels.map((_, idx) => (
-                <CallCommentSection key={idx} callNumber={idx + 1} />
+                <CallCommentSection
+                  key={idx}
+                  callNumber={idx + 1}
+                  value={callComments[idx]}
+                  onChange={(val) => {
+                    setCallComments((prev) => {
+                      const updated = [...prev];
+                      updated[idx] = { ...val, call: idx + 1 };
+                      return updated;
+                    });
+                  }}
+                />
               ))}
             </div>
           </div>

@@ -279,12 +279,12 @@ const Targets = () => {
         <div className="flex gap-2 w-full justify-center h-full">
           <div className=" absolute shadow-sm left-2 px-3 top-2 text-violet-800 gap-2 uppercase font-black py-1 border border-violet-600 rounded-sm bg-violet-200 flex">
             <p className="w-full">Count: </p>
-            <p>{ptpToConfirmData?.ptpToConfirmPaid?.count}</p>
+            <p>{ptpToConfirmData?.ptpToConfirmPaid?.count || 0}</p>
           </div>
           <div className="w-full flex py-1 font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100 h-full items-center">
             <p className="">Amount:</p>
             <p>
-              {ptpToConfirmData?.ptpToConfirmPaid?.amount?.toLocaleString(
+              {(ptpToConfirmData?.ptpToConfirmPaid?.amount || 0)?.toLocaleString(
                 "en-PH",
                 {
                   style: "currency",
@@ -307,7 +307,7 @@ const Targets = () => {
           </div>
           <div className="w-full flex py-1  font-semibold uppercase gap-1 text-violet-800 justify-center bg-violet-100 h-full items-center">
             <p className="">Amount:</p>
-            <p>{confirmPaidData?.confirmPaid?.amount?.toLocaleString(
+            <p>{(confirmPaidData?.confirmPaid?.amount || 0 )?.toLocaleString(
                 "en-PH",
                 {
                   style: "currency",
@@ -364,30 +364,6 @@ const Targets = () => {
           </div>
         </div>
       </div>
-
-      {/* <div className="flex-wrap flex items-center w-full h-full justify-center">
-        <div className={`flex x justify-center w-full h-full relative`}>
-          <GoDotFill
-            className={`absolute z-20 top-1 left-1 text-5xl ${
-              isNaN(callfileVariance)
-                ? ""
-                : callfileVariance >= 50
-                ? "text-green-500"
-                : "text-red-500"
-            } `}
-          />
-          <GoDotFill
-            className={`absolute z-10 animate-ping top-1 left-1 text-5xl ${
-              isNaN(callfileVariance)
-                ? ""
-                : callfileVariance >= 50
-                ? "text-green-500"
-                : "text-red-500"
-            } `}
-          />
-          <Doughnut data={data} className="bg-gray-100 px-5 rounded-sm" options={options} />
-        </div>
-      </div> */}
     </motion.div>
   );
 };

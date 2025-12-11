@@ -62,11 +62,14 @@ import mongoose from "mongoose";
 import { fileURLToPath } from "url";
 import scoreCardResolver from "./graphql/resolvers/scoreCardResolver.js";
 import scoreCardTypeDefs from "./graphql/schemas/scoreCardSchema.js";
+import EventEmitter from "events";
 
 const __filename = fileURLToPath(import.meta.url);
 
 // Equivalent of __dirname
 const __dirname = path.dirname(__filename);
+
+EventEmitter.defaultMaxListeners = 5000;
 
 const connectedUsers = new Map();
 
@@ -83,7 +86,9 @@ const allowedOrigins = [
   process.env.MY_FRONTEND,
   "http://localhost:4000",
   "http://localhost:3000",
+  "http://localhost:5000",
   `http://${process.env.MY_IP}:4000`,
+  `http://${process.env.MY_IP}:5000`,
 ];
 
 app.use(
@@ -172,7 +177,7 @@ cron.schedule(
         { $project: { _id: 1, user: "$cd.user" } },
       ])
         .allowDiskUse(true)
-        .cursor({ batchSize: 500 });
+        .cursor();
 
       const BATCH_SIZE = 500;
       let batchIds = [];
@@ -270,13 +275,183 @@ const typeDefs = mergeTypeDefs([
   scoreCardTypeDefs,
 ]);
 
+const schema = makeExecutableSchema({ typeDefs, resolvers });
+
+const initWebSocketServer = (httpServer, schema) => {
+  const wsServer = new WebSocketServer({
+    server: httpServer,
+    path: "/graphql",
+  });
+
+  wsServer.setMaxListeners(2000);
+
+  useServer(
+    {
+      schema,
+
+      // context for each WS connection
+      context: async (ctx) => {
+        const authHeader = ctx.connectionParams?.authorization;
+
+        if (!authHeader || !authHeader.startsWith("Bearer ")) {
+          throw new CustomError("Missing Token", 401);
+        }
+
+        const token = authHeader.split(" ")[1];
+        let user = null;
+
+        try {
+          const decoded = jwt.verify(token, process.env.SECRET);
+          user = await User.findById(decoded.id);
+          if (!user) throw new CustomError("User not found", 401);
+
+          const userId = user._id.toString();
+          const socket = ctx.extra.socket;
+
+          // Add socket to connectedUsers
+          if (!connectedUsers.has(userId)) {
+            connectedUsers.set(userId, {
+              sockets: new Set([socket]),
+              cleanupTimer: null,
+            });
+          } else {
+            const entry = connectedUsers.get(userId);
+            entry.sockets.add(socket);
+            if (entry.cleanupTimer) {
+              clearTimeout(entry.cleanupTimer);
+              entry.cleanupTimer = null;
+            }
+          }
+
+          ctx.extra.userId = userId;
+        } catch (err) {
+          console.log("WS auth error:", err.message);
+        }
+
+        return { user, pubsub, PUBSUB_EVENTS };
+      },
+
+      // disconnect logic
+      onDisconnect: async (ctx) => {
+        const socket = ctx.extra?.socket;
+        const userId = ctx.extra?.userId;
+        if (!userId || !socket) return;
+
+        const entry = connectedUsers.get(userId);
+        if (!entry) return;
+
+        // remove this socket
+        entry.sockets.delete(socket);
+
+        // user still has active connections
+        if (entry.sockets.size > 0) return;
+
+        // start cleanup timer
+        if (entry.cleanupTimer) clearTimeout(entry.cleanupTimer);
+
+        entry.cleanupTimer = setTimeout(async () => {
+          try {
+            const latest = connectedUsers.get(userId);
+            if (latest && latest.sockets.size > 0) return;
+
+            // remove from map
+            connectedUsers.delete(userId);
+
+            const userAccount = await User.findById(userId);
+            if (!userAccount) return;
+
+            // release handsOn customer
+            if (userAccount.handsOn) {
+              await CustomerAccount.updateOne(
+                { _id: userAccount.handsOn, on_hands: userId },
+                { $unset: { on_hands: "" } }
+              );
+            }
+
+            // mark offline
+            const updatedUser = await User.findByIdAndUpdate(
+              userId,
+              { $set: { isOnline: false }, $unset: { handsOn: "" } },
+              { new: true }
+            ).populate("buckets");
+
+            // close today's production
+            const startToday = new Date();
+            startToday.setHours(0, 0, 0, 0);
+            const endToday = new Date();
+            endToday.setHours(23, 59, 59, 999);
+
+            const prodRes = await Production.findOne({
+              user: userId,
+              createdAt: { $gte: startToday, $lte: endToday },
+            });
+
+            if (prodRes) {
+              prodRes.prod_history = (prodRes.prod_history || []).map((prod) =>
+                prod.existing
+                  ? { ...prod, existing: false, end: new Date() }
+                  : prod
+              );
+              prodRes.prod_history.push({
+                type: "LOGOUT",
+                start: new Date(),
+                existing: true,
+              });
+              await prodRes.save();
+            }
+
+            // VICIDIAL logout
+            const buckets = updatedUser?.buckets || [];
+            if (buckets.length > 0) {
+              const viciIps = [...new Set(buckets.map((x) => x.viciIp))];
+              const canCall = buckets.some((x) => x.canCall);
+              if (canCall) {
+                const statusChecks = await Promise.all(
+                  viciIps.map((ip) =>
+                    checkIfAgentIsOnline(updatedUser.vici_id, ip)
+                  )
+                );
+                const onlineIndex = statusChecks.indexOf(true);
+                if (onlineIndex !== -1) {
+                  await logoutVici(updatedUser.vici_id, viciIps[onlineIndex]);
+                }
+              }
+            }
+
+            // notify offline
+            await pubsub.publish(PUBSUB_EVENTS.OFFLINE_USER, {
+              accountOffline: {
+                agentId: userId,
+                message: PUBSUB_EVENTS.OFFLINE_USER,
+              },
+            });
+          } catch (err) {
+            console.error("WS cleanup error:", err);
+          }
+        }, 120000); // 2 min delay
+      },
+
+      onError: (ctx, msg, errors) => {
+        console.error("GraphQL WS error:", errors);
+      },
+
+      keepAlive: 12000,
+    },
+    wsServer
+  );
+
+  return wsServer;
+};
+
 const httpServer = createServer(app);
+
+initWebSocketServer(httpServer, schema);
 
 // Allow large CSV downloads to finish even on slow networks
 httpServer.setTimeout(10 * 60 * 1000);
 
 httpServer.on("connection", (socket) => {
-  socket.setMaxListeners(100);
+  socket.setMaxListeners(1000);
   socket.on("error", (err) => {
     if (
       !["ECONNRESET", "ECONNABORTED", "ERR_HTTP_REQUEST_TIMEOUT"].includes(
@@ -288,247 +463,140 @@ httpServer.on("connection", (socket) => {
   });
 });
 
-const schema = makeExecutableSchema({ typeDefs, resolvers });
+// const wsServer = new WebSocketServer({
+//   server: httpServer,
+//   path: "/graphql",
+// });
 
-const wsServer = new WebSocketServer({
-  server: httpServer,
-  path: "/graphql",
-});
+// useServer(
+//   {
+//     schema,
+//     context: async (ctx, msg, args) => {
+//       const authHeader = ctx.connectionParams?.authorization;
 
-useServer(
-  {
-    schema,
-    context: async (ctx, msg, args) => {
-      const authHeader = ctx.connectionParams?.authorization;
+//       if (!authHeader || !authHeader.startsWith("Bearer ")) {
+//         throw new CustomError("Missing Token", 401);
+//       }
 
-      if (!authHeader || !authHeader.startsWith("Bearer ")) {
-        throw new CustomError("Missing Token", 401);
-      }
+//       const token = authHeader.split(" ")[1];
+//       let user = null;
 
-      const token = authHeader.split(" ")[1];
-      let user = null;
+//       try {
+//         const decoded = jwt.verify(token, process.env.SECRET);
+//         user = await User.findById(decoded.id);
+//         ctx.extra.userId = decoded.id;
+//         const userId = user._id.toString();
 
-      try {
-        const decoded = jwt.verify(token, process.env.SECRET);
-        user = await User.findById(decoded.id);
-        ctx.extra.userId = decoded.id;
-        const userId = user._id.toString();
+//         const socket = ctx.extra.socket;
+//         let entry = connectedUsers.get(userId);
 
-        const socket = ctx.extra.socket;
-        let entry = connectedUsers.get(userId);
+//         if (!entry) {
+//           connectedUsers.set(userId, {
+//             sockets: new Set([socket]),
+//             cleanupTimer: null,
+//           });
+//         } else {
+//           entry.sockets.add(socket);
+//           if (entry.cleanupTimer) {
+//             clearTimeout(entry.cleanupTimer);
+//             entry.cleanupTimer = null;
+//           }
+//         }
+//       } catch (err) {
+//         console.log("WebSocket token error:", err.message);
+//       }
+//       return { user, pubsub, PUBSUB_EVENTS };
+//     },
+//     onDisconnect: async (ctx) => {
+//       const socket = ctx.extra?.socket;
+//       const userId = ctx.extra?.userId;
+//       if (!userId || !socket) return;
+//       const entry = connectedUsers.get(userId);
+//       if (!entry) return;
 
-        if (!entry) {
-          connectedUsers.set(userId, {
-            sockets: new Set([socket]),
-            cleanupTimer: null,
-          });
-        } else {
-          entry.sockets.add(socket);
-          if (entry.cleanupTimer) {
-            clearTimeout(entry.cleanupTimer);
-            entry.cleanupTimer = null;
-          }
-        }
-      } catch (err) {
-        console.log("WebSocket token error:", err.message);
-      }
-      return { user, pubsub, PUBSUB_EVENTS };
-    },
+//       entry.sockets.delete(socket);
 
-    // onDisconnect: async (ctx) => {
-    //   const socket = ctx.extra?.socket;
-    //   const userId = ctx.extra?.userId;
-    //   if (!userId || !socket) return;
+//       if (entry.sockets.size > 0) return;
 
-    //   const entry = connectedUsers.get(userId);
-    //   if (!entry) return;
+//       if (entry.cleanupTimer) clearTimeout(entry.cleanupTimer);
 
-    //   entry.sockets.delete(socket);
+//       entry.cleanupTimer = setTimeout(async () => {
+//         const latest = connectedUsers.get(userId);
 
-    //   if (entry.sockets.size > 0) return;
+//         if (latest && latest.sockets.size > 0) return;
 
-    //   if (entry.sockets.size === 0) {
-    //     entry.cleanupTimer = setTimeout(async () => {
-    //       const latest = connectedUsers.get(userId);
-    //       if (!latest || latest.sockets.size === 0) {
-    //         connectedUsers.delete(userId);
-    //         const userAccounts = await User.findById(userId);
+//         connectedUsers.delete(userId);
+//         const userAccount = await User.findById(userId);
+//         if (!userAccount) return;
 
-    //         if (userAccounts.handsOn) {
-    //           await CustomerAccount.findByIdAndUpdate(userAccounts.handsOn, {
-    //             $unset: {
-    //               on_hands: "",
-    //             },
-    //           });
-    //         }
+//         if (userAccount.handsOn) {
+//           await CustomerAccount.updateOne(
+//             { _id: userAccount.handsOn, on_hands: userId },
+//             { $unset: { on_hands: "" } }
+//           );
+//         }
 
-    //         const res = await User.findByIdAndUpdate(
-    //           userAccounts._id,
-    //           { $set: { isOnline: false },$unset: {handsOn: ""} },
-    //           { new: true }
-    //         ).populate("buckets");
+//         const updatedUser = await User.findByIdAndUpdate(
+//           userId,
+//           { $set: { isOnline: false }, $unset: { handsOn: "" } },
+//           { new: true }
+//         ).populate("buckets");
+//         const startToday = new Date();
+//         startToday.setHours(0, 0, 0, 0);
+//         const endToday = new Date();
+//         endToday.setHours(23, 59, 59, 999);
 
-    //         const startToday = new Date();
-    //         startToday.setHours(0, 0, 0, 0);
-    //         const endToday = new Date();
-    //         endToday.setHours(23, 59, 59, 999);
+//         const prodRes = await Production.findOne({
+//           user: userId,
+//           createdAt: { $gte: startToday, $lte: endToday },
+//         });
+//         if (prodRes) {
+//           prodRes.prod_history = (prodRes.prod_history || []).map((prod) => {
+//             if (prod.existing === true) {
+//               return { ...prod, existing: false, end: new Date() };
+//             }
+//             return prod;
+//           });
 
-    //         const prodRes = await Production.findOne({
-    //           user: new mongoose.Types.ObjectId(userId),
-    //           createdAt: { $gt: startToday, $lt: endToday },
-    //         });
+//           prodRes.prod_history.push({
+//             type: "LOGOUT",
+//             start: new Date(),
+//             existing: true,
+//           });
+//           await prodRes.save();
+//         }
+//         // ---- VICIDIAL LOGOUT ----
+//         const buckets = updatedUser?.buckets || [];
+//         if (buckets.length > 0) {
+//           const viciIps = [...new Set(buckets.map((x) => x.viciIp))];
+//           const canCall = buckets.some((x) => x.canCall);
+//           if (canCall) {
+//             const statusChecks = await Promise.all(
+//               viciIps.map((ip) => checkIfAgentIsOnline(updatedUser.vici_id, ip))
+//             );
+//             const onlineIndex = statusChecks.indexOf(true);
+//             if (onlineIndex !== -1) {
+//               await logoutVici(updatedUser.vici_id, viciIps[onlineIndex]);
+//             }
+//           }
+//         }
 
-    //         if (prodRes) {
-    //           const newStart = new Date();
+//         await pubsub.publish(PUBSUB_EVENTS.OFFLINE_USER, {
+//           accountOffline: {
+//             agentId: userId,
+//             message: PUBSUB_EVENTS.OFFLINE_USER,
+//           },
+//         });
+//       }, 120000);
+//     },
 
-    //           prodRes.prod_history = (prodRes.prod_history || []).map(
-    //             (prod) => {
-    //               if (prod.existing === true) {
-    //                 return {
-    //                   ...prod,
-    //                   existing: false,
-    //                   end: new Date(),
-    //                 };
-    //               }
-    //               return prod;
-    //             }
-    //           );
-
-    //           prodRes.prod_history.push({
-    //             type: "LOGOUT",
-    //             start: newStart,
-    //             existing: true,
-    //           });
-
-    //           await prodRes.save();
-    //         }
-
-    //         const bucket =
-    //           res?.buckets?.length > 0
-    //             ? new Array(...new Set(res?.buckets?.map((x) => x.viciIp)))
-    //             : [];
-
-    //         const bucketCanCall = res?.buckets.map((x) => x.canCall);
-
-    //         if (bucketCanCall.includes(true)) {
-    //           const chechIfisOnline = await Promise.all(
-    //             bucket.map(async (x) => {
-    //               const result = await checkIfAgentIsOnline(res?.vici_id, x);
-    //               return result;
-    //             })
-    //           );
-
-    //           await logoutVici(
-    //             res.vici_id,
-    //             bucket[chechIfisOnline.indexOf(true)]
-    //           );
-    //         }
-
-    //         await pubsub.publish(PUBSUB_EVENTS.OFFLINE_USER, {
-    //           accountOffline: {
-    //             agentId: userId,
-    //             message: PUBSUB_EVENTS.OFFLINE_USER,
-    //           },
-    //         });
-    //       }
-    //     }, 120000);
-    //   }
-    // },
-
-    onDisconnect: async (ctx) => {
-      const socket = ctx.extra?.socket;
-      const userId = ctx.extra?.userId;
-      if (!userId || !socket) return;
-      const entry = connectedUsers.get(userId);
-      if (!entry) return;
-      // Remove this socket from the user's active connections
-      entry.sockets.delete(socket);
-      // If at least one socket remains = user is still online somewhere else
-      if (entry.sockets.size > 0) return;
-      // If cleanup timer exists from previous disconnect, clear it
-      if (entry.cleanupTimer) clearTimeout(entry.cleanupTimer);
-      // Start delayed cleanup
-      entry.cleanupTimer = setTimeout(async () => {
-        const latest = connectedUsers.get(userId);
-        // User reconnected in the meantime
-        if (latest && latest.sockets.size > 0) return;
-        // Remove user from map entirely
-        connectedUsers.delete(userId);
-        const userAccount = await User.findById(userId);
-        if (!userAccount) return;
-        // Cleanup: Release handsOn customer if the user is holding one
-        if (userAccount.handsOn) {
-          await CustomerAccount.updateOne(
-            { _id: userAccount.handsOn, on_hands: userId },
-            { $unset: { on_hands: "" } }
-          );
-        }
-        // Mark user offline
-        const updatedUser = await User.findByIdAndUpdate(
-          userId,
-          { $set: { isOnline: false }, $unset: { handsOn: "" } },
-          { new: true }
-        ).populate("buckets");
-        // Build today's date range
-        const startToday = new Date();
-        startToday.setHours(0, 0, 0, 0);
-        const endToday = new Date();
-        endToday.setHours(23, 59, 59, 999);
-        // Fetch today's production
-        const prodRes = await Production.findOne({
-          user: userId,
-          createdAt: { $gte: startToday, $lte: endToday },
-        });
-        if (prodRes) {
-          // Close any existing open production logs
-          prodRes.prod_history = (prodRes.prod_history || []).map((prod) => {
-            if (prod.existing === true) {
-              return { ...prod, existing: false, end: new Date() };
-            }
-            return prod;
-          });
-          // Add logout entry
-          prodRes.prod_history.push({
-            type: "LOGOUT",
-            start: new Date(),
-            existing: true,
-          });
-          await prodRes.save();
-        }
-        // ---- VICIDIAL LOGOUT ----
-        const buckets = updatedUser?.buckets || [];
-        if (buckets.length > 0) {
-          const viciIps = [...new Set(buckets.map((x) => x.viciIp))];
-          const canCall = buckets.some((x) => x.canCall);
-          if (canCall) {
-            const statusChecks = await Promise.all(
-              viciIps.map((ip) => checkIfAgentIsOnline(updatedUser.vici_id, ip))
-            );
-            const onlineIndex = statusChecks.indexOf(true);
-            if (onlineIndex !== -1) {
-              await logoutVici(updatedUser.vici_id, viciIps[onlineIndex]);
-            }
-          }
-        }
-        // Notify system
-        await pubsub.publish(PUBSUB_EVENTS.OFFLINE_USER, {
-          accountOffline: {
-            agentId: userId,
-            message: PUBSUB_EVENTS.OFFLINE_USER,
-          },
-        });
-      }, 120000);
-    },
-
-    onError: (ctx, msg, errors) => {
-      console.error("GraphQL WebSocket error:", errors);
-    },
-    keepAlive: 12000,
-  },
-  wsServer
-);
-
-wsServer.setMaxListeners(50);
+//     onError: (ctx, msg, errors) => {
+//       console.error("GraphQL WebSocket error:", errors);
+//     },
+//     keepAlive: 12000,
+//   },
+//   wsServer
+// );
 
 const startServer = async () => {
   const server = new ApolloServer({
@@ -544,19 +612,14 @@ const startServer = async () => {
           const sessionUser = req.session?.user;
           let user = null;
           if (sessionUser) {
-            try {
-              user = await User.findById(sessionUser._id);
-              return { user, res, req, pubsub, PUBSUB_EVENTS };
-            } catch (error) {
-              console.log(error.message);
-            }
+            user = await User.findById(sessionUser._id);
           }
           return { user, res, req, pubsub, PUBSUB_EVENTS };
         },
       })
     );
 
-    httpServer.listen(process.env.PORT, "0.0.0.0", () => {
+    httpServer.listen(process.env.PORT, () => {
       console.log(
         `🚀 Server running at http://localhost:${process.env.PORT}/graphql`
       );
