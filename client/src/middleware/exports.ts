@@ -197,6 +197,15 @@ export const accountsNavbar: { [key: string]: links[] } = {
         },
       ],
     },
+    {
+      name: "test",
+      link: "/testsample",
+      tabs: null,
+    },{
+      name: "recoringsssx",
+      link: "/test2",
+      tabs: null,
+    }
   ],
   MIS: [
     {

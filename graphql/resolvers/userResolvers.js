@@ -519,7 +519,6 @@ const userResolvers = {
         const user = await User.findOne({ username });
 
         if (!user) throw new CustomError("Invalid", 401);
-        console.log(username)
 
         if (user.isLock) throw new CustomError("Lock", 401);
 
@@ -633,7 +632,7 @@ const userResolvers = {
           user._id,
           {
             $set: { isOnline: false },
-            $unset: { handsOn: "" },
+            $unset: { handsOn: "", "features.token": "" },
           },
           { new: true }
         ).populate("buckets");
@@ -793,6 +792,7 @@ const userResolvers = {
           id,
           {
             $set: { isOnline: false },
+            $unset: {"features.token": ""}
           },
           { new: true }
         );

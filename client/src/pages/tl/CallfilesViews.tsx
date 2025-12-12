@@ -664,7 +664,7 @@ const CallfilesViews: React.FC<Props> = ({
       setFile([]);
       setCallfile(null);
       setExcelData([]);
-      if(!loading) {
+      if (!loading) {
         dispatch(
           setSuccess({
             success: data.addSelective.success,
@@ -674,7 +674,7 @@ const CallfilesViews: React.FC<Props> = ({
         );
       }
     },
-    onError: async(err) => {
+    onError: async (err) => {
       if (err.message.includes("check the amount")) {
         setFile([]);
         await refetch();
@@ -783,7 +783,7 @@ const CallfilesViews: React.FC<Props> = ({
       >
         <div className="w-full h-full rounded-b-sm overflow-hidden flex flex-col text-left">
           <div className="w-full">
-            <div className=" w-full border border-gray-600 px-2 py-2 uppercase rounded-t-md truncate bg-gray-300 grid grid-cols-[repeat(14,_minmax(0,_1fr))] gap-2 font-black text-black text-xs">
+            <div className=" w-full border border-black px-2 py-2 uppercase rounded-t-md truncate bg-gray-300 grid grid-cols-[repeat(14,_minmax(0,_1fr))] gap-2 font-black text-black text-xs">
               {labels.map((x, index) => (
                 <div
                   className="w-full text-ellipsis cursor-default truncate"
@@ -796,6 +796,12 @@ const CallfilesViews: React.FC<Props> = ({
             </div>
           </div>
           <div className=" overflow-y-auto h-full">
+            {data?.getCallfiles?.result &&
+              data?.getCallfiles?.result?.length < 1 && (
+                <div className="w-full py-3 bg-gray-100 border-x border-b rounded-b-md border-black shadow-md flex justify-center items-center text-gray-500 italic">
+                  No callfiles found.
+                </div>
+              )}
             {data?.getCallfiles?.result?.map((res, index) => {
               const date = new Date(res.callfile.createdAt);
               const today = new Date();
@@ -815,12 +821,12 @@ const CallfilesViews: React.FC<Props> = ({
               return (
                 <motion.div
                   key={index}
-                  className=""
+                  className="border-x border-b border-black last:rounded-b-md overflow-hidden last:shadow-md"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
                 >
-                  <div className="text-[0.7rem] border-x border-b border-gray-600 last:rounded-b-md last:shadow-md hover:bg-gray-300 transition-all items-center py-2 px-3 bg-gray-100 even:bg-gray-200 2xl:text-xs gap-2 text-gray-800 grid grid-cols-[repeat(14,_minmax(0,_1fr))] w-full ">
+                  <div className="text-[0.7rem]    hover:bg-gray-300 transition-all items-center py-2 px-3 bg-gray-100 even:bg-gray-200 2xl:text-xs gap-2 text-gray-800 grid grid-cols-[repeat(14,_minmax(0,_1fr))] w-full ">
                     <div
                       className="overflow-hidden pr-2"
                       title={res.callfile.name}

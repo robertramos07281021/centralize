@@ -710,23 +710,26 @@ const CustomerDisposition = () => {
     };
   }, [debouncedSearch]);
 
-  const [selectTask, {loading: selectTaskLoading}] = useMutation(SELECT_TASK, {
-    onCompleted: () => {
-      setSearch("");
-    },
-    onError: (err) => {
-      if (err.message.includes("Already taken")) {
-        dispatch(setSelectedCustomer(null));
-        dispatch(
-          setSuccess({
-            success: true,
-            message: "Customer already taken by other agent",
-            isMessage: false,
-          })
-        );
-      }
-    },
-  });
+  const [selectTask, { loading: selectTaskLoading }] = useMutation(
+    SELECT_TASK,
+    {
+      onCompleted: () => {
+        setSearch("");
+      },
+      onError: (err) => {
+        if (err.message.includes("Already taken")) {
+          dispatch(setSelectedCustomer(null));
+          dispatch(
+            setSuccess({
+              success: true,
+              message: "Customer already taken by other agent",
+              isMessage: false,
+            })
+          );
+        }
+      },
+    }
+  );
 
   const onClickSearch = useCallback(
     async (customer: Search) => {
@@ -753,11 +756,12 @@ const CustomerDisposition = () => {
 
   const { data } = useQuery<{ checkIfAgentIsInline: string }>(CHECK_IF_INLINE, {
     notifyOnNetworkStatusChange: true,
-    skip: !location.pathname.includes("cip") || !canCallBuckets?.includes(true),
+    // skip: !location.pathname.includes("cip") || !canCallBuckets?.includes(true),
     pollInterval: 1000,
   });
 
   const checkIfAgentIsInline = data?.checkIfAgentIsInline;
+  console.log(checkIfAgentIsInline);
 
   // useEffect(() => {
   //   if (
@@ -770,8 +774,10 @@ const CustomerDisposition = () => {
   // }, [checkIfAgentIsInline]);
 
   const clearSelectedCustomer = useCallback(async () => {
-    const res = await deselectTask({ variables: { id: selectedCustomer?._id } });
-    if(!res?.errors) {
+    const res = await deselectTask({
+      variables: { id: selectedCustomer?._id },
+    });
+    if (!res?.errors) {
       setSearch("");
       dispatch(setIsRing(false));
       if (
@@ -860,7 +866,9 @@ const CustomerDisposition = () => {
   });
 
   const callbackUpdateRPC = useCallback(async () => {
-    await updateRPC({ variables: { id: selectedCustomer?.customer_info?._id } });
+    await updateRPC({
+      variables: { id: selectedCustomer?.customer_info?._id },
+    });
   }, [updateRPC, selectedCustomer]);
 
   const callbackNo = useCallback(() => {
@@ -883,9 +891,43 @@ const CustomerDisposition = () => {
   const [getCallRecording, { loading: getCallingRecordingLoading }] =
     useMutation<{ getCallRecording: string }>(GET_RECORDING, {
       onCompleted: (data) => {
+        console.log(data)
         dispatch(setCallUniqueId(data.getCallRecording));
       },
     });
+
+  useEffect(() => {
+    const splitInline = checkIfAgentIsInline?.split("|") ?? null;
+
+    if (splitInline && !selectedCustomer && Boolean(splitInline[2])) {
+      const timer = setTimeout(async () => {
+        const res = await refetch({ search: splitInline[10] });
+        if (!res.error) {
+          if (res.data.search.length > 1) {
+            setIsSearch(res.data.search);
+          } else if (res.data.search.length === 1) {
+            const selectingTask = await selectTask({
+              variables: { id: res.data.search[0]._id },
+            });
+            if (!selectingTask?.errors) {
+              dispatch(setSelectedCustomer(res.data.search[0]));
+            }
+          }
+        }
+      });
+      return () => clearTimeout(timer);
+    }
+
+    if (splitInline && selectedCustomer && Boolean(splitInline[2])) {
+      const timer = setTimeout(async () => {
+        if(splitInline[0] === "PAUSED" && splitInline[9] === "DISPO") {
+          await getCallRecording({variables: {user_id: userLogged?._id, mobile:splitInline[10] }})
+          console.log('hello')
+        }
+      });
+      return () => clearTimeout(timer);
+    }
+  }, [checkIfAgentIsInline,selectedCustomer]);
 
   const [makeCall] = useMutation<{
     makeCall: string;
@@ -915,8 +957,10 @@ const CustomerDisposition = () => {
 
     if (res.data.randomCustomer) {
       setRandomLoading(false);
-      const selectionRes = await selectTask({ variables: { id: res?.data?.randomCustomer?._id } });
-      if(!selectionRes.errors) {
+      const selectionRes = await selectTask({
+        variables: { id: res?.data?.randomCustomer?._id },
+      });
+      if (!selectionRes.errors) {
         dispatch(setSelectedCustomer(res?.data?.randomCustomer));
       }
     } else {
@@ -1015,7 +1059,7 @@ const CustomerDisposition = () => {
           const selectTaskres = await selectTask({
             variables: { id: res?.data?.randomCustomer?._id },
           });
-          if(!selectTaskres.errors) {
+          if (!selectTaskres.errors) {
             dispatch(setIsRing(true));
             dispatch(setSelectedCustomer(res?.data?.randomCustomer));
           }

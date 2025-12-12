@@ -458,7 +458,7 @@ const callResolver = {
 
             //   if (new1[1] && new1[2]) {
             //     const newRes = await getCallInfo(x, new1[1], new1[2]);
-            //     // console.log("first: ", newRes);
+            //     console.log("first: ", newRes);
             //     return res;
             //   } else {
             //     // console.log("second: ", newMap[0]);

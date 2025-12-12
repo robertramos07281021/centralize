@@ -754,10 +754,8 @@ const DispositionForm: React.FC<Props> = ({
     const isPaidWithSelective = dispo === paidId && hasSelective;
 
     return !!(
-      Number(balance) >= 0 &&
-      dispo !== paidId &&
-      !hasSelective &&
-      (notAssigned || isPTPAndAssignedToUser || isPaidWithSelective)
+      Number(balance) >= 0 && (isPaidWithSelective || !hasSelective) && 
+      (notAssigned || isPTPAndAssignedToUser )
     );
   }
 

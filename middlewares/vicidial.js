@@ -189,7 +189,6 @@ export async function getRecordings(vici_id, agent_user) {
         duration: "Y",
       },
     });
-    console.log(data)
     return data;
   } catch (error) {
     console.error("❌ Error Get Recordings:", error.message);
@@ -278,7 +277,7 @@ export async function getCallInfo(vici_id, call_id, session_id) {
         stage: "csv",
       },
     });
-
+    // console.log(res.data)
     return res.data;
   } catch (error) {
     console.error("❌ Error Get getCallInfo:", error.message);
@@ -288,6 +287,7 @@ export async function getCallInfo(vici_id, call_id, session_id) {
 export async function checkingLiveCall(vici_id, agent_user) {
   const VICIDIAL_API = `http://${vici_id}/agc/api.php`;
   try {
+
     const res = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,

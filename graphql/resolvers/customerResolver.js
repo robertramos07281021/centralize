@@ -67,7 +67,7 @@ const customerResolver = {
         if (!search) {
           return [];
         }
-
+      
         const searchValue = search;
         const startOfTheDay = new Date();
         startOfTheDay.setHours(0, 0, 0, 0);
@@ -93,7 +93,7 @@ const customerResolver = {
           active: true,
           bucket: {$in: user.buckets.map(x=> new mongoose.Types.ObjectId(x)) }
         })).map(x=> x._id)
-
+      
         const accounts = await Customer.aggregate([
           {
             $match: {
@@ -316,6 +316,7 @@ const customerResolver = {
             },
           },
         ]);
+   
         return accounts;
       } catch (error) {
         console.log(error);

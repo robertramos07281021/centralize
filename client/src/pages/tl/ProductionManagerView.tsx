@@ -4,9 +4,7 @@ import { useQuery } from "@apollo/client";
 import { useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../redux/store";
-import {
-  setProductionManagerPage,
-} from "../../redux/slices/authSlice";
+import { setProductionManagerPage } from "../../redux/slices/authSlice";
 import { motion } from "framer-motion";
 
 import Pagination from "../../components/Pagination";
@@ -55,7 +53,6 @@ const ProductionManagerView = () => {
     return Object.fromEntries(tlBuckets.map((e) => [e._id, e.name]));
   }, [bucketData]);
 
-
   useEffect(() => {
     setPage(productionManagerPage.toString());
   }, [productionManagerPage]);
@@ -64,26 +61,27 @@ const ProductionManagerView = () => {
     const timer = async () => {
       await refetch();
     };
-    timer()
+    timer();
   }, []);
 
   useEffect(() => {
     if (bucketData && !callfileBucket) {
       setCallfileBucket(bucketData?.getTLBucket[0]._id);
     }
-  }, [bucketData,callfileBucket]);
+  }, [bucketData, callfileBucket]);
 
   return (
     <div className="p-2 h-full overflow-hidden">
       <div className="h-full flex flex-col ">
-        <div className="p-5 flex gap-20 ">
-          <div className="w-1/2 flex flex-col gap-2">
-            <h1 className=" font-black uppercase text-2xl text-gray-600">
-              Call files { bucketObject[callfileBucket as keyof typeof bucketObject]}
+        <div className="px-5 py-2 w-full flex gap-2 ">
+          <div className="bg-gray-100 border overflow-hidden border-black rounded-md w-full items-center flex flex-col">
+            <h1 className=" font-black bg-gray-400 w-full uppercase text-base py-2 text-black  text-center border-b">
+              Call files{" "}
+              {bucketObject[callfileBucket as keyof typeof bucketObject]}
             </h1>
-            <div className="flex gap-5 h-full items-end">
+            <div className="flex gap-2 h-full items-center justify-center">
               <motion.label
-                className="flex flex-col h-full w-1/2 "
+                className="flex flex-col "
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
                 transition={{ delay: 0.5 }}
@@ -92,13 +90,14 @@ const ProductionManagerView = () => {
                   name="bucket"
                   id="bucket"
                   onChange={(e) => {
-                    const value = e.target.value.trim() === "" ? null : e.target.value
-                    setCallfileBucket(value)
+                    const value =
+                      e.target.value.trim() === "" ? null : e.target.value;
+                    setCallfileBucket(value);
                   }}
                   value={callfileBucket || ""}
                   className={`${
                     required ? "bg-red-50 border-red-500" : "border-black"
-                  } text-sm font-black w-full p-2 mt-3 h-full  border rounded-md`}
+                  } text-sm font-black w-full p-2 h-full  border rounded-md`}
                 >
                   {bucketData?.getTLBucket.map((e) => (
                     <option key={e._id} value={e._id}>
@@ -107,6 +106,20 @@ const ProductionManagerView = () => {
                   ))}
                 </select>
               </motion.label>
+
+              <div className="overflow-hidden relative border border-black rounded-md flex  text-sm font-black">
+                <motion.div
+                  initial={{ x: 0, opacity: 0, width: "3rem" }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.6 }}
+                  className="bg-gray-500 left-0 top-0 z-10 h-full absolute"
+                ></motion.div>
+                <div className="flex z-20" >
+                  <div className="px-3 py-2 text-white text-shadow-xs">ALL</div>
+                  <div className="px-3 py-2">ACTIVE</div>
+                  <div className="px-3 py-2">FINISHED</div>
+                </div>
+              </div>
               <motion.fieldset
                 className="flex border rounded-md p-2 px-5 gap-5 border-black "
                 initial={{ y: 20, opacity: 0 }}
@@ -152,7 +165,7 @@ const ProductionManagerView = () => {
               </motion.fieldset>
             </div>
           </div>
-          <div className="w-1/2 flex flex-col gap-2">
+          <div className="w-full p-3 border border-black rounded-md bg-gray-100 flex flex-col gap-2">
             <h1 className="text-2xl font-black uppercase text-gray-600 text-center">
               {canUpload && "Uploader"}
             </h1>

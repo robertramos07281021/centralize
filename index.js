@@ -63,10 +63,13 @@ import { fileURLToPath } from "url";
 import scoreCardResolver from "./graphql/resolvers/scoreCardResolver.js";
 import scoreCardTypeDefs from "./graphql/schemas/scoreCardSchema.js";
 import EventEmitter from "events";
+import { recordingsFTPResolver } from "./graphql/resolvers/recordingsFTP.js";
+import recordingFTPTypeDefs from "./graphql/schemas/recordingsFTPSchema.js";
+import ftp from "basic-ftp";
+import Client from "ssh2-sftp-client";
 
 const __filename = fileURLToPath(import.meta.url);
-
-// Equivalent of __dirname
+const sftp = new Client();
 const __dirname = path.dirname(__filename);
 
 EventEmitter.defaultMaxListeners = 5000;
@@ -252,6 +255,7 @@ const resolvers = mergeResolvers([
   callResolver,
   selectivesResolver,
   scoreCardResolver,
+  recordingsFTPResolver,
 ]);
 
 const typeDefs = mergeTypeDefs([
@@ -273,6 +277,7 @@ const typeDefs = mergeTypeDefs([
   callTypeDefs,
   selectivesTypeDefs,
   scoreCardTypeDefs,
+  recordingFTPTypeDefs,
 ]);
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });
@@ -371,7 +376,10 @@ const initWebSocketServer = (httpServer, schema) => {
             // mark offline
             const updatedUser = await User.findByIdAndUpdate(
               userId,
-              { $set: { isOnline: false }, $unset: { handsOn: "" } },
+              {
+                $set: { isOnline: false },
+                $unset: { handsOn: "", "features.token": "" },
+              },
               { new: true }
             ).populate("buckets");
 
@@ -447,7 +455,6 @@ const httpServer = createServer(app);
 
 initWebSocketServer(httpServer, schema);
 
-// Allow large CSV downloads to finish even on slow networks
 httpServer.setTimeout(10 * 60 * 1000);
 
 httpServer.on("connection", (socket) => {
@@ -462,141 +469,6 @@ httpServer.on("connection", (socket) => {
     }
   });
 });
-
-// const wsServer = new WebSocketServer({
-//   server: httpServer,
-//   path: "/graphql",
-// });
-
-// useServer(
-//   {
-//     schema,
-//     context: async (ctx, msg, args) => {
-//       const authHeader = ctx.connectionParams?.authorization;
-
-//       if (!authHeader || !authHeader.startsWith("Bearer ")) {
-//         throw new CustomError("Missing Token", 401);
-//       }
-
-//       const token = authHeader.split(" ")[1];
-//       let user = null;
-
-//       try {
-//         const decoded = jwt.verify(token, process.env.SECRET);
-//         user = await User.findById(decoded.id);
-//         ctx.extra.userId = decoded.id;
-//         const userId = user._id.toString();
-
-//         const socket = ctx.extra.socket;
-//         let entry = connectedUsers.get(userId);
-
-//         if (!entry) {
-//           connectedUsers.set(userId, {
-//             sockets: new Set([socket]),
-//             cleanupTimer: null,
-//           });
-//         } else {
-//           entry.sockets.add(socket);
-//           if (entry.cleanupTimer) {
-//             clearTimeout(entry.cleanupTimer);
-//             entry.cleanupTimer = null;
-//           }
-//         }
-//       } catch (err) {
-//         console.log("WebSocket token error:", err.message);
-//       }
-//       return { user, pubsub, PUBSUB_EVENTS };
-//     },
-//     onDisconnect: async (ctx) => {
-//       const socket = ctx.extra?.socket;
-//       const userId = ctx.extra?.userId;
-//       if (!userId || !socket) return;
-//       const entry = connectedUsers.get(userId);
-//       if (!entry) return;
-
-//       entry.sockets.delete(socket);
-
-//       if (entry.sockets.size > 0) return;
-
-//       if (entry.cleanupTimer) clearTimeout(entry.cleanupTimer);
-
-//       entry.cleanupTimer = setTimeout(async () => {
-//         const latest = connectedUsers.get(userId);
-
-//         if (latest && latest.sockets.size > 0) return;
-
-//         connectedUsers.delete(userId);
-//         const userAccount = await User.findById(userId);
-//         if (!userAccount) return;
-
-//         if (userAccount.handsOn) {
-//           await CustomerAccount.updateOne(
-//             { _id: userAccount.handsOn, on_hands: userId },
-//             { $unset: { on_hands: "" } }
-//           );
-//         }
-
-//         const updatedUser = await User.findByIdAndUpdate(
-//           userId,
-//           { $set: { isOnline: false }, $unset: { handsOn: "" } },
-//           { new: true }
-//         ).populate("buckets");
-//         const startToday = new Date();
-//         startToday.setHours(0, 0, 0, 0);
-//         const endToday = new Date();
-//         endToday.setHours(23, 59, 59, 999);
-
-//         const prodRes = await Production.findOne({
-//           user: userId,
-//           createdAt: { $gte: startToday, $lte: endToday },
-//         });
-//         if (prodRes) {
-//           prodRes.prod_history = (prodRes.prod_history || []).map((prod) => {
-//             if (prod.existing === true) {
-//               return { ...prod, existing: false, end: new Date() };
-//             }
-//             return prod;
-//           });
-
-//           prodRes.prod_history.push({
-//             type: "LOGOUT",
-//             start: new Date(),
-//             existing: true,
-//           });
-//           await prodRes.save();
-//         }
-//         // ---- VICIDIAL LOGOUT ----
-//         const buckets = updatedUser?.buckets || [];
-//         if (buckets.length > 0) {
-//           const viciIps = [...new Set(buckets.map((x) => x.viciIp))];
-//           const canCall = buckets.some((x) => x.canCall);
-//           if (canCall) {
-//             const statusChecks = await Promise.all(
-//               viciIps.map((ip) => checkIfAgentIsOnline(updatedUser.vici_id, ip))
-//             );
-//             const onlineIndex = statusChecks.indexOf(true);
-//             if (onlineIndex !== -1) {
-//               await logoutVici(updatedUser.vici_id, viciIps[onlineIndex]);
-//             }
-//           }
-//         }
-
-//         await pubsub.publish(PUBSUB_EVENTS.OFFLINE_USER, {
-//           accountOffline: {
-//             agentId: userId,
-//             message: PUBSUB_EVENTS.OFFLINE_USER,
-//           },
-//         });
-//       }, 120000);
-//     },
-
-//     onError: (ctx, msg, errors) => {
-//       console.error("GraphQL WebSocket error:", errors);
-//     },
-//     keepAlive: 12000,
-//   },
-//   wsServer
-// );
 
 const startServer = async () => {
   const server = new ApolloServer({
@@ -618,6 +490,36 @@ const startServer = async () => {
         },
       })
     );
+
+    app.get("/audio/:name", async (req, res) => {
+      const name = req.params.name;
+      const remotePath = `/var/spool/asterisk/monitorDONE/MP3/${name}`;
+
+      console.log("Attempting download:", remotePath);
+
+      const sftp = new Client();
+
+      try {
+        await sftp.connect({
+          host: "172.20.21.15",
+          port: 22,
+          username: "root",
+          password: "Bernales2025",
+        });
+
+        const fileBuffer = await sftp.get(remotePath);
+
+        res.setHeader("Content-Type", "audio/mpeg");
+        res.setHeader("Content-Disposition", `attachment; filename="${name}"`);
+
+        res.send(fileBuffer);
+      } catch (err) {
+        console.error("SFTP error:", err);
+        res.status(500).send("Download failed.");
+      } finally {
+        sftp.end();
+      }
+    });
 
     httpServer.listen(process.env.PORT, () => {
       console.log(
