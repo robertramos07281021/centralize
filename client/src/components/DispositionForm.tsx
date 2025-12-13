@@ -27,6 +27,7 @@ type Data = {
   chatApp: SkipCollector | null;
   sms: SMSCollector | null;
   partialPayment: number | null;
+  SOF: string | null
 };
 
 type ContactMethod = {
@@ -234,6 +235,14 @@ enum PaymentMethod {
   ATOME_APP = "Atome App",
 }
 
+enum SOF {
+  REMMITANCE = 'Remmitance',
+  BUSSINESS = 'Bussiness',
+  PENSION = 'Pension',
+  Allowance = 'Allowance',
+  CASH_ON_HAND = 'Cash On Hand'
+}
+
 enum DialerCode {
   vici = "[",
   issabel = "]",
@@ -399,6 +408,7 @@ const DispositionForm: React.FC<Props> = ({
     RFD: null,
     sms: null,
     partialPayment: null,
+    SOF: null
   });
 
   useEffect(() => {
@@ -447,6 +457,7 @@ const DispositionForm: React.FC<Props> = ({
       RFD: null,
       sms: null,
       partialPayment: null,
+      SOF: null
     });
     onPresetAmountChange({ amount: null, label: null });
   }, [onPresetAmountChange, setData]);
@@ -842,7 +853,7 @@ const DispositionForm: React.FC<Props> = ({
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className="flex flex-col bg-gray-100 overflow-hidden uppercase w-full h-full rounded-xl border-2 border-gray-600 shadow-md justify-center select-none relative"
+              className="flex flex-col bg-gray-100 overflow-hidden uppercase w-full h-full rounded-md border border-black shadow-md justify-center select-none relative"
             >
               <h1 className="text-center py-3 bg-gray-400 d uppercase border-b font-black text-black text-2xl">
                 Customer Disposition
@@ -1248,6 +1259,29 @@ const DispositionForm: React.FC<Props> = ({
                       })}
                     </select>
                   </label>
+
+                  <label className="flex flex-col gap-0.5">
+                    <p className="text-gray-800 font-bold text-start mr-2 2xl:text-sm text-xs leading-4">
+                      SOF:
+                    </p>
+                    <select
+                      name="sms_collector"
+                      id="sms_collector"
+                      value={data.SOF ?? ""}
+                      onChange={(e) => handleDataChange("SOF", e.target.value)}
+                      className={` border bg-gray-50  border-black  shadow-md  rounded-sm focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
+                    >
+                      <option value="">Select SOF Reason</option>
+                      {Object.entries(SOF).map(([_, value], index) => {
+                        return (
+                          <option value={value} key={index}>
+                            {value.charAt(0).toUpperCase() +
+                              value.slice(1, value.length)}
+                          </option>
+                        );
+                      })}
+                    </select>
+                  </label>
                 </div>
                 <div className="flex w-full flex-col gap-1">
                   {anabledDispo.includes(selectedDispo) ? (
@@ -1343,7 +1377,7 @@ const DispositionForm: React.FC<Props> = ({
                       className={`" border-black text-black shadow-md bg-gray-50 min-h-10 border rounded-sm focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2 resize-none "`}
                     ></textarea>
                   </label>
-                  <div className="flex justify-end gap-2 mt-2">
+                  <div className="flex justify-end gap-2 mt-2 h-full items-end">
                     {(!isRing || !onCall) &&
                       !(
                         inlineData?.includes("PAUSED") &&
@@ -1370,7 +1404,7 @@ const DispositionForm: React.FC<Props> = ({
                       initial={{ scale: 0.5, opacity: 0 }}
                       animate={{ scale: 1, opacity: 1 }}
                       type="button"
-                      className="bg-red-500 border-2 transition-all border-red-800 hover:bg-red-600 focus:outline-none text-white uppercase  focus:ring-4 focus:ring-red-400 font-black rounded-sm shadow-md px-5 py-3 cursor-pointer 2xl:text-sm text-xs"
+                      className="bg-red-500 border-2 transition-all border-red-800 hover:bg-red-600 focus:outline-none text-white uppercase  focus:ring-4 focus:ring-red-400 font-black rounded-sm shadow-md px-5 py-3 cursor-pointer 2xl:text-sm text-xs "
                       onClick={() =>
                         handleSubmitEscalationToTl(selectedCustomer?._id || "")
                       }

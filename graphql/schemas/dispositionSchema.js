@@ -171,6 +171,7 @@ const dispositionTypeDefs = gql`
     sms: String
     callId:String
     partialPayment: Int
+    SOF: String
   }
   
   input SearchDispoReports {

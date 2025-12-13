@@ -4,13 +4,14 @@ import "dotenv/config.js";
 import Disposition from "../../models/disposition.js";
 import CustomError from "../../middlewares/errors.js";
 import path from "path";
+import SftpClient from "ssh2-sftp-client";
+import mongoose from "mongoose";
 
 const recordingsResolver = {
   Query: {
-    findLagRecording: async (_, { name,_id }) => {
+    findLagRecording: async (_, { name, _id }) => {
       const client = new ftp.Client();
       try {
-
         const months = [
           "January",
           "February",
@@ -148,12 +149,13 @@ const recordingsResolver = {
             : isShopee;
 
         const remoteDir =
-          (findDispo.dialer === "vici" || !findDispo?.dialer) ? ifATOME : `${remoteDirIssabel}`;
+          findDispo.dialer === "vici" || !findDispo?.dialer
+            ? ifATOME
+            : `${remoteDirIssabel}`;
         const remotePath = `${remoteDir}/${name}`;
         const files = await client.list(remotePath);
         return files[0].size;
       } catch (err) {
-  
         throw new CustomError(err.message, 500);
       } finally {
         client.close();
@@ -302,19 +304,21 @@ const recordingsResolver = {
             : isShopee;
 
         const remoteDir =
-          (findDispo.dialer === "vici" || ccsCall) ? ifATOME : `${remoteDirIssabel}`;
+          findDispo.dialer === "vici" || ccsCall
+            ? ifATOME
+            : `${remoteDirIssabel}`;
         const remotePath = `${remoteDir}/${name}`;
         const localPath = `./recordings/${name}`;
         await client.downloadTo(localPath, remotePath);
         const toDownload = `http://${process.env.MY_IP}:4000/recordings/${name}`;
-        
+
         return {
           success: true,
           url: toDownload,
           message: "Successfully downloaded",
         };
       } catch (err) {
-        console.log(err)
+        console.log(err);
         throw new CustomError(
           err.message || "Unable to download recording",
           500
@@ -335,6 +339,111 @@ const recordingsResolver = {
         success: true,
         message: "Successfully deleted",
       };
+    },
+    recordingsFTP: async (_, { _id, fileName }) => {
+      const sftp = new SftpClient();
+
+      try {
+        const REMOTE_DIR = "/var/spool/asterisk/monitorDONE/MP3";
+        const findDispo = await Disposition.aggregate([
+          {
+            $match: {
+              _id: new mongoose.Types.ObjectId(_id),
+            },
+          },
+          {
+            $lookup: {
+              from: "callfiles",
+              localField: "callfile",
+              foreignField: "_id",
+              as: "cf",
+            },
+          },
+          {
+            $unwind: {
+              path: "$cf",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "cf.bucket",
+              foreignField: "_id",
+              as: "cf_bucket",
+            },
+          },
+          {
+            $unwind: {
+              path: "$cf_bucket",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+        ]);
+
+        if (!findDispo[0]?.cf_bucket?.viciIp) return null;
+        const localDir = "./recordings";
+
+        if (!fs.existsSync(localDir)) {
+          fs.mkdirSync(localDir, { recursive: true });
+        }
+        const others = {
+          "172.20.21.63": "172.20.21.67",
+        };
+
+        const passwords = {
+          "172.20.21.67": process.env.FTP_PASSWORD1,
+          "172.20.21.10": process.env.FTP_PASSWORD2,
+          "172.20.21.74": process.env.FTP_PASSWORD1,
+          "172.20.21.18": process.env.FTP_PASSWORD1,
+          "172.20.21.35": process.env.FTP_PASSWORD1,
+          "172.20.21.21": process.env.FTP_PASSWORD1,
+          "172.20.21.97": process.env.FTP_PASSWORD1,
+          "172.20.21.17": process.env.FTP_PASSWORD1,
+          "172.20.21.70": process.env.FTP_PASSWORD5,
+          "172.20.21.20": process.env.FTP_PASSWORD1,
+          "172.20.21.16": process.env.FTP_PASSWORD1,
+          // "172.20.21.63": process.env.FTP_PASSWORD1,
+        };
+
+        const checking = findDispo[0]?.cf_bucket?.viciIp in others;
+
+        const sftpConfig = {
+          host: checking
+            ? others[findDispo[0]?.cf_bucket?.viciIp]
+            : findDispo[0]?.cf_bucket?.viciIp,
+          port: 22,
+          username: process.env.FTP_USERNAME,
+          password: checking
+            ? passwords[others[findDispo[0]?.cf_bucket?.viciIp]]
+            : passwords[findDispo[0]?.cf_bucket?.viciIp],
+        };
+        
+        await sftp.connect(sftpConfig);
+
+        // const fileList = await sftp.list(REMOTE_DIR);
+        // console.log(fileList.find(x=> x.name === fileName))
+        // console.log(fileList)
+        // return
+        const fileBuffer = await sftp.get(`${REMOTE_DIR}/${fileName}`);
+        const localPath = path.join(localDir, fileName);
+        await fs.writeFileSync(localPath, fileBuffer);
+
+        const toDownload = `http://${process.env.MY_IP}:4000/recordings/${fileName}`;
+
+        return {
+          success: true,
+          url: toDownload,
+          message: "Successfully downloaded",
+        };
+      } catch (err) {
+        throw new CustomError(
+          err.message || "Unable to download recording",
+          500
+        );
+      } finally {
+        await sftp.end();
+      }
     },
   },
 };

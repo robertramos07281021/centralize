@@ -183,6 +183,7 @@ const QASupervisorView = () => {
     skip: !userId?.userId,
     notifyOnNetworkStatusChange: true,
   });
+  console.log("deptBucketData", deptBucketData);
   useEffect(() => {
     const refetching = async () => {
       await deptBucketRefetch();

@@ -93,6 +93,9 @@ const dispositionSchema = new Schema(
     features: {
       partialPayment: {
         type: Number,
+      },
+      SOF: {
+        type: String
       }
     }
   },

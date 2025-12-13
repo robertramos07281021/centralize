@@ -835,7 +835,7 @@ const productionResolver = {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         endOfMonth.setMilliseconds(-1);
 
-        const ptpPaid = await DispoType.findOne({ code: "PTP"});
+        const ptpPaid = await DispoType.findOne({ code: "PTP" });
 
         let filter = { disposition: ptpPaid._id };
 
@@ -897,8 +897,8 @@ const productionResolver = {
           {
             $match: {
               "pd.selectivesDispo": false,
-              "pd_dispotype.code": 'PAID',
-              "pd.existing": true
+              "pd_dispotype.code": "PAID",
+              "pd.existing": true,
             },
           },
           {
@@ -921,14 +921,13 @@ const productionResolver = {
           },
         ]);
 
-
-        return findDispo[0] ?? {count: 0, amount: 0};
+        return findDispo[0] ?? { count: 0, amount: 0 };
       } catch (err) {
         throw new CustomError(err.message, 500);
       }
     },
 
-    confirmPaid: async(_,{bucket,interval})=> {
+    confirmPaid: async (_, { bucket, interval }) => {
       try {
         const selectedBucket = await Bucket.findById(bucket).lean();
 
@@ -963,9 +962,13 @@ const productionResolver = {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         endOfMonth.setMilliseconds(-1);
 
-        const ptpPaid = await DispoType.findOne({ code: "PAID"});
+        const ptpPaid = await DispoType.findOne({ code: "PAID" });
 
-        let filter = { disposition: ptpPaid._id, selectivesDispo: false, existing: true };
+        let filter = {
+          disposition: ptpPaid._id,
+          selectivesDispo: false,
+          existing: true,
+        };
 
         if (interval === "daily") {
           (filter["callfile"] = { $in: callfile }),
@@ -1009,7 +1012,6 @@ const productionResolver = {
         return confirmPaid[0];
       } catch (err) {
         throw new CustomError(err.message, 500);
-
       }
     },
     getAgentDispositionRecords: async (

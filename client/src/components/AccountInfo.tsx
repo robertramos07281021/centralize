@@ -251,7 +251,7 @@ const FieldsDiv = ({
 }: {
   label: string;
   value: string | number | null | undefined;
-  endorsementDate: string | null;
+  endorsementDate: string | number | null;
 }) => {
   let newValue = value;
   const fieldsOfNumber = [
@@ -282,15 +282,19 @@ const FieldsDiv = ({
 
   return (
     <div className="flex flex-col items-center w-full gap-0.5">
-      <p className="text-gray-800 font-bold text-start w-full 2xl:text-sm text-xs leading-4 select-none">
+      <p className="text-black font-bold text-start w-full 2xl:text-sm text-xs leading-4 select-none">
         {label} :
       </p>
       <div
         className={`${
-          newValue || null ? "p-2" : "2xl:p-4.5 p-4"
-        } text-xs 2xl:text-sm border rounded-sm border-black bg-gray-100 text-gray-600 w-full`}
+          newValue || null ? "p-2" : "p-2"
+        } text-xs 2xl:text-sm border rounded-sm border-black bg-gray-100 text-black w-full`}
       >
-        {newValue || ""}
+        {newValue || (
+          <div className="italic text-gray-400 lowercase first-letter:uppercase">
+            No information
+          </div>
+        )}
       </div>
     </div>
   );
@@ -616,7 +620,7 @@ const AccountInfo = forwardRef<
         <motion.div
           initial={{ x: 50, opacity: 0 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex flex-col z-10 w-full overflow-hidden 2xl:gap-2 gap-2 bg-gray-100 border-t-2 border-x-2 border-gray-600 rounded-xl justify-center "
+          className="flex flex-col z-10 w-full overflow-hidden 2xl:gap-2 gap-2 bg-gray-100 border-t border-x border-black rounded-md justify-center "
         >
           <h1 className="text-center font-black bg-gray-400 border-b uppercase text-black text-2xl py-3">
             Account Information{" "}
@@ -625,7 +629,7 @@ const AccountInfo = forwardRef<
           {selectedCustomer?.batch_no && (
             <div className=" flex items-center justify-center text-gray-600">
               <div className="w-1/4 flex flex-col text-center">
-                <div className="font-bold text-gray-800 text-sm">Batch No.</div>
+                <div className="font-bold text-black text-sm">Batch No.</div>
                 <div className="border rounded-sm border-black text-sm py-1.5 bg-gray-100">
                   {selectedCustomer.batch_no}
                 </div>
@@ -652,7 +656,7 @@ const AccountInfo = forwardRef<
                 endorsementDate={null}
               />
             </div>
-            <div className="grid grid-cols-3 gap-2 uppercase  w-full">
+            <div className="grid grid-cols-4 gap-2 uppercase  w-full">
               <FieldsDiv
                 label="DPD"
                 value={selectedCustomer?.dpd}
@@ -668,18 +672,26 @@ const AccountInfo = forwardRef<
                 value={selectedCustomer?.max_dpd}
                 endorsementDate={selectedCustomer?.endorsement_date || ""}
               />
+
+              <FieldsDiv
+                label="Interest"
+                value={selectedCustomer?.out_standing_details.interest_os}
+                endorsementDate={
+                  selectedCustomer?.out_standing_details.interest_os || 0
+                }
+              />
             </div>
           </div>
 
           {!updateCustomerAccounts ? (
-            <div className="flex flex-col bg-gray-100 border-gray-600 border-b-2 rounded-b-xl shadow-md px-5 pb-5 items-end justify-center gap-1 text-slate-800 uppercase font-medium">
+            <div className="flex flex-col bg-gray-100 border-black border-b rounded-b-md shadow-md px-5 pb-5 items-end justify-center gap-1 text-slate-800 uppercase font-medium">
               {selectedCustomer &&
                 agentBucketData?.getDeptBucket &&
                 agentBucketData.getDeptBucket.length > 0 &&
                 agentBucketData.getDeptBucket.every(
                   (bucket) => bucket.name !== "BPIBANK 2025"
                 ) && (
-                  <div className="w-full flex flex-col lg:ml-3 gap-5 text-gray-800">
+                  <div className="w-full flex flex-col lg:ml-3 gap-5 text-black">
                     <div className="bg-gray-100 w-full gap-2 grid grid-cols-2 lg:flex flex-col mb-1 md:mb-0 md:flex-row rounded-md">
                       <div className="w-full">
                         <h1 className="font-medium truncate whitespace-nowrap 2xl:text-sm text-xs text-nowrap">
@@ -997,7 +1009,7 @@ const AccountInfo = forwardRef<
                     )}
                 </div>
               ) : (
-                <div className="flex w-full gap-2 justify-end items-end">
+                <div className="flex w-full gap-2 justify-end text-black items-end">
                   <div className="w-full">
                     <p className="font-medium whitespace-nowrap min-w-40 2xl:min-w-auto w-full text-xs 2xl:text-sm ">
                       {selectedCustomer?.out_standing_details &&
@@ -1012,6 +1024,10 @@ const AccountInfo = forwardRef<
                       {selectedCustomer?.out_standing_details?.total_os?.toLocaleString(
                         "en-PH",
                         { style: "currency", currency: "PHP" }
+                      ) || (
+                        <div className="text-gray-400 italic lowercase first-letter:uppercase">
+                          No information
+                        </div>
                       )}
                     </div>
                   </div>
@@ -1021,7 +1037,11 @@ const AccountInfo = forwardRef<
                       {selectedCustomer?.balance?.toLocaleString("en-PH", {
                         style: "currency",
                         currency: "PHP",
-                      })}
+                      }) || (
+                        <div className="text-gray-400 italic lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="w-full">
@@ -1032,7 +1052,11 @@ const AccountInfo = forwardRef<
                       {selectedCustomer?.paid_amount?.toLocaleString("en-PH", {
                         style: "currency",
                         currency: "PHP",
-                      })}
+                      }) || (
+                        <div className="text-gray-400 italic lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
                     </div>
                   </div>
                   {selectedCustomer &&

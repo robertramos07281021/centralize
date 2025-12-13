@@ -58,14 +58,10 @@ import selectivesResolver from "./graphql/resolvers/selectivesResolver.js";
 import selectivesTypeDefs from "./graphql/schemas/selectivesSchema.js";
 import DispoType from "./models/dispoType.js";
 import Production from "./models/production.js";
-import mongoose from "mongoose";
 import { fileURLToPath } from "url";
 import scoreCardResolver from "./graphql/resolvers/scoreCardResolver.js";
 import scoreCardTypeDefs from "./graphql/schemas/scoreCardSchema.js";
 import EventEmitter from "events";
-import { recordingsFTPResolver } from "./graphql/resolvers/recordingsFTP.js";
-import recordingFTPTypeDefs from "./graphql/schemas/recordingsFTPSchema.js";
-import ftp from "basic-ftp";
 import Client from "ssh2-sftp-client";
 
 const __filename = fileURLToPath(import.meta.url);
@@ -147,6 +143,8 @@ app.use((req, res, next) => {
   next();
 });
 
+let batchUsers = new Set();
+
 cron.schedule(
   "0 0 * * *",
   async () => {
@@ -184,7 +182,6 @@ cron.schedule(
 
       const BATCH_SIZE = 500;
       let batchIds = [];
-      let batchUsers = new Set();
 
       for await (const doc of cursor) {
         batchIds.push(doc._id);
@@ -196,18 +193,18 @@ cron.schedule(
             { $unset: { assignedModel: "", assigned_date: "", assigned: "" } }
           );
 
-          if (batchUsers.length > 0) {
+          if (batchUsers.size > 0) {
             await pubsub.publish(PUBSUB_EVENTS.TASK_CHANGING, {
               taskChanging: {
-                members: batchUsers,
+                members: Array.from(batchUsers),
                 message: PUBSUB_EVENTS.TASK_CHANGING,
               },
             });
           }
 
-          // reset batches
+          // reset batches correctly
           batchIds = [];
-          batchUsers = [];
+          batchUsers.clear(); // ✅
         }
       }
 
@@ -255,7 +252,6 @@ const resolvers = mergeResolvers([
   callResolver,
   selectivesResolver,
   scoreCardResolver,
-  recordingsFTPResolver,
 ]);
 
 const typeDefs = mergeTypeDefs([
@@ -277,7 +273,6 @@ const typeDefs = mergeTypeDefs([
   callTypeDefs,
   selectivesTypeDefs,
   scoreCardTypeDefs,
-  recordingFTPTypeDefs,
 ]);
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });

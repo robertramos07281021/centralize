@@ -519,21 +519,23 @@ const FieldListDisplay = memo(
 
     return (
       <div className="w-full lg:text-xs text-[0.8rem]">
-        <div className="font-bold text-slate-500 lg:text-sm text-[0.9rem] uppercase">
-          {label}
+        <div className="font-bold text-black lg:text-sm text-[0.9rem] uppercase">
+          {label}:
         </div>
         <div className="flex flex-col gap-2">
           {isEmpty ? (
             <div
-              className={`w-full border border-gray-600 ${fallbackHeight}  rounded-sm bg-gray-50 text-slate-500 text-wrap`}
-            />
+              className={`w-full border italic text-xs items-center px-3 h-full py-2.5 border-black ${fallbackHeight}  rounded-sm bg-gray-50 text-gray-400 text-wrap`}
+            >
+              No information
+            </div>
           ) : (
             values?.map((val, index) => (
               <div className="flex gap-2 w-full " key={index}>
                 <div
                   className={`w-full ${
-                    label.toLowerCase() === "address" ? "min-h-36" : ""
-                  }  border border-gray-600 p-2.5 rounded-sm bg-gray-50 text-slate-500 flex flex-wrap`}
+                    label.toLowerCase() === "address" ? "" : ""
+                  }  border border-black p-2.5 rounded-sm bg-gray-50 text-black flex flex-wrap`}
                 >
                   {val}
                 </div>
@@ -578,13 +580,13 @@ const FieldDisplay = memo(
     value: string | number | null | undefined | [];
   }) => (
     <div className=" w-full  mt-1 lg:text-xs text-[0.8em] ">
-      <div className="font-bold text-slate-500 uppercase lg:text-sm text-[0.9rem]">
-        {label}
+      <div className="font-bold text-black uppercase lg:text-sm text-[0.9rem]">
+        {label}:
       </div>
       <div
         className={`${
           value ? "p-2.5" : "p-5"
-        } w-full border border-gray-600 rounded-sm  bg-gray-50 text-slate-500 text-wrap`}
+        } w-full border border-black rounded-sm  bg-gray-50 text-black text-wrap`}
       >
         {value}
       </div>
@@ -891,7 +893,7 @@ const CustomerDisposition = () => {
   const [getCallRecording, { loading: getCallingRecordingLoading }] =
     useMutation<{ getCallRecording: string }>(GET_RECORDING, {
       onCompleted: (data) => {
-        console.log(data)
+        console.log(data);
         dispatch(setCallUniqueId(data.getCallRecording));
       },
     });
@@ -920,14 +922,16 @@ const CustomerDisposition = () => {
 
     if (splitInline && selectedCustomer && Boolean(splitInline[2])) {
       const timer = setTimeout(async () => {
-        if(splitInline[0] === "PAUSED" && splitInline[9] === "DISPO") {
-          await getCallRecording({variables: {user_id: userLogged?._id, mobile:splitInline[10] }})
-          console.log('hello')
+        if (splitInline[0] === "PAUSED" && splitInline[9] === "DISPO") {
+          await getCallRecording({
+            variables: { user_id: userLogged?._id, mobile: splitInline[10] },
+          });
+          console.log("hello");
         }
       });
       return () => clearTimeout(timer);
     }
-  }, [checkIfAgentIsInline,selectedCustomer]);
+  }, [checkIfAgentIsInline, selectedCustomer]);
 
   const [makeCall] = useMutation<{
     makeCall: string;
@@ -1296,12 +1300,12 @@ const CustomerDisposition = () => {
                 layout
                 className="w-full"
               >
-                <div className=" bg-gray-100 w-full transition-all flex flex-col shadow-md shadow-black/20 rounded-xl items-center border-gray-600 ovesrflow-hidden z-10 border-2 relative">
+                <div className=" bg-gray-100 h-full w-full transition-all flex flex-col shadow-md shadow-black/20 overflow-hidden rounded-md items-center border-black ovesrflow-hidden z-10 border relative">
                   <div className="w-32 h-32 absolute -top-28"></div>
 
                   <div className="top-40 absolute  left-0 bg-black"></div>
 
-                  <h1 className="text-center px-10 w-full flex-nowrap truncate text-ellipsis py-3 border-b bg-gray-400 rounded-t-xl border-gray-600 uppercase font-black text-black text-2xl mb-1 ">
+                  <h1 className="text-center px-10 w-full flex-nowrap truncate text-ellipsis py-3 border-b bg-gray-400 border-black uppercase font-black text-black text-2xl mb-1 ">
                     Customer Information
                   </h1>
                   <div
@@ -1321,6 +1325,7 @@ const CustomerDisposition = () => {
                               ? "bg-orange-300 border-orange-500 cursor-not-allowed"
                               : "bg-orange-500 border-orange-700 hover:shadow-none hover:bg-orange-600 cursor-pointer"
                           }`}
+                          title="Right Person Contacted"
                           disabled={updateRPCLoading}
                           onClick={() => {
                             if (!updateRPCLoading) {
@@ -1337,7 +1342,7 @@ const CustomerDisposition = () => {
                       )}
                   </div>
 
-                  <div className="px-5 flex flex-col w-full py-5">
+                  <div className="px-5 flex flex-col w-full pb-5">
                     {!selectedCustomer && (
                       <div className="relative w-full flex justify-center">
                         {!isAutoDialData?.isAutoDial && (

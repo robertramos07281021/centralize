@@ -143,6 +143,16 @@ const AGENT_RECORDING_LAG = gql`
   }
 `;
 
+const RECORDING_FTP = gql`
+  mutation recordingsFTP($_id: ID!, $fileName: String!) {
+    recordingsFTP(_id: $_id, fileName: $fileName) {
+      url
+      message
+      success
+    }
+  }
+`;
+
 const AgentRecordingView = () => {
   const location = useLocation();
   const dispatch = useAppDispatch();
@@ -241,6 +251,47 @@ const AgentRecordingView = () => {
     },
   });
 
+  const [recordingsFTP, { loading: FTPLoading, error }] = useMutation<{
+    recordingsFTP: Success;
+  }>(RECORDING_FTP, {
+    onCompleted: async (res) => {
+      const url = res.recordingsFTP.url;
+      setIsLoading("");
+      if (url) {
+        try {
+          const response = await fetch(url);
+          if (!response.ok) throw new Error("Failed to fetch file");
+          const blob = await response.blob();
+          const link = document.createElement("a");
+          link.href = URL.createObjectURL(blob);
+          link.download = url.split("/").pop() || "recording.mp3";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(link.href);
+          dispatch(
+            setSuccess({
+              success: res.recordingsFTP.success,
+              message: res.recordingsFTP.message,
+              isMessage: false,
+            })
+          );
+          await deleteRecordings({ variables: { filename: link.download } });
+        } catch (error) {
+          dispatch(setServerError(true));
+        }
+      } else {
+        dispatch(
+          setSuccess({
+            success: res.recordingsFTP.success,
+            message: res.recordingsFTP.message,
+            isMessage: false,
+          })
+        );
+      }
+    },
+  });
+
   const [findRecordings, { loading }] = useMutation<{
     findRecordings: Success;
   }>(DL_RECORDINGS, {
@@ -280,8 +331,7 @@ const AgentRecordingView = () => {
         );
       }
     },
-    onError: (err) => {
-      console.log(err);
+    onError: () => {
       dispatch(setServerError(true));
     },
   });
@@ -289,9 +339,13 @@ const AgentRecordingView = () => {
   const onDLRecordings = useCallback(
     async (_id: string, name: string) => {
       setIsLoading(_id);
-      await findRecordings({ variables: { _id, name, ccsCall } });
+      try {
+        await recordingsFTP({ variables: { _id, fileName: name } });
+      } catch (error) {
+        await findRecordings({ variables: { _id, name, ccsCall } });
+      }
     },
-    [setIsLoading, findRecordings]
+    [setIsLoading, findRecordings, recordingsFTP]
   );
 
   const onClickSearch = useCallback(() => {
@@ -335,12 +389,10 @@ const AgentRecordingView = () => {
       const name = callId[0];
       const flag = Number(callId[1]);
 
-      // Fire only if flag=0 and not yet fetched
       if (flag === 0 && !lagRecords[name]) {
         getLagRecording({
           variables: { name: `${name}.mp3`, _id: rec._id },
         }).then((res) => {
-          console.log(res);
           setLagRecords((prev) => ({
             ...prev,
             [name]: res.data?.findLagRecording,
@@ -351,7 +403,6 @@ const AgentRecordingView = () => {
   }, [recordings]);
 
   function formatDuration(value: string) {
-    // Remove any spaces and normalize
     const seconds = parseInt(value, 10);
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
@@ -569,7 +620,6 @@ const AgentRecordingView = () => {
                                   (a, b) => b.size - a.size
                                 )
                               : [];
-
                           return (
                             <motion.div
                               key={e._id}
@@ -618,8 +668,7 @@ const AgentRecordingView = () => {
                                 {e.ref_no || (
                                   <div
                                     className="text-gray-400 italic text-left truncate"
-                                    title="
-                                  No reference number"
+                                    title="No reference number"
                                   >
                                     No reference number
                                   </div>
@@ -637,7 +686,8 @@ const AgentRecordingView = () => {
                               </div>
                               <div>{e.dispotype}</div>
                               <div>
-                                {isLoading === e._id && loading ? (
+                                {isLoading === e._id &&
+                                (loading || FTPLoading) ? (
                                   <div className="cursor-progress">
                                     <CgSpinner className="text-xl animate-spin" />
                                   </div>

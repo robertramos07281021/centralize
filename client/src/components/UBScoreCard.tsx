@@ -7,6 +7,7 @@ import {
   useRef,
   useState,
 } from "react";
+import type ExcelJS from "exceljs";
 import { AnimatePresence, motion } from "framer-motion";
 import { month as MONTHS } from "../middleware/exports";
 import { gql, useQuery, useMutation } from "@apollo/client";
@@ -102,7 +103,7 @@ const ColumnInputGrid = ({
     if (callIndex < 0 || callIndex >= callValuesRef.current.length) return;
 
     const sanitized = event.target.value.replace(/[^0-9]/g, "");
-    event.target.value = sanitized; 
+    event.target.value = sanitized;
 
     const nextValue = parseNumericValue(sanitized);
     const previousValue = callValuesRef.current[callIndex] ?? 0;
@@ -282,6 +283,7 @@ const UBScoreCard = () => {
   const [callContactStatuses, setCallContactStatuses] = useState<boolean[]>(
     () => Array(5).fill(true)
   );
+  const [isExportingExcel, setIsExportingExcel] = useState(false);
   const monthFieldRef = useRef<HTMLDivElement | null>(null);
   const collectionFieldRef = useRef<HTMLDivElement | null>(null);
   const evaluatorFieldRef = useRef<HTMLDivElement | null>(null);
@@ -293,6 +295,615 @@ const UBScoreCard = () => {
       showNotifier(`INCORRECT: ${error.message}`, true);
     },
   });
+  const handleExportExcel = async (): Promise<boolean> => {
+    if (isExportingExcel) return false;
+    setIsExportingExcel(true);
+
+    const thinBorder: ExcelJS.Borders = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+      diagonal: {},
+    };
+
+    const thickBorder: ExcelJS.Borders = {
+      top: { style: "medium" },
+      left: { style: "medium" },
+      bottom: { style: "medium" },
+      right: { style: "medium" },
+      diagonal: {},
+    };
+
+    const applyBorder = (
+      ws: ExcelJS.Worksheet,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number,
+      border: ExcelJS.Borders
+    ): void => {
+      for (let r = r1; r <= r2; r++) {
+        for (let c = c1; c <= c2; c++) {
+          const cell = ws.getCell(r, c);
+          cell.border = border;
+          cell.alignment = { wrapText: true, vertical: "middle" };
+        }
+      }
+    };
+
+    const headerCell = (cell: ExcelJS.Cell): void => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "D9D9D9" },
+      };
+    };
+
+    try {
+      const excelModule = await import("exceljs/dist/exceljs.min.js");
+      const ExcelJS = excelModule.default ?? excelModule;
+
+      const workbook = new ExcelJS.Workbook();
+      const worksheet = workbook.addWorksheet("UB Score Card", {
+        views: [{ showGridLines: false }],
+        properties: { defaultRowHeight: 22 },
+      });
+
+      worksheet.columns = [
+        { width: 10 },
+        { width: 4 },
+        { width: 60 },
+        { width: 10 },
+        { width: 10 },
+        { width: 10 },
+        { width: 10 },
+        { width: 10 },
+        { width: 10 },
+        { width: 16 },
+        { width: 10 },
+      ];
+
+      /* ================= TITLE ================= */
+
+      worksheet.mergeCells("A1:K1");
+
+      const cell = worksheet.getCell("A1");
+      cell.value = "COLLECTION CALL PERFORMANCE MONITOR";
+      cell.font = { bold: true, size: 12 };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+
+      applyBorder(worksheet, 1, 1, 1, 11, thickBorder);
+
+      worksheet.getCell("B2:C2").value = "For the month of";
+      worksheet.getCell("D2").value = selectedMonth || "";
+      worksheet.getCell("B3:C3").value = "COLLECTION OFFICER:";
+      worksheet.getCell("D3").value = selectedCollectionOfficerLabel || "";
+      worksheet.getCell("B4:C4").value = "EVALUATOR:";
+      worksheet.getCell("D4").value = selectedEvaluatorLabel || "";
+
+      worksheet.getRow(6).height = 28;
+      worksheet.mergeCells("C6");
+      worksheet.getCell("C6").value = "Account Name / Account Number";
+      headerCell(worksheet.getCell("C6"));
+
+      worksheet.mergeCells("E6:F6");
+      worksheet.getCell("E6").value = "Date and Time of Call";
+      headerCell(worksheet.getCell("E6"));
+
+      worksheet.mergeCells("H6:I6");
+      worksheet.getCell("H6").value = "Date of Logger Review";
+      headerCell(worksheet.getCell("H6"));
+
+      /* Call labels */
+      for (let i = 0; i < 5; i++) {
+        worksheet.getCell(`A${7 + i}`).value = `Call ${i + 1}`;
+      }
+
+      worksheet.getCell("J6").value = "1st call";
+      worksheet.getCell("K6").value = "Last call";
+
+      worksheet.getCell("D13").value = "Defect";
+      worksheet.getCell("E13").value = "Call 1";
+      worksheet.getCell("F13").value = "Call 2";
+      worksheet.getCell("G13").value = "Call 3";
+      worksheet.getCell("H13").value = "Call 4";
+      worksheet.getCell("I13").value = "Call 5";
+
+      /* ===== BORDERS PER SECTION (NOT ACROSS SPACER) ===== */
+
+      // Account
+      applyBorder(worksheet, 6, 11, 3, 3, thinBorder);
+
+      // Date & Time
+      applyBorder(worksheet, 6, 11, 5, 6, thinBorder);
+
+      applyBorder(worksheet, 6, 11, 8, 9, thinBorder);
+
+      applyBorder(worksheet, 6, 11, 10, 11, thinBorder);
+
+      /* ================= A. OPENING ================= */
+
+      let row = 15;
+      worksheet.mergeCells(`B14:I14`);
+      worksheet.getCell(`B14`).value = "A. OPENING";
+      headerCell(worksheet.getCell(`B14`));
+      applyBorder(worksheet, 14, 14, 2, 8, thickBorder);
+
+      worksheet.getRow(15).height = 10;
+
+      // Section A questions and keys
+      const openingQuestions: Array<{ label: string; defect: number; key: string }> = [
+        { label: "Used appropriate greeting / Identified self and Agency", defect: 2, key: "opening-greeting" },
+        { label: "Mentioned UBP Disclaimer spiel", defect: 6, key: "opening-disclaimer" },
+        { label: "Mentioned Line is Recorded", defect: 5, key: "opening-recorded" },
+        { label: "Mentioned CH/ Valid CP/Y's Full Name for outgoing calls to a registered number.  Asked correct Positive Identifiers for incoming calls & calls to unregistered number.F", defect: 6, key: "opening-fullname" },
+        { label: "Properly identified self (first & last name)", defect: 6, key: "opening-selfid" },
+      ];
+
+      openingQuestions.forEach(({ label, defect, key }) => {
+        row++;
+        worksheet.getCell(`C${row}`).value = label;
+        worksheet.getCell(`D${row}`).value = defect;
+        // Bind values for each call (E, F, G, H, I columns)
+        const callVals = questionCallValues[key] || [];
+        for (let i = 0; i < 5; i++) {
+          worksheet.getCell(row, 5 + i).value = callVals[i] ?? "";
+        }
+        applyBorder(worksheet, row, row, 3, 9, thinBorder);
+      });
+
+      // B. COLLECTION CALL PROPER
+
+      let row2 = 25;
+      worksheet.mergeCells(`B22:I22`);
+      worksheet.getCell(`B22`).value = "B. COLLECTION CALL PROPER";
+      headerCell(worksheet.getCell(`B22`));
+      applyBorder(worksheet, 22, 22, 2, 8, thickBorder);
+
+      worksheet.getRow(23).height = 10;
+      worksheet.mergeCells("C24:I24");
+
+      const titleCell = worksheet.getCell("C24");
+      titleCell.value = "WITH CONTACT (A/Y)";
+      titleCell.font = { bold: true };
+      titleCell.alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
+      for (let col = 3; col <= 8; col++) {
+        worksheet.getCell(24, col).fill = {
+          type: "pattern",
+          pattern: "solid",
+          fgColor: { argb: "D9D9D9" },
+        };
+      }
+
+      applyBorder(worksheet, 24, 24, 3, 8, thinBorder);
+
+      worksheet.mergeCells(`C25:I25`);
+      worksheet.getCell(`C25`).value =
+        "ESTABLISHING RAPPORT, EMPATHY & COURTESY";
+      applyBorder(worksheet, 25, 25, 3, 8, thinBorder);
+
+      const withContactEstablishingRapport: Array<{ label: string; defect: number; key: string }> = [
+        { label: "Explained the status of the account*", defect: 1, key: "withContact-explainedStatus" },
+        { label: "Asked if CH received demand/ notification letter*", defect: 2, key: "withContact-askedNotification" },
+        { label: "Showed empathy and compassion as appropriate.", defect: 2, key: "withContact-showedEmpathy" },
+      ];
+      withContactEstablishingRapport.forEach(({ label, defect, key }) => {
+        row2++;
+        worksheet.getCell(`C${row2}`).value = label;
+        worksheet.getCell(`D${row2}`).value = defect;
+        const callVals = questionCallValues[key] || [];
+        for (let i = 0; i < 5; i++) {
+          worksheet.getCell(row2, 5 + i).value = callVals[i] ?? "";
+        }
+        applyBorder(worksheet, row2, row2, 3, 9, thinBorder);
+      });
+
+      worksheet.mergeCells(`C29:I29`);
+      worksheet.getCell(`C29`).value = "LISTENING SKILLS";
+      applyBorder(worksheet, 29, 29, 3, 8, thinBorder);
+
+      // Section B.2: WITH CONTACT (A/Y) - LISTENING SKILLS
+      const listeningSkills: Array<{ label: string; defect: number; key: string }> = [
+        { label: "Sought RFD in payment & RFBP*", defect: 1, key: "withContact-soughtRFD" },
+      ];
+
+      let row3 = 29;
+      listeningSkills.forEach(({ label, defect, key }) => {
+        row3++;
+        worksheet.getCell(`C${row3}`).value = label;
+        worksheet.getCell(`D${row3}`).value = defect;
+        const callVals = questionCallValues[key] || [];
+        for (let i = 0; i < 5; i++) {
+          worksheet.getCell(row3, 5 + i).value = callVals[i] ?? "";
+        }
+        applyBorder(worksheet, row3, row3, 3, 9, thinBorder);
+      });
+
+      // let row4 = 31;
+      worksheet.mergeCells(`C31:I31`);
+      worksheet.getCell(`C31`).value = "NEGOTIATION SKILLS";
+      applyBorder(worksheet, 31, 31, 3, 8, thinBorder);
+
+      // Section B.3: WITH CONTACT (A/Y) - NEGOTIATION SKILLS
+      const negotiationSkills: Array<{ label: string; defect: number; key: string }> = [
+        { label: "Explained consequences of non-payment, if applicable (explained conseq of legal and BAP listing/explained side of the Bank and the contract signed/explained that the bank is serious in collecting legal obligations/possible negative listing of name/future credit facility will be closed/additional collection agency expenses/involvement of lawyer will also be CH's expense)*", defect: 1, key: "withContact-explainedConsequences" },
+        { label: "Asked for CM's capacity to pay, if applicable*", defect: 1, key: "withContact-askedCapacity" },
+        { label: "Followed hierarchy of negotiation*", defect: 1, key: "withContact-followedHierarchy" },
+      ];
+      let row4 = 31;
+      negotiationSkills.forEach(({ label, defect, key }) => {
+        row4++;
+        worksheet.getCell(`C${row4}`).value = label;
+        worksheet.getCell(`D${row4}`).value = defect;
+        const callVals = questionCallValues[key] || [];
+        for (let i = 0; i < 5; i++) {
+          worksheet.getCell(row4, 5 + i).value = callVals[i] ?? "";
+        }
+        applyBorder(worksheet, row4, row4, 3, 9, thinBorder);
+      });
+
+      // let row5 = 35;
+      worksheet.mergeCells(`C35:I35`);
+      worksheet.getCell(`C35`).value = "OFFERING SOLUTIONS";
+      applyBorder(worksheet, 35, 35, 3, 8, thinBorder);
+
+      // Section B.4: WITH CONTACT (A/Y) - OFFERING SOLUTIONS
+      const offeringSolutions: Array<{ label: string; defect: number; key: string }> = [
+        { label: "Offered discount/ amnesty/ promo*", defect: 1, key: "withContact-offeredDiscount" },
+        { label: "Adviced CH to source out funds*", defect: 1, key: "withContact-advisedSourceFunds" },
+      ];
+      let row5 = 35;
+      offeringSolutions.forEach(({ label, defect, key }) => {
+        row5++;
+        worksheet.getCell(`C${row5}`).value = label;
+        worksheet.getCell(`D${row5}`).value = defect;
+        const callVals = questionCallValues[key] || [];
+        for (let i = 0; i < 5; i++) {
+          worksheet.getCell(row5, 5 + i).value = callVals[i] ?? "";
+        }
+        applyBorder(worksheet, row5, row5, 3, 9, thinBorder);
+      });
+
+      worksheet.mergeCells("C39:I39");
+      worksheet.getCell("C39").value = "WITHOUT CONTACT";
+      applyBorder(worksheet, 39, 39, 3, 8, thinBorder);
+
+      worksheet.mergeCells("C40:I40");
+      worksheet.getCell("C40").value =
+        "ESTABLISHING RAPPORT, EMPATHY & COURTESY";
+      applyBorder(worksheet, 40, 40, 3, 8, thinBorder);
+
+      // Section B.5: WITHOUT CONTACT - ESTABLISHING RAPPORT
+      const withOutContactEREC: Array<{ label: string; defect: number; key: string }> = [
+        { label: "Probed on BTC, ETA and other contact numbers", defect: 1, key: "withoutContact-probedContactNumbers" },
+        { label: "Used time schedule and follow-up if applicable", defect: 1, key: "withoutContact-usedTimeSchedule" },
+        { label: "Asked for name of party, relation to client", defect: 1, key: "withoutContact-askedPartyName" },
+        { label: "Left URGENT message ang gave correct contact number", defect: 2, key: "withoutContact-leftUrgentMessage" },
+      ];
+      let row6 = 40;
+      withOutContactEREC.forEach(({ label, defect, key }) => {
+        row6++;
+        worksheet.getCell(`C${row6}`).value = label;
+        worksheet.getCell(`D${row6}`).value = defect;
+        const callVals = questionCallValues[key] || [];
+        for (let i = 0; i < 5; i++) {
+          worksheet.getCell(row6, 5 + i).value = callVals[i] ?? "";
+        }
+        applyBorder(worksheet, row6, row6, 3, 9, thinBorder);
+      });
+
+      worksheet.mergeCells("C46:I46");
+      worksheet.getCell("C46").value = "WITH OR WITH OUT CONTACT";
+      applyBorder(worksheet, 46, 46, 3, 8, thinBorder);
+      worksheet.mergeCells("C47:I47");
+      worksheet.getCell("C47").value = "QUALITY OF CALL";
+      applyBorder(worksheet, 47, 47, 3, 8, thinBorder);
+
+      // Section B.6: WITH OR WITHOUT CONTACT - QUALITY OF CALL
+      const withOrWithoutContactEREC: Array<{ label: string; defect: number; key: string }> = [
+        { label: "Used professional tone of voice (did not shout)", defect: 2, key: "withOrWithoutContact-professionalTone" },
+        { label: "Did not use unacceptable words/phrases and maintained polite/civil language", defect: 6, key: "withOrWithoutContact-politeLanguage" },
+        { label: "Updated correct information and payment details on info sheet, if applicable", defect: 3, key: "withOrWithoutContact-updatedInfoSheet" },
+        { label: "Adherence to Policy(BSP, Code of Conduct, etc.)", defect: 6, key: "withOrWithoutContact-adherenceToPolicy" },
+        { label: "GPP / INTEGRITY ISSUES (Revealed and Collected debt from unauthorized CP)", defect: 6, key: "withOrWithoutContact-gppIntegrityIssues" },
+        { label: "Exercised sound judgment in determining the appropriate course of action.", defect: 6, key: "withOrWithoutContact-soundJudgment" },
+      ];
+      let row7 = 47;
+      withOrWithoutContactEREC.forEach(({ label, defect, key }) => {
+        row7++;
+        worksheet.getCell(`C${row7}`).value = label;
+        worksheet.getCell(`D${row7}`).value = defect;
+        const callVals = questionCallValues[key] || [];
+        for (let i = 0; i < 5; i++) {
+          worksheet.getCell(row7, 5 + i).value = callVals[i] ?? "";
+        }
+        applyBorder(worksheet, row7, row7, 3, 9, thinBorder);
+      });
+
+      // let row8 = 57;
+      worksheet.mergeCells(`B56:I56`);
+      worksheet.getCell(`B56`).value = "C. CLOSING THE CALL";
+      headerCell(worksheet.getCell(`B56`));
+      applyBorder(worksheet, 56, 56, 2, 8, thickBorder);
+
+      worksheet.getRow(57).height = 10;
+      worksheet.mergeCells("C57:I57");
+
+      // Section C: CLOSING THE CALL
+      const closingQuestions: Array<{ label: string; defect: number; key: string }> = [
+        { label: "Summarized payment arrangement*", defect: 2, key: "closing-summarizedPayment" },
+        { label: "Request return call for payment confirmation*", defect: 1, key: "closing-requestReturnCall" },
+      ];
+      let row8 = 57;
+      closingQuestions.forEach(({ label, defect, key }) => {
+        row8++;
+        worksheet.getCell(`C${row8}`).value = label;
+        worksheet.getCell(`D${row8}`).value = defect;
+        const callVals = questionCallValues[key] || [];
+        for (let i = 0; i < 5; i++) {
+          worksheet.getCell(row8, 5 + i).value = callVals[i] ?? "";
+        }
+        applyBorder(worksheet, row8, row8, 3, 9, thinBorder);
+      });
+
+      worksheet.getCell("C61").value = "WITH CONTACT? (Y/N)";
+      worksheet.getCell("C62").value = "Total Defects";
+      worksheet.getCell(`C63`).value = "Score";
+      worksheet.mergeCells(`J61:J63`);
+      worksheet.getCell(`J61`).value = "99.00%";
+      applyBorder(worksheet, 61, 63, 10, 10, thickBorder);
+
+      const row9 = 61;
+
+      callContactStatuses.slice(0, 5).forEach((status, index) => {
+        const col = 5 + index;
+        worksheet.getCell(row9, col).value = status ? "Y" : "N";
+      });
+      applyBorder(worksheet, row9, row9, 5, 9, thinBorder);
+
+      const row10 = 62;
+
+      callContactStatuses.slice(0, 5).forEach((status, index) => {
+        const col = 5 + index;
+        worksheet.getCell(row10, col).value = status ? "Y" : "N";
+      });
+      applyBorder(worksheet, row10, row10, 5, 9, thinBorder);
+
+      const row11 = 63;
+
+      callContactStatuses.slice(0, 5).forEach((status, index) => {
+        const col = 5 + index;
+        worksheet.getCell(row11, col).value = status ? "Y" : "N";
+      });
+      applyBorder(worksheet, row11, row11, 5, 9, thinBorder);
+
+      worksheet.getCell("C65").value = "CALL 1 COMMENTS OF AGENT";
+      
+      let commentRow = 65;
+      for (let i = 0; i < 5; i++) {
+        worksheet.getCell(`C${commentRow}`).value = `CALL ${i + 1} COMMENTS OF AGENT`;
+        worksheet.mergeCells(`D${commentRow}:F${commentRow}`);
+        worksheet.getCell(`D${commentRow}`).value = "COMMENTS OF AGENCY TL";
+        worksheet.mergeCells(`G${commentRow}:I${commentRow}`);
+        worksheet.getCell(`G${commentRow}`).value = "ACTION PLAN";
+        applyBorder(worksheet, commentRow, commentRow, 3, 9, thickBorder);
+
+        const agentComment = callComments[i]?.agent || "";
+        const tlComment = callComments[i]?.tl || "";
+        const actionPlanComment = callComments[i]?.actionPlan || "";
+
+        worksheet.mergeCells(`D${commentRow + 1}:F${commentRow + 2}`);
+        worksheet.mergeCells(`G${commentRow + 1}:I${commentRow + 2}`);
+        worksheet.mergeCells(`C${commentRow + 1}:C${commentRow + 2}`);
+        worksheet.getCell(`C${commentRow + 1}`).value = agentComment;
+        worksheet.getCell(`D${commentRow + 1}`).value = tlComment;
+        worksheet.getCell(`G${commentRow + 1}`).value = actionPlanComment;
+        applyBorder(worksheet, commentRow + 1, commentRow + 2, 3, 9, thickBorder);
+
+        commentRow += 3;
+        commentRow += 1;
+      }
+
+      const buffer = await workbook.xlsx.writeBuffer();
+      const blob = new Blob([buffer], {
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      });
+
+      const link = document.createElement("a");
+      link.href = URL.createObjectURL(blob);
+      link.download = `ub-score-card-${
+        selectedCollectionOfficer || "officer"
+      }.xlsx`;
+      link.click();
+
+      return true;
+    } catch (err) {
+      console.error(err);
+      return false;
+    } finally {
+      setIsExportingExcel(false);
+    }
+  };
+
+  const handleSaveAndExport = async () => {
+    // if (!selectedMonth) return alert("Please select a month");
+    // if (!selectedCollectionOfficer)
+    //   return alert("Please select a collection officer");
+    // if (!selectedEvaluator) return alert("Please select an evaluator");
+    const getCalls = (key: string) =>
+      questionCallValues[key] ?? Array(5).fill(0);
+    const scoreDetails = {
+      opening: [
+        {
+          question:
+            "Used appropriate greeting / Identified self and Agency (full Agency name)",
+          calls: getCalls("opening-greeting"),
+        },
+        {
+          question: "Mentioned UBP Disclaimer spiel",
+          calls: getCalls("opening-disclaimer"),
+        },
+        {
+          question: "Mentioned Line is Recorded",
+          calls: getCalls("opening-recorded"),
+        },
+        {
+          question:
+            "Mentioned CH/ Valid CP/Y's Full Name for outgoing calls to a registered number. Asked correct Positive Identifiers for incoming calls & calls to unregistered number.",
+          calls: getCalls("opening-fullname"),
+        },
+        {
+          question:
+            "Properly identified self, mentioned first and last name to CH/Valid CP/Y",
+          calls: getCalls("opening-selfid"),
+        },
+      ],
+      collectionCallProper: {
+        withContact: {
+          establishingRapport: {
+            explainedStatus: {
+              question: "Explained the status of the account",
+              calls: getCalls("withContact-explainedStatus"),
+            },
+            askedNotification: {
+              question: "Asked if CH received demand/ notification letter",
+              calls: getCalls("withContact-askedNotification"),
+            },
+            showedEmpathy: {
+              question: "Showed empathy and compassion as appropriate.",
+              calls: getCalls("withContact-showedEmpathy"),
+            },
+          },
+          listeningSkills: {
+            soughtRFD: {
+              question: "Sought RFD in payment & RFBP",
+              calls: getCalls("withContact-soughtRFD"),
+            },
+          },
+          negotiationSkills: {
+            explainedConsequences: {
+              question: "Explained consequences of non-payment, if applicable",
+              calls: getCalls("withContact-explainedConsequences"),
+            },
+            askedCapacity: {
+              question: "Asked for CM's capacity to pay, if applicable",
+              calls: getCalls("withContact-askedCapacity"),
+            },
+            followedHierarchy: {
+              question: "Followed hierarchy of negotiation",
+              calls: getCalls("withContact-followedHierarchy"),
+            },
+          },
+          offeringSolutions: {
+            offeredDiscount: {
+              question: "Offered discount/ amnesty/ promo",
+              calls: getCalls("withContact-offeredDiscount"),
+            },
+            advisedSourceFunds: {
+              question: "Adviced CH to source out funds",
+              calls: getCalls("withContact-advisedSourceFunds"),
+            },
+          },
+        },
+        withoutContact: {
+          establishingRapport: {
+            probedContactNumbers: {
+              question: "Probed on BTC, ETA and other contact numbers",
+              calls: getCalls("withoutContact-probedContactNumbers"),
+            },
+            usedTimeSchedule: {
+              question: "Used time schedule and follow-up if applicable",
+              calls: getCalls("withoutContact-usedTimeSchedule"),
+            },
+            askedPartyName: {
+              question: "Asked for name of party, relation to client",
+              calls: getCalls("withoutContact-askedPartyName"),
+            },
+            leftUrgentMessage: {
+              question: "Left URGENT message ang gave correct contact number",
+              calls: getCalls("withoutContact-leftUrgentMessage"),
+            },
+          },
+        },
+        withOrWithoutContact: {
+          qualityOfCall: {
+            professionalTone: {
+              question: "Used professional tone of voice (did not shout)",
+              calls: getCalls("withOrWithoutContact-professionalTone"),
+            },
+            politeLanguage: {
+              question:
+                "Did not use unacceptable words/phrases and maintained polite/civil language",
+              calls: getCalls("withOrWithoutContact-politeLanguage"),
+            },
+            updatedInfoSheet: {
+              question:
+                "Updated correct information and payment details on info sheet, if applicable",
+              calls: getCalls("withOrWithoutContact-updatedInfoSheet"),
+            },
+            adherenceToPolicy: {
+              question: "Adherence to Policy(BSP, Code of Conduct, etc.)",
+              calls: getCalls("withOrWithoutContact-adherenceToPolicy"),
+            },
+            gppIntegrityIssues: {
+              question:
+                "GPP / INTEGRITY ISSUES (Revealed and Collected debt from unauthorized CP)",
+              calls: getCalls("withOrWithoutContact-gppIntegrityIssues"),
+            },
+            soundJudgment: {
+              question:
+                "Exercised sound judgment in determining the appropriate course of action.",
+              calls: getCalls("withOrWithoutContact-soundJudgment"),
+            },
+          },
+        },
+      },
+      closingTheCall: [
+        {
+          question: "Summarized payment arrangement",
+          calls: getCalls("closing-summarizedPayment"),
+        },
+        {
+          question: "Request return call for payment confirmation",
+          calls: getCalls("closing-requestReturnCall"),
+        },
+      ],
+      callComments,
+    };
+    try {
+      await createUBScoreCardData({
+        variables: {
+          input: {
+            month: selectedMonth,
+            department: UB_CARD_BUCKET_ID,
+            agentName: selectedCollectionOfficer,
+            dateAndTimeOfCall: new Date().toISOString(),
+            number: "N/A",
+            assignedTL: selectedEvaluator,
+            typeOfScoreCard: "UB Score Card",
+            scoreDetails,
+            totalScore: overallScore,
+          },
+        },
+      });
+      await handleExportExcel();
+    } catch (err: any) {
+      if (err.graphQLErrors && err.graphQLErrors.length > 0) {
+        console.error("GraphQL Errors:", err.graphQLErrors);
+      }
+      if (err.networkError) {
+        console.error("Network Error:", err.networkError);
+      }
+      console.error("Full Apollo Error:", err);
+      alert("Failed to save or export. Check console for detailed error.");
+    }
+  };
 
   const handleCallValueChange = useCallback(
     (questionKey: string, callIndex: number, value: number) => {
@@ -440,204 +1051,10 @@ const UBScoreCard = () => {
           <div className="flex items-center absolute right-5 h-full gap-1 justify-end text-xs">
             <button
               className="px-4 py-2 cursor-pointer border-green-900 transition-all border-2 font-black uppercase rounded-sm shadow-md text-white bg-green-700 hover:bg-green-800 disabled:bg-gray-400"
-              onClick={async () => {
-                if (!selectedMonth) return alert("Please select a month");
-                if (!selectedCollectionOfficer)
-                  return alert("Please select a collection officer");
-                if (!selectedEvaluator)
-                  return alert("Please select an evaluator");
-                const getCalls = (key: string) =>
-                  questionCallValues[key] ?? Array(5).fill(0);
-                const scoreDetails = {
-                  opening: [
-                    {
-                      question:
-                        "Used appropriate greeting / Identified self and Agency (full Agency name)",
-                      calls: getCalls("opening-greeting"),
-                    },
-                    {
-                      question: "Mentioned UBP Disclaimer spiel",
-                      calls: getCalls("opening-disclaimer"),
-                    },
-                    {
-                      question: "Mentioned Line is Recorded",
-                      calls: getCalls("opening-recorded"),
-                    },
-                    {
-                      question:
-                        "Mentioned CH/ Valid CP/Y's Full Name for outgoing calls to a registered number. Asked correct Positive Identifiers for incoming calls & calls to unregistered number.",
-                      calls: getCalls("opening-fullname"),
-                    },
-                    {
-                      question:
-                        "Properly identified self, mentioned first and last name to CH/Valid CP/Y",
-                      calls: getCalls("opening-selfid"),
-                    },
-                  ],
-                  collectionCallProper: {
-                    withContact: {
-                      establishingRapport: {
-                        explainedStatus: {
-                          question: "Explained the status of the account",
-                          calls: getCalls("withContact-explainedStatus"),
-                        },
-                        askedNotification: {
-                          question:
-                            "Asked if CH received demand/ notification letter",
-                          calls: getCalls("withContact-askedNotification"),
-                        },
-                        showedEmpathy: {
-                          question:
-                            "Showed empathy and compassion as appropriate.",
-                          calls: getCalls("withContact-showedEmpathy"),
-                        },
-                      },
-                      listeningSkills: {
-                        soughtRFD: {
-                          question: "Sought RFD in payment & RFBP",
-                          calls: getCalls("withContact-soughtRFD"),
-                        },
-                      },
-                      negotiationSkills: {
-                        explainedConsequences: {
-                          question:
-                            "Explained consequences of non-payment, if applicable",
-                          calls: getCalls("withContact-explainedConsequences"),
-                        },
-                        askedCapacity: {
-                          question:
-                            "Asked for CM's capacity to pay, if applicable",
-                          calls: getCalls("withContact-askedCapacity"),
-                        },
-                        followedHierarchy: {
-                          question: "Followed hierarchy of negotiation",
-                          calls: getCalls("withContact-followedHierarchy"),
-                        },
-                      },
-                      offeringSolutions: {
-                        offeredDiscount: {
-                          question: "Offered discount/ amnesty/ promo",
-                          calls: getCalls("withContact-offeredDiscount"),
-                        },
-                        advisedSourceFunds: {
-                          question: "Adviced CH to source out funds",
-                          calls: getCalls("withContact-advisedSourceFunds"),
-                        },
-                      },
-                    },
-                    withoutContact: {
-                      establishingRapport: {
-                        probedContactNumbers: {
-                          question:
-                            "Probed on BTC, ETA and other contact numbers",
-                          calls: getCalls(
-                            "withoutContact-probedContactNumbers"
-                          ),
-                        },
-                        usedTimeSchedule: {
-                          question:
-                            "Used time schedule and follow-up if applicable",
-                          calls: getCalls("withoutContact-usedTimeSchedule"),
-                        },
-                        askedPartyName: {
-                          question:
-                            "Asked for name of party, relation to client",
-                          calls: getCalls("withoutContact-askedPartyName"),
-                        },
-                        leftUrgentMessage: {
-                          question:
-                            "Left URGENT message ang gave correct contact number",
-                          calls: getCalls("withoutContact-leftUrgentMessage"),
-                        },
-                      },
-                    },
-                    withOrWithoutContact: {
-                      qualityOfCall: {
-                        professionalTone: {
-                          question:
-                            "Used professional tone of voice (did not shout)",
-                          calls: getCalls(
-                            "withOrWithoutContact-professionalTone"
-                          ),
-                        },
-                        politeLanguage: {
-                          question:
-                            "Did not use unacceptable words/phrases and maintained polite/civil language",
-                          calls: getCalls(
-                            "withOrWithoutContact-politeLanguage"
-                          ),
-                        },
-                        updatedInfoSheet: {
-                          question:
-                            "Updated correct information and payment details on info sheet, if applicable",
-                          calls: getCalls(
-                            "withOrWithoutContact-updatedInfoSheet"
-                          ),
-                        },
-                        adherenceToPolicy: {
-                          question:
-                            "Adherence to Policy(BSP, Code of Conduct, etc.)",
-                          calls: getCalls(
-                            "withOrWithoutContact-adherenceToPolicy"
-                          ),
-                        },
-                        gppIntegrityIssues: {
-                          question:
-                            "GPP / INTEGRITY ISSUES (Revealed and Collected debt from unauthorized CP)",
-                          calls: getCalls(
-                            "withOrWithoutContact-gppIntegrityIssues"
-                          ),
-                        },
-                        soundJudgment: {
-                          question:
-                            "Exercised sound judgment in determining the appropriate course of action.",
-                          calls: getCalls("withOrWithoutContact-soundJudgment"),
-                        },
-                      },
-                    },
-                  },
-                  closingTheCall: [
-                    {
-                      question: "Summarized payment arrangement",
-                      calls: getCalls("closing-summarizedPayment"),
-                    },
-                    {
-                      question: "Request return call for payment confirmation",
-                      calls: getCalls("closing-requestReturnCall"),
-                    },
-                  ],
-                  callComments,
-                };
-
-                try {
-                  await createUBScoreCardData({
-                    variables: {
-                      input: {
-                        month: selectedMonth,
-                        department: UB_CARD_BUCKET_ID,
-                        agentName: selectedCollectionOfficer,
-                        dateAndTimeOfCall: new Date().toISOString(),
-                        number: "N/A",
-                        assignedTL: selectedEvaluator,
-                        typeOfScoreCard: "UB Score Card",
-                        scoreDetails,
-                        totalScore: overallScore,
-                      },
-                    },
-                  });
-                } catch (err: any) {
-                  if (err.graphQLErrors && err.graphQLErrors.length > 0) {
-                    console.error("GraphQL Errors:", err.graphQLErrors);
-                  }
-                  if (err.networkError) {
-                    console.error("Network Error:", err.networkError);
-                  }
-                  console.error("Full Apollo Error:", err);
-                  alert("Failed to save. Check console for detailed error.");
-                }
-              }}
+              onClick={handleSaveAndExport}
+              disabled={isExportingExcel}
             >
-              Save
+              {isExportingExcel ? "Exporting..." : "Save"}
             </button>
           </div>
         </div>

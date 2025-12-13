@@ -531,7 +531,8 @@ const Uploader: React.FC<modalProps> = ({
           <div className="h-full" >
             <button
               type="button"
-              className="bg-green-600 shadow-md border-2 h-full border-green-800 hover:bg-green-700 transition-all focus:outline-none text-white font-black uppercase rounded-md text-base px-6 py-1 cursor-pointer"
+              disabled={file.length === 0}
+              className={`" ${file.length === 0 ? "bg-gray-200 text-gray-300 border-gray-300 cursor-not-allowed" : "cursor-pointer  bg-green-600 border-green-800 hover:bg-green-700 text-white shadow-md"}  border-2 h-full  transition-all focus:outline-none font-black uppercase rounded-md text-base px-6 py-1  "`}
               onClick={submitUpload}
             >
              upload

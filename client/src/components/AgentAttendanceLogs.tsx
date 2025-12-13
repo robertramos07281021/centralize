@@ -457,7 +457,7 @@ const AgentAttendanceLogs = () => {
 
             <div className="flex h-[80%] flex-col gap-3">
               <div className=" h-full flex flex-col">
-                <div className="justify-between text-xs bg-gray-300 py-2 border rounded-t-md pl-3 pr-8 uppercase font-black grid grid-cols-3">
+                <div className="justify-between text-xs bg-gray-400 py-2 border rounded-t-md pl-3 pr-8 uppercase font-black grid grid-cols-3">
                   <div>Agent Name</div>
                   <div className="text-end">Start</div>
                   <div className="text-end">End</div>
@@ -467,18 +467,18 @@ const AgentAttendanceLogs = () => {
                     return (
                       <motion.div
                         key={index}
-                        className="border-x border-b flex flex-col h-full odd:bg-gray-200 even:bg-gray-100 last:rounded-b-md last:shadow-md px-3 py-2 text-sm text-gray-800"
+                        className="border-x border-b flex flex-col h-full bg-gray-100 last:rounded-b-md last:shadow-md  text-sm text-gray-800"
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ delay: index * 0.05 }}
                       >
-                        <div className="text-center text-black font-bold border-b">
+                        <div className="text-center bg-gray-300 py-2 text-black font-bold border-b">
                           {new Date(prod.createdAt).toLocaleDateString()}
                         </div>
                         {prod.prod.map((x, index) => {
                           return (
-                            <div key={index} className="grid grid-cols-3 h-full items-center justify-between">
+                            <div key={index} className="grid grid-cols-3 even:bg-gray-200 border-b border-gray-300 odd:bg-gray-100 px-3 py-1  items-center justify-between">
                               <span className="font-semibold text-black uppercase">
                                 {x.type}
                               </span>

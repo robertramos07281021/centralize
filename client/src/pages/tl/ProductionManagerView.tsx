@@ -109,18 +109,49 @@ const ProductionManagerView = () => {
 
               <div className="overflow-hidden relative border border-black rounded-md flex  text-sm font-black">
                 <motion.div
-                  initial={{ x: 0, opacity: 0, width: "3rem" }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.6 }}
-                  className="bg-gray-500 left-0 top-0 z-10 h-full absolute"
+                  initial={{ x: 0, opacity: 0 }}
+                  animate={{
+                    x: status === "all" ? 0 : status === "active" ? 50 : 125,
+                    opacity: 1,
+                    width:
+                      status === "all" ? 50 : status === "active" ? 76 : 100,
+                  }}
+                  className={`" ${
+                    status === "all"
+                      ? "border-r  border-amber-900 bg-amber-500"
+                      : status === "active"
+                      ? " border-x  border-blue-900 bg-blue-500"
+                      : "border-l border-green-900 bg-green-500"
+                  } left-0 top-0 z-10  h-full absolute "`}
                 ></motion.div>
-                <div className="flex z-20" >
-                  <div className="px-3 py-2 text-white text-shadow-xs">ALL</div>
-                  <div className="px-3 py-2">ACTIVE</div>
-                  <div className="px-3 py-2">FINISHED</div>
+                <div className="flex z-20">
+                  <div
+                    className={`" ${
+                      status === "all" && "text-white"
+                    } text-black px-3 py-2  cursor-pointer   text-shadow-xs "`}
+                    onClick={() => setStatus(Status.all)}
+                  >
+                    ALL
+                  </div>
+                  <div
+                    className={`" ${
+                      status === "active" && "text-white"
+                    } text-black  px-3 py-2 text-shadow-2xs cursor-pointer "`}
+                    onClick={() => setStatus(Status.active)}
+                  >
+                    ACTIVE
+                  </div>
+                  <div
+                    className={`" ${
+                      status === "finished" && "text-white"
+                    } text-black  px-3 py-2 text-shadow-2xs cursor-pointer "`}
+                    onClick={() => setStatus(Status.finished)}
+                  >
+                    FINISHED
+                  </div>
                 </div>
               </div>
-              <motion.fieldset
+              {/* <motion.fieldset
                 className="flex border rounded-md p-2 px-5 gap-5 border-black "
                 initial={{ y: 20, opacity: 0 }}
                 animate={{ y: 0, opacity: 1 }}
@@ -162,14 +193,14 @@ const ProductionManagerView = () => {
                   />
                   <span>Finished</span>
                 </label>
-              </motion.fieldset>
+              </motion.fieldset> */}
             </div>
           </div>
-          <div className="w-full p-3 border border-black rounded-md bg-gray-100 flex flex-col gap-2">
-            <h1 className="text-2xl font-black uppercase text-gray-600 text-center">
+          <div className="w-full border overflow-hidden border-black rounded-md bg-gray-100 flex flex-col">
+            <div className="h-full items-center py-2 flex justify-center text-base font-black uppercase text-black bg-gray-400 border-b text-center">
               {canUpload && "Uploader"}
-            </h1>
-            <div className=" h-full flex items-end">
+            </div>
+            <div className="px-3 py-2 h-full flex items-end">
               <Uploader
                 width="w-full"
                 bucket={callfileBucket}

@@ -1875,6 +1875,7 @@ const dispositionResolver = {
 
         const newDisposition = new Disposition({
           ...input,
+          "features.SOF": input.SOF,
           payment: withPayment.includes(dispoType.code) ? payment : null,
           amount: parseFloat(input.amount) || 0,
           user: user._id,
