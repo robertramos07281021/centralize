@@ -855,7 +855,7 @@ const callResolver = {
           .split("|")[0]
           .replace(/:/g, "");
 
-        return `${campaign_ID}_${newDate}-${time}_${findUser?.vici_id}_${mobile}-all.mp3_${duration}`;
+        return `${campaign_ID}_${newDate}-${time}_${findUser?.vici_id}_${mobile}-all.mp3_${duration}_${bucket[chechIfisOnline.indexOf(true)]}`;
       } catch (error) {
         throw new CustomError(error.message, 500);
       }

@@ -344,7 +344,7 @@ const recordingsResolver = {
       const sftp = new SftpClient();
 
       try {
-        const REMOTE_DIR = "/var/spool/asterisk/monitorDONE/MP3";
+        const REMOTE_DIR = "/var/spool/asterisk/monitorDONE/FTP";
         const findDispo = await Disposition.aggregate([
           {
             $match: {
@@ -388,7 +388,6 @@ const recordingsResolver = {
           fs.mkdirSync(localDir, { recursive: true });
         }
         const others = {
-          "172.20.21.63": "172.20.21.67",
         };
 
         const passwords = {
@@ -403,7 +402,7 @@ const recordingsResolver = {
           "172.20.21.70": process.env.FTP_PASSWORD5,
           "172.20.21.20": process.env.FTP_PASSWORD1,
           "172.20.21.16": process.env.FTP_PASSWORD1,
-          // "172.20.21.63": process.env.FTP_PASSWORD1,
+          "172.20.21.63": process.env.FTP_PASSWORD1,
         };
 
         const checking = findDispo[0]?.cf_bucket?.viciIp in others;
@@ -425,7 +424,7 @@ const recordingsResolver = {
         // console.log(fileList.find(x=> x.name === fileName))
         // console.log(fileList)
         // return
-        const fileBuffer = await sftp.get(`${REMOTE_DIR}/${fileName}`);
+        const fileBuffer = await sftp.get(`${REMOTE_DIR}/ /${fileName}`);
         const localPath = path.join(localDir, fileName);
         await fs.writeFileSync(localPath, fileBuffer);
 

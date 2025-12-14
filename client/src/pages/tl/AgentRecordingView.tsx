@@ -251,7 +251,7 @@ const AgentRecordingView = () => {
     },
   });
 
-  const [recordingsFTP, { loading: FTPLoading, error }] = useMutation<{
+  const [recordingsFTP, { loading: FTPLoading }] = useMutation<{
     recordingsFTP: Success;
   }>(RECORDING_FTP, {
     onCompleted: async (res) => {
