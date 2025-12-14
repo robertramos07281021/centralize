@@ -758,22 +758,11 @@ const CustomerDisposition = () => {
 
   const { data } = useQuery<{ checkIfAgentIsInline: string }>(CHECK_IF_INLINE, {
     notifyOnNetworkStatusChange: true,
-    // skip: !location.pathname.includes("cip") || !canCallBuckets?.includes(true),
+    skip: !location.pathname.includes('cip') && userLogged?.type !== 'AGENT',
     pollInterval: 1000,
   });
 
   const checkIfAgentIsInline = data?.checkIfAgentIsInline;
-  console.log(checkIfAgentIsInline);
-
-  // useEffect(() => {
-  //   if (
-  //     checkIfAgentIsInline?.includes("PAUSE") &&
-  //     !checkIfAgentIsInline.includes("DEAD") &&
-  //     !checkIfAgentIsInline.includes("DISPO")
-  //   ) {
-  //     dispatch(setIsRing(false));
-  //   }
-  // }, [checkIfAgentIsInline]);
 
   const clearSelectedCustomer = useCallback(async () => {
     const res = await deselectTask({

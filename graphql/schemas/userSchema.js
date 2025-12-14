@@ -149,6 +149,7 @@ const userTypeDefs = gql`
     account_type: String
     callfile_id: String
     vici_id: String
+    softphone: String
   }
 
   input UpdateAccount {

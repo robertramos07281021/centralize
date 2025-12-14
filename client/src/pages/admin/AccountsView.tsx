@@ -306,43 +306,6 @@ const AccountsView = () => {
     [setModalProps, setConfirm, unlockUser]
   );
 
-  // const filteredUsers =
-  //   users
-  //     ?.filter((user) => {
-  //       if (option === 50) return user.isOnline;
-  //       if (option === 95) return !user.isOnline;
-  //       return true;
-  //     })
-  //     ?.filter((user) => {
-  //       if (!search.trim()) return true;
-
-  //       const searchText = search.toLowerCase();
-
-  //       const nameMatch = user.name.toLowerCase().includes(searchText);
-  //       const usernameMatch = user.username.toLowerCase().includes(searchText);
-  //       const typeMatch = user.type.toLowerCase().includes(searchText);
-  //       const branchMatch = branchObject[user.branch]
-  //         ?.toLowerCase()
-  //         .includes(searchText);
-
-  //       const deptMatch = user.departments
-  //         .map((id) => deptObject[id]?.toLowerCase() || "")
-  //         .some((dept) => dept.includes(searchText));
-
-  //       const bucketMatch = user.buckets
-  //         .map((id) => bucketObject[id]?.toLowerCase() || "")
-  //         .some((bucket) => bucket.includes(searchText));
-
-  //       return (
-  //         nameMatch ||
-  //         usernameMatch ||
-  //         typeMatch ||
-  //         branchMatch ||
-  //         deptMatch ||
-  //         bucketMatch
-  //       );
-  //     }) || [];
-
   return (
     <>
       <div className="h-full relative flex flex-col overflow-hidden pt-2 px-2">
@@ -699,34 +662,12 @@ const AccountsView = () => {
               >
                 <RegisterView
                   setCancel={() => setCreate(false)}
-                  cancel={cancel}
                 />
               </motion.div>
             </div>
           )}
         </AnimatePresence>
 
-        {/* <AnimatePresence>
-          {updateModal && (
-            <div className="absolute flex z-10 top-0 justify-center items-center left-0 w-full h-full">
-              <motion.div
-                onClick={() => setCreate(false)}
-                className="bg-[#00000050] cursor-default relative flex z-20 backdrop-blur-sm w-full h-full"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                exit={{ opacity: 0 }}
-              ></motion.div>
-              <motion.div
-                className="absolute flex justify-center items-center  w-full z-30  p-2 rounded-md  "
-                initial={{ scale: 0.8, opacity: 0 }}
-                animate={{ scale: 1, opacity: 1 }}
-                exit={{ scale: 0.8, opacity: 0 }}
-              >
-                <RegisterView cancel={cancel} setCancel={()=> setCancel(false)} />
-              </motion.div>
-            </div>
-          )}
-        </AnimatePresence> */}
       </div>
       <AnimatePresence>
         {confirm && <Confirmation {...modalProps} />}

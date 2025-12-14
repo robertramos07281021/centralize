@@ -138,7 +138,7 @@ const NavbarExtn = () => {
   const navigate = useNavigate();
   const [openIndex, setOpenIndex] = useState<number | null>(null);
   const isDuplicate = useSingleTabGuard();
-  
+
   const { data: agentBucketsData, refetch: agentBucketRefetch } = useQuery<{
     getTLBucket: { canCall: boolean }[];
   }>(AGENT_BUCKETS, {
@@ -290,6 +290,8 @@ const NavbarExtn = () => {
       navigate("/agent-cip");
     }
   }, [isAutoDialData?.isAutoDial, location?.pathname]);
+
+  
 
   const endCallYes = useCallback(async () => {
     if (selectedCustomer?._id) {

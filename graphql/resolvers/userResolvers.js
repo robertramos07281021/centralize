@@ -427,6 +427,7 @@ const userResolvers = {
           account_type,
           callfile_id,
           vici_id,
+          softphone
         } = createInput;
 
         if (type === "AGENT") {
@@ -466,6 +467,7 @@ const userResolvers = {
           account_type,
           buckets,
           vici_id,
+          softphone
         });
 
         await newUser.save();
@@ -477,6 +479,7 @@ const userResolvers = {
           message: "New Account Created",
         };
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500);
       }
     },

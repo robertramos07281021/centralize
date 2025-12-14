@@ -614,6 +614,8 @@ const AgentRecordingView = () => {
                       {recordings?.getAgentDispositionRecords?.dispositions?.map(
                         (e, index) => {
                           const callId = e.callId?.split(".mp3_");
+                          const callDuration = callId[1].split('_')[0]
+
                           const callRecord =
                             e.recordings?.length > 0
                               ? [...e.recordings].sort(
@@ -700,15 +702,15 @@ const AgentRecordingView = () => {
                                             onClick={() =>
                                               onDLRecordings(
                                                 e._id,
-                                                `${callId[0]}.mp3`
+                                                e.callId
                                               )
                                             }
                                             className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
                                           >
                                             <FaDownload color="white" />
                                             <p className="text-white">
-                                              {Number(callId[1]) > 0
-                                                ? formatDuration(callId[1])
+                                              {Number(callDuration) > 0
+                                                ? formatDuration(callDuration)
                                                 : fileSizeToDuration(
                                                     lagRecords[callId[0]]
                                                   )}
@@ -725,7 +727,7 @@ const AgentRecordingView = () => {
                                                 onClick={() =>
                                                   onDLRecordings(
                                                     e._id,
-                                                    `${callId[0]}.mp3`
+                                                    e.callId
                                                   )
                                                 }
                                                 className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"

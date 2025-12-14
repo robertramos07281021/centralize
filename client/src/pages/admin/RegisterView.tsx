@@ -46,15 +46,16 @@ enum AccountType {
 
 type Data = {
   type: Type | null;
-  name: string;
-  username: string;
-  branch: string;
+  name: string | null;
+  username: string | null;
+  branch: string | null;
   departments: string[];
-  user_id: string;
+  user_id: string | null;
   buckets: string[];
   account_type: AccountType | null;
-  callfile_id: string;
-  vici_id: string;
+  callfile_id: string | null;
+  vici_id: string | null;
+  softphone: string | null;
 };
 
 const CREATE_ACCOUNT = gql`
@@ -100,24 +101,24 @@ const GET_DEPT_BUCKET = gql`
 const validForCampaignAndBucket = ["TL", "AGENT", "MIS", "QA"];
 
 type RegisterProps = {
-  cancel?: boolean;
   setCancel: () => void;
 };
 
-const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
+const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
   const [selectDept, setSelectDept] = useState<boolean>(false);
   const [selectBucket, setSelectBucket] = useState<boolean>(false);
   const [data, setData] = useState<Data>({
     type: null,
-    name: "",
-    username: "",
-    branch: "",
+    name: null,
+    username: null,
+    branch: null,
     departments: [],
-    user_id: "",
+    user_id: null,
     buckets: [],
-    callfile_id: "",
+    callfile_id: null,
     account_type: null,
-    vici_id: "",
+    vici_id: null,
+    softphone: null,
   });
   const dispatch = useAppDispatch();
 
@@ -160,15 +161,16 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
   const reset = useCallback(() => {
     setData({
       type: null,
-      name: "",
-      username: "",
-      branch: "",
+      name: null,
+      username: null,
+      branch: null,
       departments: [],
-      user_id: "",
+      user_id: null,
       buckets: [],
-      callfile_id: "",
+      callfile_id: null,
       account_type: null,
-      vici_id: "",
+      vici_id: null,
+      softphone: null,
     });
   }, [setData]);
 
@@ -195,7 +197,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
       }
     },
     onError: (error) => {
-      console.error("Mutation error:", error);
+      console.log(error)
       const errorMessage = error?.message;
       if (errorMessage?.includes("E11000")) {
         reset();
@@ -223,7 +225,13 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
   });
 
   const validateAgent = () =>
-    data.branch && data.name && data.username && data.departments.length > 0;
+    data.branch &&
+    data.name &&
+    data.username &&
+    data.departments.length > 0 &&
+    data.buckets.length > 0 &&
+    data.vici_id &&
+    data.softphone;
 
   const validateOther = () => data.name && data.username;
 
@@ -236,7 +244,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
   }, [data, createUser]);
 
   const submitForm = useCallback(() => {
-    const isAgent = data.type === "AGENT";
+    const isAgent = validForCampaignAndBucket.includes(data?.type as string);
     const isValid = isAgent ? validateAgent() : validateOther();
 
     if (!isValid) {
@@ -259,7 +267,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
       const check = e.target.checked
         ? [...data.departments, deptObject[value]]
         : data.departments.filter((d) => d !== deptObject[value]);
-      setData((prev) => ({ ...prev, departments: check }));
+      setData((prev) => ({ ...prev, departments: check, buckets: [] }));
     },
     [data, deptObject]
   );
@@ -275,36 +283,40 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
   );
 
   useEffect(() => {
-    if (
-      data.type === null &&
-      (data.name ||
-        data.username ||
-        data.branch ||
-        data.departments.length > 0 ||
-        data.user_id ||
-        data.vici_id)
-    ) {
+    if (!data.type) {
       setData((prev) => ({
         ...prev,
-        name: "",
-        username: "",
-        branch: "",
-        department: [],
+        name: null,
+        username: null,
+        branch: null,
+        departments: [],
         buckets: [],
-        user_id: "",
-        callfile_id: "",
+        user_id: null,
+        callfile_id: null,
         account_type: null,
-        vici_id: "",
+        vici_id: null,
+        softphone: null,
+      }));
+    } else { 
+      setSelectDept(false)
+      setSelectBucket(false)
+      setData((prev) => ({
+        ...prev,
+        name: null,
+        username: null,
+        branch: null,
+        departments: [],
+        buckets: [],
+        user_id: null,
+        callfile_id: null,
+        account_type: null,
+        vici_id: null,
+        softphone: null,
       }));
     }
-  }, [data.type, data]);
+  }, [data.type]);
 
-  useEffect(() => {
-    if (!cancel) {
-      setSelectDept(false);
-      setSelectBucket(false);
-    }
-  }, [cancel]);
+  const refForm = useRef<HTMLFormElement | null>(null);
 
   const bucketDiv = useRef<HTMLDivElement | null>(null);
   const campaignDiv = useRef<HTMLDivElement | null>(null);
@@ -325,15 +337,22 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
         <div className="p-5 w-full flex text-2xl font-black uppercase text-slate-800 ">
           Create Account
         </div>
-        <form className=" px-5 w-full py-2 flex flex-col gap-2 items-center justify-center ">
+        <form
+          className=" px-5 w-full py-2 flex flex-col gap-2 items-center justify-center "
+          ref={refForm}
+          noValidate
+        >
           {required && (
             <div className="text-center text-xs text-red-500">
-              All fields are required.
+              Some fields are required.
             </div>
           )}
           <label className="w-full">
             <p className="w-full text-base font-black uppercase text-slate-800">
-              Type:
+              Type:{" "}
+              <span className="text-red-500">
+                {required && !data.type ? "*" : ""}
+              </span>
             </p>
             <select
               id="type"
@@ -344,11 +363,6 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                   e.target.value === "" ? null : (e.target.value as Type);
                 setData((prev) => ({ ...prev, type: value }));
               }}
-              // onClick={() => {
-              //   if (!cancel) {
-              //     setCancel?.(true);
-              //   }
-              // }}
               className={`bg-slate-50  border-slate-300 border  text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
               <option value="">Choose a type</option>
@@ -362,14 +376,17 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
           <div className="flex gap-3 w-full">
             <label className="w-full">
               <p className="w-full text-base font-black uppercase text-slate-800">
-                Name:
+                Name:{" "}
+                <span className="text-red-500">
+                  {data.type && required && !data.name ? "*" : ""}
+                </span>
               </p>
               <input
                 type="text"
                 id="name"
                 name="name"
                 autoComplete="off"
-                value={data.name}
+                value={data.name || ""}
                 onChange={(e) =>
                   setData((prev) => ({ ...prev, name: e.target.value }))
                 }
@@ -382,14 +399,17 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
 
             <label className="w-full">
               <p className="w-full text-base font-black uppercase text-slate-800">
-                Username:
+                Username:{" "}
+                <span className="text-red-500">
+                  {data.type && required && !data.username ? "*" : ""}
+                </span>
               </p>
               <input
                 type="text"
                 name="username"
                 id="username"
                 autoComplete="off"
-                value={data.username}
+                value={data.username || ""}
                 onChange={(e) =>
                   setData((prev) => ({ ...prev, username: e.target.value }))
                 }
@@ -410,7 +430,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                 name="id_number"
                 id="id_number"
                 autoComplete="off"
-                value={data.user_id}
+                value={data.user_id || ""}
                 onChange={(e) =>
                   setData((prev) => ({ ...prev, user_id: e.target.value }))
                 }
@@ -429,7 +449,10 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
 
             <label className="w-full">
               <p className="w-full text-base font-black uppercase text-slate-800">
-                Softphone ID:
+                Softphone ID:{" "}
+                <span className="text-red-500">
+                  {data.type && required && !data.softphone ? "*" : ""}
+                </span>
               </p>
               <input
                 type="text"
@@ -437,8 +460,16 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                 id="id_number"
                 autoComplete="off"
                 aria-disabled="true"
-                disabled={true}
-                placeholder="Under Construction"
+                value={data.softphone || ""}
+                disabled={
+                  !data.type ||
+                  !validForCampaignAndBucket.toString().includes(data.type)
+                }
+                onChange={(e) => {
+                  const value =
+                    e.target.value.trim() === "" ? null : e.target.value;
+                  setData((prev) => ({ ...prev, softphone: value }));
+                }}
                 className={`${
                   !data.type ||
                   !validForCampaignAndBucket.toString().includes(data.type)
@@ -457,7 +488,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                 name="callfile_id"
                 id="callfile_id"
                 autoComplete="off"
-                value={data.callfile_id}
+                value={data.callfile_id || ""}
                 onChange={(e) =>
                   setData((prev) => ({ ...prev, callfile_id: e.target.value }))
                 }
@@ -484,17 +515,17 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                 <select
                   id="account_type"
                   name="account"
-                  disabled={!data.type}
+                  value={data.account_type || ""}
+                  disabled={data.type !== "AGENT"}
                   onChange={(e) => {
                     const value =
-                      e.target.value === ""
+                      e.target.value.trim() === ""
                         ? null
                         : (e.target.value as AccountType);
                     setData((prev) => ({ ...prev, account_type: value }));
                   }}
-                  // onClick={() => setCancel?.(true)}
                   className={`${
-                    !data.type ? "bg-gray-200" : "bg-gray-50"
+                    data.type !== "AGENT" ? "bg-gray-200" : "bg-gray-50"
                   } border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
                 >
                   <option value="">Choose a account type</option>
@@ -503,51 +534,59 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                   <option value={AccountType.SKIPER}>Skipper</option>
                 </select>
               </label>
-              <div className="flex flex-col">
-                <div className="font-black text-slate-800 ">VICI ID:</div>
-                <div className="flex border border-slate-300  rounded-md ">
-                  <input
-                    id="vici_id"
-                    disabled={!data.type}
-                    className={`" ${
-                      !data.type ||
-                      !validForCampaignAndBucket.toString().includes(data.type)
-                        ? "bg-gray-200"
-                        : "bg-gray-50"
-                    } w-full bg-gray-100 px-5 py-2 pr-1 rounded-sm focus:outline-none "`}
-                    value={data.vici_id}
-                    onChange={(e) =>
-                      setData((prev) => ({ ...prev, vici_id: e.target.value }))
-                    }
-                  />
-                </div>
-              </div>
+              <label className="flex flex-col">
+                <p className="font-black text-slate-800 ">
+                  VICI ID:{" "}
+                  <span className="text-red-500">
+                    {data.type && required && !data.vici_id ? "*" : ""}
+                  </span>
+                </p>
+
+                <input
+                  id="vici_id"
+                  disabled={
+                    !data.type ||
+                    !validForCampaignAndBucket.toString().includes(data.type)
+                  }
+                  className={` ${
+                    !data.type ||
+                    !validForCampaignAndBucket.toString().includes(data.type)
+                      ? "bg-gray-200"
+                      : "bg-gray-50"
+                  } w-full bg-gray-100 px-5 py-2 pr-1 rounded-md focus:outline-none border border-slate-300 `}
+                  value={data.vici_id || ""}
+                  onChange={(e) => {
+                    const value =
+                      e.target.value.trim() === "" ? null : e.target.value;
+                    setData((prev) => ({ ...prev, vici_id: value }));
+                  }}
+                />
+              </label>
             </div>
 
             <label className="w-full">
               <p className="w-full text-base font-black uppercase text-slate-800">
-                Branch:
+                Branch: <span className="text-red-500">
+                    {data.type && required && !data.branch ? "*" : ""}
+                  </span>
               </p>
               <select
                 id="branch"
                 name="branch"
-                value={
-                  data.branch
-                    ? Object.keys(branchObject).find(
-                        (key) => branchObject[key] === data.branch
-                      )
-                    : ""
-                }
-                onChange={(e) =>
+                value={data.branch || ""}
+                onChange={(e) => {
+                  const value =
+                    e.target.value.trim() === "" ? null : e.target.value;
                   setData((prev) => ({
                     ...prev,
-                    branch: branchObject[e.target.value],
-                  }))
-                }
-                // onClick={() => setCancel?.(true)}
+                    branch: value,
+                    departments: [],
+                    buckets: []
+                  }));
+                }}
                 disabled={
                   !data.type ||
-                  !validForCampaignAndBucket.toString().includes(data.type)
+                  !validForCampaignAndBucket?.toString().includes(data.type)
                 }
                 className={`${
                   !data.type ||
@@ -558,7 +597,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
               >
                 <option value="">Choose a branch</option>
                 {branchQuery?.getBranches.map((branch) => (
-                  <option key={branch.id} value={branch.name}>
+                  <option key={branch.id} value={branch.id}>
                     {branch.name.toUpperCase()}
                   </option>
                 ))}
@@ -568,7 +607,9 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
 
           <div className="w-full relative" ref={campaignDiv}>
             <p className="w-full text-base font-black uppercase text-slate-800">
-              Campaign:
+              Campaign: <span className="text-red-500">
+                  {data.branch && data.type && required && data.departments.length <= 0 ? "*" : ""}
+                </span>
             </p>
             <div
               className={`${
@@ -577,14 +618,14 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                     .toString()
                     .includes(data.type as Type)) &&
                 "bg-gray-200"
-              } max-w-full text-sm border  rounded-lg flex justify-between ${
+              } max-w-full text-sm border rounded-lg flex justify-between ${
                 selectDept && data.branch
                   ? "border-blue-500"
                   : "border-slate-300"
               }`}
             >
               <div
-                className="w-full p-2.5 max-w-[350px] text-nowrap truncate cursor-default capitalize"
+                className="w-full p-2.5 text-nowrap truncate cursor-default capitalize"
                 title={data.departments
                   .map(
                     (deptId) =>
@@ -601,7 +642,6 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
                       .includes(data.type as Type)
                   ) {
                     setSelectDept(!selectDept);
-                    // setCancel?.(true);
                   }
                 }}
               >
@@ -671,7 +711,9 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
           </div>
           <div className="w-full relative" ref={bucketDiv}>
             <p className="w-full text-base font-black uppercase text-slate-800">
-              Bucket:
+              Bucket: <span className="text-red-500">
+                  {data.departments.length > 0 && data.type && required && data.buckets.length <= 0 ? "*" : ""}
+                </span>
             </p>
             <div
               className={`${
@@ -683,7 +725,7 @@ const RegisterView: React.FC<RegisterProps> = ({ cancel, setCancel }) => {
               }`}
             >
               <div
-                className="w-full p-2.5 max-w-[350px] text-nowrap truncate cursor-default"
+                className="w-full p-2.5 text-nowrap truncate cursor-default"
                 title={data.buckets
                   .map(
                     (bucketId) =>

@@ -167,6 +167,11 @@ const recordingsResolver = {
     findRecordings: async (_, { name, _id, ccsCall }) => {
       const client = new ftp.Client();
       try {
+        const fileNameNewMap = name.split(".mp3");
+        const actualFileName = `${fileNameNewMap[0]}.mp3`;
+
+        const fileIp = fileNameNewMap[2] ? fileNameNewMap[2].split("_")[2] : "";
+
         const months = [
           "January",
           "February",
@@ -200,9 +205,11 @@ const recordingsResolver = {
         const monthCreated = months[createdAt.getMonth()];
         const dayCreated = createdAt.getDate();
         const month = createdAt.getMonth() + 1;
-        const viciIpAddress = findDispo.customer_account.bucket.viciIp;
-        const issabelIpAddress = findDispo.customer_account.bucket.issabelIp;
-        const bucketName = findDispo.customer_account.bucket.name || "";
+        const viciIpAddress = fileIp
+          ? fileIp
+          : findDispo?.customer_account?.bucket?.viciIp;
+        const issabelIpAddress = findDispo?.customer_account?.bucket?.issabelIp;
+        const bucketName = findDispo?.customer_account?.bucket?.name || "";
 
         const fileNale = {
           "172.20.21.64": "AUTODIAL SHOPEE BCL-M7",
@@ -307,10 +314,10 @@ const recordingsResolver = {
           findDispo.dialer === "vici" || ccsCall
             ? ifATOME
             : `${remoteDirIssabel}`;
-        const remotePath = `${remoteDir}/${name}`;
-        const localPath = `./recordings/${name}`;
+        const remotePath = `${remoteDir}/${actualFileName}`;
+        const localPath = `./recordings/${actualFileName}`;
         await client.downloadTo(localPath, remotePath);
-        const toDownload = `http://${process.env.MY_IP}:4000/recordings/${name}`;
+        const toDownload = `http://${process.env.MY_IP}:4000/recordings/${actualFileName}`;
 
         return {
           success: true,
@@ -344,7 +351,7 @@ const recordingsResolver = {
       const sftp = new SftpClient();
 
       try {
-        const REMOTE_DIR = "/var/spool/asterisk/monitorDONE/FTP";
+        const REMOTE_DIR = "/var/spool/asterisk/monitorDONE";
         const findDispo = await Disposition.aggregate([
           {
             $match: {
@@ -387,8 +394,13 @@ const recordingsResolver = {
         if (!fs.existsSync(localDir)) {
           fs.mkdirSync(localDir, { recursive: true });
         }
-        const others = {
-        };
+        const others = {};
+
+        const splitFileName = fileName.split(".mp3");
+        const newFileName = splitFileName[0];
+        const splitFileName2nd = splitFileName[1]
+          ? splitFileName[1].split("_")[2]
+          : "";
 
         const passwords = {
           "172.20.21.67": process.env.FTP_PASSWORD1,
@@ -399,7 +411,7 @@ const recordingsResolver = {
           "172.20.21.21": process.env.FTP_PASSWORD1,
           "172.20.21.97": process.env.FTP_PASSWORD1,
           "172.20.21.17": process.env.FTP_PASSWORD1,
-          "172.20.21.70": process.env.FTP_PASSWORD5,
+          "172.20.21.70": process.env.FTP_PASSWORD4,
           "172.20.21.20": process.env.FTP_PASSWORD1,
           "172.20.21.16": process.env.FTP_PASSWORD1,
           "172.20.21.63": process.env.FTP_PASSWORD1,
@@ -408,27 +420,32 @@ const recordingsResolver = {
         const checking = findDispo[0]?.cf_bucket?.viciIp in others;
 
         const sftpConfig = {
-          host: checking
+          host: splitFileName2nd
+            ? splitFileName2nd
+            : checking
             ? others[findDispo[0]?.cf_bucket?.viciIp]
             : findDispo[0]?.cf_bucket?.viciIp,
           port: 22,
           username: process.env.FTP_USERNAME,
-          password: checking
+          password: splitFileName2nd
+            ? splitFileName2nd
+            : checking
             ? passwords[others[findDispo[0]?.cf_bucket?.viciIp]]
             : passwords[findDispo[0]?.cf_bucket?.viciIp],
         };
-        
+
         await sftp.connect(sftpConfig);
 
-        // const fileList = await sftp.list(REMOTE_DIR);
-        // console.log(fileList.find(x=> x.name === fileName))
-        // console.log(fileList)
-        // return
-        const fileBuffer = await sftp.get(`${REMOTE_DIR}/ /${fileName}`);
-        const localPath = path.join(localDir, fileName);
-        await fs.writeFileSync(localPath, fileBuffer);
+        try {
+          await sftp.get(`${REMOTE_DIR}/MP3/${newFileName}.mp3`);
+        } catch (error) {
+          await sftp.get(`${REMOTE_DIR}/FTP/${newFileName}.mp3`);
+        }
 
-        const toDownload = `http://${process.env.MY_IP}:4000/recordings/${fileName}`;
+        const localPath = path.join(localDir, `${newFileName}.mp3`);
+        await fs.writeFileSync(localPath, `${newFileName}.mp3`);
+
+        const toDownload = `http://${process.env.MY_IP}:4000/recordings/${newFileName}.mp3`;
 
         return {
           success: true,
@@ -436,6 +453,7 @@ const recordingsResolver = {
           message: "Successfully downloaded",
         };
       } catch (err) {
+        console.log(err);
         throw new CustomError(
           err.message || "Unable to download recording",
           500
