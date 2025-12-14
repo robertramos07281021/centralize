@@ -720,6 +720,9 @@ const DispositionForm: React.FC<Props> = ({
       setCAToEscalate,
     ]
   );
+
+  const secondLine = inlineData.split('|')[1]
+
   useEffect(() => {
     if (
       (canCall && userLogged?.account_type === "caller") ||
@@ -1385,8 +1388,7 @@ const DispositionForm: React.FC<Props> = ({
                         inlineData?.includes("DISPO")
                       ) && (
                         <>
-                          {}
-                          {data.disposition && (
+                          {(data.disposition && (inlineData?.includes("PAUSED") && !secondLine) ) && (
                             <motion.button
                               initial={{ scale: 0.5, opacity: 0 }}
                               animate={{ scale: 1, opacity: 1 }}
