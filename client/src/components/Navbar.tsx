@@ -153,6 +153,20 @@ const CHECK_USER_ONLINE_ON_VICI = gql`
   }
 `;
 
+const ACCOUNT_LOGIN = gql`
+  subscription newUserLogin {
+    newUserLogin {
+      agentId
+      message
+    }
+  }
+`;
+
+type AccountLogin = {
+  agentId: string
+  message: string
+}
+
 const Navbar = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
@@ -169,8 +183,18 @@ const Navbar = () => {
   const modalRef = useRef<HTMLDivElement>(null);
   const { data, error, refetch } = useQuery<{ getMe: UserInfo }>(myUserInfos, {
     notifyOnNetworkStatusChange: true,
-    pollInterval: 3000,
   });
+
+  useSubscription<{newUserLogin:AccountLogin}>(ACCOUNT_LOGIN, {
+    onData: async({data})=> {
+      console.log(data)
+      if(data.data) {
+        if(data.data?.newUserLogin.message === "NEW_LOGIN" && (userLogged?._id.toString() === data?.data?.newUserLogin?.agentId?.toString())){
+          await refetch()
+        }
+      }
+    }
+  })
 
   const [poPupUser, setPopUpUser] = useState<boolean>(false);
   const { data: agentBucketsData, refetch: agentBucketRefetch } = useQuery<{
@@ -294,12 +318,14 @@ const Navbar = () => {
       no: () => setConfirmation(false),
       yes: async () => {
         if (selectedCustomer) {
-          const res =  await deselectTask({ variables: { id: selectedCustomer?._id } });
-          if(!res.errors) {
+          const res = await deselectTask({
+            variables: { id: selectedCustomer?._id },
+          });
+          if (!res.errors) {
             await logout();
           }
         } else {
-          await logout()
+          await logout();
         }
       },
       message: "Are you sure you want to logout?",
@@ -425,7 +451,7 @@ const Navbar = () => {
   ) => {
     if (e.target.checked) {
       const res = await updateProduction({ variables: { type: value } });
-      if(!res.errors) {
+      if (!res.errors) {
         setPopUpBreak(false);
         setPopUpUser(false);
         dispatch(setBreakValue(BreakEnum[value as keyof typeof BreakEnum]));

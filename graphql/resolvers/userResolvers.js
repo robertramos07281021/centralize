@@ -59,7 +59,6 @@ const userResolvers = {
       }
     },
     getMe: async (_, __, { user }) => {
-  
       if (!user) throw new CustomError("Unauthorized", 401);
 
       return user;
@@ -427,7 +426,7 @@ const userResolvers = {
           account_type,
           callfile_id,
           vici_id,
-          softphone
+          softphone,
         } = createInput;
 
         if (type === "AGENT") {
@@ -467,7 +466,7 @@ const userResolvers = {
           account_type,
           buckets,
           vici_id,
-          softphone
+          softphone,
         });
 
         await newUser.save();
@@ -479,7 +478,7 @@ const userResolvers = {
           message: "New Account Created",
         };
       } catch (error) {
-        console.log(error)
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },
@@ -609,7 +608,15 @@ const userResolvers = {
         }
         user.features.token = token;
         user.isOnline = true;
+
         await user.save();
+
+        await pubsub.publish(PUBSUB_EVENTS.NEW_LOGIN, {
+          newUserLogin: {
+            agentId: user?._id,
+            message: PUBSUB_EVENTS.NEW_LOGIN,
+          },
+        });
 
         return {
           user: user,
@@ -688,7 +695,7 @@ const userResolvers = {
             ? findUser?.buckets.map((x) => x.canCall)
             : [];
 
-        if (canCall.some(x=> x === true)) {
+        if (canCall.some((x) => x === true)) {
           await logoutVici(findUser.vici_id, bucket[0]);
         }
 
@@ -790,12 +797,11 @@ const userResolvers = {
     },
     logoutToPersist: async (_, { id }, { res }) => {
       try {
-
         const findUser = await User.findByIdAndUpdate(
           id,
           {
             $set: { isOnline: false },
-            $unset: {"features.token": ""}
+            $unset: { "features.token": "" },
           },
           { new: true }
         );
@@ -925,22 +931,21 @@ const userResolvers = {
             });
 
             await userProd.save();
-
           }
         }
-        
+
         const bucket =
-        userBuckets > 0
-        ? new Array(...new Set(userBuckets.map((x) => x.viciIp)))
-        : [];
-        
+          userBuckets > 0
+            ? new Array(...new Set(userBuckets.map((x) => x.viciIp)))
+            : [];
+
         const userBucketsCanCall = userBuckets
-        .map((x) => x.canCall)
-        .some((y) => y === true);
+          .map((x) => x.canCall)
+          .some((y) => y === true);
         if (userBucketsCanCall) {
           await logoutVici(logoutUser.vici_id, bucket[0]);
         }
-        
+
         await ModifyRecord.create({ name: "Logout", user: logoutUser._id });
         return {
           success: true,

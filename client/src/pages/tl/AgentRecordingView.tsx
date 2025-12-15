@@ -614,7 +614,7 @@ const AgentRecordingView = () => {
                       {recordings?.getAgentDispositionRecords?.dispositions?.map(
                         (e, index) => {
                           const callId = e.callId?.split(".mp3_");
-                          const callDuration = callId[1].split('_')[0]
+                          const callDuration = callId ? callId[1]?.split('_')[0] : "0"
 
                           const callRecord =
                             e.recordings?.length > 0

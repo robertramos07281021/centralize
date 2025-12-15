@@ -756,10 +756,10 @@ const CustomerDisposition = () => {
     },
   });
 
-  const { data } = useQuery<{ checkIfAgentIsInline: string }>(CHECK_IF_INLINE, {
+  const { data, refetch: caiiRefetching } = useQuery<{ checkIfAgentIsInline: string }>(CHECK_IF_INLINE, {
     notifyOnNetworkStatusChange: true,
-    skip: !location.pathname.includes('cip') && userLogged?.type !== 'AGENT',
-    pollInterval: 1000,
+    // skip: !location.pathname.includes('cip') && userLogged?.type !== 'AGENT',
+    // pollInterval: 1000,
   });
 
   const checkIfAgentIsInline = data?.checkIfAgentIsInline;
@@ -882,11 +882,14 @@ const CustomerDisposition = () => {
   const [getCallRecording, { loading: getCallingRecordingLoading }] =
     useMutation<{ getCallRecording: string }>(GET_RECORDING, {
       onCompleted: (data) => {
-        console.log(data);
         dispatch(setCallUniqueId(data.getCallRecording));
       },
     });
 
+
+  
+
+    // autoSearch 
   useEffect(() => {
     const splitInline = checkIfAgentIsInline?.split("|") ?? null;
 
@@ -915,7 +918,6 @@ const CustomerDisposition = () => {
           await getCallRecording({
             variables: { user_id: userLogged?._id, mobile: splitInline[10] },
           });
-          console.log("hello");
         }
       });
       return () => clearTimeout(timer);

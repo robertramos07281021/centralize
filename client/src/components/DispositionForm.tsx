@@ -12,6 +12,7 @@ import {
 import { motion, AnimatePresence } from "framer-motion";
 import { PresetSelection } from "./AccountInfo";
 import { CustomerRegistered } from "../middleware/types.ts";
+import Loading from "../pages/Loading.tsx";
 
 type Data = {
   amount: string | null;
@@ -240,7 +241,8 @@ enum SOF {
   BUSSINESS = 'Bussiness',
   PENSION = 'Pension',
   Allowance = 'Allowance',
-  CASH_ON_HAND = 'Cash On Hand'
+  CASH_ON_HAND = 'Cash On Hand',
+  SALARY = "Salary"
 }
 
 enum DialerCode {
@@ -772,6 +774,8 @@ const DispositionForm: React.FC<Props> = ({
       (notAssigned || isPTPAndAssignedToUser )
     );
   }
+
+  if(dispoLoading) return <Loading/>
 
   return (
     canProceed(selectedCustomer, userLogged, ptpDispoType, paidDispoType) && (

@@ -1,3 +1,4 @@
+import { subscribe } from "diagnostics_channel";
 import pubsub from "../../middlewares/pubsub.js";
 import { PUBSUB_EVENTS } from "../../middlewares/pubsubEvents.js";
 
@@ -74,6 +75,11 @@ const subscriptionsResolver = {
         return pubsub.asyncIterableIterator([PUBSUB_EVENTS.NEW_UPDATE_BUCKET]);
       },
     },
+    newUserLogin: {
+      subscribe: () => {
+        return pubsub.asyncIterableIterator([PUBSUB_EVENTS.NEW_LOGIN])
+      }
+    }
 
   },
 };

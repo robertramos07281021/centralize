@@ -217,7 +217,6 @@ const Login = () => {
 
   const [login, { loading }] = useMutation<{ login: Login }>(LOGIN, {
     onCompleted: async (res) => {
-      console.log(res)
       await persistor.purge();
       dispatch(setUserLogged(res?.login?.user));
       dispatch(setMyToken(res?.login?.token));

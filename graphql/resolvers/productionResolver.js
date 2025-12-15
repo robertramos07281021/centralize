@@ -1073,7 +1073,9 @@ const productionResolver = {
           dateEnd.setHours(23, 59, 59, 999);
           CCSCallFiltered["createdAt"] = { $gte: dateStart, $lte: dateEnd };
         } else if (!from && !to) {
-          CCSCallFiltered["createdAt"] = { $lte: today };
+          const today2 = new Date()
+          today2.setHours(23,59,59,999)
+          CCSCallFiltered["createdAt"] = { $lte: today2 };
         }
 
         const secondFilter = {

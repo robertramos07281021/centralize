@@ -428,7 +428,7 @@ const recordingsResolver = {
           port: 22,
           username: process.env.FTP_USERNAME,
           password: splitFileName2nd
-            ? splitFileName2nd
+            ? passwords[splitFileName2nd]
             : checking
             ? passwords[others[findDispo[0]?.cf_bucket?.viciIp]]
             : passwords[findDispo[0]?.cf_bucket?.viciIp],
