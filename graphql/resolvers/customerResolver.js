@@ -102,6 +102,9 @@ const customerResolver = {
             },
           },
           {
+            $limit: 50
+          },
+          {
             $lookup: {
               from: "customeraccounts",
               let: { cus_account: "$customer_account" },
