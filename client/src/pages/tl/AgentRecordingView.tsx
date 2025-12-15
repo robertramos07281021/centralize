@@ -697,7 +697,7 @@ const AgentRecordingView = () => {
                                   <div>
                                     {ccsCall ? (
                                       <div className="flex justify-end items-center w-full">
-                                        {Number(callId[1]) > 0 ? (
+                                        {Number(callDuration) > 0 ? (
                                           <div
                                             onClick={() =>
                                               onDLRecordings(

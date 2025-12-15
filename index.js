@@ -486,36 +486,6 @@ const startServer = async () => {
       })
     );
 
-    app.get("/audio/:name", async (req, res) => {
-      const name = req.params.name;
-      const remotePath = `/var/spool/asterisk/monitorDONE/MP3/${name}`;
-
-      console.log("Attempting download:", remotePath);
-
-      const sftp = new Client();
-
-      try {
-        await sftp.connect({
-          host: "172.20.21.15",
-          port: 22,
-          username: "root",
-          password: "Bernales2025",
-        });
-
-        const fileBuffer = await sftp.get(remotePath);
-
-        res.setHeader("Content-Type", "audio/mpeg");
-        res.setHeader("Content-Disposition", `attachment; filename="${name}"`);
-
-        res.send(fileBuffer);
-      } catch (err) {
-        console.error("SFTP error:", err);
-        res.status(500).send("Download failed.");
-      } finally {
-        sftp.end();
-      }
-    });
-
     httpServer.listen(process.env.PORT, () => {
       console.log(
         `🚀 Server running at http://localhost:${process.env.PORT}/graphql`
