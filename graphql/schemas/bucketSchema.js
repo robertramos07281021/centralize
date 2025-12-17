@@ -7,6 +7,7 @@ const bucketTypeDefs = gql`
     name: String
     dept: String
     viciIp: String
+    viciIp_auto: String
     issabelIp: String
     principal: Boolean
     message: String
@@ -29,6 +30,7 @@ const bucketTypeDefs = gql`
     _id: ID
     name: String
     viciIp: String
+    viciIp_auto: String
     issabelIp: String
     canCall: Boolean
     can_update_ca: Boolean
@@ -39,6 +41,7 @@ const bucketTypeDefs = gql`
     name: String!
     dept: String!
     viciIp: String
+    viciIp_auto: String
     issabelIp: String
     canCall: Boolean
     can_update_ca: Boolean

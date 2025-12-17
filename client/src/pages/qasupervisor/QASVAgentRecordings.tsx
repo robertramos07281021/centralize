@@ -113,7 +113,7 @@ const QASVAgentRecordings = () => {
                 }}
                 layout
               >
-                <div className="bg-gray-200 justify-between  z-20 cursor-pointer hover:bg-gray-300 transition-all px-3 flex gap-3 py-1 rounded-sm shadow-md border min-w-60">
+                <div className="bg-gray-200 justify-between  z-20 cursor-pointer hover:bg-gray-300 transition-all px-3 flex gap-3 py-1 rounded-sm shadow-md border min-w-64">
                   <div className="truncate">{selectedBucketLabel}</div>
                   <div
                     className={` ${

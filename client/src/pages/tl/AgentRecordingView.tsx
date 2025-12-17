@@ -345,7 +345,7 @@ const AgentRecordingView = () => {
         await findRecordings({ variables: { _id, name, ccsCall } });
       }
     },
-    [setIsLoading, findRecordings, recordingsFTP]
+    [setIsLoading, findRecordings, recordingsFTP, ccsCall]
   );
 
   const onClickSearch = useCallback(() => {
@@ -383,27 +383,31 @@ const AgentRecordingView = () => {
     if (!recordings) return;
 
     recordings?.getAgentDispositionRecords?.dispositions?.forEach((rec) => {
-      const callId = rec.callId?.split(".mp3_");
-      if (!callId) return;
+      const { baseName, durationSeconds } = parseCallId(rec.callId);
+      if (!baseName || durationSeconds !== null || lagRecords[baseName]) return;
 
-      const name = callId[0];
-      const flag = Number(callId[1]);
-
-      if (flag === 0 && !lagRecords[name]) {
-        getLagRecording({
-          variables: { name: `${name}.mp3`, _id: rec._id },
-        }).then((res) => {
-          setLagRecords((prev) => ({
-            ...prev,
-            [name]: res.data?.findLagRecording,
-          }));
-        });
-      }
+      getLagRecording({
+        variables: { name: `${baseName}.mp3`, _id: rec._id },
+      }).then((res) => {
+        setLagRecords((prev) => ({
+          ...prev,
+          [baseName]: res.data?.findLagRecording,
+        }));
+      });
     });
-  }, [recordings]);
+  }, [recordings, lagRecords, getLagRecording]);
 
-  function formatDuration(value: string) {
-    const seconds = parseInt(value, 10);
+  function parseCallId(callId?: string) {
+    if (!callId)
+      return { baseName: "", durationSeconds: null as number | null };
+    const durationMatch = callId.match(/\.mp3_(\d+)/);
+    const durationSeconds = durationMatch ? Number(durationMatch[1]) : null;
+    const baseName = callId.replace(/\.mp3.*/, "");
+    return { baseName, durationSeconds };
+  }
+
+  function formatDuration(value: number | string) {
+    const seconds = parseInt(value as string, 10);
     const mins = Math.floor(seconds / 60);
     const secs = seconds % 60;
 
@@ -578,10 +582,8 @@ const AgentRecordingView = () => {
             transition={{ delay: 0.4 }}
           >
             <div className="border rounded-t-md lg:text-sm  border-gray-600 flex font-black uppercase 2xl:text-md sticky top-0 z-20 bg-gray-300 text-gray-800">
-              <div className="  text-left wlw  w-full justify-center px-4 grid grid-cols-12 gap-3 items-center py-3">
+              <div className="  text-left wlw  w-full justify-center px-4 grid grid-cols-10 gap-3 items-center py-3">
                 <div className="">Name</div>
-                <div className="">deadcalls </div>
-                <div className="">ccs calls </div>
                 <div className="truncate">Contact No</div>
                 <div>Dialer</div>
                 <div>Amount</div>
@@ -593,7 +595,7 @@ const AgentRecordingView = () => {
                 <div className="text-center flex justify-center">Actions</div>
               </div>
             </div>
-            <div className="h-full bakit sila nag lalabas e wala panamang breaktime e HAHAHA tangine e wala namanag kaso dito flex justify-center items-center overflow-hidden">
+            <div className="h-full flex justify-center items-center overflow-hidden">
               {recordingsLoading ? (
                 <div className="flex flex-col relative justify-center items-center h-full w-full">
                   <div className="border-t-2 rounded-full z-20 w-20 h-20 border-gray-800 animate-spin "></div>
@@ -613,8 +615,28 @@ const AgentRecordingView = () => {
                     <div>
                       {recordings?.getAgentDispositionRecords?.dispositions?.map(
                         (e, index) => {
-                          const callId = e.callId?.split(".mp3_");
-                          const callDuration = callId ? callId[1]?.split('_')[0] : "0"
+                          const { baseName, durationSeconds } = parseCallId(
+                            e.callId
+                          );
+                          const lagDurationRaw = lagRecords[baseName];
+                          const lagDurationValue =
+                            typeof lagDurationRaw === "number"
+                              ? lagDurationRaw
+                              : Number(lagDurationRaw);
+                          const lagDurationLabel =
+                            Number.isFinite(lagDurationValue) &&
+                            lagDurationValue > 0
+                              ? fileSizeToDuration(lagDurationValue)
+                              : "";
+                          const durationLabel =
+                            typeof durationSeconds === "number" &&
+                            durationSeconds > 0
+                              ? formatDuration(durationSeconds)
+                              : lagDurationLabel;
+                          const hasRecording =
+                            (typeof durationSeconds === "number" &&
+                              durationSeconds > 0) ||
+                            Boolean(lagDurationLabel);
 
                           const callRecord =
                             e.recordings?.length > 0
@@ -625,7 +647,7 @@ const AgentRecordingView = () => {
                           return (
                             <motion.div
                               key={e._id}
-                              className="lg:text-xs border-b border-x hover:bg-gray-200 last:shadow-md last:rounded-b-md border-gray-600 2xl:text-sm  items-center py-3 gap-3 pl-4 pr-2 grid grid-cols-12 cursor-default bg-gray-100 even:bg-gray-200 text-slate-800"
+                              className="lg:text-xs border-b border-x hover:bg-gray-200 last:shadow-md last:rounded-b-md border-gray-600 2xl:text-sm  items-center py-3 gap-3 pl-4 pr-2 grid grid-cols-10 cursor-default bg-gray-100 even:bg-gray-200 text-slate-800"
                               initial={{ opacity: 0 }}
                               animate={{ opacity: 1 }}
                               transition={{ delay: index * 0.1 }}
@@ -636,15 +658,21 @@ const AgentRecordingView = () => {
                               >
                                 {e.customer_name}
                               </div>
-                              <div className="truncate pr-2">-</div>{" "}
-                              <div className="truncate pr-2">-</div>
                               <div
                                 className="truncate pr-2"
                                 title={e.contact_no?.join(", ")}
                               >
                                 {e.contact_no?.join(", ")}
                               </div>
-                              <div>{e.dialer}</div>
+                              <div className="first-letter:uppercase">
+                                {e.dialer ? (
+                                  e.dialer
+                                ) : (
+                                  <div className="text-gray-400 italic text-left  ">
+                                    No dialer
+                                  </div>
+                                )}
+                              </div>
                               <div>
                                 {e.amount ? (
                                   e.amount.toLocaleString("en-PH", {
@@ -697,50 +725,22 @@ const AgentRecordingView = () => {
                                   <div>
                                     {ccsCall ? (
                                       <div className="flex justify-end items-center w-full">
-                                        {Number(callDuration) > 0 ? (
+                                        {hasRecording ? (
                                           <div
                                             onClick={() =>
-                                              onDLRecordings(
-                                                e._id,
-                                                e.callId
-                                              )
+                                              onDLRecordings(e._id, e.callId)
                                             }
-                                            className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
+                                            className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-20 justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
                                           >
                                             <FaDownload color="white" />
                                             <p className="text-white">
-                                              {Number(callDuration) > 0
-                                                ? formatDuration(callDuration)
-                                                : fileSizeToDuration(
-                                                    lagRecords[callId[0]]
-                                                  )}
+                                              {durationLabel || "Download"}
                                             </p>
                                           </div>
                                         ) : (
-                                          <>
-                                            {fileSizeToDuration(
-                                              lagRecords[callId[0]]
-                                            ).includes("NaN") ? (
-                                              <div>No Recordings</div>
-                                            ) : (
-                                              <div
-                                                onClick={() =>
-                                                  onDLRecordings(
-                                                    e._id,
-                                                    e.callId
-                                                  )
-                                                }
-                                                className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-16  justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
-                                              >
-                                                <FaDownload color="white" />
-                                                <p className="text-white">
-                                                  {fileSizeToDuration(
-                                                    lagRecords[callId[0]]
-                                                  )}
-                                                </p>
-                                              </div>
-                                            )}
-                                          </>
+                                          <div className="text-gray-400 italic text-center">
+                                            No Recordings
+                                          </div>
                                         )}
                                       </div>
                                     ) : (
@@ -767,7 +767,7 @@ const AgentRecordingView = () => {
                                                           );
                                                         }
                                                       }}
-                                                      className=" bg-fuchsia-700 items-center flex shadow-md cursor-pointer border-fuchsia-900 hover:bg-fuchsia-800 transition-all border rounded-sm px-3 py-1"
+                                                      className=" bg-fuchsia-600 items-center flex shadow-md cursor-pointer border-fuchsia-900 hover:bg-fuchsia-700 transition-all border rounded-sm px-3 py-1"
                                                     >
                                                       <FaBoxArchive
                                                         className="text-white peer"

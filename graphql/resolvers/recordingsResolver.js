@@ -42,18 +42,17 @@ const recordingsResolver = {
 
         const createdAt = new Date(findDispo.createdAt);
         const yearCreated = createdAt.getFullYear();
-        const monthCreated = months[createdAt.getMonth()];
+
         const dayCreated = createdAt.getDate();
         const month = createdAt.getMonth() + 1;
-        const viciIpAddress = findDispo.customer_account.bucket.viciIp;
-        const issabelIpAddress = findDispo.customer_account.bucket.issabelIp;
-        const bucketName = findDispo.customer_account.bucket.name || "";
+        const viciIpAddress = findDispo?.customer_account?.bucket?.viciIp;
+        const bucketName = findDispo?.customer_account?.bucket?.name || "";
 
         const fileNale = {
           "172.20.21.64": "AUTODIAL SHOPEE BCL-M7",
-          "172.20.21.63": "MIXED CAMPAIGN",
+          "172.20.21.63": "AUTOBACKUP",
           "172.20.21.10": "MIXED CAMPAIGN NEW 2",
-          "172.20.21.17": "PSBANK",
+          "172.20.21.17": "PSBANK-AUTOBACKUP",
           "172.20.21.27": "MIXED CAMPAIGN",
           "172.20.21.30": "MCC",
           "172.20.21.35": "MIXED CAMPAIGN",
@@ -70,14 +69,6 @@ const recordingsResolver = {
           "172.20.21.196": "ATOME NEW",
         };
 
-        const issabelNasFileBane = {
-          "172.20.21.57": "ATOME CASH S1-ISSABEL_172.20.21.57",
-          "172.20.21.32": "ATOME CASH S2-ISSABEL_172.20.21.32",
-          "172.20.21.62": "AVON-ISSABEL_172.20.21.62",
-          "172.20.21.72": "CIGNAL-ISSABEL_172.20.21.72",
-          "172.20.21.50": "CTBC-ISSABEL_172.20.21.50",
-        };
-
         function checkDate(number) {
           return number > 9 ? number : `0${number}`;
         }
@@ -91,6 +82,7 @@ const recordingsResolver = {
         });
 
         const viciFolder = fileNale[viciIpAddress];
+
         const remoteDirVici = `/REC-${viciIpAddress}-${
           [
             "CASH S2",
@@ -102,9 +94,7 @@ const recordingsResolver = {
             ? "ATOME"
             : viciFolder || "UNKNOWN"
         }/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`;
-        const remoteDirIssabel = `/ISSABEL RECORDINGS/${
-          issabelNasFileBane[issabelIpAddress] || "UNKNOWN"
-        }/${monthCreated + " " + yearCreated}/${checkDate(dayCreated)}`;
+
         const localDir = "./recordings";
 
         if (!fs.existsSync(localDir)) {
@@ -148,11 +138,8 @@ const recordingsResolver = {
               )}-${checkDate(dayCreated)}`
             : isShopee;
 
-        const remoteDir =
-          findDispo.dialer === "vici" || !findDispo?.dialer
-            ? ifATOME
-            : `${remoteDirIssabel}`;
-        const remotePath = `${remoteDir}/${name}`;
+
+        const remotePath = `${ifATOME}/${name}`;
         const files = await client.list(remotePath);
         return files[0].size;
       } catch (err) {
@@ -317,7 +304,7 @@ const recordingsResolver = {
         const remotePath = `${remoteDir}/${actualFileName}`;
         const localPath = `./recordings/${actualFileName}`;
         await client.downloadTo(localPath, remotePath);
-        const toDownload = `http://${process.env.MY_IP}:4000/recordings/${actualFileName}`;
+        const toDownload = `http://${process.env.MY_IP}:${process.env.PORT}/recordings/${actualFileName}`;
 
         return {
           success: true,
@@ -445,7 +432,7 @@ const recordingsResolver = {
         const localPath = path.join(localDir, `${newFileName}.mp3`);
         await fs.writeFileSync(localPath, `${newFileName}.mp3`);
 
-        const toDownload = `http://${process.env.MY_IP}:4000/recordings/${newFileName}.mp3`;
+        const toDownload = `http://${process.env.MY_IP}:${process.env.PORT}/recordings/${newFileName}.mp3`;
 
         return {
           success: true,

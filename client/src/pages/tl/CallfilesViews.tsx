@@ -755,8 +755,6 @@ const CallfilesViews: React.FC<Props> = ({
     autodialLoading ||
     AddSelectiveLoading;
 
-  if (isLoading) return <Loading />;
-
   const labels = [
     "Name",
     "Date",
@@ -795,202 +793,205 @@ const CallfilesViews: React.FC<Props> = ({
               ))}
             </div>
           </div>
-          <div className=" overflow-y-auto h-full">
-            {data?.getCallfiles?.result &&
-              data?.getCallfiles?.result?.length < 1 && (
-                <div className="w-full py-3 bg-gray-100 border-x border-b rounded-b-md border-black shadow-md flex justify-center items-center text-gray-500 italic">
-                  No callfiles found.
-                </div>
-              )}
-            {data?.getCallfiles?.result?.map((res, index) => {
-              const date = new Date(res.callfile.createdAt);
-              const today = new Date();
+          {isLoading ? (
+            <Loading />
+          ) : (
+            <div className=" overflow-y-auto h-full">
+              {data?.getCallfiles?.result &&
+                data?.getCallfiles?.result?.length < 1 && (
+                  <div className="w-full py-3 bg-gray-100 border-x border-b rounded-b-md border-black shadow-md flex justify-center items-center text-gray-500 italic">
+                    No callfiles found.
+                  </div>
+                )}
+              {data?.getCallfiles?.result?.map((res, index) => {
+                const date = new Date(res.callfile.createdAt);
+                const today = new Date();
 
-              const diffTime = today.getTime() - date.getTime();
-              const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
-              const checkStatus = res.callfile.active && !res.callfile.endo;
-              const status = checkStatus ? "Active" : "Finished";
-              const finishedBy = res.callfile.finished_by ? (
-                <div>{res.callfile.finished_by.name}</div>
-              ) : (
-                <div className="text-gray-500 italic" title="Incompletete">
-                  {" "}
-                  Incomplete{" "}
-                </div>
-              );
-              return (
-                <motion.div
-                  key={index}
-                  className="border-x border-b border-black last:rounded-b-md overflow-hidden last:shadow-md"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  transition={{ delay: index * 0.1 }}
-                >
-                  <div className="text-[0.7rem]    hover:bg-gray-300 transition-all items-center py-2 px-3 bg-gray-100 even:bg-gray-200 2xl:text-xs gap-2 text-gray-800 grid grid-cols-[repeat(14,_minmax(0,_1fr))] w-full ">
-                    <div
-                      className="overflow-hidden pr-2"
-                      title={res.callfile.name}
-                    >
-                      {res.callfile.name}
-                    </div>
-                    <div>
-                      {new Date(res.callfile.createdAt).toLocaleDateString()}
-                    </div>
-                    <div>
-                      {res.callfile.endo ? (
-                        new Date(res.callfile.endo).toLocaleDateString()
-                      ) : (
-                        <div className="italic text-gray-400 text-xs">
-                          Ongoing
-                        </div>
-                      )}
-                    </div>
-                    <div>{diffDays}</div>
-                    <div>{res.accounts}</div>
-                    <div>{res.uncontactable || 0}</div>
-                    <div>{res.connected}</div>
-                    <div
-                      className="truncate cursor-default"
-                      title={res.OB.toLocaleString("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      })}
-                    >
-                      {res.OB.toLocaleString("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      })}
-                    </div>
-                    <div
-                      className="truncate cursor-default"
-                      title={res.principal.toLocaleString("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      })}
-                    >
-                      {res.principal.toLocaleString("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      })}
-                    </div>
-
-                    <div
-                      className="truncate cursor-default"
-                      title={res.target.toLocaleString("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      })}
-                    >
-                      {res.target.toLocaleString("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      })}
-                    </div>
-                    <div
-                      title={res.collected.toLocaleString("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      })}
-                    >
-                      {res.collected.toLocaleString("en-PH", {
-                        style: "currency",
-                        currency: "PHP",
-                      })}
-                    </div>
-
-                    <div>{status}</div>
-                    <div className="truncate">{finishedBy}</div>
-                    <div
-                      className={`" ${
-                        checkStatus
-                          ? "grid grid-rows-2 grid-cols-2 gap-1"
-                          : "grid grid-cols-2 gap-1 "
-                      }  justify-center items-center  "`}
-                    >
+                const diffTime = today.getTime() - date.getTime();
+                const diffDays = Math.round(diffTime / (1000 * 60 * 60 * 24));
+                const checkStatus = res.callfile.active && !res.callfile.endo;
+                const status = checkStatus ? "Active" : "Finished";
+                const finishedBy = res.callfile.finished_by ? (
+                  <div>{res.callfile.finished_by.name}</div>
+                ) : (
+                  <div className="text-gray-500 italic" title="Incompletete">
+                    Ongoing
+                  </div>
+                );
+                return (
+                  <motion.div
+                    key={index}
+                    className="border-x border-b border-black last:rounded-b-md overflow-hidden last:shadow-md"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.1 }}
+                  >
+                    <div className="text-[0.7rem]    hover:bg-gray-300 transition-all items-center py-2 px-3 bg-gray-100 even:bg-gray-200 2xl:text-xs gap-2 text-gray-800 grid grid-cols-[repeat(14,_minmax(0,_1fr))] w-full ">
                       <div
-                        className="rounded-sm shadow-sm flex justify-center hover:bg-purple-800 transition-all px-1 py-1 cursor-pointer bg-purple-700 text-white border-2 border-purple-900"
-                        title="Add Selectives"
-                        onClick={() => {
-                          setAddSelectiveModal((prev) => !prev);
-                          setCallfile(res.callfile._id);
-                        }}
+                        className="overflow-hidden pr-2"
+                        title={res.callfile.name}
                       >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth="3"
-                          stroke="currentColor"
-                          className="size-5 "
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="M12 4.5v15m7.5-7.5h-15"
-                          />
-                        </svg>
+                        {res.callfile.name}
                       </div>
-                      {checkStatus && (
-                        <>
-                          {selectedBucketData?.selectedBucket?.canCall && (
-                            <div
-                              className="rounded-sm relative h-full w-full items-center shadow-sm flex justify-center hover:bg-yellow-800 transition-all px-1 py-1 cursor-pointer bg-yellow-700 text-white border-2 border-yellow-900"
-                              onClick={() => {
-                                if (!res.callfile.autoDial) {
-                                  setAutoDial({
-                                    id: res.callfile._id,
-                                    name: res.callfile.name,
-                                  });
-                                  setCount(1);
-                                } else {
-                                  onClickIcon(
-                                    res.callfile._id,
-                                    "AUTO",
-                                    res.callfile.name
-                                  );
-                                }
-                              }}
-                            >
-                              {!item?.callfile?.autoDial ? (
-                                <div title="Turn on Auto Dial">
-                                  <svg
-                                    xmlns="http://www.w3.org/2000/svg"
-                                    viewBox="0 0 24 24"
-                                    fill="currentColor"
-                                    className="size-4 "
-                                  >
-                                    <path
-                                      fillRule="evenodd"
-                                      d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z"
-                                      clipRule="evenodd"
-                                    />
-                                  </svg>
-                                </div>
-                              ) : (
-                                <div title="Turn off Auto Dial">
-                                  <div className="absolute text-yellow-900 z-10 top-[0px] left-[5px]">
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      fill="none"
-                                      viewBox="0 0 24 24"
-                                      strokeWidth="1.5"
-                                      stroke="currentColor"
-                                      className="size-7"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"
-                                      />
-                                    </svg>
-                                  </div>
+                      <div>
+                        {new Date(res.callfile.createdAt).toLocaleDateString()}
+                      </div>
+                      <div>
+                        {res.callfile.endo ? (
+                          new Date(res.callfile.endo).toLocaleDateString()
+                        ) : (
+                          <div className="italic text-gray-400 text-xs">
+                            Ongoing
+                          </div>
+                        )}
+                      </div>
+                      <div>{diffDays}</div>
+                      <div>{res.accounts}</div>
+                      <div>{res.uncontactable || 0}</div>
+                      <div>{res.connected}</div>
+                      <div
+                        className="truncate cursor-default"
+                        title={res.OB.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      >
+                        {res.OB.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      </div>
+                      <div
+                        className="truncate cursor-default"
+                        title={res.principal.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      >
+                        {res.principal.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      </div>
 
-                                  <div className="z-20">
+                      <div
+                        className="truncate cursor-default"
+                        title={res.target.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      >
+                        {res.target.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      </div>
+                      <div
+                        title={res.collected.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      >
+                        {res.collected.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })}
+                      </div>
+
+                      <div className="">
+                        {status === "Active" ? (
+                          <div title="Active" className=" ml-3.5 animate-pulse ">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              className="size-7 text-green-600"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M8.603 3.799A4.49 4.49 0 0 1 12 2.25c1.357 0 2.573.6 3.397 1.549a4.49 4.49 0 0 1 3.498 1.307 4.491 4.491 0 0 1 1.307 3.497A4.49 4.49 0 0 1 21.75 12a4.49 4.49 0 0 1-1.549 3.397 4.491 4.491 0 0 1-1.307 3.497 4.491 4.491 0 0 1-3.497 1.307A4.49 4.49 0 0 1 12 21.75a4.49 4.49 0 0 1-3.397-1.549 4.49 4.49 0 0 1-3.498-1.306 4.491 4.491 0 0 1-1.307-3.498A4.49 4.49 0 0 1 2.25 12c0-1.357.6-2.573 1.549-3.397a4.49 4.49 0 0 1 1.307-3.497 4.49 4.49 0 0 1 3.497-1.307Zm7.007 6.387a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </div>
+                        ) : status === "Finished" ? (
+                          <div title="Finished">
+                            <svg
+                              xmlns="http://www.w3.org/2000/svg"
+                              viewBox="0 0 24 24"
+                              fill="currentColor"
+                              className="size-7 ml-4 text-green-600"
+                            >
+                              <path
+                                fillRule="evenodd"
+                                d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z"
+                                clipRule="evenodd"
+                              />
+                            </svg>
+                          </div>
+                        ) : (
+                          ""
+                        )}
+                      </div>
+                      <div className="truncate first-letter:uppercase">{finishedBy}</div>
+                      <div
+                        className={`" ${
+                          checkStatus
+                            ? "grid grid-rows-2 grid-cols-2 gap-1"
+                            : "grid grid-cols-2 gap-1 "
+                        }  justify-center items-center  "`}
+                      >
+                        <div
+                          className="rounded-sm shadow-sm flex justify-center hover:bg-purple-800 transition-all px-1 py-1 cursor-pointer bg-purple-700 text-white border-2 border-purple-900"
+                          title="Add Selectives"
+                          onClick={() => {
+                            setAddSelectiveModal((prev) => !prev);
+                            setCallfile(res.callfile._id);
+                          }}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                            strokeWidth="3"
+                            stroke="currentColor"
+                            className="size-5 "
+                          >
+                            <path
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                              d="M12 4.5v15m7.5-7.5h-15"
+                            />
+                          </svg>
+                        </div>
+                        {checkStatus && (
+                          <>
+                            {selectedBucketData?.selectedBucket?.canCall && (
+                              <div
+                                className="rounded-sm relative h-full w-full items-center shadow-sm flex justify-center hover:bg-yellow-800 transition-all px-1 py-1 cursor-pointer bg-yellow-700 text-white border-2 border-yellow-900"
+                                onClick={() => {
+                                  if (!res.callfile.autoDial) {
+                                    setAutoDial({
+                                      id: res.callfile._id,
+                                      name: res.callfile.name,
+                                    });
+                                    setCount(1);
+                                  } else {
+                                    onClickIcon(
+                                      res.callfile._id,
+                                      "AUTO",
+                                      res.callfile.name
+                                    );
+                                  }
+                                }}
+                              >
+                                {!item?.callfile?.autoDial ? (
+                                  <div title="Turn on Auto Dial">
                                     <svg
                                       xmlns="http://www.w3.org/2000/svg"
                                       viewBox="0 0 24 24"
                                       fill="currentColor"
-                                      className="size-4"
+                                      className="size-4 "
                                     >
                                       <path
                                         fillRule="evenodd"
@@ -999,120 +1000,154 @@ const CallfilesViews: React.FC<Props> = ({
                                       />
                                     </svg>
                                   </div>
-                                </div>
-                              )}
-                            </div>
-                          )}
-                          {/* */}
+                                ) : (
+                                  <div title="Turn off Auto Dial">
+                                    <div className="absolute text-yellow-900 z-10 top-[0px] left-[5px]">
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        fill="none"
+                                        viewBox="0 0 24 24"
+                                        strokeWidth="1.5"
+                                        stroke="currentColor"
+                                        className="size-7"
+                                      >
+                                        <path
+                                          strokeLinecap="round"
+                                          strokeLinejoin="round"
+                                          d="M18.364 18.364A9 9 0 0 0 5.636 5.636m12.728 12.728A9 9 0 0 1 5.636 5.636m12.728 12.728L5.636 5.636"
+                                        />
+                                      </svg>
+                                    </div>
 
+                                    <div className="z-20">
+                                      <svg
+                                        xmlns="http://www.w3.org/2000/svg"
+                                        viewBox="0 0 24 24"
+                                        fill="currentColor"
+                                        className="size-4"
+                                      >
+                                        <path
+                                          fillRule="evenodd"
+                                          d="M1.5 4.5a3 3 0 0 1 3-3h1.372c.86 0 1.61.586 1.819 1.42l1.105 4.423a1.875 1.875 0 0 1-.694 1.955l-1.293.97c-.135.101-.164.249-.126.352a11.285 11.285 0 0 0 6.697 6.697c.103.038.25.009.352-.126l.97-1.293a1.875 1.875 0 0 1 1.955-.694l4.423 1.105c.834.209 1.42.959 1.42 1.82V19.5a3 3 0 0 1-3 3h-2.25C8.552 22.5 1.5 15.448 1.5 6.75V4.5Z"
+                                          clipRule="evenodd"
+                                        />
+                                      </svg>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                            {/* */}
+
+                            <div
+                              className="rounded-sm flex shadow-sm justify-center hover:bg-green-800 px-1 py-1 cursor-pointer bg-green-700 text-white border-2 border-green-900"
+                              title="Finish"
+                              onClick={() =>
+                                onClickIcon(
+                                  res.callfile._id,
+                                  "FINISHED",
+                                  res.callfile.name
+                                )
+                              }
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                fill="none"
+                                viewBox="0 0 24 24"
+                                strokeWidth="3"
+                                stroke="currentColor"
+                                className="size-5"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  d="m4.5 12.75 6 6 9-13.5"
+                                />
+                              </svg>
+                            </div>
+                            <div
+                              onClick={() => {
+                                setModalTarget(true);
+                                setCallfileId(res.callfile);
+                              }}
+                              title="Set Target"
+                              className="rounded-sm border-2 flex shadow-sm justify-center hover:bg-orange-800 px-1 py-1 cursor-pointer bg-orange-700 text-white  border-orange-900"
+                            >
+                              <svg
+                                xmlns="http://www.w3.org/2000/svg"
+                                viewBox="0 0 24 24"
+                                fill="currentColor"
+                                className="size-5"
+                              >
+                                <path
+                                  fillRule="evenodd"
+                                  d="M11.828 2.25c-.916 0-1.699.663-1.85 1.567l-.091.549a.798.798 0 0 1-.517.608 7.45 7.45 0 0 0-.478.198.798.798 0 0 1-.796-.064l-.453-.324a1.875 1.875 0 0 0-2.416.2l-.243.243a1.875 1.875 0 0 0-.2 2.416l.324.453a.798.798 0 0 1 .064.796 7.448 7.448 0 0 0-.198.478.798.798 0 0 1-.608.517l-.55.092a1.875 1.875 0 0 0-1.566 1.849v.344c0 .916.663 1.699 1.567 1.85l.549.091c.281.047.508.25.608.517.06.162.127.321.198.478a.798.798 0 0 1-.064.796l-.324.453a1.875 1.875 0 0 0 .2 2.416l.243.243c.648.648 1.67.733 2.416.2l.453-.324a.798.798 0 0 1 .796-.064c.157.071.316.137.478.198.267.1.47.327.517.608l.092.55c.15.903.932 1.566 1.849 1.566h.344c.916 0 1.699-.663 1.85-1.567l.091-.549a.798.798 0 0 1 .517-.608 7.52 7.52 0 0 0 .478-.198.798.798 0 0 1 .796.064l.453.324a1.875 1.875 0 0 0 2.416-.2l.243-.243c.648-.648.733-1.67.2-2.416l-.324-.453a.798.798 0 0 1-.064-.796c.071-.157.137-.316.198-.478.1-.267.327-.47.608-.517l.55-.091a1.875 1.875 0 0 0 1.566-1.85v-.344c0-.916-.663-1.699-1.567-1.85l-.549-.091a.798.798 0 0 1-.608-.517 7.507 7.507 0 0 0-.198-.478.798.798 0 0 1 .064-.796l.324-.453a1.875 1.875 0 0 0-.2-2.416l-.243-.243a1.875 1.875 0 0 0-2.416-.2l-.453.324a.798.798 0 0 1-.796.064 7.462 7.462 0 0 0-.478-.198.798.798 0 0 1-.517-.608l-.091-.55a1.875 1.875 0 0 0-1.85-1.566h-.344ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z"
+                                  clipRule="evenodd"
+                                />
+                              </svg>
+                            </div>
+                          </>
+                        )}
+                        <div
+                          onClick={() =>
+                            onClickIcon(
+                              res.callfile._id,
+                              "DOWNLOAD",
+                              res.callfile.name
+                            )
+                          }
+                          title="Download"
+                          className={`" ${
+                            checkStatus ? "" : "  col-start-2 "
+                          } rounded-sm flex shadow-sm justify-center hover:bg-blue-800 py-1 cursor-pointer bg-blue-700 text-white border-2 border-blue-900 "`}
+                        >
+                          <svg
+                            xmlns="http://www.w3.org/2000/svg"
+                            viewBox="0 0 24 24"
+                            fill="currentColor"
+                            className="size-5"
+                          >
+                            <path d="M12 1.5a.75.75 0 0 1 .75.75V7.5h-1.5V2.25A.75.75 0 0 1 12 1.5ZM11.25 7.5v5.69l-1.72-1.72a.75.75 0 0 0-1.06 1.06l3 3a.75.75 0 0 0 1.06 0l3-3a.75.75 0 1 0-1.06-1.06l-1.72 1.72V7.5h3.75a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h3.75Z" />
+                          </svg>
+                        </div>
+
+                        {selectedBucketData?.selectedBucket.canCall && (
                           <div
-                            className="rounded-sm flex shadow-sm justify-center hover:bg-green-800 px-1 py-1 cursor-pointer bg-green-700 text-white border-2 border-green-900"
-                            title="Finish"
                             onClick={() =>
                               onClickIcon(
                                 res.callfile._id,
-                                "FINISHED",
+                                "DIAL",
                                 res.callfile.name
                               )
                             }
+                            title="Next Round"
+                            className={`" ${
+                              checkStatus ? "" : "  col-start-2 "
+                            } rounded-sm flex shadow-sm justify-center transition-all hover:bg-amber-700 py-1 cursor-pointer bg-amber-600 text-white border-2 border-amber-900 "`}
                           >
                             <svg
                               xmlns="http://www.w3.org/2000/svg"
                               fill="none"
                               viewBox="0 0 24 24"
-                              strokeWidth="3"
+                              strokeWidth="2"
                               stroke="currentColor"
                               className="size-5"
                             >
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
-                                d="m4.5 12.75 6 6 9-13.5"
+                                d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
                               />
                             </svg>
                           </div>
-                          <div
-                            onClick={() => {
-                              setModalTarget(true);
-                              setCallfileId(res.callfile);
-                            }}
-                            title="Set Target"
-                            className="rounded-sm border-2 flex shadow-sm justify-center hover:bg-orange-800 px-1 py-1 cursor-pointer bg-orange-700 text-white  border-orange-900"
-                          >
-                            <svg
-                              xmlns="http://www.w3.org/2000/svg"
-                              viewBox="0 0 24 24"
-                              fill="currentColor"
-                              className="size-5"
-                            >
-                              <path
-                                fillRule="evenodd"
-                                d="M11.828 2.25c-.916 0-1.699.663-1.85 1.567l-.091.549a.798.798 0 0 1-.517.608 7.45 7.45 0 0 0-.478.198.798.798 0 0 1-.796-.064l-.453-.324a1.875 1.875 0 0 0-2.416.2l-.243.243a1.875 1.875 0 0 0-.2 2.416l.324.453a.798.798 0 0 1 .064.796 7.448 7.448 0 0 0-.198.478.798.798 0 0 1-.608.517l-.55.092a1.875 1.875 0 0 0-1.566 1.849v.344c0 .916.663 1.699 1.567 1.85l.549.091c.281.047.508.25.608.517.06.162.127.321.198.478a.798.798 0 0 1-.064.796l-.324.453a1.875 1.875 0 0 0 .2 2.416l.243.243c.648.648 1.67.733 2.416.2l.453-.324a.798.798 0 0 1 .796-.064c.157.071.316.137.478.198.267.1.47.327.517.608l.092.55c.15.903.932 1.566 1.849 1.566h.344c.916 0 1.699-.663 1.85-1.567l.091-.549a.798.798 0 0 1 .517-.608 7.52 7.52 0 0 0 .478-.198.798.798 0 0 1 .796.064l.453.324a1.875 1.875 0 0 0 2.416-.2l.243-.243c.648-.648.733-1.67.2-2.416l-.324-.453a.798.798 0 0 1-.064-.796c.071-.157.137-.316.198-.478.1-.267.327-.47.608-.517l.55-.091a1.875 1.875 0 0 0 1.566-1.85v-.344c0-.916-.663-1.699-1.567-1.85l-.549-.091a.798.798 0 0 1-.608-.517 7.507 7.507 0 0 0-.198-.478.798.798 0 0 1 .064-.796l.324-.453a1.875 1.875 0 0 0-.2-2.416l-.243-.243a1.875 1.875 0 0 0-2.416-.2l-.453.324a.798.798 0 0 1-.796.064 7.462 7.462 0 0 0-.478-.198.798.798 0 0 1-.517-.608l-.091-.55a1.875 1.875 0 0 0-1.85-1.566h-.344ZM12 15.75a3.75 3.75 0 1 0 0-7.5 3.75 3.75 0 0 0 0 7.5Z"
-                                clipRule="evenodd"
-                              />
-                            </svg>
-                          </div>
-                        </>
-                      )}
-                      <div
-                        onClick={() =>
-                          onClickIcon(
-                            res.callfile._id,
-                            "DOWNLOAD",
-                            res.callfile.name
-                          )
-                        }
-                        title="Download"
-                        className={`" ${
-                          checkStatus ? "" : "  col-start-2 "
-                        } rounded-sm flex shadow-sm justify-center hover:bg-blue-800 py-1 cursor-pointer bg-blue-700 text-white border-2 border-blue-900 "`}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          viewBox="0 0 24 24"
-                          fill="currentColor"
-                          className="size-5"
-                        >
-                          <path d="M12 1.5a.75.75 0 0 1 .75.75V7.5h-1.5V2.25A.75.75 0 0 1 12 1.5ZM11.25 7.5v5.69l-1.72-1.72a.75.75 0 0 0-1.06 1.06l3 3a.75.75 0 0 0 1.06 0l3-3a.75.75 0 1 0-1.06-1.06l-1.72 1.72V7.5h3.75a3 3 0 0 1 3 3v9a3 3 0 0 1-3 3h-9a3 3 0 0 1-3-3v-9a3 3 0 0 1 3-3h3.75Z" />
-                        </svg>
+                        )}
                       </div>
-
-                      {selectedBucketData?.selectedBucket.canCall && (
-                        <div
-                          onClick={() =>
-                            onClickIcon(
-                              res.callfile._id,
-                              "DIAL",
-                              res.callfile.name
-                            )
-                          }
-                          title="Next Round"
-                          className={`" ${
-                            checkStatus ? "" : "  col-start-2 "
-                          } rounded-sm flex shadow-sm justify-center transition-all hover:bg-amber-700 py-1 cursor-pointer bg-amber-600 text-white border-2 border-amber-900 "`}
-                        >
-                          <svg
-                            xmlns="http://www.w3.org/2000/svg"
-                            fill="none"
-                            viewBox="0 0 24 24"
-                            strokeWidth="2"
-                            stroke="currentColor"
-                            className="size-5"
-                          >
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0 3.181 3.183a8.25 8.25 0 0 0 13.803-3.7M4.031 9.865a8.25 8.25 0 0 1 13.803-3.7l3.181 3.182m0-4.991v4.99"
-                            />
-                          </svg>
-                        </div>
-                      )}
                     </div>
-                  </div>
-                </motion.div>
-              );
-            })}
-          </div>
+                  </motion.div>
+                );
+              })}
+            </div>
+          )}
         </div>
       </motion.div>
       {confirm && <Confirmation {...modalProps} />}

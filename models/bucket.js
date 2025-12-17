@@ -21,6 +21,9 @@ const bucketSchema = new Schema(
     viciIp: {
       type: String,
     },
+    viciIp_auto: {
+      type: String
+    },
     issabelIp: {
       type: String,
     },

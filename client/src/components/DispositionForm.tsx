@@ -28,7 +28,7 @@ type Data = {
   chatApp: SkipCollector | null;
   sms: SMSCollector | null;
   partialPayment: number | null;
-  SOF: string | null
+  SOF: string | null;
 };
 
 type ContactMethod = {
@@ -237,12 +237,13 @@ enum PaymentMethod {
 }
 
 enum SOF {
-  REMMITANCE = 'Remmitance',
-  BUSSINESS = 'Bussiness',
-  PENSION = 'Pension',
-  Allowance = 'Allowance',
-  CASH_ON_HAND = 'Cash On Hand',
-  SALARY = "Salary"
+  REMMITANCE = "Remmitance",
+  BUSSINESS = "Bussiness",
+  PENSION = "Pension",
+  Allowance = "Allowance",
+  CASH_ON_HAND = "Cash On Hand",
+  SALARY = "Salary",
+  Others = "Others",
 }
 
 enum DialerCode {
@@ -308,6 +309,12 @@ type Customer = {
     selectivesDispo?: boolean;
   };
 };
+
+const GET_RECORDING = gql`
+  mutation getCallRecording($user_id: ID!, $mobile: String!) {
+    getCallRecording(user_id: $user_id, mobile: $mobile)
+  }
+`;
 
 const DispositionForm: React.FC<Props> = ({
   updateOf,
@@ -410,7 +417,7 @@ const DispositionForm: React.FC<Props> = ({
     RFD: null,
     sms: null,
     partialPayment: null,
-    SOF: null
+    SOF: null,
   });
 
   useEffect(() => {
@@ -459,7 +466,7 @@ const DispositionForm: React.FC<Props> = ({
       RFD: null,
       sms: null,
       partialPayment: null,
-      SOF: null
+      SOF: null,
     });
     onPresetAmountChange({ amount: null, label: null });
   }, [onPresetAmountChange, setData]);
@@ -504,7 +511,7 @@ const DispositionForm: React.FC<Props> = ({
   });
 
   useEffect(() => {
-    if (!dispoLoading ) {
+    if (!dispoLoading) {
       setLoading(dispoLoading);
     }
   }, [dispoLoading]);
@@ -586,18 +593,30 @@ const DispositionForm: React.FC<Props> = ({
     no: () => {},
   });
 
+  const secondLine = inlineData.split("|");
+
+  const [getCallRecording] = useMutation<{ getCallRecording: string }>(
+    GET_RECORDING
+  );
   const creatingDispo = useCallback(async () => {
-    await createDisposition({
-      variables: {
-        input: {
-          ...data,
-          customer_account: selectedCustomer?._id,
-          callId: callUniqueId,
-        },
-      },
+    const callIdRes = await getCallRecording({
+      variables: { user_id: userLogged?._id, mobile: secondLine[10] },
     });
-    setConfirm(false);
-  }, [data, selectedCustomer, createDisposition, callUniqueId]);
+
+    setTimeout(async()=> {
+      await createDisposition({
+        variables: {
+          input: {
+            ...data,
+            customer_account: selectedCustomer?._id,
+            callId:`${callIdRes.data?.getCallRecording}_${secondLine[secondLine.length - 1]}`,
+          },
+        },
+      });
+      setConfirm(false);
+    },300)
+
+  }, [data, selectedCustomer, createDisposition, callUniqueId, getCallRecording,userLogged, secondLine ]);
 
   const noCallback = useCallback(() => {
     setConfirm(false);
@@ -642,7 +661,9 @@ const DispositionForm: React.FC<Props> = ({
 
         setRequired(false);
         setConfirm(true);
-        const positiveDispo = disposition?.getDispositionTypes.filter(x=> ['PTP','PAID','UNEG'].includes(x.code)).map(y=> y.id)
+        const positiveDispo = disposition?.getDispositionTypes
+          .filter((x) => ["PTP", "PAID", "UNEG"].includes(x.code))
+          .map((y) => y.id);
 
         if (
           !selectedCustomer?.customer_info.isRPC &&
@@ -723,8 +744,6 @@ const DispositionForm: React.FC<Props> = ({
     ]
   );
 
-  const secondLine = inlineData.split('|')[1]
-
   useEffect(() => {
     if (
       (canCall && userLogged?.account_type === "caller") ||
@@ -770,12 +789,13 @@ const DispositionForm: React.FC<Props> = ({
     const isPaidWithSelective = dispo === paidId && hasSelective;
 
     return !!(
-      Number(balance) >= 0 && (isPaidWithSelective || !hasSelective) && 
-      (notAssigned || isPTPAndAssignedToUser )
+      Number(balance) >= 0 &&
+      (isPaidWithSelective || !hasSelective) &&
+      (notAssigned || isPTPAndAssignedToUser)
     );
   }
 
-  if(dispoLoading) return <Loading/>
+  if (dispoLoading) return <Loading />;
 
   return (
     canProceed(selectedCustomer, userLogged, ptpDispoType, paidDispoType) && (
@@ -1384,39 +1404,45 @@ const DispositionForm: React.FC<Props> = ({
                       className={`" border-black text-black shadow-md bg-gray-50 min-h-10 border rounded-sm focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2 resize-none "`}
                     ></textarea>
                   </label>
-                  <div className="flex justify-end gap-2 mt-2 h-full items-end">
-                    {(!isRing || !onCall) &&
-                      !(
-                        inlineData?.includes("PAUSED") &&
-                        inlineData?.includes("LAGGED") &&
-                        inlineData?.includes("DISPO")
-                      ) && (
-                        <>
-                          {data.disposition && (
-                            <motion.button
-                              initial={{ scale: 0.5, opacity: 0 }}
-                              animate={{ scale: 1, opacity: 1 }}
-                              accessKey="q"
-                              type="submit"
-                              className={`bg-green-500 border-2 transition-a=ll border-green-800 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-black shadow-md rounded-sm uppercase px-5 py-3 cursor-pointer 2xl:text-sm text-xs`}
-                            >
-                              Submit
-                            </motion.button>
-                          )}
-                        </>
-                      )}
+                  <div className="flex flex-col justify-end gap-2 mt-2 h-full items-end">
                     {/* {data.disposition && userLogged?.type === "AGENT" && ( */}
-                    <motion.button
-                      initial={{ scale: 0.5, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      type="button"
-                      className="bg-red-500 border-2 transition-all border-red-800 hover:bg-red-600 focus:outline-none text-white uppercase  focus:ring-4 focus:ring-red-400 font-black rounded-sm shadow-md px-5 py-3 cursor-pointer 2xl:text-sm text-xs "
-                      onClick={() =>
-                        handleSubmitEscalationToTl(selectedCustomer?._id || "")
-                      }
-                    >
-                      TL Escalation
-                    </motion.button>
+
+                    <div className="flex gap-2">
+                      {(!isRing || !onCall) &&
+                        !(
+                          inlineData?.includes("PAUSED") &&
+                          inlineData?.includes("LAGGED") &&
+                          inlineData?.includes("DISPO")
+                        ) && (
+                          <>
+                            {data.disposition && (
+                              <motion.button
+                                initial={{ scale: 0.5, opacity: 0 }}
+                                animate={{ scale: 1, opacity: 1 }}
+                                accessKey="q"
+                                type="submit"
+                                className={`bg-green-500 border-2 transition-a=ll border-green-800 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-black shadow-md rounded-sm uppercase px-5 py-3 cursor-pointer 2xl:text-sm text-xs`}
+                              >
+                                Submit
+                              </motion.button>
+                            )}
+                          </>
+                        )}
+
+                      <motion.button
+                        initial={{ scale: 0.5, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        type="button"
+                        className="bg-red-500 border-2 transition-all border-red-800 hover:bg-red-600 focus:outline-none text-white uppercase  focus:ring-4 focus:ring-red-400 font-black rounded-sm shadow-md px-5 py-3 cursor-pointer 2xl:text-sm text-xs "
+                        onClick={() =>
+                          handleSubmitEscalationToTl(
+                            selectedCustomer?._id || ""
+                          )
+                        }
+                      >
+                        TL Escalation
+                      </motion.button>
+                    </div>
                     {/* )} */}
                   </div>
                 </div>

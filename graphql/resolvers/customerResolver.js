@@ -63,7 +63,7 @@ const customerResolver = {
     },
     search: async (_, { search }, { user }) => {
       try {
-        if (!user) throw CustomError("Unauthorized", 401);
+        if (!user) throw new CustomError("Unauthorized", 401);
         if (!search) {
           return [];
         }

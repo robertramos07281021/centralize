@@ -1020,43 +1020,17 @@ const productionResolver = {
     ) => {
       const client = new ftp.Client();
       const skip = (page - 1) * limit;
-      const today = new Date();
-      today.setHours(0, 0, 0, 0);
-      const dialer = ["vici", "issabel"];
-      const filtered = {
-        user: new mongoose.Types.ObjectId(agentID),
-        $or: [
-          {
-            selectivesDispo: { $eq: false },
-          },
-          {
-            selectivesDispo: { $exists: false },
-          },
-        ],
-        $or: [
-          {
-            "customer.contact_no": search,
-          },
-          {
-            "customer.fullName": { $regex: search, $options: "i" },
-          },
-          {
-            dialer: { $regex: search, $options: "i" },
-          },
-        ],
-      };
-      if (dispotype.length > 0) {
-        filtered["dispotype.code"] = { $in: dispotype };
-      }
-
-      if (!dialer.includes(search.toLowerCase())) {
-        filtered["dialer"] = { $in: dialer };
-      }
 
       if (ccsCalls) {
         const CCSCallFiltered = {
-          callId: { $exists: true },
-          callId: { $ne: null },
+          $and: [
+            {
+              callId: { $exists: true },
+            },
+            {
+              callId: { $ne: null },
+            },
+          ],
           user: new mongoose.Types.ObjectId(agentID),
         };
 
@@ -1072,11 +1046,7 @@ const productionResolver = {
           const dateEnd = new Date(from || to);
           dateEnd.setHours(23, 59, 59, 999);
           CCSCallFiltered["createdAt"] = { $gte: dateStart, $lte: dateEnd };
-        } else if (!from && !to) {
-          const today2 = new Date()
-          today2.setHours(23,59,59,999)
-          CCSCallFiltered["createdAt"] = { $lte: today2 };
-        }
+        } 
 
         const secondFilter = {
           $or: [
@@ -1087,9 +1057,6 @@ const productionResolver = {
             },
             {
               "customer.fullName": { $regex: search, $options: "i" },
-            },
-            {
-              dialer: { $regex: search, $options: "i" },
             },
           ],
         };
@@ -1221,6 +1188,46 @@ const productionResolver = {
         };
       } else {
         try {
+          const filter = {
+            user: new mongoose.Types.ObjectId(agentID),
+            callId: { $eq: null },
+            $expr: { $gt: [{ $size: "$customer.contact_no" }, 0] },
+            $or: [
+              {
+                selectivesDispo: { $eq: false },
+              },
+              {
+                selectivesDispo: { $exists: false },
+              },
+            ],
+            $or: [
+              {
+                "customer.contact_no": search,
+              },
+              {
+                "customer.fullName": { $regex: search, $options: "i" },
+              },
+            ],
+          };
+
+          if (from && to) {
+            const dateStart = new Date(from);
+            dateStart.setHours(0, 0, 0, 0);
+            const dateEnd = new Date(to);
+            dateEnd.setHours(23, 59, 59, 999);
+            filter["createdAt"] = { $gte: dateStart, $lte: dateEnd };
+          } else if (from || to) {
+            const dateStart = new Date(from || to);
+            dateStart.setHours(0, 0, 0, 0);
+            const dateEnd = new Date(from || to);
+            dateEnd.setHours(23, 59, 59, 999);
+            filter["createdAt"] = { $gte: dateStart, $lte: dateEnd };
+          } 
+
+          if (dispotype.length > 0) {
+            filter["dispotype.code"] = { $in: dispotype };
+          }
+
           const forFiltering = await Disposition.aggregate([
             {
               $lookup: {
@@ -1281,7 +1288,7 @@ const productionResolver = {
               },
             },
             {
-              $match: filtered,
+              $match: filter,
             },
             { $sort: { createdAt: -1 } },
             {
@@ -1336,39 +1343,23 @@ const productionResolver = {
           const withRecordings = [];
 
           for (const filtered of forFiltering[0]?.data) {
-            const months = [
-              "January",
-              "February",
-              "March",
-              "April",
-              "May",
-              "June",
-              "July",
-              "August",
-              "September",
-              "October",
-              "November",
-              "December",
-            ];
-
             function checkDate(number) {
               return number > 9 ? number : `0${number}`;
             }
 
             const createdAt = new Date(filtered?.createdAt);
             const yearCreated = createdAt.getFullYear();
-            const monthCreated = months[createdAt.getMonth()];
             const dayCreated = createdAt.getDate();
             const contact = filtered?.contact_no;
-            const issabelIpAddress = filtered?.bucket?.issabelIp;
+
             const month = createdAt.getMonth() + 1;
             const viciIpAddress = filtered?.bucket?.viciIp;
 
             const fileNale = {
               "172.20.21.64": "AUTODIAL SHOPEE BCL-M7",
-              "172.20.21.63": "MIXED CAMPAIGN",
+              "172.20.21.63": "AUTOBACKUP",
               "172.20.21.10": "MIXED CAMPAIGN NEW 2",
-              "172.20.21.17": "PSBANK",
+              "172.20.21.17": "PSBANK-AUTOBACKUP",
               "172.20.21.27": "MIXED CAMPAIGN",
               "172.20.21.30": "MCC",
               "172.20.21.35": "MIXED CAMPAIGN",
@@ -1385,14 +1376,6 @@ const productionResolver = {
               "172.20.21.196": "ATOME NEW",
             };
 
-            const issabelNasFileBane = {
-              "172.20.21.57": "ATOME CASH S1-ISSABEL_172.20.21.57",
-              "172.20.21.32": "ATOME CASH S2-ISSABEL_172.20.21.32",
-              "172.20.21.62": "AVON-ISSABEL_172.20.21.62",
-              "172.20.21.72": "CIGNAL-ISSABEL_172.20.21.72",
-              "172.20.21.50": "CTBC-ISSABEL_172.20.21.50",
-            };
-
             const remoteDirVici = `/REC-${viciIpAddress}-${
               ![
                 "CASH S2",
@@ -1404,10 +1387,6 @@ const productionResolver = {
                 ? fileNale[viciIpAddress]
                 : "ATOME"
             }/${yearCreated}-${checkDate(month)}-${checkDate(dayCreated)}`;
-
-            const remoteDirIssabel = `/ISSABEL RECORDINGS/${
-              issabelNasFileBane[issabelIpAddress]
-            }/${monthCreated + " " + yearCreated}/${checkDate(dayCreated)}`;
 
             const isShopee =
               [
@@ -1446,8 +1425,7 @@ const productionResolver = {
                   )}-${checkDate(dayCreated)}`
                 : isShopee;
 
-            const remoteDir =
-              filtered.dialer === "vici" ? ifATOME : remoteDirIssabel;
+            const remoteDir = ifATOME;
 
             try {
               const files = await client.list(remoteDir);
@@ -1456,10 +1434,8 @@ const productionResolver = {
               const patterns = (contact ?? []).map((number) => {
                 const digits = number.replace(/\D/g, "");
 
-                // Normalize: remove leading 0 or 63 for consistency
                 const normalized = digits.replace(/^(0|63)/, "");
 
-                // Create a regex that matches possible formats: 0XXXXXXXXXX, 63XXXXXXXXXX, or XXXXXXXXXX
                 return new RegExp(`(0|63)?${normalized}`);
               });
 
@@ -1472,51 +1448,12 @@ const productionResolver = {
                   size: fileInfo.size,
                 }));
 
-              function getClosestFile(files, createdAt) {
-                let closest = null;
-                let smallestDiff = Infinity;
-
-                for (const file of files) {
-                  const parts = file.name.split("-");
-                  const dateStr = parts[3];
-                  const timeStr = parts[4];
-
-                  const year = dateStr.slice(0, 4);
-                  const month = dateStr.slice(4, 6);
-                  const day = dateStr.slice(6, 8);
-
-                  const hour = timeStr.slice(0, 2);
-                  const minute = timeStr.slice(2, 4);
-                  const second = timeStr.slice(4, 6);
-
-                  const fileDate = new Date(
-                    `${year}-${month}-${day}T${hour}:${minute}:${second}Z`
-                  );
-
-                  const diff = Math.abs(
-                    fileDate.getTime() - createdAt.getTime()
-                  );
-
-                  if (diff < smallestDiff) {
-                    smallestDiff = diff;
-                    closest = file;
-                  }
-                }
-
-                return closest;
-              }
-
-              if (filtered.dialer === "vici") {
-                for (const file of matches) {
-                  if (file.name.includes(`_${filtered?.user?.vici_id}_`)) {
-                    userRecordings.push(file);
-                  }
-                }
-              } else {
-                if (getClosestFile(matches, createdAt) !== null) {
-                  userRecordings.push(getClosestFile(matches, createdAt));
+              for (const file of matches) {
+                if (file.name.includes(`_${filtered?.user?.vici_id}_`)) {
+                  userRecordings.push(file);
                 }
               }
+
               withRecordings.push({ ...filtered, recordings: userRecordings });
             } catch (err) {
               withRecordings.push({ ...filtered });

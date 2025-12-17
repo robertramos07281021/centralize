@@ -79,7 +79,7 @@ export async function checkIfAgentIsOnline(agentUser, vici_id) {
 
     if (response.includes("not logged in")) return false;
     if (response.includes("success")) return true;
-
+    
     return false;
   } catch (error) {
     console.error("❌ Error checkingAgentIsOnline:", error.message);
@@ -132,6 +132,7 @@ export async function endAndDispo(agentUser, vici_id) {
 export async function checkIfAgentIsInlineOnVici(agentUser, vici_id) {
   const VICIDIAL_API = `http://${vici_id}/vicidial/non_agent_api.php`;
   try {
+
     const res = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
@@ -141,8 +142,9 @@ export async function checkIfAgentIsInlineOnVici(agentUser, vici_id) {
         state: "csv",
       },
     });
-    const data = res.data;
 
+    const data = res.data;
+ 
     return data;
   } catch (error) {
     console.error("❌ Error Check If Agent Is Inline:", error.message);

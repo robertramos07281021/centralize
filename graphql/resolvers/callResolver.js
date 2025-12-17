@@ -437,51 +437,53 @@ const callResolver = {
     checkIfAgentIsInline: async (_, __, { user }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
-        const findUser = await User.findById(user._id).populate("buckets");
+    
+        const findUser = await User.findById(user._id)
+          .populate("buckets", "viciIp viciIp_auto")
+          .lean();
 
         if (findUser.vici_id.trim() === "")
           throw new CustomError("Please", 401);
 
         const bucket =
           findUser?.buckets?.length > 0
-            ? new Array(...new Set(findUser?.buckets?.map((x) => x.viciIp)))
+            ? new Array(
+                ...new Set(
+                  findUser?.buckets?.map((x) => {
+                    return {
+                      viciIp: x.viciIp,
+                      viciIp_auto: x.viciIp_auto,
+                    };
+                  })
+                )
+              )
             : [];
-
+    
         const chechIfisOnline = await Promise.all(
           bucket.map(async (x) => {
-            const res = await checkIfAgentIsInlineOnVici(findUser?.vici_id, x);
+            let data = null;
+            const res = await checkIfAgentIsInlineOnVici(
+              findUser?.vici_id,
+              x.viciIp
+            );
+            const actualCall = res.split("|")[1];
 
-            // const resTheSecond = await checkingLiveCall(x, findUser?.vici_id)
-            // // console.log(resTheSecond)
-            // if (res.includes("PAUSE") || res.includes("INCALL")) {
-            //   const new1 = res.split("|");
-
-            //   if (new1[1] && new1[2]) {
-            //     const newRes = await getCallInfo(x, new1[1], new1[2]);
-            //     console.log("first: ", newRes);
-            //     return res;
-            //   } else {
-            //     // console.log("second: ", newMap[0]);
-            //     return res;
-            //   }
-            // }
-            return res;
+            if (!res.includes("ERROR") && actualCall !== "") {
+              data = `${res}|${x.viciIp}`;
+            } else {
+              const resAuto = await checkIfAgentIsInlineOnVici(
+                findUser?.vici_id,
+                x.viciIp_auto
+              );
+              data = `${resAuto}|${x.viciIp_auto}`;
+            }
+            return data;
           })
         );
-
-        // if(typeof chechIfisOnline === "object") {
-
-        //   const splitObject =(chechIfisOnline?.find((x) => !x.includes("ERROR")))?.split(',')
-        //   const ifObject = splitObject[splitObject.length - 2]
-
-        //   return ifObject
-        // } else {
-
-        //   return chechIfisOnline?.find((x) => !x.includes("ERROR"))
-        // }
-        // console.log(chechIfisOnline)
+   
         return chechIfisOnline?.find((x) => !x.includes("ERROR"));
       } catch (error) {
+
         throw new CustomError(error.message, 500);
       }
     },
@@ -812,7 +814,10 @@ const callResolver = {
           .toString()
           .padStart(2, "0")}`;
 
-        const findUser = await User.findById(user_id).populate("buckets");
+        const findUser = await User.findById(user_id).populate(
+          "buckets",
+          "viciIp viciIp_auto"
+        );
         if (!findUser) throw new CustomError("User not found", 401);
 
         if (findUser?.vici_id.trim() === "")
@@ -823,25 +828,52 @@ const callResolver = {
 
         const bucket =
           findUser?.buckets?.length > 0
-            ? new Array(...new Set(findUser?.buckets?.map((x) => x.viciIp)))
+            ? new Array(
+                ...new Set(
+                  findUser?.buckets?.map((x) => {
+                    return {
+                      viciIp: x.viciIp,
+                      viciIp_auto: x.viciIp_auto,
+                    };
+                  })
+                )
+              )
             : [];
 
         const chechIfisOnline = await Promise.all(
           bucket.map(async (x) => {
-            const res = await checkIfAgentIsOnline(findUser?.vici_id, x);
-            return res;
+            let data = null;
+            const res = await checkIfAgentIsInlineOnVici(
+              findUser?.vici_id,
+              x.viciIp
+            );
+            const actualCall = res.split("|")[1];
+
+            if (!res.includes("ERROR") && actualCall !== "") {
+              data = x.viciIp;
+            } else {
+              const resAuto = await checkIfAgentIsInlineOnVici(
+                findUser?.vici_id,
+                x.viciIp_auto
+              );
+
+              if (!resAuto.includes("ERROR")) {
+                data = x.viciIp_auto;
+              }
+            }
+            return data;
           })
         );
 
         const res = await getRecordings(
-          bucket[chechIfisOnline.indexOf(true)],
+          [...new Set(chechIfisOnline)].find((x) => x !== null),
           findUser?.vici_id
         );
 
         if (!res) return null;
 
         const userInfoRes = await getUserInfo(
-          bucket[chechIfisOnline.indexOf(true)],
+          [...new Set(chechIfisOnline)].find((x) => x !== null),
           findUser?.vici_id
         );
         const campaign_ID = userInfoRes.split("computer_ip")[1].split(",")[3];
@@ -855,7 +887,7 @@ const callResolver = {
           .split("|")[0]
           .replace(/:/g, "");
 
-        return `${campaign_ID}_${newDate}-${time}_${findUser?.vici_id}_${mobile}-all.mp3_${duration}_${bucket[chechIfisOnline.indexOf(true)]}`;
+        return `${campaign_ID}_${newDate}-${time}_${findUser?.vici_id}_${mobile}-all.mp3_${duration}`;
       } catch (error) {
         throw new CustomError(error.message, 500);
       }

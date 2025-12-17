@@ -143,7 +143,7 @@ const Test = () => {
   console.log(
     "Dispositions:",
     agentRecordings?.getAgentDispositionRecords?.dispositions
-  );
+  )
 
   console.log("Loading:", loading);
   console.log("Error:", error);
@@ -191,42 +191,42 @@ const Test = () => {
       <div className="bg-gray-300 h-full p-2 gap-2 rounded-md border border-black w-full flex flex-col">
         <div className="flex h-[5%]">
           <div className="flex flex-col relative" ref={dropdownRef}>
-      <div
-        className={`" ${
-          isOpenBucket ? "bg-gray-200" : ""
-        } px-3 hover:bg-gray-200 cursor-pointer py-1 min-w-40 bg-gray-100 border border-black rounded-sm "`}
-        onClick={() => setIsBucketOpen(!isOpenBucket)}
-      >
-        {selectedBucket ? selectedBucket.name : "Select a Bucket"}
-      </div>
-      <AnimatePresence>
-        {isOpenBucket && (
-          <motion.span
-            className="flex flex-col w-full absolute border border-black rounded-sm overflow-hidden top-10 left-0"
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.2 }}
-          >
-            {allBuckets?.getTLBucket.map((bucket: any) => (
-              <div
-                key={bucket._id}
-                className="px-3 even:bg-gray-100 py-1 border-b hover:bg-gray-300 transition-all cursor-pointer border-gray-200 last:border-b-0 odd:bg-gray-50 "
-                onClick={() => {
-                  setSelectedBucket(bucket);
-                  setIsBucketOpen(false);
-                }}
-              >
-                {bucket.name}
-              </div>
-            ))}
-          </motion.span>
-        )}
-      </AnimatePresence>
+            <div
+              className={`" ${
+                isOpenBucket ? "bg-gray-200" : ""
+              } px-3 hover:bg-gray-200 cursor-pointer py-1 min-w-40 bg-gray-100 border border-black rounded-sm "`}
+              onClick={() => setIsBucketOpen(!isOpenBucket)}
+            >
+              {selectedBucket ? selectedBucket.name : "Select a Bucket"}
+            </div>
+            <AnimatePresence>
+              {isOpenBucket && (
+                <motion.span
+                  className="flex flex-col w-full absolute border border-black rounded-sm overflow-hidden top-10 left-0"
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {allBuckets?.getTLBucket.map((bucket: any) => (
+                    <div
+                      key={bucket._id}
+                      className="px-3 even:bg-gray-100 py-1 border-b hover:bg-gray-300 transition-all cursor-pointer border-gray-200 last:border-b-0 odd:bg-gray-50 "
+                      onClick={() => {
+                        setSelectedBucket(bucket);
+                        setIsBucketOpen(false);
+                      }}
+                    >
+                      {bucket.name}
+                    </div>
+                  ))}
+                </motion.span>
+              )}
+            </AnimatePresence>
           </div>
         </div>
 
-        <div className="w-full bg-gray-100 border overflow-hidden border-black rounded-sm h-[95%] ">
+        {/* <div className="w-full bg-gray-100 border overflow-hidden border-black rounded-sm h-[95%] ">
           <div className="w-full grid items-center gap-2 px-3 uppercase font-black text-sm grid-cols-11 bg-gray-200 border-b h-[5%]">
             <div>Name</div>
             <div>VICI ID</div>
@@ -278,9 +278,9 @@ const Test = () => {
               </div>
             ))}
           </div>
-        </div>
+        </div> */}
       </div>
-      {/* {data?.recordings?.map((rec: any) => {
+      {data?.recordings?.map((rec: any) => {
         const audioURL = `http://172.16.24.31:3000/audio/${encodeURIComponent(
           rec.name
         )}`;
@@ -301,7 +301,7 @@ const Test = () => {
             </a>
           </div>
         );
-      })} */}
+      })}
 
       <div>
         {isOpenRecording && (

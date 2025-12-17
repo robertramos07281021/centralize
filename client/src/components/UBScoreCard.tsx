@@ -384,6 +384,14 @@ const UBScoreCard = () => {
       worksheet.getCell("B4:C4").value = "EVALUATOR:";
       worksheet.getCell("D4").value = selectedEvaluatorLabel || "";
 
+      worksheet.mergeCells(`H3:I3`);
+      worksheet.getCell("H3:I3").border = { top: thinBorder.top };
+      worksheet.getCell("J2").value = "(signature)";
+
+      worksheet.mergeCells(`H4:I4`);
+      worksheet.getCell("H4:I4").border = { top: thinBorder.top };
+      worksheet.getCell("J3").value = "(signature)";
+
       worksheet.getRow(6).height = 28;
       worksheet.mergeCells("C6");
       worksheet.getCell("C6").value = "Account Name / Account Number";
@@ -397,7 +405,6 @@ const UBScoreCard = () => {
       worksheet.getCell("H6").value = "Date of Logger Review";
       headerCell(worksheet.getCell("H6"));
 
-      /* Call labels */
       for (let i = 0; i < 5; i++) {
         worksheet.getCell(`A${7 + i}`).value = `Call ${i + 1}`;
       }
@@ -412,19 +419,13 @@ const UBScoreCard = () => {
       worksheet.getCell("H13").value = "Call 4";
       worksheet.getCell("I13").value = "Call 5";
 
-      /* ===== BORDERS PER SECTION (NOT ACROSS SPACER) ===== */
-
-      // Account
       applyBorder(worksheet, 6, 11, 3, 3, thinBorder);
 
-      // Date & Time
       applyBorder(worksheet, 6, 11, 5, 6, thinBorder);
 
       applyBorder(worksheet, 6, 11, 8, 9, thinBorder);
 
       applyBorder(worksheet, 6, 11, 10, 11, thinBorder);
-
-      /* ================= A. OPENING ================= */
 
       let row = 15;
       worksheet.mergeCells(`B14:I14`);
@@ -433,29 +434,49 @@ const UBScoreCard = () => {
       applyBorder(worksheet, 14, 14, 2, 8, thickBorder);
 
       worksheet.getRow(15).height = 10;
-
-      // Section A questions and keys
-      const openingQuestions: Array<{ label: string; defect: number; key: string }> = [
-        { label: "Used appropriate greeting / Identified self and Agency", defect: 2, key: "opening-greeting" },
-        { label: "Mentioned UBP Disclaimer spiel", defect: 6, key: "opening-disclaimer" },
-        { label: "Mentioned Line is Recorded", defect: 5, key: "opening-recorded" },
-        { label: "Mentioned CH/ Valid CP/Y's Full Name for outgoing calls to a registered number.  Asked correct Positive Identifiers for incoming calls & calls to unregistered number.F", defect: 6, key: "opening-fullname" },
-        { label: "Properly identified self (first & last name)", defect: 6, key: "opening-selfid" },
+      const openingQuestions: Array<{
+        label: string;
+        defect: number;
+        key: string;
+      }> = [
+        {
+          label: "Used appropriate greeting / Identified self and Agency",
+          defect: 2,
+          key: "opening-greeting",
+        },
+        {
+          label: "Mentioned UBP Disclaimer spiel",
+          defect: 6,
+          key: "opening-disclaimer",
+        },
+        {
+          label: "Mentioned Line is Recorded",
+          defect: 5,
+          key: "opening-recorded",
+        },
+        {
+          label:
+            "Mentioned CH/ Valid CP/Y's Full Name for outgoing calls to a registered number.  Asked correct Positive Identifiers for incoming calls & calls to unregistered number.F",
+          defect: 6,
+          key: "opening-fullname",
+        },
+        {
+          label: "Properly identified self (first & last name)",
+          defect: 6,
+          key: "opening-selfid",
+        },
       ];
 
       openingQuestions.forEach(({ label, defect, key }) => {
         row++;
         worksheet.getCell(`C${row}`).value = label;
         worksheet.getCell(`D${row}`).value = defect;
-        // Bind values for each call (E, F, G, H, I columns)
         const callVals = questionCallValues[key] || [];
         for (let i = 0; i < 5; i++) {
           worksheet.getCell(row, 5 + i).value = callVals[i] ?? "";
         }
         applyBorder(worksheet, row, row, 3, 9, thinBorder);
       });
-
-      // B. COLLECTION CALL PROPER
 
       let row2 = 25;
       worksheet.mergeCells(`B22:I22`);
@@ -488,10 +509,26 @@ const UBScoreCard = () => {
         "ESTABLISHING RAPPORT, EMPATHY & COURTESY";
       applyBorder(worksheet, 25, 25, 3, 8, thinBorder);
 
-      const withContactEstablishingRapport: Array<{ label: string; defect: number; key: string }> = [
-        { label: "Explained the status of the account*", defect: 1, key: "withContact-explainedStatus" },
-        { label: "Asked if CH received demand/ notification letter*", defect: 2, key: "withContact-askedNotification" },
-        { label: "Showed empathy and compassion as appropriate.", defect: 2, key: "withContact-showedEmpathy" },
+      const withContactEstablishingRapport: Array<{
+        label: string;
+        defect: number;
+        key: string;
+      }> = [
+        {
+          label: "Explained the status of the account*",
+          defect: 1,
+          key: "withContact-explainedStatus",
+        },
+        {
+          label: "Asked if CH received demand/ notification letter*",
+          defect: 2,
+          key: "withContact-askedNotification",
+        },
+        {
+          label: "Showed empathy and compassion as appropriate.",
+          defect: 2,
+          key: "withContact-showedEmpathy",
+        },
       ];
       withContactEstablishingRapport.forEach(({ label, defect, key }) => {
         row2++;
@@ -507,10 +544,16 @@ const UBScoreCard = () => {
       worksheet.mergeCells(`C29:I29`);
       worksheet.getCell(`C29`).value = "LISTENING SKILLS";
       applyBorder(worksheet, 29, 29, 3, 8, thinBorder);
-
-      // Section B.2: WITH CONTACT (A/Y) - LISTENING SKILLS
-      const listeningSkills: Array<{ label: string; defect: number; key: string }> = [
-        { label: "Sought RFD in payment & RFBP*", defect: 1, key: "withContact-soughtRFD" },
+      const listeningSkills: Array<{
+        label: string;
+        defect: number;
+        key: string;
+      }> = [
+        {
+          label: "Sought RFD in payment & RFBP*",
+          defect: 1,
+          key: "withContact-soughtRFD",
+        },
       ];
 
       let row3 = 29;
@@ -524,17 +567,30 @@ const UBScoreCard = () => {
         }
         applyBorder(worksheet, row3, row3, 3, 9, thinBorder);
       });
-
-      // let row4 = 31;
       worksheet.mergeCells(`C31:I31`);
       worksheet.getCell(`C31`).value = "NEGOTIATION SKILLS";
       applyBorder(worksheet, 31, 31, 3, 8, thinBorder);
-
-      // Section B.3: WITH CONTACT (A/Y) - NEGOTIATION SKILLS
-      const negotiationSkills: Array<{ label: string; defect: number; key: string }> = [
-        { label: "Explained consequences of non-payment, if applicable (explained conseq of legal and BAP listing/explained side of the Bank and the contract signed/explained that the bank is serious in collecting legal obligations/possible negative listing of name/future credit facility will be closed/additional collection agency expenses/involvement of lawyer will also be CH's expense)*", defect: 1, key: "withContact-explainedConsequences" },
-        { label: "Asked for CM's capacity to pay, if applicable*", defect: 1, key: "withContact-askedCapacity" },
-        { label: "Followed hierarchy of negotiation*", defect: 1, key: "withContact-followedHierarchy" },
+      const negotiationSkills: Array<{
+        label: string;
+        defect: number;
+        key: string;
+      }> = [
+        {
+          label:
+            "Explained consequences of non-payment, if applicable (explained conseq of legal and BAP listing/explained side of the Bank and the contract signed/explained that the bank is serious in collecting legal obligations/possible negative listing of name/future credit facility will be closed/additional collection agency expenses/involvement of lawyer will also be CH's expense)*",
+          defect: 1,
+          key: "withContact-explainedConsequences",
+        },
+        {
+          label: "Asked for CM's capacity to pay, if applicable*",
+          defect: 1,
+          key: "withContact-askedCapacity",
+        },
+        {
+          label: "Followed hierarchy of negotiation*",
+          defect: 1,
+          key: "withContact-followedHierarchy",
+        },
       ];
       let row4 = 31;
       negotiationSkills.forEach(({ label, defect, key }) => {
@@ -548,15 +604,24 @@ const UBScoreCard = () => {
         applyBorder(worksheet, row4, row4, 3, 9, thinBorder);
       });
 
-      // let row5 = 35;
       worksheet.mergeCells(`C35:I35`);
       worksheet.getCell(`C35`).value = "OFFERING SOLUTIONS";
       applyBorder(worksheet, 35, 35, 3, 8, thinBorder);
-
-      // Section B.4: WITH CONTACT (A/Y) - OFFERING SOLUTIONS
-      const offeringSolutions: Array<{ label: string; defect: number; key: string }> = [
-        { label: "Offered discount/ amnesty/ promo*", defect: 1, key: "withContact-offeredDiscount" },
-        { label: "Adviced CH to source out funds*", defect: 1, key: "withContact-advisedSourceFunds" },
+      const offeringSolutions: Array<{
+        label: string;
+        defect: number;
+        key: string;
+      }> = [
+        {
+          label: "Offered discount/ amnesty/ promo*",
+          defect: 1,
+          key: "withContact-offeredDiscount",
+        },
+        {
+          label: "Adviced CH to source out funds*",
+          defect: 1,
+          key: "withContact-advisedSourceFunds",
+        },
       ];
       let row5 = 35;
       offeringSolutions.forEach(({ label, defect, key }) => {
@@ -579,12 +644,31 @@ const UBScoreCard = () => {
         "ESTABLISHING RAPPORT, EMPATHY & COURTESY";
       applyBorder(worksheet, 40, 40, 3, 8, thinBorder);
 
-      // Section B.5: WITHOUT CONTACT - ESTABLISHING RAPPORT
-      const withOutContactEREC: Array<{ label: string; defect: number; key: string }> = [
-        { label: "Probed on BTC, ETA and other contact numbers", defect: 1, key: "withoutContact-probedContactNumbers" },
-        { label: "Used time schedule and follow-up if applicable", defect: 1, key: "withoutContact-usedTimeSchedule" },
-        { label: "Asked for name of party, relation to client", defect: 1, key: "withoutContact-askedPartyName" },
-        { label: "Left URGENT message ang gave correct contact number", defect: 2, key: "withoutContact-leftUrgentMessage" },
+      const withOutContactEREC: Array<{
+        label: string;
+        defect: number;
+        key: string;
+      }> = [
+        {
+          label: "Probed on BTC, ETA and other contact numbers",
+          defect: 1,
+          key: "withoutContact-probedContactNumbers",
+        },
+        {
+          label: "Used time schedule and follow-up if applicable",
+          defect: 1,
+          key: "withoutContact-usedTimeSchedule",
+        },
+        {
+          label: "Asked for name of party, relation to client",
+          defect: 1,
+          key: "withoutContact-askedPartyName",
+        },
+        {
+          label: "Left URGENT message ang gave correct contact number",
+          defect: 2,
+          key: "withoutContact-leftUrgentMessage",
+        },
       ];
       let row6 = 40;
       withOutContactEREC.forEach(({ label, defect, key }) => {
@@ -605,14 +689,45 @@ const UBScoreCard = () => {
       worksheet.getCell("C47").value = "QUALITY OF CALL";
       applyBorder(worksheet, 47, 47, 3, 8, thinBorder);
 
-      // Section B.6: WITH OR WITHOUT CONTACT - QUALITY OF CALL
-      const withOrWithoutContactEREC: Array<{ label: string; defect: number; key: string }> = [
-        { label: "Used professional tone of voice (did not shout)", defect: 2, key: "withOrWithoutContact-professionalTone" },
-        { label: "Did not use unacceptable words/phrases and maintained polite/civil language", defect: 6, key: "withOrWithoutContact-politeLanguage" },
-        { label: "Updated correct information and payment details on info sheet, if applicable", defect: 3, key: "withOrWithoutContact-updatedInfoSheet" },
-        { label: "Adherence to Policy(BSP, Code of Conduct, etc.)", defect: 6, key: "withOrWithoutContact-adherenceToPolicy" },
-        { label: "GPP / INTEGRITY ISSUES (Revealed and Collected debt from unauthorized CP)", defect: 6, key: "withOrWithoutContact-gppIntegrityIssues" },
-        { label: "Exercised sound judgment in determining the appropriate course of action.", defect: 6, key: "withOrWithoutContact-soundJudgment" },
+      const withOrWithoutContactEREC: Array<{
+        label: string;
+        defect: number;
+        key: string;
+      }> = [
+        {
+          label: "Used professional tone of voice (did not shout)",
+          defect: 2,
+          key: "withOrWithoutContact-professionalTone",
+        },
+        {
+          label:
+            "Did not use unacceptable words/phrases and maintained polite/civil language",
+          defect: 6,
+          key: "withOrWithoutContact-politeLanguage",
+        },
+        {
+          label:
+            "Updated correct information and payment details on info sheet, if applicable",
+          defect: 3,
+          key: "withOrWithoutContact-updatedInfoSheet",
+        },
+        {
+          label: "Adherence to Policy(BSP, Code of Conduct, etc.)",
+          defect: 6,
+          key: "withOrWithoutContact-adherenceToPolicy",
+        },
+        {
+          label:
+            "GPP / INTEGRITY ISSUES (Revealed and Collected debt from unauthorized CP)",
+          defect: 6,
+          key: "withOrWithoutContact-gppIntegrityIssues",
+        },
+        {
+          label:
+            "Exercised sound judgment in determining the appropriate course of action.",
+          defect: 6,
+          key: "withOrWithoutContact-soundJudgment",
+        },
       ];
       let row7 = 47;
       withOrWithoutContactEREC.forEach(({ label, defect, key }) => {
@@ -635,10 +750,21 @@ const UBScoreCard = () => {
       worksheet.getRow(57).height = 10;
       worksheet.mergeCells("C57:I57");
 
-      // Section C: CLOSING THE CALL
-      const closingQuestions: Array<{ label: string; defect: number; key: string }> = [
-        { label: "Summarized payment arrangement*", defect: 2, key: "closing-summarizedPayment" },
-        { label: "Request return call for payment confirmation*", defect: 1, key: "closing-requestReturnCall" },
+      const closingQuestions: Array<{
+        label: string;
+        defect: number;
+        key: string;
+      }> = [
+        {
+          label: "Summarized payment arrangement*",
+          defect: 2,
+          key: "closing-summarizedPayment",
+        },
+        {
+          label: "Request return call for payment confirmation*",
+          defect: 1,
+          key: "closing-requestReturnCall",
+        },
       ];
       let row8 = 57;
       closingQuestions.forEach(({ label, defect, key }) => {
@@ -656,7 +782,13 @@ const UBScoreCard = () => {
       worksheet.getCell("C62").value = "Total Defects";
       worksheet.getCell(`C63`).value = "Score";
       worksheet.mergeCells(`J61:J63`);
-      worksheet.getCell(`J61`).value = "99.00%";
+      worksheet.getCell(`J61`).value = `${overallScore.toFixed(2)}%`;
+
+      worksheet.mergeCells("C61:D61");
+      worksheet.mergeCells("C62:D62");
+      worksheet.mergeCells("C63:D63");
+
+      applyBorder(worksheet, 61, 63, 3, 4, thinBorder);
       applyBorder(worksheet, 61, 63, 10, 10, thickBorder);
 
       const row9 = 61;
@@ -669,25 +801,40 @@ const UBScoreCard = () => {
 
       const row10 = 62;
 
-      callContactStatuses.slice(0, 5).forEach((status, index) => {
+      callDefects.slice(0, 5).forEach((defects, index) => {
         const col = 5 + index;
-        worksheet.getCell(row10, col).value = status ? "Y" : "N";
+        worksheet.getCell(row10, col).value = defects;
       });
       applyBorder(worksheet, row10, row10, 5, 9, thinBorder);
 
       const row11 = 63;
 
-      callContactStatuses.slice(0, 5).forEach((status, index) => {
+      callScores.slice(0, 5).forEach((score, index) => {
         const col = 5 + index;
-        worksheet.getCell(row11, col).value = status ? "Y" : "N";
+        worksheet.getCell(row11, col).value = `${score.toFixed(2)}%`;
       });
       applyBorder(worksheet, row11, row11, 5, 9, thinBorder);
 
       worksheet.getCell("C65").value = "CALL 1 COMMENTS OF AGENT";
-      
+
+      worksheet.mergeCells(`M1:M85`);
+      for (let r = 1; r <= 85; r++) {
+        const cell = worksheet.getCell(r, 13);
+        cell.border = { left: thickBorder.left };
+        cell.alignment = { wrapText: true, vertical: "middle" };
+      }
+
+      worksheet.mergeCells(`A86:L86`);
+      for (let c = 1; c <= 12; c++) {
+        const cell = worksheet.getCell(86, c);
+        cell.border = { top: thickBorder.top };
+      }
+
       let commentRow = 65;
       for (let i = 0; i < 5; i++) {
-        worksheet.getCell(`C${commentRow}`).value = `CALL ${i + 1} COMMENTS OF AGENT`;
+        worksheet.getCell(`C${commentRow}`).value = `CALL ${
+          i + 1
+        } COMMENTS OF AGENT`;
         worksheet.mergeCells(`D${commentRow}:F${commentRow}`);
         worksheet.getCell(`D${commentRow}`).value = "COMMENTS OF AGENCY TL";
         worksheet.mergeCells(`G${commentRow}:I${commentRow}`);
@@ -704,7 +851,14 @@ const UBScoreCard = () => {
         worksheet.getCell(`C${commentRow + 1}`).value = agentComment;
         worksheet.getCell(`D${commentRow + 1}`).value = tlComment;
         worksheet.getCell(`G${commentRow + 1}`).value = actionPlanComment;
-        applyBorder(worksheet, commentRow + 1, commentRow + 2, 3, 9, thickBorder);
+        applyBorder(
+          worksheet,
+          commentRow + 1,
+          commentRow + 2,
+          3,
+          9,
+          thickBorder
+        );
 
         commentRow += 3;
         commentRow += 1;
@@ -732,10 +886,10 @@ const UBScoreCard = () => {
   };
 
   const handleSaveAndExport = async () => {
-    // if (!selectedMonth) return alert("Please select a month");
-    // if (!selectedCollectionOfficer)
-    //   return alert("Please select a collection officer");
-    // if (!selectedEvaluator) return alert("Please select an evaluator");
+    if (!selectedMonth) return alert("Please select a month");
+    if (!selectedCollectionOfficer)
+      return alert("Please select a collection officer");
+    if (!selectedEvaluator) return alert("Please select an evaluator");
     const getCalls = (key: string) =>
       questionCallValues[key] ?? Array(5).fill(0);
     const scoreDetails = {
@@ -923,18 +1077,24 @@ const UBScoreCard = () => {
       .reduce((sum, value) => sum + value, 0);
   }, [questionCallValues]);
 
+  const callDefects = useMemo(() => {
+    return Array.from({ length: 5 }).map((_, callIdx) =>
+      Object.values(questionCallValues)
+        .map((arr) => arr[callIdx] ?? 0)
+        .reduce((sum, v) => sum + v, 0)
+    );
+  }, [questionCallValues]);
+
   const callScores = useMemo(() => {
     return Array.from({ length: 5 }).map((_, callIdx) => {
-      const totalDefectsForCall = Object.values(questionCallValues)
-        .map((arr) => arr[callIdx] ?? 0)
-        .reduce((sum, v) => sum + v, 0);
+      const totalDefectsForCall = callDefects[callIdx] ?? 0;
       const rawScore = Math.max(
         0,
         100 - totalDefectsForCall * DEFECT_PENALTY_PERCENT
       );
       return rawScore < SCORE_FLOOR_PERCENT ? 0 : rawScore;
     });
-  }, [questionCallValues]);
+  }, [callDefects]);
 
   const overallScore = useMemo(() => {
     if (callScores.length === 0) {
@@ -1050,7 +1210,7 @@ const UBScoreCard = () => {
           <div>collection call performance monitor</div>
           <div className="flex items-center absolute right-5 h-full gap-1 justify-end text-xs">
             <button
-              className="px-4 py-2 cursor-pointer border-green-900 transition-all border-2 font-black uppercase rounded-sm shadow-md text-white bg-green-700 hover:bg-green-800 disabled:bg-gray-400"
+              className="px-4 py-2 cursor-pointer border-green-900 transition-all border-2 font-black uppercase rounded-sm shadow-md text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
               onClick={handleSaveAndExport}
               disabled={isExportingExcel}
             >

@@ -92,12 +92,51 @@ type ScoreCardSummary = {
   } | null;
 };
 
+type EastwestQuestion = {
+  text: string;
+  tag?: string;
+  defaultScore?: number;
+  response?: string;
+  penalty?: number;
+};
+
+type EastwestSection = {
+  headingLabel?: string;
+  title?: string;
+  totalNo?: number;
+  questions?: EastwestQuestion[];
+};
+
+type EastwestScoreDetails = {
+  meta?: {
+    evaluationDate?: string;
+    acknowledgedBy?: string;
+    agent?: { id?: string; name?: string } | null;
+    evaluator?: { id?: string; name?: string } | null;
+    cardholder?: string;
+    accountNumber?: string;
+    enteredScore?: string;
+    enteredRate?: string;
+  };
+  withContact?: EastwestSection[];
+  withoutContact?: EastwestSection[];
+  totals?: {
+    withContact?: number;
+    withoutContact?: number;
+    finalScore?: number;
+  };
+};
+
 const ScoreCardOverview = () => {
-  const [selectedDate, setSelectedDate] = useState<string>("");
+  const [selectedDate, setSelectedDate] = useState<string>(
+    () => new Date().toISOString().split("T")[0]
+  );
   const [searchTerm, setSearchTerm] = useState<string>("");
   const [isOpenDefaultScoreCard, setIsOpenDefaultScoreCard] =
     useState<boolean>(false);
   const [isOpenUBScoreCard, setIsOpenUBScoreCard] = useState<boolean>(false);
+  const [isOpenEastwestScoreCard, setIsOpenEastwestScoreCard] =
+    useState<boolean>(false);
   const [selectedScoreCard, setSelectedScoreCard] =
     useState<ScoreCardSummary | null>(null);
 
@@ -126,6 +165,7 @@ const ScoreCardOverview = () => {
       return {
         avgScore: 0,
         highestScore: 0,
+        lowestScore: 0,
         passRate: 0,
       };
     }
@@ -137,12 +177,28 @@ const ScoreCardOverview = () => {
       );
     const totalScore = scores.reduce((sum, value) => sum + value, 0);
     const highestScore = scores.length ? Math.max(...scores) : 0;
+    const lowestScore = scores.length ? Math.min(...scores) : 0;
     const passCount = scores.filter((score) => score >= 87).length;
     return {
       avgScore: scores.length ? totalScore / scores.length : 0,
       highestScore,
+      lowestScore,
       passRate: scores.length ? (passCount / scores.length) * 100 : 0,
     };
+  }, [scorecards]);
+
+  const totalsByType = useMemo(() => {
+    return scorecards.reduce(
+      (acc, entry) => {
+        const type = (entry.typeOfScoreCard || "").toLowerCase();
+        if (type.includes("ub mortgage")) acc.ubMortgage += 1;
+        else if (type.includes("ub score")) acc.ub += 1;
+        else if (type.includes("eastwest")) acc.eastwest += 1;
+        else acc.default += 1;
+        return acc;
+      },
+      { default: 0, eastwest: 0, ub: 0, ubMortgage: 0 }
+    );
   }, [scorecards]);
 
   const getStatusBadge = (score?: number | null) => {
@@ -265,6 +321,109 @@ const ScoreCardOverview = () => {
     return result;
   };
 
+  const extractEastwestDetails = (
+    details?: any | null
+  ): EastwestScoreDetails | null => {
+    if (!details || typeof details !== "object") return null;
+    return details as EastwestScoreDetails;
+  };
+
+  const renderEastwestSection = (
+    label: string,
+    sections?: EastwestSection[]
+  ) => {
+    if (!sections || sections.length === 0) return null;
+
+    return (
+      <div className="mt-3 flex flex-col">
+        <div className="font-black  bg-gray-300 rounded-t-md py-1 w-full border-x border-t text-center uppercase text-xl text-black">
+          {label}
+        </div>
+        {sections.map((section, sectionIdx) => (
+          <div
+            key={`${label}-${section.title}-${sectionIdx}`}
+            className={`rounded-md overflow-hidden mb-2 border border-black shadow-sm ${
+              sectionIdx === 0 ? "rounded-t-none" : ""
+            }`}
+          >
+            <div className="bg-gray-200 border-b px-3 py-2 flex justify-between items-center">
+              <div className="font-black uppercase text-gray-900">
+                {section.headingLabel || section.title || "Section"}
+              </div>
+              {typeof section.totalNo === "number" && (
+                <div className="text-xs font-black px-2 py-1 rounded-sm bg-gray-100 text-black border border-black">
+                  Total NO: {section.totalNo}
+                </div>
+              )}
+            </div>
+            {section.questions && section.questions.length > 0 ? (
+              <div className="divide-y">
+                {section.questions.map((question, qIdx) => (
+                  <div
+                    key={`${section.title}-q-${qIdx}`}
+                    className="grid grid-cols-1 md:grid-cols-4 items-center gap-2 px-3 py-2 even:bg-gray-50"
+                  >
+                    <div className="md:col-span-2 font-semibold text-black">
+                      {question.text}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className=" text-sm font-semibold text-black">
+                        Tag:
+                      </span>
+                      <span className="uppercase text-xs font-black px-2 py-1 rounded-sm bg-gray-200 border border-black">
+                        {question.tag || "-"}
+                      </span>
+                    </div>
+                    <div className="flex items-center gap-2 justify-start md:justify-end">
+                      <span className=" text-sm font-semibold text-black">
+                        Response:
+                      </span>
+                      <span
+                        className={`px-3 py-1 rounded-sm font-black uppercase border-2 text-white text-shadow-2xs ${
+                          question.response === "YES"
+                            ? "bg-green-600 border-green-900"
+                            : question.response === "NO"
+                            ? "bg-red-600 border-red-900"
+                            : "bg-gray-500 border-gray-700"
+                        }`}
+                      >
+                        {question.response || "-"}
+                      </span>
+                      <div>
+                        {typeof question.penalty === "number" && (
+                          <div className="flex items-center">
+                            <div
+                              className={`"  text-sm font-semibold text-black "`}
+                            >
+                              Penalty:
+                            </div>
+                            <div
+                              className={`" ${
+                                question.penalty > 0
+                                  ? "bg-red-600 border-red-900"
+                                  : "bg-green-600 px-4 border-green-900"
+                              } ml-2 text-base text-white font-black  px-3 py-1 rounded  border-2 "`}
+                            >
+                              {question.penalty}
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="px-3 py-2 text-sm text-gray-500 italic">
+                No questions
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+    );
+  };
+
   const renderUBSection = (title: string, section?: any) => {
     const flatQuestions = flattenQuestions(section);
     if (!flatQuestions || flatQuestions.length === 0) return null;
@@ -307,6 +466,31 @@ const ScoreCardOverview = () => {
               </div>
             </div>
           ))}
+        </div>
+      </div>
+    );
+  };
+
+  const renderEastwestTotals = (details: EastwestScoreDetails | null) => {
+    if (!details?.totals) return null;
+    const { withContact, withoutContact } = details.totals;
+    return (
+      <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div className="bg-gray-200 border border-black rounded-md p-3 text-center shadow-sm">
+          <div className="text-xs uppercase text-gray-600">
+            Total Defects (W/ Contact)
+          </div>
+          <div className="text-2xl font-black text-gray-900">
+            {withContact ?? 0}
+          </div>
+        </div>
+        <div className="bg-gray-200 border border-black rounded-md p-3 text-center shadow-sm">
+          <div className="text-xs uppercase text-gray-600">
+            Total Defects (W/O Contact)
+          </div>
+          <div className="text-2xl font-black text-gray-900">
+            {withoutContact ?? 0}
+          </div>
         </div>
       </div>
     );
@@ -404,8 +588,57 @@ const ScoreCardOverview = () => {
     );
   };
 
+  const renderEastwestMeta = (details: EastwestScoreDetails | null) => {
+    if (!details) return null;
+    const meta = details.meta ?? {};
+    return (
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm text-gray-800">
+        <div>
+          <span className="font-black uppercase text-black">Agent:</span>{" "}
+          {meta.agent?.name || "Unknown Agent"}
+        </div>
+        <div>
+          <span className="font-black uppercase text-black">Evaluator:</span>{" "}
+          {meta.evaluator?.name || "Unknown TL"}
+        </div>
+        <div>
+          <span className="font-black uppercase text-black">Cardholder:</span>{" "}
+          {meta.cardholder || "N/A"}
+        </div>
+        <div>
+          <span className="font-black uppercase text-black">Account #:</span>{" "}
+          {meta.accountNumber || "N/A"}
+        </div>
+        <div>
+          <span className="font-black uppercase text-black">
+            Evaluation Date:
+          </span>{" "}
+          {formatDate(meta.evaluationDate)}
+        </div>
+        <div>
+          <span className="font-black uppercase text-black">
+            Acknowledged By:
+          </span>{" "}
+          {meta.acknowledgedBy || "N/A"}
+        </div>
+        <div>
+          <span className="font-black uppercase text-black">
+            Entered Score:
+          </span>{" "}
+          {meta.enteredScore || "N/A"}
+        </div>
+        <div>
+          <span className="font-black uppercase text-black">Entered Rate:</span>{" "}
+          {meta.enteredRate || "N/A"}
+        </div>
+      </div>
+    );
+  };
+
   const closeModal = () => {
     setIsOpenDefaultScoreCard(false);
+    setIsOpenEastwestScoreCard(false);
+    setIsOpenUBScoreCard(false);
     setSelectedScoreCard(null);
   };
 
@@ -414,9 +647,15 @@ const ScoreCardOverview = () => {
   const openScoreCardModal = (scoreCardType: string) => {
     if (scoreCardType === "UB Score Card") {
       setIsOpenDefaultScoreCard(false);
+      setIsOpenEastwestScoreCard(false);
       setIsOpenUBScoreCard(true);
+    } else if (scoreCardType === "Eastwest Score Card") {
+      setIsOpenDefaultScoreCard(false);
+      setIsOpenUBScoreCard(false);
+      setIsOpenEastwestScoreCard(true);
     } else {
       setIsOpenUBScoreCard(false);
+      setIsOpenEastwestScoreCard(false);
       setIsOpenDefaultScoreCard(true);
     }
   };
@@ -929,28 +1168,54 @@ const ScoreCardOverview = () => {
         <div className="border-b px-4 text-black py-3 text-2xl font-black uppercase text-center bg-gray-400">
           Overview
         </div>
-        <div className="p-4 flex flex-col bg-gray-300 h-full gap-4 text-sm overflow-auto">
-          <div className="bg-white border border-black rounded-md shadow-sm p-4">
-            <div className="uppercase text-xs text-gray-500">average score</div>
-            <div className="text-3xl font-black text-gray-800">
+        <div className="p-4 flex flex-col bg-gray-300 justify-evenly h-full gap-4 text-sm overflow-auto">
+          <div className="bg-white h-full grid grid-cols-4 border gap-2 border-black rounded-md shadow-sm p-2">
+            <div className="text-xs border p-2 rounded-sm bg-gray-200 text-black flex justify-center flex-col">
+              <div className="text-center">Total Default Score Card</div>
+              <div className="text-4xl text-center font-black">{totalsByType.default}</div>
+            </div>
+            <div className="text-xs border p-2 rounded-sm bg-gray-200 text-black flex justify-center flex-col">
+              <div className="text-center">Total Eastwest Score Card</div>
+              <div className="text-4xl text-center font-black">{totalsByType.eastwest}</div>
+            </div>
+            <div className="text-xs border p-2 rounded-sm bg-gray-200 text-black flex justify-center flex-col">
+              <div className="text-center">Total UB Cards Score Card</div>
+              <div className="text-4xl text-center font-black">{totalsByType.ub}</div>
+            </div>
+
+            <div className="text-xs border p-2 rounded-sm bg-gray-200 text-black flex justify-center flex-col">
+              <div className="text-center">Total UB Mortgage Score Card</div>
+              <div className="text-4xl text-center font-black">{totalsByType.ubMortgage}</div>
+            </div>
+          </div>
+          <div className="bg-white flex justify-between items-center border h-full border-black rounded-md shadow-sm p-4">
+            <div className="uppercase font-black text-xl text-black">average score</div>
+            <div className="text-4xl font-black text-black">
               {overviewStats.avgScore.toFixed(1)}
             </div>
           </div>
-          <div className="bg-white border border-black rounded-md shadow-sm p-4">
-            <div className="uppercase text-xs text-gray-500">highest score</div>
-            <div className="text-3xl font-black text-gray-800">
+          <div className="bg-white flex justify-between items-center border h-full border-black rounded-md shadow-sm p-4">
+            <div className="uppercase font-black text-xl text-black">highest score</div>
+            <div className="text-4xl font-black text-black">
               {overviewStats.highestScore.toFixed(1)}
             </div>
           </div>
-          <div className="bg-white border border-black rounded-md shadow-sm p-4">
-            <div className="uppercase text-xs text-gray-500">pass rate</div>
-            <div className="text-3xl font-black text-gray-800">
+          <div className="bg-white flex justify-between items-center border h-full border-black rounded-md shadow-sm p-4">
+            <div className="uppercase font-black text-xl text-black">lowest score</div>
+            <div className="text-4xl font-black text-black">
+              {overviewStats.lowestScore.toFixed(1)}
+            </div>
+          </div>
+
+          <div className="bg-white flex justify-between items-center border h-full border-black rounded-md shadow-sm p-4">
+            <div className="uppercase font-black text-xl text-black">pass rate</div>
+            <div className="text-4xl font-black text-black">
               {overviewStats.passRate.toFixed(0)}%
             </div>
           </div>
-          <div className="bg-white border border-black rounded-md shadow-sm p-4">
-            <div className="uppercase text-xs text-gray-500">records shown</div>
-            <div className="text-3xl font-black text-gray-800">
+          <div className="bg-white flex justify-between items-center border h-full border-black rounded-md shadow-sm p-4">
+            <div className="uppercase font-black text-xl text-black">records shown</div>
+            <div className="text-4xl font-black text-black">
               {scorecards.length}
             </div>
           </div>
@@ -1014,7 +1279,7 @@ const ScoreCardOverview = () => {
                     {scorecards.map((entry, index) => {
                       const badge = getStatusBadge(entry.totalScore);
                       const formattedDate = formatDate(
-                        entry.dateAndTimeOfCall || entry.createdAt
+                        entry.createdAt || entry.dateAndTimeOfCall
                       );
                       return (
                         <motion.div
@@ -1203,6 +1468,95 @@ const ScoreCardOverview = () => {
                       </div>
                     </div>
                   </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isOpenEastwestScoreCard && selectedScoreCard && (
+          <motion.div
+            className="absolute top-0 left-0 w-full items-center justify-center flex h-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
+              className="w-full h-full absolute items-center justify-center flex bg-black/40 backdrop-blur-sm"
+              onClick={closeModal}
+            ></div>
+            <motion.div
+              className="bg-white z-20 border flex flex-col relative rounded-md p-6 max-w-4xl max-h-[80vh] "
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+            >
+              <button
+                type="button"
+                onClick={closeModal}
+                className="p-1 transition-all shadow-md border-2 border-red-800 bg-red-600 hover:bg-red-700 cursor-pointer text-white rounded-full uppercase text-xs font-black absolute top-2 -right-10"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth="2"
+                  stroke="currentColor"
+                  className="size-5"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M6 18 18 6M6 6l12 12"
+                  />
+                </svg>
+              </button>
+
+              <div className="flex flex-col overflow-auto pr-2 h-full">
+                <div className="flex mt-2 justify-between items-start gap-4 flex-wrap">
+                  <div>
+                    <div className="text-xl first-letter:uppercase font-black text-gray-900">
+                      {selectedScoreCard.agent?.name || "Unknown Agent"}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {selectedScoreCard.typeOfScoreCard}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Created: {formatDate(selectedScoreCard.createdAt)}
+                    </div>
+                  </div>
+                  <div className="text-right border overflow-hidden shadow-md flex flex-col justify-center rounded-sm bg-gray-200">
+                    <div className="text-3xl py-2 font-black text-center text-gray-900">
+                      {selectedScoreCard.totalScore != null
+                        ? selectedScoreCard.totalScore.toFixed(1)
+                        : "-"}
+                    </div>
+                    <div className="text-xs border-t px-5 py-2 font-black bg-gray-400 text-black uppercase">
+                      Total Score
+                    </div>
+                  </div>
+                </div>
+
+                {renderEastwestMeta(
+                  extractEastwestDetails(selectedScoreCard.scoreDetails)
+                )}
+
+                {renderEastwestTotals(
+                  extractEastwestDetails(selectedScoreCard.scoreDetails)
+                )}
+
+                {renderEastwestSection(
+                  "With Contact",
+                  extractEastwestDetails(selectedScoreCard.scoreDetails)
+                    ?.withContact
+                )}
+
+                {renderEastwestSection(
+                  "Without Contact",
+                  extractEastwestDetails(selectedScoreCard.scoreDetails)
+                    ?.withoutContact
                 )}
               </div>
             </motion.div>

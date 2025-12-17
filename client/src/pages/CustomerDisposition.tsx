@@ -756,10 +756,10 @@ const CustomerDisposition = () => {
     },
   });
 
-  const { data, refetch: caiiRefetching } = useQuery<{ checkIfAgentIsInline: string }>(CHECK_IF_INLINE, {
+  const { data, refetch: caiiRefetching } = useQuery<{
+    checkIfAgentIsInline: string;
+  }>(CHECK_IF_INLINE, {
     notifyOnNetworkStatusChange: true,
-    // skip: !location.pathname.includes('cip') && userLogged?.type !== 'AGENT',
-    // pollInterval: 1000,
   });
 
   const checkIfAgentIsInline = data?.checkIfAgentIsInline;
@@ -886,43 +886,33 @@ const CustomerDisposition = () => {
       },
     });
 
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [viciDialStatus, setViciDialStatus] = useState<string | null>(null)
 
-  
-
-    // autoSearch 
-  useEffect(() => {
-    const splitInline = checkIfAgentIsInline?.split("|") ?? null;
-
-    if (splitInline && !selectedCustomer && Boolean(splitInline[2])) {
-      const timer = setTimeout(async () => {
-        const res = await refetch({ search: splitInline[10] });
-        if (!res.error) {
-          if (res.data.search.length > 1) {
-            setIsSearch(res.data.search);
-          } else if (res.data.search.length === 1) {
-            const selectingTask = await selectTask({
-              variables: { id: res.data.search[0]._id },
-            });
-            if (!selectingTask?.errors) {
-              dispatch(setSelectedCustomer(res.data.search[0]));
-            }
+  const autoSearch = useCallback(async () => {
+    const { data } = await caiiRefetching();
+    if (data?.checkIfAgentIsInline) {
+      setViciDialStatus(data?.checkIfAgentIsInline)
+      setErrorMessage(null);
+      const splitInline = data.checkIfAgentIsInline?.split("|") ?? null;
+      const res = await refetch({ search: splitInline[10] });
+      if (!res.error) {
+        if (res.data.search.length > 1) {
+          setIsSearch(res.data.search);
+        } else if (res.data.search.length === 1) {
+          const selectingTask = await selectTask({
+            variables: { id: res.data.search[0]._id },
+          });
+          if (!selectingTask?.errors) {
+            dispatch(setSelectedCustomer(res.data.search[0]));
           }
         }
-      });
-      return () => clearTimeout(timer);
+      }
+    } else {
+      setErrorMessage(!data.checkIfAgentIsInline ? "You dont have any call on vicidial" : data.checkIfAgentIsInline);
     }
+  }, [caiiRefetching, refetch, dispatch, selectTask, setErrorMessage]);
 
-    if (splitInline && selectedCustomer && Boolean(splitInline[2])) {
-      const timer = setTimeout(async () => {
-        if (splitInline[0] === "PAUSED" && splitInline[9] === "DISPO") {
-          await getCallRecording({
-            variables: { user_id: userLogged?._id, mobile: splitInline[10] },
-          });
-        }
-      });
-      return () => clearTimeout(timer);
-    }
-  }, [checkIfAgentIsInline, selectedCustomer]);
 
   const [makeCall] = useMutation<{
     makeCall: string;
@@ -1337,17 +1327,29 @@ const CustomerDisposition = () => {
                     {!selectedCustomer && (
                       <div className="relative w-full flex justify-center">
                         {!isAutoDialData?.isAutoDial && (
-                          <input
-                            accessKey="z"
-                            type="text"
-                            name="search"
-                            autoComplete="off"
-                            value={search}
-                            onChange={(e) => handleSearchChange(e.target.value)}
-                            id="search"
-                            placeholder="Search"
-                            className=" w-full p-2 text-sm  text-gray-900 border border-gray-600 rounded-sm bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
-                          />
+                          <div className="w-full flex gap-2">
+                            <input
+                              accessKey="z"
+                              type="text"
+                              name="search"
+                              autoComplete="off"
+                              value={search}
+                              onChange={(e) =>
+                                handleSearchChange(e.target.value)
+                              }
+                              id="search"
+                              placeholder="Search"
+                              className=" w-full p-2 text-sm  text-gray-900 border border-gray-600 rounded-sm bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
+                            />
+                            <button className="border rounded px-5 cursor-pointer bg-blue-300 text-blue-600 font-bold text-sm" onClick={autoSearch}>
+                              Search
+                            </button>
+                          </div>
+                        )}
+                        {errorMessage && (
+                          <div className="w-full h-auto top-10 absolute p-2 italic border text-slate-700 font-medium text-sm bg-gray-200 shadow shadow-black/50 rounded">
+                            {errorMessage}
+                          </div>
                         )}
                         {isSearch && isSearch?.length > 0 && (
                           <div
@@ -1481,7 +1483,7 @@ const CustomerDisposition = () => {
                   {selectedCustomer && (
                     <DispositionForm
                       updateOf={() => setIsUpdate(false)}
-                      inlineData={checkIfAgentIsInline || ""}
+                      inlineData={viciDialStatus || ""}
                       canCall={isAutoDialData?.isAutoDial as boolean}
                       onPresetAmountChange={setPresetSelection}
                       setLoading={(e: boolean) => setDispoLoading(e)}

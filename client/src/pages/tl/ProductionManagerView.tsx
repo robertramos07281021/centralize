@@ -79,7 +79,7 @@ const ProductionManagerView = () => {
               Call files{" "}
               {bucketObject[callfileBucket as keyof typeof bucketObject]}
             </h1>
-            <div className="flex gap-2 h-full items-center justify-center">
+            <div className="flex gap-2 p-2 h-full items-center justify-center">
               <motion.label
                 className="flex flex-col "
                 initial={{ y: 20, opacity: 0 }}
@@ -124,7 +124,7 @@ const ProductionManagerView = () => {
                       : "border-l border-green-900 bg-green-500"
                   } left-0 top-0 z-10  h-full absolute "`}
                 ></motion.div>
-                <div className="flex z-20">
+                <div className="flex z-20 ">
                   <div
                     className={`" ${
                       status === "all" && "text-white"
@@ -193,12 +193,12 @@ const ProductionManagerView = () => {
                   />
                   <span>Finished</span>
                 </label>
-              </motion.fieldset> */}
+              </motion.fieldset> */}  
             </div>
           </div>
           <div className="w-full border overflow-hidden border-black rounded-md bg-gray-100 flex flex-col">
             <div className="h-full items-center py-2 flex justify-center text-base font-black uppercase text-black bg-gray-400 border-b text-center">
-              {canUpload && "Uploader"}
+              {"Uploader"}
             </div>
             <div className="px-3 py-2 h-full flex items-end">
               <Uploader

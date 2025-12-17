@@ -15,6 +15,7 @@ type Bucket = {
   canCall: boolean;
   can_update_ca: boolean;
   principal: boolean;
+  viciIp_auto: string | null;
 };
 
 const DEPARTMENT_QUERY = gql`
@@ -38,6 +39,7 @@ const DEPARTMENT_BUCKET = gql`
       canCall
       can_update_ca
       principal
+      viciIp_auto
     }
   }
 `;
@@ -116,6 +118,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
     can_update_ca: false,
     principal: false,
     canCall: false,
+    viciIp_auto: null,
   });
 
   const handleResetToUpdate = useCallback(() => {
@@ -128,6 +131,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
       can_update_ca: false,
       principal: false,
       canCall: false,
+      viciIp_auto: null,
     });
   }, [setBucketToUpdate]);
 
@@ -147,7 +151,6 @@ const BucketSection: React.FC<BranchSectionProps> = ({
     variables: { dept: deptSelected },
     skip: !deptSelected,
   });
-
   useEffect(() => {
     const timer = async () => {
       await refetch();
@@ -430,6 +433,16 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                             </div>
                           </div>
                           <div className="flex gap-2 ">
+                            <div>Vici_AUTO:</div>
+                            <div title={b.viciIp_auto || ""}>
+                              {b.viciIp_auto || (
+                                <div className="text-gray-400  italic font-normal capitalize">
+                                  No vici IP Auto.
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <div className="flex gap-2 ">
                             <div>Issabel: </div>
                             <div title={b.issabelIp || ""}>
                               {b.issabelIp || (
@@ -623,6 +636,32 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                         }}
                         className={`${
                           requiredIps && !bucketToUpdate.viciIp
+                            ? "bg-red-50 border-red-300"
+                            : "bg-gray-50 border-gray-300"
+                        }  border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full`}
+                      />
+                    </label>
+                    <label className="w-full">
+                      <p>Vici IP AUTO:</p>
+                      <input
+                        type="text"
+                        name="viciIp"
+                        id="viciIp"
+                        value={bucketToUpdate.viciIp_auto || ""}
+                        autoComplete="off"
+                        placeholder="Enter Vici Ip Auto"
+                        onChange={(e) => {
+                          const value =
+                            e.target.value.trim() === ""
+                              ? null
+                              : e.target.value;
+                          setBucketToUpdate((prev) => ({
+                            ...prev,
+                            viciIp_auto: value,
+                          }));
+                        }}
+                        className={`${
+                          requiredIps && !bucketToUpdate.viciIp_auto
                             ? "bg-red-50 border-red-300"
                             : "bg-gray-50 border-gray-300"
                         }  border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full`}
