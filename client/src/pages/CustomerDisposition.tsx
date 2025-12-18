@@ -909,7 +909,7 @@ const CustomerDisposition = () => {
       setViciDialStatus(data?.checkIfAgentIsInline);
       setErrorMessage(null);
       const splitInline = data.checkIfAgentIsInline?.split("|") ?? null;
-      dispatch(setViciOnAir(splitInline[10]))
+      dispatch(setViciOnAir(`${splitInline[10]}|${splitInline[splitInline.length - 1]}`))
       const res = await refetch({ search: splitInline[10] });
       if (!res.error) {
         if (res.data.search.length > 1) {

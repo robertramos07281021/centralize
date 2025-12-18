@@ -813,7 +813,7 @@ const callResolver = {
         const newDate = `${year}${month.toString().padStart(2, "0")}${day
           .toString()
           .padStart(2, "0")}`;
-
+        
         const findUser = await User.findById(user_id).populate(
           "buckets",
           "viciIp viciIp_auto"
@@ -825,6 +825,8 @@ const callResolver = {
             "Please Contact Admin to add Vici dial ID",
             401
           );
+        
+        const splitMobile = mobile.split('|')
 
         const bucket =
           findUser?.buckets?.length > 0
@@ -866,14 +868,14 @@ const callResolver = {
         );
 
         const res = await getRecordings(
-          [...new Set(chechIfisOnline)].find((x) => x !== null),
+          splitMobile[1],
           findUser?.vici_id
         );
 
         if (!res) return null;
 
         const userInfoRes = await getUserInfo(
-          [...new Set(chechIfisOnline)].find((x) => x !== null),
+          splitMobile[1],
           findUser?.vici_id
         );
         const campaign_ID = userInfoRes.split("computer_ip")[1].split(",")[3];
@@ -887,7 +889,7 @@ const callResolver = {
           .split("|")[0]
           .replace(/:/g, "");
 
-        return `${campaign_ID}_${newDate}-${time}_${findUser?.vici_id}_${mobile}-all.mp3_${duration}`;
+        return `${campaign_ID}_${newDate}-${time}_${findUser?.vici_id}_${splitMobile[0]}-all.mp3_${duration}`;
       } catch (error) {
         throw new CustomError(error.message, 500);
       }
