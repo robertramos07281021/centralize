@@ -1267,7 +1267,7 @@ const CustomerDisposition = () => {
         {!selectedCustomer && (
           <div className="absolute bottom-5 left-5 ">
             <button
-              className="border rounded-full w-8 h-8 text-xl flex items-center justify-center cursor-pointer"
+              className="border rounded-full w-12 h-12 text-2xl flex items-center justify-center cursor-pointer bg-red-500 font-bold "
               onClick={() => setShowHelper(true)}
             >
               !

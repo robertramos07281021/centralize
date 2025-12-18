@@ -17,7 +17,7 @@ const Helper: React.FC<Props> = ({ close }) => {
           X
         </button>
 
-        <h1 className="text-5xl font-medium mb-5">Helper</h1>
+        <h1 className="text-5xl font-medium mb-5">Knowledge Base</h1>
         <div className=" h-full w-full ps-5 pt-5 overflow-auto">
           <p className="font-bold">How to used Search Button</p>
           <div className="flex flex-col">
