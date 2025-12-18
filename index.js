@@ -63,6 +63,8 @@ import scoreCardResolver from "./graphql/resolvers/scoreCardResolver.js";
 import scoreCardTypeDefs from "./graphql/schemas/scoreCardSchema.js";
 import EventEmitter from "events";
 import Client from "ssh2-sftp-client";
+import patchUpdateResolver from "./graphql/resolvers/updateResolver.js";
+import patchUpdateTypeDefs from "./graphql/schemas/updateSchema.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const sftp = new Client();
@@ -252,6 +254,7 @@ const resolvers = mergeResolvers([
   callResolver,
   selectivesResolver,
   scoreCardResolver,
+  patchUpdateResolver
 ]);
 
 const typeDefs = mergeTypeDefs([
@@ -273,6 +276,7 @@ const typeDefs = mergeTypeDefs([
   callTypeDefs,
   selectivesTypeDefs,
   scoreCardTypeDefs,
+  patchUpdateTypeDefs
 ]);
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });

@@ -200,14 +200,42 @@ const userResolvers = {
       try {
         if (!user) throw new CustomError("Not authenticated", 401);
 
-        const agent = await User.find({
-          $and: [
-            { buckets: { $in: user.buckets } },
-            { type: { $eq: "AGENT" } },
-          ],
-        });
 
-        return agent;
+
+        const agentWithHandleCustomer = await User.aggregate([
+          {
+            $match: {
+              $and: [
+                { buckets: { $in: user.buckets } },
+                { type: { $eq: "AGENT" } },
+              ],
+            },
+          },
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "handsOn",
+              foreignField: "_id",
+              as: "ca",
+            },
+          },
+          {
+            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true },
+          },
+          {
+            $lookup: {
+              from: "customers",
+              localField: "ca.customer",
+              foreignField: "_id",
+              as: "customer",
+            },
+          },
+          {
+            $unwind: { path: "$customer", preserveNullAndEmptyArrays: true },
+          },
+ 
+        ]);
+        return agentWithHandleCustomer;
       } catch (error) {
         throw new CustomError(error.message, 500);
       }

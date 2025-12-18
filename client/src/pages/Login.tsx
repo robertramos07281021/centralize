@@ -9,7 +9,7 @@ import {
 import { RootState, useAppDispatch } from "../redux/store";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { gql, useMutation } from "@apollo/client";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import { motion } from "framer-motion";
 import {
   setBreakValue,
@@ -63,6 +63,19 @@ const LOGOUT = gql`
   }
 `;
 
+const GET_PUSHED_PATCH = gql`
+  query getPushedPatch {
+    getPushedPatch {
+      _id
+      type
+      title
+      descriptions
+      pushPatch
+      updatedAt
+    }
+  }
+`;
+
 const DESELECT_TASK = gql`
   mutation DeselectTask($id: ID!) {
     deselectTask(id: $id) {
@@ -92,6 +105,15 @@ type User = {
   targets: Targets;
   isOnline: boolean;
   vici_id: string;
+};
+
+type PatchUpdate = {
+  _id: string;
+  type: string;
+  title: string;
+  descriptions: string;
+  pushPatch?: boolean;
+  updatedAt?: string;
 };
 
 type Login = {
@@ -215,6 +237,35 @@ const Login = () => {
     },
   });
 
+  const { data: pushedPatchData, refetch } = useQuery<{
+    getPushedPatch: PatchUpdate[];
+  }>(GET_PUSHED_PATCH, {
+    onError: () => {
+      dispatch(setServerError(true));
+    },
+    notifyOnNetworkStatusChange: true,
+  });
+
+  useEffect(() => {
+    const refetching = async () => {
+      await refetch();
+    };
+    refetching();
+  }, []);
+
+  const livePatchNotes = pushedPatchData?.getPushedPatch ?? [];
+
+  const lastUpdateDisplay = useMemo(() => {
+    if (!livePatchNotes.length) return "—";
+    const newest = livePatchNotes.reduce<Date | null>((acc, patch) => {
+      const ts = patch.updatedAt ? new Date(patch.updatedAt) : null;
+      if (!ts || Number.isNaN(ts.getTime())) return acc;
+      if (!acc || ts > acc) return ts;
+      return acc;
+    }, null);
+    return newest ? newest.toLocaleString() : "—";
+  }, [livePatchNotes]);
+
   const [login, { loading }] = useMutation<{ login: Login }>(LOGIN, {
     onCompleted: async (res) => {
       await persistor.purge();
@@ -330,6 +381,18 @@ const Login = () => {
           <span key={flake.id} className="snowflake" style={flake.style} />
         ))}
       </div>
+      <motion.a
+        className="absolute max-h-[98vh] z-20 bottom-2 right-2 "
+        initial={{ y: 100, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ type: "spring", stiffness: 100 }}
+        href="/updates"
+        target="_blank"
+      >
+        <div className="h-full transition-all border-2 cursor-pointer hover:bg-blue-700 font-black uppercase text-white px-3 py-1 bg-blue-600 border-blue-900 rounded-md overflow-hidden shadow-md ">
+          <div className="flex text-shadow-md text-sm">VIEW new updates</div>
+        </div>
+      </motion.a>
 
       <motion.form
         ref={loginForm}

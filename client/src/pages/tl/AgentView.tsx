@@ -34,6 +34,9 @@ const TL_AGENT = gql`
         weekly
         monthly
       }
+      customer {
+        fullName
+      }
     }
   }
 `;
@@ -52,6 +55,10 @@ type Target = {
   monthly: number;
 };
 
+type Customer = {
+  fullName: string
+}
+
 type TLAgent = {
   _id: string;
   name: string;
@@ -66,6 +73,7 @@ type TLAgent = {
   departments: Department[];
   targets?: Target;
   vici_id: string;
+  customer: Customer
 };
 
 const AGENT_PRODUCTION = gql`
@@ -256,8 +264,8 @@ const AgentView = () => {
             bucket.name.toLowerCase().includes(search.toLowerCase())
           ) ||
           e.departments.some((dept) =>
-            dept.name.toLowerCase().includes(search.toLowerCase())
-          )
+            dept?.name.toLowerCase().includes(search.toLowerCase())
+          ) || e.customer?.fullName?.toLowerCase().includes(search.toLowerCase())
       );
     }
     if (option === 50) {
@@ -492,7 +500,6 @@ const AgentView = () => {
           <div className="grid px-2 border rounded-t-md gap-2 border-gray-600 grid-cols-11 font-black uppercase  text-slate-800 bg-gray-300 ">
             <div className=" py-1 flex items-center">Name</div>
             <div className="py-1 truncate flex items-center">VICI ID</div>
-            <div className="py-1 truncate flex items-center">Callfile ID</div>
             <div className="py-1 truncate flex items-center">Bucket</div>
             <div className="py-1 truncate flex items-center">Campaign</div>
             <div className="py-1 truncate flex items-center text-center justify-center">
@@ -502,6 +509,7 @@ const AgentView = () => {
               Lock
             </div>
             <div className="py-1 truncate flex items-center">Status</div>
+            <div className="py-1 truncate flex items-center">Customer</div>
             <div className="py-1 col-span-2 flex flex-col">
               <div className="text-center">Targets</div>
               <div className="grid grid-cols-3 text-center text-[0.8em]">
@@ -541,13 +549,7 @@ const AgentView = () => {
                               </div>
                             )}
                           </div>
-                          <div className="truncate">
-                            {e.callfile_id || (
-                              <div className="text-gray-400 italic text-xs">
-                                No callfile ID
-                              </div>
-                            )}
-                          </div>
+
                           <div
                             className=" truncate pr-6"
                             title={e.buckets.map((e) => e.name).join(", ")}
@@ -627,9 +629,17 @@ const AgentView = () => {
                               </div>
                             )}
                           </div>
+                          <div className="truncate">
+                            {e?.customer?.fullName || (
+                              <div className="text-gray-400 italic text-xs">
+                                No Customer Handled
+                              </div>
+                            )}
+                          </div>
                           <div className="col-span-2 ">
                             <div className="w-full grid grid-cols-3">
                               <div
+                                className="text-center"
                                 title={
                                   e.targets?.daily.toLocaleString("en-PH", {
                                     style: "currency",
@@ -651,6 +661,7 @@ const AgentView = () => {
                                   })}
                               </div>
                               <div
+                                className="text-center"
                                 title={
                                   e.targets?.weekly.toLocaleString("en-PH", {
                                     style: "currency",
@@ -672,6 +683,7 @@ const AgentView = () => {
                                   })}
                               </div>
                               <div
+                                className="text-center"
                                 title={
                                   e.targets?.monthly.toLocaleString("en-PH", {
                                     style: "currency",

@@ -107,6 +107,7 @@ const TaskManagerView = () => {
   }, [setShowSelection, showSelection]);
 
   const [dpd, setDpd] = useState<number | null>(null);
+  const [searchName,setSearchName] = useState<string | null>(null)
 
   return (
     <div className="h-full w-full relative flex flex-col overflow-hidden">
@@ -197,17 +198,6 @@ const TaskManagerView = () => {
                 }  absolute right-2 top-2 text-2xl transition-all "`}
                 onClick={onClick}
               />
-              {/* {showSelection ? (
-                <RiArrowUpSFill
-                  className="absolute right-2 top-2 text-2xl"
-                  onClick={onClick}
-                />
-              ) : (
-                <RiArrowDownSFill
-                  className="absolute right-2 top-2 text-2xl"
-                  onClick={onClick}
-                />
-              )} */}
               <div
                 className="lg:w-60  2xl:w-80 h-full px-2 font-bold uppercase truncate text-black flex text-sm items-center"
                 onClick={onClick}
@@ -297,6 +287,28 @@ const TaskManagerView = () => {
                 />
               </label>
             </motion.div>
+            <motion.div
+              className=" w-full"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 1.4, duration: 0.5, type: "spring" }}
+            >
+              <label>
+                <input
+                  type="text"
+                  className="w-96 text-sm pl-4 h-10 shadow-sm border border-black focus:outline-none rounded-md font-bold text-slate-500 px-1"
+                  name="searchName"
+                  id="searchName"
+                  placeholder="Enter Customer Name ..."
+                  autoComplete="off"
+                  value={searchName ?? ""}
+                  onChange={(e) => {
+                    const val = e.target.value.trim() === "" ? null : e.target.value;
+                    setSearchName(val);
+                  }}
+                />
+              </label>
+            </motion.div>
           </div>
         </div>
         {tasker === "group" ? (
@@ -312,6 +324,7 @@ const TaskManagerView = () => {
       <TaskDispoSection
         selectedBucket={bucketObject[bucketSelect] || null}
         dpd={dpd}
+        searchName={searchName}
       />
     </div>
   );

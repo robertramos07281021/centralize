@@ -39,10 +39,12 @@ type ScoreEntry = {
 type ScoreSection = Record<string, ScoreEntry>;
 
 type CallComment = {
-  call: number;
-  agent: string;
-  tl: string;
-  actionPlan: string;
+  call?: number;
+  agent?: string;
+  evaluator?: string;
+  tl?: string;
+  action?: string;
+  actionPlan?: string;
 };
 
 type ScoreDetails = {
@@ -136,6 +138,8 @@ const ScoreCardOverview = () => {
     useState<boolean>(false);
   const [isOpenUBScoreCard, setIsOpenUBScoreCard] = useState<boolean>(false);
   const [isOpenEastwestScoreCard, setIsOpenEastwestScoreCard] =
+    useState<boolean>(false);
+  const [isOpenUBMortgageScoreCard, setIsOpenUBMortgageScoreCard] =
     useState<boolean>(false);
   const [selectedScoreCard, setSelectedScoreCard] =
     useState<ScoreCardSummary | null>(null);
@@ -635,17 +639,452 @@ const ScoreCardOverview = () => {
     );
   };
 
+  const MORTGAGE_CALL_COUNT = 10;
+
+  const normalizeArray = <T,>(value: any, length: number, fallback: T): T[] => {
+    const source = Array.isArray(value) ? value : [];
+    const next = source
+      .slice(0, length)
+      .map((entry) =>
+        entry === null || entry === undefined ? fallback : entry
+      );
+    while (next.length < length) {
+      next.push(fallback);
+    }
+    return next;
+  };
+
+  const computeMortgageCallScores = (totals: number[]) =>
+    totals.map((total) => {
+      const numeric = typeof total === "number" ? total : Number(total) || 0;
+      const raw = Math.max(0, 100 - numeric * 5);
+      return raw >= 75 ? raw : 0;
+    });
+
+  const renderUBMortgageSection = (details?: any) => {
+    if (!details) return null;
+
+    const callDetails = {
+      accountName: normalizeArray(
+        details.callDetails?.accountName,
+        MORTGAGE_CALL_COUNT,
+        ""
+      ),
+      loanNo: normalizeArray(
+        details.callDetails?.loanNo,
+        MORTGAGE_CALL_COUNT,
+        ""
+      ),
+      accountStatus: normalizeArray(
+        details.callDetails?.accountStatus,
+        MORTGAGE_CALL_COUNT,
+        ""
+      ),
+      dateOfCall: normalizeArray(
+        details.callDetails?.dateOfCall,
+        MORTGAGE_CALL_COUNT,
+        ""
+      ),
+      callDuration: normalizeArray(
+        details.callDetails?.callDuration,
+        MORTGAGE_CALL_COUNT,
+        ""
+      ),
+      agentName: normalizeArray(
+        details.callDetails?.agentName,
+        MORTGAGE_CALL_COUNT,
+        ""
+      ),
+    };
+
+    const callTotals = normalizeArray(
+      details.callTotals,
+      MORTGAGE_CALL_COUNT,
+      0
+    );
+    const withContactStates = normalizeArray(
+      details.withContactStates,
+      MORTGAGE_CALL_COUNT,
+      true
+    );
+    const callCommentsRaw = normalizeArray<CallComment>(
+      details.callComments,
+      MORTGAGE_CALL_COUNT,
+      {
+        agent: "",
+        evaluator: "",
+        action: "",
+        tl: "",
+        actionPlan: "",
+      }
+    );
+
+    const normalizedCallComments = callCommentsRaw.map((comment) => ({
+      agent: comment?.agent ?? "",
+      evaluator: comment?.evaluator ?? comment?.tl ?? "",
+      action: comment?.action ?? comment?.actionPlan ?? "",
+    }));
+    const questionResponses = details.questionResponses ?? {};
+
+    const getQuestionValues = (questionId: string) =>
+      normalizeArray(questionResponses[questionId], MORTGAGE_CALL_COUNT, 0);
+
+    const renderQuestionMatrix = (
+      title: string,
+      rows: Array<{ label: string; questionId: string }>
+    ) => (
+      <div className="flex flex-col mt-2">
+        <div className="font-black bg-gray-300 rounded-t-md py-1 w-full border-x border-t text-center uppercase text-xl text-black">
+          {title}
+        </div>
+        <div className="border border-black rounded-b-md overflow-auto bg-white">
+          <div className="grid grid-cols-12 text-[11px] md:text-xs font-black uppercase bg-gray-200 text-black border-b">
+            <div className="px-2 py-2 border-r border-black col-span-2">
+              Criteria
+            </div>
+            {Array.from({ length: MORTGAGE_CALL_COUNT }).map((_, idx) => (
+              <div
+                key={`${title}-call-${idx}`}
+                className="px-2 py-2 text-center last:border-r-0 border-r border-black"
+              >
+                Call {idx + 1}
+              </div>
+            ))}
+          </div>
+          {rows.map((row, rowIdx) => {
+            const values = getQuestionValues(row.questionId);
+            return (
+              <div
+                key={`${title}-row-${rowIdx}`}
+                className={`grid grid-cols-12 border-b last:border-b-0 h-full text-[11px] md:text-xs items-center ${
+                  rowIdx % 2 === 0 ? "bg-gray-50" : "bg-gray-100"
+                }`}
+              >
+                <div className="px-2  py-2 border-r border-black col-span-2 text-black font-semibold">
+                  {row.label}
+                </div>
+                {values.map((val, idx) => (
+                  <div
+                    key={`${row.questionId}-val-${idx}`}
+                    className={`" ${
+                      val ? "bg-red-400" : ""
+                    } px-2 items-center flex justify-center py-2 h-full text-center border-r last:border-r-0 border-black font-black "`}
+                  >
+                    {val === 0 ? "" : val}
+                  </div>
+                ))}
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    );
+
+    const callScores = computeMortgageCallScores(callTotals);
+
+    const hasComments = normalizedCallComments.some(
+      (comment) => comment.agent || comment.evaluator || comment.action
+    );
+
+    return (
+      <div className="mt-2 flex flex-col">
+        <div className="font-black bg-gray-300 rounded-t-md py-1 w-full border-x border-t text-center uppercase text-xl text-black">
+          Call Details
+        </div>
+        <div className="overflow-auto rounded-b-md border border-black bg-gray-50">
+          <div className="grid grid-cols-10 border-b gap-2 px-3 py-2 text-xs font-black uppercase bg-gray-200 text-black">
+            <div>Call #</div>
+            <div className="truncate" title="Account name">
+              Account Name
+            </div>
+            <div>Loan #</div>
+            <div>Status</div>
+            <div>Date</div>
+            <div>Duration</div>
+            <div>Agent</div>
+            <div className="text-center truncate" title="With contact">
+              With Contact
+            </div>
+            <div className="text-center">Defects</div>
+            <div className="text-center">Score</div>
+          </div>
+          <div className="divide-y">
+            {callTotals.map((total, idx) => (
+              <div
+                key={`mortgage-call-${idx}`}
+                className="grid grid-cols-10 gap-2 px-3 py-2 text-xs md:text-sm odd:bg-white even:bg-gray-100 items-center"
+              >
+                <div className="font-black text-gray-900">Call {idx + 1}</div>
+                <div className="truncate first-letter:uppercase" title={callDetails.accountName[idx]}>
+                  {callDetails.accountName[idx] || (
+                    <div className="text-xs text-gray-400 italic truncate">
+                      No account
+                    </div>
+                  )}
+                </div>
+                <div className="truncate" title={callDetails.loanNo[idx]}>
+                  {callDetails.loanNo[idx] || (
+                    <div className="text-xs text-gray-400 italic truncate">
+                      No loan number
+                    </div>
+                  )}
+                </div>
+                <div
+                  className="truncate"
+                  title={callDetails.accountStatus[idx]}
+                >
+                  {callDetails.accountStatus[idx] || (
+                    <div className="text-xs text-gray-400 italic truncate">
+                      No status
+                    </div>
+                  )}
+                </div>
+                <div className="truncate" title={callDetails.dateOfCall[idx]}>
+                  {formatDate(callDetails.dateOfCall[idx]) === "-" ? (
+                    <div className="text-xs text-gray-400 italic truncate">
+                      No date
+                    </div>
+                  ) : (
+                    callDetails.dateOfCall[idx]
+                  )}
+                </div>
+                <div className="truncate" title={callDetails.callDuration[idx]}>
+                  {callDetails.callDuration[idx] || (
+                    <div className="text-xs text-gray-400 italic truncate">
+                      No duration
+                    </div>
+                  )}
+                </div>
+                <div className="truncate" title={callDetails.agentName[idx]}>
+                  {callDetails.agentName[idx] || "-"}
+                </div>
+                <div
+                  className={`" ${
+                    withContactStates[idx]
+                      ? " bg-green-600 border-green-900"
+                      : " bg-red-600 border-red-900"
+                  } text-white rounded-sm shadow-md py-1 border-2 text-center font-black "`}
+                >
+                  {withContactStates[idx] ? "YES" : "NO"}
+                </div>
+                <div className="text-center font-black">{total ?? 0}</div>
+                <div className="text-center font-black">
+                  {callScores[idx]?.toFixed(1) ?? "-"}%
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {renderQuestionMatrix("A. Opening", [
+          {
+            label:
+              "Used appropriate greeting / identified self and agency (full name)",
+            questionId: "opening-1",
+          },
+          {
+            label: "Mentioned OSP (authorized Service Provider of UB)",
+            questionId: "opening-2",
+          },
+          { label: "Mentioned line is recorded", questionId: "opening-3" },
+          {
+            label:
+              "Mentioned client/authorized rep full name or asked correct identifiers",
+            questionId: "opening-4",
+          },
+          {
+            label: "Agent confirmed speaking to client (explicit YES)",
+            questionId: "opening-5",
+          },
+        ])}
+
+        {renderQuestionMatrix(
+          "B. Collection Call Proper - With Contact (Rapport / Empathy / Courtesy)",
+          [
+            {
+              label: "Explained status of the account",
+              questionId: "with-contact-1",
+            },
+            {
+              label: "Asked if CH received demand/notification letter",
+              questionId: "with-contact-2",
+            },
+            {
+              label: "Showed empathy and compassion as appropriate",
+              questionId: "with-contact-3",
+            },
+          ]
+        )}
+
+        {renderQuestionMatrix(
+          "B. Collection Call Proper - With Contact (Listening Skills)",
+          [
+            {
+              label: "Sought RFD/RFBP",
+              questionId: "with-contact-4",
+            },
+          ]
+        )}
+
+        {renderQuestionMatrix(
+          "B. Collection Call Proper - With Contact (Negotiation Skills)",
+          [
+            {
+              label: "Explained consequences of non-payment (legal/BAP/etc.)",
+              questionId: "with-contact-5",
+            },
+            {
+              label: "Asked for client's capacity to pay",
+              questionId: "with-contact-6",
+            },
+            {
+              label: "Followed hierarchy of negotiation",
+              questionId: "with-contact-7",
+            },
+          ]
+        )}
+
+        {renderQuestionMatrix(
+          "B. Collection Call Proper - With Contact (Offering Solutions)",
+          [
+            {
+              label: "Offered discount/amnesty/promo",
+              questionId: "with-contact-8",
+            },
+            {
+              label: "Advised CH to source out funds",
+              questionId: "with-contact-9",
+            },
+          ]
+        )}
+
+        {renderQuestionMatrix("B. Collection Call Proper - Without Contact", [
+          {
+            label: "Probed on BTC/ETA/other contact numbers",
+            questionId: "without-contact-1",
+          },
+          {
+            label: "Used time schedule and follow-up",
+            questionId: "without-contact-2",
+          },
+          {
+            label: "Asked for name of party, relation to client",
+            questionId: "without-contact-3",
+          },
+          {
+            label: "Left URGENT message with correct contact number",
+            questionId: "without-contact-4",
+          },
+        ])}
+
+        {renderQuestionMatrix(
+          "B. Collection Call Proper - With or Without Contact (Quality of Call)",
+          [
+            {
+              label: "Used professional tone of voice",
+              questionId: "with-or-without-1",
+            },
+            {
+              label:
+                "No unacceptable words/phrases; maintained polite language",
+              questionId: "with-or-without-2",
+            },
+            {
+              label: "Updated correct information/payment details on log",
+              questionId: "with-or-without-3",
+            },
+            {
+              label: "Adherence to policy (BSP, Code of Conduct, etc.)",
+              questionId: "with-or-without-4",
+            },
+            {
+              label: "Integrity issues (no unauthorized collection)",
+              questionId: "with-or-without-5",
+            },
+            {
+              label:
+                "Exercised sound judgment for appropriate course of action",
+              questionId: "with-or-without-6",
+            },
+          ]
+        )}
+
+        {renderQuestionMatrix("C. Closing the Call", [
+          { label: "Summarized payment arrangement", questionId: "closing-1" },
+          { label: "Offered online payment channels", questionId: "closing-2" },
+          {
+            label: "Requested return call for payment confirmation",
+            questionId: "closing-3",
+          },
+        ])}
+
+        {hasComments && (
+          <div className="mt-2 shadow-md">
+            <div className="font-black bg-gray-300 rounded-t-md py-1 w-full border text-center uppercase text-xl text-black">
+              Call Comments
+            </div>
+            <div className="border-x border-b rounded-b-md border-black text-sm text-gray-700 bg-gray-50 divide-y">
+              {normalizedCallComments.map((comment, idx) => (
+                <div
+                  key={`mortgage-comment-${idx}`}
+                  className="px-3 py-2 flex flex-col gap-2 odd:bg-gray-100 even:bg-gray-200"
+                >
+                  <div className="font-semibold text-black">Call {idx + 1}</div>
+                  <div className="flex flex-col gap-1">
+                    <div>
+                      <span className="font-semibold">Comments of Agent:</span>{" "}
+                      {comment?.agent?.trim() || (
+                        <span className="italic text-xs text-gray-400">
+                          No comment
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-semibold">
+                        Comments of Evaluator:
+                      </span>{" "}
+                      {comment.evaluator?.trim() || (
+                        <span className="italic text-xs text-gray-400">
+                          No comment
+                        </span>
+                      )}
+                    </div>
+                    <div>
+                      <span className="font-semibold">Action Plan:</span>{" "}
+                      {comment.action?.trim() || (
+                        <span className="italic text-xs text-gray-400">
+                          No comment
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const closeModal = () => {
     setIsOpenDefaultScoreCard(false);
     setIsOpenEastwestScoreCard(false);
     setIsOpenUBScoreCard(false);
+    setIsOpenUBMortgageScoreCard(false);
     setSelectedScoreCard(null);
   };
 
   console.log(selectedScoreCard?.typeOfScoreCard, "<<");
 
   const openScoreCardModal = (scoreCardType: string) => {
-    if (scoreCardType === "UB Score Card") {
+    const normalized = (scoreCardType || "").toLowerCase();
+    if (normalized.includes("ub mortgage")) {
+      setIsOpenDefaultScoreCard(false);
+      setIsOpenEastwestScoreCard(false);
+      setIsOpenUBScoreCard(false);
+      setIsOpenUBMortgageScoreCard(true);
+    } else if (scoreCardType === "UB Score Card") {
       setIsOpenDefaultScoreCard(false);
       setIsOpenEastwestScoreCard(false);
       setIsOpenUBScoreCard(true);
@@ -656,6 +1095,7 @@ const ScoreCardOverview = () => {
     } else {
       setIsOpenUBScoreCard(false);
       setIsOpenEastwestScoreCard(false);
+      setIsOpenUBMortgageScoreCard(false);
       setIsOpenDefaultScoreCard(true);
     }
   };
@@ -1172,49 +1612,67 @@ const ScoreCardOverview = () => {
           <div className="bg-white h-full grid grid-cols-4 border gap-2 border-black rounded-md shadow-sm p-2">
             <div className="text-xs border p-2 rounded-sm bg-gray-200 text-black flex justify-center flex-col">
               <div className="text-center">Total Default Score Card</div>
-              <div className="text-4xl text-center font-black">{totalsByType.default}</div>
+              <div className="text-4xl text-center font-black">
+                {totalsByType.default}
+              </div>
             </div>
             <div className="text-xs border p-2 rounded-sm bg-gray-200 text-black flex justify-center flex-col">
               <div className="text-center">Total Eastwest Score Card</div>
-              <div className="text-4xl text-center font-black">{totalsByType.eastwest}</div>
+              <div className="text-4xl text-center font-black">
+                {totalsByType.eastwest}
+              </div>
             </div>
             <div className="text-xs border p-2 rounded-sm bg-gray-200 text-black flex justify-center flex-col">
               <div className="text-center">Total UB Cards Score Card</div>
-              <div className="text-4xl text-center font-black">{totalsByType.ub}</div>
+              <div className="text-4xl text-center font-black">
+                {totalsByType.ub}
+              </div>
             </div>
 
             <div className="text-xs border p-2 rounded-sm bg-gray-200 text-black flex justify-center flex-col">
               <div className="text-center">Total UB Mortgage Score Card</div>
-              <div className="text-4xl text-center font-black">{totalsByType.ubMortgage}</div>
+              <div className="text-4xl text-center font-black">
+                {totalsByType.ubMortgage}
+              </div>
             </div>
           </div>
           <div className="bg-white flex justify-between items-center border h-full border-black rounded-md shadow-sm p-4">
-            <div className="uppercase font-black text-xl text-black">average score</div>
+            <div className="uppercase font-black text-xl text-black">
+              average score
+            </div>
             <div className="text-4xl font-black text-black">
               {overviewStats.avgScore.toFixed(1)}
             </div>
           </div>
           <div className="bg-white flex justify-between items-center border h-full border-black rounded-md shadow-sm p-4">
-            <div className="uppercase font-black text-xl text-black">highest score</div>
+            <div className="uppercase font-black text-xl text-black">
+              highest score
+            </div>
             <div className="text-4xl font-black text-black">
               {overviewStats.highestScore.toFixed(1)}
             </div>
           </div>
           <div className="bg-white flex justify-between items-center border h-full border-black rounded-md shadow-sm p-4">
-            <div className="uppercase font-black text-xl text-black">lowest score</div>
+            <div className="uppercase font-black text-xl text-black">
+              lowest score
+            </div>
             <div className="text-4xl font-black text-black">
               {overviewStats.lowestScore.toFixed(1)}
             </div>
           </div>
 
           <div className="bg-white flex justify-between items-center border h-full border-black rounded-md shadow-sm p-4">
-            <div className="uppercase font-black text-xl text-black">pass rate</div>
+            <div className="uppercase font-black text-xl text-black">
+              pass rate
+            </div>
             <div className="text-4xl font-black text-black">
               {overviewStats.passRate.toFixed(0)}%
             </div>
           </div>
           <div className="bg-white flex justify-between items-center border h-full border-black rounded-md shadow-sm p-4">
-            <div className="uppercase font-black text-xl text-black">records shown</div>
+            <div className="uppercase font-black text-xl text-black">
+              records shown
+            </div>
             <div className="text-4xl font-black text-black">
               {scorecards.length}
             </div>
@@ -1715,74 +2173,213 @@ const ScoreCardOverview = () => {
                   selectedScoreCard.scoreDetails?.closingTheCall
                 )}
 
-                {Array.isArray(selectedScoreCard.scoreDetails?.callComments) &&
-                  selectedScoreCard.scoreDetails.callComments.filter(Boolean)
-                    .length > 0 && (
+                {(() => {
+                  const rawComments = Array.isArray(
+                    selectedScoreCard.scoreDetails?.callComments
+                  )
+                    ? selectedScoreCard.scoreDetails.callComments.filter(
+                        Boolean
+                      )
+                    : [];
+
+                  const normalized = rawComments.map((comment: any) => ({
+                    agent: comment?.agent ?? "",
+                    evaluator: comment?.evaluator ?? comment?.tl ?? "",
+                    action: comment?.action ?? comment?.actionPlan ?? "",
+                    call: comment?.call,
+                  }));
+
+                  const hasAny = normalized.some(
+                    (comment) => comment.agent || comment.evaluator || comment.action
+                  );
+
+                  if (!hasAny) return null;
+
+                  return (
                     <div className="mt-2 shadow-md">
                       <div className="font-black bg-gray-300 rounded-t-md py-1 w-full border text-center uppercase text-xl text-black">
                         Call Comments
                       </div>
                       <div className="border-x border-b overflow-hidden rounded-b-md border-black text-sm text-gray-700 bg-gray-50 divide-y">
-                        {selectedScoreCard.scoreDetails.callComments
-                          .filter(Boolean)
-                          .map((comment: any, idx: number) => {
-                            const callNum =
-                              comment && typeof comment.call === "number"
-                                ? comment.call
-                                : idx + 1;
-                            return (
-                              <div
-                                key={idx}
-                                className="px-3 even:bg-gray-100 odd:bg-gray-200 py-2 flex flex-col gap-2"
-                              >
-                                <div className="col-span-1 font-semibold text-black">
-                                  Call {callNum}:
+                        {normalized.map((comment, idx: number) => {
+                          const callNum =
+                            comment && typeof comment.call === "number"
+                              ? comment.call
+                              : idx + 1;
+                          return (
+                            <div
+                              key={idx}
+                              className="px-3 even:bg-gray-100 odd:bg-gray-200 py-2 flex flex-col gap-2"
+                            >
+                              <div className="col-span-1 font-semibold text-black">
+                                Call {callNum}:
+                              </div>
+                              <div className="flex flex-col justify-between">
+                                <div className="col-span-1 flex items-center">
+                                  <span className="font-semibold">Comments of Agent:</span>{" "}
+                                  {comment.agent ? (
+                                    String(comment.agent)
+                                  ) : (
+                                    <div className="italic  ml-1 text-xs text-gray-400">
+                                      No comment
+                                    </div>
+                                  )}
                                 </div>
-                                <div className="flex flex-col justify-between">
-                                  <div className="col-span-1 flex items-center">
-                                    <span className="font-semibold">
-                                      Comments of Agent:
-                                    </span>{" "}
-                                    {comment?.agent ? (
-                                      String(comment.agent)
-                                    ) : (
-                                      <div className="italic  ml-1 text-xs text-gray-400">
-                                        No comment
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="col-span-1 flex items-center">
-                                    <span className="font-semibold">
-                                      {" "}
-                                      Comments of Agency TL:
-                                    </span>{" "}
-                                    {comment?.tl ? (
-                                      String(comment.tl)
-                                    ) : (
-                                      <div className="italic ml-1 text-xs text-gray-400">
-                                        No comment
-                                      </div>
-                                    )}
-                                  </div>
-                                  <div className="col-span-1 flex items-center">
-                                    <span className="font-semibold">
-                                      Action Plan:
-                                    </span>{" "}
-                                    {comment?.actionPlan ? (
-                                      String(comment.actionPlan)
-                                    ) : (
-                                      <div className="italic ml-1 text-xs text-gray-400">
-                                        No comment
-                                      </div>
-                                    )}
-                                  </div>
+                                <div className="col-span-1 flex items-center">
+                                  <span className="font-semibold">Comments of Evaluator:</span>{" "}
+                                  {comment.evaluator ? (
+                                    String(comment.evaluator)
+                                  ) : (
+                                    <div className="italic ml-1 text-xs text-gray-400">
+                                      No comment
+                                    </div>
+                                  )}
+                                </div>
+                                <div className="col-span-1 flex items-center">
+                                  <span className="font-semibold">Action Plan:</span>{" "}
+                                  {comment.action ? (
+                                    String(comment.action)
+                                  ) : (
+                                    <div className="italic ml-1 text-xs text-gray-400">
+                                      No comment
+                                    </div>
+                                  )}
                                 </div>
                               </div>
-                            );
-                          })}
+                            </div>
+                          );
+                        })}
                       </div>
                     </div>
-                  )}
+                  );
+                })()}
+
+                {selectedScoreCard.scoreDetails?.comments && (
+                  <div className="mt-2 shadow-md">
+                    <div className="font-black bg-gray-300 rounded-t-md py-1 w-full border text-center uppercase text-xl text-black">
+                      Comments
+                    </div>
+                    <div className="border-x border-b rounded-b-md border-black text-sm text-gray-700 space-y-2 bg-gray-50">
+                      <div className="border-b px-3 py-2">
+                        <span className="font-semibold ">Highlights:</span>{" "}
+                        {selectedScoreCard.scoreDetails.comments?.highlights?.trim() ||
+                          "-"}
+                      </div>
+                      <div className="px-3 py-2 ">
+                        <span className="font-semibold">Comments:</span>{" "}
+                        {selectedScoreCard.scoreDetails.comments?.comments?.trim() ||
+                          "-"}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <AnimatePresence>
+        {isOpenUBMortgageScoreCard && selectedScoreCard && (
+          <motion.div
+            className="absolute top-0 left-0 w-full items-center justify-center flex h-full"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <div
+              className="w-full h-full absolute items-center justify-center flex bg-black/40 backdrop-blur-sm"
+              onClick={closeModal}
+            ></div>
+            <motion.div
+              className="bg-white z-20 border flex flex-col relative rounded-md p-6 max-w-5xl max-h-[80vh] "
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+            >
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void handleExportExcel();
+                }}
+                disabled={isExportingExcel}
+                className={`absolute bottom-2 cursor-pointer -right-14 flex items-center gap-2 px-3 py-2 border-2 rounded-sm font-black uppercase text-white transition ${
+                  isExportingExcel
+                    ? "bg-green-400 cursor-not-allowed border-green-700"
+                    : "bg-green-600 hover:bg-green-700 border-green-800"
+                }`}
+                title="Export to Excel"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="size-4"
+                >
+                  <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
+                  <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                </svg>
+              </button>
+
+              <div className=" flex absolute top-2 -right-10 justify-end">
+                <button
+                  type="button"
+                  onClick={closeModal}
+                  className="p-1 transition-all shadow-md border-2 border-red-800 bg-red-600 hover:bg-red-700 cursor-pointer text-white rounded-full uppercase text-xs font-black"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="2"
+                    stroke="currentColor"
+                    className="size-5"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18 18 6M6 6l12 12"
+                    />
+                  </svg>
+                </button>
+              </div>
+
+              <div className="flex flex-col overflow-auto pr-2 h-full">
+                <div className="flex mt-2 justify-between items-start gap-4 flex-wrap">
+                  <div>
+                    <div className="text-xl first-letter:uppercase font-black text-gray-900">
+                      {selectedScoreCard.agent?.name || "Unknown Agent"}
+                    </div>
+                    <div className="text-sm text-gray-600">
+                      {selectedScoreCard.typeOfScoreCard}
+                    </div>
+                    <div className="text-xs text-gray-500">
+                      Created: {formatDate(selectedScoreCard.createdAt)}
+                    </div>
+                  </div>
+                  <div className="text-right border overflow-hidden shadow-md flex flex-col justify-center rounded-sm bg-gray-200">
+                    <div className="text-3xl py-2 font-black text-center text-gray-900">
+                      {selectedScoreCard.totalScore != null
+                        ? selectedScoreCard.totalScore.toFixed(1)
+                        : "-"}
+                    </div>
+                    <div className="text-xs border-t px-5 py-2 font-black bg-gray-400 text-black uppercase">
+                      Total Score
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4 text-sm text-gray-800">
+                  <div>
+                    <span className="font-black uppercase text-black">
+                      Scorecard Type:
+                    </span>{" "}
+                    {selectedScoreCard.typeOfScoreCard}
+                  </div>
+                </div>
+
+                {renderUBMortgageSection(selectedScoreCard.scoreDetails)}
 
                 {selectedScoreCard.scoreDetails?.comments && (
                   <div className="mt-2 shadow-md">

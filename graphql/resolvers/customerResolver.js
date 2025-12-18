@@ -67,7 +67,7 @@ const customerResolver = {
         if (!search) {
           return [];
         }
-      
+
         const searchValue = search;
         const startOfTheDay = new Date();
         startOfTheDay.setHours(0, 0, 0, 0);
@@ -89,20 +89,24 @@ const customerResolver = {
           "PAID",
         ];
 
-        const callfiles = (await Callfile.find({
-          active: true,
-          bucket: {$in: user.buckets.map(x=> new mongoose.Types.ObjectId(x)) }
-        })).map(x=> x._id)
-      
+        const callfiles = (
+          await Callfile.find({
+            active: true,
+            bucket: {
+              $in: user.buckets.map((x) => new mongoose.Types.ObjectId(x)),
+            },
+          })
+        ).map((x) => x._id);
+
         const accounts = await Customer.aggregate([
           {
             $match: {
               $text: { $search: `"${searchValue}"` },
-              callfile: {$in: callfiles},
+              callfile: { $in: callfiles },
             },
           },
           {
-            $limit: 50
+            $limit: 50,
           },
           {
             $lookup: {
@@ -140,43 +144,6 @@ const customerResolver = {
               as: "ca",
             },
           },
-          // {
-          //   $lookup: {
-          //     from: "customeraccounts",
-          //     let: { cus_account: "$customer_account" },
-          //     pipeline: [
-          //       { $match: { $expr: { $eq: ["$_id", "$$cus_account"] } } },
-          //     ],
-          //     as: "ca",
-          //   },
-          // },
-          // { $unwind: { path: "$ca", preserveNullAndEmptyArrays: true } },
-          // {
-          //   $lookup: {
-          //     from: "callfiles",
-          //     let: { callfileId: "$ca.callfile" },
-          //     pipeline: [
-          //       { $match: { $expr: { $eq: ["$_id", "$$callfileId"] } } },
-          //       { $match: { active: true } },
-          //       {
-          //         $match: {
-          //           bucket: {
-          //             $in: user.buckets.map(
-          //               (x) => new mongoose.Types.ObjectId(x)
-          //             ),
-          //           },
-          //         },
-          //       },
-          //     ],
-          //     as: "account_callfile",
-          //   },
-          // },
-          // {
-          //   $unwind: {
-          //     path: "$account_callfile",
-          //     preserveNullAndEmptyArrays: false,
-          //   },
-          // },
           {
             $unwind: {
               path: "$ca",
@@ -319,7 +286,7 @@ const customerResolver = {
             },
           },
         ]);
-   
+
         return accounts;
       } catch (error) {
         console.log(error);
@@ -614,6 +581,7 @@ const customerResolver = {
           limit,
           selectedBucket,
           dpd,
+          searchName,
         } = query;
 
         let selected = "";
@@ -631,7 +599,7 @@ const customerResolver = {
         });
 
         if (!activeCallfile) return null;
-
+  
         const search = [
           { "existingDispo.code": { $ne: "DNC" } },
           { balance: { $ne: 0 } },
@@ -655,12 +623,37 @@ const customerResolver = {
           search.push({ assigned: null });
         }
 
+        const customerLookupPipeline = [
+          {
+            $match: {
+              $expr: { $eq: ["$_id", "$$customerId"] },
+            },
+          },
+        ];
+
+        if (searchName) {
+          customerLookupPipeline.push({
+            $match: {
+              fullName: { $regex: searchName, $options: "i" },
+            },
+          });
+        }
+
         const accounts = await CustomerAccount.aggregate([
           {
             $match: {
               callfile: activeCallfile?._id,
             },
           },
+          {
+            $lookup: {
+              from: "customers",
+              let: { customerId: "$customer" },
+              pipeline: customerLookupPipeline,
+              as: "customer_info",
+            },
+          },
+          { $unwind: "$customer_info" },
           {
             $lookup: {
               from: "customers",
@@ -1239,7 +1232,7 @@ const customerResolver = {
           addresses: e.address,
           emails: e.email,
           contact_no: e.contact,
-          callfile: newCallfile._id
+          callfile: newCallfile._id,
         }));
 
         const insertedCustomers = await Customer.insertMany(customerDocs, {

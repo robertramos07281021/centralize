@@ -66,6 +66,8 @@ import Guidlines from "./components/Guidlines.tsx";
 import ScoreCardOverview from "./components/ScoreCardOverview.tsx";
 import QAScoreCardAssign from "./pages/qa/QAScoreCardAssign.tsx";
 import Test from "./pages/tl/Test.tsx";
+import UpdateBoard from "./pages/admin/UpdateBoard.tsx";
+import UpdatesPage from "./pages/UpdatesPage.tsx";
 
 Chart.register(
   ...registerables,
@@ -88,6 +90,7 @@ function App() {
         <Route path="/agent-recordings" element={<AgentRecordingView />} />
         <Route path="/break-view" element={<BreakView />} />
         <Route path="/score-card-temporary" element={<DefaultScoreCard />} />
+        <Route path="/updates" element={<UpdatesPage />} />
         
         <Route element={<AdminRoute />}>
           <Route path="/selectives" element={<Selectives />} />
@@ -96,6 +99,7 @@ function App() {
           <Route path="/accounts" element={<AccountsView />} />
           <Route path="/user-account" element={<UserView />} />
           <Route path="/all-call-logs" element={<CallAllAgentLogs />} />
+          <Route path="/update-news" element={<UpdateBoard />} />
           <Route
             path="/agent-attendance-logs"
             element={<AgentAttendanceLogs />}

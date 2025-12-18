@@ -584,7 +584,6 @@ const EastwestScoreCard = () => {
   const [isOpenAgent, setIsOpenAgent] = useState(false);
   const [cardholder, setCardholder] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
-  const [scoreInput, setScoreInput] = useState("");
   const [rateInput, setRateInput] = useState("");
   const todayLabel = new Date().toLocaleDateString("en-US", {
     weekday: "long",
@@ -599,14 +598,14 @@ const EastwestScoreCard = () => {
       fetchPolicy: "cache-and-network",
     }
   );
-  const { data: agentData, loading: agentLoading } = useQuery<{ getBucketUser: Agent[] }>(
-    GET_BUCKET_AGENTS,
-    {
-      skip: !userLogged,
-      fetchPolicy: "cache-and-network",
-    }
-  );
-  const [createScoreCardData, { loading: isSaving }] = useMutation(CREATE_SCORE_CARD);
+  const { data: agentData, loading: agentLoading } = useQuery<{
+    getBucketUser: Agent[];
+  }>(GET_BUCKET_AGENTS, {
+    skip: !userLogged,
+    fetchPolicy: "cache-and-network",
+  });
+  const [createScoreCardData, { loading: isSaving }] =
+    useMutation(CREATE_SCORE_CARD);
   const [selectedEvaluator, setSelectedEvaluator] = useState<TL | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [acknowledgedBy, setAcknowledgedBy] = useState("");
@@ -852,7 +851,6 @@ const EastwestScoreCard = () => {
           : null,
         cardholder,
         accountNumber,
-        enteredScore: scoreInput,
         enteredRate: rateInput,
       },
       withContact: mapSections(
@@ -929,7 +927,9 @@ const EastwestScoreCard = () => {
 
   const handleExport = async () => {
     if (!selectedAgent || !selectedEvaluator || !acknowledgedBy.trim()) {
-      alert("Please fill Agent's Name, Evaluator's Name, and Acknowledged/Validated By before saving.");
+      alert(
+        "Please fill Agent's Name, Evaluator's Name, and Acknowledged/Validated By before saving."
+      );
       return;
     }
     if (!accountNumber.trim()) {
@@ -1049,9 +1049,13 @@ const EastwestScoreCard = () => {
                           exit={{ opacity: 0, y: -10 }}
                         >
                           {agentLoading ? (
-                            <div className="p-3 text-center text-gray-500">Loading...</div>
+                            <div className="p-3 text-center text-gray-500">
+                              Loading...
+                            </div>
                           ) : !agentData?.getBucketUser?.length ? (
-                            <div className="p-3 text-center text-gray-500">No agent available</div>
+                            <div className="p-3 text-center text-gray-500">
+                              No agent available
+                            </div>
                           ) : (
                             agentData.getBucketUser.map((agent) => (
                               <button
@@ -1078,7 +1082,7 @@ const EastwestScoreCard = () => {
 
                   <div
                     onClick={() => setIsOpenTL(!isOpenTL)}
-                    className="flex  relative justify-between cursor-pointer items-center"
+                    className="flex  relative justify-between cursor-pointer bg-gray-100 items-center"
                   >
                     <div className="flex mx-2 items-center ">
                       {selectedEvaluator?.name || "Select TL"}
@@ -1151,7 +1155,7 @@ const EastwestScoreCard = () => {
               <div className="border col-start-3 overflow-hidden rounded-md font-black uppercase text-sm shadow-md">
                 <div className="grid grid-cols-2 border-b">
                   <div className="bg-gray-400 rounded-tl px-5 border-r py-1">
-                    CARDHOLDER
+                    CARDHOLDER:
                   </div>
                   <input
                     className="ml-2 outline-none"
@@ -1162,7 +1166,7 @@ const EastwestScoreCard = () => {
                 </div>
                 <div className="grid grid-cols-2 border-b">
                   <div className="bg-gray-400  px-5 border-r py-1">
-                    ACCOUNT NUMBER
+                    ACCOUNT NUMBER:
                   </div>
                   <input
                     className="ml-2 outline-none"
@@ -1174,12 +1178,9 @@ const EastwestScoreCard = () => {
                 <div className="grid grid-cols-2 ">
                   <div className="bg-gray-400 px-5 border-r py-1">SCORE:</div>
                   <div className="grid grid-cols-2">
-                    <input
-                      className="ml-2 outline-none border-r"
-                      type="text"
-                      value={scoreInput}
-                      onChange={(event) => setScoreInput(event.target.value)}
-                    />
+                    <div className="items-center flex justify-center outline-none border-r">
+                      {finalScore}
+                    </div>
                     <input
                       className="ml-2 outline-none w-full"
                       placeholder="RATE"

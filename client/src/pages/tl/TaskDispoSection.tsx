@@ -156,14 +156,20 @@ type CADQueryValue = {
   selectedBucket: string | null;
   dpd: number | null;
   limit: number;
+  searchName: string | null;
 };
 
 type Props = {
   selectedBucket: string | null;
   dpd: number | null;
+  searchName: string | null;
 };
 
-const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
+const TaskDispoSection: React.FC<Props> = ({
+  selectedBucket,
+  dpd,
+  searchName,
+}) => {
   const {
     selectedGroup,
     selectedAgent,
@@ -176,9 +182,11 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
   const dispatch = useAppDispatch();
   const location = useLocation();
   const isTaskManager = location.pathname.includes("tl-task-manager");
+
   const { data: GroupData, refetch: groupRefetch } = useQuery<{
     findGroup: Group[];
   }>(DEPT_GROUP, { skip: !isTaskManager, notifyOnNetworkStatusChange: true });
+
   const groupDataNewObject: { [key: string]: string } = useMemo(() => {
     const group = GroupData?.findGroup || [];
     return Object.fromEntries(group.map((e) => [e.name, e._id]));
@@ -195,6 +203,7 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
     limit: limit,
     selectedBucket,
     dpd,
+    searchName,
   };
 
   const {
@@ -397,7 +406,6 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
   const valuePage =
     parseInt(taskManagerPage) > pages ? pages.toString() : taskManagerPage;
 
-
   if (loading) return <Loading />;
 
   return (
@@ -463,14 +471,19 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
                   id="all"
                   checked={handleCheckAll}
                   onChange={(e) => handleSelectAllToAdd(e)}
-                  className={`${taskFilter === "assigned" && "accent-red-600"}  `}
+                  className={`${
+                    taskFilter === "assigned" && "accent-red-600"
+                  }  `}
                 />
-                <span className="font-black uppercase text-black">Select All</span>
+                <span className="font-black uppercase text-black">
+                  Select All
+                </span>
               </label>
             </div>
           )}
           {CustomerAccountsData?.findCustomerAccount?.CustomerAccounts
-            ?.length === 0 && (!selectedGroup || selectedAgent) ? (
+            ?.length === 0 &&
+          (!selectedGroup || selectedAgent) ? (
             <div className="italic font-sans border-b border-x border-black shadow-md flex text-center justify-center w-full py-2 rounded-b-md bg-gray-100">
               No customer found.
             </div>
@@ -489,7 +502,7 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
                       className="font-medium col-span-2 truncate text-gray-900 whitespace-nowrap dark:text-white uppercase"
                       title={ca.customer_info.fullName}
                     >
-                      {ca.customer_info.fullName}dsa
+                      {ca.customer_info.fullName}
                     </div>
                     <div className="  col-span-2">
                       {ca.dispoType
@@ -506,7 +519,7 @@ const TaskDispoSection: React.FC<Props> = ({ selectedBucket, dpd }) => {
                         </div>
                       )}
                     </div>
-                    <div className="">
+                    <div className="capitalize">
                       {ca.assigned?.name || (
                         <div className="italic font-sans text-gray-400 text-xs">
                           No name assigned{" "}

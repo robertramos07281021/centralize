@@ -139,17 +139,20 @@ const AgentAttendanceLogs = () => {
       prodSummary.prod.forEach((entry) => {
         rows.push({
           "Agent Name": prods.user?.name ?? "Unknown Agent",
-          "Date": date,
-          "Type": entry.type,
-          "Start": formatHistoryStart(entry.start),
-          "End": formatHistoryStart(entry.end),
+          Date: date,
+          Type: entry.type,
+          Start: formatHistoryStart(entry.start),
+          End: formatHistoryStart(entry.end),
         });
       });
     });
     const worksheet = XLSX.utils.json_to_sheet(rows);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "Attendance Logs");
-    XLSX.writeFile(workbook, `Agent Attendance of ${prods.user?.name ?? "Unknown"}.xlsx`);
+    XLSX.writeFile(
+      workbook,
+      `Agent Attendance of ${prods.user?.name ?? "Unknown"}.xlsx`
+    );
   };
 
   return (
@@ -462,35 +465,49 @@ const AgentAttendanceLogs = () => {
                   <div className="text-end">Start</div>
                   <div className="text-end">End</div>
                 </div>
-                <div className="flex flex-col h-full overflow-auto">
+                <div className="flex flex-col h-full overflow-auto ">
                   {prods?.prod_history?.map((prod, index) => {
                     return (
                       <motion.div
                         key={index}
-                        className="border-x border-b flex flex-col h-full bg-gray-100 last:rounded-b-md last:shadow-md  text-sm text-gray-800"
+                        className="flex flex-col h-full bg-gray-100  last:shadow-md text-sm text-gray-800 "
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         exit={{ opacity: 0 }}
                         transition={{ delay: index * 0.05 }}
                       >
-                        <div className="text-center bg-gray-300 py-2 text-black font-bold border-b">
-                          {new Date(prod.createdAt).toLocaleDateString()}
+                        <div className="text-center border-x bg-gray-300 py-2 text-black font-bold border-t">
+                          {new Date(prod.createdAt).toLocaleDateString()} - Time
+                          In{" "}
+                          {new Date(prod.createdAt).toLocaleTimeString(
+                            "en-US",
+                            {
+                              hour: "2-digit",
+                              minute: "2-digit",
+                              hour12: true,
+                            }
+                          )}
                         </div>
-                        {prod.prod.map((x, index) => {
-                          return (
-                            <div key={index} className="grid grid-cols-3 even:bg-gray-200 border-b border-gray-300 odd:bg-gray-100 px-3 py-1  items-center justify-between">
-                              <span className="font-semibold text-black uppercase">
-                                {x.type}
-                              </span>
-                              <span className="text-xs text-black text-end">
-                                {formatHistoryStart(x.start)}
-                              </span>
-                              <span className="text-xs text-black text-end">
-                                {formatHistoryStart(x.end)}
-                              </span>
-                            </div>
-                          );
-                        })}
+                        <div className="border-x border-b border-t flex flex-col ">
+                          {prod.prod.map((x, index) => {
+                            return (
+                              <div
+                                key={index}
+                                className="grid grid-cols-3 even:bg-gray-200  odd:bg-gray-100 px-3 py-1  items-center justify-between"
+                              >
+                                <span className="font-semibold text-black uppercase">
+                                  {x.type}
+                                </span>
+                                <span className="text-xs text-black text-end">
+                                  {formatHistoryStart(x.start)}
+                                </span>
+                                <span className="text-xs text-black text-end">
+                                  {x.end ? formatHistoryStart(x.end) : ""}
+                                </span>
+                              </div>
+                            );
+                          })}
+                        </div>
                       </motion.div>
                     );
                   })}

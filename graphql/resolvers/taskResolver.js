@@ -300,12 +300,12 @@ const taskResolver = {
         const ca = await CustomerAccount.findById(id);
 
         if (!ca) throw new CustomError("Customer account not found", 404);
-
+        
         if (ca.on_hands) {
-          if (String(ca.on_hands) === String(userAccount._id)) {
-            throw new CustomError("You already selected this customer");
+          const customerAgent = await User.findById(ca.on_hands)
+          if(ca.on_hands.toString() === customerAgent.handsOn.toString()) {
+            throw new CustomError("Already handled by other agent");
           }
-          throw new CustomError("Already taken by another agent");
         }
 
         let assignedMembers = [];
@@ -446,7 +446,7 @@ const taskResolver = {
 
         // const customerIdsSet = new Set();
         // const accCursor = CustomerAccount.find({}, { customer: 1 }).cursor();
-        
+
         // for (
         //   let doc = await accCursor.next();
         //   doc != null;
@@ -485,25 +485,25 @@ const taskResolver = {
         //   await Customer.bulkWrite(deleteOps, { ordered: false });
         // }
 
-        const findCustomer = await CustomerAccount.aggregate([
-          {
-            $lookup: {
-              from: "customers",
-              localField: "customer",
-              foreignField: "_id",
-              as: "cust",
-            },
-          },
-          {
-            $unwind: { path: "$cust", preserveNullAndEmptyArrays: true },
-          },
-          {
-            $match: {
-              "cust._id": {$eq: null}
-            }
-          }
-        ])
-        console.log(findCustomer)
+        // const findCustomer = await CustomerAccount.aggregate([
+        //   {
+        //     $lookup: {
+        //       from: "customers",
+        //       localField: "customer",
+        //       foreignField: "_id",
+        //       as: "cust",
+        //     },
+        //   },
+        //   {
+        //     $unwind: { path: "$cust", preserveNullAndEmptyArrays: true },
+        //   },
+        //   {
+        //     $match: {
+        //       "cust._id": { $eq: null },
+        //     },
+        //   },
+        // ]);
+    
 
         return {
           success: true,

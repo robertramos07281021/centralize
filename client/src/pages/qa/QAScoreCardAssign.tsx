@@ -13,7 +13,7 @@ const QAScoreCardAssign = () => {
 
   const renderScoreCard = () => {
     switch (normalizedScoreCardType) {
-      case "ub mortgage score card":
+      case "UB MORTGAGE":
         return <UBMortgageScoreCard />;
       case "ub cards score card":
         return <UBScoreCard />;

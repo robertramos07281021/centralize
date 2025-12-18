@@ -125,6 +125,11 @@ export const accountsNavbar: { [key: string]: links[] } = {
       link: "/selectives",
       tabs: null,
     },
+    {
+      name: "Updates & News",
+      link: "/update-news",
+      tabs: null,
+    },
   ],
   AGENT: [
     {

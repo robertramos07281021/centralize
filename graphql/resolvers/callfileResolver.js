@@ -1355,7 +1355,7 @@ const callfileResolver = {
           writeStream.once("error", reject);
         });
 
-        return `http://${process.env.MY_IP}:4000/tmp/${findCallfile.name}_${timestamp}.csv`;
+        return `http://${process.env.MY_IP}:${process.env.PORT}/tmp/${findCallfile.name}_${timestamp}.csv`;
       } catch (error) {
         console.log(error);
         throw new CustomError(error.message, 500);

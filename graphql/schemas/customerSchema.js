@@ -266,6 +266,7 @@ const customerTypeDefs = gql`
     limit: Int
     selectedBucket: ID
     dpd: Int
+    searchName: String
   }
 
   type Query {
