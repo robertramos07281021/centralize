@@ -8,6 +8,7 @@ import {
   setSelectedCustomer,
   setServerError,
   setSuccess,
+  setViciOnAir,
 } from "../redux/slices/authSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import { PresetSelection } from "./AccountInfo";
@@ -323,7 +324,7 @@ const DispositionForm: React.FC<Props> = ({
   onPresetAmountChange,
   setLoading,
 }) => {
-  const { selectedCustomer, userLogged, callUniqueId, isRing, onCall } =
+  const { selectedCustomer, userLogged, callUniqueId, isRing, onCall, viciOnAir } =
     useSelector((state: RootState) => state.auth);
 
   const dispatch = useAppDispatch();
@@ -501,6 +502,7 @@ const DispositionForm: React.FC<Props> = ({
           isMessage: false,
         })
       );
+      dispatch(setViciOnAir(null))
       await deselectTask({ variables: { id: selectedCustomer?._id } });
       setLoading(false);
     },
@@ -600,7 +602,7 @@ const DispositionForm: React.FC<Props> = ({
   );
   const creatingDispo = useCallback(async () => {
     const callIdRes = await getCallRecording({
-      variables: { user_id: userLogged?._id, mobile: secondLine[10] },
+      variables: { user_id: userLogged?._id, mobile: viciOnAir },
     });
 
     setTimeout(async()=> {
@@ -616,7 +618,7 @@ const DispositionForm: React.FC<Props> = ({
       setConfirm(false);
     },300)
 
-  }, [data, selectedCustomer, createDisposition, callUniqueId, getCallRecording,userLogged, secondLine ]);
+  }, [data, selectedCustomer, createDisposition, callUniqueId, getCallRecording,userLogged, secondLine,viciOnAir ]);
 
   const noCallback = useCallback(() => {
     setConfirm(false);

@@ -83,6 +83,7 @@ type UserState = {
   mobileToCall: string | null;
   readyForBreak: BreakEnum | null
   scoreCardType: string | null
+  viciOnAir: string | null
 };
 
 const initialState: UserState = {
@@ -128,7 +129,8 @@ const initialState: UserState = {
   isRing: false,
   mobileToCall: null,
   readyForBreak: null,
-  scoreCardType: null
+  scoreCardType: null,
+  viciOnAir: null
 };
 
 export const authSlice = createSlice({
@@ -246,6 +248,9 @@ export const authSlice = createSlice({
     setScoreCardType: (state, action: PayloadAction<string | null>) => {
       state.scoreCardType = action.payload;
     },
+    setViciOnAir: (state, action: PayloadAction<string | null>) => {
+      state.viciOnAir = action.payload
+    }
   },
 });
 
@@ -285,6 +290,7 @@ export const {
   setMobileToCall,
   setIsReport,
   setReadyForBreak,
-  setScoreCardType
+  setScoreCardType,
+  setViciOnAir
 } = authSlice.actions;
 export default authSlice.reducer;

@@ -23,6 +23,7 @@ import {
   setBreakValue,
   setStart,
   setReadyForBreak,
+  setViciOnAir,
 } from "../redux/slices/authSlice";
 import AgentTimer from "./agent/AgentTimer";
 import MyTaskSection from "../components/MyTaskSection";
@@ -908,6 +909,7 @@ const CustomerDisposition = () => {
       setViciDialStatus(data?.checkIfAgentIsInline);
       setErrorMessage(null);
       const splitInline = data.checkIfAgentIsInline?.split("|") ?? null;
+      dispatch(setViciOnAir(splitInline[10]))
       const res = await refetch({ search: splitInline[10] });
       if (!res.error) {
         if (res.data.search.length > 1) {
@@ -928,7 +930,7 @@ const CustomerDisposition = () => {
           : data.checkIfAgentIsInline
       );
     }
-  }, [caiiRefetching, refetch, dispatch, selectTask, setErrorMessage]);
+  }, [caiiRefetching, refetch, dispatch, selectTask, setErrorMessage,setViciOnAir]);
 
   const [makeCall] = useMutation<{
     makeCall: string;
