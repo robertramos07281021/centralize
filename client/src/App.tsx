@@ -65,7 +65,6 @@ import UBMortgageScoreCard from "./components/UBMortgageScoreCard.tsx";
 import Guidlines from "./components/Guidlines.tsx";
 import ScoreCardOverview from "./components/ScoreCardOverview.tsx";
 import QAScoreCardAssign from "./pages/qa/QAScoreCardAssign.tsx";
-import Test from "./pages/tl/Test.tsx";
 import UpdateBoard from "./pages/admin/UpdateBoard.tsx";
 import UpdatesPage from "./pages/UpdatesPage.tsx";
 
@@ -134,7 +133,6 @@ function App() {
         <Route element={<TlRoute />}>
           <Route path="/tl-dashboard" element={<TlDashboard />} />
           <Route path="/mis-dashboard" element={<MISDashboard />} />
-          <Route path="/testsample" element={<Test />} />
           <Route
             path="/tl-production-manager"
             element={<ProductionManagerView />}

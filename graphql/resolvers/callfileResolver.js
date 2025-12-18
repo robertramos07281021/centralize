@@ -2241,7 +2241,6 @@ const callfileResolver = {
           message: "Successfully added selectives",
         };
       } catch (error) {
-        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

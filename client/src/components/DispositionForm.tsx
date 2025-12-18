@@ -595,7 +595,7 @@ const DispositionForm: React.FC<Props> = ({
 
   const secondLine = inlineData.split("|");
 
-  const [getCallRecording] = useMutation<{ getCallRecording: string }>(
+  const [getCallRecording, {loading: getRecordingLoading}] = useMutation<{ getCallRecording: string }>(
     GET_RECORDING
   );
   const creatingDispo = useCallback(async () => {
@@ -795,7 +795,7 @@ const DispositionForm: React.FC<Props> = ({
     );
   }
 
-  if (dispoLoading) return <Loading />;
+  if (dispoLoading || getRecordingLoading) return <Loading />;
 
   return (
     canProceed(selectedCustomer, userLogged, ptpDispoType, paidDispoType) && (

@@ -9,7 +9,7 @@ import {
 import { RootState, useAppDispatch } from "../redux/store";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { gql, useMutation, useQuery } from "@apollo/client";
+import { gql, useMutation } from "@apollo/client";
 import { motion } from "framer-motion";
 import {
   setBreakValue,
@@ -63,18 +63,7 @@ const LOGOUT = gql`
   }
 `;
 
-const GET_PUSHED_PATCH = gql`
-  query getPushedPatch {
-    getPushedPatch {
-      _id
-      type
-      title
-      descriptions
-      pushPatch
-      updatedAt
-    }
-  }
-`;
+
 
 const DESELECT_TASK = gql`
   mutation DeselectTask($id: ID!) {
@@ -107,14 +96,6 @@ type User = {
   vici_id: string;
 };
 
-type PatchUpdate = {
-  _id: string;
-  type: string;
-  title: string;
-  descriptions: string;
-  pushPatch?: boolean;
-  updatedAt?: string;
-};
 
 type Login = {
   user: User;
@@ -237,34 +218,8 @@ const Login = () => {
     },
   });
 
-  const { data: pushedPatchData, refetch } = useQuery<{
-    getPushedPatch: PatchUpdate[];
-  }>(GET_PUSHED_PATCH, {
-    onError: () => {
-      dispatch(setServerError(true));
-    },
-    notifyOnNetworkStatusChange: true,
-  });
 
-  useEffect(() => {
-    const refetching = async () => {
-      await refetch();
-    };
-    refetching();
-  }, []);
 
-  const livePatchNotes = pushedPatchData?.getPushedPatch ?? [];
-
-  const lastUpdateDisplay = useMemo(() => {
-    if (!livePatchNotes.length) return "—";
-    const newest = livePatchNotes.reduce<Date | null>((acc, patch) => {
-      const ts = patch.updatedAt ? new Date(patch.updatedAt) : null;
-      if (!ts || Number.isNaN(ts.getTime())) return acc;
-      if (!acc || ts > acc) return ts;
-      return acc;
-    }, null);
-    return newest ? newest.toLocaleString() : "—";
-  }, [livePatchNotes]);
 
   const [login, { loading }] = useMutation<{ login: Login }>(LOGIN, {
     onCompleted: async (res) => {
