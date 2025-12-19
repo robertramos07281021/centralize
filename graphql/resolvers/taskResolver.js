@@ -303,7 +303,7 @@ const taskResolver = {
 
         if (ca.on_hands) {
           const customerAgent = await User.findById(ca.on_hands);
-          if (ca.on_hands.toString() === customerAgent.handsOn.toString()) {
+          if (ca._id.toString() === customerAgent.handsOn.toString()) {
             throw new CustomError("Already handled by other agent");
           }
         }
