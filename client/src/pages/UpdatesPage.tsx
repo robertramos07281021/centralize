@@ -1,27 +1,34 @@
 import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { CSSProperties, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
 
 const UPDATES_PATCH = gql`
-  query getPatchUpdatesConsolidated {
-    getPatchUpdatesConsolidated {
-      info {
-        title
-        descriptions
-      }
+  query getAllPatchUpdates {
+    getAllPatchUpdates {
       type
+      title
+      descriptions
+      pushPatch
     }
   }
 `;
 
-type info = {
+type Info = {
   title: string;
   descriptions: string;
 };
 
+type PatchItem = {
+  type: string;
+  title: string;
+  descriptions: string;
+  pushPatch?: boolean;
+};
+
 type UpdatePatch = {
   type: string;
-  info: info[];
+  info: Info[];
 };
 
 const UpdatesPage = () => {
@@ -90,7 +97,7 @@ const UpdatesPage = () => {
   );
 
   const { data, refetch } = useQuery<{
-    getPatchUpdatesConsolidated: UpdatePatch[];
+    getAllPatchUpdates: PatchItem[];
   }>(UPDATES_PATCH, { notifyOnNetworkStatusChange: true });
   useEffect(() => {
     const refetching = async () => {
@@ -110,29 +117,73 @@ const UpdatesPage = () => {
         ))}
       </div>
 
-      <div className="h-full w-full bg-white/60 z-50 p-5 overflow-hidden flex flex-col">
-        <h1 className="text-5xl mb-2">Patch Update</h1>
+      <motion.div
+        className="h-full w-full bg-white/60 border backdrop-blur-sm z-50  overflow-hidden flex flex-col rounded-md"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+      >
+        <h1 className="text-5xl border-b border-black bg-blue-600 font-black uppercase text-white p-5 text-center">
+          Patch NOTE Updates
+        </h1>
 
-        <div className="h-full pt-3 flex flex-col gap-5 overflow-auto">
-          {data?.getPatchUpdatesConsolidated.map((update, index) => {
-            return (
-              <div key={index} className="px-2">
-                <h1 className="text-3xl">{update.type}</h1>
-                <ul className="px-5">
-                  {update.info.map((x, index) => {
-                    return (
-                      <li key={index}>
-                        <p>&#9679; Title: {x.title}</p>
-                        <p className="ps-5"> - {x.descriptions}</p>
-                      </li>
-                    );
-                  })}
-                </ul>
-              </div>
-            );
-          })}
-        </div>
-      </div>
+       {(() => {
+          const pushed = (data?.getAllPatchUpdates || []).filter(
+            (u) => u.pushPatch
+          );
+
+          const grouped = pushed.reduce<Record<string, Info[]>>((acc, cur) => {
+            if (!acc[cur.type]) acc[cur.type] = [];
+            acc[cur.type].push({ title: cur.title, descriptions: cur.descriptions });
+            return acc;
+          }, {});
+
+          const updates: UpdatePatch[] = Object.entries(grouped).map(
+            ([type, info]) => ({ type, info })
+          );
+
+          const isSingle = updates.length === 1;
+
+          return (
+            <div
+              className={`h-full p-2 grid gap-2 overflow-auto ${
+                isSingle
+                  ? "grid-cols-1 place-items-center"
+                  : "grid-flow-col auto-cols-fr"
+              }`}
+            >
+              {updates.length === 0 && (
+                <p className="text-center font-normal items-center flex justify-center h-full w-full text-gray-600 italic">
+                  No updates as of now
+                </p>
+              )}
+              {updates.map((update, index) => (
+                <div
+                  key={index}
+                  className={`bg-gray-200 transition-all border rounded-md shadow-md overflow-hidden ${
+                    isSingle ? "w-full max-w-xl h-full" : ""
+                  }`}
+                >
+                  <h1 className="text-3xl font-black uppercase text-white text-center border-b border-black px-2 py-2 bg-blue-600">
+                    {update.type}
+                  </h1>
+                  <ul className="p-5 flex flex-col gap-2">
+                    {update.info.map((x, index) => (
+                      <div className="border rounded-md overflow-hidden shadow-md" key={index}>
+                        <p className="bg-blue-600 text-white border-b border-black uppercase text-center font-black py-2">
+                          {x.title}
+                        </p>
+                        <p className="ps-5 bg-gray-100 py-2 first-letter:uppercase font-semibold">
+                          {x.descriptions}
+                        </p>
+                      </div>
+                    ))}
+                  </ul>
+                </div>
+              ))}
+            </div>
+          );
+        })()}
+      </motion.div>
     </div>
   );
 };

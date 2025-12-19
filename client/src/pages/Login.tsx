@@ -9,7 +9,7 @@ import {
 import { RootState, useAppDispatch } from "../redux/store";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
-import { gql, useMutation } from "@apollo/client";
+import { gql, useMutation, useQuery } from "@apollo/client";
 import { motion } from "framer-motion";
 import {
   setBreakValue,
@@ -63,13 +63,19 @@ const LOGOUT = gql`
   }
 `;
 
-
-
 const DESELECT_TASK = gql`
   mutation DeselectTask($id: ID!) {
     deselectTask(id: $id) {
       message
       success
+    }
+  }
+`;
+
+const GET_UPDATES_COUNT = gql`
+  query getAllPatchUpdates {
+    getAllPatchUpdates {
+      pushPatch
     }
   }
 `;
@@ -95,7 +101,6 @@ type User = {
   isOnline: boolean;
   vici_id: string;
 };
-
 
 type Login = {
   user: User;
@@ -134,6 +139,13 @@ const Login = () => {
   const [already, setAlready] = useState<boolean>(false);
   const [lock, setLock] = useState<boolean>(false);
   const [invalid, setInvalid] = useState<boolean>(false);
+
+  const { data: updatesData } = useQuery<{ getAllPatchUpdates: { pushPatch?: boolean }[] }>(
+    GET_UPDATES_COUNT,
+    { notifyOnNetworkStatusChange: true }
+  );
+  const updatesCount =
+    updatesData?.getAllPatchUpdates?.filter((u) => u.pushPatch)?.length ?? 0;
 
   const [deselectTask] = useMutation(DESELECT_TASK, {
     onCompleted: () => {
@@ -217,9 +229,6 @@ const Login = () => {
       dispatch(setServerError(true));
     },
   });
-
-
-
 
   const [login, { loading }] = useMutation<{ login: Login }>(LOGIN, {
     onCompleted: async (res) => {
@@ -337,15 +346,18 @@ const Login = () => {
         ))}
       </div>
       <motion.a
-        className="absolute max-h-[98vh] z-20 bottom-2 right-2 "
+        className="absolute max-h-[100%] z-20 bottom-2 right-2 "
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 100 }}
         href="/updates"
         target="_blank"
       >
-        <div className="h-full transition-all border-2 cursor-pointer hover:bg-blue-700 font-black uppercase text-white px-3 py-1 bg-blue-600 border-blue-900 rounded-md overflow-hidden shadow-md ">
+        <div className="h-full flex gap-4 items-center transition-all border-2 cursor-pointer hover:bg-blue-700 font-black uppercase text-white px-4 py-2 bg-blue-600 border-blue-900 rounded-md overflow-hidden shadow-md ">
           <div className="flex text-shadow-md text-sm">VIEW new updates</div>
+          <div className=" px-2 items-center flex justify-center h-6 rounded-full border-2 border-amber-800 bg-amber-600 text-xs">
+            {updatesCount}
+          </div>
         </div>
       </motion.a>
 

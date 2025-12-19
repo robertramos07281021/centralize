@@ -4,7 +4,7 @@ import { gql, useMutation } from "@apollo/client";
 import Confirmation from "../components/Confirmation";
 import Loading from "../pages/Loading";
 import { useAppDispatch } from "../redux/store";
-import { setServerError, setSuccess } from "../redux/slices/authSlice";
+import { setServerError, setSuccess} from "../redux/slices/authSlice";
 import { chunk } from "lodash";
 
 const CREATE_CUSTOMER = gql`

@@ -138,7 +138,6 @@ const recordingsResolver = {
               )}-${checkDate(dayCreated)}`
             : isShopee;
 
-
         const remotePath = `${ifATOME}/${name}`;
         const files = await client.list(remotePath);
         return files[0].size;
@@ -423,16 +422,47 @@ const recordingsResolver = {
 
         await sftp.connect(sftpConfig);
 
-        try {
-          await sftp.get(`${REMOTE_DIR}/MP3/${newFileName}.mp3`);
-        } catch (error) {
-          await sftp.get(`${REMOTE_DIR}/FTP/${newFileName}.mp3`);
+        function extractDateFolder(filename) {
+          // finds 8-digit date like 20251219
+          const match = filename.match(/_(\d{8})-/);
+
+          if (!match) return null;
+
+          const date = match[1]; // 20251219
+          return `${date.slice(0, 4)}-${date.slice(4, 6)}-${date.slice(6, 8)}`;
         }
 
-        const localPath = path.join(localDir, `${newFileName}.mp3`);
-        await fs.writeFileSync(localPath, `${newFileName}.mp3`);
+        const dateFolder = extractDateFolder(newFileName);
+        let fileContent;
+        let fileName;
+        try {
+          // 1️⃣ Try MP3
+          fileContent = await sftp.get(`${REMOTE_DIR}/MP3/${newFileName}.mp3`);
+          fileName = `${newFileName}.mp3`;
+        } catch (error1) {
+          try {
+            // 2️⃣ Try FTP
+            fileContent = await sftp.get(
+              `${REMOTE_DIR}/FTP/${newFileName}.mp3`
+            );
+            fileName = `${newFileName}.mp3`
+          } catch (error2) {
+            // 3️⃣ Try ORIG (WAV with date folder)
+            if (!dateFolder) {
+              throw new Error("Date not found in filename");
+            }
 
-        const toDownload = `http://${process.env.MY_IP}:${process.env.PORT}/recordings/${newFileName}.mp3`;
+            fileName = `${newFileName}.wav`
+            fileContent = await sftp.get(
+              `${REMOTE_DIR}/ORIG/${dateFolder}/${newFileName}.wav`
+            );
+          }
+        }
+
+        const localPath = path.join(localDir, fileName);
+        await fs.writeFileSync(localPath, fileContent);
+
+        const toDownload = `http://${process.env.MY_IP}:${process.env.PORT}/recordings/${fileName}`;
 
         return {
           success: true,

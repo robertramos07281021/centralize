@@ -327,6 +327,11 @@ const AgentView = () => {
     [eventType, setAuthentication, setIsAuthorize]
   );
 
+  const formatCurrency = useCallback((amount?: number | null) => {
+    const numericValue = typeof amount === "number" && !Number.isNaN(amount) ? amount : 0;
+    return numericValue.toLocaleString("en-PH", { style: "currency", currency: "PHP" });
+  }, []);
+
   return (
     <>
       {updateSetTargets && (
@@ -640,69 +645,21 @@ const AgentView = () => {
                             <div className="w-full grid grid-cols-3">
                               <div
                                 className="text-center"
-                                title={
-                                  e.targets?.daily.toLocaleString("en-PH", {
-                                    style: "currency",
-                                    currency: "PHP",
-                                  }) ||
-                                  (0).toLocaleString("en-PH", {
-                                    style: "currency",
-                                    currency: "PHP",
-                                  })
-                                }
+                                title={formatCurrency(e.targets?.daily)}
                               >
-                                {e.targets?.daily.toLocaleString("en-PH", {
-                                  style: "currency",
-                                  currency: "PHP",
-                                }) ||
-                                  (0).toLocaleString("en-PH", {
-                                    style: "currency",
-                                    currency: "PHP",
-                                  })}
+                                {formatCurrency(e.targets?.daily)}
                               </div>
                               <div
                                 className="text-center"
-                                title={
-                                  e.targets?.weekly.toLocaleString("en-PH", {
-                                    style: "currency",
-                                    currency: "PHP",
-                                  }) ||
-                                  (0).toLocaleString("en-PH", {
-                                    style: "currency",
-                                    currency: "PHP",
-                                  })
-                                }
+                                title={formatCurrency(e.targets?.weekly)}
                               >
-                                {e.targets?.weekly.toLocaleString("en-PH", {
-                                  style: "currency",
-                                  currency: "PHP",
-                                }) ||
-                                  (0).toLocaleString("en-PH", {
-                                    style: "currency",
-                                    currency: "PHP",
-                                  })}
+                                {formatCurrency(e.targets?.weekly)}
                               </div>
                               <div
                                 className="text-center"
-                                title={
-                                  e.targets?.monthly.toLocaleString("en-PH", {
-                                    style: "currency",
-                                    currency: "PHP",
-                                  }) ||
-                                  (0).toLocaleString("en-PH", {
-                                    style: "currency",
-                                    currency: "PHP",
-                                  })
-                                }
+                                title={formatCurrency(e.targets?.monthly)}
                               >
-                                {e.targets?.monthly.toLocaleString("en-PH", {
-                                  style: "currency",
-                                  currency: "PHP",
-                                }) ||
-                                  (0).toLocaleString("en-PH", {
-                                    style: "currency",
-                                    currency: "PHP",
-                                  })}
+                                {formatCurrency(e.targets?.monthly)}
                               </div>
                             </div>
                           </div>

@@ -591,21 +591,24 @@ const FieldDisplay = memo(
     value,
   }: {
     label: string;
-    value: string | number | null | undefined | [];
-  }) => (
-    <div className=" w-full  mt-1 lg:text-xs text-[0.8em] ">
-      <div className="font-bold text-black uppercase lg:text-sm text-[0.9rem]">
-        {label}:
+    value: React.ReactNode;
+  }) => {
+    const hasValue = value !== null && value !== undefined && value !== "";
+    const displayValue = hasValue ? value : <div className="italic text-gray-400">No information</div>;
+
+    return (
+      <div className=" w-full  mt-1 lg:text-xs text-[0.8em] ">
+        <div className="font-bold text-black uppercase lg:text-sm text-[0.9rem]">
+          {label}:
+        </div>
+        <div
+          className={`${hasValue ? "p-2.5" : "p-2.5"} w-full border border-black rounded-sm  bg-gray-50 text-black text-wrap`}
+        >
+          {displayValue}
+        </div>
       </div>
-      <div
-        className={`${
-          value ? "p-2.5" : "p-5"
-        } w-full border border-black rounded-sm  bg-gray-50 text-black text-wrap`}
-      >
-        {value}
-      </div>
-    </div>
-  )
+    );
+  }
 );
 
 const CustomerDisposition = () => {
@@ -909,7 +912,11 @@ const CustomerDisposition = () => {
       setViciDialStatus(data?.checkIfAgentIsInline);
       setErrorMessage(null);
       const splitInline = data.checkIfAgentIsInline?.split("|") ?? null;
-      dispatch(setViciOnAir(`${splitInline[10]}|${splitInline[splitInline.length - 1]}`))
+      dispatch(
+        setViciOnAir(
+          `${splitInline[10]}|${splitInline[splitInline.length - 1]}`
+        )
+      );
       const res = await refetch({ search: splitInline[10] });
       if (!res.error) {
         if (res.data.search.length > 1) {
@@ -930,7 +937,14 @@ const CustomerDisposition = () => {
           : data.checkIfAgentIsInline
       );
     }
-  }, [caiiRefetching, refetch, dispatch, selectTask, setErrorMessage,setViciOnAir]);
+  }, [
+    caiiRefetching,
+    refetch,
+    dispatch,
+    selectTask,
+    setErrorMessage,
+    setViciOnAir,
+  ]);
 
   const [makeCall] = useMutation<{
     makeCall: string;
@@ -1260,17 +1274,27 @@ const CustomerDisposition = () => {
 
   return (
     <>
-      {showHelper && (
-        <Helper close={()=>setShowHelper(false) }/>
-      )}
+      {showHelper && <Helper close={() => setShowHelper(false)} />}
       <div className="overflow-hidden flex flex-col relative h-full w-full">
         {!selectedCustomer && (
-          <div className="absolute bottom-5 left-5 ">
+          <div className="absolute bottom-3 left-3 ">
             <button
-              className="border rounded-full w-12 h-12 text-2xl flex items-center justify-center cursor-pointer bg-red-500 font-bold "
+              className=" rounded-full text-2xl p-2 bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-none flex items-center justify-center cursor-pointer text-b transition-all font-bold "
+             title="Help?"
               onClick={() => setShowHelper(true)}
             >
-              !
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="white"
+                className="size-10 rounded-full"
+              >
+                <path
+                  fillRule="evenodd"
+                  d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm11.378-3.917c-.89-.777-2.366-.777-3.255 0a.75.75 0 0 1-.988-1.129c1.454-1.272 3.776-1.272 5.23 0 1.513 1.324 1.513 3.518 0 4.842a3.75 3.75 0 0 1-.837.552c-.676.328-1.028.774-1.028 1.152v.75a.75.75 0 0 1-1.5 0v-.75c0-1.279 1.06-2.107 1.875-2.502.182-.088.351-.199.503-.331.83-.727.83-1.857 0-2.584ZM12 18a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+                  clipRule="evenodd"
+                />
+              </svg>
             </button>
           </div>
         )}
@@ -1374,10 +1398,10 @@ const CustomerDisposition = () => {
                                 }
                                 id="search"
                                 placeholder="Search"
-                                className=" w-full p-2 text-sm  text-gray-900 border border-gray-600 rounded-sm bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
+                                className=" w-full p-2 text-sm  text-gray-900 border border-black rounded-sm bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
                               />
                               <button
-                                className="border rounded px-5 cursor-pointer bg-blue-300 text-blue-600 font-bold text-sm"
+                                className="border-2 rounded px-5 cursor-pointer bg-blue-600 hover:bg-blue-700 transition-all text-white border-blue-900 uppercase font-bold text-sm"
                                 onClick={autoSearch}
                               >
                                 Search
@@ -1391,7 +1415,7 @@ const CustomerDisposition = () => {
                           )}
                           {isSearch && isSearch?.length > 0 && (
                             <div
-                              className={`absolute max-h-96 border border-gray-600 w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-sm top-10`}
+                              className={`absolute max-h-96 border border-black w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-sm top-10`}
                             >
                               <SearchResult
                                 data={isSearch || []}
@@ -1410,24 +1434,21 @@ const CustomerDisposition = () => {
                       )}
                       <FieldDisplay
                         label="Full Name"
-                        value={selectedCustomer?.customer_info?.fullName}
+                        value={selectedCustomer?.customer_info?.fullName|| <div className="italic text-gray-400">No information</div>}
                       />
                       <FieldDisplay
                         label="Date Of Birth (yyyy-mm-dd)"
-                        value={selectedCustomer?.customer_info?.dob}
+                        value={selectedCustomer?.customer_info?.dob || <div className="italic text-gray-400">No information</div>}
                       />
                       <FieldDisplay
                         label="Gender"
                         value={(() => {
                           const gender =
                             selectedCustomer?.customer_info?.gender?.toLowerCase();
-                          if (gender === "f" || gender === "female")
-                            return "Female";
-                          if (gender === "m" || gender === "male")
-                            return "Male";
-                          if (gender === "o" || gender === "other")
-                            return "Other";
-                          return "";
+                          if (gender === "f" || gender === "female") return "Female";
+                          if (gender === "m" || gender === "male") return "Male";
+                          if (gender === "o" || gender === "other") return "Other";
+                          return null;
                         })()}
                       />
 

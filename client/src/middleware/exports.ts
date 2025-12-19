@@ -301,7 +301,7 @@ export const accountsNavbar: { [key: string]: links[] } = {
       ],
     },
     {
-      name: "Score Card",
+      name: "Score Sheet",
       link: "/score-card",
       tabs: null,
     },
@@ -351,7 +351,7 @@ export const accountsNavbar: { [key: string]: links[] } = {
       ],
     },
     {
-      name: "Score Card",
+      name: "Score Sheet",
       link: null,
       tabs: [
         {

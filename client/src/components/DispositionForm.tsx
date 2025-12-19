@@ -601,24 +601,28 @@ const DispositionForm: React.FC<Props> = ({
     GET_RECORDING
   );
   const creatingDispo = useCallback(async () => {
-    const callIdRes = await getCallRecording({
-      variables: { user_id: userLogged?._id, mobile: viciOnAir },
-    });
+    let callId: string | undefined;
 
-    setTimeout(async()=> {
-      await createDisposition({
-        variables: {
-          input: {
-            ...data,
-            customer_account: selectedCustomer?._id,
-            callId:`${callIdRes.data?.getCallRecording}_${secondLine[secondLine.length - 1]}`,
-          },
-        },
+    if (viciOnAir) {
+      const callIdRes = await getCallRecording({
+        variables: { user_id: userLogged?._id, mobile: viciOnAir },
       });
-      setConfirm(false);
-    },300)
+      callId = `${callIdRes.data?.getCallRecording}_${secondLine[secondLine.length - 1]}`;
+    } else if (callUniqueId) {
+      callId = callUniqueId;
+    }
 
-  }, [data, selectedCustomer, createDisposition, callUniqueId, getCallRecording,userLogged, secondLine,viciOnAir ]);
+    await createDisposition({
+      variables: {
+        input: {
+          ...data,
+          customer_account: selectedCustomer?._id,
+          callId,
+        },
+      },
+    });
+    setConfirm(false);
+  }, [data, selectedCustomer, createDisposition, callUniqueId, getCallRecording, userLogged, secondLine, viciOnAir]);
 
   const noCallback = useCallback(() => {
     setConfirm(false);

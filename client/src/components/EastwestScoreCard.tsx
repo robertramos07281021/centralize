@@ -3,6 +3,7 @@ import { gql, useMutation, useQuery } from "@apollo/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
 import { RootState } from "../redux/store";
+import type ExcelJS from "exceljs";
 
 type QuestionConfig = {
   text: string;
@@ -881,37 +882,124 @@ const EastwestScoreCard = () => {
 
     const worksheet = workbook.addWorksheet("Eastwest Score Card", {
       properties: { defaultRowHeight: 18 },
-      views: [{ showGridLines: true }],
+      views: [{ showGridLines: false }],
     });
+
+    const thinBorder: ExcelJS.Borders = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+      diagonal: {},
+    };
+
+    const thickBorder: ExcelJS.Borders = {
+      top: { style: "medium" },
+      left: { style: "medium" },
+      bottom: { style: "medium" },
+      right: { style: "medium" },
+      diagonal: {},
+    };
+
+    const applyBorder = (
+      ws: ExcelJS.Worksheet,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number,
+      border: ExcelJS.Borders
+    ): void => {
+      for (let r = r1; r <= r2; r++) {
+        for (let c = c1; c <= c2; c++) {
+          const cell = ws.getCell(r, c);
+          cell.border = border;
+          cell.alignment = {
+            ...(cell.alignment ?? {}),
+            wrapText: true,
+            vertical: "middle",
+          };
+        }
+      }
+    };
+
+    const fills = {
+      title: {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFF3F3F3" },
+      },
+      section: {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF4CAF50" },
+      },
+      subHeader: {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFBDBDBD" },
+      },
+      questionBand: {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFE8F4FF" },
+      },
+      response: {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFFFFF99" },
+      },
+      finalBox: {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF7E57C2" },
+      },
+      headerGreen: {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF2E7D32" },
+      },
+      headerBlue: {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FF1976D2" },
+      },
+      headerYellow: {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "FFFFFF99" },
+      },
+    };
 
     worksheet.columns = [
-      { header: "Section", key: "section", width: 22 },
-      { header: "Question", key: "question", width: 75 },
-      { header: "Response", key: "response", width: 12 },
-      { header: "Score", key: "score", width: 10 },
-      { header: "Tag", key: "tag", width: 14 },
+      { header: "A", key: "a", width: 40 },
+      { header: "B", key: "b", width: 46 },
+      { header: "C", key: "c", width: 10 },
+      { header: "D", key: "d", width: 10 },
+      { header: "E", key: "e", width: 14 },
+      { header: "F", key: "f", width: 2 },
+      { header: "G", key: "g", width: 38 },
+      { header: "H", key: "h", width: 46 },
+      { header: "I", key: "i", width: 10 },
+      { header: "J", key: "j", width: 10 },
+      { header: "K", key: "k", width: 14 },
     ];
 
-    worksheet.mergeCells("A1:E1");
+    worksheet.mergeCells("A1:K1");
     const titleCell = worksheet.getCell("A1");
-    titleCell.value = "TPSP Phone Monitoring Sheet";
-    titleCell.font = { size: 14, bold: true };
-    titleCell.alignment = { horizontal: "center" };
+    titleCell.value = "TPSP PHONE MONITORING SHEET";
+    titleCell.font = { size: 16, bold: true };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    titleCell.fill = fills.title;
+    titleCell.border = thinBorder;
 
-    worksheet.addRow({});
-    const headerRow = worksheet.addRow({
-      section: "Section",
-      question: "Question",
-      response: "Response",
-      score: "Score",
-      tag: "Tag",
-    });
-    headerRow.font = { bold: true };
+    worksheet.mergeCells("B2:L2");
+    worksheet.getCell("B2").value = "RATING SHEET";
 
-    const exportRows = buildExportRows();
-    exportRows.forEach((row) => {
-      worksheet.addRow(row);
-    });
+    worksheet.getCell("A4").value = "EVALUATION DATE";
+    worksheet.getCell("A5").value = "AGENT'S NAME";
+    worksheet.getCell("A6").value = "EVALATOR'S NAME (TEAM HEAD)";
+    worksheet.getCell("A7").value = "ACKNOWLEDGED/VALIDATED BY: (AC/RO)";
+    applyBorder(worksheet, 1, 1, 1, 1, thinBorder);
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
@@ -926,57 +1014,66 @@ const EastwestScoreCard = () => {
   };
 
   const handleExport = async () => {
-    if (!selectedAgent || !selectedEvaluator || !acknowledgedBy.trim()) {
-      alert(
-        "Please fill Agent's Name, Evaluator's Name, and Acknowledged/Validated By before saving."
-      );
-      return;
-    }
-    if (!accountNumber.trim()) {
-      alert("Please enter the account number before saving.");
-      return;
-    }
-    if (!userLogged?._id) {
-      alert("Missing user information. Please sign in again.");
-      return;
-    }
-    const departmentId = userLogged?.departments?.[0];
-    if (!departmentId) {
-      alert("Missing department assignment. Please contact an administrator.");
-      return;
-    }
-    if (isExporting || isSaving) return;
-
-    setIsExporting(true);
-    const evaluationDateIso = new Date().toISOString();
-    const monthLabel = new Date().toLocaleString("en-US", { month: "long" });
-    const safeFinalScore = Math.max(finalScore, 0);
-    const scoreDetailsPayload = buildScoreDetailsPayload(evaluationDateIso);
-
     try {
-      await createScoreCardData({
-        variables: {
-          input: {
-            month: monthLabel,
-            department: departmentId,
-            agentName: selectedAgent._id,
-            dateAndTimeOfCall: evaluationDateIso,
-            number: accountNumber.trim(),
-            assignedQA: userLogged._id,
-            typeOfScoreCard: "Eastwest Score Card",
-            scoreDetails: scoreDetailsPayload,
-            totalScore: safeFinalScore,
-          },
-        },
-      });
-
+      setIsExporting(true);
       await exportToExcel();
     } catch (error) {
-      console.error("Failed to save Eastwest score card", error);
-      alert("Failed to save or export. Please try again.");
+      console.log(error);
     } finally {
       setIsExporting(false);
     }
+
+    // if (!selectedAgent || !selectedEvaluator || !acknowledgedBy.trim()) {
+    //   alert(
+    //     "Please fill Agent's Name, Evaluator's Name, and Acknowledged/Validated By before saving."
+    //   );
+    //   return;
+    // }
+    // if (!accountNumber.trim()) {
+    //   alert("Please enter the account number before saving.");
+    //   return;
+    // }
+    // if (!userLogged?._id) {
+    //   alert("Missing user information. Please sign in again.");
+    //   return;
+    // }
+    // const departmentId = userLogged?.departments?.[0];
+    // if (!departmentId) {
+    //   alert("Missing department assignment. Please contact an administrator.");
+    //   return;
+    // }
+    // if (isExporting || isSaving) return;
+
+    // setIsExporting(true);
+    // const evaluationDateIso = new Date().toISOString();
+    // const monthLabel = new Date().toLocaleString("en-US", { month: "long" });
+    // const safeFinalScore = Math.max(finalScore, 0);
+    // const scoreDetailsPayload = buildScoreDetailsPayload(evaluationDateIso);
+
+    // try {
+    //   await createScoreCardData({
+    //     variables: {
+    //       input: {
+    //         month: monthLabel,
+    //         department: departmentId,
+    //         agentName: selectedAgent._id,
+    //         dateAndTimeOfCall: evaluationDateIso,
+    //         number: accountNumber.trim(),
+    //         assignedQA: userLogged._id,
+    //         typeOfScoreCard: "Eastwest Score Card",
+    //         scoreDetails: scoreDetailsPayload,
+    //         totalScore: safeFinalScore,
+    //       },
+    //     },
+    //   });
+
+    //   await exportToExcel();
+    // } catch (error) {
+    //   console.error("Failed to save Eastwest score card", error);
+    //   alert("Failed to save or export. Please try again.");
+    // } finally {
+    //   setIsExporting(false);
+    // }
   };
 
   return (
