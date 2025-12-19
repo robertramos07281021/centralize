@@ -145,7 +145,7 @@ export async function checkIfAgentIsInlineOnVici(agentUser, vici_id) {
     });
 
     const data = res.data;
- 
+
     return data;
   } catch (error) {
     console.error("❌ Error Check If Agent Is Inline:", error.message);

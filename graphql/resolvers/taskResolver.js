@@ -300,10 +300,10 @@ const taskResolver = {
         const ca = await CustomerAccount.findById(id);
 
         if (!ca) throw new CustomError("Customer account not found", 404);
-        
+
         if (ca.on_hands) {
-          const customerAgent = await User.findById(ca.on_hands)
-          if(ca.on_hands.toString() === customerAgent.handsOn.toString()) {
+          const customerAgent = await User.findById(ca.on_hands);
+          if (ca.on_hands.toString() === customerAgent.handsOn.toString()) {
             throw new CustomError("Already handled by other agent");
           }
         }
@@ -503,7 +503,16 @@ const taskResolver = {
         //     },
         //   },
         // ]);
-    
+
+        const cursor = CustomerAccount.find({
+          emergency_contact: { $exists: true },
+        }).cursor();
+
+        for await (const x of cursor) {
+          await Customer.findByIdAndUpdate(x.customer, {
+            $set: { emergency_contact: x.emergency_contact },
+          });
+        }
 
         return {
           success: true,

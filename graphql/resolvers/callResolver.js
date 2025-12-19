@@ -437,7 +437,7 @@ const callResolver = {
     checkIfAgentIsInline: async (_, __, { user }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
-    
+
         const findUser = await User.findById(user._id)
           .populate("buckets", "viciIp viciIp_auto")
           .lean();
@@ -458,32 +458,27 @@ const callResolver = {
                 )
               )
             : [];
-    
+
         const chechIfisOnline = await Promise.all(
           bucket.map(async (x) => {
-            let data = null;
+           
             const res = await checkIfAgentIsInlineOnVici(
               findUser?.vici_id,
               x.viciIp
             );
-            const actualCall = res.split("|")[1];
 
-            if (!res.includes("ERROR") && actualCall !== "") {
-              data = `${res}|${x.viciIp}`;
-            } else {
-              const resAuto = await checkIfAgentIsInlineOnVici(
-                findUser?.vici_id,
-                x.viciIp_auto
-              );
-              data = `${resAuto}|${x.viciIp_auto}`;
-            }
-            return data;
+            const resAuto = await checkIfAgentIsInlineOnVici(
+              findUser?.vici_id,
+              x.viciIp_auto
+            );
+            
+            return `${res}|${x.viciIp},${resAuto}|${x.viciIp_auto}`;
           })
         );
-   
-        return chechIfisOnline?.find((x) => !x.includes("ERROR"));
+  
+        return chechIfisOnline.toString();
       } catch (error) {
-
+   
         throw new CustomError(error.message, 500);
       }
     },
@@ -813,7 +808,7 @@ const callResolver = {
         const newDate = `${year}${month.toString().padStart(2, "0")}${day
           .toString()
           .padStart(2, "0")}`;
-        
+
         const findUser = await User.findById(user_id).populate(
           "buckets",
           "viciIp viciIp_auto"
@@ -825,8 +820,8 @@ const callResolver = {
             "Please Contact Admin to add Vici dial ID",
             401
           );
-        
-        const splitMobile = mobile.split('|')
+
+        const splitMobile = mobile.split("|");
 
         const bucket =
           findUser?.buckets?.length > 0
@@ -842,35 +837,7 @@ const callResolver = {
               )
             : [];
 
-        const chechIfisOnline = await Promise.all(
-          bucket.map(async (x) => {
-            let data = null;
-            const res = await checkIfAgentIsInlineOnVici(
-              findUser?.vici_id,
-              x.viciIp
-            );
-            const actualCall = res.split("|")[1];
-
-            if (!res.includes("ERROR") && actualCall !== "") {
-              data = x.viciIp;
-            } else {
-              const resAuto = await checkIfAgentIsInlineOnVici(
-                findUser?.vici_id,
-                x.viciIp_auto
-              );
-
-              if (!resAuto.includes("ERROR")) {
-                data = x.viciIp_auto;
-              }
-            }
-            return data;
-          })
-        );
-
-        const res = await getRecordings(
-          splitMobile[1],
-          findUser?.vici_id
-        );
+        const res = await getRecordings(splitMobile[1], findUser?.vici_id);
 
         if (!res) return null;
 

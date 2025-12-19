@@ -156,7 +156,7 @@ cron.schedule(
 
       if (!dispotype) throw new Error("DispoType PTP not found");
 
-      const cursor = await CustomerAccount.aggregate([
+      const cursor = CustomerAccount.aggregate([
         {
           $match: {
             assigned: { $ne: null },

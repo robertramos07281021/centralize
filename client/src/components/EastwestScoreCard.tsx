@@ -605,7 +605,7 @@ const EastwestScoreCard = () => {
     skip: !userLogged,
     fetchPolicy: "cache-and-network",
   });
-  const [createScoreCardData, { loading: isSaving }] =
+  const [ ,{ loading: isSaving }] =
     useMutation(CREATE_SCORE_CARD);
   const [selectedEvaluator, setSelectedEvaluator] = useState<TL | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
@@ -702,175 +702,175 @@ const EastwestScoreCard = () => {
     withoutTotals.noCount,
   ];
 
-  const buildExportRows = () => {
-    const rows: Array<{
-      section: string;
-      question: string;
-      response: string | number;
-      score: string | number;
-      tag: string | number;
-    }> = [];
+  // const buildExportRows = () => {
+  //   const rows: Array<{
+  //     section: string;
+  //     question: string;
+  //     response: string | number;
+  //     score: string | number;
+  //     tag: string | number;
+  //   }> = [];
 
-    withContactSections.forEach((section, sIdx) => {
-      rows.push({
-        section: section.headingLabel ?? "",
-        question: section.title,
-        response: "",
-        score: "",
-        tag: "",
-      });
+  //   withContactSections.forEach((section, sIdx) => {
+  //     rows.push({
+  //       section: section.headingLabel ?? "",
+  //       question: section.title,
+  //       response: "",
+  //       score: "",
+  //       tag: "",
+  //     });
 
-      section.questions.forEach((q, qIdx) => {
-        const isYes = withContactResponses[sIdx]?.[qIdx] ?? true;
-        rows.push({
-          section: "",
-          question: q.text,
-          response: isYes ? "YES" : "NO",
-          score: isYes ? 0 : q.defaultScore,
-          tag: q.tag,
-        });
-      });
+  //     section.questions.forEach((q, qIdx) => {
+  //       const isYes = withContactResponses[sIdx]?.[qIdx] ?? true;
+  //       rows.push({
+  //         section: "",
+  //         question: q.text,
+  //         response: isYes ? "YES" : "NO",
+  //         score: isYes ? 0 : q.defaultScore,
+  //         tag: q.tag,
+  //       });
+  //     });
 
-      rows.push({
-        section: "",
-        question: "Total NO",
-        response: withTotals.perCategory[sIdx] ?? 0,
-        score: "",
-        tag: "",
-      });
+  //     rows.push({
+  //       section: "",
+  //       question: "Total NO",
+  //       response: withTotals.perCategory[sIdx] ?? 0,
+  //       score: "",
+  //       tag: "",
+  //     });
 
-      rows.push({
-        section: "",
-        question: "",
-        response: "",
-        score: "",
-        tag: "",
-      });
-    });
+  //     rows.push({
+  //       section: "",
+  //       question: "",
+  //       response: "",
+  //       score: "",
+  //       tag: "",
+  //     });
+  //   });
 
-    rows.push({
-      section: "B. WITHOUT CONTACT",
-      question: "",
-      response: "",
-      score: "",
-      tag: "",
-    });
+  //   rows.push({
+  //     section: "B. WITHOUT CONTACT",
+  //     question: "",
+  //     response: "",
+  //     score: "",
+  //     tag: "",
+  //   });
 
-    withoutContactSections.forEach((section, sIdx) => {
-      rows.push({
-        section: "",
-        question: section.title,
-        response: "",
-        score: "",
-        tag: "",
-      });
+  //   withoutContactSections.forEach((section, sIdx) => {
+  //     rows.push({
+  //       section: "",
+  //       question: section.title,
+  //       response: "",
+  //       score: "",
+  //       tag: "",
+  //     });
 
-      section.questions.forEach((q, qIdx) => {
-        const isYes = withoutContactResponses[sIdx]?.[qIdx] ?? true;
-        rows.push({
-          section: "",
-          question: q.text,
-          response: isYes ? "YES" : "NO",
-          score: isYes ? 0 : q.defaultScore,
-          tag: q.tag,
-        });
-      });
+  //     section.questions.forEach((q, qIdx) => {
+  //       const isYes = withoutContactResponses[sIdx]?.[qIdx] ?? true;
+  //       rows.push({
+  //         section: "",
+  //         question: q.text,
+  //         response: isYes ? "YES" : "NO",
+  //         score: isYes ? 0 : q.defaultScore,
+  //         tag: q.tag,
+  //       });
+  //     });
 
-      rows.push({
-        section: "",
-        question: "Total NO",
-        response: withoutTotals.perCategory[sIdx] ?? 0,
-        score: "",
-        tag: "",
-      });
+  //     rows.push({
+  //       section: "",
+  //       question: "Total NO",
+  //       response: withoutTotals.perCategory[sIdx] ?? 0,
+  //       score: "",
+  //       tag: "",
+  //     });
 
-      rows.push({
-        section: "",
-        question: "",
-        response: "",
-        score: "",
-        tag: "",
-      });
-    });
+  //     rows.push({
+  //       section: "",
+  //       question: "",
+  //       response: "",
+  //       score: "",
+  //       tag: "",
+  //     });
+  //   });
 
-    rows.push({
-      section: "",
-      question: "Overall NO (W/ CONTACT)",
-      response: withTotals.noCount,
-      score: "",
-      tag: "",
-    });
-    rows.push({
-      section: "",
-      question: "Overall NO (W/O CONTACT)",
-      response: withoutTotals.noCount,
-      score: "",
-      tag: "",
-    });
-    rows.push({
-      section: "",
-      question: "Final Score",
-      response: finalScore,
-      score: "",
-      tag: ratingFromScore(finalScore),
-    });
+  //   rows.push({
+  //     section: "",
+  //     question: "Overall NO (W/ CONTACT)",
+  //     response: withTotals.noCount,
+  //     score: "",
+  //     tag: "",
+  //   });
+  //   rows.push({
+  //     section: "",
+  //     question: "Overall NO (W/O CONTACT)",
+  //     response: withoutTotals.noCount,
+  //     score: "",
+  //     tag: "",
+  //   });
+  //   rows.push({
+  //     section: "",
+  //     question: "Final Score",
+  //     response: finalScore,
+  //     score: "",
+  //     tag: ratingFromScore(finalScore),
+  //   });
 
-    return rows;
-  };
+  //   return rows;
+  // };
 
-  const buildScoreDetailsPayload = (evaluationDateIso: string) => {
-    const mapSections = (
-      sections: EvaluationSectionConfig[],
-      responses: boolean[][],
-      counts: number[]
-    ) =>
-      sections.map((section, sIdx) => ({
-        headingLabel: section.headingLabel ?? "",
-        title: section.title,
-        totalNo: counts[sIdx] ?? 0,
-        questions: section.questions.map((q, qIdx) => {
-          const isYes = responses[sIdx]?.[qIdx] ?? true;
-          return {
-            text: q.text,
-            tag: q.tag,
-            defaultScore: q.defaultScore,
-            response: isYes ? "YES" : "NO",
-            penalty: isYes ? 0 : q.defaultScore,
-          };
-        }),
-      }));
+  // const buildScoreDetailsPayload = (evaluationDateIso: string) => {
+  //   const mapSections = (
+  //     sections: EvaluationSectionConfig[],
+  //     responses: boolean[][],
+  //     counts: number[]
+  //   ) =>
+  //     sections.map((section, sIdx) => ({
+  //       headingLabel: section.headingLabel ?? "",
+  //       title: section.title,
+  //       totalNo: counts[sIdx] ?? 0,
+  //       questions: section.questions.map((q, qIdx) => {
+  //         const isYes = responses[sIdx]?.[qIdx] ?? true;
+  //         return {
+  //           text: q.text,
+  //           tag: q.tag,
+  //           defaultScore: q.defaultScore,
+  //           response: isYes ? "YES" : "NO",
+  //           penalty: isYes ? 0 : q.defaultScore,
+  //         };
+  //       }),
+  //     }));
 
-    return {
-      meta: {
-        evaluationDate: evaluationDateIso,
-        acknowledgedBy,
-        agent: selectedAgent
-          ? { id: selectedAgent._id, name: selectedAgent.name }
-          : null,
-        evaluator: selectedEvaluator
-          ? { id: selectedEvaluator._id, name: selectedEvaluator.name }
-          : null,
-        cardholder,
-        accountNumber,
-        enteredRate: rateInput,
-      },
-      withContact: mapSections(
-        withContactSections,
-        withContactResponses,
-        withTotals.perCategory
-      ),
-      withoutContact: mapSections(
-        withoutContactSections,
-        withoutContactResponses,
-        withoutTotals.perCategory
-      ),
-      totals: {
-        withContact: withTotals.noCount,
-        withoutContact: withoutTotals.noCount,
-        finalScore,
-      },
-    };
-  };
+  //   return {
+  //     meta: {
+  //       evaluationDate: evaluationDateIso,
+  //       acknowledgedBy,
+  //       agent: selectedAgent
+  //         ? { id: selectedAgent._id, name: selectedAgent.name }
+  //         : null,
+  //       evaluator: selectedEvaluator
+  //         ? { id: selectedEvaluator._id, name: selectedEvaluator.name }
+  //         : null,
+  //       cardholder,
+  //       accountNumber,
+  //       enteredRate: rateInput,
+  //     },
+  //     withContact: mapSections(
+  //       withContactSections,
+  //       withContactResponses,
+  //       withTotals.perCategory
+  //     ),
+  //     withoutContact: mapSections(
+  //       withoutContactSections,
+  //       withoutContactResponses,
+  //       withoutTotals.perCategory
+  //     ),
+  //     totals: {
+  //       withContact: withTotals.noCount,
+  //       withoutContact: withoutTotals.noCount,
+  //       finalScore,
+  //     },
+  //   };
+  // };
 
   const exportToExcel = async () => {
     const excelModule = await import("exceljs/dist/exceljs.min.js");
@@ -881,7 +881,6 @@ const EastwestScoreCard = () => {
     workbook.created = new Date();
 
     const worksheet = workbook.addWorksheet("Eastwest Score Card", {
-      properties: { defaultRowHeight: 18 },
       views: [{ showGridLines: false }],
     });
 
@@ -922,84 +921,396 @@ const EastwestScoreCard = () => {
       }
     };
 
-    const fills = {
-      title: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFF3F3F3" },
-      },
-      section: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FF4CAF50" },
-      },
-      subHeader: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFBDBDBD" },
-      },
-      questionBand: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFE8F4FF" },
-      },
-      response: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFFFFF99" },
-      },
-      finalBox: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FF7E57C2" },
-      },
-      headerGreen: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FF2E7D32" },
-      },
-      headerBlue: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FF1976D2" },
-      },
-      headerYellow: {
-        type: "pattern",
-        pattern: "solid",
-        fgColor: { argb: "FFFFFF99" },
-      },
-    };
+    // const fills = {
+    //   title: {
+    //     type: "pattern",
+    //     pattern: "solid",
+    //     fgColor: { argb: "FFF3F3F3" },
+    //   },
+    //   section: {
+    //     type: "pattern",
+    //     pattern: "solid",
+    //     fgColor: { argb: "FF4CAF50" },
+    //   },
+    //   subHeader: {
+    //     type: "pattern",
+    //     pattern: "solid",
+    //     fgColor: { argb: "FFBDBDBD" },
+    //   },
+    //   questionBand: {
+    //     type: "pattern",
+    //     pattern: "solid",
+    //     fgColor: { argb: "FFE8F4FF" },
+    //   },
+    //   response: {
+    //     type: "pattern",
+    //     pattern: "solid",
+    //     fgColor: { argb: "FFFFFF99" },
+    //   },
+    //   finalBox: {
+    //     type: "pattern",
+    //     pattern: "solid",
+    //     fgColor: { argb: "FF7E57C2" },
+    //   },
+    //   headerGreen: {
+    //     type: "pattern",
+    //     pattern: "solid",
+    //     fgColor: { argb: "FF2E7D32" },
+    //   },
+    //   headerBlue: {
+    //     type: "pattern",
+    //     pattern: "solid",
+    //     fgColor: { argb: "FF1976D2" },
+    //   },
+    //   headerYellow: {
+    //     type: "pattern",
+    //     pattern: "solid",
+    //     fgColor: { argb: "FFFFFF99" },
+    //   },
+    // };
 
     worksheet.columns = [
-      { header: "A", key: "a", width: 40 },
+      { header: "A", key: "a", width: 46 },
       { header: "B", key: "b", width: 46 },
       { header: "C", key: "c", width: 10 },
       { header: "D", key: "d", width: 10 },
       { header: "E", key: "e", width: 14 },
       { header: "F", key: "f", width: 2 },
-      { header: "G", key: "g", width: 38 },
+      { header: "G", key: "g", width: 2 },
       { header: "H", key: "h", width: 46 },
-      { header: "I", key: "i", width: 10 },
+      { header: "I", key: "i", width: 35 },
       { header: "J", key: "j", width: 10 },
       { header: "K", key: "k", width: 14 },
     ];
 
-    worksheet.mergeCells("A1:K1");
+    worksheet.mergeCells("A1:H1");
     const titleCell = worksheet.getCell("A1");
     titleCell.value = "TPSP PHONE MONITORING SHEET";
-    titleCell.font = { size: 16, bold: true };
+    titleCell.font = { size: 20, bold: true };
     titleCell.alignment = { horizontal: "center", vertical: "middle" };
-    titleCell.fill = fills.title;
-    titleCell.border = thinBorder;
+    
 
-    worksheet.mergeCells("B2:L2");
-    worksheet.getCell("B2").value = "RATING SHEET";
+
+    worksheet.mergeCells("I1:L1");
+
+    const secondTitleCell = worksheet.getCell("I1");
+    secondTitleCell.value ="Bernales & Associates";
+    secondTitleCell.font = { size: 20, bold: false, color: { argb: "FF0000" } };
+    secondTitleCell.alignment = { horizontal: "center", vertical: "middle" };
+
+    worksheet.getCell("I1").value = "Bernales & Associates";
+    applyBorder(worksheet, 1, 1, 1, 12, thickBorder);
+
 
     worksheet.getCell("A4").value = "EVALUATION DATE";
     worksheet.getCell("A5").value = "AGENT'S NAME";
     worksheet.getCell("A6").value = "EVALATOR'S NAME (TEAM HEAD)";
     worksheet.getCell("A7").value = "ACKNOWLEDGED/VALIDATED BY: (AC/RO)";
-    applyBorder(worksheet, 1, 1, 1, 1, thinBorder);
+    applyBorder(worksheet, 4, 7, 1, 2, thinBorder);
+
+    worksheet.getCell("A9").value = "A. WITH CONTACT";
+    applyBorder(worksheet, 9, 9, 1, 1, thickBorder);
+
+    worksheet.getCell("A11").value = "OPENING SKILLS";
+    applyBorder(worksheet, 11, 11, 1, 1, thickBorder);
+
+    worksheet.mergeCells("C11:D11");
+    worksheet.getCell("C11").value = "DEFECT";
+    applyBorder(worksheet, 11, 11, 3, 4, thickBorder);
+
+    worksheet.getCell("C12").value = "Y/N";
+    worksheet.getCell("D12").value = "SCORE";
+    worksheet.getCell("E12").value = "Tagging";
+    applyBorder(worksheet, 12, 12, 3, 5, thickBorder);
+
+    worksheet.mergeCells("A13:B13");
+    worksheet.getCell("A13").value = "Uses Appropriate Greeting";
+    worksheet.mergeCells("A14:B14");
+    worksheet.getCell("A14").value =
+      "Did the agent advise the third party or person talking to that the call was recorded?	";
+    applyBorder(worksheet, 34, 34, 1, 1, thickBorder);
+    applyBorder(worksheet, 34, 34, 3, 4, thickBorder);
+    applyBorder(worksheet, 35, 35, 3, 5, thickBorder);
+    applyBorder(worksheet, 36, 43, 1, 5, thickBorder);
+    applyBorder(worksheet, 44, 44, 1, 3, thickBorder);
+    worksheet.mergeCells("A15:B15");
+    worksheet.getCell("A15").value =
+      "Did the agent properly identify self and Company? (No Misrepresentation?)";
+    applyBorder(worksheet, 18, 18, 1, 1, thickBorder);
+    applyBorder(worksheet, 18, 18, 3, 4, thickBorder);
+    applyBorder(worksheet, 19, 19, 3, 5, thickBorder);
+    applyBorder(worksheet, 20, 24, 1, 5, thickBorder);
+    applyBorder(worksheet, 25, 25, 1, 3, thickBorder);
+    applyBorder(worksheet, 18, 18, 1, 1, thickBorder);
+    applyBorder(worksheet, 18, 18, 3, 4, thickBorder);
+    applyBorder(worksheet, 19, 19, 3, 5, thickBorder);
+    applyBorder(worksheet, 20, 24, 1, 5, thickBorder);
+    applyBorder(worksheet, 25, 25, 1, 3, thickBorder);
+    worksheet.mergeCells("A16:B16");
+    worksheet.getCell("A16").value = "TOTAL";
+    applyBorder(worksheet, 13, 15, 1, 5, thickBorder);
+    applyBorder(worksheet, 16, 16, 1, 3, thickBorder);
+
+    worksheet.getCell("A18").value = "NEGOTIATION SKILLS";
+
+    worksheet.mergeCells("C18:D18");
+    worksheet.getCell("C18").value = "DEFECT";
+
+    worksheet.getCell("C19").value = "Y/N";
+    worksheet.getCell("D19").value = "SCORE";
+    worksheet.getCell("E19").value = "Tagging";
+
+    worksheet.mergeCells("A20:B20");
+    worksheet.getCell("A20").value =
+      "Did the agent ask for reason for delay in payment (RFD)/ broken promise (RBP) ?";
+    worksheet.mergeCells("A21:B21");
+    worksheet.getCell("A21").value =
+      "Did the agent follow hierarchy of negotiation?";
+    worksheet.mergeCells("A22:B22");
+    worksheet.getCell("A22").value = applyBorder(
+      worksheet,
+      27,
+      27,
+      1,
+      1,
+      thickBorder
+    );
+    applyBorder(worksheet, 27, 27, 3, 4, thickBorder);
+    applyBorder(worksheet, 28, 28, 3, 5, thickBorder);
+    applyBorder(worksheet, 29, 31, 1, 5, thickBorder);
+    applyBorder(worksheet, 32, 32, 1, 3, thickBorder);
+    worksheet.getCell("A22").value =
+      "Did the agent offer appropriate alternative solutions based on CH's financial situation?";
+    worksheet.mergeCells("A23:B23");
+    worksheet.getCell("A23").value =
+      "Did the agent  explain the consequences for non payment & urgency of the payment?	";
+    worksheet.mergeCells("A24:B24");
+    worksheet.getCell("A24").value =
+      "Did the agent secure PTP within the allowable grace period?	";
+    worksheet.mergeCells("A25:B25");
+    worksheet.getCell("A25").value = "TOTAL";
+
+    worksheet.getCell("A27").value = "PRODUCT KNOWLEDGE/PROBLEM SOLVING SKILLS	";
+
+    worksheet.mergeCells("C27:D27");
+    worksheet.getCell("C27").value = "DEFECT";
+
+    worksheet.getCell("C28").value = "Y/N";
+    worksheet.getCell("D28").value = "SCORE";
+    worksheet.getCell("E28").value = "Tagging";
+
+    worksheet.mergeCells("A29:B29");
+    worksheet.getCell("A29").value =
+      "Did the agent offer and appropriately discussed the applicable repayment program?	";
+    worksheet.mergeCells("A30:B30");
+    worksheet.getCell("A30").value =
+      "Did the agent accurately explain and compute applicable fees, charges or discount amount?	";
+    worksheet.mergeCells("A31:B31");
+    worksheet.getCell("A31").value =
+      "Did the agent address the concerns raised by the CH regarding his/her account?	";
+    worksheet.mergeCells("A32:B32");
+    worksheet.getCell("A32").value = "TOTAL";
+
+    worksheet.getCell("A34").value = "SOFT SKILLS";
+
+    worksheet.mergeCells("C34:D34");
+    worksheet.getCell("C34").value = "DEFECT";
+
+    worksheet.getCell("C35").value = "Y/N";
+    worksheet.getCell("D35").value = "SCORE";
+    worksheet.getCell("E35").value = "Tagging";
+
+    worksheet.mergeCells("A36:B36");
+    worksheet.getCell("A36").value =
+      "Did the agent  have a good control of the conversation?	";
+    worksheet.mergeCells("A37:B37");
+    worksheet.getCell("A37").value =
+      "Did the agent  communicate according to the cardholder's language of expertise? Avoided using jargon or technical terms that the customer wasn't familiar with.	";
+    worksheet.mergeCells("A38:B39");
+    worksheet.getCell("A38").value =
+      "Is the agent's tone of voice professional, not overly aggressive, non-confrontational, not sarcastic or condescending?";
+    worksheet.mergeCells("A40:B40");
+    worksheet.getCell("A40").value =
+      "Did the agent demonstrate empathy and understanding of the customer's situation?";
+    worksheet.mergeCells("A41:B41");
+    worksheet.getCell("A41").value =
+      "Did the agent conduct the call at a reasonable pace - neither rushed nor unnecessarily prolonged?	";
+    worksheet.mergeCells("A42:B42");
+    worksheet.getCell("A42").value =
+      "Did the agent record accurate and complete details of the conversation in the system?	";
+    worksheet.mergeCells("A43:B43");
+    worksheet.getCell("A43").value =
+      "Did the agent comply with EWBC Collection Agency Code of Conduct?	";
+    worksheet.mergeCells("A44:B44");
+    worksheet.getCell("A44").value = "TOTAL";
+
+    worksheet.getCell("A46").value = "WRAP UP/CLOSING THE CALL";
+
+    worksheet.mergeCells("C46:D46");
+    worksheet.getCell("C46").value = "DEFECT";
+
+    worksheet.getCell("C47").value = "Y/N";
+    worksheet.getCell("D47").value = "SCORE";
+    worksheet.getCell("E47").value = "Tagging";
+
+    worksheet.mergeCells("A48:B48");
+    worksheet.getCell("A48").value =
+      "Did the agent  have a good control of the conversation?	";
+    worksheet.mergeCells("A49:B49");
+    worksheet.getCell("A49").value =
+      "Did the agent  communicate according to the cardholder's language of expertise? Avoided using jargon or technical terms that the customer wasn't familiar with.	";
+    worksheet.mergeCells("A50:B50");
+    worksheet.getCell("A50").value =
+      "Is the agent's tone of voice professional, not overly aggressive, non-confrontational, not sarcastic or condescending?";
+    worksheet.mergeCells("A51:B51");
+    worksheet.getCell("A51").value =
+      "Did the agent demonstrate empathy and understanding of the customer's situation?";
+    worksheet.mergeCells("A52:B52");
+    worksheet.getCell("A52").value = "TOTAL";
+    applyBorder(worksheet, 46, 46, 1, 1, thickBorder);
+    applyBorder(worksheet, 46, 46, 3, 4, thickBorder);
+    applyBorder(worksheet, 47, 47, 3, 5, thickBorder);
+    applyBorder(worksheet, 48, 51, 1, 5, thickBorder);
+    applyBorder(worksheet, 52, 52, 1, 3, thickBorder);
+
+    worksheet.getCell("H9").value = "B. WITHOUT CONTACT";
+    applyBorder(worksheet, 9, 9, 8, 8, thickBorder);
+
+    worksheet.getCell("H11").value = "OPENING SKILLS";
+    applyBorder(worksheet, 11, 11, 8, 8, thickBorder);
+
+    worksheet.mergeCells("J11:K11");
+    worksheet.getCell("J11").value = "DEFECT";
+    applyBorder(worksheet, 11, 11, 10, 11, thickBorder);
+
+    worksheet.getCell("J12").value = "Y/N";
+    worksheet.getCell("K12").value = "SCORE";
+    worksheet.getCell("L12").value = "Tagging";
+    applyBorder(worksheet, 12, 12, 10, 12, thickBorder);
+
+    worksheet.mergeCells("H13:I13");
+    worksheet.getCell("H13").value = "Uses Appropriate Greeting";
+    worksheet.mergeCells("H14:I14");
+    worksheet.getCell("H14").value =
+      "Did the agent advise the third party or person talking to that the call was recorded?";
+    worksheet.mergeCells("H15:I15");
+    worksheet.getCell("H15").value =
+      "Did the agent properly identify self and Company? (No Misrepresentation?)";
+    worksheet.mergeCells("H16:I16");
+    worksheet.getCell("H16").value = "TOTAL";
+    applyBorder(worksheet, 13, 15, 8, 12, thickBorder);
+    applyBorder(worksheet, 16, 16, 8, 10, thickBorder);
+
+    worksheet.getCell("H18").value = "PROBING SKILLS";
+    applyBorder(worksheet, 18, 18, 8, 8, thickBorder);
+
+    worksheet.mergeCells("J18:K18");
+    worksheet.getCell("J18").value = "DEFECT";
+    applyBorder(worksheet, 18, 18, 10, 11, thickBorder);
+
+    worksheet.getCell("J19").value = "Y/N";
+    worksheet.getCell("J19").value = "SCORE";
+    worksheet.getCell("J19").value = "Tagging";
+    applyBorder(worksheet, 19, 19, 10, 12, thickBorder);
+
+    worksheet.mergeCells("H20:I20");
+    worksheet.getCell("H20").value =
+      "Did the agent probe for BTC, ETA/EDA and other contact numbers to reach CH?";
+    worksheet.mergeCells("H21:I21");
+    worksheet.getCell("H21").value =
+      "Did the agent  ask for right party contact who can receive the message?";
+    worksheet.mergeCells("H22:I22");
+    worksheet.getCell("H22").value =
+      "Did the agent  use the history of the account to follow up previous messages left?";
+    worksheet.mergeCells("H23:I23");
+    worksheet.getCell("H23").value =
+      "Did the agent attempt to contact client thru all the possible contact # based on the history/system?";
+    worksheet.mergeCells("H24:I24");
+    worksheet.getCell("H24").value =
+      "Did the agent ask info questions to obtain lead/s to the whereabouts of client/s?";
+    worksheet.mergeCells("H25:I25");
+    worksheet.getCell("H25").value = "TOTAL";
+    applyBorder(worksheet, 20, 24, 8, 12, thickBorder);
+    applyBorder(worksheet, 25, 25, 8, 10, thickBorder);
+    applyBorder(worksheet, 18, 18, 1, 1, thickBorder);
+    applyBorder(worksheet, 18, 18, 3, 4, thickBorder);
+    applyBorder(worksheet, 19, 19, 3, 5, thickBorder);
+    applyBorder(worksheet, 20, 24, 1, 5, thickBorder);
+    applyBorder(worksheet, 25, 25, 1, 3, thickBorder);
+
+    worksheet.getCell("H27").value = "SOFT SKILLS";
+    applyBorder(worksheet, 27, 27, 8, 8, thickBorder);
+
+    worksheet.mergeCells("J27:K27");
+    worksheet.getCell("J27").value = "DEFECT";
+    applyBorder(worksheet, 27, 27, 10, 11, thickBorder);
+
+    worksheet.getCell("J28").value = "Y/N";
+    worksheet.getCell("K28").value = "SCORE";
+    worksheet.getCell("L28").value = "Tagging";
+    applyBorder(worksheet, 28, 28, 10, 12, thickBorder);
+
+    worksheet.mergeCells("H29:I29");
+    worksheet.getCell("H29").value =
+      "Did the agent endorse the account for SKIPS and FV?		";
+    worksheet.mergeCells("H30:I30");
+    worksheet.getCell("H30").value =
+      "Did the agent have a good control of the conversation?	";
+    worksheet.mergeCells("H31:I31");
+    worksheet.getCell("H31").value =
+      "Is the agent's tone of voice professional, not overly aggressive, non-confrontational, not sarcastic or condescending?";
+    applyBorder(worksheet, 29, 33, 8, 12, thickBorder);
+    applyBorder(worksheet, 34, 34, 8, 10, thickBorder);
+    worksheet.mergeCells("H32:I32");
+    worksheet.getCell("H32").value =
+      "Did the agent record accurate details of the conversation in the system?	";
+    worksheet.mergeCells("H33:I33");
+    worksheet.getCell("H33").value =
+      "Did the agent comply with EWBC Collection Agency Code of Conduct?	";
+    worksheet.mergeCells("H34:I34");
+    worksheet.getCell("H34").value = "TOTAL";
+
+    worksheet.getCell("H36").value = "WRAP UP/CLOSING THE CALL";
+    applyBorder(worksheet, 36, 36, 8, 8, thickBorder);
+
+    worksheet.mergeCells("J36:K36");
+    worksheet.getCell("J36").value = "DEFECT";
+    applyBorder(worksheet, 36, 36, 10, 11, thickBorder);
+
+    worksheet.getCell("J37").value = "Y/N";
+    worksheet.getCell("K37").value = "SCORE";
+    worksheet.getCell("L37").value = "Tagging";
+    applyBorder(worksheet, 37, 37, 10, 12, thickBorder);
+
+    worksheet.mergeCells("H38:I38");
+    worksheet.getCell("H38").value =
+      "Did the agent leave a message for a return call?	";
+    worksheet.mergeCells("H39:I39");
+    worksheet.getCell("H39").value =
+      "Did the agent ask the 3rd party to read back the number for return call?	";
+    worksheet.getCell("H40").value = "TOTAL";
+    applyBorder(worksheet, 38, 39, 8, 12, thickBorder);
+    applyBorder(worksheet, 40, 40, 8, 10, thickBorder);
+
+    worksheet.mergeCells("J42:K42");
+    worksheet.getCell("J42").value = "COUNT OF DEFECT";
+    worksheet.getCell("J43").value = "W/ CONTACT";
+    worksheet.getCell("K43").value = "W/O CONTACT";
+
+    worksheet.getCell("H43").value = "ITEM/S";
+
+    worksheet.getCell("I43").value = "RATE";
+    worksheet.getCell("J43").value = "W/ CONTACT";
+    worksheet.getCell("K43").value = "W/O CONTACT";
+
+    worksheet.getCell("H44").value = "OPENING SKILLS";
+    worksheet.getCell("H45").value = "NEGOTIATION SKILLS/PROBING SKILLS";
+    worksheet.getCell("H46").value = "PRODUCT KNOWLEDGE/PROBLEM SOLVING SKILLS";
+    worksheet.getCell("H47").value = "SOFT SKILLS";
+    worksheet.getCell("H48").value = "WRAP UP";
+    worksheet.getCell("H49").value = "TOTAL # OF DEFECT/S AND FINAL SCORE:";
+    worksheet.getCell("H50").value = "FINAL RATING";
+    worksheet.getCell("I50").value = "";
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
@@ -1008,7 +1319,7 @@ const EastwestScoreCard = () => {
     const downloadUrl = URL.createObjectURL(blob);
     const link = document.createElement("a");
     link.href = downloadUrl;
-    link.download = `eastwest-score-card-${Date.now()}.xlsx`;
+    link.download = `eastwest-score-sheet-${Date.now()}.xlsx`;
     link.click();
     URL.revokeObjectURL(downloadUrl);
   };

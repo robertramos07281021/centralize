@@ -69,6 +69,7 @@ const customerResolver = {
         }
 
         const searchValue = search;
+
         const startOfTheDay = new Date();
         startOfTheDay.setHours(0, 0, 0, 0);
         const endOfTheDay = new Date();
@@ -150,6 +151,7 @@ const customerResolver = {
               preserveNullAndEmptyArrays: false,
             },
           },
+
           {
             $lookup: {
               from: "users",
@@ -599,7 +601,7 @@ const customerResolver = {
         });
 
         if (!activeCallfile) return null;
-  
+
         const search = [
           { "existingDispo.code": { $ne: "DNC" } },
           { balance: { $ne: 0 } },
@@ -1233,6 +1235,10 @@ const customerResolver = {
           emails: e.email,
           contact_no: e.contact,
           callfile: newCallfile._id,
+          emergency_contact: {
+            name: e.emergencyContactName,
+            mobile: e.emergencyContactMobile,
+          },
         }));
 
         const insertedCustomers = await Customer.insertMany(customerDocs, {

@@ -22,6 +22,14 @@ const customerSchema = new Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "CustomerAccount",
     },
+    emergency_contact: {
+      name: {
+        type: String,
+      },
+      mobile: {
+        type: String,
+      },
+    },
     updatedBy: [
       {
         user: {

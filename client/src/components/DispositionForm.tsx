@@ -324,8 +324,14 @@ const DispositionForm: React.FC<Props> = ({
   onPresetAmountChange,
   setLoading,
 }) => {
-  const { selectedCustomer, userLogged, callUniqueId, isRing, onCall, viciOnAir } =
-    useSelector((state: RootState) => state.auth);
+  const {
+    selectedCustomer,
+    userLogged,
+    callUniqueId,
+    isRing,
+    onCall,
+    viciOnAir,
+  } = useSelector((state: RootState) => state.auth);
 
   const dispatch = useAppDispatch();
   const Form = useRef<HTMLFormElement | null>(null);
@@ -502,7 +508,7 @@ const DispositionForm: React.FC<Props> = ({
           isMessage: false,
         })
       );
-      dispatch(setViciOnAir(null))
+      dispatch(setViciOnAir(null));
       await deselectTask({ variables: { id: selectedCustomer?._id } });
       setLoading(false);
     },
@@ -595,34 +601,43 @@ const DispositionForm: React.FC<Props> = ({
     no: () => {},
   });
 
-  const secondLine = inlineData.split("|");
+  const [getCallRecording, { loading: getRecordingLoading }] = useMutation<{
+    getCallRecording: string;
+  }>(GET_RECORDING);
 
-  const [getCallRecording, {loading: getRecordingLoading}] = useMutation<{ getCallRecording: string }>(
-    GET_RECORDING
-  );
   const creatingDispo = useCallback(async () => {
     let callId: string | undefined;
 
     if (viciOnAir) {
+      const vicidialIp = viciOnAir.split("|")[1];
       const callIdRes = await getCallRecording({
         variables: { user_id: userLogged?._id, mobile: viciOnAir },
       });
-      callId = `${callIdRes.data?.getCallRecording}_${secondLine[secondLine.length - 1]}`;
+      callId = `${callIdRes.data?.getCallRecording}_${vicidialIp}`;
     } else if (callUniqueId) {
       callId = callUniqueId;
     }
-
-    await createDisposition({
-      variables: {
-        input: {
-          ...data,
-          customer_account: selectedCustomer?._id,
-          callId,
+    setTimeout(async() => {
+      await createDisposition({
+        variables: {
+          input: {
+            ...data,
+            customer_account: selectedCustomer?._id,
+            callId,
+          },
         },
-      },
-    });
-    setConfirm(false);
-  }, [data, selectedCustomer, createDisposition, callUniqueId, getCallRecording, userLogged, secondLine, viciOnAir]);
+      });
+      setConfirm(false);
+    }, 300);
+  }, [
+    data,
+    selectedCustomer,
+    createDisposition,
+    callUniqueId,
+    getCallRecording,
+    userLogged,
+    viciOnAir,
+  ]);
 
   const noCallback = useCallback(() => {
     setConfirm(false);

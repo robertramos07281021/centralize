@@ -586,15 +586,13 @@ const FieldListDisplay = memo(
 );
 
 const FieldDisplay = memo(
-  ({
-    label,
-    value,
-  }: {
-    label: string;
-    value: React.ReactNode;
-  }) => {
+  ({ label, value }: { label: string; value: React.ReactNode }) => {
     const hasValue = value !== null && value !== undefined && value !== "";
-    const displayValue = hasValue ? value : <div className="italic text-gray-400">No information</div>;
+    const displayValue = hasValue ? (
+      value
+    ) : (
+      <div className="italic text-gray-400">No information</div>
+    );
 
     return (
       <div className=" w-full  mt-1 lg:text-xs text-[0.8em] ">
@@ -602,7 +600,9 @@ const FieldDisplay = memo(
           {label}:
         </div>
         <div
-          className={`${hasValue ? "p-2.5" : "p-2.5"} w-full border border-black rounded-sm  bg-gray-50 text-black text-wrap`}
+          className={`${
+            hasValue ? "p-2.5" : "p-2.5"
+          } w-full border border-black rounded-sm  bg-gray-50 text-black text-wrap`}
         >
           {displayValue}
         </div>
@@ -712,6 +712,7 @@ const CustomerDisposition = () => {
   const debouncedSearch = useMemo(() => {
     return debounce(async (val: string) => {
       if (val && val.trim() !== "") {
+        await caiiRefetching();
         const res = await refetch({ search: val });
         setIsSearch(res.data.search);
       }
@@ -736,12 +737,12 @@ const CustomerDisposition = () => {
         setSearch("");
       },
       onError: (err) => {
-        if (err.message.includes("Already taken")) {
+        if (err.message.includes("Already handled")) {
           dispatch(setSelectedCustomer(null));
           dispatch(
             setSuccess({
               success: true,
-              message: "Customer already taken by other agent",
+              message: "Customer already handled by other agent",
               isMessage: false,
             })
           );
@@ -780,6 +781,14 @@ const CustomerDisposition = () => {
   });
 
   const checkIfAgentIsInline = data?.checkIfAgentIsInline;
+
+  const newInline = checkIfAgentIsInline
+    ?.split(",")
+    .map((x) => {
+      const newViciStatus = x.split("|")[1];
+      return newViciStatus;
+    })
+    .filter((x) => x !== null || x !== undefined);
 
   const clearSelectedCustomer = useCallback(async () => {
     const res = await deselectTask({
@@ -908,34 +917,46 @@ const CustomerDisposition = () => {
 
   const autoSearch = useCallback(async () => {
     const { data } = await caiiRefetching();
-    if (data?.checkIfAgentIsInline) {
-      setViciDialStatus(data?.checkIfAgentIsInline);
-      setErrorMessage(null);
-      const splitInline = data.checkIfAgentIsInline?.split("|") ?? null;
-      dispatch(
-        setViciOnAir(
-          `${splitInline[10]}|${splitInline[splitInline.length - 1]}`
-        )
-      );
-      const res = await refetch({ search: splitInline[10] });
-      if (!res.error) {
-        if (res.data.search.length > 1) {
-          setIsSearch(res.data.search);
-        } else if (res.data.search.length === 1) {
-          const selectingTask = await selectTask({
-            variables: { id: res.data.search[0]._id },
-          });
-          if (!selectingTask?.errors) {
-            dispatch(setSelectedCustomer(res.data.search[0]));
+    const splitData = data.checkIfAgentIsInline.split(",");
+    const newInline = splitData
+      .map((x) => {
+        const newViciStatus = x.split("|")[1];
+        return  newViciStatus;
+      })
+      .filter((x) => x !== null && x !== undefined && x !== "");
+  
+    if (newInline?.length === 1) {
+      const inlineDataWithCall = splitData.filter(
+        (x) => x.split("|")[1] !== undefined && x.split("|")[1] !== null && x.split("|")[1] !== ""
+      ).toString();
+        setErrorMessage(null);
+        setViciDialStatus(data?.checkIfAgentIsInline);
+        const splitInline = inlineDataWithCall?.split("|") ?? null;
+        const res = await refetch({ search: splitInline[10] });
+        if (!res.error) {
+          dispatch(
+            setViciOnAir(
+              `${splitInline[10]}|${splitInline[splitInline.length - 1]}`
+            )
+          );
+          if (res.data.search.length > 1) {
+            setIsSearch(res.data.search);
+          } else if (res.data.search.length === 1) {
+            const selectingTask = await selectTask({
+              variables: { id: res.data.search[0]._id },
+            });
+            if (!selectingTask?.errors) {
+              dispatch(setSelectedCustomer(res.data.search[0]));
+            }
           }
         }
-      }
+      
     } else {
-      setErrorMessage(
-        !data.checkIfAgentIsInline
-          ? "You dont have any call on vicidial"
-          : data.checkIfAgentIsInline
-      );
+      if (newInline.length < 1) {
+        setErrorMessage("You dont have any call on vicidial.");
+      } else {
+        setErrorMessage("Kindly hang up the other active Vicidial call.");
+      }
     }
   }, [
     caiiRefetching,
@@ -1199,7 +1220,6 @@ const CustomerDisposition = () => {
 
     setConfirm(true);
     setManualDial(null);
-    // setPause(false);
     setModalProps({
       message: "End the call?",
       toggle: "CREATE",
@@ -1280,7 +1300,7 @@ const CustomerDisposition = () => {
           <div className="absolute bottom-3 left-3 ">
             <button
               className=" rounded-full text-2xl p-2 bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-none flex items-center justify-center cursor-pointer text-b transition-all font-bold "
-             title="Help?"
+              title="Help?"
               onClick={() => setShowHelper(true)}
             >
               <svg
@@ -1417,11 +1437,17 @@ const CustomerDisposition = () => {
                             <div
                               className={`absolute max-h-96 border border-black w-full  left-1/2 -translate-x-1/2 bg-white overflow-y-auto rounded-sm top-10`}
                             >
-                              <SearchResult
-                                data={isSearch || []}
-                                search={search}
-                                onClick={onClickSearch}
-                              />
+                              {newInline && newInline?.length > 1 ? (
+                                <div className="w-full h-full p-2 italic border text-slate-700 font-medium text-sm bg-gray-200 shadow shadow-black/50 rounded">
+                                  Kindly hang up the other active Vicidial call.
+                                </div>
+                              ) : (
+                                <SearchResult
+                                  data={isSearch || []}
+                                  search={search}
+                                  onClick={onClickSearch}
+                                />
+                              )}
                             </div>
                           )}
                           {isSearch && isSearch.length <= 0 && (
@@ -1434,20 +1460,35 @@ const CustomerDisposition = () => {
                       )}
                       <FieldDisplay
                         label="Full Name"
-                        value={selectedCustomer?.customer_info?.fullName|| <div className="italic text-gray-400">No information</div>}
+                        value={
+                          selectedCustomer?.customer_info?.fullName || (
+                            <div className="italic text-gray-400">
+                              No information
+                            </div>
+                          )
+                        }
                       />
                       <FieldDisplay
                         label="Date Of Birth (yyyy-mm-dd)"
-                        value={selectedCustomer?.customer_info?.dob || <div className="italic text-gray-400">No information</div>}
+                        value={
+                          selectedCustomer?.customer_info?.dob || (
+                            <div className="italic text-gray-400">
+                              No information
+                            </div>
+                          )
+                        }
                       />
                       <FieldDisplay
                         label="Gender"
                         value={(() => {
                           const gender =
                             selectedCustomer?.customer_info?.gender?.toLowerCase();
-                          if (gender === "f" || gender === "female") return "Female";
-                          if (gender === "m" || gender === "male") return "Male";
-                          if (gender === "o" || gender === "other") return "Other";
+                          if (gender === "f" || gender === "female")
+                            return "Female";
+                          if (gender === "m" || gender === "male")
+                            return "Male";
+                          if (gender === "o" || gender === "other")
+                            return "Other";
                           return null;
                         })()}
                       />
