@@ -12,8 +12,8 @@ const SetupView = () => {
   return (
     <div className="w-full flex relative flex-col h-full overflow-auto p-5">
       <div className="flex py-2 justify-between items-center">
-        <h1 className="text-2xl text-slate-500 font-black uppercase">
-          Branch & Department
+        <h1 className="text-2xl text-black font-black uppercase">
+          Branch, Campaign, and Bucket Configuration
         </h1>
         <div className="uppercase flex gap-3 font-black mr-10">
           <motion.div
@@ -48,7 +48,7 @@ const SetupView = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-3 h-full overflow-hidden">
+      <div className="grid grid-cols-3 gap-2 h-full overflow-hidden">
         <BranchSection branch={branch} setBranch={setBranch} />
         <DepartmentSection campaign={campaign} setCampaign={setCampaign} />
         <BucketSection buckets={buckets} setBuckets={setBuckets} />

@@ -96,6 +96,10 @@ export type CustomerData = {
   total_os: number;
   txn_fee_os: number;
   vendor_endorsement: string;
+  term: number;
+  paid: number;
+  product: string;
+  rem_months: number;
 };
 
 // =======================
@@ -126,6 +130,10 @@ export type OutStandingDetails = {
   new_tad_with_sf: number;
   new_pay_off: number;
   service_fee: number;
+  rem_months: number;
+  paid: number;
+  product: string;
+  term: number;
 };
 
 type grassDetails = {

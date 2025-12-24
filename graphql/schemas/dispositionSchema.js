@@ -112,7 +112,7 @@ const dispositionTypeDefs = gql`
   }
 
   type DailyFTE {
-    totalUsers: Int
+    totalUsers: [User]
   }
 
   type AomDailyCollection {

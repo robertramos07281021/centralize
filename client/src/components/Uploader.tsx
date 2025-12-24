@@ -112,6 +112,10 @@ const Uploader: React.FC<modalProps> = ({
             model,
             last_payment_amount,
             last_payment_date,
+            term,
+            rem_months,
+            paid,
+            product,
             ...others
           } = row;
 
@@ -193,6 +197,11 @@ const Uploader: React.FC<modalProps> = ({
             new_tad_with_sf: Number(new_tad_with_sf) || 0,
             new_pay_off: Number(new_pay_off) || 0,
             service_fee: Number(service_fee) || 0,
+            rem_months: Number(rem_months) || 0,
+            term: Number(term) || 0,
+            paid: Number(paid) || 0,
+            
+
             last_payment_amount: Number(last_payment_amount) || 0,
             gender: isNaN(gender) ? gender : "O",
           } as Record<string, any>;
@@ -200,11 +209,15 @@ const Uploader: React.FC<modalProps> = ({
           if (emergencyContactMobile) {
             rows["emergencyContactMobile"] = normalizePHNumber(
               emergencyContactMobile
-            ).toString();
+            );
           }
 
           if (model) {
             rows["model"] = model.toString().trim();
+          }
+
+          if (product) {
+            rows["product"] = product.toString().trim();
           }
 
           if (year) {

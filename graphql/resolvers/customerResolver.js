@@ -98,7 +98,7 @@ const customerResolver = {
             },
           })
         ).map((x) => x._id);
-
+ 
         const accounts = await Customer.aggregate([
           {
             $match: {
@@ -285,6 +285,10 @@ const customerResolver = {
               last_payment_amount:
                 "$ca.out_standing_details.last_payment_amount",
               last_payment_date: "$ca.out_standing_details.last_payment_date",
+              rem_months: "$ca.out_standing_details.rem_months",
+              product: "$ca.out_standing_details.product",
+              paid: "$ca.out_standing_details.paid",
+              term: "$ca.out_standing_details.term",
             },
           },
         ]);
@@ -1287,6 +1291,10 @@ const customerResolver = {
               model: e.model,
               last_payment_date: e.last_payment_date,
               last_payment_amount: e.last_payment_amount,
+              term: e.term,
+              paid: e.paid,
+              rem_months: e.rem_months,
+              product: e.product,
             },
             emergency_contact: {
               name: e.emergencyContactName,
@@ -1340,8 +1348,14 @@ const customerResolver = {
     ) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
-        const filtersEmail = emails.filter((x) => x.trim() !== "");
-        const filtersMobile = mobiles.filter((x) => x.trim() !== "");
+        const safeEmails = Array.isArray(emails) ? emails : [];
+        const safeMobiles = Array.isArray(mobiles) ? mobiles : [];
+        const filtersEmail = safeEmails.filter(
+          (x) => typeof x === "string" && x.trim() !== ""
+        );
+        const filtersMobile = safeMobiles.filter(
+          (x) => typeof x === "string" && x.trim() !== ""
+        );
         const findCustomer = await Customer.findById(id);
         const ToUpdate = {
           fullName,

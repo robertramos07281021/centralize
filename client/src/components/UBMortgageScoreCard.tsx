@@ -995,6 +995,7 @@ const UBMortgageScoreCard = () => {
       worksheet.getRow(4).height = 13;
       worksheet.getRow(5).height = 13;
       worksheet.getRow(7).height = 25;
+      worksheet.getRow(27).height = 15;
 
       worksheet.mergeCells("C2:E2");
       worksheet.getCell("C2").value = formattedMonthYear;
@@ -1031,6 +1032,7 @@ const UBMortgageScoreCard = () => {
       worksheet.getCell("J7").value = "Agent Name:";
       worksheet.getCell("K7").value = "Score:";
       applyBorder(worksheet, 7, 7, 2, 11, thickBorder);
+    
 
       worksheet.mergeCells("B8:C8");
       worksheet.mergeCells("B9:C9");

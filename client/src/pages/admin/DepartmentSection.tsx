@@ -26,7 +26,6 @@ const CREATEDEPT = gql`
   }
 `;
 
-
 const UPDATEDEPT = gql`
   mutation updateDept(
     $name: String!
@@ -410,31 +409,28 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
   }, [setIsUpdate, setDeptToModify, setName, setBranch, setAom]);
 
   return (
-    <div className=" h-full overflow-hidden">
-      <div className="h-full flex flex-col overflow-hidden">
-        <div className=" items-center my-5 justify-center w-full">
-          <div className="px-4 bg-white">
-            <motion.h1
-              className="font-black text-gray-300 uppercase text-center text-2xl "
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.1 }}
-            >
-              Campaign
-            </motion.h1>
-          </div>
+    <div className=" h-full  overflow-hidden">
+      <motion.div className="h-full border rounded-md  flex flex-col overflow-hidden"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.2 }}
+      >
+        <div className="bg-yellow-600 items-center border-b py-3 justify-center w-full">
+          <h1
+            className="font-black text-white uppercase text-center text-2xl "
+          >
+            Campaign
+          </h1>
         </div>
-        <div className="flex gap-5 h-full justify-center overflow-hidden">
-          <div className="h-full  flex flex-col gap-3 pr-1 overflow-y-auto">
+        <div className="flex gap-5 bg-yellow-400 h-full justify-center overflow-hidden">
+          <div className="h-full  flex flex-col gap-2 p-4 overflow-y-auto">
             {dept?.getDepts.map((d, index) => {
               return (
                 d.name !== "ADMIN" && (
-                  <motion.div
+                  <div
                     key={d.id}
-                    className="justify-between border shadow-sm font-black rounded-md bg-gray-200 even:bg-gray-300  px-5 py-2 hover:bg-gray-400  text-slate-800 grid grid-cols-5 gap-5 text-center items-center"
-                    initial={{ y: 20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    transition={{ delay: index * 0.1 }}
+                    className="justify-between border  hover:shadow-lg border-black shadow-sm font-black rounded-md bg-yellow-100 even:bg-yellow-200  px-5 py-2  text-black grid grid-cols-5 gap-5 text-center items-center"
+                
                   >
                     <div className="col-span-2 text-left ">
                       {d?.name.replace(/_/g, " ")}
@@ -492,13 +488,13 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
                         </svg>
                       </div>
                     </div>
-                  </motion.div>
+                  </div>
                 )
               );
             })}
           </div>
         </div>
-      </div>
+      </motion.div>
       <AnimatePresence>
         {campaign && (
           <div className=" absolute z-50 top-0 left-0 w-full h-full flex justify-center items-center gap-5">

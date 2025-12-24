@@ -27,6 +27,10 @@ const bucketSchema = new Schema(
     issabelIp: {
       type: String,
     },
+    isPermanent: {
+      type: Boolean,
+      default: false
+    },
     message: {
       type:String
     },

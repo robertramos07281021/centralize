@@ -437,13 +437,13 @@ const callResolver = {
     checkIfAgentIsInline: async (_, __, { user }) => {
       try {
         if (!user) throw new CustomError("Unauthorized", 401);
-
         const findUser = await User.findById(user._id)
           .populate("buckets", "viciIp viciIp_auto")
           .lean();
 
-        if (findUser.vici_id.trim() === "")
-          throw new CustomError("Please", 401);
+        const viciId = findUser?.vici_id || "";
+
+        if (viciId?.trim() === "") throw new CustomError("Please", 401);
 
         const bucket =
           findUser?.buckets?.length > 0
@@ -461,24 +461,27 @@ const callResolver = {
 
         const chechIfisOnline = await Promise.all(
           bucket.map(async (x) => {
-           
+            const data = [];
             const res = await checkIfAgentIsInlineOnVici(
               findUser?.vici_id,
               x.viciIp
             );
-
-            const resAuto = await checkIfAgentIsInlineOnVici(
-              findUser?.vici_id,
-              x.viciIp_auto
-            );
-            
-            return `${res}|${x.viciIp},${resAuto}|${x.viciIp_auto}`;
+  
+            data.push((`${res.trim('\n') + "|" + x.viciIp}`).toString());
+        
+            if (x.viciIp_auto) {
+              const resAuto = await checkIfAgentIsInlineOnVici(
+                findUser?.vici_id,
+                x.viciIp_auto
+              );
+              data.push((`${resAuto.trim('\n') + "|" + x.viciIp_auto}`).toString());
+            }
+            return data.toString();
           })
         );
-  
+      
         return chechIfisOnline.toString();
       } catch (error) {
-   
         throw new CustomError(error.message, 500);
       }
     },
@@ -490,7 +493,7 @@ const callResolver = {
 
         if (!selectedBucket?.viciIp) return null;
 
-        return await getLoggedInUser(selectedBucket.viciIp);
+        return await getLoggedInUser(selectedBucket?.viciIp);
       } catch (error) {
         throw new CustomError(error.message, 500);
       }
@@ -801,6 +804,8 @@ const callResolver = {
     },
     getCallRecording: async (_, { user_id, mobile }) => {
       try {
+        if (!Boolean(mobile)) return null;
+
         const date = new Date();
         const year = date.getFullYear();
         const day = date.getDate();
@@ -815,13 +820,15 @@ const callResolver = {
         );
         if (!findUser) throw new CustomError("User not found", 401);
 
-        if (findUser?.vici_id.trim() === "")
+        const viciId = findUser?.vici_id || "";
+
+        if (viciId.trim() === "")
           throw new CustomError(
             "Please Contact Admin to add Vici dial ID",
             401
           );
 
-        const splitMobile = mobile.split("|");
+        const splitMobile = mobile?.split("|");
 
         const bucket =
           findUser?.buckets?.length > 0
@@ -837,18 +844,15 @@ const callResolver = {
               )
             : [];
 
-        const res = await getRecordings(splitMobile[1], findUser?.vici_id);
-
+        const res = await getRecordings(splitMobile[1], viciId);
+        
         if (!res) return null;
 
-        const userInfoRes = await getUserInfo(
-          splitMobile[1],
-          findUser?.vici_id
-        );
-        const campaign_ID = userInfoRes.split("computer_ip")[1].split(",")[3];
+        const userInfoRes = await getUserInfo(splitMobile[1], viciId);
+        const campaign_ID = userInfoRes.split("computer_ip")[1]?.split(",")[3];
 
-        const secondSplitRes = res.split(" ") || [];
-        const forDuration = res.split("|") || [];
+        const secondSplitRes = res?.split(" ") || [];
+        const forDuration = res?.split("|") || [];
 
         const duration = forDuration[forDuration.length - 2];
 
@@ -856,7 +860,7 @@ const callResolver = {
           .split("|")[0]
           .replace(/:/g, "");
 
-        return `${campaign_ID}_${newDate}-${time}_${findUser?.vici_id}_${splitMobile[0]}-all.mp3_${duration}`;
+        return `${campaign_ID}_${newDate}-${time}_${viciId}_${splitMobile[0]}-all.mp3_${duration}`;
       } catch (error) {
         throw new CustomError(error.message, 500);
       }

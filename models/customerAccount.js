@@ -74,21 +74,25 @@ const customerAccountSchema = new Schema(
     },
     features: {
       branch: {
-        type: String
+        type: String,
       },
       account_type: {
         type: String,
-        enum: ['call','skip','field'],
-        default: 'call'
+        enum: ["call", "skip", "field"],
+        default: "call",
       },
       called: {
         type: Number,
-        default: 0
+        default: 0,
       },
       alreadyCalled: {
         type: Boolean,
-        default: false
-      }
+        default: false,
+      },
+      permanent: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
     },
     account_update_history: [
       {
@@ -165,7 +169,7 @@ const customerAccountSchema = new Schema(
       },
       overall_balance: {
         type: Number,
-        default: 0
+        default: 0,
       },
       cf: {
         type: Number,
@@ -173,22 +177,22 @@ const customerAccountSchema = new Schema(
       },
       mo_balance: {
         type: Number,
-        default: 0
+        default: 0,
       },
       pastdue_amount: {
         type: Number,
-        default: 0
+        default: 0,
       },
       mo_amort: {
         type: Number,
-        default: 0
+        default: 0,
       },
       partial_payment_w_service_fee: {
         type: Number,
-        default: 0, 
+        default: 0,
       },
       new_tad_with_sf: {
-        type: Number, 
+        type: Number,
         default: 0,
       },
       new_pay_off: {
@@ -215,8 +219,23 @@ const customerAccountSchema = new Schema(
       last_payment_date: {
         type: String,
       },
+      term: {
+        type: Number,
+        default: 0,
+      },
+      paid: {
+        type: Number,
+        default: 0,
+      },
+      rem_months: {
+        type: Number,
+        default: 0,
+      },
+      product: {
+        type: String,
+      },
     },
-    isPTP: {  
+    isPTP: {
       type: Boolean,
       defualt: false,
     },
@@ -240,6 +259,7 @@ const customerAccountSchema = new Schema(
         type: String,
       },
     },
+
     active: {
       type: Boolean,
     },

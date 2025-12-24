@@ -52,6 +52,10 @@ const customerTypeDefs = gql`
     model: String
     last_payment_amount: Float
     last_payment_date: String
+    paid: Float
+    term: Float
+    rem_months: Float
+    product: String
   }
 
   type CustomerInfo {
@@ -99,6 +103,10 @@ const customerTypeDefs = gql`
     model: String
     last_payment_amount: Float
     last_payment_date: String
+    paid: Float
+    term: Float
+    rem_months: Float
+    product: String
   }
 
   type grassDetails {

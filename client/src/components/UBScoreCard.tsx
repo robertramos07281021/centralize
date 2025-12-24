@@ -9,7 +9,6 @@ import {
 } from "react";
 import type ExcelJS from "exceljs";
 import { AnimatePresence, motion } from "framer-motion";
-import { month as MONTHS } from "../middleware/exports";
 import { gql, useQuery, useMutation } from "@apollo/client";
 import { useAppDispatch } from "../redux/store";
 import { setSuccess } from "../redux/slices/authSlice";
@@ -262,29 +261,35 @@ const CallCommentSection = ({
 );
 
 const UBScoreCard = () => {
-  const [callComments, setCallComments] = useState<CallComment[]>(() =>
+  const currentMonthLabel = useMemo(
+    () => new Date().toLocaleString("en-US", { month: "long" }),
+    []
+  );
+  const createInitialCallComments = () =>
     Array.from({ length: 5 }, (_, idx) => ({
       call: idx + 1,
       agent: "",
       tl: "",
       actionPlan: "",
-    }))
+    }));
+  const createInitialCallContactStatuses = () => Array(5).fill(true);
+  const [callComments, setCallComments] = useState<CallComment[]>(
+    createInitialCallComments
   );
-  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [selectedMonth] = useState<string>(currentMonthLabel);
   const [selectedCollectionOfficer, setSelectedCollectionOfficer] =
     useState<string>("");
   const [selectedEvaluator, setSelectedEvaluator] = useState<string>("");
-  const [isMonthMenuOpen, setMonthMenuOpen] = useState(false);
   const [isCollectionMenuOpen, setCollectionMenuOpen] = useState(false);
   const [isEvaluatorMenuOpen, setEvaluatorMenuOpen] = useState(false);
   const [questionCallValues, setQuestionCallValues] = useState<{
     [questionKey: string]: number[];
   }>({});
   const [callContactStatuses, setCallContactStatuses] = useState<boolean[]>(
-    () => Array(5).fill(true)
+    createInitialCallContactStatuses
   );
+  const [formResetKey, setFormResetKey] = useState(0);
   const [isExportingExcel, setIsExportingExcel] = useState(false);
-  const monthFieldRef = useRef<HTMLDivElement | null>(null);
   const collectionFieldRef = useRef<HTMLDivElement | null>(null);
   const evaluatorFieldRef = useRef<HTMLDivElement | null>(null);
   const [createUBScoreCardData] = useMutation(CREATE_UB_SCORECARD, {
@@ -885,6 +890,17 @@ const UBScoreCard = () => {
     }
   };
 
+  const resetForm = () => {
+    setCallComments(createInitialCallComments());
+    setSelectedCollectionOfficer("");
+    setSelectedEvaluator("");
+    setCollectionMenuOpen(false);
+    setEvaluatorMenuOpen(false);
+    setQuestionCallValues({});
+    setCallContactStatuses(createInitialCallContactStatuses());
+    setFormResetKey((prev) => prev + 1);
+  };
+
   const handleSaveAndExport = async () => {
     if (!selectedMonth) return alert("Please select a month");
     if (!selectedCollectionOfficer)
@@ -1046,7 +1062,10 @@ const UBScoreCard = () => {
           },
         },
       });
-      await handleExportExcel();
+      const exported = await handleExportExcel();
+      if (exported) {
+        resetForm();
+      }
     } catch (err: any) {
       if (err.graphQLErrors && err.graphQLErrors.length > 0) {
         console.error("GraphQL Errors:", err.graphQLErrors);
@@ -1105,15 +1124,12 @@ const UBScoreCard = () => {
   }, [callScores]);
 
   useEffect(() => {
-    if (!isMonthMenuOpen && !isCollectionMenuOpen && !isEvaluatorMenuOpen) {
+    if (!isCollectionMenuOpen && !isEvaluatorMenuOpen) {
       return;
     }
 
     const handleClickAway = (event: MouseEvent) => {
       const target = event.target as Node;
-      if (monthFieldRef.current?.contains(target)) {
-        return;
-      }
       if (collectionFieldRef.current?.contains(target)) {
         return;
       }
@@ -1121,19 +1137,13 @@ const UBScoreCard = () => {
         return;
       }
 
-      setMonthMenuOpen(false);
       setCollectionMenuOpen(false);
       setEvaluatorMenuOpen(false);
     };
 
     document.addEventListener("mousedown", handleClickAway);
     return () => document.removeEventListener("mousedown", handleClickAway);
-  }, [isMonthMenuOpen, isCollectionMenuOpen, isEvaluatorMenuOpen]);
-
-  const handleMonthSelect = (month: string) => {
-    setSelectedMonth(month);
-    setMonthMenuOpen(false);
-  };
+  }, [isCollectionMenuOpen, isEvaluatorMenuOpen]);
 
   const handleContactStatusChange = useCallback(
     (callIndex: number, hasContact: boolean) => {
@@ -1201,6 +1211,7 @@ const UBScoreCard = () => {
   return (
     <div className="p-5 flex flex-col  text-black w-full max-h-[90vh]">
       <motion.div
+        key={formResetKey}
         className="border flex rounded-md overflow-hidden flex-col h-full"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
@@ -1227,66 +1238,8 @@ const UBScoreCard = () => {
                   <div className="bg-gray-400 rounded-t-md px-5 border-b py-1">
                     For the month
                   </div>
-                  <div className="relative" ref={monthFieldRef}>
-                    <motion.div
-                      role="button"
-                      tabIndex={0}
-                      className="flex text-black bg-white cursor-pointer items-center justify-between gap-2 px-5 py-1 text-sm"
-                      onClick={() => setMonthMenuOpen((prev) => !prev)}
-                      onKeyDown={(event) => {
-                        if (event.key === "Enter" || event.key === " ") {
-                          event.preventDefault();
-                          setMonthMenuOpen((prev) => !prev);
-                        }
-                      }}
-                      aria-expanded={isMonthMenuOpen}
-                      aria-haspopup="listbox"
-                    >
-                      <span>{selectedMonth || "Select Month"}</span>
-                      <motion.span
-                        className="text-xs"
-                        animate={{ rotate: isMonthMenuOpen ? 90 : 0 }}
-                        transition={{ duration: 0.2 }}
-                      >
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          strokeWidth="3"
-                          stroke="currentColor"
-                          className="size-4"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            d="m8.25 4.5 7.5 7.5-7.5 7.5"
-                          />
-                        </svg>
-                      </motion.span>
-                    </motion.div>
-                    <AnimatePresence>
-                      {isMonthMenuOpen && (
-                        <motion.div
-                          initial={{ opacity: 0, y: -6 }}
-                          animate={{ opacity: 1, y: 0 }}
-                          exit={{ opacity: 0, y: -6 }}
-                          transition={{ duration: 0.15 }}
-                          className="absolute z-20  left-0 top-full mt-1 h-44 w-full overflow-auto rounded-sm border border-black bg-white shadow-lg"
-                          role="listbox"
-                        >
-                          {MONTHS.map((month) => (
-                            <button
-                              type="button"
-                              key={month}
-                              className="w-full text-left cursor-pointer even:bg-gray-200 odd:bg-gray-100 border-b last:border-b-0 px-4 py-2 text-sm hover:bg-gray-300"
-                              onClick={() => handleMonthSelect(month)}
-                            >
-                              {month}
-                            </button>
-                          ))}
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
+                  <div className="flex text-black bg-white items-center gap-2 px-5 py-1 text-sm">
+                    <span>{selectedMonth}</span>
                   </div>
                 </div>
                 <div className="grid grid-rows-2 border-b">
@@ -1301,7 +1254,6 @@ const UBScoreCard = () => {
                       onClick={() =>
                         setCollectionMenuOpen((prev) => {
                           if (!prev) {
-                            setMonthMenuOpen(false);
                             setEvaluatorMenuOpen(false);
                           }
                           return !prev;
@@ -1312,7 +1264,6 @@ const UBScoreCard = () => {
                           event.preventDefault();
                           setCollectionMenuOpen((prev) => {
                             if (!prev) {
-                              setMonthMenuOpen(false);
                               setEvaluatorMenuOpen(false);
                             }
                             return !prev;
@@ -1388,7 +1339,6 @@ const UBScoreCard = () => {
                       onClick={() =>
                         setEvaluatorMenuOpen((prev) => {
                           if (!prev) {
-                            setMonthMenuOpen(false);
                             setCollectionMenuOpen(false);
                           }
                           return !prev;
@@ -1399,7 +1349,6 @@ const UBScoreCard = () => {
                           event.preventDefault();
                           setEvaluatorMenuOpen((prev) => {
                             if (!prev) {
-                              setMonthMenuOpen(false);
                               setCollectionMenuOpen(false);
                             }
                             return !prev;

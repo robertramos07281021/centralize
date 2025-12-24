@@ -168,8 +168,6 @@ const QASupervisorView = () => {
     }
   }, [userId?.userId]);
 
-  const deptVariables = useMemo(() => ({ depts: userId?.departments }), [userId?.departments]);
-
   const {
     data: deptBucketData,
     refetch: deptBucketRefetch,
@@ -177,22 +175,20 @@ const QASupervisorView = () => {
   } = useQuery<{
     getDepartmentBucket: Bucket[];
   }>(GET_DEPARTMENT_BUCKET, {
-    variables: {
-      deptVariables,
-    },
+    variables: { depts: userId?.departments },
     skip: !userId?.userId,
     notifyOnNetworkStatusChange: true,
   });
   console.log("deptBucketData", deptBucketData);
   useEffect(() => {
     const refetching = async () => {
-      await deptBucketRefetch();
+      await deptBucketRefetch({ depts: userId.departments });
     };
 
     if (userId?.userId) {
       refetching();
     }
-  }, [userId.departments]);
+  }, [userId.departments, deptBucketRefetch]);
 
   const newBucketMap = useMemo(() => {
     const data = bucketData?.getAllBucket || [];
@@ -590,7 +586,6 @@ const QASupervisorView = () => {
             <div className="flex justify-center">online</div>
             <div className="flex justify-center">Score card</div>
 
-            <div className="flex justify-center">lock</div>
 
             <div className="flex justify-center"></div>
           </div>

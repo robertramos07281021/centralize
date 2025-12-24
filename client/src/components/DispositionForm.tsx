@@ -608,8 +608,8 @@ const DispositionForm: React.FC<Props> = ({
   const creatingDispo = useCallback(async () => {
     let callId: string | undefined;
 
-    if (viciOnAir) {
-      const vicidialIp = viciOnAir.split("|")[1];
+    if (Boolean(viciOnAir) && data?.contact_method === AccountType.CALL) {
+      const vicidialIp = viciOnAir?.split("|")[1];
       const callIdRes = await getCallRecording({
         variables: { user_id: userLogged?._id, mobile: viciOnAir },
       });

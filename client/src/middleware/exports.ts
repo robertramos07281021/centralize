@@ -355,23 +355,23 @@ export const accountsNavbar: { [key: string]: links[] } = {
       link: null,
       tabs: [
         {
-          name: "Score Card Overview",
+          name: "Score Sheet Overview",
           link: "/scorecard-overview",
         },
         {
-          name: "Default Score Card",
+          name: "Default Score Sheet",
           link: "/default-score-card",
         },
         {
-          name: "UB Cards Score Card",
+          name: "UB Cards Score Sheet",
           link: "/ub-score-card",
         },
         {
-          name: "Eastwest Score Card",
+          name: "Eastwest Score Sheet",
           link: "/eastwest-score-card",
         },
         {
-          name: "UB Mortgage Score Card",
+          name: "UB Mortgage Score Sheet",
           link: "/ub-mortgage-score-card",
         },
       ],

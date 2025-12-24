@@ -235,33 +235,25 @@ const BranchSection: React.FC<BranchSectionProps> = ({ branch, setBranch }) => {
   );
 
   return (
-    <div className=" w-full h-full overflow-hidden">
+    <motion.div
+      className="border rounded-md bg-gray-200 w-full h-full overflow-hidden"
+      initial={{ scale: 0.8, opacity: 0 }}
+      animate={{ scale: 1, opacity: 1 }}
+      transition={{ delay: 0 }}
+    >
       <div className=" h-full w-full">
-        <div className="flex items-center justify-center my-5 w-full">
-          <div className=" px-4  bg-white  dark:bg-gray-900">
-            <motion.h1
-              className="text-2xl font-black uppercase text-gray-300"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-            >
-              Branch
-            </motion.h1>
-          </div>
+        <div className="flex bg-purple-600 text-white items-center justify-center py-3 border-b border-black w-full">
+          <h1 className="text-2xl font-black uppercase">Branch</h1>
         </div>
-        <div className="flex gap-10 justify-center items-center w-full h-full">
-          <div className="h-full pb-2 w-full flex flex-col gap-3 rounded-xl overflow-y-auto px-4">
+        <div className="flex gap-10 bg-purple-300 justify-center items-center w-full h-full">
+          <div className="h-full w-full flex flex-col gap-2 rounded-xl overflow-y-auto p-4">
             {data?.getBranches?.map((branch, index) => (
-              <motion.div
+              <div
                 key={branch.id}
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: index * 0.1 }}
-                className="even:bg-gray-200 border bg-gray-300 rounded-md"
+                className="even:bg-purple-100 text-black border shadow-md odd:bg-purple-200 rounded-md"
               >
-                <div className="flex flex-row justify-between items-center px-4 shadow-sm py-2 gap-10  hover:bg-gray-400 hover:shadow-lg transition-all rounded-md">
-                  <p className="uppercase text-slate-800 font-black  ">
-                    {branch.name}
-                  </p>
+                <div className="flex flex-row justify-between items-center px-4 shadow-sm py-2 gap-10 hover:shadow-lg transition-all rounded-md">
+                  <p className="uppercase font-black  ">{branch.name}</p>
                   <div className="flex gap-2">
                     <div
                       onClick={() => {
@@ -275,9 +267,9 @@ const BranchSection: React.FC<BranchSectionProps> = ({ branch, setBranch }) => {
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
                         fill="currentColor"
-                          className={`" ${
-                            index === index ? "hover:rotate-90" : ""
-                          } transition-all size-5.5  "`}
+                        className={`" ${
+                          index === index ? "hover:rotate-90" : ""
+                        } transition-all size-5.5  "`}
                       >
                         <path
                           fillRule="evenodd"
@@ -324,7 +316,7 @@ const BranchSection: React.FC<BranchSectionProps> = ({ branch, setBranch }) => {
                     {/* <PiTrashFill className="text-red-400 hover:text-red-600 cursor-pointer" /> */}
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
           </div>
           <AnimatePresence>
@@ -413,7 +405,7 @@ const BranchSection: React.FC<BranchSectionProps> = ({ branch, setBranch }) => {
         </div>
       </div>
       {confirm && <Confirmation {...modalProps} />}
-    </div>
+    </motion.div>
   );
 };
 

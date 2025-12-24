@@ -1,6 +1,8 @@
 import viciImage from "../images/vicidial_on_dial.png";
 import ccsSearch from "../images/search.png";
 import dispositionPanel from "../images/dispositionPanel.png";
+import exclamationPointer from "../images/cannotDispo.png";
+import clickYes from "../images/clickYes.png";
 import { motion } from "framer-motion";
 
 type Props = {
@@ -78,8 +80,8 @@ const Helper: React.FC<Props> = ({ close }) => {
             >
               2. Click <strong>Search</strong>. If the customer account isn’t
               found, ask your TL to check if another agent has already claimed
-              it or their is an error to your account need to fixed, your
-              vicidial id registered on CCS.
+              it or there is an error to your account that needs to be fix, your
+              vicidial id register on CCS.
             </motion.div>
             <motion.div
               className="flex items-center justify-center"
@@ -126,6 +128,48 @@ const Helper: React.FC<Props> = ({ close }) => {
                 alt="Disposition Panel Image"
                 className="ms-5 mt-5"
               />
+            </motion.div>
+          </div>
+
+          <div className="mt-5 flex flex-col">
+            <motion.div
+              className=" mt-5"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.2 }}
+              viewport={{ once: false }}
+            >
+              <p className="mt-5 text-xl font-black uppercase">
+                Cannot dispose a customer account?
+              </p>
+              <p className="">
+                {/* &#9679; */}
+                1. First, check if the <strong>Red Exclamation Icon</strong> is visible then if it's visible select the <strong>Red Exclamation Icon</strong>{" "}
+                located in the
+                <strong> Upper-right corner</strong> of the dashboard, enter your
+                VICI ID and click <strong>Yes. </strong>Make sure your VICI ID is set to allow disposing of customer accounts and searching customer accounts. <strong className="text-gray-400 font-normal italic" >(The VICI ID is your birthdate)</strong>
+              </p>
+            </motion.div>
+            <motion.div
+              className=" flex items-center mt-2 justify-center"
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.4 }}
+              viewport={{ once: false }}
+            >
+              <div className="border border-black pr-5 items-center justify-center rounded-md shadow-md flex" >
+              <img
+                src={exclamationPointer}
+                alt="Red exclamation icon screenshot"
+                className="ms-5 mt-5"
+              />
+               <img
+                src={clickYes}
+                alt="Red exclamation icon screenshot"
+                className="ms-5 mt-5"
+              />
+
+              </div>
             </motion.div>
           </div>
         </div>

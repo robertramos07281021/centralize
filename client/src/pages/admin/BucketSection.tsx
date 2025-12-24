@@ -357,42 +357,41 @@ const BucketSection: React.FC<BranchSectionProps> = ({
   );
   return (
     <div className="flex overflow-hidden">
-      <div className="px-4 w-full flex flex-col overflow-hidden h-full">
-        <div className="my-5 items-center justify-center w-full">
-          <div className=" px-4  bg-white  dark:bg-gray-900">
-            <motion.h1
-              className="font-black uppercase text-center text-2xl text-gray-300 "
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              Bucket
-            </motion.h1>
-          </div>
+      <motion.div className="rounded-md border w-full flex flex-col overflow-hidden h-full"
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ delay: 0.4 }}
+      >
+        <div className="py-3 bg-green-600 border-b items-center justify-center w-full">
+          <motion.h1
+            className="font-black uppercase text-center text-2xl text-white "
+            initial={{ y: 20, opacity: 0 }}
+            animate={{ y: 0, opacity: 1 }}
+            transition={{ delay: 0.2 }}
+          >
+            Bucket
+          </motion.h1>
         </div>
-        <div className="flex gap-2 justify-center overflow-hidden ">
+        <div className="flex gap-2 p-4 bg-green-300 justify-center overflow-hidden ">
           <div className=" h-full w-full flex flex-col gap-2 pr-1 overflow-y-auto">
             {newDepts.map((nd, index) => {
               const findBucket = dept?.getDepts.find((x) => x.id === nd);
               return (
                 deptObject[nd] !== "ADMIN" && (
-                  <motion.div
+                  <div
                     key={index}
                     className={`${
                       nd.toString() === deptSelected?.toString()
-                        ? "bg-gray-400"
-                        : "even:bg-gray-200 bg-gray-100"
-                    } text-sm flex flex-col border uppercase font-black w-full text-slate-800 shadow-sm rounded-md even: p-2 border-black hover:bg-gray-400 cursor-pointer`}
+                        ? "bg-green-400"
+                        : "even:bg-green-200 bg-green-100"
+                    } text-sm flex flex-col border uppercase font-black w-full text-black shadow-md rounded-md even: p-2 border-black hover:bg-green-400 cursor-pointer`}
                     onClick={() => handleSelectDept(nd)}
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ delay: index * 0.1 }}
                   >
                     <p className="text-xs truncate py-1">
                       {deptObject[nd]?.replace(/_/g, " ")}-{" "}
                       <span>{findBucket?.branch}</span>
                     </p>
-                  </motion.div>
+                  </div>
                 )
               );
             })}
@@ -407,10 +406,10 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                       initial={{ x: 20, opacity: 0 }}
                       animate={{ x: 0, opacity: 1 }}
                       transition={{ delay: index * 0.1 }}
-                      className="bg-gray-200 border even:bg-gray-100 rounded-md shadow-sm"
+                      className="bg-green-200 border even:bg-green-100 rounded-md shadow-sm"
                       onClick={() => {}}
                     >
-                      <div className="text-xs overflow-hidden items-center font-black hover:shadow-md transition-all uppercase text-slate-800 px-5 py-2 hover:bg-gray-200 rounded-md cursor-pointer">
+                      <div className="text-xs overflow-hidden items-center font-black hover:shadow-md transition-all uppercase text-black px-5 py-2 hover:bg-green-200 rounded-md cursor-pointer">
                         <div className="grid  py-1 grid-rows-3 gap-1">
                           <div className="flex gap-2 truncate ">
                             <div className="">Name: </div>
@@ -780,7 +779,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
             )}
           </AnimatePresence>
         </div>
-      </div>
+      </motion.div>
       {confirm && <Confirmation {...modalProps} />}
     </div>
   );

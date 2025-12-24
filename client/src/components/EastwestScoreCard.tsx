@@ -167,12 +167,12 @@ const withContactSections: EvaluationSectionConfig[] = [
     title: "WRAP UP/CLOSING THE CALL",
     questions: [
       {
-        text: "Did the agent ask for payment confirmation?",
+        text: "Did the agent  ask for payment confirmation?	",
         defaultScore: 15,
         tag: "IMPORTANT",
       },
       {
-        text: "Did the agent reminded client of the next due date or payment schedule?",
+        text: "Did the agent reminded client of the next due date or payment schedule?	",
         defaultScore: 10,
         tag: "CRITICAL",
       },
@@ -389,7 +389,7 @@ const QuestionRow = ({
 const SectionTotalRow = ({ totalNo }: { totalNo: number }) => (
   <div className="flex shadow-md">
     <div className="w-full bg-gray-400 font-semibold uppercase rounded-bl-md px-3 py-1 border-l border-b">
-      Total NO
+      Total
     </div>
     <div className="grid w-[50%] bg-gray-400 rounded-br-md  items-center justify-center text-center border-r border-b grid-cols-3">
       <div className="border-x h-full items-center flex justify-center font-semibold">
@@ -586,6 +586,7 @@ const EastwestScoreCard = () => {
   const [cardholder, setCardholder] = useState("");
   const [accountNumber, setAccountNumber] = useState("");
   const [rateInput, setRateInput] = useState("");
+  const [isValidated, setIsValidated] = useState(true);
   const todayLabel = new Date().toLocaleDateString("en-US", {
     weekday: "long",
     month: "long",
@@ -605,21 +606,24 @@ const EastwestScoreCard = () => {
     skip: !userLogged,
     fetchPolicy: "cache-and-network",
   });
-  const [ ,{ loading: isSaving }] =
+  const [createScoreCardData, { loading: isSaving }] =
     useMutation(CREATE_SCORE_CARD);
+  const createInitialWithContactResponses = () =>
+    withContactSections.map((section) => section.questions.map(() => true));
+  const createInitialWithoutContactResponses = () =>
+    withoutContactSections.map((section) => section.questions.map(() => true));
   const [selectedEvaluator, setSelectedEvaluator] = useState<TL | null>(null);
   const [selectedAgent, setSelectedAgent] = useState<Agent | null>(null);
   const [acknowledgedBy, setAcknowledgedBy] = useState("");
+  const [evaluatorRemarks, setEvaluatorRemarks] = useState("");
+  const [agentRemarks, setAgentRemarks] = useState("");
   const [withContactResponses, setWithContactResponses] = useState<boolean[][]>(
-    () =>
-      withContactSections.map((section) => section.questions.map(() => true))
+    createInitialWithContactResponses
   );
 
   const [withoutContactResponses, setWithoutContactResponses] = useState<
     boolean[][]
-  >(() =>
-    withoutContactSections.map((section) => section.questions.map(() => true))
-  );
+  >(createInitialWithoutContactResponses);
 
   const toggleResponse = (
     column: "with" | "without",
@@ -818,59 +822,59 @@ const EastwestScoreCard = () => {
   //   return rows;
   // };
 
-  // const buildScoreDetailsPayload = (evaluationDateIso: string) => {
-  //   const mapSections = (
-  //     sections: EvaluationSectionConfig[],
-  //     responses: boolean[][],
-  //     counts: number[]
-  //   ) =>
-  //     sections.map((section, sIdx) => ({
-  //       headingLabel: section.headingLabel ?? "",
-  //       title: section.title,
-  //       totalNo: counts[sIdx] ?? 0,
-  //       questions: section.questions.map((q, qIdx) => {
-  //         const isYes = responses[sIdx]?.[qIdx] ?? true;
-  //         return {
-  //           text: q.text,
-  //           tag: q.tag,
-  //           defaultScore: q.defaultScore,
-  //           response: isYes ? "YES" : "NO",
-  //           penalty: isYes ? 0 : q.defaultScore,
-  //         };
-  //       }),
-  //     }));
+  const buildScoreDetailsPayload = (evaluationDateIso: string) => {
+    const mapSections = (
+      sections: EvaluationSectionConfig[],
+      responses: boolean[][],
+      counts: number[]
+    ) =>
+      sections.map((section, sIdx) => ({
+        headingLabel: section.headingLabel ?? "",
+        title: section.title,
+        totalNo: counts[sIdx] ?? 0,
+        questions: section.questions.map((q, qIdx) => {
+          const isYes = responses[sIdx]?.[qIdx] ?? true;
+          return {
+            text: q.text,
+            tag: q.tag,
+            defaultScore: q.defaultScore,
+            response: isYes ? "YES" : "NO",
+            penalty: isYes ? 0 : q.defaultScore,
+          };
+        }),
+      }));
 
-  //   return {
-  //     meta: {
-  //       evaluationDate: evaluationDateIso,
-  //       acknowledgedBy,
-  //       agent: selectedAgent
-  //         ? { id: selectedAgent._id, name: selectedAgent.name }
-  //         : null,
-  //       evaluator: selectedEvaluator
-  //         ? { id: selectedEvaluator._id, name: selectedEvaluator.name }
-  //         : null,
-  //       cardholder,
-  //       accountNumber,
-  //       enteredRate: rateInput,
-  //     },
-  //     withContact: mapSections(
-  //       withContactSections,
-  //       withContactResponses,
-  //       withTotals.perCategory
-  //     ),
-  //     withoutContact: mapSections(
-  //       withoutContactSections,
-  //       withoutContactResponses,
-  //       withoutTotals.perCategory
-  //     ),
-  //     totals: {
-  //       withContact: withTotals.noCount,
-  //       withoutContact: withoutTotals.noCount,
-  //       finalScore,
-  //     },
-  //   };
-  // };
+    return {
+      meta: {
+        evaluationDate: evaluationDateIso,
+        acknowledgedBy,
+        agent: selectedAgent
+          ? { id: selectedAgent._id, name: selectedAgent.name }
+          : null,
+        evaluator: selectedEvaluator
+          ? { id: selectedEvaluator._id, name: selectedEvaluator.name }
+          : null,
+        cardholder,
+        accountNumber,
+        enteredRate: rateInput,
+      },
+      withContact: mapSections(
+        withContactSections,
+        withContactResponses,
+        withTotals.perCategory
+      ),
+      withoutContact: mapSections(
+        withoutContactSections,
+        withoutContactResponses,
+        withoutTotals.perCategory
+      ),
+      totals: {
+        withContact: withTotals.noCount,
+        withoutContact: withoutTotals.noCount,
+        finalScore,
+      },
+    };
+  };
 
   const exportToExcel = async () => {
     const excelModule = await import("exceljs/dist/exceljs.min.js");
@@ -900,6 +904,65 @@ const EastwestScoreCard = () => {
       diagonal: {},
     };
 
+    const amberFill: ExcelJS.Fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFFFFF00" },
+    };
+
+    const solidGreenFill: ExcelJS.Fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF548235" },
+    };
+
+    const greenFill: ExcelJS.Fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF70AD47" },
+    };
+
+    const lightGreenFill: ExcelJS.Fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFA9D08E" },
+    };
+
+    const solidBlueFill: ExcelJS.Fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF00B0F0" },
+    };
+    const blueFill: ExcelJS.Fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF66CCFF" },
+    };
+
+    const lightBlueFill: ExcelJS.Fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFD9E1F2" },
+    };
+
+    const orangeFill: ExcelJS.Fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF7030A0" },
+    };
+
+    const blackFill: ExcelJS.Fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF000000" },
+    };
+
+    const grayFill: ExcelJS.Fill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFB0B0B0" },
+    };
+
     const applyBorder = (
       ws: ExcelJS.Worksheet,
       r1: number,
@@ -921,92 +984,150 @@ const EastwestScoreCard = () => {
       }
     };
 
-    // const fills = {
-    //   title: {
-    //     type: "pattern",
-    //     pattern: "solid",
-    //     fgColor: { argb: "FFF3F3F3" },
-    //   },
-    //   section: {
-    //     type: "pattern",
-    //     pattern: "solid",
-    //     fgColor: { argb: "FF4CAF50" },
-    //   },
-    //   subHeader: {
-    //     type: "pattern",
-    //     pattern: "solid",
-    //     fgColor: { argb: "FFBDBDBD" },
-    //   },
-    //   questionBand: {
-    //     type: "pattern",
-    //     pattern: "solid",
-    //     fgColor: { argb: "FFE8F4FF" },
-    //   },
-    //   response: {
-    //     type: "pattern",
-    //     pattern: "solid",
-    //     fgColor: { argb: "FFFFFF99" },
-    //   },
-    //   finalBox: {
-    //     type: "pattern",
-    //     pattern: "solid",
-    //     fgColor: { argb: "FF7E57C2" },
-    //   },
-    //   headerGreen: {
-    //     type: "pattern",
-    //     pattern: "solid",
-    //     fgColor: { argb: "FF2E7D32" },
-    //   },
-    //   headerBlue: {
-    //     type: "pattern",
-    //     pattern: "solid",
-    //     fgColor: { argb: "FF1976D2" },
-    //   },
-    //   headerYellow: {
-    //     type: "pattern",
-    //     pattern: "solid",
-    //     fgColor: { argb: "FFFFFF99" },
-    //   },
-    // };
+    const applyBorderWithInner = (
+      ws: ExcelJS.Worksheet,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number,
+      outer: ExcelJS.Borders,
+      inner: ExcelJS.Borders
+    ): void => {
+      for (let r = r1; r <= r2; r++) {
+        for (let c = c1; c <= c2; c++) {
+          const cell = ws.getCell(r, c);
+          cell.border = {
+            top: r === r1 ? outer.top : inner.top,
+            bottom: r === r2 ? outer.bottom : inner.bottom,
+            left: c === c1 ? outer.left : inner.left,
+            right: c === c2 ? outer.right : inner.right,
+            diagonal: {},
+          };
+          cell.alignment = {
+            ...(cell.alignment ?? {}),
+            wrapText: true,
+            vertical: "middle",
+          };
+        }
+      }
+    };
+
+    const applyFill = (
+      ws: ExcelJS.Worksheet,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number,
+      fill: ExcelJS.Fill
+    ): void => {
+      for (let r = r1; r <= r2; r++) {
+        for (let c = c1; c <= c2; c++) {
+          ws.getCell(r, c).fill = fill;
+        }
+      }
+    };
+
+    const setFontColor = (
+      ws: ExcelJS.Worksheet,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number,
+      color: Partial<ExcelJS.Color>,
+      bold = false
+    ): void => {
+      for (let r = r1; r <= r2; r++) {
+        for (let c = c1; c <= c2; c++) {
+          const cell = ws.getCell(r, c);
+          cell.font = { ...(cell.font ?? {}), color, bold };
+        }
+      }
+    };
+
+    const centerCells = (
+      ws: ExcelJS.Worksheet,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number
+    ): void => {
+      for (let r = r1; r <= r2; r++) {
+        for (let c = c1; c <= c2; c++) {
+          const cell = ws.getCell(r, c);
+          cell.alignment = {
+            ...(cell.alignment ?? {}),
+            horizontal: "center",
+            vertical: "middle",
+            wrapText: true,
+          };
+        }
+      }
+    };
 
     worksheet.columns = [
-      { header: "A", key: "a", width: 46 },
-      { header: "B", key: "b", width: 46 },
-      { header: "C", key: "c", width: 10 },
-      { header: "D", key: "d", width: 10 },
-      { header: "E", key: "e", width: 14 },
-      { header: "F", key: "f", width: 2 },
-      { header: "G", key: "g", width: 2 },
-      { header: "H", key: "h", width: 46 },
-      { header: "I", key: "i", width: 35 },
-      { header: "J", key: "j", width: 10 },
-      { header: "K", key: "k", width: 14 },
+      { header: "A", key: "a", width: 62 },
+      { header: "B", key: "b", width: 60 },
+      { header: "C", key: "c", width: 19 },
+      { header: "D", key: "d", width: 13 },
+      { header: "E", key: "e", width: 18 },
+      { header: "F", key: "f", width: 3 },
+      { header: "G", key: "g", width: 3 },
+      { header: "H", key: "h", width: 77 },
+      { header: "I", key: "i", width: 57 },
+      { header: "J", key: "j", width: 19 },
+      { header: "K", key: "k", width: 22 },
+      { header: "L", key: "l", width: 20 },
     ];
 
     worksheet.mergeCells("A1:H1");
     const titleCell = worksheet.getCell("A1");
     titleCell.value = "TPSP PHONE MONITORING SHEET";
-    titleCell.font = { size: 20, bold: true };
+    titleCell.font = { size: 30, bold: true, name: "Calibri" };
     titleCell.alignment = { horizontal: "center", vertical: "middle" };
-    
-
 
     worksheet.mergeCells("I1:L1");
 
     const secondTitleCell = worksheet.getCell("I1");
-    secondTitleCell.value ="Bernales & Associates";
-    secondTitleCell.font = { size: 20, bold: false, color: { argb: "FF0000" } };
+    secondTitleCell.value = "Bernales & Associates";
+    secondTitleCell.font = {
+      size: 30,
+      bold: false,
+      name: "Calibri",
+      color: { argb: "FF0000" },
+    };
     secondTitleCell.alignment = { horizontal: "center", vertical: "middle" };
 
     worksheet.getCell("I1").value = "Bernales & Associates";
     applyBorder(worksheet, 1, 1, 1, 12, thickBorder);
 
-
     worksheet.getCell("A4").value = "EVALUATION DATE";
     worksheet.getCell("A5").value = "AGENT'S NAME";
     worksheet.getCell("A6").value = "EVALATOR'S NAME (TEAM HEAD)";
     worksheet.getCell("A7").value = "ACKNOWLEDGED/VALIDATED BY: (AC/RO)";
+    worksheet.getCell("B4").value = todayLabel;
+    worksheet.getCell("B5").value = selectedAgent?.name ?? "";
+    worksheet.getCell("B6").value = selectedEvaluator?.name ?? "";
+    worksheet.getCell("B7").value = acknowledgedBy;
     applyBorder(worksheet, 4, 7, 1, 2, thinBorder);
+
+    worksheet.mergeCells("I4:K4");
+    worksheet.mergeCells("I5:K5");
+    worksheet.mergeCells("I6:K6");
+    worksheet.mergeCells("A2:L2");
+    worksheet.getCell("A2").value = "RATING SHEET";
+    worksheet.getCell("A2").alignment = {
+      horizontal: "center",
+    };
+    applyBorder(worksheet, 2, 2, 1, 12, thickBorder);
+    worksheet.getCell("H4").value = "CARDHOLDER";
+    worksheet.getCell("H5").value = "ACCOUNT NUMBER";
+    worksheet.getCell("H6").value = "SCORE:";
+    worksheet.getCell("I4").value = cardholder;
+    worksheet.getCell("I5").value = accountNumber;
+    worksheet.getCell("I6").value = rateInput
+      ? `${finalScore} | Rate: ${rateInput}`
+      : finalScore;
+    applyBorder(worksheet, 4, 6, 8, 11, thinBorder);
 
     worksheet.getCell("A9").value = "A. WITH CONTACT";
     applyBorder(worksheet, 9, 9, 1, 1, thickBorder);
@@ -1016,12 +1137,83 @@ const EastwestScoreCard = () => {
 
     worksheet.mergeCells("C11:D11");
     worksheet.getCell("C11").value = "DEFECT";
+    centerCells(worksheet, 11, 11, 3, 4);
     applyBorder(worksheet, 11, 11, 3, 4, thickBorder);
 
     worksheet.getCell("C12").value = "Y/N";
     worksheet.getCell("D12").value = "SCORE";
     worksheet.getCell("E12").value = "Tagging";
+    centerCells(worksheet, 12, 12, 3, 5);
     applyBorder(worksheet, 12, 12, 3, 5, thickBorder);
+    worksheet.getRow(13).height = 15;
+    worksheet.getRow(14).height = 15;
+    worksheet.getRow(21).height = 15;
+    worksheet.getRow(23).height = 15;
+    worksheet.getRow(36).height = 20;
+    worksheet.getRow(40).height = 20;
+
+    worksheet.getRow(42).height = 22;
+    worksheet.getRow(43).height = 22;
+
+    applyFill(worksheet, 65, 65, 1, 5, lightGreenFill);
+    applyFill(worksheet, 43, 43, 10, 10, lightGreenFill);
+    applyFill(worksheet, 49, 49, 10, 10, lightGreenFill);
+    applyFill(worksheet, 65, 65, 8, 12, lightGreenFill);
+    applyFill(worksheet, 58, 62, 1, 5, amberFill);
+    applyFill(worksheet, 4, 7, 2, 2, amberFill);
+    applyFill(worksheet, 4, 6, 9, 11, amberFill);
+    applyFill(worksheet, 1, 1, 9, 12, amberFill);
+
+    applyFill(worksheet, 58, 62, 8, 12, amberFill);
+    applyFill(worksheet, 49, 49, 11, 11, solidBlueFill);
+    applyFill(worksheet, 43, 43, 11, 11, solidBlueFill);
+
+    applyFill(worksheet, 13, 15, 3, 3, amberFill);
+    applyFill(worksheet, 20, 24, 3, 3, amberFill);
+    applyFill(worksheet, 29, 31, 3, 3, amberFill);
+    applyFill(worksheet, 36, 43, 3, 3, amberFill);
+    applyFill(worksheet, 48, 51, 3, 3, amberFill);
+    applyFill(worksheet, 16, 16, 3, 3, lightGreenFill);
+    applyFill(worksheet, 25, 25, 3, 3, lightGreenFill);
+    applyFill(worksheet, 32, 32, 3, 3, lightGreenFill);
+    applyFill(worksheet, 44, 44, 3, 3, lightGreenFill);
+    applyFill(worksheet, 52, 52, 3, 3, lightGreenFill);
+    applyFill(worksheet, 16, 16, 1, 2, lightGreenFill);
+    applyFill(worksheet, 25, 25, 1, 2, lightGreenFill);
+    applyFill(worksheet, 32, 32, 1, 2, lightGreenFill);
+    applyFill(worksheet, 44, 44, 1, 2, lightGreenFill);
+    applyFill(worksheet, 52, 52, 1, 2, lightGreenFill);
+    applyFill(worksheet, 9, 9, 1, 1, solidGreenFill);
+    applyFill(worksheet, 11, 11, 1, 1, greenFill);
+    applyFill(worksheet, 18, 18, 1, 1, greenFill);
+    applyFill(worksheet, 27, 27, 1, 1, greenFill);
+    applyFill(worksheet, 32, 32, 1, 1, lightGreenFill);
+    applyFill(worksheet, 34, 34, 1, 1, greenFill);
+    applyFill(worksheet, 46, 46, 1, 1, greenFill);
+
+    applyFill(worksheet, 9, 9, 8, 8, solidBlueFill);
+    applyFill(worksheet, 11, 11, 8, 8, blueFill);
+    applyFill(worksheet, 16, 16, 8, 10, lightBlueFill);
+    applyFill(worksheet, 18, 18, 8, 8, blueFill);
+
+    applyFill(worksheet, 27, 27, 8, 8, blueFill);
+    applyFill(worksheet, 34, 34, 8, 10, blueFill);
+    applyFill(worksheet, 36, 36, 8, 8, blueFill);
+
+    applyFill(worksheet, 43, 43, 8, 9, orangeFill);
+    applyFill(worksheet, 42, 42, 10, 11, orangeFill);
+    applyFill(worksheet, 44, 49, 9, 9, orangeFill);
+    applyFill(worksheet, 49, 49, 8, 8, orangeFill);
+
+    const whiteFont = { argb: "FFFFFFFF" } as const;
+    setFontColor(worksheet, 43, 43, 8, 9, whiteFont, true);
+    setFontColor(worksheet, 42, 42, 10, 11, whiteFont, true);
+    setFontColor(worksheet, 44, 49, 9, 9, whiteFont, true);
+    setFontColor(worksheet, 49, 49, 8, 8, whiteFont, true);
+
+    applyFill(worksheet, 34, 34, 8, 10, lightBlueFill);
+    applyFill(worksheet, 40, 40, 8, 10, lightBlueFill);
+    applyFill(worksheet, 25, 25, 8, 10, lightBlueFill);
 
     worksheet.mergeCells("A13:B13");
     worksheet.getCell("A13").value = "Uses Appropriate Greeting";
@@ -1031,7 +1223,7 @@ const EastwestScoreCard = () => {
     applyBorder(worksheet, 34, 34, 1, 1, thickBorder);
     applyBorder(worksheet, 34, 34, 3, 4, thickBorder);
     applyBorder(worksheet, 35, 35, 3, 5, thickBorder);
-    applyBorder(worksheet, 36, 43, 1, 5, thickBorder);
+    applyBorderWithInner(worksheet, 36, 43, 1, 5, thickBorder, thinBorder);
     applyBorder(worksheet, 44, 44, 1, 3, thickBorder);
     worksheet.mergeCells("A15:B15");
     worksheet.getCell("A15").value =
@@ -1039,26 +1231,28 @@ const EastwestScoreCard = () => {
     applyBorder(worksheet, 18, 18, 1, 1, thickBorder);
     applyBorder(worksheet, 18, 18, 3, 4, thickBorder);
     applyBorder(worksheet, 19, 19, 3, 5, thickBorder);
-    applyBorder(worksheet, 20, 24, 1, 5, thickBorder);
+    applyBorderWithInner(worksheet, 20, 24, 1, 5, thickBorder, thinBorder);
     applyBorder(worksheet, 25, 25, 1, 3, thickBorder);
     applyBorder(worksheet, 18, 18, 1, 1, thickBorder);
     applyBorder(worksheet, 18, 18, 3, 4, thickBorder);
     applyBorder(worksheet, 19, 19, 3, 5, thickBorder);
-    applyBorder(worksheet, 20, 24, 1, 5, thickBorder);
+    applyBorderWithInner(worksheet, 20, 24, 1, 5, thickBorder, thinBorder);
     applyBorder(worksheet, 25, 25, 1, 3, thickBorder);
     worksheet.mergeCells("A16:B16");
     worksheet.getCell("A16").value = "TOTAL";
-    applyBorder(worksheet, 13, 15, 1, 5, thickBorder);
+    applyBorderWithInner(worksheet, 13, 15, 1, 5, thickBorder, thinBorder);
     applyBorder(worksheet, 16, 16, 1, 3, thickBorder);
 
     worksheet.getCell("A18").value = "NEGOTIATION SKILLS";
 
     worksheet.mergeCells("C18:D18");
     worksheet.getCell("C18").value = "DEFECT";
+    centerCells(worksheet, 18, 18, 3, 4);
 
     worksheet.getCell("C19").value = "Y/N";
     worksheet.getCell("D19").value = "SCORE";
     worksheet.getCell("E19").value = "Tagging";
+    centerCells(worksheet, 19, 19, 3, 5);
 
     worksheet.mergeCells("A20:B20");
     worksheet.getCell("A20").value =
@@ -1077,7 +1271,7 @@ const EastwestScoreCard = () => {
     );
     applyBorder(worksheet, 27, 27, 3, 4, thickBorder);
     applyBorder(worksheet, 28, 28, 3, 5, thickBorder);
-    applyBorder(worksheet, 29, 31, 1, 5, thickBorder);
+    applyBorderWithInner(worksheet, 29, 31, 1, 5, thickBorder, thinBorder);
     applyBorder(worksheet, 32, 32, 1, 3, thickBorder);
     worksheet.getCell("A22").value =
       "Did the agent offer appropriate alternative solutions based on CH's financial situation?";
@@ -1090,14 +1284,17 @@ const EastwestScoreCard = () => {
     worksheet.mergeCells("A25:B25");
     worksheet.getCell("A25").value = "TOTAL";
 
+    worksheet.mergeCells("A27:B27");
     worksheet.getCell("A27").value = "PRODUCT KNOWLEDGE/PROBLEM SOLVING SKILLS	";
 
     worksheet.mergeCells("C27:D27");
     worksheet.getCell("C27").value = "DEFECT";
+    centerCells(worksheet, 27, 27, 3, 4);
 
     worksheet.getCell("C28").value = "Y/N";
     worksheet.getCell("D28").value = "SCORE";
     worksheet.getCell("E28").value = "Tagging";
+    centerCells(worksheet, 28, 28, 3, 5);
 
     worksheet.mergeCells("A29:B29");
     worksheet.getCell("A29").value =
@@ -1115,12 +1312,18 @@ const EastwestScoreCard = () => {
 
     worksheet.mergeCells("C34:D34");
     worksheet.getCell("C34").value = "DEFECT";
+    centerCells(worksheet, 34, 34, 3, 4);
 
     worksheet.getCell("C35").value = "Y/N";
     worksheet.getCell("D35").value = "SCORE";
     worksheet.getCell("E35").value = "Tagging";
+    centerCells(worksheet, 35, 35, 3, 5);
 
     worksheet.mergeCells("A36:B36");
+    worksheet.mergeCells("C38:C39");
+    worksheet.mergeCells("D38:D39");
+    worksheet.mergeCells("E38:E39");
+
     worksheet.getCell("A36").value =
       "Did the agent  have a good control of the conversation?	";
     worksheet.mergeCells("A37:B37");
@@ -1148,29 +1351,31 @@ const EastwestScoreCard = () => {
 
     worksheet.mergeCells("C46:D46");
     worksheet.getCell("C46").value = "DEFECT";
+    centerCells(worksheet, 46, 46, 3, 4);
 
     worksheet.getCell("C47").value = "Y/N";
     worksheet.getCell("D47").value = "SCORE";
     worksheet.getCell("E47").value = "Tagging";
+    centerCells(worksheet, 47, 47, 3, 5);
 
     worksheet.mergeCells("A48:B48");
     worksheet.getCell("A48").value =
-      "Did the agent  have a good control of the conversation?	";
+      "Did the agent  ask for payment confirmation?";
     worksheet.mergeCells("A49:B49");
     worksheet.getCell("A49").value =
-      "Did the agent  communicate according to the cardholder's language of expertise? Avoided using jargon or technical terms that the customer wasn't familiar with.	";
+      "Did the agent reminded client of the next due date or payment schedule?";
     worksheet.mergeCells("A50:B50");
     worksheet.getCell("A50").value =
-      "Is the agent's tone of voice professional, not overly aggressive, non-confrontational, not sarcastic or condescending?";
+      "Did the agent obtains/verifies customer's Information? (Demographics)";
     worksheet.mergeCells("A51:B51");
     worksheet.getCell("A51").value =
-      "Did the agent demonstrate empathy and understanding of the customer's situation?";
+      "If an information update was requested, was PID competed as required?";
     worksheet.mergeCells("A52:B52");
     worksheet.getCell("A52").value = "TOTAL";
     applyBorder(worksheet, 46, 46, 1, 1, thickBorder);
     applyBorder(worksheet, 46, 46, 3, 4, thickBorder);
     applyBorder(worksheet, 47, 47, 3, 5, thickBorder);
-    applyBorder(worksheet, 48, 51, 1, 5, thickBorder);
+    applyBorderWithInner(worksheet, 48, 51, 1, 5, thickBorder, thinBorder);
     applyBorder(worksheet, 52, 52, 1, 3, thickBorder);
 
     worksheet.getCell("H9").value = "B. WITHOUT CONTACT";
@@ -1181,13 +1386,19 @@ const EastwestScoreCard = () => {
 
     worksheet.mergeCells("J11:K11");
     worksheet.getCell("J11").value = "DEFECT";
+    centerCells(worksheet, 11, 11, 10, 11);
     applyBorder(worksheet, 11, 11, 10, 11, thickBorder);
 
     worksheet.getCell("J12").value = "Y/N";
     worksheet.getCell("K12").value = "SCORE";
     worksheet.getCell("L12").value = "Tagging";
+    centerCells(worksheet, 12, 12, 10, 12);
     applyBorder(worksheet, 12, 12, 10, 12, thickBorder);
 
+    applyFill(worksheet, 13, 15, 10, 10, amberFill);
+    applyFill(worksheet, 20, 24, 10, 10, amberFill);
+    applyFill(worksheet, 29, 33, 10, 10, amberFill);
+    applyFill(worksheet, 38, 39, 10, 10, amberFill);
     worksheet.mergeCells("H13:I13");
     worksheet.getCell("H13").value = "Uses Appropriate Greeting";
     worksheet.mergeCells("H14:I14");
@@ -1198,7 +1409,7 @@ const EastwestScoreCard = () => {
       "Did the agent properly identify self and Company? (No Misrepresentation?)";
     worksheet.mergeCells("H16:I16");
     worksheet.getCell("H16").value = "TOTAL";
-    applyBorder(worksheet, 13, 15, 8, 12, thickBorder);
+    applyBorderWithInner(worksheet, 13, 15, 8, 12, thickBorder, thinBorder);
     applyBorder(worksheet, 16, 16, 8, 10, thickBorder);
 
     worksheet.getCell("H18").value = "PROBING SKILLS";
@@ -1206,11 +1417,13 @@ const EastwestScoreCard = () => {
 
     worksheet.mergeCells("J18:K18");
     worksheet.getCell("J18").value = "DEFECT";
+    centerCells(worksheet, 18, 18, 10, 11);
     applyBorder(worksheet, 18, 18, 10, 11, thickBorder);
 
     worksheet.getCell("J19").value = "Y/N";
-    worksheet.getCell("J19").value = "SCORE";
-    worksheet.getCell("J19").value = "Tagging";
+    worksheet.getCell("K19").value = "SCORE";
+    worksheet.getCell("L19").value = "Tagging";
+    centerCells(worksheet, 19, 19, 10, 12);
     applyBorder(worksheet, 19, 19, 10, 12, thickBorder);
 
     worksheet.mergeCells("H20:I20");
@@ -1230,12 +1443,12 @@ const EastwestScoreCard = () => {
       "Did the agent ask info questions to obtain lead/s to the whereabouts of client/s?";
     worksheet.mergeCells("H25:I25");
     worksheet.getCell("H25").value = "TOTAL";
-    applyBorder(worksheet, 20, 24, 8, 12, thickBorder);
+    applyBorderWithInner(worksheet, 20, 24, 8, 12, thickBorder, thinBorder);
     applyBorder(worksheet, 25, 25, 8, 10, thickBorder);
     applyBorder(worksheet, 18, 18, 1, 1, thickBorder);
     applyBorder(worksheet, 18, 18, 3, 4, thickBorder);
     applyBorder(worksheet, 19, 19, 3, 5, thickBorder);
-    applyBorder(worksheet, 20, 24, 1, 5, thickBorder);
+    applyBorderWithInner(worksheet, 20, 24, 1, 5, thickBorder, thinBorder);
     applyBorder(worksheet, 25, 25, 1, 3, thickBorder);
 
     worksheet.getCell("H27").value = "SOFT SKILLS";
@@ -1243,11 +1456,13 @@ const EastwestScoreCard = () => {
 
     worksheet.mergeCells("J27:K27");
     worksheet.getCell("J27").value = "DEFECT";
+    centerCells(worksheet, 27, 27, 10, 11);
     applyBorder(worksheet, 27, 27, 10, 11, thickBorder);
 
     worksheet.getCell("J28").value = "Y/N";
     worksheet.getCell("K28").value = "SCORE";
     worksheet.getCell("L28").value = "Tagging";
+    centerCells(worksheet, 28, 28, 10, 12);
     applyBorder(worksheet, 28, 28, 10, 12, thickBorder);
 
     worksheet.mergeCells("H29:I29");
@@ -1259,7 +1474,7 @@ const EastwestScoreCard = () => {
     worksheet.mergeCells("H31:I31");
     worksheet.getCell("H31").value =
       "Is the agent's tone of voice professional, not overly aggressive, non-confrontational, not sarcastic or condescending?";
-    applyBorder(worksheet, 29, 33, 8, 12, thickBorder);
+    applyBorderWithInner(worksheet, 29, 33, 8, 12, thickBorder, thinBorder);
     applyBorder(worksheet, 34, 34, 8, 10, thickBorder);
     worksheet.mergeCells("H32:I32");
     worksheet.getCell("H32").value =
@@ -1275,11 +1490,13 @@ const EastwestScoreCard = () => {
 
     worksheet.mergeCells("J36:K36");
     worksheet.getCell("J36").value = "DEFECT";
+    centerCells(worksheet, 36, 36, 10, 11);
     applyBorder(worksheet, 36, 36, 10, 11, thickBorder);
 
     worksheet.getCell("J37").value = "Y/N";
     worksheet.getCell("K37").value = "SCORE";
     worksheet.getCell("L37").value = "Tagging";
+    centerCells(worksheet, 37, 37, 10, 12);
     applyBorder(worksheet, 37, 37, 10, 12, thickBorder);
 
     worksheet.mergeCells("H38:I38");
@@ -1288,20 +1505,25 @@ const EastwestScoreCard = () => {
     worksheet.mergeCells("H39:I39");
     worksheet.getCell("H39").value =
       "Did the agent ask the 3rd party to read back the number for return call?	";
+    worksheet.mergeCells("H40:I40");
+
     worksheet.getCell("H40").value = "TOTAL";
-    applyBorder(worksheet, 38, 39, 8, 12, thickBorder);
+    applyBorderWithInner(worksheet, 38, 39, 8, 12, thickBorder, thinBorder);
     applyBorder(worksheet, 40, 40, 8, 10, thickBorder);
 
     worksheet.mergeCells("J42:K42");
     worksheet.getCell("J42").value = "COUNT OF DEFECT";
+    applyBorder(worksheet, 42, 42, 10, 11, thickBorder);
     worksheet.getCell("J43").value = "W/ CONTACT";
     worksheet.getCell("K43").value = "W/O CONTACT";
 
     worksheet.getCell("H43").value = "ITEM/S";
 
     worksheet.getCell("I43").value = "RATE";
+    worksheet.mergeCells("I44:I49");
     worksheet.getCell("J43").value = "W/ CONTACT";
     worksheet.getCell("K43").value = "W/O CONTACT";
+    applyBorder(worksheet, 43, 49, 8, 11, thickBorder);
 
     worksheet.getCell("H44").value = "OPENING SKILLS";
     worksheet.getCell("H45").value = "NEGOTIATION SKILLS/PROBING SKILLS";
@@ -1309,8 +1531,268 @@ const EastwestScoreCard = () => {
     worksheet.getCell("H47").value = "SOFT SKILLS";
     worksheet.getCell("H48").value = "WRAP UP";
     worksheet.getCell("H49").value = "TOTAL # OF DEFECT/S AND FINAL SCORE:";
+
     worksheet.getCell("H50").value = "FINAL RATING";
     worksheet.getCell("I50").value = "";
+    applyBorder(worksheet, 50, 50, 8, 9, thickBorder);
+
+    worksheet.getCell("H52").value = "EQUIVALENT DEFECT RATING";
+    worksheet.getCell("H53").value = "CRITICAL = 25";
+    worksheet.getCell("H54").value = "IMPORTANT = 15";
+    worksheet.getCell("H55").value = "ESSENTIAL = 10";
+
+    worksheet.getCell("I52").value = "FINAL SCORE/RATING";
+    worksheet.getCell("I53").value = "100 Above - EXCELLENT";
+    worksheet.getCell("I54").value = "90-99 - SUPERIOR";
+    worksheet.getCell("I55").value = "89-80 - ACCEPTABLE";
+    worksheet.getCell("I56").value = "79 Below - UNACCEPTABLE";
+    applyBorder(worksheet, 52, 56, 8, 8, thickBorder);
+    applyBorder(worksheet, 52, 56, 9, 9, thickBorder);
+    applyFill(worksheet, 52, 52, 8, 9, blackFill);
+    setFontColor(worksheet, 52, 52, 8, 9, whiteFont, true);
+
+    worksheet.mergeCells("A58:E58");
+    worksheet.getCell("A58").value = "EVALUATOR'S REMARK/S";
+
+    worksheet.getCell("A58").alignment = {
+      horizontal: "center",
+    };
+    worksheet.mergeCells("A59:E62");
+    worksheet.getCell("A59").value = evaluatorRemarks;
+    worksheet.getCell("A59").alignment = {
+      horizontal: "center",
+      vertical: "top",
+      wrapText: true,
+    };
+
+    worksheet.mergeCells("A63:E64");
+    applyBorder(worksheet, 58, 64, 1, 5, thinBorder);
+
+    worksheet.mergeCells("H58:L58");
+    worksheet.getCell("H58").value = "AGENT'S REMARKS";
+
+    worksheet.getCell("H58").alignment = {
+      horizontal: "center",
+    };
+    worksheet.mergeCells("H59:L62");
+    worksheet.getCell("H59").value = agentRemarks;
+    worksheet.getCell("H59").alignment = {
+      horizontal: "center",
+      vertical: "top",
+      wrapText: true,
+    };
+    worksheet.mergeCells("A65:E65");
+
+    worksheet.getCell("A65").value =
+      selectedEvaluator?.name ?? "No evulator selected";
+    worksheet.getCell("A65").alignment = {
+      horizontal: "center",
+    };
+    worksheet.mergeCells("A66:E66");
+    worksheet.getCell("A66").value = "Team Head's signature over printed name";
+
+    worksheet.getCell("A66").alignment = {
+      horizontal: "center",
+    };
+
+    applyBorder(worksheet, 65, 66, 1, 5, thinBorder);
+
+    worksheet.mergeCells("H63:L64");
+    worksheet.mergeCells("H65:L65");
+    worksheet.getCell("H65").value = selectedAgent?.name ?? "No agent selected";
+    worksheet.getCell("H65").alignment = {
+      horizontal: "center",
+    };
+    worksheet.mergeCells("H66:L66");
+    worksheet.getCell("H66").value = "Collector's Signature over printed name";
+    worksheet.getCell("H66").alignment = {
+      horizontal: "center",
+    };
+    applyBorder(worksheet, 65, 66, 8, 12, thinBorder);
+
+    worksheet.getCell("A68").value = `VALIDATED (Y/N): ${
+      isValidated ? "YES" : "NO"
+    }`;
+    worksheet.getCell("A70").value = "AC'S COMMENTS:";
+
+    applyBorder(worksheet, 58, 64, 8, 12, thinBorder);
+
+    applyFill(worksheet, 78, 78, 9, 9, lightGreenFill);
+    worksheet.getCell("H78").value = "Noted by:";
+    worksheet.getCell("I78").value = acknowledgedBy
+      ? acknowledgedBy
+      : "No AC/RO assigned";
+
+    worksheet.mergeCells("H79:L79");
+    worksheet.getCell("H79").value =
+      "Agency Coordinator's Signature over Printed Name";
+    worksheet.getCell("H78").alignment = {
+      horizontal: "right",
+    };
+    worksheet.getCell("H79").alignment = {
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    const withRowMap = [
+      [13, 14, 15],
+      [20, 21, 22, 23, 24],
+      [29, 30, 31],
+      [36, 37, 38, 40, 41, 42, 43],
+      [48, 49, 50, 51],
+    ];
+
+    const withoutRowMap = [
+      [13, 14, 15],
+      [20, 21, 22, 23, 24],
+      [29, 30, 31, 32, 33],
+      [38, 39],
+    ];
+
+    const setResponses = (
+      rowsBySection: number[][],
+      totalsBySection: number[],
+      sections: EvaluationSectionConfig[],
+      responses: boolean[][],
+      yCol: number,
+      scoreCol: number,
+      tagCol: number
+    ) => {
+      rowsBySection.forEach((rows, sIdx) => {
+        let yesCount = 0;
+        let noCount = 0;
+
+        rows.forEach((row, qIdx) => {
+          const section = sections[sIdx];
+          const question = section?.questions?.[qIdx];
+          if (!question) return;
+          const isYes = responses?.[sIdx]?.[qIdx] ?? true;
+          const score = isYes ? 0 : question.defaultScore;
+          if (isYes) yesCount += 1;
+          else noCount += 1;
+          worksheet.getCell(row, yCol).value = isYes ? "Y" : "N";
+          worksheet.getCell(row, scoreCol).value = score;
+          worksheet.getCell(row, tagCol).value = question.tag;
+          [yCol, scoreCol, tagCol].forEach((col) => {
+            const cell = worksheet.getCell(row, col);
+            cell.alignment = {
+              ...(cell.alignment ?? {}),
+              horizontal: col === tagCol ? "left" : "center",
+              vertical: "middle",
+              wrapText: true,
+            };
+          });
+        });
+
+        const totalRow = totalsBySection[sIdx];
+        if (totalRow) {
+          const totalCell = worksheet.getCell(totalRow, yCol);
+          totalCell.value = noCount;
+          totalCell.alignment = {
+            ...(totalCell.alignment ?? {}),
+            horizontal: "center",
+            vertical: "middle",
+            wrapText: true,
+          };
+        }
+      });
+    };
+
+    const withTotalRows = [16, 25, 32, 44, 52];
+    const withoutTotalRows = [16, 25, 34, 40];
+
+    setResponses(
+      withRowMap,
+      withTotalRows,
+      withContactSections,
+      withContactResponses,
+      3,
+      4,
+      5
+    );
+    setResponses(
+      withoutRowMap,
+      withoutTotalRows,
+      withoutContactSections,
+      withoutContactResponses,
+      10,
+      11,
+      12
+    );
+
+    const rateValue = Number.isFinite(finalScore) ? finalScore : "";
+    const rateCell = worksheet.getCell("I44");
+    rateCell.value = rateValue;
+    rateCell.alignment = {
+      ...(rateCell.alignment ?? {}),
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    const finalRatingLabel = ratingFromScore(finalScore);
+    const finalRatingCell = worksheet.getCell("I50");
+    finalRatingCell.value = finalRatingLabel;
+    finalRatingCell.alignment = {
+      ...(finalRatingCell.alignment ?? {}),
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    const summaryRows = [44, 45, 46, 47, 48, 49];
+    summaryRows.forEach((row, idx) => {
+      const withVal = withContactCounts[idx] ?? 0;
+      const withoutVal = withoutContactCounts[idx] ?? 0;
+
+      worksheet.getCell(row, 10).value = withVal; // J column (W/ contact)
+      const withoutCell = worksheet.getCell(row, 11); // K column (W/O contact)
+      withoutCell.value = withoutVal;
+
+      [worksheet.getCell(row, 10), withoutCell].forEach((cell) => {
+        cell.alignment = {
+          ...(cell.alignment ?? {}),
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true,
+        };
+      });
+    });
+
+    const withoutProdRow = 46;
+    const withoutProdCell = worksheet.getCell(withoutProdRow, 11); // K46
+    withoutProdCell.value = "";
+    withoutProdCell.fill = grayFill;
+    withoutProdCell.alignment = {
+      ...(withoutProdCell.alignment ?? {}),
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    const calibriAddresses = new Set(["A1", "I1"]);
+
+    worksheet.eachRow({ includeEmpty: true }, (row: ExcelJS.Row) => {
+      row.eachCell({ includeEmpty: true }, (cell: ExcelJS.Cell) => {
+        const existingFont = cell.font ?? {};
+        const baseSize = existingFont.size ?? 15;
+        const fontName = calibriAddresses.has(cell.address)
+          ? "Calibri"
+          : "Arial";
+
+        cell.font = { ...existingFont, name: fontName, size: baseSize };
+      });
+    });
+
+    worksheet.getCell("A1").font = {
+      ...(worksheet.getCell("A1").font ?? {}),
+      size: 30,
+    };
+    worksheet.getCell("I1").font = {
+      ...(worksheet.getCell("I1").font ?? {}),
+      size: 30,
+    };
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
@@ -1324,67 +1806,83 @@ const EastwestScoreCard = () => {
     URL.revokeObjectURL(downloadUrl);
   };
 
+  const resetForm = () => {
+    setCardholder("");
+    setAccountNumber("");
+    setRateInput("");
+    setIsValidated(true);
+    setSelectedAgent(null);
+    setSelectedEvaluator(null);
+    setAcknowledgedBy("");
+    setEvaluatorRemarks("");
+    setAgentRemarks("");
+    setIsOpenAgent(false);
+    setIsOpenTL(false);
+    setWithContactResponses(createInitialWithContactResponses());
+    setWithoutContactResponses(createInitialWithoutContactResponses());
+  };
+
   const handleExport = async () => {
+    if (!selectedAgent || !selectedEvaluator || !acknowledgedBy.trim()) {
+      alert(
+        "Please fill Agent's Name, Evaluator's Name, and Acknowledged/Validated By before saving."
+      );
+      return;
+    }
+    if (!accountNumber.trim()) {
+      alert("Please enter the account number before saving.");
+      return;
+    }
+    if (!userLogged?._id) {
+      alert("Missing user information. Please sign in again.");
+      return;
+    }
+    const departmentId = userLogged?.departments?.[0];
+    if (!departmentId) {
+      alert("Missing department assignment. Please contact an administrator.");
+      return;
+    }
+    if (isExporting || isSaving) return;
+
+    setIsExporting(true);
+    const evaluationDateIso = new Date().toISOString();
+    const monthLabel = new Date().toLocaleString("en-US", { month: "long" });
+    const safeFinalScore = Math.max(finalScore, 0);
+    const scoreDetailsPayload = buildScoreDetailsPayload(evaluationDateIso);
+
     try {
-      setIsExporting(true);
+      await createScoreCardData({
+        variables: {
+          input: {
+            month: monthLabel,
+            department: departmentId,
+            agentName: selectedAgent._id,
+            dateAndTimeOfCall: evaluationDateIso,
+            number: accountNumber.trim(),
+            assignedQA: userLogged._id,
+            typeOfScoreCard: "Eastwest Score Card",
+            scoreDetails: scoreDetailsPayload,
+            totalScore: safeFinalScore,
+          },
+        },
+      });
+      try {
+        setIsExporting(true);
+        await exportToExcel();
+      } catch (error) {
+        console.log(error);
+      } finally {
+        setIsExporting(false);
+      }
+
       await exportToExcel();
+      resetForm();
     } catch (error) {
-      console.log(error);
+      console.error("Failed to save Eastwest score card", error);
+      alert("Failed to save or export. Please try again.");
     } finally {
       setIsExporting(false);
     }
-
-    // if (!selectedAgent || !selectedEvaluator || !acknowledgedBy.trim()) {
-    //   alert(
-    //     "Please fill Agent's Name, Evaluator's Name, and Acknowledged/Validated By before saving."
-    //   );
-    //   return;
-    // }
-    // if (!accountNumber.trim()) {
-    //   alert("Please enter the account number before saving.");
-    //   return;
-    // }
-    // if (!userLogged?._id) {
-    //   alert("Missing user information. Please sign in again.");
-    //   return;
-    // }
-    // const departmentId = userLogged?.departments?.[0];
-    // if (!departmentId) {
-    //   alert("Missing department assignment. Please contact an administrator.");
-    //   return;
-    // }
-    // if (isExporting || isSaving) return;
-
-    // setIsExporting(true);
-    // const evaluationDateIso = new Date().toISOString();
-    // const monthLabel = new Date().toLocaleString("en-US", { month: "long" });
-    // const safeFinalScore = Math.max(finalScore, 0);
-    // const scoreDetailsPayload = buildScoreDetailsPayload(evaluationDateIso);
-
-    // try {
-    //   await createScoreCardData({
-    //     variables: {
-    //       input: {
-    //         month: monthLabel,
-    //         department: departmentId,
-    //         agentName: selectedAgent._id,
-    //         dateAndTimeOfCall: evaluationDateIso,
-    //         number: accountNumber.trim(),
-    //         assignedQA: userLogged._id,
-    //         typeOfScoreCard: "Eastwest Score Card",
-    //         scoreDetails: scoreDetailsPayload,
-    //         totalScore: safeFinalScore,
-    //       },
-    //     },
-    //   });
-
-    //   await exportToExcel();
-    // } catch (error) {
-    //   console.error("Failed to save Eastwest score card", error);
-    //   alert("Failed to save or export. Please try again.");
-    // } finally {
-    //   setIsExporting(false);
-    // }
   };
 
   return (
@@ -1402,9 +1900,9 @@ const EastwestScoreCard = () => {
               type="button"
               disabled={isExporting || isSaving}
               onClick={() => void handleExport()}
-              className="px-4 py-2 cursor-pointer border-green-900 transition-all border-2 font-black uppercase rounded-sm shadow-md text-white bg-green-600 hover:bg-green-700 disabled:bg-gray-400"
+              className="px-4 py-2 cursor-pointer border-green-900 transition-all border-2 font-black uppercase rounded-sm shadow-md text-white bg-green-600 hover:bg-green-700 disabled:border-gray-500 disabled:bg-gray-400"
             >
-              {isExporting || isSaving ? "processing..." : "save"}
+              {isExporting || isSaving ? "Saving..." : "save"}
             </button>
           </div>
         </div>
@@ -1613,8 +2111,50 @@ const EastwestScoreCard = () => {
                   }
                 />
               ))}
-            </div>
 
+              <div className="flex flex-col border rounded-md overflow-hidden">
+                <div className="bg-gray-400 font-semibold px-3 border-b py-1">
+                  EVALUATOR'S REMARK/S
+                </div>
+                <div className="bg-white p-1">
+                  <textarea
+                    className="w-full min-h-24 outline-none p-2"
+                    value={evaluatorRemarks}
+                    onChange={(event) =>
+                      setEvaluatorRemarks(event.target.value)
+                    }
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2 rounded-md overflow-hidden">
+                <div className="font-semibold py-1">VALIDATED (Y/N):</div>
+                <div className="flex gap-1" >
+                  <button
+                    type="button"
+                    onClick={() => setIsValidated(true)}
+                    className={`border-2 font-black uppercase px-3 flex items-center rounded-sm cursor-pointer text-shadow-2xs justify-center transition-colors ${
+                     !isValidated
+                        ? "bg-green-600 border-green-900 text-white"
+                        : "bg-gray-400 border-2 border-gray-500 text-gray-200 font-black uppercase px-3 flex items-center rounded-sm cursor-pointer text-shadow-2xs justify-center"
+                    }`}
+                  >
+                    YES
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setIsValidated(false)}
+                    className={`border-2 font-black uppercase px-3 flex items-center rounded-sm cursor-pointer text-shadow-2xs justify-center transition-colors ${
+                      isValidated
+                        ? "bg-red-600 border-red-900 text-white"
+                        : "bg-gray-400 border-2 border-gray-500 text-gray-200 font-black uppercase px-3 flex items-center rounded-sm cursor-pointer text-shadow-2xs justify-center"
+                    }`}
+                  >
+                    NO
+                  </button>
+                </div>
+              </div>
+            </div>
             <div className="flex gap-2 h-auto flex-col">
               {withoutContactSections.map((section, index) => (
                 <EvaluationSection
@@ -1638,6 +2178,18 @@ const EastwestScoreCard = () => {
               />
 
               <EquivalentRatingBlock />
+              <div className="flex flex-col border rounded-md overflow-hidden">
+                <div className="bg-gray-400 font-semibold px-3 border-b py-1">
+                  AGENT'S REMARK/S
+                </div>
+                <div className="bg-white p-1">
+                  <textarea
+                    className="w-full min-h-24 outline-none p-2"
+                    value={agentRemarks}
+                    onChange={(event) => setAgentRemarks(event.target.value)}
+                  />
+                </div>
+              </div>
             </div>
           </div>
         </div>

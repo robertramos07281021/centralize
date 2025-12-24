@@ -835,10 +835,9 @@ const productionResolver = {
         const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
         endOfMonth.setMilliseconds(-1);
 
-        const ptpPaid = await DispoType.findOne({ code: "PTP" });
+        const ptpCode = await DispoType.findOne({ code: "PTP" });
 
-        let filter = { disposition: ptpPaid._id };
-
+        let filter = { disposition: ptpCode._id };
         if (interval === "daily") {
           (filter["callfile"] = { $in: callfile }),
             (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
@@ -854,75 +853,161 @@ const productionResolver = {
           );
         }
 
-        const findDispo = await Disposition.aggregate([
-          {
-            $match: filter,
-          },
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "paidDispo",
-              foreignField: "_id",
-              as: "pd",
-            },
-          },
-          {
-            $unwind: { path: "$pd", preserveNullAndEmptyArrays: true },
-          },
-          {
-            $lookup: {
-              from: "dispotypes",
-              localField: "pd.disposition",
-              foreignField: "_id",
-              as: "pd_dispotype",
-            },
-          },
-          {
-            $unwind: {
-              path: "$pd_dispotype",
-              preserveNullAndEmptyArrays: true,
-            },
-          },
-          {
-            $lookup: {
-              from: "dispotypes",
-              localField: "disposition",
-              foreignField: "_id",
-              as: "dispotype",
-            },
-          },
-          {
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
-          },
-          {
-            $match: {
-              "pd.selectivesDispo": false,
-              "pd_dispotype.code": "PAID",
-              "pd.existing": true,
-            },
-          },
-          {
-            $group: {
-              _id: 0,
-              count: {
-                $sum: 1,
-              },
-              amount: {
-                $sum: "$amount",
+        if (selectedBucket.principal) {
+          const findDispo = await Disposition.aggregate([
+            {
+              $match: {
+                callfile: existingCallfile._id,
               },
             },
-          },
-          {
-            $project: {
-              _id: 0,
-              count: 1,
-              amount: 1,
+            {
+              $lookup: {
+                from: "dispositions",
+                localField: "paidDispo",
+                foreignField: "_id",
+                as: "pd",
+              },
             },
-          },
-        ]);
+            {
+              $unwind: { path: "$pd", preserveNullAndEmptyArrays: true },
+            },
+            {
+              $lookup: {
+                from: "dispotypes",
+                localField: "pd.disposition",
+                foreignField: "_id",
+                as: "pd_dispotype",
+              },
+            },
+            {
+              $unwind: {
+                path: "$pd_dispotype",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $lookup: {
+                from: "dispotypes",
+                localField: "disposition",
+                foreignField: "_id",
+                as: "dispotype",
+              },
+            },
+            {
+              $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
+            },
+            {
+              $lookup: {
+                from: "customeraccounts",
+                localField: "customer_account",
+                foreignField: "_id",
+                as: "ca",
+              },
+            },
+            {
+              $unwind: { path: "$ca", preserveNullAndEmptyArrays: true },
+            },
+            {
+              $match: {
+                "dispotype.code": "PTP",
+                pd: { $ne: null },
+                "pd.selectivesDispo": false,
+                "pd_dispotype.code": "PAID",
+              },
+            },
+            {
+              $group: {
+                _id: 0,
+                count: {
+                  $sum: 1,
+                },
+                amount: {
+                  $sum: "$ca.out_standing_details.principal_os",
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                count: 1,
+                amount: 1,
+              },
+            },
+          ]);
 
-        return findDispo[0] ?? { count: 0, amount: 0 };
+          return findDispo[0] ?? { count: 0, amount: 0 };
+        } else {
+          const findDispo = await Disposition.aggregate([
+            {
+              $match: filter,
+            },
+            {
+              $lookup: {
+                from: "dispositions",
+                localField: "paidDispo",
+                foreignField: "_id",
+                as: "pd",
+              },
+            },
+            {
+              $unwind: { path: "$pd", preserveNullAndEmptyArrays: true },
+            },
+            {
+              $lookup: {
+                from: "dispotypes",
+                localField: "pd.disposition",
+                foreignField: "_id",
+                as: "pd_dispotype",
+              },
+            },
+            {
+              $unwind: {
+                path: "$pd_dispotype",
+                preserveNullAndEmptyArrays: true,
+              },
+            },
+            {
+              $lookup: {
+                from: "dispotypes",
+                localField: "disposition",
+                foreignField: "_id",
+                as: "dispotype",
+              },
+            },
+            {
+              $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
+            },
+            {
+              $match: {
+                "pd.selectivesDispo": false,
+                "pd_dispotype.code": "PAID",
+                "pd.existing": true,
+              },
+            },
+            {
+              $group: {
+                _id: 0,
+                count: {
+                  $sum: 1,
+                },
+                amount: {
+                  $sum: "$amount",
+                },
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                count: 1,
+                amount: 1,
+              },
+            },
+          ]);
+
+          return findDispo[0] ?? { count: 0, amount: 0 };
+        }
       } catch (err) {
+        console.log(err);
         throw new CustomError(err.message, 500);
       }
     },
@@ -1046,7 +1131,7 @@ const productionResolver = {
           const dateEnd = new Date(from || to);
           dateEnd.setHours(23, 59, 59, 999);
           CCSCallFiltered["createdAt"] = { $gte: dateStart, $lte: dateEnd };
-        } 
+        }
 
         const secondFilter = {
           $or: [
@@ -1222,7 +1307,7 @@ const productionResolver = {
             const dateEnd = new Date(from || to);
             dateEnd.setHours(23, 59, 59, 999);
             filter["createdAt"] = { $gte: dateStart, $lte: dateEnd };
-          } 
+          }
 
           if (dispotype.length > 0) {
             filter["dispotype.code"] = { $in: dispotype };
@@ -1534,23 +1619,43 @@ const productionResolver = {
           );
         }
 
-        const disposition = await Disposition.aggregate([
-          {
-            $match: filter,
-          },
-          {
-            $group: {
-              _id: "$user",
+        if (selectedBucket.principal) {
+          const disposition = await Disposition.aggregate([
+            {
+              $match: { callfile: existingCallfile?._id },
             },
-          },
-          {
-            $project: {
-              _id: 0,
-              users: "$_id",
+            {
+              $group: {
+                _id: "$user",
+              },
             },
-          },
-        ]);
-        return disposition.map((x) => x.users);
+            {
+              $project: {
+                _id: 0,
+                users: "$_id",
+              },
+            },
+          ]);
+          return disposition.map((x) => x.users);
+        } else {
+          const disposition = await Disposition.aggregate([
+            {
+              $match: filter,
+            },
+            {
+              $group: {
+                _id: "$user",
+              },
+            },
+            {
+              $project: {
+                _id: 0,
+                users: "$_id",
+              },
+            },
+          ]);
+          return disposition.map((x) => x.users);
+        }
       } catch (error) {
         throw new CustomError(error.message, 500);
       }

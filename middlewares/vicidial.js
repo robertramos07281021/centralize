@@ -28,8 +28,16 @@ const credentials = {
 const passwordNonAuto = process.env.VICIDIAL_ADMIN_PASS;
 const passwordAuto = process.env.VICIDIAL_ADMIN_PASS_A;
 
+const normalizeViciId = (vici_id) => {
+  const id = typeof vici_id === "string" ? vici_id.trim() : "";
+  return id || null;
+};
+
 export async function callViaVicidial(agentUser, phoneNumber, vici_id) {
-  const VICIDIAL_API = `http://${vici_id.trim()}/agc/api.php`;
+  const safeViciId = normalizeViciId(vici_id);
+  if (!safeViciId) return { success: false, message: "Missing Vici ID" };
+
+  const VICIDIAL_API = `http://${safeViciId}/agc/api.php`;
 
   const isProd =
     process.env.NODE_ENV === "production"
@@ -40,7 +48,7 @@ export async function callViaVicidial(agentUser, phoneNumber, vici_id) {
 
   const params = {
     ...credentials,
-    pass: viciAuto.includes(vici_id.trim()) ? passwordAuto : passwordNonAuto,
+    pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
     function: "external_dial",
     agent_user: agentUser,
     value: isProd,
@@ -61,15 +69,18 @@ export async function callViaVicidial(agentUser, phoneNumber, vici_id) {
 
 export async function checkIfAgentIsOnline(agentUser, vici_id) {
   try {
+    const safeViciId = normalizeViciId(vici_id);
+    if (!safeViciId) return false;
+
     if (!agentUser || agentUser.trim() === "") {
       return false;
     }
-    const VICIDIAL_API = `http://${vici_id.trim()}/agc/api.php`;
+    const VICIDIAL_API = `http://${safeViciId}/agc/api.php`;
 
     const { data } = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
-        pass: viciAuto.includes(vici_id.trim()) ? passwordAuto : passwordNonAuto,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         agent_user: agentUser.trim(),
         function: "calls_in_queue_count",
         value: "DISPLAY",
@@ -88,14 +99,17 @@ export async function checkIfAgentIsOnline(agentUser, vici_id) {
 }
 
 export async function endAndDispo(agentUser, vici_id) {
-  const VICIDIAL_API = `http://${vici_id.trim()}/agc/api.php`;
+  const safeViciId = normalizeViciId(vici_id);
+  if (!safeViciId) return;
+
+  const VICIDIAL_API = `http://${safeViciId}/agc/api.php`;
 
   try {
 
     await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
-        pass: viciAuto.includes(vici_id.trim()) ? passwordAuto : passwordNonAuto,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         agent_user: agentUser,
         function: "external_pause",
         value: "PAUSE",
@@ -107,7 +121,7 @@ export async function endAndDispo(agentUser, vici_id) {
     await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
-        pass: viciAuto.includes(vici_id.trim()) ? passwordAuto : passwordNonAuto,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         agent_user: agentUser,
         function: "external_hangup",
         value: 1,
@@ -119,7 +133,7 @@ export async function endAndDispo(agentUser, vici_id) {
     await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
-        pass: viciAuto.includes(vici_id.trim()) ? passwordAuto : passwordNonAuto,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         agent_user: agentUser,
         function: "external_status",
         value: "A",
@@ -131,13 +145,16 @@ export async function endAndDispo(agentUser, vici_id) {
 }
 
 export async function checkIfAgentIsInlineOnVici(agentUser, vici_id) {
-  const VICIDIAL_API = `http://${vici_id.trim()}/vicidial/non_agent_api.php`;
+  const safeViciId = normalizeViciId(vici_id);
+  if (!safeViciId) return null;
+
+  const VICIDIAL_API = `http://${safeViciId}/vicidial/non_agent_api.php`;
   try {
 
     const res = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
-        pass: viciAuto.includes(vici_id.trim()) ? passwordAuto : passwordNonAuto,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         function: "agent_status",
         agent_user: agentUser,
         state: "csv",
@@ -153,14 +170,17 @@ export async function checkIfAgentIsInlineOnVici(agentUser, vici_id) {
 }
 
 export async function logoutVici(agentUser, vici_id) {
-  const VICIDIAL_API = `http://${vici_id.trim()}/agc/api.php`;
+  const safeViciId = normalizeViciId(vici_id);
+  if (!safeViciId) return;
+
+  const VICIDIAL_API = `http://${safeViciId}/agc/api.php`;
   try {
-    const res = await checkIfAgentIsOnline(agentUser, vici_id.trim());
+    const res = await checkIfAgentIsOnline(agentUser, safeViciId);
     if (res) {
       await axios.get(VICIDIAL_API, {
         params: {
           ...credentials,
-          pass: viciAuto.includes(vici_id.trim()) ? passwordAuto : passwordNonAuto,
+          pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
           agent_user: agentUser,
           function: "logout",
           value: "LOGOUT",
@@ -173,7 +193,10 @@ export async function logoutVici(agentUser, vici_id) {
 }
 
 export async function getRecordings(vici_id, agent_user) {
-  const VICIDIAL_API = `http://${vici_id}/vicidial/non_agent_api.php`;
+  const safeViciId = normalizeViciId(vici_id);
+  if (!safeViciId) return null;
+
+  const VICIDIAL_API = `http://${safeViciId}/vicidial/non_agent_api.php`;
   try {
     const date = new Date();
     const year = date.getFullYear();
@@ -183,7 +206,7 @@ export async function getRecordings(vici_id, agent_user) {
     const { data } = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
-        pass: viciAuto.includes(vici_id) ? passwordAuto : passwordNonAuto,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         function: "recording_lookup",
         date: `${year}-${month.toString().padStart(2, "0")}-${day
           .toString()
@@ -199,14 +222,17 @@ export async function getRecordings(vici_id, agent_user) {
 }
 
 export async function getUserInfo(vici_id, agent_user) {
-  const VICIDIAL_API = `http://${vici_id.trim()}/vicidial/non_agent_api.php`;
+  const safeViciId = normalizeViciId(vici_id);
+  if (!safeViciId) return null;
+
+  const VICIDIAL_API = `http://${safeViciId}/vicidial/non_agent_api.php`;
   try {
-    if (!vici_id) return null;
+    if (!safeViciId) return null;
 
     const { data } = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
-        pass: viciAuto.includes(vici_id.trim()) ? passwordAuto : passwordNonAuto,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         function: "agent_status",
         agent_user,
         stage: "csv",
@@ -222,12 +248,15 @@ export async function getUserInfo(vici_id, agent_user) {
 }
 
 export async function getLoggedInUser(vici_id) {
-  const VICIDIAL_API = `http://${vici_id.trim()}/vicidial/non_agent_api.php`;
+  const safeViciId = normalizeViciId(vici_id);
+  if (!safeViciId) return null;
+
+  const VICIDIAL_API = `http://${safeViciId}/vicidial/non_agent_api.php`;
   try {
     const { data } = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
-        pass: viciAuto.includes(vici_id.trim()) ? passwordAuto : passwordNonAuto,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         function: "logged_in_agents",
         header: "YES",
         show_sub_status: "YES",
@@ -242,18 +271,19 @@ export async function getLoggedInUser(vici_id) {
 }
 
 export async function bargeUser(vici_id, session_id, barger_phone) {
-  const VICIDIAL_API = `http://${vici_id.trim()}/vicidial/non_agent_api.php`;
-  try {
-    if (!session_id) return null;
+  const safeViciId = normalizeViciId(vici_id);
+  if (!safeViciId || !session_id) return null;
 
+  const VICIDIAL_API = `http://${safeViciId}/vicidial/non_agent_api.php`;
+  try {
     const res = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
-        pass: viciAuto.includes(vici_id.trim()) ? passwordAuto : passwordNonAuto,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         function: "blind_monitor",
         phone_login: barger_phone,
         session_id: session_id,
-        server_ip: vici_id,
+        server_ip: safeViciId,
         state: "BARGE",
       },
     });
@@ -265,14 +295,15 @@ export async function bargeUser(vici_id, session_id, barger_phone) {
 }
 
 export async function getCallInfo(vici_id, call_id, session_id) {
-  const VICIDIAL_API = `http://${vici_id.trim()}/vicidial/non_agent_api.php`;
-  try {
-    if (!session_id) return null;
+  const safeViciId = normalizeViciId(vici_id);
+  if (!safeViciId || !session_id) return null;
 
+  const VICIDIAL_API = `http://${safeViciId}/vicidial/non_agent_api.php`;
+  try {
     const res = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
-        pass: viciAuto.includes(vici_id.trim()) ? passwordAuto : passwordNonAuto,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         function: "callid_info ",
         call_id: call_id,
         session_id: session_id,
@@ -288,13 +319,16 @@ export async function getCallInfo(vici_id, call_id, session_id) {
 }
 
 export async function checkingLiveCall(vici_id, agent_user) {
-  const VICIDIAL_API = `http://${vici_id.trim()}/agc/api.php`;
+  const safeViciId = normalizeViciId(vici_id);
+  if (!safeViciId) return null;
+
+  const VICIDIAL_API = `http://${safeViciId}/agc/api.php`;
   try {
 
     const res = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
-        pass: viciAuto.includes(vici_id.trim()) ? passwordAuto : passwordNonAuto,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         function: "live_agent_status",
         agent_user: agent_user,
       },

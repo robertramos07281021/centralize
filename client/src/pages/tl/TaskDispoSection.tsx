@@ -5,7 +5,6 @@ import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../redux/store";
 import Confirmation from "../../components/Confirmation";
 import Pagination from "../../components/Pagination";
-import Loading from "../Loading";
 import {
   setPage,
   setServerError,
@@ -406,15 +405,13 @@ const TaskDispoSection: React.FC<Props> = ({
   const valuePage =
     parseInt(taskManagerPage) > pages ? pages.toString() : taskManagerPage;
 
-  if (loading) return <Loading />;
-
   return (
     <>
       <motion.div
-        className="h-full w-full flex flex-col rounded-md shadow-2xl  px-5 py-2 overflow-hidden"
-        initial={{ y: 20, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ delay: 0.1, duration: 0.5, type: "spring" }}
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2 }}
+        className="h-full max-h-[90vh] w-full flex flex-col rounded-md overflow-hidden"
       >
         {(selectedGroup || selectedAgent) && (
           <div
@@ -431,7 +428,7 @@ const TaskDispoSection: React.FC<Props> = ({
                 add one or more task.
               </div>
             )}
-            <div className="flex gap-2">
+            <div className="flex gap-2 mb-2">
               {taskFilter !== "assigned" ? (
                 <button
                   type="button"
@@ -443,7 +440,7 @@ const TaskDispoSection: React.FC<Props> = ({
               ) : (
                 <button
                   type="button"
-                  className="focus:outline-none font-black text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-300 uppercase border-2 border-red-900 cursor-pointer rounded-md text-xs px-5 h-10 me-2"
+                  className="focus:outline-none  font-black text-white bg-red-600 hover:bg-red-700 focus:ring-4 focus:ring-red-300 uppercase border-2 border-red-900 cursor-pointer rounded-md text-xs px-5 h-10 me-2"
                   onClick={handleClickDeleteGroupTaskButton}
                 >
                   Remove task
@@ -453,15 +450,20 @@ const TaskDispoSection: React.FC<Props> = ({
           </div>
         )}
 
-        <div className="text-sm text-gray-800 border py-3 gap-8 px-6 items-center uppercase bg-gray-300 rounded-t-md dark:bg-gray-700 dark:text-gray-400 grid grid-cols-8 font-black mt-2">
-          <div className=" col-span-2">Customer Name</div>
-          <div className=" col-span-2">Current Disposition</div>
-          <div className="">Bucket</div>
-          <div className="">DPD</div>
-          <div className="">Assigned</div>
-          <div className="">Action</div>
+        <div className="text-sm text-gray-800 border h-[5%] py-3 gap-2 px-6 items-center uppercase bg-gray-400 rounded-t-md dark:bg-gray-700 dark:text-gray-400 grid grid-cols-8 font-black">
+          <div className="truncate col-span-2">Customer Name</div>
+          <div className="truncate col-span-2">Current Disposition</div>
+          <div className="truncate">Bucket</div>
+          <div className="truncate">DPD</div>
+          <div className="truncate">Assigned</div>
+          <div className="truncate">Action</div>
         </div>
-        <div className=" w-full h-full text-gray-500 flex flex-col overflow-y-auto rounded-b-md relative mb-2">
+        <div className=" w-full h-[85%] text-gray-500 flex flex-col overflow-y-auto rounded-b-md relative mb-2">
+          {loading && (!selectedGroup || selectedAgent) && (
+            <div className="border-x border-b flex justify-center border-black py-2 rounded-b-md w-full " >
+              <div className="border-t-2 rounded-full w-8 h-8 animate-spin border-black " ></div>
+            </div>
+          )}
           {(selectedGroup || selectedAgent) && (
             <div className="bg-white flex border-b border-x rounded-b-md border-black hover:bg-blue-100 py-2 items-center text-xs justify-end sticky top-0">
               <label className=" flex cursor-pointer gap-1 justify-end px-2 ">
@@ -483,7 +485,8 @@ const TaskDispoSection: React.FC<Props> = ({
           )}
           {CustomerAccountsData?.findCustomerAccount?.CustomerAccounts
             ?.length === 0 &&
-          (!selectedGroup || selectedAgent) ? (
+          (!selectedGroup || selectedAgent) &&
+          !loading ? (
             <div className="italic font-sans border-b border-x border-black shadow-md flex text-center justify-center w-full py-2 rounded-b-md bg-gray-100">
               No customer found.
             </div>
@@ -493,7 +496,7 @@ const TaskDispoSection: React.FC<Props> = ({
                 (ca, index) => (
                   <motion.div
                     key={ca._id}
-                    className="even:bg-gray-100 border-b last:rounded-b-md la st:shadow-md  border-x border-black cursor-default gap-10 bg-gray-200 hover:bg-gray-300 transition-all grid grid-cols-8 py-2 items-center text-sm px-6"
+                    className="even:bg-gray-100 border-b last:rounded-b-md max-h-10 la st:shadow-md  border-x border-black cursor-default gap-10 bg-gray-200 hover:bg-gray-300 transition-all grid grid-cols-8 py-2 items-center text-sm px-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: index * 0.1 }}
@@ -504,22 +507,22 @@ const TaskDispoSection: React.FC<Props> = ({
                     >
                       {ca.customer_info.fullName}
                     </div>
-                    <div className="  col-span-2">
+                    <div className="truncate  col-span-2">
                       {ca.dispoType
                         ? ca.dispoType.code === "PAID"
                           ? `${ca.dispoType.code}`
                           : ca.dispoType.code
                         : "New Endorsed"}
                     </div>
-                    <div className="">{ca.account_bucket.name}</div>
-                    <div className="">
+                    <div className="truncate">{ca.account_bucket.name}</div>
+                    <div className="truncate">
                       {ca.dpd || (
                         <div className="italic font-sans text-gray-400 text-xs">
                           No DPD
                         </div>
                       )}
                     </div>
-                    <div className="capitalize">
+                    <div className="truncate capitalize">
                       {ca.assigned?.name || (
                         <div className="italic font-sans text-gray-400 text-xs">
                           No name assigned{" "}

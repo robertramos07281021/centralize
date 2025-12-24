@@ -90,6 +90,10 @@ const OTHER_ACCOUNTS = gql`
         model
         last_payment_amount
         last_payment_date
+        term
+        product
+        rem_months
+        paid
       }
       grass_details {
         grass_region
@@ -242,6 +246,10 @@ type AccountHistory = {
   brand: string;
   late_payment_amount: number;
   late_payment_date: string;
+  paid: number;
+  term: number;
+  rem_months: number;
+  product: string;
 };
 
 const FieldsDiv = ({
@@ -387,18 +395,29 @@ const AccountInfo = forwardRef<
         (selectedCustomer?.account_update_history?.length || 0)
       : 0;
 
-  // const formattedAmount = useMemo(() => {
-  //   if (!presetAmount) return "";
-  //   const parsed = Number(presetAmount);
-  //   return Number.isNaN(parsed)
-  //     ? presetAmount
-  //     : parsed.toLocaleString("en-PH", {
-  //         style: "currency",
-  //         currency: "PHP",
-  //       });
-  // }, [presetAmount]);
-
   const presetLabel = presetSelection?.label || "Partial";
+  const bucketName = (
+    selectedCustomer?.account_bucket?.name || ""
+  ).toUpperCase();
+  const isSumisho = bucketName === "SUMISHO";
+  const restructuringLabel = isSumisho ? "Product" : "Restructuring Balance";
+  const dfLabel = isSumisho ? "Rem Months" : "DF";
+  const interest = isSumisho ? "PAID" : "Interest";
+  const term = isSumisho ? "TERM" : "DPD DUE DATE";
+  const termValue =
+    selectedCustomer?.out_standing_details?.term ?? selectedCustomer?.max_dpd;
+  const interestValue =
+    selectedCustomer?.out_standing_details?.interest_os ||
+    selectedCustomer?.out_standing_details?.paid;
+  const productValue =
+    selectedCustomer?.out_standing_details?.product ??
+    (selectedCustomer?.out_standing_details?.mo_balance ?? 0).toLocaleString(
+      "en-PH",
+      { style: "currency", currency: "PHP" }
+    );
+  const remMonthsValue =
+    selectedCustomer?.out_standing_details?.rem_months ??
+    selectedCustomer?.out_standing_details?.cf;
 
   return (
     <div className="w-full h-full">
@@ -668,17 +687,15 @@ const AccountInfo = forwardRef<
                 endorsementDate={null}
               />
               <FieldsDiv
-                label="DPD Due Date"
-                value={selectedCustomer?.max_dpd}
-                endorsementDate={selectedCustomer?.endorsement_date || ""}
+                label={term}
+                value={termValue}
+                endorsementDate={null}
               />
 
               <FieldsDiv
-                label="Interest"
-                value={selectedCustomer?.out_standing_details.interest_os}
-                endorsementDate={
-                  selectedCustomer?.out_standing_details.interest_os || 0
-                }
+                label={interest}
+                value={interestValue}
+                endorsementDate={null}
               />
             </div>
           </div>
@@ -695,16 +712,10 @@ const AccountInfo = forwardRef<
                     <div className="bg-gray-100 w-full gap-2 grid grid-cols-2 lg:flex flex-col mb-1 md:mb-0 md:flex-row rounded-md">
                       <div className="w-full">
                         <h1 className="font-medium truncate whitespace-nowrap 2xl:text-sm text-xs text-nowrap">
-                          Restructuring Balance
+                          {restructuringLabel}
                         </h1>
                         <div className="w-full p-1 pl-2 border border-black rounded-sm">
-                          {(
-                            selectedCustomer?.out_standing_details
-                              ?.mo_balance ?? 0
-                          ).toLocaleString("en-PH", {
-                            style: "currency",
-                            currency: "PHP",
-                          })}
+                          {productValue}
                         </div>
                       </div>
 
@@ -725,7 +736,7 @@ const AccountInfo = forwardRef<
 
                       <div className="w-full">
                         <h1 className="font-medium 2xl:text-sm text-xs">
-                          MO_Amort
+                          Monthly Amort
                         </h1>
                         <div className="w-full pl-2 p-1 border border-black rounded-sm">
                           {(
@@ -739,14 +750,11 @@ const AccountInfo = forwardRef<
                       </div>
 
                       <div className="w-full">
-                        <h1 className="font-medium 2xl:text-sm text-xs">DF</h1>
+                        <h1 className="font-medium 2xl:text-sm text-xs">
+                          {dfLabel}
+                        </h1>
                         <div className=" w-full pl-2 p-1 border border-black rounded-sm">
-                          {(
-                            selectedCustomer?.out_standing_details?.cf ?? 0
-                          ).toLocaleString("en-PH", {
-                            style: "currency",
-                            currency: "PHP",
-                          })}
+                          {remMonthsValue}
                         </div>
                       </div>
                     </div>

@@ -377,54 +377,48 @@ const GroupSection = () => {
 
   return (
     <>
-      <div className=" flex justify-between h-full w-full gap-5 items-end flex-col">
-        <div className="flex gap-2 pt-3 w-full">
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 0.9, duration: 0.5, type: "spring" }}
+      <div className=" flex w-full gap-5 items-end flex-col">
+        <div className="flex flex-col xl:flex-row gap-2 items-end pt-3 w-full">
+          <div className="w-full"
           >
+            <div>Group Name:</div>
             <input
               type="text"
               name="name"
               id="name"
               autoComplete="off"
               value={name}
-              className={`border h-full shadow-sm  ${
+              className={`border  shadow-sm  ${
                 required ? "border-red-500 bg-red-50" : "border-black bg-white"
-              } rounded-md lg:py-1  2xl:py-1.5 focus:outline-none pl-4 lg:text-sm 2xl:text-sm`}
+              } rounded-md py-2 focus:outline-none w-full px-2 lg:text-sm 2xl:text-sm`}
               onChange={(e) => setName(e.target.value)}
               placeholder="Enter Group Name..."
             />
-          </motion.div>
-          <motion.div
-            initial={{ y: 20, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            transition={{ delay: 1, duration: 0.5, type: "spring" }}
+          </div>
+          <div
             className="w-full"
           >
+            <div>Group Description</div>
+
             <input
               type="text"
               name="discription"
               id="discription"
               autoComplete="off"
               value={description}
-              className="border shadow-sm h-full border-black focus:outline-none bg-slate-50 rounded-md  lg:py-1 pl-4  2xl:py-1.5 flex  w-full text-sm "
+              className="border shadow-sm border-black focus:outline-none bg-slate-50 rounded-md  py-2 px-2 flex  w-full text-sm "
               onChange={(e) => setDescription(e.target.value)}
               placeholder="Enter Group Description..."
             />
-          </motion.div>
+          </div>
           {!updatedGroup ? (
-            <motion.button
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 1.1, duration: 0.5, type: "spring" }}
+            <button
               type="button"
               className="shadow-md text-white bg-green-500 border-2 font-black uppercase whitespace-nowrap border-green-800 hover:bg-green-600 focus:ring-4 focus:ring-green-300 cursor-pointer rounded-lg text-sm px-5 h-10 dark:bg-green-600 dark:hover:bg-green-700 dark:focus:ring-green-800"
               onClick={onSubmitCreateGroup}
             >
               Add Group
-            </motion.button>
+            </button>
           ) : (
             <div className="flex gap-1">
               <button
@@ -539,7 +533,7 @@ const GroupSection = () => {
             </>
           )}
           {!addMember ? (
-            <motion.select
+            <select
               id="group"
               name="group"
               value={selectedGroup}
@@ -552,9 +546,6 @@ const GroupSection = () => {
                 dispatch(setSelectedGroup(e.target.value));
                 setGroupRequired(false);
               }}
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 1.5, duration:  0.5, type: "spring" }}
             >
               <option value="">Select Group</option>
               {deptGroupData?.findGroup?.map((dgd) => (
@@ -562,7 +553,7 @@ const GroupSection = () => {
                   {dgd.name}
                 </option>
               ))}
-            </motion.select>
+            </select>
           ) : (
             <div className=" ps-3.5 h-10 pe-0 lg:w-50 2xl:w-96 border border-slate-300 rounded-lg bg-slate-50 cursor-default flex justify-between items-center">
               <p>{selectedGroup}</p>{" "}
@@ -578,7 +569,7 @@ const GroupSection = () => {
                   exit={{ opacity: 0 }}
                 ></motion.div>
                 <motion.div
-                  className="flex gap-2 bg-white p-3 rounded-sm border z-60 "
+                  className="flex gap-2 h-full max-h-[50vh] bg-white p-3 rounded-sm border z-60 "
                   initial={{ scale: 0.8, opacity: 0 }}
                   animate={{ scale: 1, opacity: 1 }}
                   exit={{ scale: 0.8, opacity: 0 }}
@@ -589,75 +580,79 @@ const GroupSection = () => {
                       className="bg-white rounded-md h-full border overflow-hidden shadow-md z-60 "
                       layout
                     >
-                      <div className="grid uppercase py-2 bg-gray-300 border-b shadow-md grid-cols-5 text-center">
+                      <div className="grid uppercase h-[10%] gap-2 items-center text-sm py-2 bg-gray-300 border-b shadow-md grid-cols-5 text-center">
                         <div>id</div>
                         <div className="col-span-2">name</div>
                         <div className="col-span-2">bucket</div>
                       </div>
-                      {deptAgentData?.findAgents.map((da) => (
-                        <div
-                          key={da._id}
-                          className="grid grid-cols-5 text-sm items-center text-center px-5 py-2 odd:bg-gray-100 hover:bg-gray-200 "
-                        >
-                          <div className="cursor-default">
-                            {da.user_id || (
-                              <div className="text-xs text-gray-400 italic">
-                                No ID
-                              </div>
-                            )}
-                          </div>
+                      <div className="h-[90%] overflow-auto">
+                        {deptAgentData?.findAgents.map((da) => (
                           <div
-                            className="text-nowrap truncate uppercase cursor-default"
-                            title={da.name.toUpperCase()}
+                            key={da._id}
+                            className="grid grid-cols-5 gap-2 border-b border-gray-300 text-sm overflow-auto items-center text-center px-5 py-2 odd:bg-gray-100 hover:bg-gray-200 "
                           >
-                            {da.name}
-                          </div>
-                          <div className="col-span-2 cursor-default">
-                            {da.buckets.map((e) => bucketObject[e]).join(", ")}
-                          </div>
-                          <div className="flex justify-end cursor-default">
-                            {da.group ? (
-                              dgdObjectName[da.group]
-                            ) : (
-                              <div
-                                className="bg-green-600 cursor-pointer hover:bg-green-700 transition-all shadow-md p-1 border-2 rounded-md text-white border-green-800"
-                                onClick={() => handleAddGroupMember(da._id)}
-                              >
-                                <svg
-                                  xmlns="http://www.w3.org/2000/svg"
-                                  fill="none"
-                                  viewBox="0 0 24 24"
-                                  strokeWidth="2"
-                                  stroke="currentColor"
-                                  className="size-6"
+                            <div className="cursor-default">
+                              {da.user_id || (
+                                <div className="text-xs text-gray-400 italic">
+                                  No ID
+                                </div>
+                              )}
+                            </div>
+                            <div
+                              className="text-nowrap truncate uppercase cursor-default"
+                              title={da.name.toUpperCase()}
+                            >
+                              {da.name}
+                            </div>
+                            <div className="col-span-2 truncate cursor-default">
+                              {da.buckets
+                                .map((e) => bucketObject[e])
+                                .join(", ")}
+                            </div>
+                            <div className="flex justify-end cursor-default">
+                              {da.group ? (
+                                dgdObjectName[da.group]
+                              ) : (
+                                <div
+                                  className="bg-green-600 cursor-pointer hover:bg-green-700 transition-all shadow-md p-1 border-2 rounded-md text-white border-green-800"
+                                  onClick={() => handleAddGroupMember(da._id)}
                                 >
-                                  <path
-                                    strokeLinecap="round"
-                                    strokeLinejoin="round"
-                                    d="M12 4.5v15m7.5-7.5h-15"
-                                  />
-                                </svg>
-                              </div>
-                              // <FaPlusCircle
-                              //   className="lg:text-base 2xl:text-lg text-green-500"
-                              //   onClick={() => handleAddGroupMember(da._id)}
-                              // />
-                            )}
+                                  <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    fill="none"
+                                    viewBox="0 0 24 24"
+                                    strokeWidth="2"
+                                    stroke="currentColor"
+                                    className="size-6"
+                                  >
+                                    <path
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      d="M12 4.5v15m7.5-7.5h-15"
+                                    />
+                                  </svg>
+                                </div>
+                                // <FaPlusCircle
+                                //   className="lg:text-base 2xl:text-lg text-green-500"
+                                //   onClick={() => handleAddGroupMember(da._id)}
+                                // />
+                              )}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        ))}
+                      </div>
                     </motion.div>
                     <motion.div
                       className="bg-white rounded-md min-w-60 border h-full text-sm uppercase p-2 overflow-hidden shadow-md z-60 "
                       layout
                     >
-                      <div className="flex flex-col overflow-y-auto">
+                      <div className="flex h-[10%] flex-col overflow-y-auto">
                         <h1 className="font-black text-black">Description</h1>
                         <div className="flex flex-col overflow-y-auto text-justify px-2">
                           {selectedGroupData?.description}
                         </div>
                       </div>
-                      <div className="h-2/3 flex flex-col">
+                      <div className="h-[90%] flex flex-col">
                         <h1 className="font-black text-black">
                           Member
                           {selectedGroupData?.members &&
@@ -668,7 +663,7 @@ const GroupSection = () => {
                         <div
                           className={`" ${
                             selectedGroupData?.members ? "border" : ""
-                          } max-h-40 flex flex-col rounded-sm shadow-md  overflow-y-auto "`}
+                          } h-full flex flex-col rounded-sm shadow-md  overflow-y-auto "`}
                         >
                           {selectedGroupData?.members.length === 0 && (
                             <p className="text-center italic lowercase text-gray-500 py-2">

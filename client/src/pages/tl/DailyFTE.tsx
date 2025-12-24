@@ -5,14 +5,20 @@ import { RootState } from "../../redux/store";
 import { motion } from "framer-motion";
 import { useSelector } from "react-redux";
 
+type User = {
+  name: string;
+};
+
 type DailyFTEType = {
-  totalUsers: number;
+  totalUsers: [User];
 };
 
 const DAILY_FTE = gql`
   query GetDailyFTE($bucket: ID) {
     getDailyFTE(bucket: $bucket) {
-      totalUsers
+      totalUsers {
+        name
+      }
     }
   }
 `;
@@ -90,7 +96,8 @@ const DailyFTE = () => {
 
   const findData = data?.getDailyFTE?.totalUsers;
   const FTEPercent =
-    (Number(findData) / Number(campaignAssignedData?.getCampaignAssigned)) *
+    (Number(findData?.length) /
+      Number(campaignAssignedData?.getCampaignAssigned)) *
     100;
 
   return (
@@ -105,7 +112,6 @@ const DailyFTE = () => {
         value={campaignAssignedData?.getCampaignAssigned || 0}
         loading={loading}
       />
-
       <div className="relative">
         <div
           className="absolute top-2 right-2 text-gray-800"
@@ -126,7 +132,39 @@ const DailyFTE = () => {
             />
           </svg>
         </div>
-        <DivFTEs label="Actual" value={findData || 0} loading={loading} />
+
+        <div className="absolute peer top-2.5 right-8 border rounded-full w-4 h-4 flex items-center justify-center cursor-default">
+          !
+        </div>
+        <div className="absolute h-auto top-[104%] left-0 hidden peer-hover:flex flex-col z-100 w-full overflow-hudden ">
+          <h1 className="font-bold text-gray-800 text-center py-2 bg-gray-400 border-x  border-y rounded-t-md border-slate-500">
+            Actual Agent
+          </h1>
+
+          <div className="flex flex-col border-x border-b rounded-b-md p-4 border-slate-500 bg-white">
+            {findData && findData?.length > 1 ? (
+              <>
+                {findData?.map((x, index) => {
+                  return (
+                    <div key={index} className="capitalize text-slate-600">
+                      {index + 1}.{""}
+                      {x.name}
+                    </div>
+                  );
+                })}
+              </>
+            ) : (
+              <div className="text-slate-600 text-center italic font-medium">
+                No agents have production.
+              </div>
+            )}
+          </div>
+        </div>
+        <DivFTEs
+          label="Actual"
+          value={findData?.length || 0}
+          loading={loading}
+        />
       </div>
       <DivFTEs
         label="Attendance %"

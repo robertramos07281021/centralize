@@ -48,6 +48,8 @@ type User = {
 const QASVAgentRecordings = () => {
   const { selectedCampaign } = useSelector((state: RootState) => state.auth);
   const [isOpen, setIsOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const hasSearchTerm = searchTerm.trim().length > 0;
 
   const { data: bucketData, refetch: bucketRefetching } = useQuery<{
     getAllBucket: Bucket[];
@@ -80,6 +82,20 @@ const QASVAgentRecordings = () => {
     return "Select a campaign";
   }, [selectedCampaign, newMapBucjket]);
 
+  const filteredAgents = useMemo(() => {
+    const term = searchTerm.trim().toLowerCase();
+    if (!term) return agendivata?.getBucketUser || [];
+
+    return (agendivata?.getBucketUser || []).filter((user) => {
+      const nameMatch = user.name?.toLowerCase().includes(term);
+      const sipMatch = user.user_id?.toLowerCase().includes(term);
+      const bucketMatch = user.buckets
+        .map((b) => newMapBucjket[b]?.toLowerCase())
+        .some((label) => label?.includes(term));
+      return nameMatch || sipMatch || bucketMatch;
+    });
+  }, [agendivata, newMapBucjket, searchTerm]);
+
   useEffect(() => {
     const refetching = async () => {
       await refetch();
@@ -104,14 +120,15 @@ const QASVAgentRecordings = () => {
         animate={{ y: 0, opacity: 1 }}
       >
         <motion.div className="flex items-center justify-start">
-          <div className="flex items-center gap-3">
-            <div className="relative">
+          <div className="flex items-center gap-3 w-full">
+            <div className="relative flex justify-between w-full">
               <motion.div
                 onClick={() => {
                   if (bucketOptions.length === 0) return;
                   setIsOpen((prev) => !prev);
                 }}
                 layout
+                className="relative"
               >
                 <div className="bg-gray-200 justify-between  z-20 cursor-pointer hover:bg-gray-300 transition-all px-3 flex gap-3 py-1 rounded-sm shadow-md border min-w-64">
                   <div className="truncate">{selectedBucketLabel}</div>
@@ -136,35 +153,44 @@ const QASVAgentRecordings = () => {
                     </svg>
                   </div>
                 </div>
+                <AnimatePresence>
+                  {isOpen && bucketOptions.length > 0 && (
+                    <motion.div
+                      initial={{ y: -10, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: -5, opacity: 0 }}
+                    >
+                      <div className="absolute flex flex-col max-h-80 overflow-auto z-20 border bg-gray-200 shadow-md transition-all cursor-pointer rounded-sm mt-1 w-full">
+                        <span
+                          onClick={() => handleCampaignSelect("")}
+                          className="whitespace-nowrap hover:bg-gray-300 px-3 py-1"
+                        >
+                          Select a campaign
+                        </span>
+                        {bucketOptions.map((bucket) => (
+                          <span
+                            onClick={() => handleCampaignSelect(bucket._id)}
+                            className="whitespace-nowrap hover:bg-gray-300 px-3 py-1"
+                            key={bucket._id}
+                          >
+                            {bucket.name}
+                          </span>
+                        ))}
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </motion.div>
 
-              <AnimatePresence>
-                {isOpen && bucketOptions.length > 0 && (
-                  <motion.div
-                    initial={{ y: -10, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -5, opacity: 0 }}
-                  >
-                    <div className="absolute flex flex-col max-h-80 overflow-auto z-20 border bg-gray-200 shadow-md transition-all cursor-pointer rounded-sm mt-1 w-full">
-                      <span
-                        onClick={() => handleCampaignSelect("")}
-                        className="whitespace-nowrap hover:bg-gray-300 px-3 py-1"
-                      >
-                        Select a campaign
-                      </span>
-                      {bucketOptions.map((bucket) => (
-                        <span
-                          onClick={() => handleCampaignSelect(bucket._id)}
-                          className="whitespace-nowrap hover:bg-gray-300 px-3 py-1"
-                          key={bucket._id}
-                        >
-                          {bucket.name}
-                        </span>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              <div className="border bg-gray-100 rounded-sm shadow-md px-2 flex items-center" >
+                <input
+                  className="h-full outline-none bg-transparent py-1 text-sm"
+                  placeholder="Search..."
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+              </div>
+
             </div>
           </div>
         </motion.div>
@@ -200,10 +226,17 @@ const QASVAgentRecordings = () => {
                     No agents found for this campaign.
                   </div>
                 )}
-                {agendivata?.getBucketUser.map((user, index) => (
+                {agendivata && filteredAgents.length === 0 && (
+                  <div className="bg-gray-200 border-x border-b py-2 text-gray-400 italic border-black rounded-b-md shadow-md flex justify-center items-center">
+                    {hasSearchTerm
+                      ? "No agents match this search."
+                      : "No agents found for this campaign."}
+                  </div>
+                )}
+                {filteredAgents.map((user, index) => (
                   <motion.div
                     key={user._id}
-                    className=" even:bg-gray-200 text-sm border-x border-b last:rounded-b-md grid py-1 items-center w-full grid-cols-6 bg-gray-100 cursor-default transition-all hover:bg-gray-300 select-none"
+                    className=" even:bg-gray-200 last:shadow-md text-sm border-x border-b last:rounded-b-md grid py-1 items-center w-full grid-cols-6 bg-gray-100 cursor-default transition-all hover:bg-gray-300 select-none"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: index * 0.1 }}

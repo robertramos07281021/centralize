@@ -504,15 +504,15 @@ const taskResolver = {
         //   },
         // ]);
 
-        const cursor = CustomerAccount.find({
-          emergency_contact: { $exists: true },
-        }).cursor();
+        // const cursor = CustomerAccount.find({
+        //   emergency_contact: { $exists: true },
+        // }).cursor();
 
-        for await (const x of cursor) {
-          await Customer.findByIdAndUpdate(x.customer, {
-            $set: { emergency_contact: x.emergency_contact },
-          });
-        }
+        // for await (const x of cursor) {
+        //   await Customer.findByIdAndUpdate(x.customer, {
+        //     $set: { emergency_contact: x.emergency_contact },
+        //   });
+        // }
 
         return {
           success: true,

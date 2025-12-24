@@ -70,12 +70,12 @@ const AgentSection: React.FC<ComponentProps> = ({ bucket }) => {
 
 
   return (
-    <div className="w-full flex justify-end items-center text-xs">
+    <div className="w-full mt-2 flex justify-end items-center text-xs">
 
       <select
         id="agent"
         name="agent"
-        className={`bg-gray-50 border-gray-300 border text-gray-900 rounded-sm focus:ring-blue-500 focus:border-blue-500 block lg:w-50 2xl:w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
+        className={`bg-gray-50 border-black border text-gray-900 rounded-md shadow-md block lg:w-50 2xl:w-96 p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500`}
         onChange={(e) => setSelectedAgent(e.target.value)}
       >
         <option value="">Select Agent</option>

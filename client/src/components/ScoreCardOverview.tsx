@@ -70,6 +70,8 @@ type ScoreDetails = {
   } | null;
 };
 
+type ScoreCardTypeKey = "default" | "ub" | "eastwest" | "ubMortgage";
+
 type ScoreCardSummary = {
   _id: string;
   typeOfScoreCard: string;
@@ -127,6 +129,10 @@ type EastwestScoreDetails = {
     withoutContact?: number;
     finalScore?: number;
   };
+  comments?: {
+    comments?: string | null;
+    highlights?: string | null;
+  } | null;
 };
 
 const ScoreCardOverview = () => {
@@ -134,6 +140,8 @@ const ScoreCardOverview = () => {
     () => new Date().toISOString().split("T")[0]
   );
   const [searchTerm, setSearchTerm] = useState<string>("");
+  const [selectedTypeFilter, setSelectedTypeFilter] =
+    useState<ScoreCardTypeKey | null>(null);
   const [isOpenDefaultScoreCard, setIsOpenDefaultScoreCard] =
     useState<boolean>(false);
   const [isOpenUBScoreCard, setIsOpenUBScoreCard] = useState<boolean>(false);
@@ -164,8 +172,23 @@ const ScoreCardOverview = () => {
 
   const scorecards: ScoreCardSummary[] = data?.getScoreCardSummaries ?? [];
 
+  const deriveTypeKey = (type?: string): ScoreCardTypeKey => {
+    const normalized = (type || "").toLowerCase();
+    if (normalized.includes("ub mortgage")) return "ubMortgage";
+    if (normalized.includes("ub score")) return "ub";
+    if (normalized.includes("eastwest")) return "eastwest";
+    return "default";
+  };
+
+  const filteredScorecards = useMemo(() => {
+    if (!selectedTypeFilter) return scorecards;
+    return scorecards.filter(
+      (entry) => deriveTypeKey(entry.typeOfScoreCard) === selectedTypeFilter
+    );
+  }, [scorecards, selectedTypeFilter]);
+
   const overviewStats = useMemo(() => {
-    if (scorecards.length === 0) {
+    if (filteredScorecards.length === 0) {
       return {
         avgScore: 0,
         highestScore: 0,
@@ -173,7 +196,7 @@ const ScoreCardOverview = () => {
         passRate: 0,
       };
     }
-    const scores = scorecards
+    const scores = filteredScorecards
       .map((entry) => entry.totalScore ?? null)
       .filter(
         (value): value is number =>
@@ -189,16 +212,13 @@ const ScoreCardOverview = () => {
       lowestScore,
       passRate: scores.length ? (passCount / scores.length) * 100 : 0,
     };
-  }, [scorecards]);
+  }, [filteredScorecards]);
 
   const totalsByType = useMemo(() => {
     return scorecards.reduce(
       (acc, entry) => {
-        const type = (entry.typeOfScoreCard || "").toLowerCase();
-        if (type.includes("ub mortgage")) acc.ubMortgage += 1;
-        else if (type.includes("ub score")) acc.ub += 1;
-        else if (type.includes("eastwest")) acc.eastwest += 1;
-        else acc.default += 1;
+        const typeKey = deriveTypeKey(entry.typeOfScoreCard);
+        acc[typeKey] += 1;
         return acc;
       },
       { default: 0, eastwest: 0, ub: 0, ubMortgage: 0 }
@@ -253,6 +273,20 @@ const ScoreCardOverview = () => {
       return String(value);
     }
     return SCORE_VALUE_LABELS[normalized] ?? String(value);
+  };
+
+  const handleTypeClick = (typeKey: ScoreCardTypeKey) => {
+    setSelectedTypeFilter((prev) => (prev === typeKey ? null : typeKey));
+  };
+
+  const typeButtonClass = (typeKey: ScoreCardTypeKey, baseClasses: string) => {
+    const isSelected = selectedTypeFilter === typeKey;
+    const isDimmed = selectedTypeFilter !== null && !isSelected;
+    const ringClass = isSelected ? " " : "";
+    if (isDimmed) {
+      return `font-black uppercase bg-gray-400 border-2 border-gray-600 text-white px-2 items-center flex rounded-md shadow-md cursor-pointer hover:bg-gray-500`;
+    }
+    return `${baseClasses}${ringClass}`;
   };
 
   const buildExcelCriteriaRows = (details?: ScoreDetails | null) => {
@@ -815,7 +849,10 @@ const ScoreCardOverview = () => {
                 className="grid grid-cols-10 gap-2 px-3 py-2 text-xs md:text-sm odd:bg-white even:bg-gray-100 items-center"
               >
                 <div className="font-black text-gray-900">Call {idx + 1}</div>
-                <div className="truncate first-letter:uppercase" title={callDetails.accountName[idx]}>
+                <div
+                  className="truncate first-letter:uppercase"
+                  title={callDetails.accountName[idx]}
+                >
                   {callDetails.accountName[idx] || (
                     <div className="text-xs text-gray-400 italic truncate">
                       No account
@@ -1100,10 +1137,2466 @@ const ScoreCardOverview = () => {
     }
   };
 
+  const ratingFromScore = (score: number) => {
+    if (score >= 100) return "EXCELLENT";
+    if (score >= 90) return "SUPERIOR";
+    if (score >= 80) return "ACCEPTABLE";
+    return "UNACCEPTABLE";
+  };
+
+  const exportEastwestExcel = async (scoreCard: ScoreCardSummary) => {
+    const details = extractEastwestDetails(scoreCard.scoreDetails);
+    if (!details) {
+      window.alert("Missing score details for this score card.");
+      return;
+    }
+
+    const withContactSections = Array.isArray(details.withContact)
+      ? details.withContact
+      : [];
+    const withoutContactSections = Array.isArray(details.withoutContact)
+      ? details.withoutContact
+      : [];
+
+    const normalizeResponses = (sections: EastwestSection[]) =>
+      sections.map((section) =>
+        (section.questions ?? []).map((q) =>
+          String(q.response ?? "YES")
+            .toUpperCase()
+            .startsWith("Y")
+        )
+      );
+
+    const withContactResponses = normalizeResponses(withContactSections);
+    const withoutContactResponses = normalizeResponses(withoutContactSections);
+
+    const withContactCounts = withContactSections.map((s) => s.totalNo ?? 0);
+    const withoutContactCounts = withoutContactSections.map(
+      (s) => s.totalNo ?? 0
+    );
+
+    const withTotalsOverall =
+      details.totals?.withContact ??
+      withContactCounts.reduce((sum, val) => sum + (val || 0), 0);
+    const withoutTotalsOverall =
+      details.totals?.withoutContact ??
+      withoutContactCounts.reduce((sum, val) => sum + (val || 0), 0);
+
+    withContactCounts.push(withTotalsOverall ?? 0);
+    withoutContactCounts.push(withoutTotalsOverall ?? 0);
+
+    const finalScore = Number(
+      details.totals?.finalScore ?? scoreCard.totalScore ?? 0
+    );
+
+    const acknowledgedBy = details.meta?.acknowledgedBy ?? "";
+    const selectedAgentName =
+      details.meta?.agent?.name ?? scoreCard.agent?.name ?? "Unknown Agent";
+    const selectedEvaluatorName =
+      details.meta?.evaluator?.name ?? scoreCard.qa?.name ?? "Unknown QA";
+    const cardholder = details.meta?.cardholder ?? "";
+    const accountNumber = details.meta?.accountNumber ?? scoreCard.number ?? "";
+    const rateInput =
+      details.meta?.enteredRate ?? details.meta?.enteredScore ?? "";
+    const evaluatorRemarks = details.comments?.comments ?? "";
+    const agentRemarks = details.comments?.highlights ?? "";
+
+    const evaluationDate =
+      details.meta?.evaluationDate || scoreCard.dateAndTimeOfCall;
+    const todayLabel = evaluationDate
+      ? new Date(evaluationDate).toLocaleDateString()
+      : new Date().toLocaleDateString();
+
+    const excelModule = await import("exceljs/dist/exceljs.min.js");
+    const ExcelJS = excelModule.default ?? excelModule;
+
+    const workbook = new ExcelJS.Workbook();
+    workbook.creator = selectedEvaluatorName || "QA";
+    workbook.created = new Date();
+
+    const worksheet = workbook.addWorksheet("Eastwest Score Card", {
+      views: [{ showGridLines: false }],
+    });
+
+    const thinBorder = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+      diagonal: {},
+    } as const;
+
+    const thickBorder = {
+      top: { style: "medium" },
+      left: { style: "medium" },
+      bottom: { style: "medium" },
+      right: { style: "medium" },
+      diagonal: {},
+    } as const;
+
+    const amberFill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFFFFF00" },
+    } as const;
+
+    const solidGreenFill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF548235" },
+    } as const;
+
+    const greenFill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF70AD47" },
+    } as const;
+
+    const lightGreenFill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFA9D08E" },
+    } as const;
+
+    const solidBlueFill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF00B0F0" },
+    } as const;
+    const blueFill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF66CCFF" },
+    } as const;
+
+    const lightBlueFill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFD9E1F2" },
+    } as const;
+
+    const orangeFill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF7030A0" },
+    } as const;
+
+    const blackFill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF000000" },
+    } as const;
+
+    const grayFill = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFB0B0B0" },
+    } as const;
+
+    const applyBorder = (
+      ws: any,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number,
+      border: any
+    ) => {
+      for (let r = r1; r <= r2; r += 1) {
+        for (let c = c1; c <= c2; c += 1) {
+          const cell = ws.getCell(r, c);
+          cell.border = border;
+          cell.alignment = {
+            ...(cell.alignment ?? {}),
+            wrapText: true,
+            vertical: "middle",
+          };
+        }
+      }
+    };
+
+    const applyBorderWithInner = (
+      ws: any,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number,
+      outer: any,
+      inner: any
+    ) => {
+      for (let r = r1; r <= r2; r += 1) {
+        for (let c = c1; c <= c2; c += 1) {
+          const cell = ws.getCell(r, c);
+          cell.border = {
+            top: r === r1 ? outer.top : inner.top,
+            bottom: r === r2 ? outer.bottom : inner.bottom,
+            left: c === c1 ? outer.left : inner.left,
+            right: c === c2 ? outer.right : inner.right,
+            diagonal: {},
+          };
+          cell.alignment = {
+            ...(cell.alignment ?? {}),
+            wrapText: true,
+            vertical: "middle",
+          };
+        }
+      }
+    };
+
+    const applyFill = (
+      ws: any,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number,
+      fill: any
+    ) => {
+      for (let r = r1; r <= r2; r += 1) {
+        for (let c = c1; c <= c2; c += 1) {
+          ws.getCell(r, c).fill = fill;
+        }
+      }
+    };
+
+    const setFontColor = (
+      ws: any,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number,
+      color: any,
+      bold = false
+    ) => {
+      for (let r = r1; r <= r2; r += 1) {
+        for (let c = c1; c <= c2; c += 1) {
+          const cell = ws.getCell(r, c);
+          cell.font = { ...(cell.font ?? {}), color, bold };
+        }
+      }
+    };
+
+    const centerCells = (
+      ws: any,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number
+    ) => {
+      for (let r = r1; r <= r2; r += 1) {
+        for (let c = c1; c <= c2; c += 1) {
+          const cell = ws.getCell(r, c);
+          cell.alignment = {
+            ...(cell.alignment ?? {}),
+            horizontal: "center",
+            vertical: "middle",
+            wrapText: true,
+          };
+        }
+      }
+    };
+
+    worksheet.columns = [
+      { header: "A", key: "a", width: 62 },
+      { header: "B", key: "b", width: 60 },
+      { header: "C", key: "c", width: 19 },
+      { header: "D", key: "d", width: 13 },
+      { header: "E", key: "e", width: 18 },
+      { header: "F", key: "f", width: 3 },
+      { header: "G", key: "g", width: 3 },
+      { header: "H", key: "h", width: 77 },
+      { header: "I", key: "i", width: 57 },
+      { header: "J", key: "j", width: 19 },
+      { header: "K", key: "k", width: 22 },
+      { header: "L", key: "l", width: 20 },
+    ];
+
+    worksheet.mergeCells("A1:H1");
+    const titleCell = worksheet.getCell("A1");
+    titleCell.value = "TPSP PHONE MONITORING SHEET";
+    titleCell.font = { size: 30, bold: true, name: "Calibri" };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+
+    worksheet.mergeCells("I1:L1");
+
+    const secondTitleCell = worksheet.getCell("I1");
+    secondTitleCell.value = "Bernales & Associates";
+    secondTitleCell.font = {
+      size: 30,
+      bold: false,
+      name: "Calibri",
+      color: { argb: "FF0000" },
+    };
+    secondTitleCell.alignment = { horizontal: "center", vertical: "middle" };
+
+    worksheet.getCell("I1").value = "Bernales & Associates";
+    applyBorder(worksheet, 1, 1, 1, 12, thickBorder);
+
+    worksheet.getCell("A4").value = "EVALUATION DATE";
+    worksheet.getCell("A5").value = "AGENT'S NAME";
+    worksheet.getCell("A6").value = "EVALATOR'S NAME (TEAM HEAD)";
+    worksheet.getCell("A7").value = "ACKNOWLEDGED/VALIDATED BY: (AC/RO)";
+    worksheet.getCell("B4").value = todayLabel;
+    worksheet.getCell("B5").value = selectedAgentName;
+    worksheet.getCell("B6").value = selectedEvaluatorName;
+    worksheet.getCell("B7").value = acknowledgedBy;
+    applyBorder(worksheet, 4, 7, 1, 2, thinBorder);
+
+    worksheet.mergeCells("I4:K4");
+    worksheet.mergeCells("I5:K5");
+    worksheet.mergeCells("I6:K6");
+    worksheet.mergeCells("A2:L2");
+    worksheet.getCell("A2").value = "RATING SHEET";
+    worksheet.getCell("A2").alignment = {
+      horizontal: "center",
+    };
+    applyBorder(worksheet, 2, 2, 1, 12, thickBorder);
+    worksheet.getCell("H4").value = "CARDHOLDER";
+    worksheet.getCell("H5").value = "ACCOUNT NUMBER";
+    worksheet.getCell("H6").value = "SCORE:";
+    worksheet.getCell("I4").value = cardholder;
+    worksheet.getCell("I5").value = accountNumber;
+    worksheet.getCell("I6").value = rateInput
+      ? `${finalScore} | Rate: ${rateInput}`
+      : finalScore;
+    applyBorder(worksheet, 4, 6, 8, 11, thinBorder);
+
+    worksheet.getCell("A9").value = "A. WITH CONTACT";
+    applyBorder(worksheet, 9, 9, 1, 1, thickBorder);
+
+    worksheet.getCell("A11").value = "OPENING SKILLS";
+    applyBorder(worksheet, 11, 11, 1, 1, thickBorder);
+
+    worksheet.mergeCells("C11:D11");
+    worksheet.getCell("C11").value = "DEFECT";
+    centerCells(worksheet, 11, 11, 3, 4);
+    applyBorder(worksheet, 11, 11, 3, 4, thickBorder);
+
+    worksheet.getCell("C12").value = "Y/N";
+    worksheet.getCell("D12").value = "SCORE";
+    worksheet.getCell("E12").value = "Tagging";
+    centerCells(worksheet, 12, 12, 3, 5);
+    applyBorder(worksheet, 12, 12, 3, 5, thickBorder);
+    worksheet.getRow(13).height = 15;
+    worksheet.getRow(14).height = 15;
+    worksheet.getRow(21).height = 15;
+    worksheet.getRow(23).height = 15;
+    worksheet.getRow(36).height = 20;
+    worksheet.getRow(40).height = 20;
+
+    worksheet.getRow(42).height = 22;
+    worksheet.getRow(43).height = 22;
+
+    applyFill(worksheet, 65, 65, 1, 5, lightGreenFill);
+    applyFill(worksheet, 43, 43, 10, 10, lightGreenFill);
+    applyFill(worksheet, 49, 49, 10, 10, lightGreenFill);
+    applyFill(worksheet, 65, 65, 8, 12, lightGreenFill);
+    applyFill(worksheet, 58, 62, 1, 5, amberFill);
+    applyFill(worksheet, 4, 7, 2, 2, amberFill);
+    applyFill(worksheet, 4, 6, 9, 11, amberFill);
+    applyFill(worksheet, 1, 1, 9, 12, amberFill);
+
+    applyFill(worksheet, 58, 62, 8, 12, amberFill);
+    applyFill(worksheet, 49, 49, 11, 11, solidBlueFill);
+    applyFill(worksheet, 43, 43, 11, 11, solidBlueFill);
+
+    applyFill(worksheet, 13, 15, 3, 3, amberFill);
+    applyFill(worksheet, 20, 24, 3, 3, amberFill);
+    applyFill(worksheet, 29, 31, 3, 3, amberFill);
+    applyFill(worksheet, 36, 43, 3, 3, amberFill);
+    applyFill(worksheet, 48, 51, 3, 3, amberFill);
+    applyFill(worksheet, 16, 16, 3, 3, lightGreenFill);
+    applyFill(worksheet, 25, 25, 3, 3, lightGreenFill);
+    applyFill(worksheet, 32, 32, 3, 3, lightGreenFill);
+    applyFill(worksheet, 44, 44, 3, 3, lightGreenFill);
+    applyFill(worksheet, 52, 52, 3, 3, lightGreenFill);
+    applyFill(worksheet, 16, 16, 1, 2, lightGreenFill);
+    applyFill(worksheet, 25, 25, 1, 2, lightGreenFill);
+    applyFill(worksheet, 32, 32, 1, 2, lightGreenFill);
+    applyFill(worksheet, 44, 44, 1, 2, lightGreenFill);
+    applyFill(worksheet, 52, 52, 1, 2, lightGreenFill);
+    applyFill(worksheet, 9, 9, 1, 1, solidGreenFill);
+    applyFill(worksheet, 11, 11, 1, 1, greenFill);
+    applyFill(worksheet, 18, 18, 1, 1, greenFill);
+    applyFill(worksheet, 27, 27, 1, 1, greenFill);
+    applyFill(worksheet, 32, 32, 1, 1, lightGreenFill);
+    applyFill(worksheet, 34, 34, 1, 1, greenFill);
+    applyFill(worksheet, 46, 46, 1, 1, greenFill);
+
+    applyFill(worksheet, 9, 9, 8, 8, solidBlueFill);
+    applyFill(worksheet, 11, 11, 8, 8, blueFill);
+    applyFill(worksheet, 16, 16, 8, 10, lightBlueFill);
+    applyFill(worksheet, 18, 18, 8, 8, blueFill);
+
+    applyFill(worksheet, 27, 27, 8, 8, blueFill);
+    applyFill(worksheet, 34, 34, 8, 10, blueFill);
+    applyFill(worksheet, 36, 36, 8, 8, blueFill);
+
+    applyFill(worksheet, 43, 43, 8, 9, orangeFill);
+    applyFill(worksheet, 42, 42, 10, 11, orangeFill);
+    applyFill(worksheet, 44, 49, 9, 9, orangeFill);
+    applyFill(worksheet, 49, 49, 8, 8, orangeFill);
+
+    const whiteFont = { argb: "FFFFFFFF" } as const;
+    setFontColor(worksheet, 43, 43, 8, 9, whiteFont, true);
+    setFontColor(worksheet, 42, 42, 10, 11, whiteFont, true);
+    setFontColor(worksheet, 44, 49, 9, 9, whiteFont, true);
+    setFontColor(worksheet, 49, 49, 8, 8, whiteFont, true);
+
+    applyFill(worksheet, 34, 34, 8, 10, lightBlueFill);
+    applyFill(worksheet, 40, 40, 8, 10, lightBlueFill);
+    applyFill(worksheet, 25, 25, 8, 10, lightBlueFill);
+
+    worksheet.mergeCells("A13:B13");
+    worksheet.getCell("A13").value = "Uses Appropriate Greeting";
+    worksheet.mergeCells("A14:B14");
+    worksheet.getCell("A14").value =
+      "Did the agent advise the third party or person talking to that the call was recorded?\t";
+    applyBorder(worksheet, 34, 34, 1, 1, thickBorder);
+    applyBorder(worksheet, 34, 34, 3, 4, thickBorder);
+    applyBorder(worksheet, 35, 35, 3, 5, thickBorder);
+    applyBorderWithInner(worksheet, 36, 43, 1, 5, thickBorder, thinBorder);
+    applyBorder(worksheet, 44, 44, 1, 3, thickBorder);
+    worksheet.mergeCells("A15:B15");
+    worksheet.getCell("A15").value =
+      "Did the agent properly identify self and Company? (No Misrepresentation?)";
+    applyBorder(worksheet, 18, 18, 1, 1, thickBorder);
+    applyBorder(worksheet, 18, 18, 3, 4, thickBorder);
+    applyBorder(worksheet, 19, 19, 3, 5, thickBorder);
+    applyBorderWithInner(worksheet, 20, 24, 1, 5, thickBorder, thinBorder);
+    applyBorder(worksheet, 25, 25, 1, 3, thickBorder);
+    applyBorder(worksheet, 18, 18, 1, 1, thickBorder);
+    applyBorder(worksheet, 18, 18, 3, 4, thickBorder);
+    applyBorder(worksheet, 19, 19, 3, 5, thickBorder);
+    applyBorderWithInner(worksheet, 20, 24, 1, 5, thickBorder, thinBorder);
+    applyBorder(worksheet, 25, 25, 1, 3, thickBorder);
+    worksheet.mergeCells("A16:B16");
+    worksheet.getCell("A16").value = "TOTAL";
+    applyBorderWithInner(worksheet, 13, 15, 1, 5, thickBorder, thinBorder);
+    applyBorder(worksheet, 16, 16, 1, 3, thickBorder);
+
+    worksheet.getCell("A18").value = "NEGOTIATION SKILLS";
+
+    worksheet.mergeCells("C18:D18");
+    worksheet.getCell("C18").value = "DEFECT";
+    centerCells(worksheet, 18, 18, 3, 4);
+
+    worksheet.getCell("C19").value = "Y/N";
+    worksheet.getCell("D19").value = "SCORE";
+    worksheet.getCell("E19").value = "Tagging";
+    centerCells(worksheet, 19, 19, 3, 5);
+
+    worksheet.mergeCells("A20:B20");
+    worksheet.getCell("A20").value =
+      "Did the agent ask for reason for delay in payment (RFD)/ broken promise (RBP) ?";
+    worksheet.mergeCells("A21:B21");
+    worksheet.getCell("A21").value =
+      "Did the agent follow hierarchy of negotiation?";
+    worksheet.mergeCells("A22:B22");
+    worksheet.getCell("A22").value = applyBorder(
+      worksheet,
+      27,
+      27,
+      1,
+      1,
+      thickBorder
+    );
+    applyBorder(worksheet, 27, 27, 3, 4, thickBorder);
+    applyBorder(worksheet, 28, 28, 3, 5, thickBorder);
+    applyBorderWithInner(worksheet, 29, 31, 1, 5, thickBorder, thinBorder);
+    applyBorder(worksheet, 32, 32, 1, 3, thickBorder);
+    worksheet.getCell("A22").value =
+      "Did the agent offer appropriate alternative solutions based on CH's financial situation?";
+    worksheet.mergeCells("A23:B23");
+    worksheet.getCell("A23").value =
+      "Did the agent  explain the consequences for non payment & urgency of the payment?\t";
+    worksheet.mergeCells("A24:B24");
+    worksheet.getCell("A24").value =
+      "Did the agent secure PTP within the allowable grace period?\t";
+    worksheet.mergeCells("A25:B25");
+    worksheet.getCell("A25").value = "TOTAL";
+
+    worksheet.mergeCells("A27:B27");
+    worksheet.getCell("A27").value =
+      "PRODUCT KNOWLEDGE/PROBLEM SOLVING SKILLS\t";
+
+    worksheet.mergeCells("C27:D27");
+    worksheet.getCell("C27").value = "DEFECT";
+    centerCells(worksheet, 27, 27, 3, 4);
+
+    worksheet.getCell("C28").value = "Y/N";
+    worksheet.getCell("D28").value = "SCORE";
+    worksheet.getCell("E28").value = "Tagging";
+    centerCells(worksheet, 28, 28, 3, 5);
+
+    worksheet.mergeCells("A29:B29");
+    worksheet.getCell("A29").value =
+      "Did the agent offer and appropriately discussed the applicable repayment program?\t";
+    worksheet.mergeCells("A30:B30");
+    worksheet.getCell("A30").value =
+      "Did the agent accurately explain and compute applicable fees, charges or discount amount?\t";
+    worksheet.mergeCells("A31:B31");
+    worksheet.getCell("A31").value =
+      "Did the agent address the concerns raised by the CH regarding his/her account?\t";
+    worksheet.mergeCells("A32:B32");
+    worksheet.getCell("A32").value = "TOTAL";
+
+    worksheet.getCell("A34").value = "SOFT SKILLS";
+
+    worksheet.mergeCells("C34:D34");
+    worksheet.getCell("C34").value = "DEFECT";
+    centerCells(worksheet, 34, 34, 3, 4);
+
+    worksheet.getCell("C35").value = "Y/N";
+    worksheet.getCell("D35").value = "SCORE";
+    worksheet.getCell("E35").value = "Tagging";
+    centerCells(worksheet, 35, 35, 3, 5);
+
+    worksheet.mergeCells("A36:B36");
+    worksheet.mergeCells("C38:C39");
+    worksheet.mergeCells("D38:D39");
+    worksheet.mergeCells("E38:E39");
+
+    worksheet.getCell("A36").value =
+      "Did the agent  have a good control of the conversation?\t";
+    worksheet.mergeCells("A37:B37");
+    worksheet.getCell("A37").value =
+      "Did the agent  communicate according to the cardholder's language of expertise? Avoided using jargon or technical terms that the customer wasn't familiar with.\t";
+    worksheet.mergeCells("A38:B39");
+    worksheet.getCell("A38").value =
+      "Is the agent's tone of voice professional, not overly aggressive, non-confrontational, not sarcastic or condescending?";
+    worksheet.mergeCells("A40:B40");
+    worksheet.getCell("A40").value =
+      "Did the agent demonstrate empathy and understanding of the customer's situation?";
+    worksheet.mergeCells("A41:B41");
+    worksheet.getCell("A41").value =
+      "Did the agent conduct the call at a reasonable pace - neither rushed nor unnecessarily prolonged?\t";
+    worksheet.mergeCells("A42:B42");
+    worksheet.getCell("A42").value =
+      "Did the agent record accurate and complete details of the conversation in the system?\t";
+    worksheet.mergeCells("A43:B43");
+    worksheet.getCell("A43").value =
+      "Did the agent comply with EWBC Collection Agency Code of Conduct?\t";
+    worksheet.mergeCells("A44:B44");
+    worksheet.getCell("A44").value = "TOTAL";
+
+    worksheet.getCell("A46").value = "WRAP UP/CLOSING THE CALL";
+
+    worksheet.mergeCells("C46:D46");
+    worksheet.getCell("C46").value = "DEFECT";
+    centerCells(worksheet, 46, 46, 3, 4);
+
+    worksheet.getCell("C47").value = "Y/N";
+    worksheet.getCell("D47").value = "SCORE";
+    worksheet.getCell("E47").value = "Tagging";
+    centerCells(worksheet, 47, 47, 3, 5);
+
+    worksheet.mergeCells("A48:B48");
+    worksheet.getCell("A48").value =
+      "Did the agent  ask for payment confirmation?";
+    worksheet.mergeCells("A49:B49");
+    worksheet.getCell("A49").value =
+      "Did the agent reminded client of the next due date or payment schedule?";
+    worksheet.mergeCells("A50:B50");
+    worksheet.getCell("A50").value =
+      "Did the agent obtains/verifies customer's Information? (Demographics)";
+    worksheet.mergeCells("A51:B51");
+    worksheet.getCell("A51").value =
+      "If an information update was requested, was PID competed as required?";
+    worksheet.mergeCells("A52:B52");
+    worksheet.getCell("A52").value = "TOTAL";
+    applyBorder(worksheet, 46, 46, 1, 1, thickBorder);
+    applyBorder(worksheet, 46, 46, 3, 4, thickBorder);
+    applyBorder(worksheet, 47, 47, 3, 5, thickBorder);
+    applyBorderWithInner(worksheet, 48, 51, 1, 5, thickBorder, thinBorder);
+    applyBorder(worksheet, 52, 52, 1, 3, thickBorder);
+
+    worksheet.getCell("H9").value = "B. WITHOUT CONTACT";
+    applyBorder(worksheet, 9, 9, 8, 8, thickBorder);
+
+    worksheet.getCell("H11").value = "OPENING SKILLS";
+    applyBorder(worksheet, 11, 11, 8, 8, thickBorder);
+
+    worksheet.mergeCells("J11:K11");
+    worksheet.getCell("J11").value = "DEFECT";
+    centerCells(worksheet, 11, 11, 10, 11);
+    applyBorder(worksheet, 11, 11, 10, 11, thickBorder);
+
+    worksheet.getCell("J12").value = "Y/N";
+    worksheet.getCell("K12").value = "SCORE";
+    worksheet.getCell("L12").value = "Tagging";
+    centerCells(worksheet, 12, 12, 10, 12);
+    applyBorder(worksheet, 12, 12, 10, 12, thickBorder);
+
+    applyFill(worksheet, 13, 15, 10, 10, amberFill);
+    applyFill(worksheet, 20, 24, 10, 10, amberFill);
+    applyFill(worksheet, 29, 33, 10, 10, amberFill);
+    applyFill(worksheet, 38, 39, 10, 10, amberFill);
+    worksheet.mergeCells("H13:I13");
+    worksheet.getCell("H13").value = "Uses Appropriate Greeting";
+    worksheet.mergeCells("H14:I14");
+    worksheet.getCell("H14").value =
+      "Did the agent advise the third party or person talking to that the call was recorded?";
+    worksheet.mergeCells("H15:I15");
+    worksheet.getCell("H15").value =
+      "Did the agent properly identify self and Company? (No Misrepresentation?)";
+    worksheet.mergeCells("H16:I16");
+    worksheet.getCell("H16").value = "TOTAL";
+    applyBorderWithInner(worksheet, 13, 15, 8, 12, thickBorder, thinBorder);
+    applyBorder(worksheet, 16, 16, 8, 10, thickBorder);
+
+    worksheet.getCell("H18").value = "PROBING SKILLS";
+    applyBorder(worksheet, 18, 18, 8, 8, thickBorder);
+
+    worksheet.mergeCells("J18:K18");
+    worksheet.getCell("J18").value = "DEFECT";
+    centerCells(worksheet, 18, 18, 10, 11);
+    applyBorder(worksheet, 18, 18, 10, 11, thickBorder);
+
+    worksheet.getCell("J19").value = "Y/N";
+    worksheet.getCell("K19").value = "SCORE";
+    worksheet.getCell("L19").value = "Tagging";
+    centerCells(worksheet, 19, 19, 10, 12);
+    applyBorder(worksheet, 19, 19, 10, 12, thickBorder);
+
+    worksheet.mergeCells("H20:I20");
+    worksheet.getCell("H20").value =
+      "Did the agent probe for BTC, ETA/EDA and other contact numbers to reach CH?";
+    worksheet.mergeCells("H21:I21");
+    worksheet.getCell("H21").value =
+      "Did the agent  ask for right party contact who can receive the message?";
+    worksheet.mergeCells("H22:I22");
+    worksheet.getCell("H22").value =
+      "Did the agent  use the history of the account to follow up previous messages left?";
+    worksheet.mergeCells("H23:I23");
+    worksheet.getCell("H23").value =
+      "Did the agent attempt to contact client thru all the possible contact # based on the history/system?";
+    worksheet.mergeCells("H24:I24");
+    worksheet.getCell("H24").value =
+      "Did the agent ask info questions to obtain lead/s to the whereabouts of client/s?";
+    worksheet.mergeCells("H25:I25");
+    worksheet.getCell("H25").value = "TOTAL";
+    applyBorderWithInner(worksheet, 20, 24, 8, 12, thickBorder, thinBorder);
+    applyBorder(worksheet, 25, 25, 8, 10, thickBorder);
+    applyBorder(worksheet, 18, 18, 1, 1, thickBorder);
+    applyBorder(worksheet, 18, 18, 3, 4, thickBorder);
+    applyBorder(worksheet, 19, 19, 3, 5, thickBorder);
+    applyBorderWithInner(worksheet, 20, 24, 1, 5, thickBorder, thinBorder);
+    applyBorder(worksheet, 25, 25, 1, 3, thickBorder);
+
+    worksheet.getCell("H27").value = "SOFT SKILLS";
+    applyBorder(worksheet, 27, 27, 8, 8, thickBorder);
+
+    worksheet.mergeCells("J27:K27");
+    worksheet.getCell("J27").value = "DEFECT";
+    centerCells(worksheet, 27, 27, 10, 11);
+    applyBorder(worksheet, 27, 27, 10, 11, thickBorder);
+
+    worksheet.getCell("J28").value = "Y/N";
+    worksheet.getCell("K28").value = "SCORE";
+    worksheet.getCell("L28").value = "Tagging";
+    centerCells(worksheet, 28, 28, 10, 12);
+    applyBorder(worksheet, 28, 28, 10, 12, thickBorder);
+
+    worksheet.mergeCells("H29:I29");
+    worksheet.getCell("H29").value =
+      "Did the agent endorse the account for SKIPS and FV?\t\t";
+    worksheet.mergeCells("H30:I30");
+    worksheet.getCell("H30").value =
+      "Did the agent have a good control of the conversation?\t";
+    worksheet.mergeCells("H31:I31");
+    worksheet.getCell("H31").value =
+      "Is the agent's tone of voice professional, not overly aggressive, non-confrontational, not sarcastic or condescending?";
+    applyBorderWithInner(worksheet, 29, 33, 8, 12, thickBorder, thinBorder);
+    applyBorder(worksheet, 34, 34, 8, 10, thickBorder);
+    worksheet.mergeCells("H32:I32");
+    worksheet.getCell("H32").value =
+      "Did the agent record accurate details of the conversation in the system?\t";
+    worksheet.mergeCells("H33:I33");
+    worksheet.getCell("H33").value =
+      "Did the agent comply with EWBC Collection Agency Code of Conduct?\t";
+    worksheet.mergeCells("H34:I34");
+    worksheet.getCell("H34").value = "TOTAL";
+
+    worksheet.getCell("H36").value = "WRAP UP/CLOSING THE CALL";
+    applyBorder(worksheet, 36, 36, 8, 8, thickBorder);
+
+    worksheet.mergeCells("J36:K36");
+    worksheet.getCell("J36").value = "DEFECT";
+    centerCells(worksheet, 36, 36, 10, 11);
+    applyBorder(worksheet, 36, 36, 10, 11, thickBorder);
+
+    worksheet.getCell("J37").value = "Y/N";
+    worksheet.getCell("K37").value = "SCORE";
+    worksheet.getCell("L37").value = "Tagging";
+    centerCells(worksheet, 37, 37, 10, 12);
+    applyBorder(worksheet, 37, 37, 10, 12, thickBorder);
+
+    worksheet.mergeCells("H38:I38");
+    worksheet.getCell("H38").value =
+      "Did the agent leave a message for a return call?\t";
+    worksheet.mergeCells("H39:I39");
+    worksheet.getCell("H39").value =
+      "Did the agent ask the 3rd party to read back the number for return call?\t";
+    worksheet.mergeCells("H40:I40");
+
+    worksheet.getCell("H40").value = "TOTAL";
+    applyBorderWithInner(worksheet, 38, 39, 8, 12, thickBorder, thinBorder);
+    applyBorder(worksheet, 40, 40, 8, 10, thickBorder);
+
+    worksheet.mergeCells("J42:K42");
+    worksheet.getCell("J42").value = "COUNT OF DEFECT";
+    applyBorder(worksheet, 42, 42, 10, 11, thickBorder);
+    worksheet.getCell("J43").value = "W/ CONTACT";
+    worksheet.getCell("K43").value = "W/O CONTACT";
+
+    worksheet.getCell("H43").value = "ITEM/S";
+
+    worksheet.getCell("I43").value = "RATE";
+    worksheet.mergeCells("I44:I49");
+    worksheet.getCell("J43").value = "W/ CONTACT";
+    worksheet.getCell("K43").value = "W/O CONTACT";
+    applyBorder(worksheet, 43, 49, 8, 11, thickBorder);
+
+    worksheet.getCell("H44").value = "OPENING SKILLS";
+    worksheet.getCell("H45").value = "NEGOTIATION SKILLS/PROBING SKILLS";
+    worksheet.getCell("H46").value = "PRODUCT KNOWLEDGE/PROBLEM SOLVING SKILLS";
+    worksheet.getCell("H47").value = "SOFT SKILLS";
+    worksheet.getCell("H48").value = "WRAP UP";
+    worksheet.getCell("H49").value = "TOTAL # OF DEFECT/S AND FINAL SCORE:";
+
+    worksheet.getCell("H50").value = "FINAL RATING";
+    worksheet.getCell("I50").value = "";
+    applyBorder(worksheet, 50, 50, 8, 9, thickBorder);
+
+    worksheet.getCell("H52").value = "EQUIVALENT DEFECT RATING";
+    worksheet.getCell("H53").value = "CRITICAL = 25";
+    worksheet.getCell("H54").value = "IMPORTANT = 15";
+    worksheet.getCell("H55").value = "ESSENTIAL = 10";
+
+    worksheet.getCell("I52").value = "FINAL SCORE/RATING";
+    worksheet.getCell("I53").value = "100 Above - EXCELLENT";
+    worksheet.getCell("I54").value = "90-99 - SUPERIOR";
+    worksheet.getCell("I55").value = "89-80 - ACCEPTABLE";
+    worksheet.getCell("I56").value = "79 Below - UNACCEPTABLE";
+    applyBorder(worksheet, 52, 56, 8, 8, thickBorder);
+    applyBorder(worksheet, 52, 56, 9, 9, thickBorder);
+    applyFill(worksheet, 52, 52, 8, 9, blackFill);
+    setFontColor(worksheet, 52, 52, 8, 9, whiteFont, true);
+
+    worksheet.mergeCells("A58:E58");
+    worksheet.getCell("A58").value = "EVALUATOR'S REMARK/S";
+
+    worksheet.getCell("A58").alignment = {
+      horizontal: "center",
+    };
+    worksheet.mergeCells("A59:E62");
+    worksheet.getCell("A59").value = evaluatorRemarks;
+    worksheet.getCell("A59").alignment = {
+      horizontal: "center",
+      vertical: "top",
+      wrapText: true,
+    };
+
+    worksheet.mergeCells("A63:E64");
+    applyBorder(worksheet, 58, 64, 1, 5, thinBorder);
+
+    worksheet.mergeCells("H58:L58");
+    worksheet.getCell("H58").value = "AGENT'S REMARKS";
+
+    worksheet.getCell("H58").alignment = {
+      horizontal: "center",
+    };
+    worksheet.mergeCells("H59:L62");
+    worksheet.getCell("H59").value = agentRemarks;
+    worksheet.getCell("H59").alignment = {
+      horizontal: "center",
+      vertical: "top",
+      wrapText: true,
+    };
+    worksheet.mergeCells("A65:E65");
+
+    worksheet.getCell("A65").value =
+      selectedEvaluatorName || "No evulator selected";
+    worksheet.getCell("A65").alignment = {
+      horizontal: "center",
+    };
+    worksheet.mergeCells("A66:E66");
+    worksheet.getCell("A66").value = "Team Head's signature over printed name";
+
+    worksheet.getCell("A66").alignment = {
+      horizontal: "center",
+    };
+
+    applyBorder(worksheet, 65, 66, 1, 5, thinBorder);
+
+    worksheet.mergeCells("H63:L64");
+    worksheet.mergeCells("H65:L65");
+    worksheet.getCell("H65").value = selectedAgentName || "No agent selected";
+    worksheet.getCell("H65").alignment = {
+      horizontal: "center",
+    };
+    worksheet.mergeCells("H66:L66");
+    worksheet.getCell("H66").value = "Collector's Signature over printed name";
+    worksheet.getCell("H66").alignment = {
+      horizontal: "center",
+    };
+    applyBorder(worksheet, 65, 66, 8, 12, thinBorder);
+
+    worksheet.getCell("A68").value = "VALIDATED (Y/N): ________";
+    worksheet.getCell("A70").value = "AC'S COMMENTS:";
+
+    applyBorder(worksheet, 58, 64, 8, 12, thinBorder);
+
+    applyFill(worksheet, 78, 78, 9, 9, lightGreenFill);
+    worksheet.getCell("H78").value = "Noted by:";
+    worksheet.getCell("I78").value = acknowledgedBy || "No AC/RO assigned";
+
+    worksheet.mergeCells("H79:L79");
+    worksheet.getCell("H79").value =
+      "Agency Coordinator's Signature over Printed Name";
+    worksheet.getCell("H78").alignment = {
+      horizontal: "right",
+    };
+    worksheet.getCell("H79").alignment = {
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    const withRowMap = [
+      [13, 14, 15],
+      [20, 21, 22, 23, 24],
+      [29, 30, 31],
+      [36, 37, 38, 40, 41, 42, 43],
+      [48, 49, 50, 51],
+    ];
+
+    const withoutRowMap = [
+      [13, 14, 15],
+      [20, 21, 22, 23, 24],
+      [29, 30, 31, 32, 33],
+      [38, 39],
+    ];
+
+    const setResponses = (
+      rowsBySection: number[][],
+      totalsBySection: number[],
+      sections: EastwestSection[],
+      responses: boolean[][],
+      yCol: number,
+      scoreCol: number,
+      tagCol: number
+    ) => {
+      rowsBySection.forEach((rows, sIdx) => {
+        let noCount = 0;
+
+        rows.forEach((row, qIdx) => {
+          const section = sections[sIdx];
+          const question = section?.questions?.[qIdx];
+          if (!question) return;
+          const isYes = responses?.[sIdx]?.[qIdx] ?? true;
+          const score = isYes ? 0 : question.defaultScore ?? 0;
+          if (!isYes) noCount += 1;
+          worksheet.getCell(row, yCol).value = isYes ? "Y" : "N";
+          worksheet.getCell(row, scoreCol).value = score;
+          worksheet.getCell(row, tagCol).value = question.tag;
+          [yCol, scoreCol, tagCol].forEach((col) => {
+            const cell = worksheet.getCell(row, col);
+            cell.alignment = {
+              ...(cell.alignment ?? {}),
+              horizontal: col === tagCol ? "left" : "center",
+              vertical: "middle",
+              wrapText: true,
+            };
+          });
+        });
+
+        const totalRow = totalsBySection[sIdx];
+        if (totalRow) {
+          const totalCell = worksheet.getCell(totalRow, yCol);
+          totalCell.value = noCount;
+          totalCell.alignment = {
+            ...(totalCell.alignment ?? {}),
+            horizontal: "center",
+            vertical: "middle",
+            wrapText: true,
+          };
+        }
+      });
+    };
+
+    const withTotalRows = [16, 25, 32, 44, 52];
+    const withoutTotalRows = [16, 25, 34, 40];
+
+    setResponses(
+      withRowMap,
+      withTotalRows,
+      withContactSections,
+      withContactResponses,
+      3,
+      4,
+      5
+    );
+    setResponses(
+      withoutRowMap,
+      withoutTotalRows,
+      withoutContactSections,
+      withoutContactResponses,
+      10,
+      11,
+      12
+    );
+
+    const rateValue = Number.isFinite(finalScore) ? finalScore : "";
+    const rateCell = worksheet.getCell("I44");
+    rateCell.value = rateValue;
+    rateCell.alignment = {
+      ...(rateCell.alignment ?? {}),
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    const finalRatingLabel = ratingFromScore(finalScore);
+    const finalRatingCell = worksheet.getCell("I50");
+    finalRatingCell.value = finalRatingLabel;
+    finalRatingCell.alignment = {
+      ...(finalRatingCell.alignment ?? {}),
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    const summaryRows = [44, 45, 46, 47, 48, 49];
+    summaryRows.forEach((row, idx) => {
+      const withVal = withContactCounts[idx] ?? 0;
+      const withoutVal = withoutContactCounts[idx] ?? 0;
+
+      worksheet.getCell(row, 10).value = withVal;
+      const withoutCell = worksheet.getCell(row, 11);
+      withoutCell.value = withoutVal;
+
+      [worksheet.getCell(row, 10), withoutCell].forEach((cell) => {
+        cell.alignment = {
+          ...(cell.alignment ?? {}),
+          horizontal: "center",
+          vertical: "middle",
+          wrapText: true,
+        };
+      });
+    });
+
+    const withoutProdRow = 46;
+    const withoutProdCell = worksheet.getCell(withoutProdRow, 11);
+    withoutProdCell.value = "";
+    withoutProdCell.fill = grayFill;
+    withoutProdCell.alignment = {
+      ...(withoutProdCell.alignment ?? {}),
+      horizontal: "center",
+      vertical: "middle",
+      wrapText: true,
+    };
+
+    const calibriAddresses = new Set(["A1", "I1"]);
+
+    worksheet.eachRow({ includeEmpty: true }, (row: any) => {
+      row.eachCell({ includeEmpty: true }, (cell: any) => {
+        const existingFont = cell.font ?? {};
+        const baseSize = existingFont.size ?? 15;
+        const fontName = calibriAddresses.has(cell.address)
+          ? "Calibri"
+          : "Arial";
+
+        cell.font = { ...existingFont, name: fontName, size: baseSize };
+      });
+    });
+
+    worksheet.getCell("A1").font = {
+      ...(worksheet.getCell("A1").font ?? {}),
+      size: 30,
+    };
+    worksheet.getCell("I1").font = {
+      ...(worksheet.getCell("I1").font ?? {}),
+      size: 30,
+    };
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const downloadUrl = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = downloadUrl;
+    link.download = `eastwest-score-sheet-${Date.now()}.xlsx`;
+    link.click();
+    URL.revokeObjectURL(downloadUrl);
+  };
+
+  const exportUBMortgageExcel = async (scoreCard: ScoreCardSummary) => {
+    if (!scoreCard.scoreDetails) {
+      window.alert("Missing score details for this score card.");
+      return;
+    }
+
+    const details = scoreCard.scoreDetails as any;
+    const questionDefs = [
+      { id: "opening-1", defect: 2, row: 22 },
+      { id: "opening-2", defect: 1, row: 23 },
+      { id: "opening-3", defect: 5, row: 24 },
+      { id: "opening-4", defect: 6, row: 25 },
+      { id: "opening-5", defect: 6, row: 26 },
+      { id: "with-contact-1", defect: 1, row: 32 },
+      { id: "with-contact-2", defect: 1, row: 33 },
+      { id: "with-contact-3", defect: 2, row: 34 },
+      { id: "with-contact-4", defect: 1, row: 36 },
+      { id: "with-contact-5", defect: 1, row: 38 },
+      { id: "with-contact-6", defect: 1, row: 39 },
+      { id: "with-contact-7", defect: 1, row: 40 },
+      { id: "with-contact-8", defect: 1, row: 42 },
+      { id: "with-contact-9", defect: 1, row: 43 },
+      { id: "without-contact-1", defect: 1, row: 46 },
+      { id: "without-contact-2", defect: 1, row: 47 },
+      { id: "without-contact-3", defect: 1, row: 48 },
+      { id: "without-contact-4", defect: 2, row: 49 },
+      { id: "with-or-without-1", defect: 2, row: 54 },
+      { id: "with-or-without-2", defect: 6, row: 55 },
+      { id: "with-or-without-3", defect: 3, row: 56 },
+      { id: "with-or-without-4", defect: 6, row: 57 },
+      { id: "with-or-without-5", defect: 6, row: 58 },
+      { id: "with-or-without-6", defect: 6, row: 59 },
+      { id: "closing-1", defect: 2, row: 64 },
+      { id: "closing-2", defect: 1, row: 65 },
+      { id: "closing-3", defect: 1, row: 66 },
+    ];
+
+    const callDetails = {
+      accountName: normalizeArray(
+        details.callDetails?.accountName,
+        MORTGAGE_CALL_COUNT,
+        ""
+      ),
+      loanNo: normalizeArray(
+        details.callDetails?.loanNo,
+        MORTGAGE_CALL_COUNT,
+        ""
+      ),
+      accountStatus: normalizeArray(
+        details.callDetails?.accountStatus,
+        MORTGAGE_CALL_COUNT,
+        ""
+      ),
+      dateOfCall: normalizeArray(
+        details.callDetails?.dateOfCall,
+        MORTGAGE_CALL_COUNT,
+        ""
+      ),
+      callDuration: normalizeArray(
+        details.callDetails?.callDuration,
+        MORTGAGE_CALL_COUNT,
+        ""
+      ),
+      agentName: normalizeArray(
+        details.callDetails?.agentName,
+        MORTGAGE_CALL_COUNT,
+        ""
+      ),
+    };
+
+    const callNumbers = Array.from(
+      { length: MORTGAGE_CALL_COUNT },
+      (_, idx) => idx + 1
+    );
+    const callTotals = normalizeArray(
+      details.callTotals,
+      MORTGAGE_CALL_COUNT,
+      0
+    );
+    const withContactStates = normalizeArray(
+      details.withContactStates,
+      MORTGAGE_CALL_COUNT,
+      true
+    );
+    const callComments = normalizeArray(
+      details.callComments,
+      MORTGAGE_CALL_COUNT,
+      {
+        agent: "",
+        evaluator: "",
+        action: "",
+      }
+    );
+
+    const questionResponses: Record<string, number[]> =
+      details.questionResponses ?? {};
+    const makeZeroArray = () =>
+      Array.from({ length: MORTGAGE_CALL_COUNT }, () => 0);
+    questionDefs.forEach((q) => {
+      if (!questionResponses[q.id]) {
+        questionResponses[q.id] = makeZeroArray();
+      }
+    });
+
+    const callScores = computeMortgageCallScores(callTotals);
+    const formattedMonthYear =
+      scoreCard.month?.trim() ||
+      new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        year: "numeric",
+      }).format(new Date(scoreCard.dateAndTimeOfCall || Date.now()));
+
+    const excelModule = await import("exceljs/dist/exceljs.min.js");
+    const ExcelJS = excelModule.default ?? excelModule;
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Mortgage Scorecard", {
+      views: [{ showGridLines: false }],
+      properties: { defaultRowHeight: 20 },
+    });
+
+    const thinBorder: any = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+      diagonal: {},
+    };
+
+    const thickBorder: any = {
+      top: { style: "medium" },
+      left: { style: "medium" },
+      bottom: { style: "medium" },
+      right: { style: "medium" },
+      diagonal: {},
+    };
+
+    const headerFill: any = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FF9CA3AF" },
+    };
+
+    const goldAccentFill: any = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFFEF3C7" },
+    };
+
+    const whiteFill: any = {
+      type: "pattern",
+      pattern: "solid",
+      fgColor: { argb: "FFFFFFFF" },
+    };
+
+    const applyBorder = (
+      ws: any,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number,
+      border: any
+    ) => {
+      for (let r = r1; r <= r2; r += 1) {
+        for (let c = c1; c <= c2; c += 1) {
+          const cell = ws.getCell(r, c);
+          cell.border = border;
+          cell.alignment = {
+            ...(cell.alignment ?? {}),
+            wrapText: true,
+            vertical: "middle",
+          };
+        }
+      }
+    };
+
+    const applyRightBorder = (
+      ws: any,
+      r1: number,
+      r2: number,
+      col: number,
+      style: any
+    ) => {
+      for (let r = r1; r <= r2; r += 1) {
+        const cell = ws.getCell(r, col);
+        const existing = cell.border ?? {};
+        cell.border = {
+          ...existing,
+          right: { style },
+        };
+      }
+    };
+
+    const applyTopBorder = (
+      ws: any,
+      r: number,
+      c1: number,
+      c2: number,
+      style: any
+    ) => {
+      for (let c = c1; c <= c2; c += 1) {
+        const cell = ws.getCell(r, c);
+        const existing = cell.border ?? {};
+        cell.border = {
+          ...existing,
+          top: { style },
+        };
+      }
+    };
+
+    const applyBottomBorder = (
+      ws: any,
+      r: number,
+      c1: number,
+      c2: number,
+      style: any
+    ) => {
+      for (let c = c1; c <= c2; c += 1) {
+        const cell = ws.getCell(r, c);
+        const existing = cell.border ?? {};
+        cell.border = {
+          ...existing,
+          bottom: { style },
+        };
+      }
+    };
+
+    const applyLeftBorder = (
+      ws: any,
+      r1: number,
+      r2: number,
+      col: number,
+      style: any
+    ) => {
+      for (let r = r1; r <= r2; r += 1) {
+        const cell = ws.getCell(r, col);
+        const existing = cell.border ?? {};
+        cell.border = {
+          ...existing,
+          left: { style },
+        };
+      }
+    };
+
+    const applyMatrixBorders = (
+      ws: any,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number,
+      outer: any,
+      inner: any
+    ) => {
+      for (let r = r1; r <= r2; r += 1) {
+        for (let c = c1; c <= c2; c += 1) {
+          const cell = ws.getCell(r, c);
+          const existing = cell.border ?? {};
+          cell.border = {
+            ...existing,
+            top: { style: r === r1 ? outer : inner },
+            bottom: { style: r === r2 ? outer : inner },
+            left: { style: c === c1 ? outer : inner },
+            right: { style: c === c2 ? outer : inner },
+          };
+          cell.alignment = {
+            ...(cell.alignment ?? {}),
+            wrapText: true,
+            vertical: "middle",
+          };
+        }
+      }
+    };
+
+    const applyFill = (
+      ws: any,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number,
+      fill: any
+    ) => {
+      for (let r = r1; r <= r2; r += 1) {
+        for (let c = c1; c <= c2; c += 1) {
+          ws.getCell(r, c).fill = fill;
+        }
+      }
+    };
+
+    worksheet.columns = [
+      { width: 10 },
+      { width: 50 },
+      { width: 10 },
+      { width: 14 },
+      { width: 10 },
+      { width: 14 },
+      { width: 10 },
+      { width: 20 },
+      { width: 20 },
+      { width: 20 },
+      { width: 10 },
+      { width: 10 },
+      { width: 10 },
+      { width: 20 },
+      { width: 20 },
+      { width: 20 },
+    ];
+
+    worksheet.mergeCells("A1:M1");
+    const titleCell = worksheet.getCell("A1");
+    titleCell.value =
+      "COLLECTION CALL PERFORMANCE REVIEW - SECURED LOANS COLLECTIONS";
+    titleCell.font = { bold: true, size: 12 };
+    titleCell.alignment = { horizontal: "center", vertical: "middle" };
+    applyFill(worksheet, 1, 1, 1, 13, headerFill);
+
+    worksheet.getCell("A2").value = "For the month of";
+    worksheet.getRow(1).height = 30;
+    worksheet.getRow(2).height = 13;
+    worksheet.getRow(3).height = 13;
+    worksheet.getRow(4).height = 13;
+    worksheet.getRow(5).height = 13;
+    worksheet.getRow(7).height = 25;
+    worksheet.getRow(27).height = 15;
+
+    worksheet.mergeCells("C2:E2");
+    worksheet.getCell("C2").value = formattedMonthYear;
+
+    worksheet.getCell("A3").value = "COLLECTION AGENCY";
+    worksheet.mergeCells("C3:E3");
+    worksheet.getCell("C3").value = "Bernales & Associates";
+
+    worksheet.getCell("A4").value = "COLLECTION AGENT/OFFICER";
+    worksheet.mergeCells("C4:E4");
+    worksheet.getCell("C4").value = scoreCard.agent?.name ?? "";
+
+    worksheet.getCell("A5").value = "EVALUATOR:";
+    worksheet.mergeCells("C5:E5");
+    worksheet.getCell("C5").value = scoreCard.qa?.name ?? "";
+    applyFill(worksheet, 2, 5, 3, 5, goldAccentFill);
+    applyBottomBorder(worksheet, 2, 3, 5, "thin");
+    applyBottomBorder(worksheet, 3, 3, 5, "thin");
+    applyBottomBorder(worksheet, 4, 3, 5, "thin");
+    applyBottomBorder(worksheet, 5, 3, 5, "thin");
+
+    worksheet.mergeCells("B7:C7");
+    worksheet.getCell("B7").value = "Account Name:";
+
+    worksheet.mergeCells("D7:E7");
+    worksheet.getCell("D7").value = "Loan No:";
+
+    worksheet.mergeCells("F7:G7");
+    worksheet.getCell("F7").value = "Account Status:";
+
+    worksheet.getCell("H7").value = "Date of Call:";
+
+    worksheet.getCell("I7").value = "Call Duration:";
+    worksheet.getCell("J7").value = "Agent Name:";
+    worksheet.getCell("K7").value = "Score:";
+    applyBorder(worksheet, 7, 7, 2, 11, thickBorder);
+
+    worksheet.mergeCells("B8:C8");
+    worksheet.mergeCells("B9:C9");
+    worksheet.mergeCells("B10:C10");
+    worksheet.mergeCells("B11:C11");
+    worksheet.mergeCells("B12:C12");
+    worksheet.mergeCells("B13:C13");
+    worksheet.mergeCells("B14:C14");
+    worksheet.mergeCells("B15:C15");
+    worksheet.mergeCells("B16:C16");
+    worksheet.mergeCells("B17:C17");
+
+    worksheet.mergeCells("D8:E8");
+    worksheet.mergeCells("D9:E9");
+    worksheet.mergeCells("D10:E10");
+    worksheet.mergeCells("D11:E11");
+    worksheet.mergeCells("D12:E12");
+    worksheet.mergeCells("D13:E13");
+    worksheet.mergeCells("D14:E14");
+    worksheet.mergeCells("D15:E15");
+    worksheet.mergeCells("D16:E16");
+    worksheet.mergeCells("D17:E17");
+
+    worksheet.mergeCells("F8:G8");
+    worksheet.mergeCells("F9:G9");
+    worksheet.mergeCells("F10:G10");
+    worksheet.mergeCells("F11:G11");
+    worksheet.mergeCells("F12:G12");
+    worksheet.mergeCells("F13:G13");
+    worksheet.mergeCells("F14:G14");
+    worksheet.mergeCells("F15:G15");
+    worksheet.mergeCells("F16:G16");
+    worksheet.mergeCells("F17:G17");
+
+    applyFill(worksheet, 8, 17, 2, 10, goldAccentFill);
+    applyFill(worksheet, 8, 17, 11, 11, whiteFill);
+    applyMatrixBorders(worksheet, 8, 17, 2, 11, "medium", "thin");
+    applyLeftBorder(worksheet, 8, 17, 2, "medium");
+
+    callNumbers.forEach((_, idx) => {
+      const row = 8 + idx;
+      worksheet.getCell(row, 2).value = callDetails.accountName[idx] ?? "";
+      worksheet.getCell(row, 4).value = callDetails.loanNo[idx] ?? "";
+      worksheet.getCell(row, 6).value = callDetails.accountStatus[idx] ?? "";
+      worksheet.getCell(row, 8).value = callDetails.dateOfCall[idx] ?? "";
+      worksheet.getCell(row, 9).value = callDetails.callDuration[idx] ?? "";
+      worksheet.getCell(row, 10).value = callDetails.agentName[idx] ?? "";
+      worksheet.getCell(row, 11).value = callScores[idx]
+        ? `${callScores[idx]}%`
+        : 0;
+    });
+
+    worksheet.getCell("C19").value = "DEFECT";
+    callNumbers.forEach((label, idx) => {
+      const cell = worksheet.getCell(19, idx + 4);
+      cell.value = label;
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+
+    for (let i = 0; i < MORTGAGE_CALL_COUNT; i += 1) {
+      const cell = worksheet.getCell(8 + i, 1);
+      cell.value = `Call ${i + 1}`;
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+    }
+
+    worksheet.mergeCells("A20:M20");
+    worksheet.getCell("A20").value = "A. OPENING";
+    worksheet.getCell("A20").font = { bold: true };
+    applyFill(worksheet, 20, 20, 1, 13, headerFill);
+
+    applyBorder(worksheet, 22, 26, 2, 13, thinBorder);
+
+    const openingItems = [
+      {
+        label:
+          "Used appropriate greeting (Good Morning, Good Afternon, Good day) / Identified self (mention first and last name) and Agency (full Agency name)",
+        defect: 2,
+      },
+      {
+        label: "Mentioned (OSP mentioned - authorized Service Provider of UB)",
+        defect: 1,
+      },
+      { label: "Mentioned Line is Recorded", defect: 5 },
+      {
+        label:
+          "Mentioned Client name / Authorized Rep Full Name for outgoing calls to a registered number.  For incoming calls, asked correct Positive Identifiers from unregistered number.",
+        defect: 6,
+      },
+      {
+        label:
+          "Agent confirms talking to the client. Client should confirm (explicit YES) before proceeding to the call",
+        defect: 6,
+      },
+    ];
+
+    openingItems.forEach((item, idx) => {
+      const row = 22 + idx;
+      const labelCell = worksheet.getCell(row, 2);
+      labelCell.value = item.label;
+      labelCell.alignment = { wrapText: true, vertical: "middle" };
+
+      const defectCell = worksheet.getCell(row, 3);
+      defectCell.value = item.defect;
+      defectCell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+
+    const writeQuestionValues = (questionId: string, row: number) => {
+      const values = questionResponses[questionId] ?? makeZeroArray();
+      values.forEach((val, idx) => {
+        const cell = worksheet.getCell(row, 4 + idx);
+        cell.value = val === 0 ? "" : val;
+        cell.alignment = { horizontal: "center", vertical: "middle" };
+      });
+    };
+
+    applyFill(worksheet, 22, 26, 4, 13, goldAccentFill);
+
+    worksheet.mergeCells("A28:M28");
+    worksheet.getCell("A28").value = "B. COLLECTION CALL PROPER";
+    worksheet.getCell("A28").font = { bold: true };
+    applyFill(worksheet, 28, 28, 1, 13, headerFill);
+
+    worksheet.mergeCells("B30:M30");
+    worksheet.getCell("B30").value = "WITH CONTACT";
+    worksheet.getCell("B30").font = { bold: true };
+    applyFill(worksheet, 30, 30, 2, 13, headerFill);
+    applyBorder(worksheet, 30, 43, 2, 13, thinBorder);
+
+    const withContactItems = [
+      { label: "ESTABLISHING RAPPORT, EMPATHY & COURTESY", defect: "" },
+      { label: "Explained the status of the account", defect: 1 },
+      { label: "Asked if CH received demand/ notification letter", defect: 1 },
+      { label: "Showed empathy and compassion as appropriate.", defect: 2 },
+      { label: "LISTENING SKILLS", defect: "" },
+      {
+        label:
+          "Sought RFD (reason of delinquency or non-payment) in payment & RFBP (reason for broken promise)",
+        defect: 1,
+      },
+      { label: "NEGOTIATION SKILLS", defect: "" },
+      {
+        label:
+          "Explained consequences of non-payment, if applicable (explained conseq of legal and BAP listing/explained side of the Bank and the contract signed/explained that the bank is serious in collecting legal obligations/possible negative listing of name/future credit facility will be closed/additional collection agency expenses/involvement of lawyer will also be Client's expense)",
+        defect: 1,
+      },
+      { label: "Asked for Client's capacity to pay, if applicable", defect: 1 },
+      {
+        label:
+          "Followed hierarchy of negotiation, if applicable (Full payment, minimum amount due, total past due or last bucket amount",
+        defect: 1,
+      },
+      { label: "OFFERING SOLUTIONS", defect: "" },
+      { label: "Offered discount/ amnesty/ promo", defect: 1 },
+      { label: "Adviced Client to source out funds", defect: 1 },
+    ];
+
+    withContactItems.forEach((item, idx) => {
+      const row = 31 + idx;
+      const labelCell = worksheet.getCell(row, 2);
+      labelCell.value = item.label;
+      labelCell.alignment = { wrapText: true, vertical: "middle" };
+      if (item.defect === "") {
+        labelCell.font = { bold: true };
+      }
+
+      const defectCell = worksheet.getCell(row, 3);
+      defectCell.value = item.defect === "" ? "" : item.defect;
+      defectCell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+
+    applyFill(worksheet, 31, 43, 4, 13, goldAccentFill);
+    applyFill(worksheet, 31, 31, 4, 13, goldAccentFill);
+    applyFill(worksheet, 35, 35, 4, 13, goldAccentFill);
+    applyFill(worksheet, 37, 37, 4, 13, goldAccentFill);
+    applyFill(worksheet, 41, 41, 4, 13, goldAccentFill);
+
+    worksheet.mergeCells("B52:M52");
+    worksheet.getCell("B52").value = "WITH OR WITHOUT CONTACT";
+    worksheet.getCell("B52").font = { bold: true };
+    worksheet.mergeCells("B45:M45");
+    worksheet.getCell("B45").value = "WITHOUT CONTACT";
+    worksheet.getCell("B45").font = { bold: true };
+    applyFill(worksheet, 45, 45, 2, 13, headerFill);
+    applyFill(worksheet, 52, 52, 2, 13, headerFill);
+    applyBorder(worksheet, 45, 50, 2, 13, thinBorder);
+
+    const withoutContactItems = [
+      { label: "ESTABLISHING RAPPORT, EMPATHY & COURTESY", defect: "" },
+      {
+        label:
+          "Probed on BTC (best time to call), ETA (Expected time of arrival) and other contact numbers",
+        defect: 1,
+      },
+      { label: "Used time schedule and follow-up if applicable", defect: 1 },
+      { label: "Asked for name of party, relation to client", defect: 1 },
+      {
+        label: "Left URGENT message ang gave correct contact number",
+        defect: 2,
+      },
+    ];
+
+    withoutContactItems.forEach((item, idx) => {
+      const row = 46 + idx;
+      const labelCell = worksheet.getCell(row, 2);
+      labelCell.value = item.label;
+      labelCell.alignment = { wrapText: true, vertical: "middle" };
+      if (item.defect === "") {
+        labelCell.font = { bold: true };
+      }
+
+      const defectCell = worksheet.getCell(row, 3);
+      defectCell.value = item.defect === "" ? "" : item.defect;
+      defectCell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+
+    applyFill(worksheet, 46, 50, 4, 13, goldAccentFill);
+
+    const withOrWithoutContactItems = [
+      { label: "QUALITY OF CALL", defect: "" },
+      { label: "Used professional tone of voice", defect: 2 },
+      {
+        label:
+          "Did not use unacceptable words/phrases and maintained polite/civil language",
+        defect: 6,
+      },
+      {
+        label:
+          "Updated correct information and payment details on logfle/collection memo, if applicable",
+        defect: 3,
+      },
+      { label: "Adherence to Policy(BSP, Code of Conduct, etc.)", defect: 6 },
+      {
+        label:
+          "Intgerity Issues (Revealed and Collected debt from unauthorized Client)",
+        defect: 6,
+      },
+      {
+        label:
+          "Exercised sound judgment in determining the appropriate course of action.",
+        defect: 6,
+      },
+    ];
+
+    withOrWithoutContactItems.forEach((item, idx) => {
+      const row = 53 + idx;
+      const labelCell = worksheet.getCell(row, 2);
+      labelCell.value = item.label;
+      labelCell.alignment = { wrapText: true, vertical: "middle" };
+      if (item.defect === "") {
+        labelCell.font = { bold: true };
+      }
+
+      const defectCell = worksheet.getCell(row, 3);
+      defectCell.value = item.defect === "" ? "" : item.defect;
+      defectCell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+
+    applyFill(worksheet, 53, 59, 4, 13, goldAccentFill);
+    applyFill(worksheet, 53, 53, 4, 13, goldAccentFill);
+
+    applyBorder(worksheet, 52, 59, 2, 13, thinBorder);
+
+    questionDefs.forEach((q) => {
+      writeQuestionValues(q.id, q.row);
+    });
+
+    worksheet.mergeCells("A61:M61");
+    worksheet.getCell("A61").value = "C. CLOSING THE CALL";
+    worksheet.getCell("A61").font = { bold: true };
+    applyFill(worksheet, 61, 61, 1, 13, headerFill);
+
+    worksheet.mergeCells("B63:M63");
+    worksheet.getCell("B63").value = "SUMMARY";
+    worksheet.getCell("B63").font = { bold: true };
+    applyFill(worksheet, 63, 63, 2, 13, headerFill);
+    applyBorder(worksheet, 63, 66, 2, 13, thinBorder);
+
+    const summaryItems = [
+      { label: "Summarized payment arrangement", defect: 2 },
+      { label: "Offered online payment channels", defect: 1 },
+      { label: "Request return call for payment confirmation", defect: 1 },
+    ];
+
+    worksheet.mergeCells("N69:N71");
+    worksheet.getCell("N69").value = "99.71%";
+
+    worksheet.mergeCells("O69:O71");
+    worksheet.getCell("O69").value = "99.71%";
+
+    worksheet.mergeCells("P69:P71");
+    worksheet.getCell("P69").value = "99.71%";
+
+    applyBorder(worksheet, 69, 71, 14, 16, thinBorder);
+
+    summaryItems.forEach((item, idx) => {
+      const row = 64 + idx;
+      const labelCell = worksheet.getCell(row, 2);
+      labelCell.value = item.label;
+      labelCell.alignment = { wrapText: true, vertical: "middle" };
+
+      const defectCell = worksheet.getCell(row, 3);
+      defectCell.value = item.defect;
+      defectCell.alignment = { horizontal: "center", vertical: "middle" };
+    });
+
+    applyFill(worksheet, 64, 66, 4, 13, goldAccentFill);
+
+    callNumbers.forEach((_, idx) => {
+      const col = 4 + idx;
+      worksheet.getCell(69, col).value = withContactStates[idx] ? "YES" : "NO";
+      worksheet.getCell(69, col).alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
+      worksheet.getCell(70, col).value = callTotals[idx] ?? 0;
+      worksheet.getCell(70, col).alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
+      worksheet.getCell(71, col).value = `${callScores[idx] ?? 0}%`;
+      worksheet.getCell(71, col).alignment = {
+        horizontal: "center",
+        vertical: "middle",
+      };
+    });
+
+    const withContactCell = worksheet.getCell("B69");
+    withContactCell.value = "WITH CONTACT? (Y/N)";
+    withContactCell.alignment = { horizontal: "right", vertical: "middle" };
+
+    const totalDefectsCell = worksheet.getCell("B70");
+    totalDefectsCell.value = "TOTAL DEFECTS";
+    totalDefectsCell.alignment = { horizontal: "right", vertical: "middle" };
+
+    const totalDefectsValueCell = worksheet.getCell(70, 3);
+    totalDefectsValueCell.value = 68;
+    totalDefectsValueCell.alignment = {
+      horizontal: "center",
+      vertical: "middle",
+    };
+
+    const scoreCell = worksheet.getCell("B71");
+    scoreCell.value = "SCORE";
+    scoreCell.alignment = { horizontal: "right", vertical: "middle" };
+    applyBorder(worksheet, 69, 71, 2, 13, thinBorder);
+
+    callNumbers.forEach((_, idx) => {
+      const startRow = 74 + idx * 4;
+
+      const summaryCell = worksheet.getCell(startRow, 2);
+      summaryCell.value = `CALL ${idx + 1} CALL SUMMARY`;
+      summaryCell.alignment = { vertical: "middle", wrapText: true };
+      summaryCell.font = { bold: true };
+
+      worksheet.mergeCells(startRow, 3, startRow, 5);
+      const evaluatorCell = worksheet.getCell(startRow, 3);
+      evaluatorCell.value = "COMMENTS OF EVALUATOR";
+      evaluatorCell.alignment = { vertical: "middle", wrapText: true };
+      evaluatorCell.font = { bold: true };
+
+      worksheet.mergeCells(startRow, 6, startRow, 8);
+      const actionCell = worksheet.getCell(startRow, 6);
+      actionCell.value = "ACTION PLAN";
+      actionCell.alignment = { vertical: "middle", wrapText: true };
+      actionCell.font = { bold: true };
+
+      applyFill(worksheet, startRow, startRow, 2, 8, headerFill);
+      applyFill(worksheet, startRow + 1, startRow + 2, 2, 8, goldAccentFill);
+
+      worksheet.mergeCells(startRow + 1, 2, startRow + 2, 2);
+      worksheet.mergeCells(startRow + 1, 3, startRow + 2, 5);
+      worksheet.mergeCells(startRow + 1, 6, startRow + 2, 8);
+
+      const comments = callComments[idx];
+      worksheet.getCell(startRow + 1, 2).value = comments?.agent ?? "";
+      worksheet.getCell(startRow + 1, 3).value = comments?.evaluator ?? "";
+      worksheet.getCell(startRow + 1, 6).value = comments?.action ?? "";
+
+      applyBorder(worksheet, startRow, startRow + 2, 2, 8, thinBorder);
+    });
+    applyRightBorder(worksheet, 1, 112, 13, "thick");
+    applyTopBorder(worksheet, 113, 1, 13, "thick");
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    const sanitizedAgent = (scoreCard.agent?.name ?? "agent").replace(
+      /\s+/g,
+      "-"
+    );
+    const timestamp = new Date().toISOString().replace(/[:]/g, "-");
+    link.download = `ub-mortgage-${sanitizedAgent}-${timestamp}.xlsx`;
+    link.click();
+  };
+
+  const exportUBExcel = async (scoreCard: ScoreCardSummary) => {
+    if (!scoreCard.scoreDetails) {
+      window.alert("Missing score details for this score card.");
+      return;
+    }
+
+    const details: any = scoreCard.scoreDetails ?? {};
+
+    const extractCalls = (value: any) =>
+      normalizeArray(value?.calls ?? value, 5, 0);
+
+    const opening = Array.isArray(details.opening) ? details.opening : [];
+    const collectionProper = details.collectionCallProper ?? {};
+    const withContact = collectionProper.withContact ?? {};
+    const withoutContact = collectionProper.withoutContact ?? {};
+    const withOrWithout = collectionProper.withOrWithoutContact ?? {};
+    const closing = details.closing ?? details.closingTheCall ?? {};
+
+    const questionCallValues: Record<string, number[]> = {
+      "opening-greeting": extractCalls(opening[0]),
+      "opening-disclaimer": extractCalls(opening[1]),
+      "opening-recorded": extractCalls(opening[2]),
+      "opening-fullname": extractCalls(opening[3]),
+      "opening-selfid": extractCalls(opening[4]),
+      "withContact-explainedStatus": extractCalls(
+        withContact.establishingRapport?.explainedStatus
+      ),
+      "withContact-askedNotification": extractCalls(
+        withContact.establishingRapport?.askedNotification
+      ),
+      "withContact-showedEmpathy": extractCalls(
+        withContact.establishingRapport?.showedEmpathy
+      ),
+      "withContact-soughtRFD": extractCalls(
+        withContact.listeningSkills?.soughtRFD
+      ),
+      "withContact-explainedConsequences": extractCalls(
+        withContact.negotiationSkills?.explainedConsequences
+      ),
+      "withContact-askedCapacity": extractCalls(
+        withContact.negotiationSkills?.askedCapacity
+      ),
+      "withContact-followedHierarchy": extractCalls(
+        withContact.negotiationSkills?.followedHierarchy
+      ),
+      "withContact-offeredDiscount": extractCalls(
+        withContact.offeringSolutions?.offeredDiscount
+      ),
+      "withContact-advisedSourceFunds": extractCalls(
+        withContact.offeringSolutions?.advisedSourceFunds
+      ),
+      "withoutContact-probedContactNumbers": extractCalls(
+        withoutContact.establishingRapport?.probedContactNumbers
+      ),
+      "withoutContact-usedTimeSchedule": extractCalls(
+        withoutContact.establishingRapport?.usedTimeSchedule
+      ),
+      "withoutContact-askedPartyName": extractCalls(
+        withoutContact.establishingRapport?.askedPartyName
+      ),
+      "withoutContact-leftUrgentMessage": extractCalls(
+        withoutContact.establishingRapport?.leftUrgentMessage
+      ),
+      "withOrWithoutContact-professionalTone": extractCalls(
+        withOrWithout.qualityOfCall?.professionalTone
+      ),
+      "withOrWithoutContact-politeLanguage": extractCalls(
+        withOrWithout.qualityOfCall?.politeLanguage
+      ),
+      "withOrWithoutContact-updatedInfoSheet": extractCalls(
+        withOrWithout.qualityOfCall?.updatedInfoSheet
+      ),
+      "withOrWithoutContact-adherenceToPolicy": extractCalls(
+        withOrWithout.qualityOfCall?.adherenceToPolicy
+      ),
+      "withOrWithoutContact-gppIntegrityIssues": extractCalls(
+        withOrWithout.qualityOfCall?.gppIntegrityIssues
+      ),
+      "withOrWithoutContact-soundJudgment": extractCalls(
+        withOrWithout.qualityOfCall?.soundJudgment
+      ),
+      "closing-summarizedPayment": extractCalls(closing[0]),
+      "closing-requestReturnCall": extractCalls(closing[1]),
+    };
+
+    const DEFECT_PENALTY_PERCENT = 5;
+    const SCORE_FLOOR_PERCENT = 75;
+
+    const callDefects = Array.from({ length: 5 }).map((_, callIdx) =>
+      Object.values(questionCallValues)
+        .map((arr) => arr[callIdx] ?? 0)
+        .reduce((sum, value) => sum + value, 0)
+    );
+
+    const callScores = Array.from({ length: 5 }).map((_, callIdx) => {
+      const totalDefectsForCall = callDefects[callIdx] ?? 0;
+      const rawScore = Math.max(
+        0,
+        100 - totalDefectsForCall * DEFECT_PENALTY_PERCENT
+      );
+      return rawScore < SCORE_FLOOR_PERCENT ? 0 : rawScore;
+    });
+
+    const overallScore = callScores.length
+      ? callScores.reduce((sum, value) => sum + value, 0) / callScores.length
+      : 100;
+
+    const monthLabel =
+      scoreCard.month?.trim() ||
+      new Intl.DateTimeFormat("en-US", {
+        month: "long",
+        year: "numeric",
+      }).format(new Date(scoreCard.dateAndTimeOfCall || Date.now()));
+
+    const agentLabel = scoreCard.agent?.name || "Unknown Agent";
+    const evaluatorLabel = scoreCard.qa?.name || "Unknown Evaluator";
+
+    const callComments = normalizeArray(details.callComments, 5, {
+      agent: "",
+      tl: "",
+      actionPlan: "",
+    });
+
+    const callContactStatuses = normalizeArray(
+      details.callContactStatuses ?? details.withContactStates,
+      5,
+      true
+    );
+
+    const excelModule = await import("exceljs/dist/exceljs.min.js");
+    const ExcelJS = excelModule.default ?? excelModule;
+
+    const thinBorder: any = {
+      top: { style: "thin" },
+      left: { style: "thin" },
+      bottom: { style: "thin" },
+      right: { style: "thin" },
+      diagonal: {},
+    };
+
+    const thickBorder: any = {
+      top: { style: "medium" },
+      left: { style: "medium" },
+      bottom: { style: "medium" },
+      right: { style: "medium" },
+      diagonal: {},
+    };
+
+    const applyBorder = (
+      ws: any,
+      r1: number,
+      r2: number,
+      c1: number,
+      c2: number,
+      border: any
+    ) => {
+      for (let r = r1; r <= r2; r += 1) {
+        for (let c = c1; c <= c2; c += 1) {
+          const cell = ws.getCell(r, c);
+          cell.border = border;
+          cell.alignment = { wrapText: true, vertical: "middle" };
+        }
+      }
+    };
+
+    const headerCell = (cell: any) => {
+      cell.font = { bold: true };
+      cell.alignment = { horizontal: "center", vertical: "middle" };
+      cell.fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "D9D9D9" },
+      };
+    };
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("UB Score Card", {
+      views: [{ showGridLines: false }],
+      properties: { defaultRowHeight: 22 },
+    });
+
+    worksheet.columns = [
+      { width: 10 },
+      { width: 4 },
+      { width: 60 },
+      { width: 10 },
+      { width: 10 },
+      { width: 10 },
+      { width: 10 },
+      { width: 10 },
+      { width: 10 },
+      { width: 16 },
+      { width: 10 },
+    ];
+
+    worksheet.mergeCells("A1:K1");
+    const headerTitleCell = worksheet.getCell("A1");
+    headerTitleCell.value = "COLLECTION CALL PERFORMANCE MONITOR";
+    headerTitleCell.font = { bold: true, size: 12 };
+    headerTitleCell.alignment = { horizontal: "center", vertical: "middle" };
+
+    applyBorder(worksheet, 1, 1, 1, 11, thickBorder);
+
+    worksheet.getCell("B2:C2").value = "For the month of";
+    worksheet.getCell("D2").value = monthLabel;
+    worksheet.getCell("B3:C3").value = "COLLECTION OFFICER:";
+    worksheet.getCell("D3").value = agentLabel;
+    worksheet.getCell("B4:C4").value = "EVALUATOR:";
+    worksheet.getCell("D4").value = evaluatorLabel;
+
+    worksheet.mergeCells(`H3:I3`);
+    worksheet.getCell("H3:I3").border = { top: thinBorder.top };
+    worksheet.getCell("J2").value = "(signature)";
+
+    worksheet.mergeCells(`H4:I4`);
+    worksheet.getCell("H4:I4").border = { top: thinBorder.top };
+    worksheet.getCell("J3").value = "(signature)";
+
+    worksheet.getRow(6).height = 28;
+    worksheet.mergeCells("C6");
+    worksheet.getCell("C6").value = "Account Name / Account Number";
+    headerCell(worksheet.getCell("C6"));
+
+    worksheet.mergeCells("E6:F6");
+    worksheet.getCell("E6").value = "Date and Time of Call";
+    headerCell(worksheet.getCell("E6"));
+
+    worksheet.mergeCells("H6:I6");
+    worksheet.getCell("H6").value = "Date of Logger Review";
+    headerCell(worksheet.getCell("H6"));
+
+    for (let i = 0; i < 5; i += 1) {
+      worksheet.getCell(`A${7 + i}`).value = `Call ${i + 1}`;
+    }
+
+    worksheet.getCell("J6").value = "1st call";
+    worksheet.getCell("K6").value = "Last call";
+
+    worksheet.getCell("D13").value = "Defect";
+    worksheet.getCell("E13").value = "Call 1";
+    worksheet.getCell("F13").value = "Call 2";
+    worksheet.getCell("G13").value = "Call 3";
+    worksheet.getCell("H13").value = "Call 4";
+    worksheet.getCell("I13").value = "Call 5";
+
+    applyBorder(worksheet, 6, 11, 3, 3, thinBorder);
+    applyBorder(worksheet, 6, 11, 5, 6, thinBorder);
+    applyBorder(worksheet, 6, 11, 8, 9, thinBorder);
+    applyBorder(worksheet, 6, 11, 10, 11, thinBorder);
+
+    let row = 15;
+    worksheet.mergeCells(`B14:I14`);
+    worksheet.getCell(`B14`).value = "A. OPENING";
+    headerCell(worksheet.getCell(`B14`));
+    applyBorder(worksheet, 14, 14, 2, 8, thickBorder);
+
+    worksheet.getRow(15).height = 10;
+    const openingQuestions = [
+      {
+        label: "Used appropriate greeting / Identified self and Agency",
+        defect: 2,
+        key: "opening-greeting",
+      },
+      {
+        label: "Mentioned UBP Disclaimer spiel",
+        defect: 6,
+        key: "opening-disclaimer",
+      },
+      {
+        label: "Mentioned Line is Recorded",
+        defect: 5,
+        key: "opening-recorded",
+      },
+      {
+        label:
+          "Mentioned CH/ Valid CP/Y's Full Name for outgoing calls to a registered number.  Asked correct Positive Identifiers for incoming calls & calls to unregistered number.F",
+        defect: 6,
+        key: "opening-fullname",
+      },
+      {
+        label: "Properly identified self (first & last name)",
+        defect: 6,
+        key: "opening-selfid",
+      },
+    ];
+
+    openingQuestions.forEach(({ label, defect, key }) => {
+      row += 1;
+      worksheet.getCell(`C${row}`).value = label;
+      worksheet.getCell(`D${row}`).value = defect;
+      const callVals = questionCallValues[key] || [];
+      for (let i = 0; i < 5; i += 1) {
+        worksheet.getCell(row, 5 + i).value = callVals[i] ?? "";
+      }
+      applyBorder(worksheet, row, row, 3, 9, thinBorder);
+    });
+
+    let row2 = 25;
+    worksheet.mergeCells(`B22:I22`);
+    worksheet.getCell(`B22`).value = "B. COLLECTION CALL PROPER";
+    headerCell(worksheet.getCell(`B22`));
+    applyBorder(worksheet, 22, 22, 2, 8, thickBorder);
+
+    worksheet.getRow(23).height = 10;
+    worksheet.mergeCells("C24:I24");
+
+    const withContactTitleCell = worksheet.getCell("C24");
+    withContactTitleCell.value = "WITH CONTACT (A/Y)";
+    withContactTitleCell.font = { bold: true };
+    withContactTitleCell.alignment = {
+      horizontal: "center",
+      vertical: "middle",
+    };
+    for (let col = 3; col <= 8; col += 1) {
+      worksheet.getCell(24, col).fill = {
+        type: "pattern",
+        pattern: "solid",
+        fgColor: { argb: "D9D9D9" },
+      };
+    }
+
+    applyBorder(worksheet, 24, 24, 3, 8, thinBorder);
+
+    worksheet.mergeCells(`C25:I25`);
+    worksheet.getCell(`C25`).value = "ESTABLISHING RAPPORT, EMPATHY & COURTESY";
+    applyBorder(worksheet, 25, 25, 3, 8, thinBorder);
+
+    const withContactEstablishingRapport = [
+      {
+        label: "Explained the status of the account*",
+        defect: 1,
+        key: "withContact-explainedStatus",
+      },
+      {
+        label: "Asked if CH received demand/ notification letter*",
+        defect: 2,
+        key: "withContact-askedNotification",
+      },
+      {
+        label: "Showed empathy and compassion as appropriate.",
+        defect: 2,
+        key: "withContact-showedEmpathy",
+      },
+    ];
+    withContactEstablishingRapport.forEach(({ label, defect, key }) => {
+      row2 += 1;
+      worksheet.getCell(`C${row2}`).value = label;
+      worksheet.getCell(`D${row2}`).value = defect;
+      const callVals = questionCallValues[key] || [];
+      for (let i = 0; i < 5; i += 1) {
+        worksheet.getCell(row2, 5 + i).value = callVals[i] ?? "";
+      }
+      applyBorder(worksheet, row2, row2, 3, 9, thinBorder);
+    });
+
+    worksheet.mergeCells(`C29:I29`);
+    worksheet.getCell(`C29`).value = "LISTENING SKILLS";
+    applyBorder(worksheet, 29, 29, 3, 8, thinBorder);
+    const listeningSkills = [
+      {
+        label: "Sought RFD in payment & RFBP*",
+        defect: 1,
+        key: "withContact-soughtRFD",
+      },
+    ];
+
+    let row3 = 29;
+    listeningSkills.forEach(({ label, defect, key }) => {
+      row3 += 1;
+      worksheet.getCell(`C${row3}`).value = label;
+      worksheet.getCell(`D${row3}`).value = defect;
+      const callVals = questionCallValues[key] || [];
+      for (let i = 0; i < 5; i += 1) {
+        worksheet.getCell(row3, 5 + i).value = callVals[i] ?? "";
+      }
+      applyBorder(worksheet, row3, row3, 3, 9, thinBorder);
+    });
+    worksheet.mergeCells(`C31:I31`);
+    worksheet.getCell(`C31`).value = "NEGOTIATION SKILLS";
+    applyBorder(worksheet, 31, 31, 3, 8, thinBorder);
+    const negotiationSkills = [
+      {
+        label:
+          "Explained consequences of non-payment, if applicable (explained conseq of legal and BAP listing/explained side of the Bank and the contract signed/explained that the bank is serious in collecting legal obligations/possible negative listing of name/future credit facility will be closed/additional collection agency expenses/involvement of lawyer will also be CH's expense)*",
+        defect: 1,
+        key: "withContact-explainedConsequences",
+      },
+      {
+        label: "Asked for CM's capacity to pay, if applicable*",
+        defect: 1,
+        key: "withContact-askedCapacity",
+      },
+      {
+        label: "Followed hierarchy of negotiation*",
+        defect: 1,
+        key: "withContact-followedHierarchy",
+      },
+    ];
+    let row4 = 31;
+    negotiationSkills.forEach(({ label, defect, key }) => {
+      row4 += 1;
+      worksheet.getCell(`C${row4}`).value = label;
+      worksheet.getCell(`D${row4}`).value = defect;
+      const callVals = questionCallValues[key] || [];
+      for (let i = 0; i < 5; i += 1) {
+        worksheet.getCell(row4, 5 + i).value = callVals[i] ?? "";
+      }
+      applyBorder(worksheet, row4, row4, 3, 9, thinBorder);
+    });
+
+    worksheet.mergeCells(`C35:I35`);
+    worksheet.getCell("C35").value = "OFFERING SOLUTIONS";
+    applyBorder(worksheet, 35, 35, 3, 8, thinBorder);
+    const offeringSolutions = [
+      {
+        label: "Offered discount/ amnesty/ promo*",
+        defect: 1,
+        key: "withContact-offeredDiscount",
+      },
+      {
+        label: "Adviced CH to source out funds*",
+        defect: 1,
+        key: "withContact-advisedSourceFunds",
+      },
+    ];
+    let row5 = 35;
+    offeringSolutions.forEach(({ label, defect, key }) => {
+      row5 += 1;
+      worksheet.getCell(`C${row5}`).value = label;
+      worksheet.getCell(`D${row5}`).value = defect;
+      const callVals = questionCallValues[key] || [];
+      for (let i = 0; i < 5; i += 1) {
+        worksheet.getCell(row5, 5 + i).value = callVals[i] ?? "";
+      }
+      applyBorder(worksheet, row5, row5, 3, 9, thinBorder);
+    });
+
+    worksheet.mergeCells("C39:I39");
+    worksheet.getCell("C39").value = "WITHOUT CONTACT";
+    applyBorder(worksheet, 39, 39, 3, 8, thinBorder);
+
+    worksheet.mergeCells("C40:I40");
+    worksheet.getCell("C40").value = "ESTABLISHING RAPPORT, EMPATHY & COURTESY";
+    applyBorder(worksheet, 40, 40, 3, 8, thinBorder);
+
+    const withOutContactEREC = [
+      {
+        label: "Probed on BTC, ETA and other contact numbers",
+        defect: 1,
+        key: "withoutContact-probedContactNumbers",
+      },
+      {
+        label: "Used time schedule and follow-up if applicable",
+        defect: 1,
+        key: "withoutContact-usedTimeSchedule",
+      },
+      {
+        label: "Asked for name of party, relation to client",
+        defect: 1,
+        key: "withoutContact-askedPartyName",
+      },
+      {
+        label: "Left URGENT message ang gave correct contact number",
+        defect: 2,
+        key: "withoutContact-leftUrgentMessage",
+      },
+    ];
+    let row6 = 40;
+    withOutContactEREC.forEach(({ label, defect, key }) => {
+      row6 += 1;
+      worksheet.getCell(`C${row6}`).value = label;
+      worksheet.getCell(`D${row6}`).value = defect;
+      const callVals = questionCallValues[key] || [];
+      for (let i = 0; i < 5; i += 1) {
+        worksheet.getCell(row6, 5 + i).value = callVals[i] ?? "";
+      }
+      applyBorder(worksheet, row6, row6, 3, 9, thinBorder);
+    });
+
+    worksheet.mergeCells("C46:I46");
+    worksheet.getCell("C46").value = "WITH OR WITH OUT CONTACT";
+    applyBorder(worksheet, 46, 46, 3, 8, thinBorder);
+    worksheet.mergeCells("C47:I47");
+    worksheet.getCell("C47").value = "QUALITY OF CALL";
+    applyBorder(worksheet, 47, 47, 3, 8, thinBorder);
+
+    const withOrWithoutContactEREC = [
+      {
+        label: "Used professional tone of voice (did not shout)",
+        defect: 2,
+        key: "withOrWithoutContact-professionalTone",
+      },
+      {
+        label:
+          "Did not use unacceptable words/phrases and maintained polite/civil language",
+        defect: 6,
+        key: "withOrWithoutContact-politeLanguage",
+      },
+      {
+        label:
+          "Updated correct information and payment details on info sheet, if applicable",
+        defect: 3,
+        key: "withOrWithoutContact-updatedInfoSheet",
+      },
+      {
+        label: "Adherence to Policy(BSP, Code of Conduct, etc.)",
+        defect: 6,
+        key: "withOrWithoutContact-adherenceToPolicy",
+      },
+      {
+        label:
+          "GPP / INTEGRITY ISSUES (Revealed and Collected debt from unauthorized CP)",
+        defect: 6,
+        key: "withOrWithoutContact-gppIntegrityIssues",
+      },
+      {
+        label:
+          "Exercised sound judgment in determining the appropriate course of action.",
+        defect: 6,
+        key: "withOrWithoutContact-soundJudgment",
+      },
+    ];
+    let row7 = 47;
+    withOrWithoutContactEREC.forEach(({ label, defect, key }) => {
+      row7 += 1;
+      worksheet.getCell(`C${row7}`).value = label;
+      worksheet.getCell(`D${row7}`).value = defect;
+      const callVals = questionCallValues[key] || [];
+      for (let i = 0; i < 5; i += 1) {
+        worksheet.getCell(row7, 5 + i).value = callVals[i] ?? "";
+      }
+      applyBorder(worksheet, row7, row7, 3, 9, thinBorder);
+    });
+
+    worksheet.mergeCells(`B56:I56`);
+    worksheet.getCell(`B56`).value = "C. CLOSING THE CALL";
+    headerCell(worksheet.getCell(`B56`));
+    applyBorder(worksheet, 56, 56, 2, 8, thickBorder);
+
+    worksheet.getRow(57).height = 10;
+    worksheet.mergeCells("C57:I57");
+
+    const closingQuestions = [
+      {
+        label: "Summarized payment arrangement*",
+        defect: 2,
+        key: "closing-summarizedPayment",
+      },
+      {
+        label: "Request return call for payment confirmation*",
+        defect: 1,
+        key: "closing-requestReturnCall",
+      },
+    ];
+    let row8 = 57;
+    closingQuestions.forEach(({ label, defect, key }) => {
+      row8 += 1;
+      worksheet.getCell(`C${row8}`).value = label;
+      worksheet.getCell(`D${row8}`).value = defect;
+      const callVals = questionCallValues[key] || [];
+      for (let i = 0; i < 5; i += 1) {
+        worksheet.getCell(row8, 5 + i).value = callVals[i] ?? "";
+      }
+      applyBorder(worksheet, row8, row8, 3, 9, thinBorder);
+    });
+
+    worksheet.getCell("C61").value = "WITH CONTACT? (Y/N)";
+    worksheet.getCell("C62").value = "Total Defects";
+    worksheet.getCell(`C63`).value = "Score";
+    worksheet.mergeCells(`J61:J63`);
+    worksheet.getCell(`J61`).value = `${overallScore.toFixed(2)}%`;
+
+    worksheet.mergeCells("C61:D61");
+    worksheet.mergeCells("C62:D62");
+    worksheet.mergeCells("C63:D63");
+
+    applyBorder(worksheet, 61, 63, 3, 4, thinBorder);
+    applyBorder(worksheet, 61, 63, 10, 10, thickBorder);
+
+    const contactRow = 61;
+    callContactStatuses.slice(0, 5).forEach((status, index) => {
+      const col = 5 + index;
+      worksheet.getCell(contactRow, col).value = status ? "Y" : "N";
+    });
+    applyBorder(worksheet, contactRow, contactRow, 5, 9, thinBorder);
+
+    const defectsRow = 62;
+    callDefects.slice(0, 5).forEach((defects, index) => {
+      const col = 5 + index;
+      worksheet.getCell(defectsRow, col).value = defects;
+    });
+    applyBorder(worksheet, defectsRow, defectsRow, 5, 9, thinBorder);
+
+    const scoresRow = 63;
+    callScores.slice(0, 5).forEach((score, index) => {
+      const col = 5 + index;
+      worksheet.getCell(scoresRow, col).value = `${score.toFixed(2)}%`;
+    });
+    applyBorder(worksheet, scoresRow, scoresRow, 5, 9, thinBorder);
+
+    worksheet.getCell("C65").value = "CALL 1 COMMENTS OF AGENT";
+
+    worksheet.mergeCells(`M1:M85`);
+    for (let r = 1; r <= 85; r += 1) {
+      const cell = worksheet.getCell(r, 13);
+      cell.border = { left: thickBorder.left };
+      cell.alignment = { wrapText: true, vertical: "middle" };
+    }
+
+    worksheet.mergeCells(`A86:L86`);
+    for (let c = 1; c <= 12; c += 1) {
+      const cell = worksheet.getCell(86, c);
+      cell.border = { top: thickBorder.top };
+    }
+
+    let commentRow = 65;
+    for (let i = 0; i < 5; i += 1) {
+      worksheet.getCell(`C${commentRow}`).value = `CALL ${
+        i + 1
+      } COMMENTS OF AGENT`;
+      worksheet.mergeCells(`D${commentRow}:F${commentRow}`);
+      worksheet.getCell(`D${commentRow}`).value = "COMMENTS OF AGENCY TL";
+      worksheet.mergeCells(`G${commentRow}:I${commentRow}`);
+      worksheet.getCell(`G${commentRow}`).value = "ACTION PLAN";
+      applyBorder(worksheet, commentRow, commentRow, 3, 9, thickBorder);
+
+      const agentComment = callComments[i]?.agent || "";
+      const tlComment = callComments[i]?.tl || "";
+      const actionPlanComment = callComments[i]?.actionPlan || "";
+
+      worksheet.mergeCells(`D${commentRow + 1}:F${commentRow + 2}`);
+      worksheet.mergeCells(`G${commentRow + 1}:I${commentRow + 2}`);
+      worksheet.mergeCells(`C${commentRow + 1}:C${commentRow + 2}`);
+      worksheet.getCell(`C${commentRow + 1}`).value = agentComment;
+      worksheet.getCell(`D${commentRow + 1}`).value = tlComment;
+      worksheet.getCell(`G${commentRow + 1}`).value = actionPlanComment;
+      applyBorder(worksheet, commentRow + 1, commentRow + 2, 3, 9, thickBorder);
+
+      commentRow += 4;
+    }
+
+    const buffer = await workbook.xlsx.writeBuffer();
+    const blob = new Blob([buffer], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    });
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    const sanitizedAgent = (scoreCard.agent?.name ?? "agent").replace(
+      /\s+/g,
+      "-"
+    );
+    const timestamp = new Date().toISOString().replace(/[:]/g, "-");
+    link.download = `ub-score-card-${sanitizedAgent}-${timestamp}.xlsx`;
+    link.click();
+  };
+
   const handleExportExcel = async () => {
     if (!selectedScoreCard || isExportingExcel) {
       if (!selectedScoreCard) {
         window.alert("Select a score card to export.");
+      }
+      return;
+    }
+
+    const normalizedType = (
+      selectedScoreCard.typeOfScoreCard || ""
+    ).toLowerCase();
+    if (normalizedType.includes("ub mortgage")) {
+      try {
+        setIsExportingExcel(true);
+        await exportUBMortgageExcel(selectedScoreCard);
+      } catch (error) {
+        console.error("Failed to export UB Mortgage score card", error);
+        window.alert(
+          "Unable to export this score card right now. Please try again."
+        );
+      } finally {
+        setIsExportingExcel(false);
+      }
+      return;
+    }
+
+    if (normalizedType.includes("ub score")) {
+      try {
+        setIsExportingExcel(true);
+        await exportUBExcel(selectedScoreCard);
+      } catch (error) {
+        console.error("Failed to export UB score card", error);
+        window.alert(
+          "Unable to export this score card right now. Please try again."
+        );
+      } finally {
+        setIsExportingExcel(false);
+      }
+      return;
+    }
+
+    if (normalizedType.includes("eastwest")) {
+      try {
+        setIsExportingExcel(true);
+        await exportEastwestExcel(selectedScoreCard);
+      } catch (error) {
+        console.error("Failed to export Eastwest score card", error);
+        window.alert(
+          "Unable to export this score card right now. Please try again."
+        );
+      } finally {
+        setIsExportingExcel(false);
       }
       return;
     }
@@ -1674,7 +4167,7 @@ const ScoreCardOverview = () => {
               records shown
             </div>
             <div className="text-4xl font-black text-black">
-              {scorecards.length}
+              {filteredScorecards.length}
             </div>
           </div>
         </div>
@@ -1698,14 +4191,57 @@ const ScoreCardOverview = () => {
                 onChange={(event) => setSelectedDate(event.target.value)}
               />
             </div>
-            <div className="border bg-gray-100 rounded-sm flex items-center px-3">
-              <input
-                className="px-3 py-1 outline-none bg-transparent"
-                placeholder="Search..."
-                type="text"
-                value={searchTerm}
-                onChange={(event) => setSearchTerm(event.target.value)}
-              />
+            <div className="flex gap-2">
+              <div
+                className={typeButtonClass(
+                  "default",
+                  "font-black uppercase bg-green-600 border-2 border-green-900 text-white px-2 items-center flex rounded-md shadow-md cursor-pointer hover:bg-green-700"
+                )}
+                onClick={() => handleTypeClick("default")}
+                title="Default Score Card"
+              >
+                SS
+              </div>
+              <div
+                className={typeButtonClass(
+                  "ub",
+                  "font-black uppercase bg-amber-600 border-2 border-amber-900 text-white px-2 items-center flex rounded-md shadow-md cursor-pointer hover:bg-amber-700"
+                )}
+                onClick={() => handleTypeClick("ub")}
+                title="UB Score Card"
+              >
+                UB
+              </div>
+              <div
+                className={typeButtonClass(
+                  "eastwest",
+                  "font-black uppercase bg-blue-600 border-2 border-blue-900 text-white px-2 items-center flex rounded-md shadow-md cursor-pointer hover:bg-blue-700"
+                )}
+                onClick={() => handleTypeClick("eastwest")}
+                title="Eastwest Score Card"
+              >
+                EW
+              </div>
+              <div
+                className={typeButtonClass(
+                  "ubMortgage",
+                  "font-black uppercase bg-purple-600 border-2 outline-none border-purple-900 text-white px-2 items-center flex rounded-md shadow-md cursor-pointer hover:bg-purple-700"
+                )}
+                onClick={() => handleTypeClick("ubMortgage")}
+                title="UB Mortgage Score Card"
+              >
+                UBM
+              </div>
+
+              <div className="border bg-gray-100 rounded-sm flex items-center px-3">
+                <input
+                  className="px-3 py-1 outline-none bg-transparent"
+                  placeholder="Search..."
+                  type="text"
+                  value={searchTerm}
+                  onChange={(event) => setSearchTerm(event.target.value)}
+                />
+              </div>
             </div>
           </div>
           <div className="w-full border flex flex-col bg-gray-100 rounded-sm overflow-hidden">
@@ -1728,13 +4264,13 @@ const ScoreCardOverview = () => {
                   <div className="flex justify-center items-center h-full text-gray-500 italic">
                     Loading...
                   </div>
-                ) : scorecards.length === 0 ? (
+                ) : filteredScorecards.length === 0 ? (
                   <div className="flex justify-center items-center h-full py-2 text-gray-400">
                     No data available
                   </div>
                 ) : (
                   <div className="flex flex-col divide-y overflow-auto">
-                    {scorecards.map((entry, index) => {
+                    {filteredScorecards.map((entry, index) => {
                       const badge = getStatusBadge(entry.totalScore);
                       const formattedDate = formatDate(
                         entry.createdAt || entry.dateAndTimeOfCall
@@ -1803,6 +4339,31 @@ const ScoreCardOverview = () => {
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
             >
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void handleExportExcel();
+                }}
+                disabled={isExportingExcel}
+                className={`absolute bottom-2 cursor-pointer -right-14 flex items-center gap-2 px-3 py-2 border-2 rounded-sm font-black uppercase text-white transition ${
+                  isExportingExcel
+                    ? "bg-green-400 cursor-not-allowed border-green-700"
+                    : "bg-green-600 hover:bg-green-700 border-green-800"
+                }`}
+                title="Export to Excel"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="size-4"
+                >
+                  <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
+                  <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                </svg>
+              </button>
+
               <button
                 type="button"
                 onClick={(event) => {
@@ -1945,12 +4506,37 @@ const ScoreCardOverview = () => {
               className="w-full h-full absolute items-center justify-center flex bg-black/40 backdrop-blur-sm"
               onClick={closeModal}
             ></div>
+
             <motion.div
               className="bg-white z-20 border flex flex-col relative rounded-md p-6 max-w-4xl max-h-[80vh] "
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.8, opacity: 0 }}
             >
+              <button
+                type="button"
+                onClick={(event) => {
+                  event.stopPropagation();
+                  void handleExportExcel();
+                }}
+                disabled={isExportingExcel}
+                className={`absolute bottom-2 cursor-pointer -right-14 flex items-center gap-2 px-3 py-2 border-2 rounded-sm font-black uppercase text-white transition ${
+                  isExportingExcel
+                    ? "bg-green-400 cursor-not-allowed border-green-700"
+                    : "bg-green-600 hover:bg-green-700 border-green-800"
+                }`}
+                title="Export to Excel"
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="size-4"
+                >
+                  <path d="M5.625 1.5c-1.036 0-1.875.84-1.875 1.875v17.25c0 1.035.84 1.875 1.875 1.875h12.75c1.035 0 1.875-.84 1.875-1.875V12.75A3.75 3.75 0 0 0 16.5 9h-1.875a1.875 1.875 0 0 1-1.875-1.875V5.25A3.75 3.75 0 0 0 9 1.5H5.625Z" />
+                  <path d="M12.971 1.816A5.23 5.23 0 0 1 14.25 5.25v1.875c0 .207.168.375.375.375H16.5a5.23 5.23 0 0 1 3.434 1.279 9.768 9.768 0 0 0-6.963-6.963Z" />
+                </svg>
+              </button>
               <button
                 type="button"
                 onClick={closeModal}
@@ -2190,7 +4776,8 @@ const ScoreCardOverview = () => {
                   }));
 
                   const hasAny = normalized.some(
-                    (comment) => comment.agent || comment.evaluator || comment.action
+                    (comment) =>
+                      comment.agent || comment.evaluator || comment.action
                   );
 
                   if (!hasAny) return null;
@@ -2216,7 +4803,9 @@ const ScoreCardOverview = () => {
                               </div>
                               <div className="flex flex-col justify-between">
                                 <div className="col-span-1 flex items-center">
-                                  <span className="font-semibold">Comments of Agent:</span>{" "}
+                                  <span className="font-semibold">
+                                    Comments of Agent:
+                                  </span>{" "}
                                   {comment.agent ? (
                                     String(comment.agent)
                                   ) : (
@@ -2226,7 +4815,9 @@ const ScoreCardOverview = () => {
                                   )}
                                 </div>
                                 <div className="col-span-1 flex items-center">
-                                  <span className="font-semibold">Comments of Evaluator:</span>{" "}
+                                  <span className="font-semibold">
+                                    Comments of Evaluator:
+                                  </span>{" "}
                                   {comment.evaluator ? (
                                     String(comment.evaluator)
                                   ) : (
@@ -2236,7 +4827,9 @@ const ScoreCardOverview = () => {
                                   )}
                                 </div>
                                 <div className="col-span-1 flex items-center">
-                                  <span className="font-semibold">Action Plan:</span>{" "}
+                                  <span className="font-semibold">
+                                    Action Plan:
+                                  </span>{" "}
                                   {comment.action ? (
                                     String(comment.action)
                                   ) : (

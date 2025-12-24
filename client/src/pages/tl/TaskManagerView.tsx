@@ -2,6 +2,7 @@ import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { RiArrowUpSFill } from "react-icons/ri";
+import { VscLoading } from "react-icons/vsc";
 import GroupSection from "./GroupSection";
 import TaskDispoSection from "./TaskDispoSection";
 import AgentSection from "./AgentSection";
@@ -52,15 +53,50 @@ const TaskManagerView = () => {
   const { tasker, taskFilter, selectedDisposition } = useSelector(
     (state: RootState) => state.auth
   );
-  const { data: DispositionTypes, refetch } = useQuery<{
+  const { data: DispositionTypes, refetch, loading: dispoLoading } = useQuery<{
     getDispositionTypes: DispositionTypes[];
   }>(GET_ALL_DISPOSITION_TYPE, { notifyOnNetworkStatusChange: true });
-  const { data: bucketData, refetch: tlBucketRefetch } = useQuery<{
+  const { data: bucketData, refetch: tlBucketRefetch, loading: bucketLoading } = useQuery<{
     getTLBucket: Bucket[];
   }>(BUCKETS, { notifyOnNetworkStatusChange: true });
   const [bucketSelect, setBucketSelect] = useState<
     keyof typeof bucketObject | ""
   >("");
+
+  const segmentToggle = (
+    options: { label: string; value: string }[],
+    active: string,
+    onSelect: (value: string) => void
+  ) => {
+    const index = options.findIndex((opt) => opt.value === active);
+    const clampedIndex = index >= 0 ? index : 0;
+    const isFirst = clampedIndex === 0;
+
+    return (
+      <div className="overflow-hidden w-full shadow-md uppercase relative border border-black rounded-b-md flex text-sm font-black">
+        <motion.div
+          initial={{ x: 0, opacity: 0, width: "50%" }}
+          animate={{ x: isFirst ? "0%" : "100%", opacity: 1, width: "50%" }}
+          className={`" ${
+            isFirst
+              ? "border-r border-blue-900 bg-blue-400"
+              : "border-l border-blue-900 bg-blue-400"
+          } left-0 top-0 z-10 h-full absolute "`}
+        ></motion.div>
+        <div className="flex z-20 w-full">
+          {options.map((opt) => (
+            <div
+              key={opt.value}
+              className={`" ${active === opt.value ? "text-black" : " text-gray-400"} w-1/2 text-center text-black px-3 py-2 cursor-pointer "`}
+              onClick={() => onSelect(opt.value)}
+            >
+              {opt.label}
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  };
 
   useEffect(() => {
     const timer = async () => {
@@ -77,7 +113,10 @@ const TaskManagerView = () => {
 
   useEffect(() => {
     if (bucketData) {
-      setBucketSelect(bucketData.getTLBucket[0].name);
+      const first = bucketData.getTLBucket[0];
+      if (first) {
+        setBucketSelect(first.name);
+      }
     }
   }, [bucketData]);
 
@@ -107,225 +146,195 @@ const TaskManagerView = () => {
   }, [setShowSelection, showSelection]);
 
   const [dpd, setDpd] = useState<number | null>(null);
-  const [searchName,setSearchName] = useState<string | null>(null)
+  const [searchName, setSearchName] = useState<string | null>(null);
+
+  const isLoading = dispoLoading || bucketLoading;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center justify-center h-full w-full">
+        <VscLoading className="animate-spin text-4xl text-gray-500" />
+      </div>
+    );
+  }
 
   return (
-    <div className="h-full w-full relative flex flex-col overflow-hidden">
-      <div className="flex gap-10 p-5 items-start">
-        <div className=" flex gap-5 lg:text-[0.6em] 2xl:text-xs w-full flex-col">
-          <div className="flex gap-2">
-            <motion.fieldset
-              className="flex p-1.5 gap-4 px-4 shadow-sm border rounded-md border-black"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.8, duration: 0.5, type: "spring" }}
-            >
-              <legend className="font-black text-sm uppercase text-black px-2">
-                Tasker
-              </legend>
-              <label className="text-sm font-medium text-gray-900 flex items-center gap-1">
-                <input
-                  id="default-radio-1"
-                  type="radio"
-                  value={Tasker.group}
-                  name="default-radio"
-                  checked={tasker === Tasker.group}
-                  onChange={(e) => dispatch(setTasker(e.target.value))}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300"
-                />
-                <span>Group</span>
-              </label>
-              <label className="text-sm font-medium text-gray-900 flex items-center gap-1">
-                <input
-                  id="default-radio-2"
-                  type="radio"
-                  value={Tasker.individual}
-                  name="default-radio"
-                  checked={tasker === Tasker.individual}
-                  onChange={(e) => dispatch(setTasker(e.target.value))}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 "
-                />
-                <span>Individual</span>
-              </label>
-            </motion.fieldset>
-
-            <motion.fieldset
-              className="flex p-1.5 gap-4 px-4 shadow-sm border rounded-md border-black"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.9, duration: 0.5, type: "spring" }}
-            >
-              <legend className="font-black uppercase  text-sm text-black px-2">
-                Tasks Filter
-              </legend>
-              <label className="text-sm font-medium text-gray-900 flex items-center gap-1">
-                <input
-                  id="default-radio-3"
-                  type="radio"
-                  value={TaskFilter.assigned}
-                  name="default-radio-1"
-                  checked={taskFilter === TaskFilter.assigned}
-                  onChange={(e) => dispatch(setTaskFilter(e.target.value))}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300"
-                />
-                <span>Assigned</span>
-              </label>
-              <label className="text-sm font-medium text-gray-900 flex items-center gap-1">
-                <input
-                  id="default-radio-4"
-                  type="radio"
-                  value={TaskFilter.unassigned}
-                  name="default-radio-1"
-                  checked={taskFilter === TaskFilter.unassigned}
-                  onChange={(e) => dispatch(setTaskFilter(e.target.value))}
-                  className="w-4 h-4 text-blue-600 bg-gray-100 border-gray-300 "
-                />
-                <span>Unassigned</span>
-              </label>
-            </motion.fieldset>
-          </div>
-          <div className="flex gap-2">
-            <motion.div
-              className="w-1/2 border  cursor-pointer shadow-sm  rounded-md h-10 border-black relative z-50"
-              title={selectedDisposition?.toString()}
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 1.2, duration: 0.5, type: "spring" }}
-            >
-              <RiArrowUpSFill
-                className={`"  ${
-                  showSelection ? "rotate-180" : "rotate-90"
-                }  absolute right-2 top-2 text-2xl transition-all "`}
-                onClick={onClick}
-              />
-              <div
-                className="lg:w-60  2xl:w-80 h-full px-2 font-bold uppercase truncate text-black flex text-sm items-center"
-                onClick={onClick}
-              >
-                {selectedDisposition?.length > 0
-                  ? selectedDisposition?.toString()
-                  : "Select Disposition"}
-              </div>
-              <AnimatePresence>
-                {showSelection && (
-                  <motion.div
-                    className="w-full h-96  border overflow-y-auto absolute top-10 flex rounded-md mt-1 shadow-md text-xs flex-col border-black bg-white"
-                    initial={{ y: -20, opacity: 0 }}
-                    animate={{ y: 0, opacity: 1 }}
-                    exit={{ y: -20, opacity: 0 }}
-                  >
-                    {DispositionTypes?.getDispositionTypes
-                      .filter((e) => e.name !== "PAID")
-                      .map((e) => (
-                        <label
-                          key={e.id}
-                          className="flex gap-2 text-black font-black even:bg-gray-100 px-2 py-3"
-                        >
-                          <input
-                            type="checkbox"
-                            name={e.name}
-                            id={e.name}
-                            value={e.name}
-                            checked={selectedDisposition?.includes(e.name)}
-                            onChange={(e) => handleCheckBox(e.target.value, e)}
-                          />
-                          <p>{e.name}</p>
-                        </label>
-                      ))}
-                  </motion.div>
+    <div className="max-h-[90dvh] h-full w-full grid grid-cols-3 p-5 gap-2 relative overflow-hidden">
+      <motion.div className=" flex flex-col gap-10 items-start"
+        initial={{ y: 20, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ delay: 0.1 }}
+      >
+        <div className="bg-gray-200 w-full flex flex-col p-5 border rounded-md shadow-md h-[95%]">  
+          <div className=" flex  gap-2 lg:text-[0.6em] 2xl:text-xs w-full flex-col">
+            <div className="flex flex-col gap-2">
+              <div className="flex flex-col bg-gray-300">
+                <div className="font-black bg-blue-500 py-2 border-x border-t rounded-t-md text-center text-sm uppercase text-black px-1">
+                  Tasker
+                </div>
+                {segmentToggle(
+                  [
+                    { label: "Group", value: Tasker.group },
+                    { label: "Individual", value: Tasker.individual },
+                  ],
+                  tasker,
+                  (val) => dispatch(setTasker(val))
                 )}
-              </AnimatePresence>
-            </motion.div>
-            {showSelection && (
+              </div>
+
+              <div className="flex flex-col bg-gray-300">
+                <div className="font-black bg-blue-500 py-2 border-x border-t rounded-t-md text-sm text-center uppercase text-black px-1">
+                  Tasks Filter
+                </div>
+                {segmentToggle(
+                  [
+                    { label: "Assigned", value: TaskFilter.assigned },
+                    { label: "Unassigned", value: TaskFilter.unassigned },
+                  ],
+                  taskFilter,
+                  (val) => dispatch(setTaskFilter(val))
+                )}
+              </div>
+            </div>
+            <div className="flex flex-col">
+              <div className="text-base" >Disposition:</div>
               <div
-                onClick={() => setShowSelection(false)}
-                className=" z-20 absolute top-0 left-0 w-full h-full"
-              ></div>
-            )}
-            <motion.div
-              className=" w-full"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 1.3, duration: 0.5, type: "spring" }}
-            >
-              <select
-                className="w-full cursor-pointer focus:outline-none h-full shadow-sm text-sm border rounded-md border-black font-bold text-black px-1"
-                name="bucket"
-                id="bucket"
-                value={bucketSelect}
-                onChange={(e) => setBucketSelect(e.target.value)}
+                className="w-full border bg-white cursor-pointer shadow-sm  rounded-md h-10 border-black relative z-50"
+                title={selectedDisposition?.toString()}
               >
-                {bucketData?.getTLBucket.map((e) => (
-                  <option
-                    className="rounded-md mt-10"
-                    key={e._id}
-                    value={e.name}
-                  >
-                    {e.name}
-                  </option>
-                ))}
-              </select>
-            </motion.div>
-            <motion.div
-              className=" w-full"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 1.4, duration: 0.5, type: "spring" }}
-            >
-              <label>
-                <input
-                  type="number"
-                  className="w-15 text-sm pl-4 h-10 shadow-sm border border-black focus:outline-none rounded-md font-bold text-slate-500 px-1"
-                  name="dpd"
-                  id="dpd"
-                  min={0}
-                  value={dpd ?? ""}
-                  onChange={(e) => {
-                    const val = e.target.value;
-                    setDpd(val === "" ? null : Number(val));
-                  }}
+                <RiArrowUpSFill
+                  className={`"  ${
+                    showSelection ? "rotate-180" : "rotate-90"
+                  }  absolute right-2 top-2 text-2xl transition-all "`}
+                  onClick={onClick}
                 />
-              </label>
-            </motion.div>
-            <motion.div
-              className=" w-full"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 1.4, duration: 0.5, type: "spring" }}
-            >
-              <label>
-                <input
-                  type="text"
-                  className="w-96 text-sm pl-4 h-10 shadow-sm border border-black focus:outline-none rounded-md font-bold text-slate-500 px-1"
-                  name="searchName"
-                  id="searchName"
-                  placeholder="Enter Customer Name ..."
-                  autoComplete="off"
-                  value={searchName ?? ""}
-                  onChange={(e) => {
-                    const val = e.target.value.trim() === "" ? null : e.target.value;
-                    setSearchName(val);
-                  }}
-                />
-              </label>
-            </motion.div>
+                <div
+                  className="w-full h-full px-2 font-bold uppercase truncate text-black flex text-sm items-center"
+                  onClick={onClick}
+                >
+                  {selectedDisposition?.length > 0
+                    ? selectedDisposition?.toString()
+                    : "Select Disposition"}
+                </div>
+                <AnimatePresence>
+                  {showSelection && (
+                    <motion.div
+                      className="w-full max-h-60  border overflow-y-auto absolute top-10 flex rounded-md mt-1 shadow-md text-xs flex-col border-black bg-white"
+                      initial={{ y: -20, opacity: 0 }}
+                      animate={{ y: 0, opacity: 1 }}
+                      exit={{ y: -20, opacity: 0 }}
+                    >
+                      {DispositionTypes?.getDispositionTypes
+                        .filter((e) => e.name !== "PAID")
+                        .map((e) => (
+                          <label
+                            key={e.id}
+                            className="flex gap-2 text-black border-b border-gray-300 font-black even:bg-gray-100 px-2 py-3"
+                          >
+                            <input
+                              type="checkbox"
+                              name={e.name}
+                              id={e.name}
+                              value={e.name}
+                              checked={selectedDisposition?.includes(e.name)}
+                              onChange={(e) =>
+                                handleCheckBox(e.target.value, e)
+                              }
+                            />
+                            <p>{e.name}</p>
+                          </label>
+                        ))}
+                    </motion.div>
+                  )}
+                </AnimatePresence>
+              </div>
+              {showSelection && (
+                <div
+                  onClick={() => setShowSelection(false)}
+                  className=" z-20 absolute top-0 left-0 w-full h-full"
+                ></div>
+              )}
+              <div className="mb-2"
+              >
+                <div className="text-base" >Campaign: </div>
+                <select
+                  className="w-full py-2 bg-white cursor-pointer shadow-sm text-sm border rounded-md border-black font-bold text-black px-1"
+                  name="bucket"
+                  id="bucket"
+                  value={bucketSelect}
+                  onChange={(e) => setBucketSelect(e.target.value)}
+                >
+                  {bucketData?.getTLBucket.map((e) => (
+                    <option
+                      className="rounded-md mt-10"
+                      key={e._id}
+                      value={e.name}
+                    >
+                      {e.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+              <div className="flex gap-2">
+                <div
+                  className=""
+                >
+                  <label>
+                    <input
+                      type="number"
+                      className="w-15 text-sm bg-white pl-4 h-10 shadow-sm border border-black focus:outline-none rounded-md font-normal text-black px-1"
+                      name="dpd"
+                      id="dpd"
+                      min={0}
+                      value={dpd ?? ""}
+                      onChange={(e) => {
+                        const val = e.target.value;
+                        setDpd(val === "" ? null : Number(val));
+                      }}
+                    />
+                  </label>
+                </div>
+                <div
+                  className=" w-full"
+                >
+                  <label>
+                    <input
+                      type="text"
+                      className="w-full bg-white text-sm pl-4 h-10 shadow-sm border border-black focus:outline-none rounded-md font-normal text-black px-1"
+                      name="searchName"
+                      id="searchName"
+                      placeholder="Enter Customer Name..."
+                      autoComplete="off"
+                      value={searchName ?? ""}
+                      onChange={(e) => {
+                        const val =
+                          e.target.value.trim() === "" ? null : e.target.value;
+                        setSearchName(val);
+                      }}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
           </div>
+          {tasker === "group" ? (
+            <GroupSection />
+          ) : (
+            <AgentSection
+              bucket={String(
+                bucketObject[bucketSelect] as keyof typeof bucketObject
+              )}
+            />
+          )}
         </div>
-        {tasker === "group" ? (
-          <GroupSection />
-        ) : (
-          <AgentSection
-            bucket={String(
-              bucketObject[bucketSelect] as keyof typeof bucketObject
-            )}
-          />
-        )}
+      </motion.div>
+      <div className="col-span-2 h-full max-h-[90dvh]">
+        <TaskDispoSection
+          selectedBucket={bucketObject[bucketSelect] || null}
+          dpd={dpd}
+          searchName={searchName}
+        />
       </div>
-      <TaskDispoSection
-        selectedBucket={bucketObject[bucketSelect] || null}
-        dpd={dpd}
-        searchName={searchName}
-      />
     </div>
   );
 };

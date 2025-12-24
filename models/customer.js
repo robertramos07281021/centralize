@@ -57,7 +57,11 @@ const customerSchema = new Schema(
 );
 
 // Compound text index for fast search on fullName, contact_no, emails
-customerSchema.index({ fullName: "text", contact_no: "text", emails: "text" });
+customerSchema.index({
+  fullName: "text",
+  contact_no: "text",
+  "emergency_contact.mobile": "text",
+});
 
 const Customer = mongoose.model("Customer", customerSchema);
 export default Customer;
