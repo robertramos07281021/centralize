@@ -538,13 +538,13 @@ const Navbar = () => {
         )}
         <div className="sticky top-0 z-50 print:hidden">
           <div className="py-2 px-5 bg-blue-500 flex justify-between items-center ">
-            <div className="flex text-2xl gap-2 font-medium items-center text-white italic">
-              <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10" />
+            <a href="/" title="Home"  className="flex cursor-pointer text-2xl gap-2 font-medium items-center text-white italic">
+              <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10 rounded-sm shadow-md" />
               Collections System
               {userLogged?.type === "AGENT" &&
                 breakValue !== BreakEnum.WELCOME &&
                 !selectedCustomer && <IdleAutoLogout />}
-            </div>
+            </a>
             <div className="p-1 flex gap-2 text-xs z-50">
               <p className="font-black text-lg mr-2 flex items-center text-white text-shadow-sm uppercase">
                 Hello!&nbsp;

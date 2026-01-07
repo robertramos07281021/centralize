@@ -84,8 +84,7 @@ type updateInput = {
 
 enum Type {
   AGENT = "Agent",
-  TL = "TL",
-  MIS = "MIS",
+  TL = "TL/MIS",
   QA = "QA",
   QASUPERVISOR = "QA Supervisor",
 }
@@ -520,7 +519,7 @@ const UpdateBoard = () => {
       </AnimatePresence>
       <div className="max-h-[90dvh] gap-2  h-full w-full grid grid-cols-3 p-5">
         <motion.form
-          className="w-full overflow-hidden h-full flex flex-col bg-gray-100 border rounded-md shadow-md"
+          className="w-full truncate overflow-hidden h-full flex flex-col bg-gray-100 border rounded-md shadow-md"
           ref={formRef}
           noValidate
           onSubmit={submitAddPatch}

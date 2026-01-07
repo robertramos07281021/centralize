@@ -699,6 +699,26 @@ const AccountInfo = forwardRef<
               />
             </div>
           </div>
+          <div className="grid grid-cols-3 font-medium px-5 gap-2">
+            <div>
+              <div className="uppercase">BA1 Tag:</div>
+              <div className="w-full p-1 pl-2 border border-black rounded-sm">
+                No information
+              </div>
+            </div>
+            <div>
+              <div className="uppercase">BA2 Tag:</div>
+              <div className="w-full p-1 pl-2 border border-black rounded-sm">
+                No information
+              </div>
+            </div>{" "}
+            <div>
+              <div className="uppercase">INS AMT:</div>
+              <div className="w-full p-1 pl-2 border border-black rounded-sm">
+                No information
+              </div>
+            </div>
+          </div>
 
           {!updateCustomerAccounts ? (
             <div className="flex flex-col bg-gray-100 border-black border-b rounded-b-md shadow-md px-5 pb-5 items-end justify-center gap-1 text-slate-800 uppercase font-medium">

@@ -74,18 +74,17 @@ const ProductionManagerView = () => {
     <div className="p-2 h-full overflow-hidden">
       <div className="h-full flex flex-col ">
         <div className="px-5 py-2 w-full flex gap-2 ">
-          <div className="bg-gray-100 border overflow-hidden border-black rounded-md w-full items-center flex flex-col">
+          <motion.div
+            className="bg-gray-100 border overflow-hidden border-black rounded-md w-full items-center flex flex-col"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+          >
             <h1 className=" font-black bg-gray-400 w-full uppercase text-base py-2 text-black  text-center border-b">
               Call files{" "}
               {bucketObject[callfileBucket as keyof typeof bucketObject]}
             </h1>
             <div className="flex gap-2 p-2 h-full items-center justify-center">
-              <motion.label
-                className="flex flex-col "
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.5 }}
-              >
+              <label className="flex flex-col ">
                 <select
                   name="bucket"
                   id="bucket"
@@ -105,7 +104,7 @@ const ProductionManagerView = () => {
                     </option>
                   ))}
                 </select>
-              </motion.label>
+              </label>
 
               <div className="overflow-hidden relative border border-black rounded-md flex  text-sm font-black">
                 <motion.div
@@ -151,52 +150,14 @@ const ProductionManagerView = () => {
                   </div>
                 </div>
               </div>
-              {/* <motion.fieldset
-                className="flex border rounded-md p-2 px-5 gap-5 border-black "
-                initial={{ y: 20, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ delay: 0.6 }}
-              >
-                <legend className="text-sm font-black uppercase text-gray-800 px-2">
-                  Status
-                </legend>
-                <label className="text-sm flex gap-1 text-gray-600">
-                  <input
-                    type="radio"
-                    name="status"
-                    id="all"
-                    checked={status === Status.all}
-                    onChange={(e) => setStatus(e.target.value as Status)}
-                    value={Status.all}
-                  />
-                  <span>All</span>
-                </label>
-                <label className="text-sm flex gap-1 text-gray-600">
-                  <input
-                    type="radio"
-                    name="status"
-                    id="active"
-                    checked={status === Status.active}
-                    onChange={(e) => setStatus(e.target.value as Status)}
-                    value={Status.active}
-                  />
-                  <span>Active</span>
-                </label>
-                <label className="text-sm flex gap-1 text-gray-600">
-                  <input
-                    type="radio"
-                    name="status"
-                    id="finished"
-                    checked={status === Status.finished}
-                    onChange={(e) => setStatus(e.target.value as Status)}
-                    value={Status.finished}
-                  />
-                  <span>Finished</span>
-                </label>
-              </motion.fieldset> */}  
             </div>
-          </div>
-          <div className="w-full border overflow-hidden border-black rounded-md bg-gray-100 flex flex-col">
+          </motion.div>
+          <motion.div
+            className="w-full border overflow-hidden border-black rounded-md bg-gray-100 flex flex-col"
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{delay: 0.2}}
+          >
             <div className="h-full items-center py-2 flex justify-center text-base font-black uppercase text-black bg-gray-400 border-b text-center">
               {"Uploader"}
             </div>
@@ -216,7 +177,7 @@ const ProductionManagerView = () => {
                 successUpload={() => setSuccessUploading(true)}
               />
             </div>
-          </div>
+          </motion.div>
         </div>
         <CallfilesViews
           bucket={callfileBucket}

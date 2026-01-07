@@ -249,7 +249,7 @@ const Selectives = () => {
                     })}
                   </div>
                   <div className="flex justify-end gap-2">
-                    <div className="px-2 py-1 text-white rounded-sm cursor-pointer border-2 border-blue-900 bg-blue-600 hover:bg-blue-700">
+                    <div title="Hindi pa tapos" className="px-2 py-1 text-white rounded-sm cursor-not-allowed border-2 border-blue-900 bg-blue-600 hover:bg-blue-700">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"
@@ -264,7 +264,7 @@ const Selectives = () => {
                       </svg>
                     </div>
 
-                    <div className="px-2 py-1 text-white rounded-sm cursor-pointer border-2 border-green-900 bg-green-600 hover:bg-green-700">
+                    <div title="Hindi pa tapos" className="px-2 py-1 text-white rounded-sm cursor-not-allowed border-2 border-green-900 bg-green-600 hover:bg-green-700">
                       <svg
                         xmlns="http://www.w3.org/2000/svg"
                         viewBox="0 0 24 24"

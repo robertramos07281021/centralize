@@ -532,7 +532,6 @@ const CallfilesViews: React.FC<Props> = ({
             })
           );
         } catch (err) {
-          console.log(err);
           setConfirm(false);
           dispatch(setServerError(true));
         }
@@ -778,6 +777,7 @@ const CallfilesViews: React.FC<Props> = ({
         className=" h-full w-full overflow-hidden px-5 flex-nowrap overflow-x-auto inline flex-col relative"
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
+        transition={{delay: 0.4}}
       >
         <div className="w-full h-full rounded-b-sm overflow-hidden flex flex-col text-left">
           <div className="w-full">

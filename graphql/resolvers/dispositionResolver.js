@@ -278,7 +278,7 @@ const dispositionResolver = {
 
         const todayEnd = new Date();
         todayEnd.setHours(23, 59, 59, 999);
-
+      
         const dailyFTE = await Disposition.aggregate([
           {
             $lookup: {
@@ -336,9 +336,10 @@ const dispositionResolver = {
             },
           },
         ]);
-      
+
         return dailyFTE[0];
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500);
       }
     },
@@ -867,6 +868,7 @@ const dispositionResolver = {
         }
 
         if (selectedBucket.principal) {
+          if (!existingCallfile) return null;
           const PTP = await Disposition.aggregate([
             {
               $lookup: {
@@ -1349,6 +1351,7 @@ const dispositionResolver = {
         const rpcCount = ["PTP", "PAID", "UNEG", "DISP", "RTP", "FFUP"];
 
         if (selectedBucket.principal) {
+          if (!existingCallfile) return null;
           const TotalRPC = await Disposition.aggregate([
             {
               $match: {
@@ -1558,10 +1561,7 @@ const dispositionResolver = {
         const rpcCount = ["PTP", "PAID", "UNEG", "DISP", "RTP", "FFUP"];
 
         if (selectedBucket.principal) {
-          const existingCallfile = await Callfile.findOne({
-            bucket: selectedBucket._id,
-            active: { $eq: true },
-          }).lean();
+          if (!existingCallfile) return null;
           const RPCCount = await Disposition.aggregate([
             {
               $match: {
@@ -1962,7 +1962,7 @@ const dispositionResolver = {
         const existingCallfile = await Callfile.findOne({
           bucket: selectedBucket._id,
           active: true,
-        });
+        }).lean();
 
         if (callfile.length <= 0) return null;
         const todayStart = new Date();
@@ -2016,10 +2016,7 @@ const dispositionResolver = {
         let result = {};
 
         if (selectedBucket.principal) {
-          const existingCallfile = await Callfile.findOne({
-            bucket: selectedBucket._id,
-            active: { $eq: true },
-          }).lean();
+          if (!existingCallfile) return null;
 
           const customerAccount = await CustomerAccount.aggregate([
             {

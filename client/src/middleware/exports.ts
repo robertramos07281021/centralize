@@ -130,6 +130,11 @@ export const accountsNavbar: { [key: string]: links[] } = {
       link: "/update-news",
       tabs: null,
     },
+    {
+      name: "CCS Flow",
+      link: "/ccs-flow",
+      tabs: null
+    }
   ],
   AGENT: [
     {
@@ -375,6 +380,23 @@ export const accountsNavbar: { [key: string]: links[] } = {
           link: "/ub-mortgage-score-card",
         },
       ],
+    },
+  ],
+  COMPLIANCE: [
+    {
+      name: "dashboard",
+      link: "/compliance-dashboard",
+      tabs: null,
+    },
+    {
+      name: "QA Accounts",
+      link: "/compliance-agent-account",
+      tabs: null,
+    },
+    {
+      name: "tab3",
+      link: "/tantado",
+      tabs: null,
     },
   ],
 };

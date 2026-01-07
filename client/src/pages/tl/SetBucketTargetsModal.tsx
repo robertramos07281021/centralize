@@ -99,14 +99,14 @@ const SetBucketTargetsModal: React.FC<Modal> = ({ cancel, refetch }) => {
 
   return (
     <div className="absolute top-0 left-0 z-50 bg-white/20 backdrop-blur-[1px] h-full w-full flex items-center justify-center">
-      <div className="w-2/8 h-1/2 border border-slate-300 rounded-xl overflow-hidden bg-white flex flex-col  shadow-md shadow-black/20">
-        <h1 className="py-1 text-2xl px-3 bg-orange-500 text-white font-bold ">
+      <div className="w-[400px] border border-orange-800 h-auto rounded-sm overflow-hidden bg-white flex flex-col  shadow-md shadow-black/20">
+        <h1 className="py-2 border-b border-orange-800 text-2xl w-full flex justify-center  px-3 bg-orange-500 uppercase text-center text-white font-black ">
           Set Targets
         </h1>
-        <div className="h-full w-full flex flex-col items-center justify-center gap-5">
+        <div className="h-full p-5 w-full flex flex-col items-center justify-center gap-2">
           {length && (
             <label className="flex flex-col w-2/3">
-              <p className="text-sm font-bold text-gray-500">Buckets:</p>
+              <p className="text-sm font-bold text-black">Buckets:</p>
               <select
                 name="bucket"
                 id="bucket"
@@ -119,8 +119,8 @@ const SetBucketTargetsModal: React.FC<Modal> = ({ cancel, refetch }) => {
                 className={`border ${
                   required && !bucket
                     ? "border-red-500 bg-red-50 text-red-500"
-                    : " border-slate-500"
-                } w-full rounded-md  px-2 py-1 text-gray-500 outline-none`}
+                    : " border-black"
+                } w-full rounded-md  px-2 py-1 text-black outline-none`}
               >
                 {data && data?.getTLBucket.length > 1 && (
                   <option value="">Select Bucket</option>
@@ -133,11 +133,11 @@ const SetBucketTargetsModal: React.FC<Modal> = ({ cancel, refetch }) => {
               </select>
             </label>
           )}
-          <label className="flex flex-col w-2/3">
-            <p className="text-sm font-bold text-gray-500">Daily:</p>
+          <label className="flex flex-col w-full">
+            <p className="text-sm font-bold text-black uppercase">Daily:</p>
             <input
               type="text"
-              className="border w-full rounded-md border-slate-500 px-2 py-1 text-gray-500 outline-none"
+              className="border w-full rounded-sm shadow-md border-black px-2 py-1 text-black outline-none"
               autoComplete="off"
               id="daily"
               name="daily"
@@ -151,11 +151,11 @@ const SetBucketTargetsModal: React.FC<Modal> = ({ cancel, refetch }) => {
               }}
             />
           </label>
-          <label className="flex flex-col w-2/3">
-            <p className="text-sm font-bold text-gray-500">Weekly:</p>
+          <label className="flex flex-col w-full">
+            <p className="text-sm font-bold uppercase text-black">Weekly:</p>
             <input
               type="text"
-              className="border w-full rounded-md border-slate-500 px-2 py-1 text-gray-500 outline-none"
+              className="border w-full rounded-md border-black px-2 py-1 text-black outline-none"
               autoComplete="off"
               id="weekly"
               name="weekly"
@@ -169,11 +169,11 @@ const SetBucketTargetsModal: React.FC<Modal> = ({ cancel, refetch }) => {
               }}
             />
           </label>
-          <label className="flex flex-col w-2/3">
-            <p className="text-sm font-bold text-gray-500">Monthly:</p>
+          <label className="flex flex-col w-full">
+            <p className="text-sm font-bold text-black uppercase">Monthly:</p>
             <input
               type="text"
-              className="border w-full rounded-md border-slate-500 px-2 py-1 text-gray-500 outline-none"
+              className="border w-full rounded-md border-black px-2 py-1 text-black outline-none"
               autoComplete="off"
               id="monthly"
               name="monthly"
@@ -187,17 +187,17 @@ const SetBucketTargetsModal: React.FC<Modal> = ({ cancel, refetch }) => {
               }}
             />
           </label>
-          <div className="flex gap-5">
+          <div className="flex gap-2">
             <button
               type="button"
-              className="bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-500 font-medium rounded-lg text-sm w-24 py-2.5 me-2  cursor-pointer"
+              className="bg-orange-500 border-2 border-orange-800 hover:bg-orange-600 text-white transition-all rounded-sm uppercase font-black text-sm w-24 py-2.5 cursor-pointer"
               onClick={handleSuccess}
             >
               Submit
             </button>
             <button
               type="button"
-              className="bg-gray-500 hover:bg-gray-600 focus:outline-none text-white focus:ring-4 focus:ring-gray-500 font-medium rounded-lg text-sm w-24 py-2.5 me-2  cursor-pointer"
+              className="bg-gray-300 text-gray-500 border-2 border-gray-400 hover:bg-gray-400 transition-all  rounded-sm uppercase text-sm w-24 font-black py-2.5 me-2  cursor-pointer"
               onClick={cancel}
             >
               Cancel

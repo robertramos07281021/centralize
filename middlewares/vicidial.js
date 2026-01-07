@@ -14,7 +14,7 @@ const viciAuto = [
   "172.20.21.70",
   "172.20.21.85",
   "172.20.21.76",
-  "172.20.21.15"
+  "172.20.21.15",
 ];
 
 const credentials = {
@@ -91,7 +91,7 @@ export async function checkIfAgentIsOnline(agentUser, vici_id) {
 
     if (response.includes("not logged in")) return false;
     if (response.includes("success")) return true;
-    
+
     return false;
   } catch (error) {
     console.error("❌ Error checkingAgentIsOnline:", error.message);
@@ -105,7 +105,6 @@ export async function endAndDispo(agentUser, vici_id) {
   const VICIDIAL_API = `http://${safeViciId}/agc/api.php`;
 
   try {
-
     await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
@@ -114,7 +113,7 @@ export async function endAndDispo(agentUser, vici_id) {
         function: "external_pause",
         value: "PAUSE",
       },
-    })
+    });
 
     await new Promise((res) => setTimeout(res, 1000));
 
@@ -150,7 +149,6 @@ export async function checkIfAgentIsInlineOnVici(agentUser, vici_id) {
 
   const VICIDIAL_API = `http://${safeViciId}/vicidial/non_agent_api.php`;
   try {
-
     const res = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
@@ -192,7 +190,7 @@ export async function logoutVici(agentUser, vici_id) {
   }
 }
 
-export async function getRecordings(vici_id, agent_user) {
+export async function getRecordings(vici_id, agent_user, dateFilter) {
   const safeViciId = normalizeViciId(vici_id);
   if (!safeViciId) return null;
 
@@ -203,18 +201,21 @@ export async function getRecordings(vici_id, agent_user) {
     const day = date.getDate();
     const month = date.getMonth() + 1;
 
+
+
     const { data } = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
         pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         function: "recording_lookup",
-        date: `${year}-${month.toString().padStart(2, "0")}-${day
+        date: dateFilter ? dateFilter : `${year}-${month.toString().padStart(2, "0")}-${day
           .toString()
           .padStart(2, "0")}`,
         agent_user,
         duration: "Y",
       },
     });
+
     return data;
   } catch (error) {
     console.error("❌ Error Get Recordings:", error.message);
@@ -242,7 +243,7 @@ export async function getUserInfo(vici_id, agent_user) {
     });
     return data;
   } catch (error) {
-    console.log(error)
+    console.log(error);
     console.error("❌ Error Get UserInfo:", error.message);
   }
 }
@@ -262,10 +263,10 @@ export async function getLoggedInUser(vici_id) {
         show_sub_status: "YES",
       },
     });
-    
+
     return data;
   } catch (error) {
-    console.log(error)
+    console.log(error);
     console.error("❌ Error Get getLoggedInUser:", error.message);
   }
 }
@@ -324,7 +325,6 @@ export async function checkingLiveCall(vici_id, agent_user) {
 
   const VICIDIAL_API = `http://${safeViciId}/agc/api.php`;
   try {
-
     const res = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
@@ -334,7 +334,54 @@ export async function checkingLiveCall(vici_id, agent_user) {
       },
     });
 
-    return res.data
+    return res.data;
+  } catch (error) {
+    console.error("❌ Error Logout Vici:", error.message);
+  }
+}
+
+export async function findMobileRecordings(vici_id, phone) {
+  const safeViciId = normalizeViciId(vici_id);
+  if (!safeViciId || !session_id) return null;
+
+  const VICIDIAL_API = `http://${safeViciId}/vicidial/non_agent_api.php`;
+
+  try {
+    const res = await axios.get(VICIDIAL_API, {
+      params: {
+        ...credentials,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
+        function: "phone_number_log ",
+        stage: "pipe",
+        agent_user: phone,
+      },
+    });
+
+    return res.data;
+  } catch (error) {
+    console.error("❌ Error Logout Vici:", error.message);
+  }
+}
+
+export async function checkViciPhoneNumberLog(vici_id, phone) {
+  const safeViciId = normalizeViciId(vici_id);
+  if (!safeViciId || !session_id) return null;
+
+  const VICIDIAL_API = `http://${safeViciId}/vicidial/non_agent_api.php`;
+
+  try {
+    const res = await axios.get(VICIDIAL_API, {
+      params: {
+        ...credentials,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
+        function: "phone_number_log ",
+        phone_number: phone,
+        stage:"pipe",
+        detail: "LAST"
+      },
+    });
+
+    return res.data;
   } catch (error) {
     console.error("❌ Error Logout Vici:", error.message);
   }

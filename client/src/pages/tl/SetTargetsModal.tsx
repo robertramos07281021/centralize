@@ -82,22 +82,22 @@ const SetTargetsModal: React.FC<Props> = ({
 
   return (
     <AnimatePresence>
-      <div className="absolute top-0 left-0 overflow-hidden z-50 bg-white/20 backdrop-blur-[1px] h-full w-full flex items-center justify-center">
+      <div className="absolute top-0 left-0 overflow-hidden z-50 bg-white/20 backdrop-blur-sm h-full w-full flex items-center justify-center">
         <motion.div
-          className="w-2/8 h-1/2 rounded-md overflow-hidden bg-white flex flex-col  shadow-md shadow-black/20"
+          className="w-[400px] border border-orange-800 h-[400px] rounded-sm overflow-hidden bg-white flex flex-col  shadow-md shadow-black/20"
           initial={{ scale: 0.6, opacity: 0 }}
           animate={{ scale: 1, opacity: 1 }}
           exit={{ opacity: 0, scale: 0.6 }}
         >
-          <h1 className="py-2 text-2xl px-3 bg-orange-500 uppercase text-center text-white font-black ">
+          <h1 className="py-2 border-b border-orange-800 text-2xl w-full flex justify-center  px-3 bg-orange-500 uppercase text-center text-white font-black ">
             Set Targets
           </h1>
-          <div className="h-full w-full flex flex-col items-center justify-center gap-5">
-            <label className="flex flex-col w-2/3">
-              <p className="text-sm font-bold text-gray-500">Daily:</p>
+          <div className="h-full p-5 w-full flex flex-col items-center justify-center gap-5">
+            <label className="flex flex-col w-full">
+              <p className="text-sm font-bold uppercase text-black">Daily:</p>
               <input
                 type="text"
-                className="border w-full rounded-md border-slate-500 px-2 py-1 text-gray-500"
+                className="border w-full rounded-md border-black px-2 py-1 text-black"
                 value={targets.daily}
                 autoComplete="off"
                 id="daily"
@@ -111,11 +111,11 @@ const SetTargetsModal: React.FC<Props> = ({
                 }}
               />
             </label>
-            <label className="flex flex-col w-2/3">
-              <p className="text-sm font-bold text-gray-500">Weekly:</p>
+            <label className="flex flex-col w-full">
+              <p className="text-sm font-bold uppercase text-black">Weekly:</p>
               <input
                 type="text"
-                className="border w-full rounded-md border-slate-500 px-2 py-1 text-gray-500"
+                className="border w-full rounded-md border-black px-2 py-1 text-black"
                 value={targets.weekly}
                 autoComplete="off"
                 id="weekly"
@@ -129,11 +129,11 @@ const SetTargetsModal: React.FC<Props> = ({
                 }}
               />
             </label>
-            <label className="flex flex-col w-2/3">
-              <p className="text-sm font-bold text-gray-500">Monthly:</p>
+            <label className="flex flex-col w-full">
+              <p className="text-sm font-bold uppercase text-black">Monthly:</p>
               <input
                 type="text"
-                className="border w-full rounded-md border-slate-500 px-2 py-1 text-gray-500"
+                className="border w-full rounded-md border-black px-2 py-1 text-black"
                 value={targets.monthly}
                 autoComplete="off"
                 id="monthly"
@@ -150,14 +150,14 @@ const SetTargetsModal: React.FC<Props> = ({
             <div className="flex gap-2">
               <button
                 type="button"
-                className="bg-orange-500 hover:bg-orange-600 focus:outline-none text-white focus:ring-4 transition-all focus:ring-orange-500 rounded-sm uppercase font-black text-sm w-24 py-2.5 me-2  cursor-pointer"
+                className="bg-orange-500 border-2 border-orange-800 hover:bg-orange-600 focus:outline-none text-white transition-all rounded-sm uppercase font-black text-sm w-24 py-2.5  cursor-pointer"
                 onClick={handleSubmitTargets}
               >
                 Submit
               </button>
               <button
                 type="button"
-                className="bg-gray-500 hover:bg-gray-600 focus:outline-none text-white focus:ring-4 transition-all focus:ring-gray-500 rounded-sm uppercase text-sm w-24 font-black py-2.5 me-2  cursor-pointer"
+                className="bg-gray-300 text-black border-2 border-gray-400 hover:bg-gray-400 transition-all  rounded-sm uppercase text-sm w-24 font-black py-2.5 me-2  cursor-pointer"
                 onClick={cancel}
               >
                 Cancel

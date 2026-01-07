@@ -36,6 +36,9 @@ enum Type {
   OPERATION = "OPERATION",
   QA = "QA",
   QASUPERVISOR = "QA SUPERVISOR",
+  COMPLIANCE = "COMPLIANCE",
+  FIELD = "FIELD",
+
 }
 
 enum AccountType {
@@ -98,7 +101,7 @@ const GET_DEPT_BUCKET = gql`
   }
 `;
 
-const validForCampaignAndBucket = ["TL", "AGENT", "MIS", "QA"];
+const validForCampaignAndBucket = ["TL", "AGENT", "MIS", "QA", "COMPLIANCE"];
 
 type RegisterProps = {
   setCancel: () => void;

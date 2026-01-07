@@ -443,9 +443,10 @@ const AccountsView = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <div className=" rounded-t-sm pr-3 bg-gray-200 border border-gray-500 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-12 py-2 font-black uppercase">
+          <div className=" rounded-t-sm pr-3 bg-gray-200 border border-gray-500 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-13 py-2 font-black uppercase">
             <div className="col-span-2 px-2">Name</div>
             <div>Username</div>
+            <div>VICI ID</div>
             <div>SIP ID</div>
             <div>Type</div>
             <div>Branch</div>
@@ -461,7 +462,7 @@ const AccountsView = () => {
               users?.map((user, index) => (
                 <motion.div
                   key={user._id}
-                  className="grid grid-cols-12 border-x border-gray-500 border-b last:rounded-b-md last:shadow-md py-2 hover:bg-gray-200 odd:bg-gray-100 cursor-default items-center"
+                  className="grid grid-cols-13 border-x border-gray-500 border-b last:rounded-b-md last:shadow-md py-2 hover:bg-gray-200 odd:bg-gray-100 cursor-default items-center"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
@@ -474,6 +475,13 @@ const AccountsView = () => {
                   </div>
                   <div className="truncate pr-1" title={user.username}>
                     {user.username}
+                  </div>
+                   <div>
+                    {user.vici_id || (
+                      <div className="text-xs italic text-gray-400">
+                        No VICI ID
+                      </div>
+                    )}
                   </div>
                   <div>
                     {user.user_id || (
@@ -616,7 +624,7 @@ const AccountsView = () => {
               ))
             ) : (
               <motion.div
-                className="flex justify-center italic items-center text-gray-300 font-bold h-[200px] text-xl"
+                className="flex justify-center border-xdSEDASD AS##!#@!#!@W##############ADADWADADADADADADADDADAD313131333333333333333 border-b rounded-b border-gray-500 shadow-md text-sm italic items-center text-gray-400 py-3"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
               >

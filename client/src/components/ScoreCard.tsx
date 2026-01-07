@@ -58,6 +58,11 @@ const createDefaultRegulatorySelections = () =>
     acc[id] = "N?A";
     return acc;
   }, {});
+
+const getCurrentMonthLabel = () => {
+  const currentMonthIndex = new Date().getMonth();
+  return MONTHS[currentMonthIndex] ?? "";
+};
 type SectionFieldConfig = {
   key: string;
   scoreId: string;
@@ -494,8 +499,9 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
     normalizedScoreCardType && normalizedScoreCardType.length > 0
       ? normalizedScoreCardType
       : SCORE_CARD_TYPE;
-  const [isMonthMenuOpen, setMonthMenuOpen] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [selectedMonth, setSelectedMonth] = useState<string>(
+    getCurrentMonthLabel()
+  );
   const [isDeptMenuOpen, setDeptMenuOpen] = useState(false);
   const [selectedDept, setSelectedDept] = useState<string>("");
   const [selectedDeptId, setSelectedDeptId] = useState<string>("");
@@ -526,14 +532,12 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
     });
     return map;
   }, [regulatorySelections]);
-  const monthFieldRef = useRef<HTMLDivElement | null>(null);
   const deptFieldRef = useRef<HTMLDivElement | null>(null);
   const agentFieldRef = useRef<HTMLDivElement | null>(null);
   const scoreCardRef = useRef<HTMLDivElement | null>(null);
 
   const resetScoreCard = () => {
-    setSelectedMonth("");
-    setMonthMenuOpen(false);
+    setSelectedMonth(getCurrentMonthLabel());
     setSelectedDept("");
     setSelectedDeptId("");
     setDeptMenuOpen(false);
@@ -564,8 +568,7 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
   const [fetchAgents, { data: agentData, loading: agentLoading }] =
     useLazyQuery<{ getAgentsByDepartment: { _id: string; name: string }[] }>(
       GET_DEPT_AGENTS,
-      { fetchPolicy: "network-only",
-       }
+      { fetchPolicy: "network-only" }
     );
   const agents = agentData?.getAgentsByDepartment ?? [];
 
@@ -775,20 +778,12 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
   };
 
   useEffect(() => {
-    if (!isMonthMenuOpen && !isDeptMenuOpen && !isAgentMenuOpen) {
+    if (!isDeptMenuOpen && !isAgentMenuOpen) {
       return;
     }
 
     const handleClickAway = (event: MouseEvent) => {
       const targetNode = event.target as Node;
-
-      if (
-        isMonthMenuOpen &&
-        monthFieldRef.current &&
-        !monthFieldRef.current.contains(targetNode)
-      ) {
-        setMonthMenuOpen(false);
-      }
 
       if (
         isDeptMenuOpen &&
@@ -810,12 +805,7 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
     document.addEventListener("mousedown", handleClickAway);
 
     return () => document.removeEventListener("mousedown", handleClickAway);
-  }, [isMonthMenuOpen, isDeptMenuOpen, isAgentMenuOpen]);
-
-  const handleMonthSelect = (month: string) => {
-    setSelectedMonth(month);
-    setMonthMenuOpen(false);
-  };
+  }, [isDeptMenuOpen, isAgentMenuOpen]);
 
   const handleDeptSelect = (deptId: string, deptName: string) => {
     setSelectedDept(deptName);
@@ -859,10 +849,12 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
         ...prev,
         [fieldId]: true,
       }));
-      setDisabledMissedGuidelines((prev) => ({
-        ...prev,
-        [missedGuidelineId]: true,
-      }));
+      setDisabledMissedGuidelines((prev) => {
+        if (!prev[missedGuidelineId]) return prev;
+        const copy = { ...prev };
+        delete copy[missedGuidelineId];
+        return copy;
+      });
       return;
     }
 
@@ -889,12 +881,11 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
       delete copy[fieldId];
       return copy;
     });
-    setDisabledMissedGuidelines((prev) => {
-      if (!prev[missedGuidelineId]) return prev;
-      const copy = { ...prev };
-      delete copy[missedGuidelineId];
-      return copy;
-    });
+    setDisabledMissedGuidelines((prev) => ({
+      ...prev,
+      [missedGuidelineId]: true,
+    }));
+    handleMissedGuidelineChange(missedGuidelineId, "");
   };
 
   const handleMissedGuidelineChange = (fieldId: string, value: string) => {
@@ -1507,92 +1498,26 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
           </div>
         </div>
         <div className="bg-gray-300 h-[91.6%] p-5 flex flex-col">
-          <div className="flex justify-between">
-            <div className="border rounded-md font-black uppercase text-sm shadow-md">
-              <div className="grid grid-cols-2 border-b">
-                <div className="bg-gray-400 rounded-tl px-5 border-r py-1">
+          <div className="flex h-[30%] w-full gap-2 justify-between">
+            <div className="border w-full flex flex-col h-full rounded-md  font-black uppercase text-sm shadow-md">
+              <div className="grid h-full grid-cols-2 border-b">
+                <div className="bg-gray-400 flex h-full items-center rounded-tl px-5 border-r py-1">
                   Month
                 </div>
-                <div className="relative" ref={monthFieldRef}>
-                  <motion.div
-                    role="button"
-                    tabIndex={0}
-                    className="flex text-black cursor-pointer rounded-tr hover:bg-gray-400 items-center justify-between gap-2  px-3 py-1 text-sm shadow-sm"
-                    onClick={() => setMonthMenuOpen((prev) => !prev)}
-                    onKeyDown={(event) => {
-                      if (event.key === "Enter" || event.key === " ") {
-                        event.preventDefault();
-                        setMonthMenuOpen((prev) => !prev);
-                      }
-                    }}
-                    aria-expanded={isMonthMenuOpen}
-                    aria-haspopup="listbox"
-                  >
-                    <span>{selectedMonth || "Select Month"}</span>
-                    <motion.span
-                      className="text-xs"
-                      animate={{ rotate: isMonthMenuOpen ? 90 : 0 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="3"
-                        stroke="currentColor"
-                        className="size-4"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="m8.25 4.5 7.5 7.5-7.5 7.5"
-                        />
-                      </svg>
-                    </motion.span>
-                  </motion.div>
-                  <AnimatePresence>
-                    {isMonthMenuOpen && (
-                      <motion.div
-                        initial={{ opacity: 0, y: -6 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: -6 }}
-                        transition={{ duration: 0.15 }}
-                        className="absolute left-0 top-full w-full mt-1 h-44 z-10 overflow-auto rounded-sm border border-black bg-white shadow-lg"
-                        role="listbox"
-                      >
-                        {MONTHS.map((month) => (
-                          <motion.div
-                            key={month}
-                            className="cursor-pointer w-full even:bg-gray-300 odd:bg-gray-200 border-b last:border-b-0 px-6 py-2 text-sm text-black"
-                            onClick={() => handleMonthSelect(month)}
-                            onKeyDown={(event) => {
-                              if (event.key === "Enter" || event.key === " ") {
-                                event.preventDefault();
-                                handleMonthSelect(month);
-                              }
-                            }}
-                            role="option"
-                            tabIndex={0}
-                            aria-selected={selectedMonth === month}
-                            whileHover={{ backgroundColor: "#E5E7EB" }}
-                            whileTap={{ scale: 0.98 }}
-                          >
-                            {month}
-                          </motion.div>
-                        ))}
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                <div className="flex items-center justify-between rounded-tr bg-gray-200 px-3 py-1 text-sm text-black shadow-sm">
+                  <span>{selectedMonth || "N/A"}</span>
                 </div>
               </div>
 
               <div className="grid grid-cols-2 border-b">
-                <div className="bg-gray-400 px-5 border-r py-1">Department</div>
+                <div className="bg-gray-400 flex h-full items-center px-5 border-r py-1">
+                  Department
+                </div>
                 <div className="relative " ref={deptFieldRef}>
                   <motion.div
                     role="button"
                     tabIndex={0}
-                    className="flex text-black  cursor-pointer rounded-tr hover:bg-gray-400 items-center justify-between gap-2 px-3 py-1 text-sm shadow-sm"
+                    className="flex text-black truncate cursor-pointer rounded-tr hover:bg-gray-400 items-center justify-between gap-2 px-3 py-1 text-sm shadow-sm"
                     onClick={() =>
                       !deptLoading && setDeptMenuOpen((prev) => !prev)
                     }
@@ -1798,15 +1723,28 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
               </div>
 
               <div className="grid grid-cols-2  border-b">
-                <div className="bg-gray-400 px-5 border-r py-1">
+                <div className="bg-gray-400 px-5 truncate border-r py-1">
                   Date and Time of Call
                 </div>
-                <input
-                  className="mx-2 cursor-pointer outline-none"
-                  type="datetime-local"
-                  value={callDateTime}
-                  onChange={(event) => setCallDateTime(event.target.value)}
-                />
+                <div className=" grid grid-cols-3 truncate">
+                  <input
+                    className="mx-2 cursor-pointer col-span-2 outline-none"
+                    type="datetime-local"
+                    value={callDateTime}
+                    onChange={(event) => setCallDateTime(event.target.value)}
+                  />
+                  <div
+                    className="items-center border-l px-2 cursor-pointer bg-gray-400 flex"
+                    onClick={() => {
+                      const now = new Date();
+                      const pad = (n: number) => n.toString().padStart(2, '0');
+                      const formatted = `${now.getFullYear()}-${pad(now.getMonth() + 1)}-${pad(now.getDate())}T${pad(now.getHours())}:${pad(now.getMinutes())}`;
+                      setCallDateTime(formatted);
+                    }}
+                  >
+                    Today
+                  </div>
+                </div>
               </div>
 
               <div className="grid grid-cols-2 border-b">
@@ -1821,7 +1759,7 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
               </div>
 
               <div className="grid grid-cols-2">
-                <div className="bg-gray-400 rounded-bl-md px-5 border-r py-1">
+                <div className="bg-gray-400 truncate rounded-bl-md px-5 border-r py-1">
                   Assigned QA
                 </div>
                 <div className="px-3 flex items-center h-full ">
@@ -1830,9 +1768,9 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
               </div>
             </div>
 
-            <div className="flex h-full gap-4">
-              <div className="flex flex-col h-full">
-                <div className="px-16 text-2xl border rounded-t-md bg-gray-400 py-2 text-black font-black uppercase">
+            <div className="flex h-full justify-end w-full gap-4">
+              <div className="flex xl:w-60 w-full flex-col h-full">
+                <div className=" w-full  text-md text-center border rounded-t-md bg-gray-400 py-2 text-black font-black uppercase">
                   Total Score
                 </div>
                 <div
@@ -1861,7 +1799,7 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
             </div>
           </div>
 
-          <div className="w-full flex flex-col mt-2 ">
+          <div className="w-full h-[70%] flex flex-col mt-2 ">
             <div className="grid font-black uppercase bg-gray-400 border rounded-t-md px-3 py-1 grid-cols-5">
               <div>Criteria</div>
               <div>Category</div>

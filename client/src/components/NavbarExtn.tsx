@@ -181,7 +181,7 @@ const NavbarExtn = () => {
             .toString()
             .includes(userLogged._id)
         ) {
-          await refetch();
+          await refetch?.();
         }
       }
     },

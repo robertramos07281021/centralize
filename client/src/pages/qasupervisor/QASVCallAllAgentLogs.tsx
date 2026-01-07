@@ -282,7 +282,7 @@ const QASVCallAllAgentLogs = () => {
           </div>
           <div className="w-full flex flex-col h-full overflow-auto">
             {!selectedBucket || selectedBucket.isAll ? (
-              <div className="flex justify-center items-center bg-gray-200 w-full py-3 rounded-b-md shadow-md font-black italic text-gray-400 border-black border-x border-b">
+              <div className="flex justify-center items-center bg-gray-200 w-full py-3 rounded-b-md shadow-md italic text-gray-400 border-black border-x border-b">
                 <div>Select a bucket to view agents</div>
               </div>
             ) : filteredRows.length === 0 ? (

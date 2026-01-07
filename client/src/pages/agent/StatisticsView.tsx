@@ -102,7 +102,7 @@ const StatisticsView = () => {
       </div>
       <AnimatePresence>
         {open && (
-          <div className="absolute top-0 justify-center z-50 items-center flex left-0 w-full h-full">
+          <div className="absolute top-0 justify-center z-20 items-center flex left-0 w-full h-full">
             <motion.div
               onClick={() => {
                 setOpen(false);
@@ -113,29 +113,57 @@ const StatisticsView = () => {
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
             ></motion.div>
-            <div className="absolute">
+            <form onSubmit={onSubmitVici_Id} className="absolute">
               <motion.div
-                className="bg-white   p-5 rounded-md shadow-md"
+                className="bg-white border  p-5 rounded-md shadow-md"
                 initial={{ scale: 0.5, opacity: 0 }}
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.5, opacity: 0 }}
                 transition={{}}
               >
                 <div className="mb-3 text-center font-black uppercase text-3xl">
-                  input the vcI id
+                  input your vicI id
                 </div>
-                <input
+
+                <div
                   className={`${
                     required ? "bg-red-200" : "bg-gray-200"
-                  }  w-full px-4 py-1 rounded-md shadow-md `}
-                  placeholder="Enter Vici dial ID"
-                  value={vici_id || ""}
-                  onChange={(e) => {
-                    const value =
-                      e.target.value.trim() === "" ? null : e.target.value;
-                    setVici_id(value);
-                  }}
-                />
+                  }  w-full px-3 py-2 flex border outline-none rounded-md shadow-md `}
+                >
+                  <input
+                    className="w-full bg-transparent outline-none"
+                    placeholder="Enter Vici dial ID"
+                    value={vici_id || ""}
+                    minLength={6}
+                    maxLength={8}
+                    min={6}
+                    max={8}
+                    onChange={(e) => {
+                      const value =
+                        e.target.value.trim() === "" ? null : e.target.value;
+                      setVici_id(value);
+                    }}
+                    required
+                  />
+                  <div
+                    title={
+                      "VICI ID is your USER ID in the VICI dialer system\ncomposed of your birth date. (Eg. MMDDYYYY)"
+                    }
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      viewBox="0 0 24 24"
+                      fill="currentColor"
+                      className="size-6 cursor-pointer text-blue-800"
+                    >
+                      <path
+                        fillRule="evenodd"
+                        d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm11.378-3.917c-.89-.777-2.366-.777-3.255 0a.75.75 0 0 1-.988-1.129c1.454-1.272 3.776-1.272 5.23 0 1.513 1.324 1.513 3.518 0 4.842a3.75 3.75 0 0 1-.837.552c-.676.328-1.028.774-1.028 1.152v.75a.75.75 0 0 1-1.5 0v-.75c0-1.279 1.06-2.107 1.875-2.502.182-.088.351-.199.503-.331.83-.727.83-1.857 0-2.584ZM12 18a.75.75 0 1 0 0-1.5.75.75 0 0 0 0 1.5Z"
+                        clipRule="evenodd"
+                      />
+                    </svg>
+                  </div>
+                </div>
 
                 <div className="flex mt-5 font-black text-white  uppercase gap-3">
                   <div
@@ -145,17 +173,17 @@ const StatisticsView = () => {
                     }}
                     className="py-2 px-3 bg-red-600 border-2 border-red-800 hover:bg-red-800 cursor-pointer transition-all rounded-md shadow-md "
                   >
-                    No
+                    cancel
                   </div>
-                  <div
-                    className="py-2 w-full text-center border-2 border-green-800 hover:bg-green-800 transition-all cursor-pointer bg-green-600 rounded-md shadow0-md"
-                    onClick={onSubmitVici_Id}
+                  <button
+                    type="submit"
+                    className="py-2 uppercase w-full text-center border-2 border-green-800 hover:bg-green-800 transition-all cursor-pointer bg-green-600 rounded-md shadow-md"
                   >
-                    yes
-                  </div>
+                    submit
+                  </button>
                 </div>
               </motion.div>
-            </div>
+            </form>
           </div>
         )}
       </AnimatePresence>

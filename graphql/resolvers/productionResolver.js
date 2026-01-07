@@ -811,7 +811,7 @@ const productionResolver = {
         const existingCallfile = await Callfile.findOne({
           bucket: selectedBucket._id,
           active: true,
-        });
+        }).lean();
         if (callfile.length <= 0) return null;
         const todayStart = new Date();
         todayStart.setHours(0, 0, 0, 0);
@@ -854,6 +854,7 @@ const productionResolver = {
         }
 
         if (selectedBucket.principal) {
+          if (!existingCallfile) return null;
           const findDispo = await Disposition.aggregate([
             {
               $match: {
@@ -1108,6 +1109,7 @@ const productionResolver = {
 
       if (ccsCalls) {
         const CCSCallFiltered = {
+          contact_method: "call",
           $and: [
             {
               callId: { $exists: true },
@@ -1275,6 +1277,7 @@ const productionResolver = {
         try {
           const filter = {
             user: new mongoose.Types.ObjectId(agentID),
+            contact_method: "call",
             callId: { $eq: null },
             $expr: { $gt: [{ $size: "$customer.contact_no" }, 0] },
             $or: [
@@ -1620,6 +1623,7 @@ const productionResolver = {
         }
 
         if (selectedBucket.principal) {
+          if (!existingCallfile) return null;
           const disposition = await Disposition.aggregate([
             {
               $match: { callfile: existingCallfile?._id },

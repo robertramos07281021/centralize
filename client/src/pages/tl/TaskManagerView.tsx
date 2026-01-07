@@ -160,12 +160,12 @@ const TaskManagerView = () => {
 
   return (
     <div className="max-h-[90dvh] h-full w-full grid grid-cols-3 p-5 gap-2 relative overflow-hidden">
-      <motion.div className=" flex flex-col gap-10 items-start"
+      <motion.div className=" h-[95%] flex flex-col gap-10 items-start"
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ delay: 0.1 }}
       >
-        <div className="bg-gray-200 w-full flex flex-col p-5 border rounded-md shadow-md h-[95%]">  
+        <div className="bg-gray-200 overflow-auto w-full h-full flex flex-col p-5 border rounded-md shadow-md ">  
           <div className=" flex  gap-2 lg:text-[0.6em] 2xl:text-xs w-full flex-col">
             <div className="flex flex-col gap-2">
               <div className="flex flex-col bg-gray-300">

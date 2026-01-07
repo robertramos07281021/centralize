@@ -1,11 +1,4 @@
-import {
-  CSSProperties,
-  useCallback,
-  useEffect,
-  useMemo,
-  useRef,
-  useState,
-} from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { RootState, useAppDispatch } from "../redux/store";
 import { useNavigate } from "react-router-dom";
 import { FaEye, FaEyeSlash } from "react-icons/fa";
@@ -127,6 +120,7 @@ const Login = () => {
       MIS: "/mis-dashboard",
       QA: "/qa-agents-dashboard",
       QASUPERVISOR: "/qasv-dashboard",
+      COMPLIANCE: "/compliance-dashboard",
     }),
     []
   );
@@ -139,11 +133,11 @@ const Login = () => {
   const [already, setAlready] = useState<boolean>(false);
   const [lock, setLock] = useState<boolean>(false);
   const [invalid, setInvalid] = useState<boolean>(false);
+  const logo = "/bernalesLogo.png";
 
-  const { data: updatesData } = useQuery<{ getAllPatchUpdates: { pushPatch?: boolean }[] }>(
-    GET_UPDATES_COUNT,
-    { notifyOnNetworkStatusChange: true }
-  );
+  const { data: updatesData } = useQuery<{
+    getAllPatchUpdates: { pushPatch?: boolean }[];
+  }>(GET_UPDATES_COUNT, { notifyOnNetworkStatusChange: true });
   const updatesCount =
     updatesData?.getAllPatchUpdates?.filter((u) => u.pushPatch)?.length ?? 0;
 
@@ -155,70 +149,6 @@ const Login = () => {
       dispatch(setServerError(true));
     },
   });
-
-  type Snowflake = {
-    id: string;
-    style: CSSProperties &
-      Record<
-        | "--flake-size"
-        | "--flake-scale"
-        | "--flake-opacity"
-        | "--drift-start"
-        | "--drift-end",
-        string
-      >;
-  };
-
-  const snowStyles = `
-    .snow-layer {
-      position: absolute;
-      inset: 0;
-      overflow: hidden;
-      pointer-events: none;
-      z-index: 5;
-    }
-    .snowflake {
-      position: absolute;
-      top: -12vh;
-      width: var(--flake-size);
-      height: var(--flake-size);
-      border-radius: 50%;
-      background: radial-gradient(circle, rgba(255,255,255,var(--flake-opacity)) 0%, rgba(255,255,255,0) 100%);
-      transform: translate3d(var(--drift-start), -12vh, 0) scale(var(--flake-scale));
-      animation-name: snow-fall;
-      animation-timing-function: linear;
-      animation-iteration-count: infinite;
-    }
-    @keyframes snow-fall {
-      to {
-        transform: translate3d(var(--drift-end), 110vh, 0) scale(var(--flake-scale));
-      }
-    }
-  `;
-
-  const snowflakes = useMemo<Snowflake[]>(
-    () =>
-      Array.from({ length: 120 }, (_, index) => {
-        const size = (4 + Math.random() * 8).toFixed(1);
-        const scale = (0.6 + Math.random() * 0.9).toFixed(2);
-        const opacity = (0.25 + Math.random() * 0.75).toFixed(2);
-        const driftStart = (Math.random() * 2 - 1) * 6;
-        const driftEnd = driftStart + (Math.random() * 2 - 1) * 14;
-        const style = {
-          left: `${Math.random() * 100}%`,
-          animationDelay: `${Math.random() * -20}s`,
-          animationDuration: `${14 + Math.random() * 12}s`,
-          opacity,
-          ["--flake-size"]: `${size}px`,
-          ["--flake-scale"]: scale,
-          ["--flake-opacity"]: opacity,
-          ["--drift-start"]: `${driftStart.toFixed(2)}vw`,
-          ["--drift-end"]: `${driftEnd.toFixed(2)}vw`,
-        } as Snowflake["style"];
-        return { id: `flake-${index}`, style };
-      }),
-    []
-  );
 
   const [logout] = useMutation(LOGOUT, {
     onCompleted: async () => {
@@ -338,13 +268,8 @@ const Login = () => {
 
   return (
     <div className="h-screen w-screen overflow-hidden flex items-center justify-center bg-[url(/login_bg.jpg)] bg-fixed bg-no-repeat bg-cover relative ">
-      <style>{snowStyles}</style>
       <div className="w-full h-full absolute bg-blue-500/70 backdrop-blur-[4px]"></div>
-      <div className="snow-layer z " aria-hidden="true">
-        {snowflakes.map((flake) => (
-          <span key={flake.id} className="snowflake" style={flake.style} />
-        ))}
-      </div>
+
       <motion.a
         className="absolute max-h-[100%] z-20 bottom-2 right-2 "
         initial={{ y: 100, opacity: 0 }}
@@ -354,7 +279,13 @@ const Login = () => {
         target="_blank"
       >
         <div className="h-full flex gap-4 items-center transition-all border-2 cursor-pointer hover:bg-blue-700 font-black uppercase text-white px-4 py-2 bg-blue-600 border-blue-900 rounded-md overflow-hidden shadow-md ">
-          <div className="flex text-shadow-md text-sm">VIEW new updates</div>
+          {updatesCount === 0 ? null : (
+            <div>
+              <div className="absolute -left-1 -top-1 w-4 h-4 bg-red-600 rounded-full z-20 shadow-md"></div>
+              <div className="absolute -left-1 -top-1 w-4 h-4 bg-red-600 rounded-full z-10 animate-ping "></div>
+            </div>
+          )}
+          <div className="flex text-shadow-md text-sm">VIEW updates</div>
           <div className=" px-2 items-center flex justify-center h-6 rounded-full border-2 border-amber-800 bg-amber-600 text-xs">
             {updatesCount}
           </div>
@@ -364,18 +295,22 @@ const Login = () => {
       <motion.form
         ref={loginForm}
         onSubmit={handleSubmitLogin}
-        className="bg-white/70 backdrop-blur-lg relative border border-gray-900 w-96 min-h-96 py-10 rounded-xl z-50 flex items-center justify-center flex-col gap-10 shadow-2xl shadow-black/80"
+        className="bg-white backdrop-blur-lg relative border border-gray-900 w-[420px] min-h-96 py-10 rounded-xl z-50 flex items-center justify-center flex-col gap-2 shadow-2xl shadow-black/80"
         noValidate
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ type: "spring" }}
       >
-        <div className="flex flex-col text-center text-blue-500">
-          <h1 className="text-2xl font-black italic text-shadow-sm">
-            Bernales & Associates
-          </h1>
-          <h1 className=" font-black uppercase text-shadow-sm dark:text-white ">
+        <div className="flex flex-col px-6 text-center text-blue-800">
+          <div>
+            {" "}
+            <img src={logo} />{" "}
+          </div>
+          <h1 className=" font-black text-2xl uppercase text-shadow-sm dark:text-white ">
             Collection System
+          </h1>{" "}
+          <h1 className=" font-black text-xl uppercase text-shadow-sm dark:text-white ">
+            login
           </h1>
         </div>
         <div className="flex gap-5 w-full flex-col px-10">
@@ -401,7 +336,7 @@ const Login = () => {
           )}
           <div className="w-full">
             <label>
-              <span className="block text-sm font-black uppercase text-gray-900 dark:text-white">
+              <span className="block text-sm font-black uppercase text-blue-900 dark:text-white">
                 Username:
               </span>
               <input
@@ -409,7 +344,7 @@ const Login = () => {
                 id="username"
                 name="username"
                 autoComplete="off"
-                placeholder="Ex. JohnDoe"
+                placeholder="Eg. JDoe"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 className="bg-gray-50 focus:outline-none border shadow-md text-gray-900 text-sm rounded-sm focus:ring-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
@@ -419,7 +354,7 @@ const Login = () => {
           </div>
           <div className="relative">
             <label>
-              <span className="block uppercase text-sm font-black text-gray-900 dark:text-white">
+              <span className="block uppercase text-sm font-black text-blue-900 dark:text-white">
                 Password:
               </span>
               <input

@@ -423,7 +423,7 @@ const DepartmentSection: React.FC<BranchSectionProps> = ({
           </h1>
         </div>
         <div className="flex gap-5 bg-yellow-400 h-full justify-center overflow-hidden">
-          <div className="h-full  flex flex-col gap-2 p-4 overflow-y-auto">
+          <div className="h-full w-full  flex flex-col gap-2 p-4 overflow-y-auto">
             {dept?.getDepts.map((d, index) => {
               return (
                 d.name !== "ADMIN" && (

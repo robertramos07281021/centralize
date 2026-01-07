@@ -140,14 +140,19 @@ const Helper: React.FC<Props> = ({ close }) => {
               viewport={{ once: false }}
             >
               <p className="mt-5 text-xl font-black uppercase">
-                Cannot dispose a customer account?
+                Cannot dispose or search a customer account?
               </p>
               <p className="">
                 {/* &#9679; */}
-                1. First, check if the <strong>Red Exclamation Icon</strong> is visible then if it's visible select the <strong>Red Exclamation Icon</strong>{" "}
-                located in the
-                <strong> Upper-right corner</strong> of the dashboard, enter your
-                VICI ID and click <strong>Yes. </strong>Make sure your VICI ID is set to allow disposing of customer accounts and searching customer accounts. <strong className="text-gray-400 font-normal italic" >(The VICI ID is your birthdate)</strong>
+                1. First, check if the <strong>Red Exclamation Icon</strong> is
+                visible then if it's visible select the{" "}
+                <strong>Red Exclamation Icon</strong> located in the
+                <strong> Upper-right corner</strong> of the dashboard, enter
+                your VICI ID and click <strong>Yes. </strong>Make sure your VICI
+                ID is set to allow disposing and searching customer accounts.{" "}
+                <strong className="text-gray-400 font-normal italic">
+                  (The VICI ID is your birthdate)
+                </strong>
               </p>
             </motion.div>
             <motion.div
@@ -157,18 +162,17 @@ const Helper: React.FC<Props> = ({ close }) => {
               transition={{ delay: 0.4 }}
               viewport={{ once: false }}
             >
-              <div className="border border-black pr-5 items-center justify-center rounded-md shadow-md flex" >
-              <img
-                src={exclamationPointer}
-                alt="Red exclamation icon screenshot"
-                className="ms-5 mt-5"
-              />
-               <img
-                src={clickYes}
-                alt="Red exclamation icon screenshot"
-                className="ms-5 mt-5"
-              />
-
+              <div className="border  border-black pr-5 items-center justify-center rounded-md shadow-md flex xl:flex-row flex-col">
+                <img
+                  src={exclamationPointer}
+                  alt="Red exclamation icon screenshot"
+                  className="ms-5 mt-5"
+                />
+                <img
+                  src={clickYes}
+                  alt="Red exclamation icon screenshot"
+                  className="ms-5 mt-5"
+                />
               </div>
             </motion.div>
           </div>

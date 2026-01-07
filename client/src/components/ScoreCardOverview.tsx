@@ -583,7 +583,7 @@ const ScoreCardOverview = () => {
                   )}
                 </div>
                 <div className="text-gray-700 flex gap-2 items-center">
-                  <span className="font-medium text-black">Poindts:</span>
+                  <span className="font-medium text-black">Points:</span>
                   <div
                     className={` ${
                       entryPoints === 0
@@ -4102,7 +4102,7 @@ const ScoreCardOverview = () => {
           Overview
         </div>
         <div className="p-4 flex flex-col bg-gray-300 justify-evenly h-full gap-4 text-sm overflow-auto">
-          <div className="bg-white h-full grid grid-cols-4 border gap-2 border-black rounded-md shadow-sm p-2">
+          <div className="bg-white h-full grid grid-cols-1 lg:grid-cols-2 2xl:grid-cols-4 border gap-2 border-black rounded-md shadow-sm p-2">
             <div className="text-xs border p-2 rounded-sm bg-gray-200 text-black flex justify-center flex-col">
               <div className="text-center">Total Default Score Card</div>
               <div className="text-4xl text-center font-black">
@@ -4248,9 +4248,9 @@ const ScoreCardOverview = () => {
             <div className="grid grid-cols-6  uppercase gap-4 p-3 font-black border-b bg-gray-200">
               <div>QA Name</div>
               <div>Agent Name</div>
-              <div>Score Card Type</div>
+              <div className="truncate">Score Sheet Type</div>
               <div>Date</div>
-              <div className="text-center">Total Score</div>
+              <div className="text-center truncate">Total Score</div>
               <div className="text-center">Status</div>
             </div>
             {error && (
@@ -4294,7 +4294,9 @@ const ScoreCardOverview = () => {
                             {entry.agent?.name || "Unknown Agent"}
                           </div>
                           <div className="text-gray-700 font-medium">
-                            {entry.typeOfScoreCard}
+                            {entry.typeOfScoreCard === "Default Score Card"
+                              ? "Score Sheet"
+                              : entry.typeOfScoreCard}
                           </div>
                           <div className="text-gray-700 font-medium">
                             {formattedDate}

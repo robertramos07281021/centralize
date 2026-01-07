@@ -458,7 +458,7 @@ const TaskDispoSection: React.FC<Props> = ({
           <div className="truncate">Assigned</div>
           <div className="truncate">Action</div>
         </div>
-        <div className=" w-full h-[85%] text-gray-500 flex flex-col overflow-y-auto rounded-b-md relative mb-2">
+        <div className=" w-full h-[85%] text-gray-500 flex flex-col overflow-y-auto relative mb-2">
           {loading && (!selectedGroup || selectedAgent) && (
             <div className="border-x border-b flex justify-center border-black py-2 rounded-b-md w-full " >
               <div className="border-t-2 rounded-full w-8 h-8 animate-spin border-black " ></div>
@@ -491,12 +491,12 @@ const TaskDispoSection: React.FC<Props> = ({
               No customer found.
             </div>
           ) : (
-            <div>
+            <div  >
               {CustomerAccountsData?.findCustomerAccount?.CustomerAccounts.map(
                 (ca, index) => (
                   <motion.div
                     key={ca._id}
-                    className="even:bg-gray-100 border-b last:rounded-b-md max-h-10 la st:shadow-md  border-x border-black cursor-default gap-10 bg-gray-200 hover:bg-gray-300 transition-all grid grid-cols-8 py-2 items-center text-sm px-6"
+                    className="even:bg-gray-100 border-b last:rounded-b-md max-h-10 last:shadow-md  border-x border-black cursor-default gap-10 bg-gray-200 hover:bg-gray-300 transition-all grid grid-cols-8 py-2 items-center text-sm px-6"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: index * 0.1 }}

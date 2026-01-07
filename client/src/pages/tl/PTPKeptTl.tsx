@@ -103,7 +103,7 @@ const PTPKeptTl = () => {
             </div>
           </>
         ) : (
-          <div className="flex justify-end w-full">
+          <div className="flex justify-center w-full">
             <AiOutlineLoading3Quarters className="animate-spin" />
           </div>
         )}

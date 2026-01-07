@@ -1,8 +1,8 @@
 import { useQuery } from "@apollo/client";
 import gql from "graphql-tag";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { RootState } from "../../redux/store";
-import { motion } from "framer-motion";
+import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
 
 type User = {
@@ -37,8 +37,8 @@ type DivFTEsProps = {
 
 const DivFTEs = ({ label, value, loading }: DivFTEsProps) => {
   return (
-    <div className="border border-slate-500 rounded-sm shadow-md bg-white flex h-full flex-col items-center justify-center">
-      <h1 className="text-[0.8rem] 2xl:text-xs text-center uppercase font-black text-gray-800 bg-gray-400 border-b border-gray-500 h-[50%] w-full flex items-center justify-center">
+    <div className="border overflow-hidden border-slate-700 rounded-sm shadow-md bg-white flex h-full flex-col items-center justify-center">
+      <h1 className="text-[0.8rem] 2xl:text-xs text-center uppercase font-black text-gray-800 bg-gray-400 border-b border-gray-700 h-[50%] w-full flex items-center justify-center">
         {label}
       </h1>
       {loading ? (
@@ -56,6 +56,7 @@ const DivFTEs = ({ label, value, loading }: DivFTEsProps) => {
 
 const DailyFTE = () => {
   const { selectedBucket } = useSelector((state: RootState) => state.auth);
+  const [isOpenActualAgent, setIsOpenActualAgent] = useState(false);
   const {
     data,
     refetch,
@@ -133,33 +134,46 @@ const DailyFTE = () => {
           </svg>
         </div>
 
-        <div className="absolute peer top-2.5 right-8 border rounded-full w-4 h-4 flex items-center justify-center cursor-default">
+        <div
+          onMouseEnter={() => setIsOpenActualAgent(true)}
+          onMouseLeave={() => setIsOpenActualAgent(false)}
+          className="absolute animate-pulse text-red-900 bg-red-500 font-black peer top-2.5 left-3 border rounded-full w-5 h-5 flex items-center justify-center cursor-default"
+        >
           !
         </div>
-        <div className="absolute h-auto top-[104%] left-0 hidden peer-hover:flex flex-col z-100 w-full overflow-hudden ">
-          <h1 className="font-bold text-gray-800 text-center py-2 bg-gray-400 border-x  border-y rounded-t-md border-slate-500">
-            Actual Agent
-          </h1>
-
-          <div className="flex flex-col border-x border-b rounded-b-md p-4 border-slate-500 bg-white">
-            {findData && findData?.length > 1 ? (
-              <>
-                {findData?.map((x, index) => {
-                  return (
-                    <div key={index} className="capitalize text-slate-600">
-                      {index + 1}.{""}
-                      {x.name}
-                    </div>
-                  );
-                })}
-              </>
-            ) : (
-              <div className="text-slate-600 text-center italic font-medium">
-                No agents have production.
+        <AnimatePresence>
+          {isOpenActualAgent && (
+            <motion.div
+              className="absolute h-auto top-[104%] shadow-md left-0  flex-col z-100 w-full overflow-hidden "
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ type: "spring", duration: 0.3 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <h1 className="uppercase font-bold text-gray-800 text-center py-2 bg-gray-400 border-x  border-y rounded-t-sm border-slate-700">
+                Actual Agent
+              </h1>
+              <div className="flex flex-col border-x border-b rounded-b-md border-slate-700 p-4 bg-white">
+                {findData && findData?.length > 1 ? (
+                  <>
+                    {findData?.map((x, index) => {
+                      return (
+                        <div key={index} className="capitalize text-slate-600">
+                          {index + 1}.{""}
+                          {x.name}
+                        </div>
+                      );
+                    })}
+                  </>
+                ) : (
+                  <div className="text-gray-400  text-xs text-center italic font-medium">
+                    No agents have production.
+                  </div>
+                )}
               </div>
-            )}
-          </div>
-        </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
         <DivFTEs
           label="Actual"
           value={findData?.length || 0}

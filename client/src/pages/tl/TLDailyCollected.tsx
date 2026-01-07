@@ -105,7 +105,7 @@ const TLDailyCollected = () => {
             <p className="text-4xl">{paidSelected ? paidSelected?.isRPC : 0}</p>
           </div>
         ) : (
-          <div className="flex justify-end w-full">
+          <div className="flex justify-center w-full">
             <AiOutlineLoading3Quarters className="animate-spin" />
           </div>
         )}

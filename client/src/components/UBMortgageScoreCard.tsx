@@ -1568,15 +1568,15 @@ const UBMortgageScoreCard = () => {
   };
 
   return (
-    <div className="p-5 flex flex-col relative h-full text-black w-full max-h-[90vh]">
+    <div className="p-2 sm:p-5 flex flex-col relative h-full text-black w-full max-h-[90vh]">
       <motion.div
-        className="border flex rounded-md overflow-hidden flex-col h-full"
+        className="border flex rounded-md overflow-hidden flex-col h-full w-full max-w-full"
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ type: "spring", stiffness: 100 }}
+        transition={{ type: 'spring', stiffness: 100 }}
       >
-        <div className=" font-black relative items-center flex justify-center border-b  h-[8.4%]  uppercase bg-gray-400 text-2xl text-center py-3 w-full text-black">
-          <div>
+        <div className="font-black relative items-center flex justify-center border-b h-auto min-h-[60px] uppercase bg-gray-400 text-xl md:text-2xl text-center py-3 w-full text-black">
+          <div className="truncate px-40 xl:px-0" title="COLLECTION CALL PERFORMANCE REVIEW - SECURED LOANS COLLECTIONS" >
             COLLECTION CALL PERFORMANCE REVIEW - SECURED LOANS COLLECTIONS
           </div>
           <div className="flex items-center absolute right-5 h-full gap-1 justify-end text-xs">
@@ -1591,36 +1591,36 @@ const UBMortgageScoreCard = () => {
           </div>
         </div>
 
-        <div className="bg-gray-300  h-[91.6%] overflow-auto  p-5 flex flex-col ">
-          <div className="flex justify-between">
-            <div className="grid grid-cols-4 w-full items-start gap-2">
+        <div className="bg-gray-300 h-auto min-h-[60vh] overflow-auto p-2 sm:p-5 flex flex-col w-full">
+          <div className="flex flex-col md:flex-row justify-between w-full">
+            <div className="grid grid-cols-1 md:grid-cols-4 w-full items-start gap-2">
               <div className="border  rounded-md font-black uppercase text-sm shadow-md">
                 <div className="grid grid-rows-2 border-b">
-                  <div className="bg-gray-400 rounded-t-md px-5 border-b py-1">
+                  <div className=" truncate bg-gray-400 rounded-t-md px-5 border-b py-1">
                     For the month
                   </div>
-                  <div className="h-full px-5 items-center flex bg-gray-100">
+                  <div className="h-full truncate px-5 items-center flex bg-gray-100">
                     {formattedMonthYear}
                   </div>
                 </div>
-                <div className="grid grid-rows-2 items-center border-b">
-                  <div className="bg-gray-400  px-5 border-b py-1">
+                <div className="grid truncate grid-rows-2 items-center border-b">
+                  <div className=" truncate bg-gray-400  px-5 border-b py-1">
                     Collection officer
                   </div>
-                  <div className="h-full px-5 items-center flex bg-gray-100">
+                  <div className="truncate h-full px-5 items-center flex bg-gray-100">
                     Bernales & Associates
                   </div>
                 </div>
                 <div className="grid grid-rows-2 border-b">
-                  <div className="bg-gray-400 px-5 border-b py-1">
+                  <div className="truncate bg-gray-400 px-5 border-b py-1">
                     COLLECTION AGENT/OFFICER:
                   </div>
-                  <div className="relative flex flex-col">
+                  <div className="relative truncate flex flex-col">
                     <div
                       onClick={() => setIsOpenAgent(!isOpenAgent)}
                       className="flex bg-gray-100 h-full cursor-pointer items-center px-5 justify-between"
                     >
-                      <div>
+                      <div className="truncate " >
                         {selectedAgent ? selectedAgent.name : "Select an Agent"}
                       </div>
                       <svg
@@ -1665,10 +1665,10 @@ const UBMortgageScoreCard = () => {
                   </div>
                 </div>
                 <div className="grid grid-rows-2 ">
-                  <div className="bg-gray-400 px-5 border-b py-1">
+                  <div className="truncate bg-gray-400 px-5 border-b py-1">
                     Evaluator
                   </div>
-                  <div className="w-full px-5 rounded-b-md items-center flex h-full bg-gray-100">
+                  <div className="w-full truncate  px-5 rounded-b-md items-center flex h-full bg-gray-100">
                     {userLogged?.name}
                   </div>
                 </div>

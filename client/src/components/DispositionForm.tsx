@@ -608,16 +608,37 @@ const DispositionForm: React.FC<Props> = ({
   const creatingDispo = useCallback(async () => {
     let callId: string | undefined;
 
+
+    
     if (Boolean(viciOnAir) && data?.contact_method === AccountType.CALL) {
       const vicidialIp = viciOnAir?.split("|")[1];
       const callIdRes = await getCallRecording({
         variables: { user_id: userLogged?._id, mobile: viciOnAir },
       });
-      callId = `${callIdRes.data?.getCallRecording}_${vicidialIp}`;
+      if (!callIdRes.data?.getCallRecording.toString().includes("ERROR")) {
+        callId = `${callIdRes.data?.getCallRecording}_${vicidialIp}`;
+      } else {
+        const year = new Date().getFullYear();
+        const month = new Date().getMonth() + 1;
+        const date = new Date().getDate();
+
+        callId = `_${year}${month > 9 ? month : `0${month}`}${
+          date > 9 ? date : `0${date}`
+        }_010101_${userLogged?.vici_id}_0_${vicidialIp}`;
+      }
     } else if (callUniqueId) {
       callId = callUniqueId;
+    } else {
+    
+      const year = new Date().getFullYear();
+      const month = new Date().getMonth() + 1;
+      const date = new Date().getDate();
+
+      callId = `${year}${month > 9 ? month : `0${month}`}${
+        date > 9 ? date : `0${date}`
+      }_${userLogged?.vici_id}`;
     }
-    setTimeout(async() => {
+    setTimeout(async () => {
       await createDisposition({
         variables: {
           input: {

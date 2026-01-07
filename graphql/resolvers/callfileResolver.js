@@ -1634,6 +1634,8 @@ const callfileResolver = {
         const rpcCount = ["PTP", "PAID", "UNEG", "DISP", "RTP", "FFUP"];
 
         if (selectedBucket.principal) {
+          if (!existingCallfile) return null;
+
           const TotalRPC = await Disposition.aggregate([
             {
               $match: {
@@ -2495,6 +2497,7 @@ const callfileResolver = {
         throw new CustomError(error.message, 500);
       }
     },
+    
   },
 };
 

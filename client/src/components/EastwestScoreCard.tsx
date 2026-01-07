@@ -617,6 +617,7 @@ const EastwestScoreCard = () => {
   const [acknowledgedBy, setAcknowledgedBy] = useState("");
   const [evaluatorRemarks, setEvaluatorRemarks] = useState("");
   const [agentRemarks, setAgentRemarks] = useState("");
+  const [acComments, setAcComments] = useState("");
   const [withContactResponses, setWithContactResponses] = useState<boolean[][]>(
     createInitialWithContactResponses
   );
@@ -1614,6 +1615,22 @@ const EastwestScoreCard = () => {
       isValidated ? "YES" : "NO"
     }`;
     worksheet.getCell("A70").value = "AC'S COMMENTS:";
+    worksheet.mergeCells("A71:K71");
+    worksheet.mergeCells("A72:K72");
+    worksheet.mergeCells("A73:K73");
+    worksheet.mergeCells("A74:K74");
+    worksheet.getCell("A71").value = acComments;
+    worksheet.getCell("A71").alignment = {
+      horizontal: "left",
+      vertical: "top",
+      wrapText: true,
+    };
+    worksheet.mergeCells("A75:E75");
+
+    applyBorder(worksheet, 71, 74, 1, 11, thinBorder);
+    applyBorder(worksheet, 75, 75, 1, 5, thinBorder);
+    applyFill(worksheet, 71, 74, 1, 11, amberFill);
+    applyFill(worksheet, 75, 75, 1, 5, amberFill);
 
     applyBorder(worksheet, 58, 64, 8, 12, thinBorder);
 
@@ -1796,7 +1813,7 @@ const EastwestScoreCard = () => {
 
     const buffer = await workbook.xlsx.writeBuffer();
     const blob = new Blob([buffer], {
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      type: "application/vnd.openxmlfortangina tlaga namang itong tabaggggggamats-officedocument.spreadsheetml.sheet",
     });
     const downloadUrl = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -1816,6 +1833,7 @@ const EastwestScoreCard = () => {
     setAcknowledgedBy("");
     setEvaluatorRemarks("");
     setAgentRemarks("");
+    setAcComments("");
     setIsOpenAgent(false);
     setIsOpenTL(false);
     setWithContactResponses(createInitialWithContactResponses());
@@ -1909,13 +1927,16 @@ const EastwestScoreCard = () => {
 
         <div className="bg-gray-300 h-[91.6%]  p-5 flex flex-col ">
           <div className="flex justify-between">
-            <div className="grid grid-cols-3 w-full items-start gap-2">
+            <div className="grid grid-cols-2 xl:grid-cols-3 w-full items-start gap-2">
               <div className="border rounded-md font-black uppercase text-sm shadow-md">
                 <div className="grid grid-cols-2 border-b">
-                  <div className="bg-gray-400 rounded-tl px-5 border-r py-1">
+                  <div className="truncate bg-gray-400 rounded-tl px-5 border-r py-1" title="EVALUATION DATE" >
                     EVALUATION DATE
                   </div>
-                  <div className="items-center flex px-2 rounded-tr-md bg-gray-100">
+                  <div
+                    className="items-center truncate flex px-2 rounded-tr-md bg-gray-100"
+                    title={todayLabel}
+                  >
                     {todayLabel}
                   </div>
                 </div>
@@ -1982,15 +2003,18 @@ const EastwestScoreCard = () => {
                   </div>
                 </div>
                 <div className="grid grid-cols-2 border-b ">
-                  <div className="bg-gray-400 px-5 border-r py-1">
+                  <div
+                    className="bg-gray-400 truncate px-5 border-r py-1"
+                    title="EVALUATOR'S NAME (TEAM HEAD)"
+                  >
                     EVALUATOR'S NAME (TEAM HEAD)
                   </div>
 
                   <div
                     onClick={() => setIsOpenTL(!isOpenTL)}
-                    className="flex  relative justify-between cursor-pointer bg-gray-100 items-center"
+                    className="flex  relative px-2 justify-between cursor-pointer bg-gray-100 items-center"
                   >
-                    <div className="flex mx-2 items-center ">
+                    <div className="flex items-center ">
                       {selectedEvaluator?.name || "Select TL"}
                     </div>
                     <div>
@@ -2046,11 +2070,14 @@ const EastwestScoreCard = () => {
                 </div>
 
                 <div className="grid grid-cols-2  ">
-                  <div className="bg-gray-400 rounded-bl-md px-5 border-r py-1">
+                  <div
+                    title="  ACKNOWLEDGED/VALIDATED BY: (AC/RO)"
+                    className="bg-gray-400 truncate rounded-bl-md px-5 border-r py-1"
+                  >
                     ACKNOWLEDGED/VALIDATED BY: (AC/RO)
                   </div>
                   <input
-                    className=" outline-none rounded-br-md bg-gray-100"
+                    className="px-3 outline-none font-normal rounded-br-md bg-gray-100"
                     type="text"
                     value={acknowledgedBy}
                     onChange={(event) => setAcknowledgedBy(event.target.value)}
@@ -2058,24 +2085,24 @@ const EastwestScoreCard = () => {
                 </div>
               </div>
 
-              <div className="border col-start-3 overflow-hidden rounded-md font-black uppercase text-sm shadow-md">
+              <div className="border xl:col-start-3 col-start-2 overflow-hidden rounded-md font-black uppercase text-sm shadow-md">
                 <div className="grid grid-cols-2 border-b">
-                  <div className="bg-gray-400 rounded-tl px-5 border-r py-1">
+                  <div className="truncate bg-gray-400 rounded-tl px-5 border-r py-1" title="CARDHOLDER" >
                     CARDHOLDER:
                   </div>
                   <input
-                    className="ml-2 outline-none"
+                    className="pl-2 bg-white outline-none"
                     type="text"
                     value={cardholder}
                     onChange={(event) => setCardholder(event.target.value)}
                   />
                 </div>
                 <div className="grid grid-cols-2 border-b">
-                  <div className="bg-gray-400  px-5 border-r py-1">
+                  <div className="truncate bg-gray-400  px-5 border-r py-1" title="ACCOUNT NUMBER" >
                     ACCOUNT NUMBER:
                   </div>
                   <input
-                    className="ml-2 outline-none"
+                    className="pl-2 bg-white outline-none"
                     type="text"
                     value={accountNumber}
                     onChange={(event) => setAccountNumber(event.target.value)}
@@ -2083,7 +2110,7 @@ const EastwestScoreCard = () => {
                 </div>
                 <div className="grid grid-cols-2 ">
                   <div className="bg-gray-400 px-5 border-r py-1">SCORE:</div>
-                  <div className="grid grid-cols-2">
+                  <div className="grid bg-white grid-cols-2">
                     <div className="items-center flex justify-center outline-none border-r">
                       {finalScore}
                     </div>
@@ -2099,7 +2126,7 @@ const EastwestScoreCard = () => {
               </div>
             </div>
           </div>
-          <div className="grid grid-cols-2 mt-2 pb-5 overflow-auto gap-2 h-full">
+          <div className="flex flex-col xl:grid grid-cols-2 mt-2 pb-5 overflow-auto gap-2 h-full">
             <div className="flex gap-2 h-auto flex-col">
               {withContactSections.map((section, index) => (
                 <EvaluationSection
@@ -2129,12 +2156,12 @@ const EastwestScoreCard = () => {
 
               <div className="flex gap-2 rounded-md overflow-hidden">
                 <div className="font-semibold py-1">VALIDATED (Y/N):</div>
-                <div className="flex gap-1" >
+                <div className="flex gap-1">
                   <button
                     type="button"
                     onClick={() => setIsValidated(true)}
                     className={`border-2 font-black uppercase px-3 flex items-center rounded-sm cursor-pointer text-shadow-2xs justify-center transition-colors ${
-                     !isValidated
+                      !isValidated
                         ? "bg-green-600 border-green-900 text-white"
                         : "bg-gray-400 border-2 border-gray-500 text-gray-200 font-black uppercase px-3 flex items-center rounded-sm cursor-pointer text-shadow-2xs justify-center"
                     }`}
@@ -2187,6 +2214,24 @@ const EastwestScoreCard = () => {
                     className="w-full min-h-24 outline-none p-2"
                     value={agentRemarks}
                     onChange={(event) => setAgentRemarks(event.target.value)}
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col border rounded-md overflow-hidden">
+                <div className="bg-gray-400 font-semibold px-3 border-b py-1">
+                  AC'S COMMENTS:
+                </div>
+                <div
+                  className={` ${
+                    isValidated ? "bg-white" : "bg-gray-200"
+                  }  p-1 `}
+                >
+                  <textarea
+                    className={` w-full min-h-24 outline-none p-2 `}
+                    disabled={!isValidated}
+                    value={acComments}
+                    onChange={(event) => setAcComments(event.target.value)}
                   />
                 </div>
               </div>

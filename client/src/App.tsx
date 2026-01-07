@@ -67,6 +67,10 @@ import ScoreCardOverview from "./components/ScoreCardOverview.tsx";
 import QAScoreCardAssign from "./pages/qa/QAScoreCardAssign.tsx";
 import UpdateBoard from "./pages/admin/UpdateBoard.tsx";
 import UpdatesPage from "./pages/UpdatesPage.tsx";
+import { ComplianceRoute } from "./routes/ComplianceRoute.tsx";
+import ComplianceDashboard from "./pages/compliance/ComplianceDashboard.tsx";
+import ComplianceQAAccount from "./pages/compliance/ComplianceQAAccount.tsx";
+import CCSFlow from "./pages/admin/CCSFlow.tsx";
 
 Chart.register(
   ...registerables,
@@ -90,7 +94,7 @@ function App() {
         <Route path="/break-view" element={<BreakView />} />
         <Route path="/score-card-temporary" element={<DefaultScoreCard />} />
         <Route path="/updates" element={<UpdatesPage />} />
-        
+
         <Route element={<AdminRoute />}>
           <Route path="/selectives" element={<Selectives />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
@@ -99,6 +103,7 @@ function App() {
           <Route path="/user-account" element={<UserView />} />
           <Route path="/all-call-logs" element={<CallAllAgentLogs />} />
           <Route path="/update-news" element={<UpdateBoard />} />
+          <Route path="/ccs-flow" element={<CCSFlow />} />
           <Route
             path="/agent-attendance-logs"
             element={<AgentAttendanceLogs />}
@@ -117,6 +122,11 @@ function App() {
           <Route path="/agent-dashboard" element={<StatisticsView />} />
           <Route path="/agent-cip" element={<CustomerDisposition />} />
           <Route path="/agent-report" element={<AgentReport />} />
+        </Route>
+
+        <Route element={<ComplianceRoute />}>
+          <Route path="/compliance-dashboard" element={<ComplianceDashboard/>} />
+          <Route path="/compliance-agent-account" element={<ComplianceQAAccount />} />
         </Route>
 
         <Route element={<AomRoute />}>
@@ -144,7 +154,10 @@ function App() {
           <Route path="/tl-cip" element={<CustomerDisposition />} />
           <Route path="/tl-reports" element={<CallfileAndAgentReport />} />
           <Route path="/call-agents-logs" element={<CallLogs />} />
-          <Route path="/tl-agent-attendance" element={<AgentAttendanceLogs />} />
+          <Route
+            path="/tl-agent-attendance"
+            element={<AgentAttendanceLogs />}
+          />
         </Route>
 
         <Route element={<CeoRoute />}>
@@ -192,7 +205,6 @@ function App() {
           <Route path="/qasv-recordings" element={<QASVAgentRecordings />} />
           <Route path="/scorecard-overview" element={<ScoreCardOverview />} />
         </Route>
-
       </Routes>
     </BrowserRouter>
   );

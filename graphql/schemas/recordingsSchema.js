@@ -1,8 +1,15 @@
 import { gql } from "graphql-tag";
 
 const recordingTypeDefs = gql`
+  type CantFind {
+    name: String
+    size: Int
+  }
+
   type Query {
     findLagRecording(name: String,_id:ID):Int
+    findLagOnFTP(name: String):Int
+    cantFindOnFTP(name: String):[CantFind]
   }
 
   type Mutation {

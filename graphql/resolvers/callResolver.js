@@ -17,6 +17,7 @@ import Callfile from "../../models/callfile.js";
 import CustomerAccount from "../../models/customerAccount.js";
 import User from "../../models/user.js";
 import DispoType from "../../models/dispoType.js";
+import Disposition from "../../models/disposition.js";
 
 const callResolver = {
   Query: {
@@ -443,7 +444,7 @@ const callResolver = {
 
         const viciId = findUser?.vici_id || "";
 
-        if (viciId?.trim() === "") throw new CustomError("Please", 401);
+        if (viciId.trim() === "") return "NO_VICI_ID";
 
         const bucket =
           findUser?.buckets?.length > 0
@@ -466,20 +467,22 @@ const callResolver = {
               findUser?.vici_id,
               x.viciIp
             );
-  
-            data.push((`${res.trim('\n') + "|" + x.viciIp}`).toString());
-        
+
+            data.push(`${res.trim("\n") + "|" + x.viciIp}`.toString());
+
             if (x.viciIp_auto) {
               const resAuto = await checkIfAgentIsInlineOnVici(
                 findUser?.vici_id,
                 x.viciIp_auto
               );
-              data.push((`${resAuto.trim('\n') + "|" + x.viciIp_auto}`).toString());
+              data.push(
+                `${resAuto.trim("\n") + "|" + x.viciIp_auto}`.toString()
+              );
             }
             return data.toString();
           })
         );
-      
+
         return chechIfisOnline.toString();
       } catch (error) {
         throw new CustomError(error.message, 500);
@@ -830,23 +833,9 @@ const callResolver = {
 
         const splitMobile = mobile?.split("|");
 
-        const bucket =
-          findUser?.buckets?.length > 0
-            ? new Array(
-                ...new Set(
-                  findUser?.buckets?.map((x) => {
-                    return {
-                      viciIp: x.viciIp,
-                      viciIp_auto: x.viciIp_auto,
-                    };
-                  })
-                )
-              )
-            : [];
+        const res = await getRecordings(splitMobile[1], viciId, null);
 
-        const res = await getRecordings(splitMobile[1], viciId);
-        
-        if (!res) return null;
+        if (!res || res.include("ERROR")) return null;
 
         const userInfoRes = await getUserInfo(splitMobile[1], viciId);
         const campaign_ID = userInfoRes.split("computer_ip")[1]?.split(",")[3];
@@ -921,6 +910,144 @@ const callResolver = {
         throw new CustomError(error.message, 500);
       }
     },
+
+    lateCallRecording: async (_, { id }, { user }) => {
+      try {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
+        const dispo = await Disposition.aggregate([
+          {
+            $match: {
+              _id: new mongoose.Types.ObjectId(id),
+            },
+          },
+          {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "ca",
+            },
+          },
+          {
+            $unwind: {
+              path: "$ca",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "ca.bucket",
+              foreignField: "_id",
+              as: "bucket",
+            },
+          },
+          {
+            $unwind: {
+              path: "$bucket",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $lookup: {
+              from: "customers",
+              localField: "ca.customer",
+              foreignField: "_id",
+              as: "customer",
+            },
+          },
+          {
+            $unwind: {
+              path: "$customer",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+        ]);
+
+        const dispoDate = dispo[0].createdAt;
+
+        const d = new Date(dispoDate);
+
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+
+        const formattedDate = `${year}-${month}-${day}`;
+
+        const getRecordingManual = await getRecordings(
+          dispo[0].bucket.viciIp,
+          user.vici_id,
+          formattedDate
+        );
+
+        const records = [];
+
+        if (!getRecordingManual.includes("ERROR")) {
+          const splitManualRecordings = getRecordingManual.split("-all.").map(x=> `${dispo[0].bucket.viciIp}_${x}`);
+          records.push(...splitManualRecordings.flat());
+        }
+
+        if (dispo[0].bucket.viciIp_auto) {
+          const getRecordingAuto = await getRecordings(
+            dispo[0].bucket.viciIp_auto,
+            user.vici_id,
+            formattedDate
+          );
+
+          if (!getRecordingAuto.includes("ERROR")) {
+            const splitAutoRecordings = getRecordingAuto.split("-all.").map(x=> `${dispo[0].bucket.viciIp_auto}_${x}`);
+            records.push(...splitAutoRecordings.flat());
+          }
+        }
+
+        const contact = [...new Set(dispo[0].customer.contact_no)];
+
+        if (dispo[0]?.customer?.emergency?.mobile) {
+          contact.push(dispo[0].customer?.emergency?.mobile);
+        }
+   
+        const recordings = [];
+        for (const record of records) {
+       
+          if (contact.some((x) => record.includes(x))) {
+            const splitRecord = record.split("/");
+            const ip = record.split('_')[0]
+
+            const duration = record.split("|")[4];
+            recordings.push(
+              `${splitRecord[splitRecord.length - 1]}-all.mp3_${duration}_${
+                ip
+              }`
+            );
+          }
+        }
+ 
+        const trueRecordings = [];
+
+        for (const recording of recordings) {
+          const spliting = recording.split(".mp3");
+          
+          const findRecording = await Disposition.aggregate([
+            {
+              $match: {
+                $text: { $search: `"${spliting[0]}"` },
+              },
+            },
+          ]);
+          if (findRecording.length <= 0) {
+            trueRecordings.push(recording);
+          }
+        }
+        
+        return trueRecordings;
+      } catch (error) {
+        throw new CustomError(error.message, 500);
+      }
+    },
+    getLastCall: async (_,{phone,vici_id}) => {
+
+    }
   },
 };
 

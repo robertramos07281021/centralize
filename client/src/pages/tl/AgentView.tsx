@@ -56,8 +56,8 @@ type Target = {
 };
 
 type Customer = {
-  fullName: string
-}
+  fullName: string;
+};
 
 type TLAgent = {
   _id: string;
@@ -73,7 +73,7 @@ type TLAgent = {
   departments: Department[];
   targets?: Target;
   vici_id: string;
-  customer: Customer
+  customer: Customer;
 };
 
 const AGENT_PRODUCTION = gql`
@@ -175,13 +175,13 @@ const AgentView = () => {
     if (search.trim() !== "") {
       filtered = filtered.filter(
         (e) =>
-          e.user_id.includes(search) ||
+          e.user_id?.includes(search) ||
           e.name.toLowerCase().includes(search.toLowerCase()) ||
           e.buckets.some((bucket) =>
-            bucket.name.toLowerCase().includes(search.toLowerCase())
+            bucket.name.toLowerCase()?.includes(search.toLowerCase())
           ) ||
           e.departments.some((dept) =>
-            dept.name.toLowerCase().includes(search.toLowerCase())
+            dept.name.toLowerCase()?.includes(search.toLowerCase())
           )
       );
     }
@@ -197,13 +197,13 @@ const AgentView = () => {
   useEffect(() => {
     const filteredData = tlAgentData?.findDeptAgents?.filter(
       (e) =>
-        e.user_id.includes(search) ||
-        e.name.toLowerCase().includes(search.toLowerCase()) ||
+        e.user_id?.includes(search) ||
+        e.name.toLowerCase()?.includes(search.toLowerCase()) ||
         e.buckets.some((bucket) =>
-          bucket.name.toLowerCase().includes(search.toLowerCase())
+          bucket.name.toLowerCase()?.includes(search.toLowerCase())
         ) ||
         e.departments.some((dept) =>
-          dept.name.toLowerCase().includes(search.toLowerCase())
+          dept.name.toLowerCase()?.includes(search.toLowerCase())
         )
     );
     if (filteredData) {
@@ -265,7 +265,8 @@ const AgentView = () => {
           ) ||
           e.departments.some((dept) =>
             dept?.name.toLowerCase().includes(search.toLowerCase())
-          ) || e.customer?.fullName?.toLowerCase().includes(search.toLowerCase())
+          ) ||
+          e.customer?.fullName?.toLowerCase().includes(search.toLowerCase())
       );
     }
     if (option === 50) {
@@ -328,8 +329,12 @@ const AgentView = () => {
   );
 
   const formatCurrency = useCallback((amount?: number | null) => {
-    const numericValue = typeof amount === "number" && !Number.isNaN(amount) ? amount : 0;
-    return numericValue.toLocaleString("en-PH", { style: "currency", currency: "PHP" });
+    const numericValue =
+      typeof amount === "number" && !Number.isNaN(amount) ? amount : 0;
+    return numericValue.toLocaleString("en-PH", {
+      style: "currency",
+      currency: "PHP",
+    });
   }, []);
 
   return (
@@ -489,7 +494,7 @@ const AgentView = () => {
               className="shadow-md"
               onClick={() => onClickAction(null, false, ButtonType.SET_TARGETS)}
             >
-              <div className="right-5 px-5 py-2 text-sm bg-orange-500 transition-all rounded-md text-orange-900 border-2 cursor-pointer font-black uppercase  border-orange-800 hover:bg-orange-600">
+              <div className="right-5 px-5 py-2 text-sm bg-orange-500 transition-all rounded-md text-white border-2 cursor-pointer font-black uppercase  border-orange-800 hover:bg-orange-600">
                 Set Targets
               </div>
             </motion.button>
@@ -523,7 +528,7 @@ const AgentView = () => {
                 <div>Montly</div>
               </div>
             </div>
-            <div className="py-1 truncate flex items-center">Action</div>
+            <div className="py-1 truncate flex items-center justify-end mr-4">Action</div>
           </div>
           <div className="h-[93%] overflow-y-auto">
             {agentProduction.length !== 0 ? (

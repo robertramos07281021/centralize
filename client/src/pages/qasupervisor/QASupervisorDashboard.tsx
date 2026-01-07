@@ -1,26 +1,111 @@
 import { motion } from "framer-motion";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useMemo } from "react";
+import { useQuery, gql } from "@apollo/client";
 import GaugeChart from "react-gauge-chart";
+
+const GET_QA_USERS = gql`
+  query getQAUsers($page: Int!, $limit: Int!) {
+    getQAUsers(page: $page, limit: $limit) {
+      users {
+        _id
+        name
+        active
+        type
+        buckets
+        isOnline
+        isLock
+        departments
+        scoreCardType
+      }
+      total
+    }
+  }
+`;
+
+const GET_ALL_DEPTS = gql`
+  query getDepts {
+    getDepts {
+      id
+      name
+      branch
+    }
+  }
+`;
+
+const GET_ALL_BUCKETS = gql`
+  query GetAllBucket {
+    getAllBucket {
+      _id
+      name
+      dept
+    }
+  }
+`;
+
+const GET_SCORECARD_SUMMARIES = gql`
+  query GetScoreCardSummaries($date: String, $search: String) {
+    getScoreCardSummaries(date: $date, search: $search) {
+      _id
+      qa {
+        _id
+        name
+      }
+    }
+  }
+`;
 
 const QASupervisorDashboard = () => {
   const [value, setValue] = useState(1);
-  // const [hehe, setHehe] = useState(40);
-  useEffect(()=> {
-    setValue(1)
-  },[])
+
+  const { data } = useQuery(GET_QA_USERS, {
+    variables: { page: 1, limit: 100 },
+  });
+  const { data: deptData } = useQuery(GET_ALL_DEPTS);
+  const { data: bucketData } = useQuery(GET_ALL_BUCKETS);
+  const { data: scorecardData } = useQuery(GET_SCORECARD_SUMMARIES, {
+    variables: { date: null, search: null },
+    fetchPolicy: "network-only",
+  });
+
+  const users = data?.getQAUsers?.users || [];
+
+  const deptMap = useMemo(() => {
+    const arr = deptData?.getDepts || [];
+    return Object.fromEntries(arr.map((d: any) => [d.id, d.name]));
+  }, [deptData]);
+
+  const bucketMap = useMemo(() => {
+    const arr = bucketData?.getAllBucket || [];
+    return Object.fromEntries(arr.map((b: any) => [b._id, b.name]));
+  }, [bucketData]);
+
+  const scoreSheetCountByQa = useMemo(() => {
+    const summaries = scorecardData?.getScoreCardSummaries || [];
+    return summaries.reduce((acc: Record<string, number>, entry: any) => {
+      const qaId = entry?.qa?._id;
+      if (qaId) {
+        acc[qaId] = (acc[qaId] || 0) + 1;
+      }
+      return acc;
+    }, {});
+  }, [scorecardData]);
+
+  useEffect(() => {
+    setValue(1);
+  }, []);
 
   return (
-    <div className="w-full h-full overflow-hidden relative flex flex-col">
-      <div className="bg-blue-500 shadow-md py-3 px-4">
-        <div className="flex items-center">
-          <div className="bg-blue-300 cursor-pointer rounded-md shadow-md hover:shadow-none transition-all hover:bg-blue-400 mr-3 py-2 px-3 h-full">
+    <div className="w-full h-full max-h-[90vh] overflow-hidden relative flex flex-col">
+      <div className="bg-blue-500 h-[5%] shadow-md py-1.5 px-4">
+        <div className="flex h-full items-center gap-2">
+          <div className="bg-blue-300 flex cursor-pointer rounded-md shadow-md hover:shadow-none transition-all hover:bg-blue-400 px-2 items-center h-full">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth="3"
               stroke="currentColor"
-              className="size-6 text-blue-600"
+              className="size-5 text-blue-600"
             >
               <path
                 strokeLinecap="round"
@@ -29,14 +114,14 @@ const QASupervisorDashboard = () => {
               />
             </svg>
           </div>
-          <div className="bg-blue-300 cursor-pointer rounded-md shadow-md hover:shadow-none transition-all hover:bg-blue-400 mr-3 py-2 px-3 h-full">
+          <div className="bg-blue-300 cursor-pointer rounded-md shadow-md hover:shadow-none transition-all hover:bg-blue-400 px-2 items-center flex h-full">
             <svg
               xmlns="http://www.w3.org/2000/svg"
               fill="none"
               viewBox="0 0 24 24"
               strokeWidth="3"
               stroke="currentColor"
-              className="size-6 text-blue-600"
+              className="size-5 text-blue-600"
             >
               <path
                 strokeLinecap="round"
@@ -45,91 +130,117 @@ const QASupervisorDashboard = () => {
               />
             </svg>
           </div>
-          <div className="underline font-black text-white uppercase text-2xl">
+          <div className="underline font-black text-white uppercase text-lg">
             Week # 12
           </div>
         </div>
       </div>
-      <div className="flex flex-col">
-        <div className="grid grid-cols-4 relative mt-3 gap-3 px-3 ">
+      <div className="flex h-[10%] p-3 flex-col">
+        <div className="grid grid-cols-4 h-full relative gap-3  ">
           <motion.div
-            className="bg-gray-200 font-black uppercase text-gray-500 text-center border-4 rounded-md p-2 border-gray-500"
-            initial={{ opacity: 0, y: 100 }}
+            className="bg-gray-200 font-black uppercase text-gray-500 text-center border rounded-md p-2 border-gray-500"
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ type: "spring" }}
           >
             <div>Total Calls</div>
-            <div className=" text-5xl text-red-800">100</div>
+            <div className=" text-xl text-red-800">100</div>
           </motion.div>
           <motion.div
-            className="bg-gray-200 font-black uppercase text-gray-500 text-center border-4 rounded-md p-2 border-gray-500"
-            initial={{ opacity: 0, y: 100 }}
+            className="bg-gray-200 font-black uppercase text-gray-500 text-center border rounded-md p-2 border-gray-500"
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ type: "spring", delay: 0.1 }}
+            transition={{ delay: 0.1 }}
           >
             <div>Total Calls</div>
-            <div className=" text-5xl text-red-800">100</div>
+            <div className=" text-xl text-red-800">100</div>
           </motion.div>
           <motion.div
-            className="bg-gray-200 font-black uppercase text-gray-500 text-center border-4 rounded-md p-2 border-gray-500"
-            initial={{ opacity: 0, y: 100 }}
+            className="bg-gray-200 font-black uppercase text-gray-500 text-center border rounded-md p-2 border-gray-500"
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ type: "spring", delay: 0.2 }}
+            transition={{ delay: 0.2 }}
           >
             <div>Total Calls</div>
-            <div className=" text-5xl text-red-800">100</div>
+            <div className=" text-xl text-red-800">100</div>
           </motion.div>
           <motion.div
-            className="bg-gray-200 font-black uppercase text-gray-500 text-center border-4 rounded-md p-2 border-gray-500"
-            initial={{ opacity: 0, y: 100 }}
+            className="bg-gray-200 font-black uppercase text-gray-500 text-center border rounded-md p-2 border-gray-500"
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ type: "spring", delay: 0.3 }}
+            transition={{ delay: 0.3 }}
           >
             <div>Total Calls</div>
-            <div className=" text-5xl text-red-800">100</div>
+            <div className=" text-xl text-red-800">100</div>
           </motion.div>
         </div>
       </div>
-      <div className="pt-4 px-16">
+      
+      <div className="grid grid-cols-2 px-3 py-3 gap-3 grid-rows-2 h-[85%]">
         <motion.div
-          className="flex gap-48"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.7 }}
-        >
-          <input type="radio" />
-          <input type="radio" />
-          <input type="radio" />
-          <input type="radio" />
-        </motion.div>
-      </div>
-      <div className="grid grid-cols-2 px-3 py-3 gap-3 grid-rows-2 h-full">
-        <motion.div
-          initial={{ opacity: 0, y: 100 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring" }}
+          transition={{ delay: 0.3 }}
+          className="h-full"
         >
-          <div className="grid  rounded-md shadow border-4 border-gray-500 grid-rows-5 h-full bg-gray-200">
-            <div className="grid-cols-6 text-center grid items-center px-4 shadow-md rounded-t-sm font-black text-sm text-gray-500 bg-gray-300">
+          <div className="grid  rounded-md shadow overflow-hidden border border-black h-full bg-gray-200">
+            <div className="grid-cols-4 py-2 border-b text-start grid items-center px-4 shadow-md rounded-t-sm font-black text-sm text-black uppercase bg-gray-300">
               <div>QA Name</div>
               <div>Campaign</div>
               <div>Bucket(s)</div>
-              <div>Avg. Speed of Ans</div>
-              <div>Call Resolution</div>
-              <div>CR Trend</div>
+              <div className="truncate text-center" title="Score Sheet report">
+                Score Sheet report
+              </div>
             </div>
-            <div></div>
+            <div className="divide-y divide-gray-400 overflow-y-auto h-full">
+              {users.map((user: any) => (
+                <div
+                  key={user._id}
+                  className="grid grid-cols-4 odd:bg-gray-200 gap-2 transition-all hover:bg-gray-300 even:bg-gray-100 px-4 py-2 items-center text-sm text-black"
+                >
+                  <div className="first-letter:uppercase">{user.name}</div>
+                  <div className="truncate" title={user.departments.join(", ")}>
+                    {Array.isArray(user.departments) &&
+                    user.departments.length > 0 ? (
+                      user.departments
+                        .map((deptId: string) => deptMap[deptId] || deptId)
+                        .join(", ")
+                    ) : (
+                      <span className="italic text-gray-400 text-xs">
+                        No campaign
+                      </span>
+                    )}
+                  </div>
+                  <div className="truncate" title={user.buckets.join(", ")}>
+                    {Array.isArray(user.buckets) && user.buckets.length > 0 ? (
+                      user.buckets
+                        .map(
+                          (bucketId: string) => bucketMap[bucketId] || bucketId
+                        )
+                        .join(", ")
+                    ) : (
+                      <span className="italic text-gray-400 text-xs">
+                        No bucket
+                      </span>
+                    )}
+                  </div>
+                  <div className="text-center">
+                    {scoreSheetCountByQa[user._id] || 0}
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         </motion.div>
         <motion.div
-          initial={{ opacity: 0, y: 100 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", delay: 0.4 }}
+          transition={{ delay: 0.4 }}
         >
-          <div className=" rounded-md flex flex-col shadow border-4 border-gray-500 h-full bg-gray-200">
-            <div className="bg-gray-300 rounded-t-sm flex flex-col w-full">
-              <div className="font-black uppercase text-center py-3 text-gray-500 text-2xl shadow-md ">
-                Call Abandon Rate - By Department
+          <div className=" rounded-md overflow-hidden flex flex-col shadow border border-black h-full bg-gray-200">
+            <div className="bg-gray-300 border-b shadow-md border-black rounded-t-sm flex flex-col w-full">
+              <div className="font-black uppercase text-center py-3 text-black text-2xl shadow-md ">
+                Top 6 QA Performance
               </div>
             </div>
             <div className="h-full grid grid-cols-5 grid-rows-1 px-10  items-end content-center justify-center">
@@ -160,22 +271,26 @@ const QASupervisorDashboard = () => {
                 <div className="w-16 h-[85%] rounded-t-md bg-red-700 text-center"></div>
               </div>
             </div>
-            <div className="px-10 border-t-2 border-gray-500 grid grid-cols-5 text-sm gap-3 truncate text-center font-black uppercase text-gray-500 justify-evenly py-2">
-              <div className="truncate" title="Washing Machine" >Washing Machine</div>
+            <div className="px-10 border-t border-gray-500 grid grid-cols-5 text-sm gap-3 truncate text-center font-black uppercase text-gray-500 justify-evenly py-2">
+              <div className="truncate" title="Washing Machine">
+                Washing Machine
+              </div>
               <div>Toaster</div>
               <div>Fridge</div>
-              <div className="truncate" title="Air Conditioner">Air Conditioner</div>
+              <div className="truncate" title="Air Conditioner">
+                Air Conditioner
+              </div>
               <div>Television</div>
             </div>
           </div>
         </motion.div>
         <motion.div
-          initial={{ opacity: 0, y: 100 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", delay: 0.5 }}
+          transition={{ delay: 0.5 }}
         >
-          <div className=" rounded-md shadow  border-4 relative flex flex-col border-gray-500 h-full bg-gray-200">
-            <div className="bg-gray-300  rounded-t-sm justify-evenly py-2 shadow-md w-full flex text-sm ">
+          <div className=" rounded-md shadow  border relative flex flex-col border-gray-500 h-full bg-gray-200">
+            <div className="bg-gray-300 border-b border-gray-500  rounded-t-sm justify-evenly py-2 shadow-md w-full flex text-sm ">
               <div className="font-black uppercase text-center py-3 text-gray-500 ">
                 Overall Satisfaction Score
               </div>
@@ -229,12 +344,12 @@ const QASupervisorDashboard = () => {
           </div>
         </motion.div>
         <motion.div
-          initial={{ opacity: 0, y: 100 }}
+          initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ type: "spring", delay: 0.6 }}
+          transition={{ delay: 0.6 }}
         >
-          <div className=" rounded-md shadow border-4 relative flex flex-col border-gray-500 h-full bg-gray-200">
-            <div className="bg-gray-300 rounded-t-md w-full">
+          <div className=" rounded-md shadow border relative flex flex-col border-gray-500 h-full bg-gray-200">
+            <div className="bg-gray-300 border-b border-gray-500 rounded-t-md w-full">
               <div className="font-black uppercase text-center py-3 text-gray-500 text-2xl shadow-md ">
                 SLA Limits
               </div>

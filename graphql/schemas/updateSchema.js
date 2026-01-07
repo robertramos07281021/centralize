@@ -9,6 +9,7 @@ const patchUpdateTypeDefs = gql`
     descriptions: String
     pushPatch: Boolean
     updatedAt: DateTime
+    createdAt: DateTime
   }
 
   type Information {

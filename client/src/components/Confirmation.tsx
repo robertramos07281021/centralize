@@ -1,11 +1,11 @@
-import { useEffect } from "react";
+import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 
 const color = {
   CREATE: {
     title: "bg-blue-500",
     button:
-      "bg-blue-500 hover:bg-blue-600 focus:ring-blue-300 border-blue-800 border-2",
+      "bg-blue-500 hover:bg-blue-600 focus:ring-blue-300 ",
   },
   UPDATE: {
     title: "bg-orange-500",
@@ -18,7 +18,7 @@ const color = {
   LOGOUT: {
     title: "bg-red-500",
     button:
-      "bg-red-500 hover:bg-red-600 focus:ring-red-300  border-red-800 border-2 ",
+      "bg-red-500 hover:bg-red-600 focus:ring-red-300 ",
   },
   UPLOADED: {
     title: "bg-green-500",
@@ -31,7 +31,7 @@ const color = {
   IDLE: {
     title: "bg-red-500",
     button:
-      "bg-red-500 hover:bg-red-600 focus:ring-red-300  border-red-800 border-2 ",
+      "bg-red-500 hover:bg-red-600 focus:ring-red-300 ",
   },
   FINISHED: {
     title: "bg-green-500",
@@ -44,12 +44,12 @@ const color = {
   ESCALATE: {
     title: "bg-red-500",
     button:
-      "bg-red-500 hover:bg-red-600  focus:ring-red-300  border-red-800 border-2 ",
+      "bg-red-500 hover:bg-red-600  focus:ring-red-300 ",
   },
   UNLOCK: {
     title: "bg-red-500",
     button:
-      "bg-red-500 hover:bg-red-600 focus:ring-red-300  border-red-800 border-2 ",
+      "bg-red-500 hover:bg-red-600 focus:ring-red-300  ",
   },
   ACTIVATE: {
     title: "bg-blue-500",
@@ -58,12 +58,12 @@ const color = {
   DEACTIVATE: {
     title: "bg-red-500",
     button:
-      "bg-red-500 hover:bg-red-600 focus:ring-red-300  border-red-800 border-2",
+      "bg-red-500 hover:bg-red-600 focus:ring-red-300",
   },
   RPCTODAY: {
     title: "bg-red-500",
     button:
-      "bg-red-500 hover:bg-red-600 focus:ring-red-300  border-red-800 border-2",
+      "bg-red-500 hover:bg-red-600 focus:ring-red-300 ",
   },
   SELECT: {
     title: "bg-orange-500",
@@ -80,7 +80,7 @@ const color = {
   DIAL: {
     title: "bg-orange-500",
     button: "bg-orange-500 hover:bg-orange-600 focus:ring-orange-300",
-  }
+  },
 };
 
 type toggleType = keyof typeof color;
@@ -94,11 +94,13 @@ type modalProps = {
 
 const noButtonHide = ["IDLE", "RPCTODAY"];
 
+
 const Confirmation: React.FC<modalProps> = ({ yes, no, message, toggle }) => {
+  const [loading, setLoading] = useState(false);
   useEffect(() => {
     try {
       const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === "Escape") {
+        if (e.key === "Escape" && !loading) {
           no();
         }
       };
@@ -106,9 +108,17 @@ const Confirmation: React.FC<modalProps> = ({ yes, no, message, toggle }) => {
       return () => document.removeEventListener("keydown", handleKeyDown);
     } catch (error) {
       console.log(error);
-    } finally {
     }
-  }, []);
+  }, [loading]);
+
+  const handleYes = async () => {
+    setLoading(true);
+    try {
+      await yes();
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -117,7 +127,7 @@ const Confirmation: React.FC<modalProps> = ({ yes, no, message, toggle }) => {
       className="fixed w-screen h-screen top-0 left-0 z-60 flex items-center justify-center"
     >
       <motion.div
-        onClick={no}
+        onClick={() => !loading && no()}
         key={"confirmModal-bg"}
         className="absolute top-0 left-0 w-full h-full bg-black/20 backdrop-blur-sm cursor-pointer z-10"
         initial={{ opacity: 0 }}
@@ -128,6 +138,7 @@ const Confirmation: React.FC<modalProps> = ({ yes, no, message, toggle }) => {
         className={` ${color[toggle]?.title}  min-w-96  max-h-96 max-w-120 bg-white rounded-lg z-20 shadow-xl overflow-hidden flex flex-col `}
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
+        layout
       >
         <div
           className={`${color[toggle]?.title} p-2  text-2xl text-white py-4 font-black uppercase text-center `}
@@ -136,22 +147,53 @@ const Confirmation: React.FC<modalProps> = ({ yes, no, message, toggle }) => {
         </div>
         <div className="h-full p-10 flex flex-col bg-white items-center justify-center gap-10">
           <p className="text-xl font-medium text-slate-700 px-10 text-center">
-            {message}
+            {loading
+              ? noButtonHide.includes(toggle)
+                ? "Processing..."
+                : toggle === "CREATE" ||
+                  toggle === "UPLOADED" ||
+                  toggle === "ADDED" ||
+                  toggle === "FINISHED"
+                ? "Submitting..."
+                : "Confirming..."
+              : message}
           </p>
           <div className="flex gap-2">
-            <button
+            <motion.button
               type="button"
               accessKey="w"
-              className={`${color[toggle]?.button} transition-all text-white focus:ring-4  font-black uppercase rounded-lg text-lg w-24 py-2.5 cursor-pointer`}
-              onClick={yes}
+              className={
+                `transition-all focus:ring-4 font-black uppercase rounded-md shadow-md text-lg px-6 py-2  ` +
+                (loading
+                  ? "opacity-60 cursor-not-allowed bg-gray-300 text-gray-400"
+                  : `  text-white cursor-pointer ${color[toggle]?.button} ` ||
+                    " ")
+              }
+              onClick={handleYes}
+              disabled={loading}
+              layout
             >
-              {noButtonHide.includes(toggle) ? "OK" : "Yes"}
-            </button>
+              {loading
+                ? noButtonHide.includes(toggle)
+                  ? "..."
+                  : toggle === "CREATE" ||
+                    toggle === "UPLOADED" ||
+                    toggle === "ADDED" ||
+                    toggle === "FINISHED"
+                  ? "Submitting..."
+                  : "Confirming..."
+                : noButtonHide.includes(toggle)
+                ? "OK"
+                : "Yes"}
+            </motion.button>
             {!noButtonHide.includes(toggle) && (
               <button
                 type="button"
-                className="text-white bg-gray-500 border-gray-800 transition-all hover:bg-gray-600 font-black uppercase rounded-lg text-lg w-24 py-2.5 cursor-pointer"
+                className={`text-white bg-gray-400 border-gray-500 transition-all hover:bg-gray-500 shadow-md font-black uppercase rounded-md text-lg px-6 py-2 cursor-pointer ${
+                  loading ? "opacity-60 cursor-not-allowed" : ""
+                }`}
                 onClick={no}
+                disabled={loading}
               >
                 No
               </button>

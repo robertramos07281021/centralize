@@ -625,7 +625,6 @@ const CustomerDisposition = () => {
   const [manualDial, setManualDial] = useState<string | null>(null);
   const [isUpdate, setIsUpdate] = useState<boolean>(false);
   const [isSearch, setIsSearch] = useState<Search[] | null>(null);
-  const [isSearching, setIsSearching] = useState<boolean>(false);
   const inputRef = useRef<HTMLInputElement | null>(null);
   const [isRPC, setIsRPC] = useState<boolean>(false);
 
@@ -647,7 +646,6 @@ const CustomerDisposition = () => {
   useEffect(() => {
     if (search.trim() === "") {
       setIsSearch(null);
-      setIsSearching(false);
     }
   }, [search]);
 
@@ -661,13 +659,10 @@ const CustomerDisposition = () => {
     ?.filter((x) => userLogged?.buckets?.includes(x._id))
     .map((bucket) => bucket.canCall);
 
-  const { refetch, loading: loadingSearch } = useQuery<{ search: Search[] }>(
-    SEARCH,
-    {
-      skip: !isSearch,
-      notifyOnNetworkStatusChange: true,
-    }
-  );
+  const { refetch } = useQuery<{ search: Search[] }>(SEARCH, {
+    skip: !isSearch,
+    notifyOnNetworkStatusChange: true,
+  });
   const { data: dispotypes } = useQuery<{ getDispositionTypes: Dispotype[] }>(
     DISPOTYPES
   );
@@ -717,14 +712,9 @@ const CustomerDisposition = () => {
   const debouncedSearch = useMemo(() => {
     return debounce(async (val: string) => {
       if (typeof val === "string" && val.trim() !== "") {
-        setIsSearching(true);
-        try {
-          await caiiRefetching();
-          const res = await refetch({ search: val });
-          setIsSearch(res.data.search);
-        } finally {
-          setIsSearching(false);
-        }
+        await caiiRefetching();
+        const res = await refetch({ search: val });
+        setIsSearch(res.data.search);
       }
     }, 500);
   }, [refetch]);
@@ -732,9 +722,6 @@ const CustomerDisposition = () => {
   const handleSearchChange = (val: string) => {
     setSearch(val);
     debouncedSearch(val);
-    if (!val.trim()) {
-      setIsSearching(false);
-    }
   };
 
   useEffect(() => {
@@ -794,18 +781,24 @@ const CustomerDisposition = () => {
   });
 
   const checkIfAgentIsInline = data?.checkIfAgentIsInline;
-
-  const [hasMultipleInline, setHasMultipleInline] = useState<boolean>(false);
+  const [hasMultipleInline, setHasMultipleInline] = useState<boolean>(true);
 
   useEffect(() => {
     const timer = setTimeout(async () => {
       const { data } = await caiiRefetching();
       if (data) {
-        const checkIfError = data.checkIfAgentIsInline
+        const checkIfError = data?.checkIfAgentIsInline
           ?.split(",")
           .filter((x) => !x.includes("ERROR"));
-
-        const hasMultipleInline = (checkIfError?.length ?? 0) > 1;
+        const newInline = checkIfAgentIsInline
+          ?.split(",")
+          .map((x) => {
+            const newViciStatus = x?.split("|")[1];
+            return newViciStatus;
+          })
+          .filter((x) => x !== null && x !== undefined && x !== "");
+        const hasMultipleInline =
+          (checkIfError?.length ?? 0) > 1 && (newInline?.length ?? 0) > 1;
         setHasMultipleInline(hasMultipleInline);
       }
     });
@@ -939,21 +932,20 @@ const CustomerDisposition = () => {
   const [viciDialStatus, setViciDialStatus] = useState<string | null>(null);
 
   const autoSearch = useCallback(async () => {
-    setIsSearching(true);
     const { data } = await caiiRefetching();
     const splitData = data.checkIfAgentIsInline.split(",");
     const newSplitDataNotError = splitData.filter((x) => !x.includes("ERROR"));
 
     if (newSplitDataNotError.length <= 0) return;
 
-    const newInline = newSplitDataNotError
+    const newInline = splitData
       .map((x) => {
         const newViciStatus = x?.split("|")[1];
         return newViciStatus;
       })
       .filter((x) => x !== null && x !== undefined && x !== "");
 
-    if ([...new Set(newInline)]?.length === 1) {
+    if (newInline?.length === 1) {
       const inlineDataWithCall = splitData
         .filter(
           (x) =>
@@ -965,7 +957,6 @@ const CustomerDisposition = () => {
       setErrorMessage(null);
       setViciDialStatus(data?.checkIfAgentIsInline);
       const splitInline = inlineDataWithCall?.split("|") ?? null;
-
       const res = await refetch({ search: splitInline[10] });
       if (!res.error) {
         dispatch(
@@ -984,23 +975,20 @@ const CustomerDisposition = () => {
           }
         }
       }
-
-      setIsSearching(false);
-    } else if ([...new Set(newInline)]?.length <= 0) {
-      setIsSearching(false);
-      setErrorMessage("You dont have any call on vicidial.");
-    } else if ([...new Set(newInline)]?.length > 1) {
-      setIsSearching(false);
-      setErrorMessage("Kindly hang up the other active Vicidial call.");
+    } else {
+      if (newInline.length < 1) {
+        setErrorMessage("You dont have any call on vicidial.");
+      } else {
+        setErrorMessage("Kindly hang up the other active Vicidial call.");
+      }
     }
- 
   }, [
     caiiRefetching,
     refetch,
     dispatch,
     selectTask,
     setErrorMessage,
-    setIsSearching,
+    setViciOnAir,
   ]);
 
   const [makeCall] = useMutation<{
@@ -1048,7 +1036,6 @@ const CustomerDisposition = () => {
       );
     }
   };
-
   // =============================== need to add on skip
 
   useSubscription<{ newUpdateOnBucket: { bucket: string; message: string } }>(
@@ -1335,7 +1322,7 @@ const CustomerDisposition = () => {
     <>
       {showHelper && <Helper close={() => setShowHelper(false)} />}
       <div className="overflow-hidden flex flex-col relative h-full w-full">
-        {!selectedCustomer && (
+         {!selectedCustomer && (
           <div className="absolute bottom-3 left-3 ">
             <button
               className=" rounded-full text-2xl p-2 bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-none flex items-center justify-center cursor-pointer text-b transition-all font-bold "
@@ -1448,8 +1435,7 @@ const CustomerDisposition = () => {
                         <div className="relative w-full flex justify-center">
                           {!isAutoDialData?.isAutoDial && (
                             <div className="w-full flex gap-2">
-                              <motion.input
-                                layout
+                              <input
                                 accessKey="z"
                                 type="text"
                                 name="search"
@@ -1460,54 +1446,14 @@ const CustomerDisposition = () => {
                                 }
                                 id="search"
                                 placeholder="Search"
-                                className=" w-full p-2 text-sm  text-gray-900 border border-black rounded-sm bg-gray-50 outline-0 "
+                                className=" w-full p-2 text-sm  text-gray-900 border border-black rounded-sm bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
                               />
-                              <AnimatePresence>
-                                {!hasMultipleInline && isSearch && (
-                                  <motion.div
-                                    className="bg-gray-300 border shadow-md flex items-center rounded-sm py-1 px-3"
-                                    initial={{ opacity: 0, scale: 0.8 }}
-                                    animate={{ opacity: 1, scale: 1 }}
-                                    exit={{ opacity: 0, scale: 0.8 }}
-                                    title="Search completed"
-                                    transition={{ delay: 0.2 }}
-                                  >
-                                    <svg
-                                      xmlns="http://www.w3.org/2000/svg"
-                                      viewBox="0 0 24 24"
-                                      fill="currentColor"
-                                      className="size-6 text-green-600"
-                                    >
-                                      <path
-                                        fillRule="evenodd"
-                                        d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm13.36-1.814a.75.75 0 1 0-1.22-.872l-3.236 4.53L9.53 12.22a.75.75 0 0 0-1.06 1.06l2.25 2.25a.75.75 0 0 0 1.14-.094l3.75-5.25Z"
-                                        clipRule="evenodd"
-                                      />
-                                    </svg>
-                                  </motion.div>
-                                )}
-                              </AnimatePresence>
-                              <AnimatePresence>
-                                {
-                                  (isSearching || loadingSearch) && (
-                                    <motion.div
-                                      className="bg-gray-300 border shadow-md flex items-center rounded-sm py-1 px-3"
-                                      initial={{ opacity: 0, scale: 0.8 }}
-                                      animate={{ opacity: 1, scale: 1 }}
-                                      exit={{ opacity: 0, scale: 0.8 }}
-                                      transition={{ delay: 0.2 }}
-                                    >
-                                      <div className="border-t-2 border-black w-5 animate-spin ease-in rounded-full h-5"></div>
-                                    </motion.div>
-                                  )}
-                              </AnimatePresence>
-                              <motion.button
+                              <button
                                 className="border-2 rounded px-5 cursor-pointer bg-blue-600 hover:bg-blue-700 transition-all text-white border-blue-900 uppercase font-bold text-sm"
                                 onClick={autoSearch}
-                                whileTap={{ scale: 0.4 }}
                               >
                                 Search
-                              </motion.button>
+                              </button>
                             </div>
                           )}
                           {errorMessage && (
@@ -1533,7 +1479,7 @@ const CustomerDisposition = () => {
                             </div>
                           )}
                           {isSearch && isSearch.length <= 0 && (
-                            <div className="w-full h-auto top-11 absolute p-2 italic border border-black text-slate-700 font-medium text-sm bg-gray-200 shadow-md rounded">
+                            <div className="w-full h-auto top-10 absolute p-2 italic border text-slate-700 font-medium text-sm bg-gray-200 shadow shadow-black/50 rounded">
                               No file was found, or another agent has already
                               taken the customer.
                             </div>

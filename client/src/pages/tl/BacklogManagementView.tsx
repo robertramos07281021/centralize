@@ -274,7 +274,6 @@ const BacklogManagementView = () => {
       const timestamp = new Date().toISOString().replace(/[:]/g, "-").slice(0, 19);
       writeFile(workbook, `CallDoughnut_${identifier || "Report"}_${timestamp}.xlsx`);
     } catch (error) {
-      console.error("Failed to export Call Doughnut data", error);
       window.alert("Unable to export the report right now. Please try again.");
     } finally {
       setIsExporting(false);

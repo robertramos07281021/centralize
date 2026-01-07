@@ -137,6 +137,15 @@ type SearchRecordings = {
   dispotype: string[];
 };
 
+const CANT_FIND_ON_FTP = gql`
+  query cantFindOnFTP($name: String) {
+    cantFindOnFTP(name: $name) {
+      name
+      size
+    }
+  }
+`;
+
 const AGENT_RECORDING_LAG = gql`
   query findLagRecording($name: String, $_id: ID) {
     findLagRecording(name: $name, _id: $_id)
@@ -152,6 +161,23 @@ const RECORDING_FTP = gql`
     }
   }
 `;
+
+const AGENT_RECORDING_LAG_FTP = gql`
+  query findLagOnFTP($name: String) {
+    findLagOnFTP(name: $name)
+  }
+`;
+
+const LATE_RECORDING = gql`
+  mutation lateCallRecording($id: ID) {
+    lateCallRecording(id: $id)
+  }
+`;
+
+type CantFind = {
+  name: string;
+  size: number;
+};
 
 const AgentRecordingView = () => {
   const location = useLocation();
@@ -204,6 +230,18 @@ const AgentRecordingView = () => {
       notifyOnNetworkStatusChange: true,
     }
   );
+  const [findLagOnFTP] = useLazyQuery<{ findLagOnFTP: number }>(
+    AGENT_RECORDING_LAG_FTP,
+    {
+      notifyOnNetworkStatusChange: true,
+    }
+  );
+
+  const [cantFindOnFTP, { loading: cantFindOnFTPLoading }] = useLazyQuery<{
+    cantFindOnFTP: CantFind[];
+  }>(CANT_FIND_ON_FTP, {
+    notifyOnNetworkStatusChange: true,
+  });
 
   useEffect(() => {
     const refetching = async () => {
@@ -384,18 +422,67 @@ const AgentRecordingView = () => {
 
     recordings?.getAgentDispositionRecords?.dispositions?.forEach((rec) => {
       const { baseName, durationSeconds } = parseCallId(rec.callId);
-      if (!baseName || durationSeconds !== null || lagRecords[baseName]) return;
 
-      getLagRecording({
-        variables: { name: `${baseName}.mp3`, _id: rec._id },
-      }).then((res) => {
-        setLagRecords((prev) => ({
-          ...prev,
-          [baseName]: res.data?.findLagRecording,
-        }));
-      });
+      if (ccsCall) {
+        if (durationSeconds && durationSeconds > 0) return;
+        findLagOnFTP({
+          variables: { name: rec.callId },
+        }).then(({ data }) => {
+          if (data) {
+            setLagRecords((prev) => ({
+              ...prev,
+              [baseName]: data?.findLagOnFTP,
+            }));
+          } else {
+            cantFindOnFTP({ variables: { name: rec.callId } }).then(
+              ({ data }) => {
+                setLagRecords((prev) => ({
+                  ...prev,
+                  [baseName]: data?.cantFindOnFTP,
+                }));
+              }
+            );
+          }
+        });
+      } else {
+        if (!baseName || durationSeconds !== null || lagRecords[baseName])
+          return;
+        getLagRecording({
+          variables: { name: `${baseName}.mp3`, _id: rec._id },
+        }).then((res) => {
+          setLagRecords((prev) => ({
+            ...prev,
+            [baseName]: res.data?.findLagRecording,
+          }));
+        });
+      }
     });
-  }, [recordings, lagRecords, getLagRecording]);
+  }, [recordings?.getAgentDispositionRecords?.dispositions]);
+
+  const [lateCallRecordingsData, setLateCallRecordingsData] = useState<
+    string[]
+  >([]);
+
+  const [lateCallRecording, { loading: lateCallRecordingLoading }] =
+    useMutation<{ lateCallRecording: string[] }>(LATE_RECORDING, {
+      onCompleted: (data) => {
+        setLateCallRecordingsData(data.lateCallRecording);
+      },
+    });
+
+  const [selectedToFind, setSelectedToFind] = useState<string | null>(null);
+
+  const findLateRecording = useCallback(
+    async (_id: string) => {
+      if (_id === selectedToFind) {
+        setSelectedToFind(null);
+      } else {
+        setSelectedToFind(_id);
+        await lateCallRecording({ variables: { id: _id } });
+      }
+    },
+    [setSelectedToFind, lateCallRecording, selectedToFind]
+  );
 
   function parseCallId(callId?: string) {
     if (!callId)
@@ -623,6 +710,7 @@ const AgentRecordingView = () => {
                             typeof lagDurationRaw === "number"
                               ? lagDurationRaw
                               : Number(lagDurationRaw);
+
                           const lagDurationLabel =
                             Number.isFinite(lagDurationValue) &&
                             lagDurationValue > 0
@@ -633,10 +721,13 @@ const AgentRecordingView = () => {
                             durationSeconds > 0
                               ? formatDuration(durationSeconds)
                               : lagDurationLabel;
+
                           const hasRecording =
                             (typeof durationSeconds === "number" &&
                               durationSeconds > 0) ||
                             Boolean(lagDurationLabel);
+
+                          const checkCallId = e.callId.split("_").length > 2;
 
                           const callRecord =
                             e.recordings?.length > 0
@@ -725,21 +816,80 @@ const AgentRecordingView = () => {
                                   <div>
                                     {ccsCall ? (
                                       <div className="flex justify-end items-center w-full">
-                                        {hasRecording ? (
-                                          <div
-                                            onClick={() =>
-                                              onDLRecordings(e._id, e.callId)
-                                            }
-                                            className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-20 justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
-                                          >
-                                            <FaDownload color="white" />
-                                            <p className="text-white">
-                                              {durationLabel || "Download"}
-                                            </p>
-                                          </div>
+                                        {checkCallId ? (
+                                          <>
+                                            {hasRecording ? (
+                                              <div
+                                                onClick={() =>
+                                                  onDLRecordings(
+                                                    e._id,
+                                                    e.callId
+                                                  )
+                                                }
+                                                className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-20 justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
+                                              >
+                                                <FaDownload color="white" />
+                                                <p className="text-white">
+                                                  {durationLabel || "Download"}
+                                                </p>
+                                              </div>
+                                            ) : (
+                                              <div className="text-gray-400 italic text-center">
+                                                No Recordings
+                                              </div>
+                                            )}
+                                          </>
                                         ) : (
-                                          <div className="text-gray-400 italic text-center">
-                                            No Recordings
+                                          <div className="relative">
+                                            {selectedToFind &&
+                                              selectedToFind === e._id && (
+                                                <div className="absolute right-[104%] border p-2 flex flex-col gap-2 bg-white">
+                                                  {!lateCallRecordingLoading ? (
+                                                    <>
+                                                      {lateCallRecordingsData.map(
+                                                        (x, index) => {
+                                                          const duration = x
+                                                            .split(".mp3_")[1]
+                                                            .split("_")[0];
+
+                                                          return (
+                                                            <div
+                                                              key={index}
+                                                              className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-20 justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
+                                                              onClick={()=> {
+                                                                onDLRecordings(e._id,x)
+                                                               
+                                                              }}
+                                                            >
+                                                              <FaDownload color="white" />
+                                                              <p className="text-white">
+                                                                {formatDuration(
+                                                                  duration
+                                                                )}
+                                                              </p>
+                                                            </div>
+                                                          );
+                                                        }
+                                                      )}
+                                                    </>
+                                                  ) : (
+                                                    <div className="cursor-progress">
+                                                      <CgSpinner className="text-xl animate-spin" />
+                                                    </div>
+                                                  )}
+                                                </div>
+                                              )}
+
+                                            <div
+                                              className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-20 justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
+                                              onClick={() => {
+                                                findLateRecording(e._id);
+                                              }}
+                                            >
+                                              <p className="text-white">
+                                                Click Me
+                                              </p>
+                                            </div>
                                           </div>
                                         )}
                                       </div>
