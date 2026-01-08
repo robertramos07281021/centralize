@@ -16,6 +16,7 @@ import AccountHistoriesView from "./AccountHistoriesView";
 import DispositionRecords from "./DispositionRecords";
 import UpdateCustomerAccount from "./UpdateCustomerAccount";
 import UpdatedAccountHistory from "./UpdatedAccountHistory";
+import MasterFileView from "./MasterFileView";
 import { motion, AnimatePresence } from "framer-motion";
 
 const OTHER_ACCOUNTS = gql`
@@ -336,6 +337,8 @@ const AccountInfo = forwardRef<
     notifyOnNetworkStatusChange: true,
   });
 
+  console.log(selectedCustomer);
+
   useEffect(() => {
     if (selectedCustomer) {
       const refetching = async () => {
@@ -624,12 +627,6 @@ const AccountInfo = forwardRef<
                       </div>
                     </div>
                   )}
-
-                  <div className="relative cursor-pointer">
-                    <div className="bg-amber-600 border-2 px-4 border-amber-900 hover:bg-amber-700 text-shadow-2xs text-center py-3 text-white transition-all cursor-pointer shadow-md rounded-md uppercase font-black text-xs">
-                      MASTERFILE
-                    </div>
-                  </div>
                 </motion.div>
               )}
             </AnimatePresence>
@@ -699,26 +696,6 @@ const AccountInfo = forwardRef<
               />
             </div>
           </div>
-          <div className="grid grid-cols-3 font-medium px-5 gap-2">
-            <div>
-              <div className="uppercase">BA1 Tag:</div>
-              <div className="w-full p-1 pl-2 border border-black rounded-sm">
-                No information
-              </div>
-            </div>
-            <div>
-              <div className="uppercase">BA2 Tag:</div>
-              <div className="w-full p-1 pl-2 border border-black rounded-sm">
-                No information
-              </div>
-            </div>{" "}
-            <div>
-              <div className="uppercase">INS AMT:</div>
-              <div className="w-full p-1 pl-2 border border-black rounded-sm">
-                No information
-              </div>
-            </div>
-          </div>
 
           {!updateCustomerAccounts ? (
             <div className="flex flex-col bg-gray-100 border-black border-b rounded-b-md shadow-md px-5 pb-5 items-end justify-center gap-1 text-slate-800 uppercase font-medium">
@@ -774,7 +751,13 @@ const AccountInfo = forwardRef<
                           {dfLabel}
                         </h1>
                         <div className=" w-full pl-2 p-1 border border-black rounded-sm">
-                          {remMonthsValue}
+                          {remMonthsValue || 0 > 0 ? (
+                            remMonthsValue
+                          ) : (
+                            <div className="2xl:p-0.5 first-letter:uppercase truncate italic text-gray-400 lowercase 2xl:text-sm lg:text-base">
+                              No information
+                            </div>
+                          )}
                         </div>
                       </div>
                     </div>

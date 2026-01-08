@@ -345,7 +345,7 @@ const DispositionForm: React.FC<Props> = ({
     (x) => x.existing === true
   );
 
-  const neverChangeContactMethod = ["PTP", "UNEG", "PAID", "DEC", "RTP", "ITP"];
+  const neverChangeContactMethod = ["PTP", "UNEG", "PAID"];
   const dispoNeverChangeContactMethod = disposition?.getDispositionTypes
     .filter((x) => neverChangeContactMethod.includes(x.code))
     .map((x) => x.id);

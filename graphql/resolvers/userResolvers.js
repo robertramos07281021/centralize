@@ -736,7 +736,7 @@ const userResolvers = {
     resetPassword: async (_, { id }) => {
       try {
         const saltPassword = await bcrypt.genSalt(10);
-        const hashPassword = await bcrypt.hash("Bernales2025", saltPassword);
+        const hashPassword = await bcrypt.hash("Bernales2026", saltPassword);
         const user = await User.findByIdAndUpdate(
           id,
           {

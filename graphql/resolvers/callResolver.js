@@ -835,7 +835,7 @@ const callResolver = {
 
         const res = await getRecordings(splitMobile[1], viciId, null);
 
-        if (!res || res.include("ERROR")) return null;
+        if (!res || res.includes("ERROR")) return null;
 
         const userInfoRes = await getUserInfo(splitMobile[1], viciId);
         const campaign_ID = userInfoRes.split("computer_ip")[1]?.split(",")[3];

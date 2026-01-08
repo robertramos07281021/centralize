@@ -10,6 +10,7 @@ import AccountInfo, {
 import DispositionForm from "../components/DispositionForm";
 import { gql, useMutation, useQuery, useSubscription } from "@apollo/client";
 import { Search, CustomerRegistered } from "../middleware/types";
+import MasterFileModal from "../components/MasterFileView.tsx";
 import {
   setCallUniqueId,
   setDeadCall,
@@ -478,7 +479,7 @@ const SearchResult = memo(
                 <div
                   className="px-2 font-medium text-slate-600 uppercase block"
                   dangerouslySetInnerHTML={{
-                    __html: customer.customer_info.fullName.replace(
+                    __html: (customer.customer_info.fullName || "").replace(
                       new RegExp(escapeRegExp(search), "gi"),
                       (match) => `<mark>${match}</mark> - <span>`
                     ),
@@ -1308,6 +1309,9 @@ const CustomerDisposition = () => {
   }, [data, dispatch]);
 
   const [showHelper, setShowHelper] = useState<boolean>(false);
+  const [showMasterFile, setShowMasterFile] = useState<boolean>(false);
+
+  console.log(userLogged?.buckets, "user buckets");
 
   const isLoading = loading || selectTaskLoading;
 
@@ -1322,7 +1326,27 @@ const CustomerDisposition = () => {
     <>
       {showHelper && <Helper close={() => setShowHelper(false)} />}
       <div className="overflow-hidden flex flex-col relative h-full w-full">
-         {!selectedCustomer && (
+        <AnimatePresence>
+          {(showMasterFile || !selectedCustomer) && (
+            <motion.div
+              initial={{ scale: 0.8, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.8, opacity: 0 }}
+              transition={{ duration: 0.3, type: "spring" }}
+              onClick={() => setShowMasterFile(true)}
+              title="Master File"
+              className="absolute cursor-pointer bg-yellow-600 text-white border-yellow-900 text-shadow-2xs hover:bg-yellow-700 top-5 left-5 py-1 px-3 font-black rounded-sm shadow-md border-2"
+            >
+              M
+              <div className="absolute -top-3 -right-4 rotate-12 text-[0.5rem] bg-green-600 border-green-800 px-1.5 py-0.5 border-2 rounded-full  " >NEW</div>
+            </motion.div>
+          )}
+          {showMasterFile && !selectedCustomer && (
+            <MasterFileModal close={() => setShowMasterFile(false)} />
+          )}
+        </AnimatePresence>
+
+        {!selectedCustomer && (
           <div className="absolute bottom-3 left-3 ">
             <button
               className=" rounded-full text-2xl p-2 bg-blue-600 hover:bg-blue-700 shadow-md hover:shadow-none flex items-center justify-center cursor-pointer text-b transition-all font-bold "
