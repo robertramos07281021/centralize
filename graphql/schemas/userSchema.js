@@ -152,7 +152,7 @@ const userTypeDefs = gql`
     account_type: String
     callfile_id: String
     vici_id: String
-    softphone: String
+    softphone: String!
   }
 
   input UpdateAccount {
@@ -166,6 +166,7 @@ const userTypeDefs = gql`
     account_type: String
     id: ID!
     vici_id: String
+    softphone: String!
   }
 
   input UpdateQAInput {

@@ -773,6 +773,9 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                 autoComplete="off"
                 disabled={!isUpdate}
                 value={data.softphone}
+                onChange={(e)=> {
+                  setData((prev)=> ({...prev, softphone: e.target.value}))
+                }}
                 className={`${
                   data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"
                 }  border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}
