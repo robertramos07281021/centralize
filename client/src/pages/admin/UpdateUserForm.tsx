@@ -94,6 +94,7 @@ const RESET_PASSWORD = gql`
         active
         _id
         user_id
+        softphone
       }
     }
   }
@@ -120,6 +121,7 @@ const UPDATE_USER = gql`
         _id
         user_id
         vici_id
+        softphone
       }
     }
   }
@@ -144,6 +146,7 @@ const STATUS_UPDATE = gql`
         callfile_id
         isOnline
         buckets
+        softphone
         targets {
           daily
           weekly
@@ -176,6 +179,7 @@ const UNLOCK_USER = gql`
         callfile_id
         isOnline
         buckets
+        softphone
         targets {
           daily
           weekly
@@ -208,6 +212,7 @@ const LOGOUT_USER = gql`
         callfile_id
         isOnline
         buckets
+        softphone
         targets {
           daily
           weekly
@@ -254,13 +259,21 @@ type Data = {
   callfile_id: string;
   user_id: string;
   vici_id: string;
+  softphone: string;
 };
 
 const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
-  const validForCampaignAndBucket = ["AGENT", "TL", "MIS", "ADMIN", "QA", "QASUPERVISOR"];
+  const validForCampaignAndBucket = [
+    "AGENT",
+    "TL",
+    "MIS",
+    "ADMIN",
+    "QA",
+    "QASUPERVISOR",
+  ];
 
   const { data: branchesData, refetch: branchRefetch } = useQuery<{
     getBranches: Branch[];
@@ -308,6 +321,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
     callfile_id: "",
     account_type: "",
     user_id: "",
+    softphone: "",
     vici_id: "",
   });
 
@@ -324,6 +338,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
         account_type: state?.account_type,
         user_id: state?.user_id || "",
         vici_id: state.vici_id || "",
+        softphone: state.softphone || "",
       });
     }
   }, [state]);
@@ -494,6 +509,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
       callfile_id: state?.callfile_id,
       user_id: state?.user_id,
       vici_id: state?.vici_id,
+      softphone: state?.softphone,
     });
   };
 
@@ -755,8 +771,8 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                 id="callfile_id"
                 name="callfile_id"
                 autoComplete="off"
-                disabled={true}
-                placeholder="Under Construction"
+                disabled={!isUpdate}
+                value={data.softphone}
                 className={`${
                   data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"
                 }  border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}

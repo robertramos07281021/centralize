@@ -92,6 +92,7 @@ const FIND_QUERY = gql`
         callfile_id
         isOnline
         buckets
+        softphone
         targets {
           daily
           weekly

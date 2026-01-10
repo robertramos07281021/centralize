@@ -68,6 +68,7 @@ const userTypeDefs = gql`
     handsOn: ID
     scoreCardType: String
     features: Features
+    softphone: String
   }
 
   type PaginatedUsers {

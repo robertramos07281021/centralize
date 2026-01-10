@@ -46,6 +46,7 @@ export type Users = {
   user_id: string;
   targets: Targets;
   vici_id: string;
+  softphone: string
 };
 
 // _id
