@@ -237,7 +237,7 @@ const AgentRecordingView = () => {
     }
   );
 
-  const [cantFindOnFTP, { loading: cantFindOnFTPLoading }] = useLazyQuery<{
+  const [cantFindOnFTP] = useLazyQuery<{
     cantFindOnFTP: CantFind[];
   }>(CANT_FIND_ON_FTP, {
     notifyOnNetworkStatusChange: true,
@@ -727,7 +727,7 @@ const AgentRecordingView = () => {
                               durationSeconds > 0) ||
                             Boolean(lagDurationLabel);
 
-                          const checkCallId = e.callId.split("_").length > 2;
+                          const checkCallId = e.callId?.split("_").length > 2;
 
                           const callRecord =
                             e.recordings?.length > 0

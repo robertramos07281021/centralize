@@ -56,6 +56,11 @@ const customerTypeDefs = gql`
     term: Float
     rem_months: Float
     product: String
+    client_type: String
+    overdue_balance: Float
+    client_id: String
+    loan_start: String
+    due_date: String
   }
 
   type CustomerInfo {
@@ -107,6 +112,11 @@ const customerTypeDefs = gql`
     term: Float
     rem_months: Float
     product: String
+    client_type: String
+    overdue_balance: Float
+    client_id: String
+    loan_start: String
+    due_date: String
   }
 
   type grassDetails {
@@ -181,6 +191,11 @@ const customerTypeDefs = gql`
     endorsement_date: String
     credit_customer_id: String
     bill_due_date: String
+    client_type: String
+    overdue_balance: Float
+    client_id: String
+    due_date: String
+    loan_start: String
     max_dpd: Int
     balance: Float
     dpd: Int
@@ -213,6 +228,11 @@ const customerTypeDefs = gql`
     endorsement_date: String
     credit_customer_id: String
     bill_due_date: String
+    client_type: String
+    overdue_balance: Float
+    client_id: String
+    due_date: String
+    loan_start: String
     max_dpd: Int
     balance: Float
     month_pd: Int

@@ -670,7 +670,6 @@ const productionResolver = {
           startOfTheDay = start;
 
           const end = new Date();
-
           end.setHours(23, 59, 59, 999);
           endOfTheDay = end;
         } else if ((!from && to) || (!to && from)) {
@@ -693,7 +692,7 @@ const productionResolver = {
         const users = (
           await User.find({ buckets: bucketId, type: "AGENT" })
         ).map((x) => new mongoose.Types.ObjectId(x._id));
-
+     
         const production = await Production.aggregate([
           {
             $match: {

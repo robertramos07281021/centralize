@@ -134,6 +134,11 @@ export type OutStandingDetails = {
   paid: number;
   product: string;
   term: number;
+  client_type: string;
+  overdue_balance: number;
+  client_id: string;
+  loan_start: string;
+  due_date: string;
 };
 
 type grassDetails = {

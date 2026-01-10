@@ -1257,8 +1257,13 @@ const customerResolver = {
             case_id: e.case_id,
             callfile: newCallfile._id,
             credit_customer_id: e.credit_user_id,
+            client_type: e.client_type,
+            overdue_balance: e.overdue_balance,
+            client_id: e.client_id,
+            due_date: e.due_date,
+            loan_start: e.loan_start,
             endorsement_date: e.endorsement_date,
-            bill_due_day: e.bill_due_day,
+            bill_due_date: e.bill_due_date,
             max_dpd: e.max_dpd,
             dpd: e.dpd,
             balance: e.balance,
@@ -1295,6 +1300,11 @@ const customerResolver = {
               paid: e.paid,
               rem_months: e.rem_months,
               product: e.product,
+              client_type: e.client_type,
+              overdue_balance: e.overdue_balance,
+              client_id: e.client_id,
+              loan_start: e.loan_start,
+              due_date: e.due_date,
             },
             emergency_contact: {
               name: e.emergencyContactName,
@@ -1338,6 +1348,7 @@ const customerResolver = {
           message: "Callfile successfully created",
         };
       } catch (error) {
+        console.log(error);
         throw new CustomError(error.message, 500);
       }
     },

@@ -294,6 +294,13 @@ const CallLogs = () => {
                 const session = newtext[2];
 
                 const canBarge =
+                  (x.includes("INCALL") &&
+                    !x.includes("DEAD") &&
+                    !x.includes("DISPO") &&
+                    !x.includes("DIAL")) ||
+                  Boolean(session);
+
+                const canBargeAndLive =
                   x.includes("INCALL") &&
                   !x.includes("DEAD") &&
                   !x.includes("DISPO") &&
@@ -400,7 +407,7 @@ const CallLogs = () => {
                               </div>
                             )
                           ) : colIndex === 11 ? (
-                            canBarge ? (
+                            canBargeAndLive ? (
                               <div className="w-full flex justify-center">
                                 <div
                                   className="text-xs cursor-default shadow-md font-black uppercase text-white px-3 py-1 border-2 border-red-900 rounded-sm bg-red-600"

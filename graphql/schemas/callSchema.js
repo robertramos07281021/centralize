@@ -22,7 +22,6 @@ const callTypeDefs = gql`
     bargeCall(session_id:String,viciUser_id: String):String
     updateDialNext(callfile:ID!):Success
     lateCallRecording(id: ID):[String]
-    getLastCall(phone:String):String
   }
   
 `

@@ -67,7 +67,7 @@ import patchUpdateResolver from "./graphql/resolvers/updateResolver.js";
 import patchUpdateTypeDefs from "./graphql/schemas/updateSchema.js";
 
 const __filename = fileURLToPath(import.meta.url);
-const sftp = new Client();
+
 const __dirname = path.dirname(__filename);
 
 EventEmitter.defaultMaxListeners = 5000;

@@ -16,7 +16,6 @@ import AccountHistoriesView from "./AccountHistoriesView";
 import DispositionRecords from "./DispositionRecords";
 import UpdateCustomerAccount from "./UpdateCustomerAccount";
 import UpdatedAccountHistory from "./UpdatedAccountHistory";
-import MasterFileView from "./MasterFileView";
 import { motion, AnimatePresence } from "framer-motion";
 
 const OTHER_ACCOUNTS = gql`
@@ -28,6 +27,11 @@ const OTHER_ACCOUNTS = gql`
       endorsement_date
       credit_customer_id
       bill_due_date
+      client_type
+      overdue_balance
+      client_id
+      due_date
+      loan_start
       max_dpd
       dpd
       balance
@@ -95,6 +99,11 @@ const OTHER_ACCOUNTS = gql`
         product
         rem_months
         paid
+        client_type
+        overdue_balance
+        client_id
+        due_date
+        loan_start
       }
       grass_details {
         grass_region
@@ -291,7 +300,10 @@ const FieldsDiv = ({
 
   return (
     <div className="flex flex-col items-center w-full gap-0.5">
-      <p className="text-black font-bold text-start w-full 2xl:text-sm text-xs leading-4 select-none">
+      <p
+        className="text-black truncate font-bold text-start w-full 2xl:text-sm text-xs leading-4 select-none"
+        title={label}
+      >
         {label} :
       </p>
       <div
@@ -337,8 +349,6 @@ const AccountInfo = forwardRef<
     notifyOnNetworkStatusChange: true,
   });
 
-  console.log(selectedCustomer);
-
   useEffect(() => {
     if (selectedCustomer) {
       const refetching = async () => {
@@ -356,6 +366,8 @@ const AccountInfo = forwardRef<
     skip: !selectedCustomer && !isTLCIP,
     notifyOnNetworkStatusChange: true,
   });
+
+  console.log(selectedCustomer);
 
   const [isClose, setIsClose] = useState(false);
   const [showButton, setShowButton] = useState<boolean>(false);
@@ -402,7 +414,7 @@ const AccountInfo = forwardRef<
   const bucketName = (
     selectedCustomer?.account_bucket?.name || ""
   ).toUpperCase();
-  const isSumisho = bucketName === "SUMISHO";
+  const isSumisho = bucketName === "SUMISHO" || "CIGNAL";
   const restructuringLabel = isSumisho ? "Product" : "Restructuring Balance";
   const dfLabel = isSumisho ? "Rem Months" : "DF";
   const interest = isSumisho ? "PAID" : "Interest";
@@ -421,6 +433,8 @@ const AccountInfo = forwardRef<
   const remMonthsValue =
     selectedCustomer?.out_standing_details?.rem_months ??
     selectedCustomer?.out_standing_details?.cf;
+
+  console.log(selectedCustomer?.out_standing_details);
 
   return (
     <div className="w-full h-full">
@@ -763,6 +777,101 @@ const AccountInfo = forwardRef<
                     </div>
                   </div>
                 )}
+              {bucketName === "FINBRO" && (
+                <div className="grid w-full gap-2 text-black text-sm grid-cols-4 grid-rows-2">
+                  <div className="flex flex-col">
+                    <div>Client Type: </div>
+                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                      {selectedCustomer?.out_standing_details?.client_type || (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="truncate">Overdue Balance: </div>
+                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                      {(selectedCustomer?.out_standing_details
+                        ?.overdue_balance ?? 0) > 0 ? (
+                        (
+                          selectedCustomer?.out_standing_details
+                            ?.overdue_balance ?? 0
+                        ).toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })
+                      ) : (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <div>Client ID: </div>
+                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                      {selectedCustomer?.out_standing_details?.client_id || (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <div>Loan Start: </div>
+                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                      {selectedCustomer?.out_standing_details?.loan_start || (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <div className="truncate">Last Payment Date: </div>
+                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                      {selectedCustomer?.out_standing_details
+                        ?.last_payment_date || (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="truncate">Last Payment Amount: </div>
+                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                      {(selectedCustomer?.out_standing_details
+                        ?.last_payment_amount ?? 0) > 0 ? (
+                        (
+                          selectedCustomer?.out_standing_details
+                            ?.last_payment_amount ?? 0
+                        ).toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        })
+                      ) : (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                  <div className="flex flex-col col-span-2">
+                    <div>Due Date: </div>
+                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                      {selectedCustomer?.out_standing_details?.due_date || (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
 
               {selectedCustomer &&
                 agentBucketData?.getDeptBucket?.some(
@@ -1097,6 +1206,7 @@ const AccountInfo = forwardRef<
             </div>
           )}
         </motion.div>
+
         {selectedCustomer &&
           data &&
           data?.customerOtherAccounts?.length > 0 &&

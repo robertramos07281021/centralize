@@ -201,16 +201,16 @@ export async function getRecordings(vici_id, agent_user, dateFilter) {
     const day = date.getDate();
     const month = date.getMonth() + 1;
 
-
-
     const { data } = await axios.get(VICIDIAL_API, {
       params: {
         ...credentials,
         pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         function: "recording_lookup",
-        date: dateFilter ? dateFilter : `${year}-${month.toString().padStart(2, "0")}-${day
-          .toString()
-          .padStart(2, "0")}`,
+        date: dateFilter
+          ? dateFilter
+          : `${year}-${month.toString().padStart(2, "0")}-${day
+              .toString()
+              .padStart(2, "0")}`,
         agent_user,
         duration: "Y",
       },
@@ -374,10 +374,36 @@ export async function checkViciPhoneNumberLog(vici_id, phone) {
       params: {
         ...credentials,
         pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
-        function: "phone_number_log ",
+        function: "phone_number_log",
         phone_number: phone,
-        stage:"pipe",
-        detail: "LAST"
+        stage: "pipe",
+        detail: "LAST",
+      },
+    });
+
+    return res.data;
+  } catch (error) {
+    console.error("❌ Error Logout Vici:", error.message);
+  }
+}
+
+export async function bucketUsersStatus(vici_id) {
+  const safeViciId = normalizeViciId(vici_id);
+  if (!safeViciId) return null;
+
+  const VICIDIAL_API = `http://${safeViciId}/vicidial/non_agent_api.php`;
+  try {
+    const today = new Date().toISOString().split('T')[0];
+
+    const res = await axios.get(VICIDIAL_API, {
+      params: {
+        ...credentials,
+        pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
+        function: "agent_stats_export",
+        stage: "pipe",
+        time_format: "M",
+        datetime_start: `${today}+00:00:00`,
+        datetime_end: `${today}+23:59:59`,
       },
     });
 

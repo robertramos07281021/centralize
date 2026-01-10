@@ -83,8 +83,6 @@ const QAAgentViews = () => {
     }
   );
 
-  console.log(agendivata);
-
   const newMapBucjket = useMemo(() => {
     const bucketData = data?.getAllBucket || [];
     return Object.fromEntries(bucketData.map((d) => [d._id, d.name]));

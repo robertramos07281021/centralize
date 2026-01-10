@@ -1,6 +1,3 @@
-import React from "react";
-import gql from "graphql-tag";
-import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
 
 
 

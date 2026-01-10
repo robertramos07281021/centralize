@@ -134,10 +134,6 @@ const StatisticsView = () => {
                     className="w-full bg-transparent outline-none"
                     placeholder="Enter Vici dial ID"
                     value={vici_id || ""}
-                    minLength={6}
-                    maxLength={8}
-                    min={6}
-                    max={8}
                     onChange={(e) => {
                       const value =
                         e.target.value.trim() === "" ? null : e.target.value;
@@ -147,7 +143,7 @@ const StatisticsView = () => {
                   />
                   <div
                     title={
-                      "VICI ID is your USER ID in the VICI dialer system\ncomposed of your birth date. (Eg. MMDDYYYY)"
+                      "VICI ID is your USER ID in the VICI dialer system\nthe one you use to login to vicidial"
                     }
                   >
                     <svg

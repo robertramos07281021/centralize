@@ -38,7 +38,6 @@ enum Type {
   QASUPERVISOR = "QA SUPERVISOR",
   COMPLIANCE = "COMPLIANCE",
   FIELD = "FIELD",
-
 }
 
 enum AccountType {
@@ -101,6 +100,12 @@ const GET_DEPT_BUCKET = gql`
   }
 `;
 
+const GET_BUCKET_VICIIDS = gql`
+  query getBucketViciIds($bucketIds: [ID]) {
+    getBucketViciIds(bucketIds: $bucketIds)
+  }
+`;
+
 const validForCampaignAndBucket = ["TL", "AGENT", "MIS", "QA", "COMPLIANCE"];
 
 type RegisterProps = {
@@ -124,6 +129,37 @@ const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
     softphone: null,
   });
   const dispatch = useAppDispatch();
+
+  const [viciIdsAccounts, setViciIdsAccounts] = useState<
+    { name: string; vici_id: string }[]
+  >([]);
+
+  const { refetch } = useQuery<{ getBucketViciIds: string[] }>(
+    GET_BUCKET_VICIIDS,
+    { variables: { bucketIds: data.buckets } }
+  );
+
+  useEffect(() => {
+    if (data.buckets.length > 0) {
+      const refetching = async () => {
+        const res = await refetch({
+          variables: { bucketIds: data?.buckets },
+        });
+        const newRes = res.data.getBucketViciIds.map((x) => {
+          const resultSplit = x.split("|");
+          const name = resultSplit[1];
+          const viciId = resultSplit[0];
+          return {
+            name: name,
+            vici_id: viciId,
+          };
+        });
+        setViciIdsAccounts(newRes);
+      };
+      refetching();
+    }
+  }, [data.buckets]);
+  console.log(viciIdsAccounts);
 
   const { data: branchQuery } = useQuery<{ getBranches: Branch[] }>(
     BRANCH_QUERY
@@ -200,7 +236,7 @@ const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
       }
     },
     onError: (error) => {
-      console.log(error)
+      console.log(error);
       const errorMessage = error?.message;
       if (errorMessage?.includes("E11000")) {
         reset();
@@ -300,9 +336,9 @@ const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
         vici_id: null,
         softphone: null,
       }));
-    } else { 
-      setSelectDept(false)
-      setSelectBucket(false)
+    } else {
+      setSelectDept(false);
+      setSelectBucket(false);
       setData((prev) => ({
         ...prev,
         name: null,
@@ -537,41 +573,14 @@ const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
                   <option value={AccountType.SKIPER}>Skipper</option>
                 </select>
               </label>
-              <label className="flex flex-col">
-                <p className="font-black text-slate-800 ">
-                  VICI ID:{" "}
-                  <span className="text-red-500">
-                    {data.type && required && !data.vici_id ? "*" : ""}
-                  </span>
-                </p>
-
-                <input
-                  id="vici_id"
-                  disabled={
-                    !data.type ||
-                    !validForCampaignAndBucket.toString().includes(data.type)
-                  }
-                  className={` ${
-                    !data.type ||
-                    !validForCampaignAndBucket.toString().includes(data.type)
-                      ? "bg-gray-200"
-                      : "bg-gray-50"
-                  } w-full bg-gray-100 px-5 py-2 pr-1 rounded-md focus:outline-none border border-slate-300 `}
-                  value={data.vici_id || ""}
-                  onChange={(e) => {
-                    const value =
-                      e.target.value.trim() === "" ? null : e.target.value;
-                    setData((prev) => ({ ...prev, vici_id: value }));
-                  }}
-                />
-              </label>
             </div>
 
             <label className="w-full">
               <p className="w-full text-base font-black uppercase text-slate-800">
-                Branch: <span className="text-red-500">
-                    {data.type && required && !data.branch ? "*" : ""}
-                  </span>
+                Branch:{" "}
+                <span className="text-red-500">
+                  {data.type && required && !data.branch ? "*" : ""}
+                </span>
               </p>
               <select
                 id="branch"
@@ -584,7 +593,7 @@ const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
                     ...prev,
                     branch: value,
                     departments: [],
-                    buckets: []
+                    buckets: [],
                   }));
                 }}
                 disabled={
@@ -610,9 +619,15 @@ const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
 
           <div className="w-full relative" ref={campaignDiv}>
             <p className="w-full text-base font-black uppercase text-slate-800">
-              Campaign: <span className="text-red-500">
-                  {data.branch && data.type && required && data.departments.length <= 0 ? "*" : ""}
-                </span>
+              Campaign:{" "}
+              <span className="text-red-500">
+                {data.branch &&
+                data.type &&
+                required &&
+                data.departments.length <= 0
+                  ? "*"
+                  : ""}
+              </span>
             </p>
             <div
               className={`${
@@ -714,9 +729,15 @@ const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
           </div>
           <div className="w-full relative" ref={bucketDiv}>
             <p className="w-full text-base font-black uppercase text-slate-800">
-              Bucket: <span className="text-red-500">
-                  {data.departments.length > 0 && data.type && required && data.buckets.length <= 0 ? "*" : ""}
-                </span>
+              Bucket:{" "}
+              <span className="text-red-500">
+                {data.departments.length > 0 &&
+                data.type &&
+                required &&
+                data.buckets.length <= 0
+                  ? "*"
+                  : ""}
+              </span>
             </p>
             <div
               className={`${
@@ -771,6 +792,49 @@ const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
                     setSelectBucket((prev) => !prev);
                 }}
               />
+            </div>
+            <div>
+              <label className="flex flex-col">
+                <p className="font-black text-slate-800 ">
+                  VICI ID:{" "}
+                  <span className="text-red-500">
+                    {data.type && required && !data.vici_id ? "*" : ""}
+                  </span>
+                </p>
+
+                <input
+                  id="vici_id"
+                  name="vici_id"
+                  list="viciIds"
+                  disabled={
+                    !data.type ||
+                    !validForCampaignAndBucket.toString().includes(data.type) ||
+                    data?.buckets?.length < 1
+                  }
+                  className={` ${
+                    !data.type ||
+                    !validForCampaignAndBucket.toString().includes(data.type) ||
+                    data?.buckets?.length < 1
+                      ? "bg-gray-200"
+                      : "bg-gray-50"
+                  } w-full bg-gray-100 px-5 py-2 pr-1 rounded-md focus:outline-none border border-slate-300 `}
+                  value={data.vici_id || ""}
+                  onChange={(e) => {
+                    const value =
+                      e.target.value.trim() === "" ? null : e.target.value;
+                    setData((prev) => ({ ...prev, vici_id: value }));
+                  }}
+                />
+                <datalist id="viciIds">
+                  {viciIdsAccounts.map((via, index) => {
+                    return (
+                      <option value={via.vici_id} key={index}>
+                        {via.name}
+                      </option>
+                    );
+                  })}
+                </datalist>
+              </label>
             </div>
             {selectBucket && data.departments.length > 0 && (
               <div className="w-full  absolute left-0 top-[70px] bg-white border-slate-300 p-1.5 max-h-28 rounded-b-md overflow-y-auto border z-40">

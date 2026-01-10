@@ -137,6 +137,7 @@ const userTypeDefs = gql`
     getHelperAgent: [Users]
     getBucketTL(bucketId: ID): [Users]
     getBucketTLByBucket(bucketId: ID!): [Users]
+    getBucketViciIds(bucketIds:[ID]):[String]
   }
 
   input CreatingAccount {

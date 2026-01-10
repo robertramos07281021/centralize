@@ -963,6 +963,20 @@ const callResolver = {
               preserveNullAndEmptyArrays: true,
             },
           },
+          {
+            $lookup: {
+              from: "users",
+              localField: "user",
+              foreignField: "_id",
+              as: "user",
+            },
+          },
+          {
+            $unwind: {
+              path: "$user",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
         ]);
 
         const dispoDate = dispo[0].createdAt;
@@ -977,7 +991,7 @@ const callResolver = {
 
         const getRecordingManual = await getRecordings(
           dispo[0].bucket.viciIp,
-          user.vici_id,
+          dispo[0].user.vici_id,
           formattedDate
         );
 
@@ -991,7 +1005,7 @@ const callResolver = {
         if (dispo[0].bucket.viciIp_auto) {
           const getRecordingAuto = await getRecordings(
             dispo[0].bucket.viciIp_auto,
-            user.vici_id,
+            dispo[0].user.vici_id,
             formattedDate
           );
 
@@ -1045,9 +1059,6 @@ const callResolver = {
         throw new CustomError(error.message, 500);
       }
     },
-    getLastCall: async (_,{phone,vici_id}) => {
-
-    }
   },
 };
 

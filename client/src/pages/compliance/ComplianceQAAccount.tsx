@@ -1,13 +1,12 @@
 import React, { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import gql from "graphql-tag";
-import { useLazyQuery, useMutation, useQuery } from "@apollo/client";
+import { useQuery } from "@apollo/client";
 
 type Dept = {
   name: string;
   id: string;
 };
-
 
 const GET_ALL_BUCKETS = gql`
   query GetAllBucket {
@@ -28,7 +27,7 @@ const GET_ALL_CAMPAIGNS = gql`
 `;
 
 const GET_ALL_QA_ACCOUNTS = gql`
-  query GetQAUsers($page: Int!, $limit: Int!) {
+  query getQAUsers($page: Int!, $limit: Int!) {
     getQAUsers(page: $page, limit: $limit) {
       users {
         _id
@@ -46,17 +45,32 @@ const GET_ALL_QA_ACCOUNTS = gql`
   }
 `;
 
+type QaUser = {
+  _id: string;
+  name: string;
+  active: boolean;
+  type: string;
+  buckets: string[];
+  isOnline: boolean;
+  isLock: boolean;
+  departments: string[];
+  scoreCardType: string;
+};
+
+type QaAccounts = {
+  users: QaUser[];
+  total: number;
+};
+
 const ComplianceQAAccount = () => {
-  const { data, loading, error } = useQuery<{ getDepts: Dept[] }>(
-    GET_ALL_CAMPAIGNS
-  );
+  const { data } = useQuery<{ getDepts: Dept[] }>(GET_ALL_CAMPAIGNS);
   const [isDeptOpen, setIsDeptOpen] = useState(false);
-  const [selectedDept, setSelectedDept] = useState(null);
-  const [qaUsers, setQaUsers] = useState([]);
+  const [selectedDept, setSelectedDept] = useState<Dept | null>(null);
+  const [qaUsers, setQaUsers] = useState<QaUser[]>([]);
   const { data: bucketsData } = useQuery(GET_ALL_BUCKETS);
   const [page] = useState(1);
   const [limit] = useState(50);
-  const { data: usersData, loading: usersLoading } = useQuery(
+  const { data: usersData } = useQuery<{ getQAUsers: QaAccounts }>(
     GET_ALL_QA_ACCOUNTS,
     {
       variables: { page, limit },
@@ -65,14 +79,15 @@ const ComplianceQAAccount = () => {
 
   React.useEffect(() => {
     if (usersData?.getQAUsers?.users) {
-      setQaUsers(usersData.getQAUsers.users);
+      setQaUsers(usersData?.getQAUsers?.users);
     }
   }, [usersData]);
 
   const filteredUsers = React.useMemo(() => {
     if (!selectedDept) return qaUsers;
     return qaUsers.filter(
-      (user) => user.departments && user.departments.includes(selectedDept.id)
+      (user) =>
+        user?.departments && user?.departments?.includes(selectedDept?.id)
     );
   }, [qaUsers, selectedDept]);
 
@@ -94,7 +109,7 @@ const ComplianceQAAccount = () => {
               className="py-1 px-3 items-center  border rounded-sm bg-gray-100 flex cursor-pointer gap-4 transition-all hover:bg-gray-200"
             >
               <div className="">
-                {selectedDept ? selectedDept.name : "Select a Campaign"}
+                {selectedDept ? selectedDept?.name : "Select a Campaign"}
               </div>
               <div>
                 <svg
@@ -146,7 +161,7 @@ const ComplianceQAAccount = () => {
             <div>Name</div>
             <div>Campaign</div>
             <div>Buckets</div>
-            <div className="text-center" >Online</div>
+            <div className="text-center">Online</div>
           </div>
           <div className="overflow-auto h-[95.5%]">
             {filteredUsers && filteredUsers.length > 0 ? (
@@ -154,9 +169,9 @@ const ComplianceQAAccount = () => {
                 <motion.div
                   key={user._id}
                   className="grid grid-cols-4 hover:bg-gray-200 border-gray-400 gap-2 px-2 py-2 border-b lastborder-b-0 items-center bg-white odd:bg-gray-100"
-                    initial={{ opacity: 0 }}
-                    animate={{ opacity: 1 }}
-                    transition={{ duration: 0.2, delay: index * 0.1 }}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.2, delay: index * 0.1 }}
                 >
                   <div className="first-letter:uppercase">{user.name}</div>
                   <div>
@@ -168,14 +183,20 @@ const ComplianceQAAccount = () => {
                           const dept = data.getDepts.find(
                             (d) => d.id === deptId
                           );
-                          return dept && dept.name !== "ADMIN" ? dept.name : null;
+                          return dept && dept.name !== "ADMIN"
+                            ? dept.name
+                            : null;
                         })
                         .filter(Boolean)
                         .join(", ") || (
-                          <span className="text-xs text-gray-400 italic">No campaign</span>
-                        )
+                        <span className="text-xs text-gray-400 italic">
+                          No campaign
+                        </span>
+                      )
                     ) : (
-                      <span className="text-xs text-gray-400 italic">No campaign</span>
+                      <span className="text-xs text-gray-400 italic">
+                        No campaign
+                      </span>
                     )}
                   </div>
                   <div>
@@ -185,13 +206,15 @@ const ComplianceQAAccount = () => {
                       user.buckets
                         .map((bucketId) => {
                           const bucket = bucketsData.getAllBucket.find(
-                            (b) => b._id === bucketId
+                            (b: any) => b._id === bucketId
                           );
                           return bucket ? bucket.name : bucketId;
                         })
                         .join(", ")
                     ) : (
-                      <span className="text-xs text-gray-400 italic">No buckets</span>
+                      <span className="text-xs text-gray-400 italic">
+                        No buckets
+                      </span>
                     )}
                   </div>
                   <div className="flex text-center justify-center items-center ml-5">

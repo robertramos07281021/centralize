@@ -10,7 +10,7 @@ import { DateTime } from "../../middlewares/dateTime.js";
 import Production from "../../models/production.js";
 import Bucket from "../../models/bucket.js";
 import mongoose from "mongoose";
-import { logoutVici } from "../../middlewares/vicidial.js";
+import { bucketUsersStatus, logoutVici } from "../../middlewares/vicidial.js";
 import CustomerAccount from "../../models/customerAccount.js";
 
 const userResolvers = {
@@ -201,8 +201,6 @@ const userResolvers = {
       try {
         if (!user) throw new CustomError("Not authenticated", 401);
 
-
-
         const agentWithHandleCustomer = await User.aggregate([
           {
             $match: {
@@ -234,7 +232,6 @@ const userResolvers = {
           {
             $unwind: { path: "$customer", preserveNullAndEmptyArrays: true },
           },
- 
         ]);
         return agentWithHandleCustomer;
       } catch (error) {
@@ -414,6 +411,30 @@ const userResolvers = {
         }).select("_id name buckets");
 
         return tls;
+      } catch (error) {
+        throw new CustomError(error.message, 500);
+      }
+    },
+    getBucketViciIds: async (_, { bucketIds }) => {
+      try {
+        const viciIds = [];
+
+        for (const bucketId of bucketIds) {
+          const findBucket = await Bucket.findById(bucketId);
+  
+          if (findBucket.viciIp) {
+            const res = await bucketUsersStatus(findBucket.viciIp);
+            const newRes = res.split("\n");
+            viciIds.push(...newRes.flat());
+          }
+          if (findBucket.viciIp_auto) {
+            const res2 = await bucketUsersStatus(findBucket.viciIp_auto);
+            const newRes2 = res2.split("\n");
+            viciIds.push(...newRes2.flat());
+          }
+        }
+
+        return viciIds;
       } catch (error) {
         throw new CustomError(error.message, 500);
       }

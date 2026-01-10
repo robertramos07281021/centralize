@@ -5,7 +5,7 @@ import { closeWsClient, getWsClient } from "./wsClient.ts";
 
 const httpLink = new HttpLink({
   // uri:'http://172.16.24.31:4000/graphql', // prod
-  uri:'http://172.16.24.31:4000/graphql', // dev
+  uri:'/graphql', // dev
   credentials: 'include',
 });
 

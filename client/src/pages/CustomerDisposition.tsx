@@ -37,8 +37,6 @@ import { motion, AnimatePresence } from "framer-motion";
 import Lottie from "lottie-react";
 import phone from "../Animations/Phone Call.json";
 import NeedToLoginVici from "./agent/NeedToLoginVici.tsx";
-import frequency from "../Animations/Sound voice waves.json";
-
 import Helper from "../components/Helper.tsx";
 
 const DESELECT_TASK = gql`
@@ -122,6 +120,12 @@ const PICK_RANDOM = gql`
         model
         last_payment_amount
         last_payment_date
+        client_type
+        overdue_balance
+        client_id
+        due_date
+        loan_start
+        term
       }
       grass_details {
         grass_region
@@ -239,6 +243,12 @@ const SEARCH = gql`
         model
         last_payment_amount
         last_payment_date
+        client_type
+        overdue_balance
+        client_id
+        due_date
+        loan_start
+        term
       }
       grass_details {
         grass_region
@@ -636,6 +646,10 @@ const CustomerDisposition = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
   const [dispoLoading, setDispoLoading] = useState<boolean>(false);
+
+  function isValidMobile(number: string): boolean {
+    return /^09\d{9}$/.test(number);
+  }
 
   useEffect(() => {
     if (readyForBreak && !selectedCustomer) {
@@ -1311,8 +1325,6 @@ const CustomerDisposition = () => {
   const [showHelper, setShowHelper] = useState<boolean>(false);
   const [showMasterFile, setShowMasterFile] = useState<boolean>(false);
 
-  console.log(userLogged?.buckets, "user buckets");
-
   const isLoading = loading || selectTaskLoading;
 
   if (isLoading) return <Loading />;
@@ -1327,7 +1339,7 @@ const CustomerDisposition = () => {
       {showHelper && <Helper close={() => setShowHelper(false)} />}
       <div className="overflow-hidden flex flex-col relative h-full w-full">
         <AnimatePresence>
-          {(showMasterFile || !selectedCustomer) && (
+          {userLogged.type === "TL" && (
             <motion.div
               initial={{ scale: 0.8, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -1338,10 +1350,12 @@ const CustomerDisposition = () => {
               className="absolute cursor-pointer bg-yellow-600 text-white border-yellow-900 text-shadow-2xs hover:bg-yellow-700 top-5 left-5 py-1 px-3 font-black rounded-sm shadow-md border-2"
             >
               M
-              <div className="absolute -top-3 -right-4 rotate-12 text-[0.5rem] bg-green-600 border-green-800 px-1.5 py-0.5 border-2 rounded-full  " >NEW</div>
+              <div className="absolute -top-3 -right-4 rotate-12 text-[0.5rem] bg-green-600 border-green-800 px-1.5 py-0.5 border-2 rounded-full  ">
+                NEW
+              </div>
             </motion.div>
           )}
-          {showMasterFile && !selectedCustomer && (
+          {showMasterFile && (
             <MasterFileModal close={() => setShowMasterFile(false)} />
           )}
         </AnimatePresence>
@@ -1694,7 +1708,7 @@ const CustomerDisposition = () => {
                 initial={{ opacity: 0, scale: 0.6 }}
                 animate={{ opacity: 1, scale: 1 }}
                 transition={{ duration: 1, type: "spring" }}
-                className={`" w-40 rounded-full cursor-grab active:cursor-grabbing absolute top-30 right-20 z-40 justify-center items-center flex "`}
+                className="w-40 rounded-full cursor-grab active:cursor-grabbing absolute top-30 right-20 z-40 justify-center items-center flex "
               >
                 {(randomLoading ||
                   getCallingRecordingLoading ||
@@ -1709,38 +1723,36 @@ const CustomerDisposition = () => {
                   </div>
                 ) : (
                   <>
-                    {!checkIfAgentIsInline?.includes("INCALL") &&
-                      !isRing &&
-                      !isAutoDialData?.isAutoDial && (
-                        <div
-                          onClick={() => {
-                            if (dial) {
-                              setManualDial(null);
-                              setBreaker(false);
-                              setDial((prev) => !prev);
-                            } else {
-                              setBreaker(false);
+                    {!isRing && (
+                      <div
+                        onClick={() => {
+                          if (dial) {
+                            setManualDial(null);
+                            setBreaker(false);
+                            setDial((prev) => !prev);
+                          } else {
+                            setBreaker(false);
 
-                              setDial((prev) => !prev);
-                            }
+                            setDial((prev) => !prev);
+                          }
+                        }}
+                        className="absolute z-50 -top-4 cursor-pointer"
+                      >
+                        <motion.div
+                          key={"dial-button-key"}
+                          initial={{ x: 0, y: 40, opacity: 0 }}
+                          animate={{ x: 0, y: 0, opacity: 1 }}
+                          transition={{
+                            type: "spring",
+                            delay: isRing ? 1.4 : 0.6,
                           }}
-                          className="absolute z-50 -top-4 cursor-pointer"
                         >
-                          <motion.div
-                            key={"dial-button-key"}
-                            initial={{ x: 0, y: 40, opacity: 0 }}
-                            animate={{ x: 0, y: 0, opacity: 1 }}
-                            transition={{
-                              type: "spring",
-                              delay: isRing ? 1.4 : 0.6,
-                            }}
-                          >
-                            <div className="bg-purple-600  text-white cursor-pointer border-purple-950 hover:bg-purple-700 hover:scale-105 text-sm transition-all px-3 py-1 rounded-md border-2 shadow-md font-black uppercase">
-                              Keypad{" "}
-                            </div>{" "}
-                          </motion.div>
-                        </div>
-                      )}
+                          <div className="bg-purple-600  text-white cursor-pointer border-purple-950 hover:bg-purple-700 hover:scale-105 text-sm transition-all px-3 py-1 rounded-md border-2 shadow-md font-black uppercase">
+                            Keypad{" "}
+                          </div>{" "}
+                        </motion.div>
+                      </div>
+                    )}
 
                     {/* Break button on bottom */}
                     {userLogged?.type === "AGENT" && (
@@ -1849,7 +1861,7 @@ const CustomerDisposition = () => {
                             <div className="justify-center text-center flex h-full">
                               <div
                                 onClick={() => {
-                                  if (manualDial && manualDial.length > 1) {
+                                  if (manualDial && manualDial.length > 0) {
                                     handleClear();
                                   }
                                 }}
@@ -1874,7 +1886,7 @@ const CustomerDisposition = () => {
                                 if (
                                   manualDial &&
                                   manualDial.length > 10 &&
-                                  manualDial.includes("09")
+                                  isValidMobile(manualDial)
                                 ) {
                                   dialManualNumber();
                                 }
@@ -1882,7 +1894,7 @@ const CustomerDisposition = () => {
                               className={`" ${
                                 manualDial &&
                                 manualDial.length > 10 &&
-                                manualDial.includes("09")
+                                isValidMobile(manualDial)
                                   ? "bg-green-500 hover:bg-green-600 border-black cursor-pointer text-white"
                                   : "bg-gray-400 border-gray-500 cursor-not-allowed text-gray-300"
                               }  h-full flex justify-center   transition-all shadow-md text-center items-center border  text-xs rounded-sm "`}
@@ -1894,21 +1906,10 @@ const CustomerDisposition = () => {
                       )}
                     </AnimatePresence>
 
-                    <div
-                      className={` ${
-                        (checkIfAgentIsInline?.includes("INCALL") &&
-                          !checkIfAgentIsInline?.includes("DIAL") &&
-                          !checkIfAgentIsInline?.includes("DEAD")) ||
-                        (checkIfAgentIsInline?.includes("PAUSED") &&
-                          checkIfAgentIsInline?.includes("LAGGED") &&
-                          checkIfAgentIsInline?.includes("DISPO"))
-                          ? "bg-purple-900 border-black"
-                          : "bg-gray-100 border-gray-900"
-                      }  p-2 border-2  rounded-full h-full w-full shadow-md shadow-black/20 `}
-                    >
-                      <div className={`transition-all duration-300 `}>
-                        <div className="w-full relative h-full flex justify-center items-center">
-                          {/* Frequency */}
+                    <div className="bg-gray-100 border-gray-900 p-2 border-2  rounded-full h-full w-full shadow-md shadow-black/20">
+                      <div className="transition-all duration-300">
+                        {/* <div className="w-full relative h-full flex justify-center items-center">
+                       
                           <AnimatePresence>
                             {((checkIfAgentIsInline?.includes("INCALL") &&
                               !checkIfAgentIsInline?.includes("DIAL") &&
@@ -1928,17 +1929,11 @@ const CustomerDisposition = () => {
                               </motion.div>
                             )}
                           </AnimatePresence>
-                        </div>
+                        </div> */}
 
                         {/* Dialer phone */}
                         <div className="absolute w-full font-black uppercase text-green-900 justify-evenly  cursor-grab flex flex-col  h-full items-center right-0 z-20 top-0">
-                          {((!isRing &&
-                            checkIfAgentIsInline?.includes("PAUSED")) ||
-                            (isRing &&
-                              checkIfAgentIsInline?.includes("INCALL")) ||
-                            (checkIfAgentIsInline?.includes("PAUSED") &&
-                              checkIfAgentIsInline?.includes("LAGGED") &&
-                              checkIfAgentIsInline?.includes("DISPO"))) && (
+                          {
                             <motion.div
                               key={""}
                               className="absolute -left-5 top-14.5 transition-al"
@@ -1949,24 +1944,25 @@ const CustomerDisposition = () => {
                               <div
                                 onClick={handleUsingPhoneUI}
                                 className={`" ${
-                                  !(
-                                    (checkIfAgentIsInline?.includes("PAUSED") &&
-                                      !checkIfAgentIsInline?.includes(
-                                        "LAGGED"
-                                      ) &&
-                                      !checkIfAgentIsInline?.includes(
-                                        "DISPO"
-                                      )) ||
-                                    (checkIfAgentIsInline?.includes("PAUSED") &&
-                                      checkIfAgentIsInline?.includes(
-                                        "LAGGED"
-                                      ) &&
-                                      !checkIfAgentIsInline?.includes(
-                                        "DISPO"
-                                      )) ||
-                                    (checkIfAgentIsInline?.includes("INCALL") &&
-                                      checkIfAgentIsInline?.includes("DEAD"))
-                                  )
+                                  // !(
+                                  //   (checkIfAgentIsInline?.includes("PAUSED") &&
+                                  //     !checkIfAgentIsInline?.includes(
+                                  //       "LAGGED"
+                                  //     ) &&
+                                  //     !checkIfAgentIsInline?.includes(
+                                  //       "DISPO"
+                                  //     )) ||
+                                  //   (checkIfAgentIsInline?.includes("PAUSED") &&
+                                  //     checkIfAgentIsInline?.includes(
+                                  //       "LAGGED"
+                                  //     ) &&
+                                  //     !checkIfAgentIsInline?.includes(
+                                  //       "DISPO"
+                                  //     )) ||
+                                  //   (checkIfAgentIsInline?.includes("INCALL") &&
+                                  //     checkIfAgentIsInline?.includes("DEAD"))
+                                  // )
+                                  isRing
                                     ? "bg-gray-400 border-gray-500 cursor-not-allowed "
                                     : " hover:scale-110 cursor-pointer bg-green-500 hover:bg-green-600 border-green-900 "
                                 }  transition-all items-center justify-center flex p-2 text-white  rounded-full border-2 "`}
@@ -1998,18 +1994,12 @@ const CustomerDisposition = () => {
                                 </div>
                               </div>
                             </motion.div>
-                          )}
+                          }
 
                           {/* End call */}
-                          {((!isRing &&
-                            checkIfAgentIsInline?.includes("PAUSED")) ||
-                            (isRing &&
-                              checkIfAgentIsInline?.includes("INCALL")) ||
-                            (checkIfAgentIsInline?.includes("PAUSED") &&
-                              checkIfAgentIsInline?.includes("LAGGED") &&
-                              checkIfAgentIsInline?.includes("DISPO"))) && (
+                          {
                             <motion.div
-                              className={`" absolute -right-5 top-14.5  "`}
+                              className=" absolute -right-5 top-14.5  "
                               initial={{ x: -40, opacity: 0 }}
                               animate={{ x: 0, opacity: 1 }}
                               transition={{
@@ -2019,27 +2009,14 @@ const CustomerDisposition = () => {
                             >
                               <div
                                 className={` ${
-                                  (isRing &&
-                                    checkIfAgentIsInline?.includes("INCALL")) ||
-                                  (checkIfAgentIsInline?.includes("PAUSED") &&
-                                    checkIfAgentIsInline?.includes("LAGGED") &&
-                                    checkIfAgentIsInline?.includes("DISPO"))
+                                  isRing
                                     ? "bg-red-500 border-red-900 hover:scale-110 cursor-pointer "
                                     : "border-gray-900 cursor-not-allowed  bg-gray-400 "
                                 } transition-all text-white   p-2  rounded-full border-2  `}
                                 onClick={() => {
                                   {
                                     if (
-                                      checkIfAgentIsInline?.includes(
-                                        "INCALL"
-                                      ) ||
-                                      (checkIfAgentIsInline?.includes(
-                                        "PAUSED"
-                                      ) &&
-                                        checkIfAgentIsInline?.includes(
-                                          "LAGGED"
-                                        ) &&
-                                        checkIfAgentIsInline?.includes("DISPO"))
+                                      isRing
                                     ) {
                                       handleEndCall();
                                     }
@@ -2066,13 +2043,13 @@ const CustomerDisposition = () => {
                                 </svg>
                               </div>
                             </motion.div>
-                          )}
+                          }
                         </div>
                       </div>
 
                       {/* Middle Phone */}
 
-                      {(!isRing ||
+                      {/* {(!isRing ||
                         (isRing && checkIfAgentIsInline?.includes("PAUSED")) ||
                         (isRing &&
                           checkIfAgentIsInline?.includes("INCALL") &&
@@ -2092,9 +2069,15 @@ const CustomerDisposition = () => {
                             !checkIfAgentIsInline?.includes("DISPO")
                           }
                         />
-                      )}
+                      )} */}
 
-                      {isRing &&
+                      <Lottie
+                        animationData={phone}
+                        loop={false}
+                        autoplay={false}
+                      />
+
+                      {/* {isRing &&
                         checkIfAgentIsInline?.includes("INCALL") &&
                         checkIfAgentIsInline?.includes("DIAL") && (
                           <div
@@ -2117,7 +2100,7 @@ const CustomerDisposition = () => {
                               }
                             />
                           </div>
-                        )}
+                        )} */}
                     </div>
                   </>
                 )}

@@ -1736,6 +1736,9 @@ const dispositionResolver = {
                     ],
                   },
                 },
+                confirm: {
+                  
+                },  
                 kept: {
                   $sum: {
                     $cond: [
@@ -1755,6 +1758,7 @@ const dispositionResolver = {
                 user: "$_id",
                 ptp: 1,
                 kept: 1,
+                confirm: 1
               },
             },
           ]);

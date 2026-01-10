@@ -195,6 +195,7 @@ enum Dialer {
   VICI = "vici",
   ISSABEL = "issabel",
   INBOUND = "inbound",
+  SAIDUO = "saiduo",
 }
 
 enum AccountType {
@@ -251,6 +252,7 @@ enum DialerCode {
   vici = "[",
   issabel = "]",
   inbound = ";",
+  saiduo = "'",
 }
 
 type DispositionType = {
@@ -540,6 +542,7 @@ const DispositionForm: React.FC<Props> = ({
       dispatch(setServerError(true));
     },
   });
+  
   // ======================================================================================
   const handleDataChange = (key: keyof Data, value: any) => {
     if (key === "disposition") {

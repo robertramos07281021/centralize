@@ -4,7 +4,7 @@ import { gql, useMutation } from "@apollo/client";
 import Confirmation from "../components/Confirmation";
 import Loading from "../pages/Loading";
 import { useAppDispatch } from "../redux/store";
-import { setServerError, setSuccess} from "../redux/slices/authSlice";
+import { setServerError, setSuccess } from "../redux/slices/authSlice";
 import { chunk } from "lodash";
 
 const CREATE_CUSTOMER = gql`
@@ -112,6 +112,12 @@ const Uploader: React.FC<modalProps> = ({
             model,
             last_payment_amount,
             last_payment_date,
+            client_type,
+            overdue_balance,
+            client_id,
+            due_date,
+            loan_start,
+            term,
             ...others
           } = row;
 
@@ -143,7 +149,7 @@ const Uploader: React.FC<modalProps> = ({
             if (/^63\d{1,2}\d{7}$/.test(cleaned)) {
               return "0" + cleaned.slice(2);
             }
-            
+
             if (/^\+63\d{1,2}\d{7}$/.test(contact)) {
               return "0" + cleaned.slice(3);
             }
@@ -193,8 +199,10 @@ const Uploader: React.FC<modalProps> = ({
             new_tad_with_sf: Number(new_tad_with_sf) || 0,
             new_pay_off: Number(new_pay_off) || 0,
             service_fee: Number(service_fee) || 0,
+            term: Number(term) || 0,
             last_payment_amount: Number(last_payment_amount) || 0,
             gender: isNaN(gender) ? gender : "O",
+            overdue_balance: Number(overdue_balance) || 0,
           } as Record<string, any>;
 
           if (emergencyContactMobile) {
@@ -205,6 +213,14 @@ const Uploader: React.FC<modalProps> = ({
 
           if (model) {
             rows["model"] = model.toString().trim();
+          }
+
+          if (client_type) {
+            rows["client_type"] = client_type.toString().trim();
+          }
+
+          if (client_id) {
+            rows["client_id"] = String(client_id).trim();
           }
 
           if (year) {
@@ -237,6 +253,15 @@ const Uploader: React.FC<modalProps> = ({
           if (bill_due_date) {
             rows["bill_due_date"] = safeDate(bill_due_date);
           }
+
+          if (loan_start) {
+            rows["loan_start"] = safeDate(loan_start);
+          }
+
+          if (due_date) {
+            rows["due_date"] = safeDate(due_date);
+          }
+
           if (last_payment_date) {
             rows["last_payment_date"] = safeDate(last_payment_date);
           }
@@ -400,7 +425,7 @@ const Uploader: React.FC<modalProps> = ({
         status.push(res);
       });
     }
-          
+
     if (chunks.length === status.length) {
       if (
         status
@@ -499,7 +524,9 @@ const Uploader: React.FC<modalProps> = ({
   return (
     <>
       {canUpload && (
-        <div className={`print:hidden  flex h-full gap-2 items-center ${width}`}>
+        <div
+          className={`print:hidden  flex h-full gap-2 items-center ${width}`}
+        >
           <div
             {...getRootProps()}
             className={`${
@@ -528,14 +555,18 @@ const Uploader: React.FC<modalProps> = ({
               </ul>
             )}
           </div>
-          <div className="h-full" >
+          <div className="h-full">
             <button
               type="button"
               disabled={file.length === 0}
-              className={`" ${file.length === 0 ? "bg-gray-200 text-gray-300 border-gray-300 cursor-not-allowed" : "cursor-pointer  bg-green-600 border-green-800 hover:bg-green-700 text-white shadow-md"}  border-2 h-full  transition-all focus:outline-none font-black uppercase rounded-md text-base px-6 py-1  "`}
+              className={`" ${
+                file.length === 0
+                  ? "bg-gray-200 text-gray-300 border-gray-300 cursor-not-allowed"
+                  : "cursor-pointer  bg-green-600 border-green-800 hover:bg-green-700 text-white shadow-md"
+              }  border-2 h-full  transition-all focus:outline-none font-black uppercase rounded-md text-base px-6 py-1  "`}
               onClick={submitUpload}
             >
-             upload
+              upload
             </button>
           </div>
         </div>
