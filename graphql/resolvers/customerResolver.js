@@ -1060,6 +1060,7 @@ const customerResolver = {
     },
     customerOtherAccounts: async (_, { caId }) => {
       try {
+     
         if (!caId) return null;
         const findCustomerAccount = await CustomerAccount.aggregate([
           {
@@ -1135,6 +1136,316 @@ const customerResolver = {
         ]);
 
         return otherCustomer;
+      } catch (error) {
+        console.log(error)
+        throw new CustomError(error.message, 500);
+      }
+    },
+    masterFileAccounts: async (
+      _,
+      { bucketIds, page = 1, limit = 200, search },
+      { user }
+    ) => {
+      try {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
+        const requestedBucketIds = Array.isArray(bucketIds) ? bucketIds : [];
+        const userBucketIds = (user?.buckets ?? []).map((id) => String(id));
+
+        const allowed = requestedBucketIds.length
+          ? requestedBucketIds.filter((id) => userBucketIds.includes(String(id)))
+          : userBucketIds;
+
+        if (allowed.length === 0) {
+          return { accounts: [], total: 0 };
+        }
+
+        const allowedBucketObjectIds = allowed.map(
+          (id) => new mongoose.Types.ObjectId(id)
+        );
+
+        const activeCallfiles = await Callfile.find({
+          active: true,
+          bucket: { $in: allowedBucketObjectIds },
+        })
+          .select({ _id: 1 })
+          .lean();
+
+        const callfileIds = activeCallfiles.map((c) => c._id);
+
+        if (callfileIds.length === 0) {
+          return { accounts: [], total: 0 };
+        }
+
+        const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+        const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 200;
+        const skip = (safePage - 1) * safeLimit;
+
+        const pipeline = [
+          {
+            $match: {
+              callfile: { $in: callfileIds },
+            },
+          },
+          {
+            $lookup: {
+              from: "customers",
+              localField: "customer",
+              foreignField: "_id",
+              as: "customer_info",
+            },
+          },
+          {
+            $unwind: {
+              path: "$customer_info",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "bucket",
+              foreignField: "_id",
+              as: "account_bucket",
+            },
+          },
+          {
+            $unwind: {
+              path: "$account_bucket",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+        ];
+
+        if (search && String(search).trim()) {
+          const s = String(search).trim();
+          pipeline.push({
+            $match: {
+              $or: [
+                { "customer_info.fullName": { $regex: s, $options: "i" } },
+                { "account_bucket.name": { $regex: s, $options: "i" } },
+                { "account_bucket.dept": { $regex: s, $options: "i" } },
+                { "customer_info.gender": { $regex: s, $options: "i" } },
+                {
+                  "customer_info.contact_no": {
+                    $elemMatch: { $regex: s, $options: "i" },
+                  },
+                },
+                { case_id: { $regex: s, $options: "i" } },
+                { account_id: { $regex: s, $options: "i" } },
+              ],
+            },
+          });
+        }
+
+        pipeline.push(
+          {
+            $project: {
+              _id: 1,
+              case_id: 1,
+              account_id: 1,
+              endorsement_date: 1,
+              credit_customer_id: 1,
+              bill_due_date: 1,
+              client_type: 1,
+              overdue_balance: 1,
+              client_id: 1,
+              due_date: 1,
+              loan_start: 1,
+              max_dpd: 1,
+              balance: 1,
+              month_pd: 1,
+              dpd: 1,
+              paid_amount: 1,
+              batch_no: 1,
+              out_standing_details: 1,
+              account_update_history: 1,
+              grass_details: 1,
+              account_bucket: "$account_bucket",
+              customer_info: "$customer_info",
+              emergency_contact: 1,
+              assigned: 1,
+              assigned_date: 1,
+              current_disposition: 1,
+              dispo_history: 1,
+            },
+          },
+          {
+            $facet: {
+              accounts: [{ $skip: skip }, { $limit: safeLimit }],
+              total: [{ $count: "count" }],
+            },
+          },
+          {
+            $project: {
+              accounts: 1,
+              total: {
+                $ifNull: [{ $arrayElemAt: ["$total.count", 0] }, 0],
+              },
+            },
+          }
+        );
+
+        const result = await CustomerAccount.aggregate(pipeline);
+        const first = result?.[0] ?? { accounts: [], total: 0 };
+        return first;
+      } catch (error) {
+        throw new CustomError(error.message, 500);
+      }
+    },
+
+    masterFileAccountsByCallfile: async (
+      _,
+      { callfileIds, page = 1, limit = 200, search },
+      { user }
+    ) => {
+      try {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
+        const requestedCallfileIds = Array.isArray(callfileIds)
+          ? callfileIds
+          : [];
+        if (requestedCallfileIds.length === 0) {
+          return { accounts: [], total: 0 };
+        }
+
+        const userBucketIds = (user?.buckets ?? [])
+          .map((id) => String(id))
+          .filter((id) => mongoose.Types.ObjectId.isValid(id))
+          .map((id) => new mongoose.Types.ObjectId(id));
+
+        if (userBucketIds.length === 0) return { accounts: [], total: 0 };
+
+        const requestedObjectIds = requestedCallfileIds
+          .map((id) => String(id))
+          .filter((id) => mongoose.Types.ObjectId.isValid(id))
+          .map((id) => new mongoose.Types.ObjectId(id));
+
+        if (requestedObjectIds.length === 0) return { accounts: [], total: 0 };
+
+        const allowedCallfiles = await Callfile.find({
+          _id: { $in: requestedObjectIds },
+          active: true,
+          bucket: { $in: userBucketIds },
+        })
+          .select({ _id: 1 })
+          .lean();
+
+        const allowedCallfileIds = allowedCallfiles.map((c) => c._id);
+        if (allowedCallfileIds.length === 0) return { accounts: [], total: 0 };
+
+        const safePage = Number.isFinite(page) && page > 0 ? page : 1;
+        const safeLimit = Number.isFinite(limit) && limit > 0 ? limit : 200;
+        const skip = (safePage - 1) * safeLimit;
+
+        const pipeline = [
+          {
+            $match: {
+              callfile: { $in: allowedCallfileIds },
+            },
+          },
+          {
+            $lookup: {
+              from: "customers",
+              localField: "customer",
+              foreignField: "_id",
+              as: "customer_info",
+            },
+          },
+          {
+            $unwind: {
+              path: "$customer_info",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $lookup: {
+              from: "buckets",
+              localField: "bucket",
+              foreignField: "_id",
+              as: "account_bucket",
+            },
+          },
+          {
+            $unwind: {
+              path: "$account_bucket",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+        ];
+
+        if (search && String(search).trim()) {
+          const s = String(search).trim();
+          pipeline.push({
+            $match: {
+              $or: [
+                { "customer_info.fullName": { $regex: s, $options: "i" } },
+                { "account_bucket.name": { $regex: s, $options: "i" } },
+                { "account_bucket.dept": { $regex: s, $options: "i" } },
+                { "customer_info.gender": { $regex: s, $options: "i" } },
+                {
+                  "customer_info.contact_no": {
+                    $elemMatch: { $regex: s, $options: "i" },
+                  },
+                },
+                { case_id: { $regex: s, $options: "i" } },
+                { account_id: { $regex: s, $options: "i" } },
+              ],
+            },
+          });
+        }
+
+        pipeline.push(
+          {
+            $project: {
+              _id: 1,
+              case_id: 1,
+              account_id: 1,
+              endorsement_date: 1,
+              credit_customer_id: 1,
+              bill_due_date: 1,
+              client_type: 1,
+              overdue_balance: 1,
+              client_id: 1,
+              due_date: 1,
+              loan_start: 1,
+              max_dpd: 1,
+              balance: 1,
+              month_pd: 1,
+              dpd: 1,
+              paid_amount: 1,
+              batch_no: 1,
+              out_standing_details: 1,
+              account_update_history: 1,
+              grass_details: 1,
+              account_bucket: "$account_bucket",
+              customer_info: "$customer_info",
+              emergency_contact: 1,
+              assigned: 1,
+              assigned_date: 1,
+              current_disposition: 1,
+              dispo_history: 1,
+            },
+          },
+          {
+            $facet: {
+              accounts: [{ $skip: skip }, { $limit: safeLimit }],
+              total: [{ $count: "count" }],
+            },
+          },
+          {
+            $project: {
+              accounts: 1,
+              total: {
+                $ifNull: [{ $arrayElemAt: ["$total.count", 0] }, 0],
+              },
+            },
+          }
+        );
+
+        const result = await CustomerAccount.aggregate(pipeline);
+        const first = result?.[0] ?? { accounts: [], total: 0 };
+        return first;
       } catch (error) {
         throw new CustomError(error.message, 500);
       }

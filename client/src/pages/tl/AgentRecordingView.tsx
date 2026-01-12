@@ -846,30 +846,41 @@ const AgentRecordingView = () => {
                                                 <div className="absolute right-[104%] border p-2 flex flex-col gap-2 bg-white">
                                                   {!lateCallRecordingLoading ? (
                                                     <>
-                                                      {lateCallRecordingsData.map(
-                                                        (x, index) => {
-                                                          const duration = x
-                                                            .split(".mp3_")[1]
-                                                            .split("_")[0];
+                                                      {lateCallRecordingsData.length <=
+                                                      0 ? (
+                                                        <div className="italic p-2 text-nowrap rounded text-slate-500">No Recordings found</div>
+                                                      ) : (
+                                                        <div>
+                                                          {lateCallRecordingsData.map(
+                                                            (x, index) => {
+                                                              const duration = x
+                                                                .split(
+                                                                  ".mp3_"
+                                                                )[1]
+                                                                .split("_")[0];
 
-                                                          return (
-                                                            <div
-                                                              key={index}
-                                                              className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-20 justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
-                                                              onClick={()=> {
-                                                                onDLRecordings(e._id,x)
-                                                               
-                                                              }}
-                                                            >
-                                                              <FaDownload color="white" />
-                                                              <p className="text-white">
-                                                                {formatDuration(
-                                                                  duration
-                                                                )}
-                                                              </p>
-                                                            </div>
-                                                          );
-                                                        }
+                                                              return (
+                                                                <div
+                                                                  key={index}
+                                                                  className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-20 justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
+                                                                  onClick={() => {
+                                                                    onDLRecordings(
+                                                                      e._id,
+                                                                      x
+                                                                    );
+                                                                  }}
+                                                                >
+                                                                  <FaDownload color="white" />
+                                                                  <p className="text-white">
+                                                                    {formatDuration(
+                                                                      duration
+                                                                    )}
+                                                                  </p>
+                                                                </div>
+                                                              );
+                                                            }
+                                                          )}
+                                                        </div>
                                                       )}
                                                     </>
                                                   ) : (

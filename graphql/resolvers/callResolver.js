@@ -998,7 +998,9 @@ const callResolver = {
         const records = [];
 
         if (!getRecordingManual.includes("ERROR")) {
-          const splitManualRecordings = getRecordingManual.split("-all.").map(x=> `${dispo[0].bucket.viciIp}_${x}`);
+          const splitManualRecordings = getRecordingManual
+            .split("-all.")
+            .map((x) => `${dispo[0].bucket.viciIp}_${x}`);
           records.push(...splitManualRecordings.flat());
         }
 
@@ -1010,7 +1012,9 @@ const callResolver = {
           );
 
           if (!getRecordingAuto.includes("ERROR")) {
-            const splitAutoRecordings = getRecordingAuto.split("-all.").map(x=> `${dispo[0].bucket.viciIp_auto}_${x}`);
+            const splitAutoRecordings = getRecordingAuto
+              .split("-all.")
+              .map((x) => `${dispo[0].bucket.viciIp_auto}_${x}`);
             records.push(...splitAutoRecordings.flat());
           }
         }
@@ -1020,28 +1024,39 @@ const callResolver = {
         if (dispo[0]?.customer?.emergency?.mobile) {
           contact.push(dispo[0].customer?.emergency?.mobile);
         }
-   
+
         const recordings = [];
-        for (const record of records) {
-       
-          if (contact.some((x) => record.includes(x))) {
+
+        function normalizeMobile(number) {
+
+          if (number.startsWith("9")) {
+            return "0" + number;
+          }
+
+          if(number.startsWith('09')) {
+            return "63" + number.slice(1)
+          }
+          return number;
+        }
+
+        for (const record of [...new Set(records)]) {
+
+          if (contact.some((x) =>  record.includes(normalizeMobile(x)) || record.includes(x))) {
             const splitRecord = record.split("/");
-            const ip = record.split('_')[0]
+            const ip = record.split("_")[0];
 
             const duration = record.split("|")[4];
             recordings.push(
-              `${splitRecord[splitRecord.length - 1]}-all.mp3_${duration}_${
-                ip
-              }`
+              `${splitRecord[splitRecord.length - 1]}-all.mp3_${duration}_${ip}`
             );
           }
         }
- 
+
         const trueRecordings = [];
 
         for (const recording of recordings) {
           const spliting = recording.split(".mp3");
-          
+
           const findRecording = await Disposition.aggregate([
             {
               $match: {
@@ -1053,7 +1068,7 @@ const callResolver = {
             trueRecordings.push(recording);
           }
         }
-        
+
         return trueRecordings;
       } catch (error) {
         throw new CustomError(error.message, 500);

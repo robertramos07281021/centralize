@@ -339,6 +339,7 @@ const taskResolver = {
           message: "Successfully selected",
         };
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500);
       }
     },
@@ -381,6 +382,7 @@ const taskResolver = {
         });
         return { success: true, message: "Successfully deselected" };
       } catch (error) {
+        console.log(error)
         throw new CustomError(error.message, 500);
       }
     },

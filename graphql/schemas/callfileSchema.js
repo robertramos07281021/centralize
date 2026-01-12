@@ -84,6 +84,7 @@ const callfileTypeDefs = gql`
     downloadCallfiles(callfile:ID!): String!
     monthlyDetails: [MonthlyDetails]
     getBucketCallfile(bucketId:[ID]):[Callfile]
+    getBucketActiveCallfile(bucketIds:[ID]):[Callfile]
     getToolsProduction(bucket:ID,interval:String):[ToolsProduction]
     getCollectionMonitoring(bucket:ID, interval:String):Collection
     getCallfileDispositions(

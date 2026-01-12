@@ -36,22 +36,6 @@ const customerAccountSchema = new Schema(
     credit_customer_id: {
       type: String,
     },
-    client_type: {
-      type: String,
-    },
-    overdue_balance: {
-      type: Number,
-      default: 0,
-    },
-    client_id: {
-      type: String,
-    },
-    due_date: {
-      type: String,
-    },
-    loan_start: {
-      type: String,
-    },
     endorsement_date: {
       type: String,
     },

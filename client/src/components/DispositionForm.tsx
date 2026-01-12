@@ -542,7 +542,7 @@ const DispositionForm: React.FC<Props> = ({
       dispatch(setServerError(true));
     },
   });
-  
+
   // ======================================================================================
   const handleDataChange = (key: keyof Data, value: any) => {
     if (key === "disposition") {
@@ -599,7 +599,7 @@ const DispositionForm: React.FC<Props> = ({
 
   const [modalProps, setModalProps] = useState({
     message: "",
-    toggle: "CREATE" as "CREATE" | "ESCALATE",
+    toggle: "CREATE" as "CREATE" | "ESCALATE" | "NOPHONE",
     yes: () => {},
     no: () => {},
   });
@@ -611,14 +611,12 @@ const DispositionForm: React.FC<Props> = ({
   const creatingDispo = useCallback(async () => {
     let callId: string | undefined;
 
-
-    
     if (Boolean(viciOnAir) && data?.contact_method === AccountType.CALL) {
       const vicidialIp = viciOnAir?.split("|")[1];
       const callIdRes = await getCallRecording({
         variables: { user_id: userLogged?._id, mobile: viciOnAir },
       });
-      if (!callIdRes.data?.getCallRecording.toString().includes("ERROR")) {
+      if (!callIdRes.data?.getCallRecording?.toString().includes("ERROR")) {
         callId = `${callIdRes.data?.getCallRecording}_${vicidialIp}`;
       } else {
         const year = new Date().getFullYear();
@@ -632,7 +630,6 @@ const DispositionForm: React.FC<Props> = ({
     } else if (callUniqueId) {
       callId = callUniqueId;
     } else {
-    
       const year = new Date().getFullYear();
       const month = new Date().getMonth() + 1;
       const date = new Date().getDate();
@@ -678,9 +675,26 @@ const DispositionForm: React.FC<Props> = ({
   const handleSubmitForm = useCallback(
     (e: React.FormEvent<HTMLFormElement>) => {
       e.preventDefault();
+
       if (!Form.current?.checkValidity()) {
         setRequired(true);
       } else {
+        if (
+          selectedCustomer &&
+          selectedCustomer?.customer_info?.contact_no?.length <= 0 &&
+          data.contact_method === AccountType.CALL
+        ) {
+          setConfirm(true);
+          setModalProps({
+            message:
+              "This account has no registered phone number. You cannot assign a contact method for the call.",
+            toggle: "NOPHONE",
+            yes: () => setConfirm(false),
+            no: () => setConfirm(false),
+          });
+          return;
+        }
+
         if (selectedDispo === "PAID" && data.payment_date) {
           const paymentDate = new Date(data.payment_date);
 

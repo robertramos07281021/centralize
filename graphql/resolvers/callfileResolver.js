@@ -398,6 +398,32 @@ const callfileResolver = {
       }
     },
 
+    getBucketActiveCallfile: async (_, { bucketIds }, { user }) => {
+      try {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
+        const requestedBucketIds = Array.isArray(bucketIds) ? bucketIds : [];
+        const userBucketIds = (user?.buckets ?? []).map((id) => String(id));
+
+        const allowed = requestedBucketIds.length
+          ? requestedBucketIds.filter((id) => userBucketIds.includes(String(id)))
+          : userBucketIds;
+
+        if (allowed.length === 0) return [];
+
+        const filter = {
+          active: true,
+          bucket: {
+            $in: allowed.map((id) => new mongoose.Types.ObjectId(id)),
+          },
+        };
+
+        return await Callfile.find(filter).sort({ createdAt: -1 }).lean();
+      } catch (error) {
+        throw new CustomError(error.message, 500);
+      }
+    },
+
     getCallfileDispositions: async (
       _,
       { callfileId, dateFrom, dateTo },

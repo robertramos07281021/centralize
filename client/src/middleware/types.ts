@@ -225,6 +225,34 @@ export type Search = {
   current_disposition: CurrentDispo;
 };
 
+
+  //   type Search {
+  //   _id: ID
+  //   case_id: String
+  //   account_id: String
+  //   endorsement_date: String
+  //   credit_customer_id: String
+  //   bill_due_date: String
+  //   max_dpd: Int
+  //   balance: Float
+  //   month_pd: Int
+  //   dpd: Int
+  //   assigned: ID
+  //   assigned_date: String
+  //   paid_amount: Float
+  //   batch_no: String
+  //   out_standing_details: outStandingDetails
+  //   account_update_history: [AccountUpdateHistory]
+  //   grass_details: grassDetails
+  //   account_bucket: Bucket
+  //   customer_info: CustomerInfo
+  //   isRPCToday: Boolean
+  //   emergency_contact: EmergencyContact
+  //   dispo_history: [CurrentDispo]
+  //   current_disposition: CurrentDispo
+  // }
+
+
 export enum IntervalsTypes {
   DAILY = "daily",
   WEEKLY = "weekly",

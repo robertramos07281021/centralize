@@ -4,8 +4,7 @@ import { motion } from "framer-motion";
 const color = {
   CREATE: {
     title: "bg-blue-500",
-    button:
-      "bg-blue-500 hover:bg-blue-600 focus:ring-blue-300 ",
+    button: "bg-blue-500 hover:bg-blue-600 focus:ring-blue-300 ",
   },
   UPDATE: {
     title: "bg-orange-500",
@@ -17,8 +16,7 @@ const color = {
   },
   LOGOUT: {
     title: "bg-red-500",
-    button:
-      "bg-red-500 hover:bg-red-600 focus:ring-red-300 ",
+    button: "bg-red-500 hover:bg-red-600 focus:ring-red-300 ",
   },
   UPLOADED: {
     title: "bg-green-500",
@@ -30,8 +28,7 @@ const color = {
   },
   IDLE: {
     title: "bg-red-500",
-    button:
-      "bg-red-500 hover:bg-red-600 focus:ring-red-300 ",
+    button: "bg-red-500 hover:bg-red-600 focus:ring-red-300 ",
   },
   FINISHED: {
     title: "bg-green-500",
@@ -43,13 +40,11 @@ const color = {
   },
   ESCALATE: {
     title: "bg-red-500",
-    button:
-      "bg-red-500 hover:bg-red-600  focus:ring-red-300 ",
+    button: "bg-red-500 hover:bg-red-600  focus:ring-red-300 ",
   },
   UNLOCK: {
     title: "bg-red-500",
-    button:
-      "bg-red-500 hover:bg-red-600 focus:ring-red-300  ",
+    button: "bg-red-500 hover:bg-red-600 focus:ring-red-300  ",
   },
   ACTIVATE: {
     title: "bg-blue-500",
@@ -57,13 +52,15 @@ const color = {
   },
   DEACTIVATE: {
     title: "bg-red-500",
-    button:
-      "bg-red-500 hover:bg-red-600 focus:ring-red-300",
+    button: "bg-red-500 hover:bg-red-600 focus:ring-red-300",
   },
   RPCTODAY: {
     title: "bg-red-500",
-    button:
-      "bg-red-500 hover:bg-red-600 focus:ring-red-300 ",
+    button: "bg-red-500 hover:bg-red-600 focus:ring-red-300 ",
+  },
+  NOPHONE: {
+    title: "bg-red-500",
+    button: "bg-red-500 hover:bg-red-600 focus:ring-red-300 ",
   },
   SELECT: {
     title: "bg-orange-500",
@@ -92,23 +89,18 @@ type modalProps = {
   toggle: toggleType;
 };
 
-const noButtonHide = ["IDLE", "RPCTODAY"];
-
+const noButtonHide = ["IDLE", "RPCTODAY","NOPHONE"];
 
 const Confirmation: React.FC<modalProps> = ({ yes, no, message, toggle }) => {
   const [loading, setLoading] = useState(false);
   useEffect(() => {
-    try {
-      const handleKeyDown = (e: KeyboardEvent) => {
-        if (e.key === "Escape" && !loading) {
-          no();
-        }
-      };
-      document.addEventListener("keydown", handleKeyDown);
-      return () => document.removeEventListener("keydown", handleKeyDown);
-    } catch (error) {
-      console.log(error);
-    }
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape" && !loading) {
+        no();
+      }
+    };
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
   }, [loading]);
 
   const handleYes = async () => {

@@ -165,7 +165,7 @@ const userTypeDefs = gql`
     callfile_id: String
     account_type: String
     id: ID!
-    vici_id: String
+    vici_id: String 
     softphone: String!
   }
 

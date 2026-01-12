@@ -191,11 +191,6 @@ const customerTypeDefs = gql`
     endorsement_date: String
     credit_customer_id: String
     bill_due_date: String
-    client_type: String
-    overdue_balance: Float
-    client_id: String
-    due_date: String
-    loan_start: String
     max_dpd: Int
     balance: Float
     dpd: Int
@@ -228,11 +223,6 @@ const customerTypeDefs = gql`
     endorsement_date: String
     credit_customer_id: String
     bill_due_date: String
-    client_type: String
-    overdue_balance: Float
-    client_id: String
-    due_date: String
-    loan_start: String
     max_dpd: Int
     balance: Float
     month_pd: Int
@@ -250,6 +240,11 @@ const customerTypeDefs = gql`
     emergency_contact: EmergencyContact
     dispo_history: [CurrentDispo]
     current_disposition: CurrentDispo
+  }
+
+  type MasterFileAccountsResult {
+    accounts: [Search]
+    total: Int
   }
 
   type PerformanceStatistic {
@@ -311,6 +306,18 @@ const customerTypeDefs = gql`
     getMonthlyTarget: [MonthlyTarget]
     getMonthlyPerformance: [PerformanceStatistic]
     customerOtherAccounts(caId: ID): [Search]
+    masterFileAccounts(
+      bucketIds: [ID]
+      page: Int
+      limit: Int
+      search: String
+    ): MasterFileAccountsResult
+    masterFileAccountsByCallfile(
+      callfileIds: [ID]
+      page: Int
+      limit: Int
+      search: String
+    ): MasterFileAccountsResult
     # getAomReports(input:AomReport):[]
   }
 

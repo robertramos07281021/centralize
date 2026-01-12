@@ -27,11 +27,11 @@ const OTHER_ACCOUNTS = gql`
       endorsement_date
       credit_customer_id
       bill_due_date
-      client_type
-      overdue_balance
-      client_id
-      due_date
-      loan_start
+      # client_type
+      # overdue_balance
+      # client_id
+      # due_date
+      # loan_start
       max_dpd
       dpd
       balance
@@ -104,6 +104,7 @@ const OTHER_ACCOUNTS = gql`
         client_id
         due_date
         loan_start
+        late_charge_waive_fee_os
       }
       grass_details {
         grass_region
@@ -116,6 +117,20 @@ const OTHER_ACCOUNTS = gql`
         _id
         can_update_ca
       }
+
+      # account_bucket {
+      #   name
+      #   dept
+      #   _id
+      #   can_update_ca
+      #   message
+      #   issabelIp
+      #   isActive
+      #   canCall
+      #   principal
+      #   viciIp_auto
+      #   viciIp
+      # }
       customer_info {
         fullName
         dob
@@ -367,8 +382,6 @@ const AccountInfo = forwardRef<
     notifyOnNetworkStatusChange: true,
   });
 
-  console.log(selectedCustomer);
-
   const [isClose, setIsClose] = useState(false);
   const [showButton, setShowButton] = useState<boolean>(false);
   const divRef = useRef<HTMLDivElement | null>(null);
@@ -433,8 +446,6 @@ const AccountInfo = forwardRef<
   const remMonthsValue =
     selectedCustomer?.out_standing_details?.rem_months ??
     selectedCustomer?.out_standing_details?.cf;
-
-  console.log(selectedCustomer?.out_standing_details);
 
   return (
     <div className="w-full h-full">

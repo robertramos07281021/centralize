@@ -56,7 +56,7 @@ const UpdatesPage = () => {
       <div className="w-full h-full absolute bg-blue-500/70 backdrop-blur-[4px]"></div>
 
       <motion.div
-        className="h-[100%] w-full bg-white/60 border backdrop-blur-sm z-50  overflow-hidden flex flex-col rounded-md"
+        className="h-[100%] w-full bg-white/60 backdrop-blur-sm z-50  overflow-hidden flex flex-col"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
       >
@@ -112,7 +112,7 @@ const UpdatesPage = () => {
                   <ul className="p-5 flex flex-col gap-2 overflow-auto h-[87%]">
                     {update.info.map((x, index) => (
                       <li
-                        className="border rounded-md  shadow-md list-none"
+                        className="border rounded-md overflow-hidden shadow-md list-none"
                         key={index}
                       >
                         <div className="bg-blue-600 text-white border-b border-black uppercase text-center font-black py-2 ">

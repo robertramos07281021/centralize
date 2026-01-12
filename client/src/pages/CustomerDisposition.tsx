@@ -551,44 +551,47 @@ const FieldListDisplay = memo(
               No information
             </div>
           ) : (
-            values?.map((val, index) => (
-              <div className="flex gap-2 w-full " key={index}>
-                <div
-                  className={`w-full ${
-                    label.toLowerCase() === "address" ? "" : ""
-                  }  border border-black p-2.5 rounded-sm bg-gray-50 text-black flex flex-wrap`}
-                >
-                  {val}
-                </div>
-                {canCall &&
-                  isPhoneNumber &&
-                  typeof val === "string" &&
-                  val.trim() !== "" &&
-                  index !== 0 && (
-                    <button
-                      onClick={() => {
-                        onClickValue?.(val);
-                      }}
-                      className={`  hover:bg-green-600 bg-green-500 cursor-pointer border-green-900 p-[7px] border-2 text-white rounded-md transition-all borde2 shadow-md `}
-                    >
-                      <svg
-                        xmlns="http://www.w3.org/2000/svg"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        strokeWidth="2"
-                        stroke="currentColor"
-                        className="size-5"
+            values?.map((val, index) =>{
+             return (
+                <div className="flex gap-2 w-full " key={index}>
+                  <div
+                    className={`w-full border border-black p-2.5 rounded-sm bg-gray-50 text-black flex flex-wrap ${(val === "") ? "italic text-gray-400" : ""} `}
+                  >
+                    {val === "" ? "No information" : val}
+                  </div>
+                  {canCall &&
+                    isPhoneNumber &&
+                    typeof val === "string" &&
+                    val.trim() !== "" &&
+                    index !== 0 && (
+                      <button
+                        onClick={() => {
+                          onClickValue?.(val);
+                        }}
+                        className={`  hover:bg-green-600 bg-green-500 cursor-pointer border-green-900 p-[7px] border-2 text-white rounded-md transition-all borde2 shadow-md `}
                       >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"
-                        />
-                      </svg>
-                    </button>
-                  )}
-              </div>
-            ))
+                        <svg
+                          xmlns="http://www.w3.org/2000/svg"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          strokeWidth="2"
+                          stroke="currentColor"
+                          className="size-5"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            d="M2.25 6.75c0 8.284 6.716 15 15 15h2.25a2.25 2.25 0 0 0 2.25-2.25v-1.372c0-.516-.351-.966-.852-1.091l-4.423-1.106c-.44-.11-.902.055-1.173.417l-.97 1.293c-.282.376-.769.542-1.21.38a12.035 12.035 0 0 1-7.143-7.143c-.162-.441.004-.928.38-1.21l1.293-.97c.363-.271.527-.734.417-1.173L6.963 3.102a1.125 1.125 0 0 0-1.091-.852H4.5A2.25 2.25 0 0 0 2.25 4.5v2.25Z"
+                          />
+                        </svg>
+                      </button>
+                    )}
+                </div>
+              )
+
+
+            } 
+          )
           )}
         </div>
       </div>
