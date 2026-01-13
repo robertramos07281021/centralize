@@ -267,10 +267,10 @@ const DispositionRecords: React.FC<ComponentProps> = ({ close }) => {
                     </div>
                   </div>
                 )}
-                {(dispo_historySorted?.length ||
+                {!(dispo_historySorted &&
                   dispo_historySorted?.length === 0) && (
-                  <div className="py-1.5 bg-gray-100 px-5 text-gray-800 border-x border-b font-medium ">
-                    No history
+                  <div className="py-1.5 bg-gray-100 px-5 text-center italic text-gray-800 border-x border-b font-medium ">
+                    No History
                   </div>
                 )}
                 {dispo_historySorted?.map((ne, index) => {

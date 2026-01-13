@@ -643,6 +643,7 @@ const DispositionForm: React.FC<Props> = ({
         variables: {
           input: {
             ...data,
+            user: userLogged?._id,
             customer_account: selectedCustomer?._id,
             callId,
           },

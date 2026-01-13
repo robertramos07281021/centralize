@@ -12,562 +12,480 @@ import Bucket from "../../models/bucket.js";
 import mongoose from "mongoose";
 import { bucketUsersStatus, logoutVici } from "../../middlewares/vicidial.js";
 import CustomerAccount from "../../models/customerAccount.js";
+import { safeResolver } from "../../middlewares/safeResolver.js";
 
 const userResolvers = {
   DateTime,
   Query: {
-    getBucketUser: async (_, { bucketId }, { user }) => {
-      try {
-        let filter = null;
-        if (bucketId) {
-          filter = bucketId;
-        } else {
-          filter = { $in: user.buckets };
-        }
-        const findUser = await User.find({
-          type: { $eq: "AGENT" },
-          buckets: filter,
-        });
-        return findUser;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
+    getBucketUser: safeResolver(async (_, { bucketId }, { user }) => {
+      let filter = null;
+      if (bucketId) {
+        filter = bucketId;
+      } else {
+        filter = { $in: user.buckets };
       }
-    },
-    getUsers: async (_, { page = 1, limit = 20 }) => {
-      try {
-        const res = await User.aggregate([
-          {
-            $facet: {
-              users: [{ $skip: (page - 1) * limit }, { $limit: limit }],
-              total: [{ $count: "totalUser" }],
-            },
+      const findUser = await User.find({
+        type: { $eq: "AGENT" },
+        buckets: filter,
+      });
+      return findUser;
+    }),
+    getUsers: safeResolver(async (_, { page = 1, limit = 20 }) => {
+      const res = await User.aggregate([
+        {
+          $facet: {
+            users: [{ $skip: (page - 1) * limit }, { $limit: limit }],
+            total: [{ $count: "totalUser" }],
           },
-        ]);
-        return {
-          users: res[0].users ?? [],
-          total: res[0].total.length > 0 ? res[0].total[0].totalUser : 0,
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    getUser: async (_, { id }) => {
-      try {
-        return await User.findById(id);
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    getMe: async (_, __, { user }) => {
+        },
+      ]);
+      return {
+        users: res[0].users ?? [],
+        total: res[0].total.length > 0 ? res[0].total[0].totalUser : 0,
+      };
+    }),
+    getUser: safeResolver(async (_, { id }) => {
+      return await User.findById(id);
+    }),
+    getMe: safeResolver(async (_, __, { user }) => {
       if (!user) throw new CustomError("Unauthorized", 401);
 
       return user;
-    },
-    getAomUser: async () => {
-      try {
-        return await User.find({ type: "AOM" });
-      } catch (error) {
-        throw new CustomError(error.message, 500);
+    }),
+    getAomUser: safeResolver(async () => {
+      return await User.find({ type: "AOM" });
+    }),
+    findUsers: safeResolver(async (_, { search, page, limit, filter }) => {
+      function escapeRegex(str) {
+        return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       }
-    },
-    findUsers: async (_, { search, page, limit, filter }) => {
-      try {
-        function escapeRegex(str) {
-          return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-        }
-        const searchFilter = { $regex: escapeRegex(search), $options: "i" };
-        const res = await User.aggregate([
-          {
-            $lookup: {
-              from: "departments",
-              localField: "departments",
-              foreignField: "_id",
-              as: "department",
-            },
+      const searchFilter = { $regex: escapeRegex(search), $options: "i" };
+      const res = await User.aggregate([
+        {
+          $lookup: {
+            from: "departments",
+            localField: "departments",
+            foreignField: "_id",
+            as: "department",
           },
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "buckets",
-              foreignField: "_id",
-              as: "bucket",
-            },
+        },
+        {
+          $lookup: {
+            from: "buckets",
+            localField: "buckets",
+            foreignField: "_id",
+            as: "bucket",
           },
-          {
-            $lookup: {
-              from: "branches",
-              localField: "branch",
-              foreignField: "_id",
-              as: "user_branch",
-            },
+        },
+        {
+          $lookup: {
+            from: "branches",
+            localField: "branch",
+            foreignField: "_id",
+            as: "user_branch",
           },
-          {
-            $unwind: { path: "$user_branch", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $unwind: { path: "$user_branch", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $match: {
+            ...(filter === "online" ? { isOnline: true } : []),
+            ...(filter === "offline" ? { isOnline: false } : []),
+            $or: [
+              { name: searchFilter },
+              { username: searchFilter },
+              { type: searchFilter },
+              { "user_branch.name": searchFilter },
+              { department: { $elemMatch: { name: searchFilter } } },
+              { bucket: { $elemMatch: { name: searchFilter } } },
+              { user_id: searchFilter },
+              ...(search.toLowerCase() === "active" ? [{ active: true }] : []),
+              ...(search.toLowerCase() === "inactive"
+                ? [{ active: false }]
+                : []),
+              ...(search.toLowerCase() === "islock" ? [{ isLock: true }] : []),
+              ...(search.toLowerCase() === "unlock" ? [{ isLock: false }] : []),
+            ],
           },
-          {
-            $match: {
-              ...(filter === "online" ? { isOnline: true } : []),
-              ...(filter === "offline" ? { isOnline: false } : []),
-              $or: [
-                { name: searchFilter },
-                { username: searchFilter },
-                { type: searchFilter },
-                { "user_branch.name": searchFilter },
-                { department: { $elemMatch: { name: searchFilter } } },
-                { bucket: { $elemMatch: { name: searchFilter } } },
-                { user_id: searchFilter },
-                ...(search.toLowerCase() === "active"
-                  ? [{ active: true }]
-                  : []),
-                ...(search.toLowerCase() === "inactive"
-                  ? [{ active: false }]
-                  : []),
-                ...(search.toLowerCase() === "islock"
-                  ? [{ isLock: true }]
-                  : []),
-                ...(search.toLowerCase() === "unlock"
-                  ? [{ isLock: false }]
-                  : []),
-              ],
-            },
+        },
+        {
+          $facet: {
+            users: [{ $skip: (page - 1) * limit }, { $limit: limit }],
+            total: [{ $count: "totalUser" }],
           },
-          {
-            $facet: {
-              users: [{ $skip: (page - 1) * limit }, { $limit: limit }],
-              total: [{ $count: "totalUser" }],
-            },
-          },
-        ]);
-        const users = res[0]?.users || [];
-        const total = res[0]?.total[0]?.totalUser || 0;
+        },
+      ]);
+      const users = res[0]?.users || [];
+      const total = res[0]?.total[0]?.totalUser || 0;
 
-        return {
-          users: users,
-          total: total,
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
+      return {
+        users: users,
+        total: total,
+      };
+    }),
+    getQAUsers: safeResolver(async (_, { page, limit }) => {
+      const skip = (page - 1) * limit;
+
+      const qaUsers = await User.aggregate([
+        { $match: { type: "QA" } },
+        { $sort: { createdAt: -1 } },
+        {
+          $facet: {
+            users: [{ $skip: skip }, { $limit: limit }],
+            total: [{ $count: "user" }],
+          },
+        },
+      ]);
+
+      const users = qaUsers[0]?.users || [];
+      const total = qaUsers[0]?.total?.[0]?.user || 0;
+
+      return { users, total };
+    }),
+
+    getAgentsByDepartment: safeResolver(async (_, { deptId }) => {
+      if (!deptId) {
+        return [];
       }
-    },
-    getQAUsers: async (_, { page, limit }) => {
-      try {
-        const skip = (page - 1) * limit;
 
-        const qaUsers = await User.aggregate([
-          { $match: { type: "QA" } },
-          { $sort: { createdAt: -1 } },
-          {
-            $facet: {
-              users: [{ $skip: skip }, { $limit: limit }],
-              total: [{ $count: "user" }],
-            },
-          },
-        ]);
-
-        const users = qaUsers[0]?.users || [];
-        const total = qaUsers[0]?.total?.[0]?.user || 0;
-
-        return { users, total };
-      } catch (error) {
-        console.log(error);
-        throw new CustomError(error.message, 500);
+      const department = await Department.findById(deptId);
+      if (!department) {
+        return [];
       }
-    },
 
-    getAgentsByDepartment: async (_, { deptId }) => {
-      try {
-        if (!deptId) {
-          return [];
-        }
+      const agents = await User.find({
+        type: { $eq: "AGENT" },
+        departments: { $in: [department._id] },
+        active: true,
+      }).select("_id name");
 
-        const department = await Department.findById(deptId);
-        if (!department) {
-          return [];
-        }
+      return agents;
+    }),
 
-        const agents = await User.find({
-          type: { $eq: "AGENT" },
-          departments: { $in: [department._id] },
-          active: true,
-        }).select("_id name");
-
-        return agents;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-
-    findDeptAgents: async (_, __, { user }) => {
-      try {
-        if (!user) throw new CustomError("Not authenticated", 401);
-
-        const agentWithHandleCustomer = await User.aggregate([
-          {
-            $match: {
-              $and: [
-                { buckets: { $in: user.buckets } },
-                { type: { $eq: "AGENT" } },
-              ],
-            },
-          },
-          {
-            $lookup: {
-              from: "customeraccounts",
-              localField: "handsOn",
-              foreignField: "_id",
-              as: "ca",
-            },
-          },
-          {
-            $unwind: { path: "$ca", preserveNullAndEmptyArrays: true },
-          },
-          {
-            $lookup: {
-              from: "customers",
-              localField: "ca.customer",
-              foreignField: "_id",
-              as: "customer",
-            },
-          },
-          {
-            $unwind: { path: "$customer", preserveNullAndEmptyArrays: true },
-          },
-        ]);
-        return agentWithHandleCustomer;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    findAgents: async (_, __, { user }) => {
+    findDeptAgents: safeResolver(async (_, __, { user }) => {
       if (!user) throw new CustomError("Not authenticated", 401);
-      try {
-        const agents = await User.find({
-          departments: { $in: user.departments },
-          active: true,
-        });
-        return agents;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    getCampaignAssigned: async (_, { bucket }) => {
-      try {
-        if (!bucket) return null;
-        const assigned = await User.countDocuments({
-          type: "AGENT",
-          reliver: false,
-          active: true,
-          buckets: new mongoose.Types.ObjectId(bucket),
-        });
 
-        return assigned;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    getAOMCampaignFTE: async (_, __, { user }) => {
-      try {
-        if (!user) throw new CustomError("Not authenticated", 401);
+      const agentWithHandleCustomer = await User.aggregate([
+        {
+          $match: {
+            $and: [
+              { buckets: { $in: user.buckets } },
+              { type: { $eq: "AGENT" } },
+            ],
+          },
+        },
+        {
+          $lookup: {
+            from: "customeraccounts",
+            localField: "handsOn",
+            foreignField: "_id",
+            as: "ca",
+          },
+        },
+        {
+          $unwind: { path: "$ca", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: "customers",
+            localField: "ca.customer",
+            foreignField: "_id",
+            as: "customer",
+          },
+        },
+        {
+          $unwind: { path: "$customer", preserveNullAndEmptyArrays: true },
+        },
+      ]);
+      return agentWithHandleCustomer;
+    }),
+    findAgents: safeResolver(async (_, __, { user }) => {
+      if (!user) throw new CustomError("Not authenticated", 401);
 
-        const aomFTEs = await User.aggregate([
-          {
-            $match: {
-              type: "AGENT",
-              $expr: {
-                $eq: [{ $size: "$departments" }, 1],
+      const agents = await User.find({
+        departments: { $in: user.departments },
+        active: true,
+      });
+      return agents;
+    }),
+    getCampaignAssigned: safeResolver(async (_, { bucket }) => {
+      if (!bucket) return null;
+      const assigned = await User.countDocuments({
+        type: "AGENT",
+        reliver: false,
+        active: true,
+        buckets: new mongoose.Types.ObjectId(bucket),
+      });
+
+      return assigned;
+    }),
+    getAOMCampaignFTE: safeResolver(async (_, __, { user }) => {
+      if (!user) throw new CustomError("Not authenticated", 401);
+
+      const aomFTEs = await User.aggregate([
+        {
+          $match: {
+            type: "AGENT",
+            $expr: {
+              $eq: [{ $size: "$departments" }, 1],
+            },
+          },
+        },
+        {
+          $lookup: {
+            from: "departments",
+            localField: "departments",
+            foreignField: "_id",
+            as: "department",
+          },
+        },
+        {
+          $unwind: { path: "$department", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $match: {
+            "department.aom": new mongoose.Types.ObjectId(user._id),
+          },
+        },
+        {
+          $group: {
+            _id: {
+              _id: "$department._id",
+              name: "$department.name",
+              branch: "$department.branch",
+            },
+            users: {
+              $push: {
+                isOnline: "$isOnline",
+                user_id: "$user_id",
+                name: "$name",
+                buckets: "$buckets",
               },
             },
           },
-          {
-            $lookup: {
-              from: "departments",
-              localField: "departments",
-              foreignField: "_id",
-              as: "department",
-            },
+        },
+        {
+          $sort: { "_id.name": 1 },
+        },
+        {
+          $project: {
+            _id: 0,
+            department: "$_id",
+            users: 1,
           },
-          {
-            $unwind: { path: "$department", preserveNullAndEmptyArrays: true },
+        },
+      ]);
+
+      return aomFTEs;
+    }),
+    getHelperAgent: safeResolver(async (_, __, { user }) => {
+      if (!user) throw new CustomError("Not authenticated", 401);
+
+      const userId = new mongoose.Types.ObjectId(user._id);
+
+      const UserHelper = await User.aggregate([
+        {
+          $lookup: {
+            from: "departments",
+            localField: "departments",
+            foreignField: "_id",
+            as: "department",
           },
-          {
-            $match: {
-              "department.aom": new mongoose.Types.ObjectId(user._id),
-            },
-          },
-          {
-            $group: {
-              _id: {
-                _id: "$department._id",
-                name: "$department.name",
-                branch: "$department.branch",
-              },
-              users: {
-                $push: {
-                  isOnline: "$isOnline",
-                  user_id: "$user_id",
-                  name: "$name",
-                  buckets: "$buckets",
+        },
+        {
+          $addFields: {
+            filteredDepartments: {
+              $filter: {
+                input: "$department",
+                as: "dep",
+                cond: {
+                  $eq: ["$$dep.aom", userId],
                 },
               },
             },
           },
-          {
-            $sort: { "_id.name": 1 },
-          },
-          {
-            $project: {
-              _id: 0,
-              department: "$_id",
-              users: 1,
-            },
-          },
-        ]);
-
-        return aomFTEs;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    getHelperAgent: async (_, __, { user }) => {
-      try {
-        if (!user) throw new CustomError("Not authenticated", 401);
-
-        const userId = new mongoose.Types.ObjectId(user._id);
-
-        const UserHelper = await User.aggregate([
-          {
-            $lookup: {
-              from: "departments",
-              localField: "departments",
-              foreignField: "_id",
-              as: "department",
-            },
-          },
-          {
-            $addFields: {
-              filteredDepartments: {
-                $filter: {
-                  input: "$department",
-                  as: "dep",
-                  cond: {
-                    $eq: ["$$dep.aom", userId],
-                  },
+        },
+        {
+          $match: {
+            $expr: {
+              $and: [
+                {
+                  $gt: [{ $size: "$filteredDepartments" }, 0],
                 },
-              },
+                {
+                  $gt: [{ $size: "$departments" }, 1],
+                },
+              ],
             },
+            type: "AGENT",
           },
-          {
-            $match: {
-              $expr: {
-                $and: [
-                  {
-                    $gt: [{ $size: "$filteredDepartments" }, 0],
-                  },
-                  {
-                    $gt: [{ $size: "$departments" }, 1],
-                  },
-                ],
-              },
-              type: "AGENT",
-            },
-          },
-        ]);
+        },
+      ]);
 
-        return UserHelper;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    getBucketTL: async (_, __, { user }) => {
-      try {
-        if (!user) throw new CustomError("Not authenticated", 401);
-        const findUserTLs = await User.aggregate([
-          {
-            $match: {
-              buckets: {
-                $in: user.buckets.map((e) => new mongoose.Types.ObjectId(e)),
-              },
-              type: "TL",
+      return UserHelper;
+    }),
+    getBucketTL: safeResolver(async (_, __, { user }) => {
+      if (!user) throw new CustomError("Not authenticated", 401);
+      const findUserTLs = await User.aggregate([
+        {
+          $match: {
+            buckets: {
+              $in: user.buckets.map((e) => new mongoose.Types.ObjectId(e)),
             },
+            type: "TL",
           },
-        ]);
-        return findUserTLs;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
+        },
+      ]);
+      return findUserTLs;
+    }),
+    getBucketTLByBucket: safeResolver(async (_, { bucketId }) => {
+      if (!bucketId) {
+        return [];
       }
-    },
-    getBucketTLByBucket: async (_, { bucketId }) => {
-      try {
-        if (!bucketId) {
-          return [];
+
+      const bucketObjectId = new mongoose.Types.ObjectId(bucketId);
+
+      const tls = await User.find({
+        type: { $eq: "TL" },
+        buckets: { $in: [bucketObjectId] },
+        active: true,
+      }).select("_id name buckets");
+
+      return tls;
+    }),
+    getBucketViciIds: safeResolver(async (_, { bucketIds }) => {
+      const viciIds = [];
+
+      for (const bucketId of bucketIds) {
+        const findBucket = await Bucket.findById(bucketId);
+
+        if (findBucket.viciIp) {
+          const res = await bucketUsersStatus(findBucket.viciIp);
+          const newRes = res.split("\n");
+          viciIds.push(...newRes.flat());
         }
-
-        const bucketObjectId = new mongoose.Types.ObjectId(bucketId);
-
-        const tls = await User.find({
-          type: { $eq: "TL" },
-          buckets: { $in: [bucketObjectId] },
-          active: true,
-        }).select("_id name buckets");
-
-        return tls;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    getBucketViciIds: async (_, { bucketIds }) => {
-      try {
-        const viciIds = [];
-
-        for (const bucketId of bucketIds) {
-          const findBucket = await Bucket.findById(bucketId);
-  
-          if (findBucket.viciIp) {
-            const res = await bucketUsersStatus(findBucket.viciIp);
-            const newRes = res.split("\n");
-            viciIds.push(...newRes.flat());
-          }
-          if (findBucket.viciIp_auto) {
-            const res2 = await bucketUsersStatus(findBucket.viciIp_auto);
-            const newRes2 = res2.split("\n");
-            viciIds.push(...newRes2.flat());
-          }
+        if (findBucket.viciIp_auto) {
+          const res2 = await bucketUsersStatus(findBucket.viciIp_auto);
+          const newRes2 = res2.split("\n");
+          viciIds.push(...newRes2.flat());
         }
-
-        return viciIds;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
       }
-    },
+
+      return viciIds;
+    }),
   },
   DeptUser: {
-    buckets: async (parent) => {
-      try {
-        const buckets = await Bucket.find({ _id: { $in: parent.buckets } });
-        return buckets;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    departments: async (parent) => {
-      try {
-        const departments = await Department.find({
-          _id: { $in: parent.departments },
-        });
+    buckets: safeResolver(async (parent) => {
+      const buckets = await Bucket.find({ _id: { $in: parent.buckets } });
+      return buckets;
+    }),
+    departments: safeResolver(async (parent) => {
+      const departments = await Department.find({
+        _id: { $in: parent.departments },
+      });
 
-        return departments;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
+      return departments;
+    }),
   },
   Mutation: {
-    createUser: async (_, { createInput }, { user }) => {
-      try {
-        if (!user) throw new CustomError("Unauthorized", 401);
-        const {
-          name,
-          username,
-          branch,
-          departments,
-          type,
-          user_id,
-          buckets,
-          account_type,
-          callfile_id,
-          vici_id,
-          softphone,
-        } = createInput;
+    createUser: safeResolver(async (_, { createInput }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+      const {
+        name,
+        username,
+        branch,
+        departments,
+        type,
+        user_id,
+        buckets,
+        account_type,
+        callfile_id,
+        vici_id,
+        softphone,
+      } = createInput;
 
-        if (type === "AGENT") {
-          await Promise.all(
-            departments.map(async (deptId) => {
-              const found = await Department.findById(deptId);
-              if (!found) throw new Error(`Department not found: ${deptId}`);
-            })
-          );
+      if (type === "AGENT") {
+        await Promise.all(
+          departments.map(async (deptId) => {
+            const found = await Department.findById(deptId);
+            if (!found) throw new Error(`Department not found: ${deptId}`);
+          })
+        );
 
-          await Promise.all(
-            buckets.map(async (bucketId) => {
-              const found = await Bucket.findById(bucketId);
-              if (!found) throw new Error(`Bucket not found: ${bucketId}`);
-            })
-          );
+        await Promise.all(
+          buckets.map(async (bucketId) => {
+            const found = await Bucket.findById(bucketId);
+            if (!found) throw new Error(`Bucket not found: ${bucketId}`);
+          })
+        );
 
-          const findBranch = await Branch.findById(branch);
-          if (!findBranch) throw new Error("Branch not found");
-        }
-
-        const saltPassword = await bcrypt.genSalt(10);
-        const password =
-          type.toLowerCase() === "admin" ? "adminadmin" : "Bernales2025";
-
-        const hashPassword = await bcrypt.hash(password, saltPassword);
-
-        const newUser = new User({
-          name,
-          username,
-          password: hashPassword,
-          branch: branch || null,
-          departments,
-          type,
-          callfile_id,
-          user_id,
-          account_type,
-          buckets,
-          vici_id,
-          softphone,
-        });
-
-        await newUser.save();
-
-        await ModifyRecord.create({ name: "Created", user: newUser._id });
-
-        return {
-          success: true,
-          message: "New Account Created",
-        };
-      } catch (error) {
-        console.log(error);
-        throw new CustomError(error.message, 500);
+        const findBranch = await Branch.findById(branch);
+        if (!findBranch) throw new Error("Branch not found");
       }
-    },
 
-    updatePassword: async (_, { _id, password, confirmPass }) => {
-      try {
-        if (!_id) throw new CustomError("Unauthorized", 401);
+      const saltPassword = await bcrypt.genSalt(10);
+      const password =
+        type.toLowerCase() === "admin" ? "adminadmin" : "Bernales2025";
 
-        if (confirmPass !== password) throw new CustomError("Not Match", 401);
+      const hashPassword = await bcrypt.hash(password, saltPassword);
 
-        const userChangePass = await User.findById(_id);
+      const newUser = new User({
+        name,
+        username,
+        password: hashPassword,
+        branch: branch || null,
+        departments,
+        type,
+        callfile_id,
+        user_id,
+        account_type,
+        buckets,
+        vici_id,
+        softphone,
+      });
 
-        if (!userChangePass) throw new CustomError("User not found", 404);
+      await newUser.save();
 
-        const saltPassword = await bcrypt.genSalt(10);
-        const hashPassword = await bcrypt.hash(password, saltPassword);
+      await ModifyRecord.create({ name: "Created", user: newUser._id });
 
-        userChangePass.password = hashPassword;
-        userChangePass.change_password = true;
+      return {
+        success: true,
+        message: "New Account Created",
+      };
+    }),
 
-        await userChangePass.save();
+    updatePassword: safeResolver(async (_, { _id, password, confirmPass }) => {
+      if (!_id) throw new CustomError("Unauthorized", 401);
 
-        await ModifyRecord.create({
-          name: "Update Password",
-          user: userChangePass._id,
-        });
+      if (confirmPass !== password) throw new CustomError("Not Match", 401);
 
-        return userChangePass;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
+      const userChangePass = await User.findById(_id);
 
-    login: async (
-      _,
-      { username, password },
-      { res, req, pubsub, PUBSUB_EVENTS }
-    ) => {
-      try {
+      if (!userChangePass) throw new CustomError("User not found", 404);
+
+      const saltPassword = await bcrypt.genSalt(10);
+      const hashPassword = await bcrypt.hash(password, saltPassword);
+
+      userChangePass.password = hashPassword;
+      userChangePass.change_password = true;
+
+      await userChangePass.save();
+
+      await ModifyRecord.create({
+        name: "Update Password",
+        user: userChangePass._id,
+      });
+
+      return userChangePass;
+    }),
+
+    login: safeResolver(
+      async (
+        _,
+        { username, password },
+        { res, req, pubsub, PUBSUB_EVENTS }
+      ) => {
         const user = await User.findOne({ username });
 
         if (!user) throw new CustomError("Invalid", 401);
@@ -674,426 +592,381 @@ const userResolvers = {
           start: dateToday,
           token,
         };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
       }
-    },
-    logout: async (_, __, { user, res }) => {
-      try {
-        if (!user) throw new CustomError("Logout: Unauthorized", 401);
+    ),
+    logout: safeResolver(async (_, __, { user, res }) => {
+      if (!user) throw new CustomError("Logout: Unauthorized", 401);
 
-        if (user.handsOn) {
-          await CustomerAccount.findByIdAndUpdate(user.handsOn, {
-            $set: { on_hands: false },
-          });
-        }
-
-        const findUser = await User.findByIdAndUpdate(
-          user._id,
-          {
-            $set: { isOnline: false },
-            $unset: { handsOn: "", "features.token": "" },
-          },
-          { new: true }
-        ).populate("buckets");
-
-        if (!findUser) {
-          throw CustomError("User not found", 404);
-        }
-
-        if (findUser.type === "AGENT") {
-          const start = new Date();
-          start.setHours(0, 0, 0, 0);
-
-          const end = new Date();
-          end.setHours(23, 59, 59, 999);
-
-          const userProd = await Production.findOne({
-            user: findUser._id,
-            createdAt: { $gt: start, $lte: end },
-          });
-
-          if (userProd?.prod_history.length > 0) {
-            const dateToday = new Date();
-
-            userProd.prod_history.forEach((x) => {
-              if (x.existing === true) {
-                x.existing = false;
-                x.end = dateToday;
-              }
-            });
-
-            userProd.prod_history.push({
-              type: "LOGOUT",
-              start: dateToday,
-              existing: true,
-            });
-
-            await userProd.save();
-          }
-        }
-
-        res.clearCookie("connect.sid");
-
-        const bucket =
-          findUser?.buckets?.length > 0
-            ? new Array(...new Set(findUser?.buckets?.map((x) => x.viciIp)))
-            : [];
-
-        const canCall =
-          findUser?.buckets?.length > 0
-            ? findUser?.buckets.map((x) => x.canCall)
-            : [];
-
-        if (canCall.some((x) => x === true)) {
-          await logoutVici(findUser.vici_id, bucket[0]);
-        }
-
-        return { success: true, message: "Successfully logout" };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    resetPassword: async (_, { id }) => {
-      try {
-        const saltPassword = await bcrypt.genSalt(10);
-        const hashPassword = await bcrypt.hash("Bernales2026", saltPassword);
-        const user = await User.findByIdAndUpdate(
-          id,
-          {
-            $set: {
-              password: hashPassword,
-              change_password: false,
-              isOnline: false,
-              new_account: false,
-            },
-          },
-          { new: true }
-        );
-        if (!user) throw new CustomError("User not found", 404);
-
-        await ModifyRecord.create({ name: "Reset Password", user: user._id });
-
-        return {
-          success: true,
-          message: "User password updated",
-          user: user,
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    updateUser: async (_, { updateInput }, { user }) => {
-      if (!user) throw new CustomError("Unauthorized", 401);
-      try {
-        const { id, ...others } = updateInput;
-        const findUser = await User.findById(id);
-        if (!findUser) throw new CustomError("User not found", 404);
-
-        if (!findUser.buckets.includes(others.buckets) && !findUser.reliver) {
-          await User.findByIdAndUpdate(id, {
-            $set: {
-              targets: {
-                daily_target: 0,
-                weekly_target: 0,
-                monthly_target: 0,
-                daily_variance: 0,
-                weekly_variance: 0,
-                montlhy_variance: 0,
-              },
-            },
-          });
-        }
-
-        const updateUser = await User.findByIdAndUpdate(
-          id,
-          { $set: { ...others } },
-          { new: true }
-        );
-
-        await ModifyRecord.create({
-          name: "Update User Info",
-          user: updateUser._id,
+      if (user.handsOn) {
+        await CustomerAccount.findByIdAndUpdate(user.handsOn, {
+          $set: { on_hands: false },
         });
-
-        return {
-          success: true,
-          message: "User account successfully updated",
-          user: updateUser,
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
       }
-    },
-    updateActiveStatus: async (_, { id }, { user }) => {
-      try {
-        if (!user) throw new CustomError("Unauthorized", 401);
-        const findUser = await User.findById(id);
-        if (!findUser) throw CustomError("User not found", 404);
-        findUser.active = !findUser.active;
-        await ModifyRecord.create({
-          name: `${findUser.active ? "Activation" : "Deactivation"}`,
+
+      const findUser = await User.findByIdAndUpdate(
+        user._id,
+        {
+          $set: { isOnline: false },
+          $unset: { handsOn: "", "features.token": "" },
+        },
+        { new: true }
+      ).populate("buckets");
+
+      if (!findUser) {
+        throw CustomError("User not found", 404);
+      }
+
+      if (findUser.type === "AGENT") {
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+
+        const userProd = await Production.findOne({
           user: findUser._id,
+          createdAt: { $gt: start, $lte: end },
         });
-        await findUser.save();
-        return {
-          success: true,
-          message: "User status successfully updated",
-          user: findUser,
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    logoutToPersist: async (_, { id }, { res }) => {
-      try {
-        const findUser = await User.findByIdAndUpdate(
-          id,
-          {
-            $set: { isOnline: false },
-            $unset: { "features.token": "" },
-          },
-          { new: true }
-        );
 
-        if (!findUser) {
-          throw CustomError("User not found", 404);
-        }
+        if (userProd?.prod_history.length > 0) {
+          const dateToday = new Date();
 
-        if (findUser.type === "AGENT") {
-          const start = new Date();
-          start.setHours(0, 0, 0, 0);
-
-          const end = new Date();
-          end.setHours(23, 59, 59, 999);
-
-          const userProd = await Production.findOne({
-            user: findUser._id,
-            createdAt: { $gt: start, $lte: end },
+          userProd.prod_history.forEach((x) => {
+            if (x.existing === true) {
+              x.existing = false;
+              x.end = dateToday;
+            }
           });
 
-          if (userProd?.prod_history?.length > 0) {
-            const dateToday = new Date();
-
-            userProd.prod_history.forEach((x) => {
-              if (x.existing === true) {
-                x.existing = false;
-                x.end = dateToday;
-              }
-            });
-
-            userProd.prod_history.push({
-              type: "LOGOUT",
-              start: dateToday,
-              existing: true,
-            });
-
-            await userProd.save();
-          }
-        }
-
-        res.clearCookie("connect.sid");
-
-        return {
-          success: true,
-          message: "Successfully logout",
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-
-    unlockUser: async (_, { id }, { user }) => {
-      try {
-        if (!user) throw new CustomError("Unauthorized", 401);
-
-        const unlockUser = await User.findByIdAndUpdate(
-          id,
-          {
-            $set: {
-              isLock: false,
-              attempt_login: 0,
-            },
-          },
-          { new: true }
-        );
-
-        if (!unlockUser) throw new CustomError("Agent not found", 404);
-
-        await ModifyRecord.create({
-          name: "Unlock account",
-          user: unlockUser._id,
-        });
-
-        return {
-          success: true,
-          message: `Successfully unlock ${unlockUser.name.toUpperCase()} account`,
-          user: unlockUser,
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    adminLogout: async (_, { id }, { user }) => {
-      try {
-        if (!user) throw new CustomError("Unauthorized", 401);
-
-        const logoutUser = await User.findByIdAndUpdate(
-          id,
-          { $set: { isOnline: false } },
-          { new: true }
-        );
-
-        const userBuckets = await Bucket.find({
-          _id: {
-            $in: logoutUser.buckets.map((x) => new mongoose.Types.ObjectId(x)),
-          },
-        });
-
-        if (!logoutUser) throw new CustomError("User not found", 404);
-
-        if (logoutUser.type === "AGENT") {
-          const start = new Date();
-          start.setHours(0, 0, 0, 0);
-
-          const end = new Date();
-          end.setHours(23, 59, 59, 999);
-
-          const userProd = await Production.findOne({
-            user: logoutUser._id,
-            createdAt: { $gt: start, $lte: end },
+          userProd.prod_history.push({
+            type: "LOGOUT",
+            start: dateToday,
+            existing: true,
           });
 
-          if (userProd.prod_history.length > 0) {
-            const dateToday = new Date();
-
-            userProd?.prod_history?.forEach((x) => {
-              if (x.existing === true) {
-                x.existing = false;
-                x.end = dateToday;
-              }
-            });
-
-            userProd.prod_history.push({
-              type: "LOGOUT",
-              start: dateToday,
-              existing: true,
-            });
-
-            await userProd.save();
-          }
+          await userProd.save();
         }
-
-        const bucket =
-          userBuckets > 0
-            ? new Array(...new Set(userBuckets.map((x) => x.viciIp)))
-            : [];
-
-        const userBucketsCanCall = userBuckets
-          .map((x) => x.canCall)
-          .some((y) => y === true);
-        if (userBucketsCanCall) {
-          await logoutVici(logoutUser.vici_id, bucket[0]);
-        }
-
-        await ModifyRecord.create({ name: "Logout", user: logoutUser._id });
-        return {
-          success: true,
-          message: "Successfully logout",
-          user: logoutUser,
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
       }
-    },
-    authorization: async (_, { password }, { user }) => {
-      try {
-        if (!user) throw new CustomError("Unauthorized", 401);
 
-        const validatePassword = await bcrypt.compare(password, user.password);
+      res.clearCookie("connect.sid");
 
-        if (!validatePassword) throw new CustomError("Invalid");
+      const bucket =
+        findUser?.buckets?.length > 0
+          ? new Array(...new Set(findUser?.buckets?.map((x) => x.viciIp)))
+          : [];
 
-        return {
-          success: true,
-          message: "Password is valid",
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
+      const canCall =
+        findUser?.buckets?.length > 0
+          ? findUser?.buckets.map((x) => x.canCall)
+          : [];
+
+      if (canCall.some((x) => x === true)) {
+        await logoutVici(findUser.vici_id, bucket[0]);
       }
-    },
-    deleteUser: async (_, { id }, { user }) => {
-      try {
-        if (!user) throw new CustomError("Unauthorized", 401);
 
-        const deletedUser = await User.findByIdAndDelete(id);
-        if (!deletedUser) throw new CustomError("User not found", 400);
+      return { success: true, message: "Successfully logout" };
+    }),
+    resetPassword: safeResolver(async (_, { id }) => {
+      const saltPassword = await bcrypt.genSalt(10);
+      const hashPassword = await bcrypt.hash("Bernales2026", saltPassword);
+      const user = await User.findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            password: hashPassword,
+            change_password: false,
+            isOnline: false,
+            new_account: false,
+          },
+        },
+        { new: true }
+      );
+      if (!user) throw new CustomError("User not found", 404);
 
-        return {
-          success: true,
-          message: "User successfully deleted",
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    updateUserVici_id: async (_, { vici_id }, { user }) => {
-      try {
-        const updateUser = await User.findByIdAndUpdate(
-          user._id,
-          {
-            $set: {
-              vici_id: vici_id,
+      await ModifyRecord.create({ name: "Reset Password", user: user._id });
+
+      return {
+        success: true,
+        message: "User password updated",
+        user: user,
+      };
+    }),
+    updateUser: safeResolver(async (_, { updateInput }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const { id, ...others } = updateInput;
+      const findUser = await User.findById(id);
+      if (!findUser) throw new CustomError("User not found", 404);
+
+      if (!findUser.buckets.includes(others.buckets) && !findUser.reliver) {
+        await User.findByIdAndUpdate(id, {
+          $set: {
+            targets: {
+              daily_target: 0,
+              weekly_target: 0,
+              monthly_target: 0,
+              daily_variance: 0,
+              weekly_variance: 0,
+              montlhy_variance: 0,
             },
           },
-          { new: true }
-        );
-
-        if (!updateUser) throw new CustomError("User not found", 401);
-
-        return {
-          success: true,
-          message: "Successfully added vici dial id",
-          user: updateUser,
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
+        });
       }
-    },
-    updateQAUser: async (_, { input }, { user }) => {
-      try {
-        if (!user) throw new CustomError("Unauthorized", 401);
-        const { userId, departments, buckets, scoreCardType } = input;
 
-        const updateFields = {};
-        if (typeof departments !== "undefined") {
-          updateFields.departments = departments;
-        }
-        if (typeof buckets !== "undefined") {
-          updateFields.buckets = buckets;
-        }
-        if (typeof scoreCardType !== "undefined") {
-          updateFields.scoreCardType = scoreCardType;
-        }
+      const updateUser = await User.findByIdAndUpdate(
+        id,
+        { $set: { ...others } },
+        { new: true }
+      );
 
-        if (Object.keys(updateFields).length === 0) {
-          throw new CustomError("No fields provided", 400);
-        }
+      await ModifyRecord.create({
+        name: "Update User Info",
+        user: updateUser._id,
+      });
 
-        const updatedUser = await User.findByIdAndUpdate(userId, {
-          $set: updateFields,
+      return {
+        success: true,
+        message: "User account successfully updated",
+        user: updateUser,
+      };
+    }),
+    updateActiveStatus: safeResolver(async (_, { id }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+      const findUser = await User.findById(id);
+      if (!findUser) throw CustomError("User not found", 404);
+      findUser.active = !findUser.active;
+      await ModifyRecord.create({
+        name: `${findUser.active ? "Activation" : "Deactivation"}`,
+        user: findUser._id,
+      });
+      await findUser.save();
+      return {
+        success: true,
+        message: "User status successfully updated",
+        user: findUser,
+      };
+    }),
+    logoutToPersist: safeResolver(async (_, { id }, { res }) => {
+      const findUser = await User.findByIdAndUpdate(
+        id,
+        {
+          $set: { isOnline: false },
+          $unset: { "features.token": "" },
+        },
+        { new: true }
+      );
+
+      if (!findUser) {
+        throw CustomError("User not found", 404);
+      }
+
+      if (findUser.type === "AGENT") {
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+
+        const userProd = await Production.findOne({
+          user: findUser._id,
+          createdAt: { $gt: start, $lte: end },
         });
 
-        if (!updatedUser) throw new CustomError("User not found", 401);
+        if (userProd?.prod_history?.length > 0) {
+          const dateToday = new Date();
 
-        return {
-          success: true,
-          message: "User successfully updated",
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
+          userProd.prod_history.forEach((x) => {
+            if (x.existing === true) {
+              x.existing = false;
+              x.end = dateToday;
+            }
+          });
+
+          userProd.prod_history.push({
+            type: "LOGOUT",
+            start: dateToday,
+            existing: true,
+          });
+
+          await userProd.save();
+        }
       }
-    },
+
+      res.clearCookie("connect.sid");
+
+      return {
+        success: true,
+        message: "Successfully logout",
+      };
+    }),
+
+    unlockUser: safeResolver(async (_, { id }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const unlockUser = await User.findByIdAndUpdate(
+        id,
+        {
+          $set: {
+            isLock: false,
+            attempt_login: 0,
+          },
+        },
+        { new: true }
+      );
+
+      if (!unlockUser) throw new CustomError("Agent not found", 404);
+
+      await ModifyRecord.create({
+        name: "Unlock account",
+        user: unlockUser._id,
+      });
+
+      return {
+        success: true,
+        message: `Successfully unlock ${unlockUser.name.toUpperCase()} account`,
+        user: unlockUser,
+      };
+    }),
+    adminLogout: safeResolver(async (_, { id }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const logoutUser = await User.findByIdAndUpdate(
+        id,
+        { $set: { isOnline: false } },
+        { new: true }
+      );
+
+      const userBuckets = await Bucket.find({
+        _id: {
+          $in: logoutUser.buckets.map((x) => new mongoose.Types.ObjectId(x)),
+        },
+      });
+
+      if (!logoutUser) throw new CustomError("User not found", 404);
+
+      if (logoutUser.type === "AGENT") {
+        const start = new Date();
+        start.setHours(0, 0, 0, 0);
+
+        const end = new Date();
+        end.setHours(23, 59, 59, 999);
+
+        const userProd = await Production.findOne({
+          user: logoutUser._id,
+          createdAt: { $gt: start, $lte: end },
+        });
+
+        if (userProd.prod_history.length > 0) {
+          const dateToday = new Date();
+
+          userProd?.prod_history?.forEach((x) => {
+            if (x.existing === true) {
+              x.existing = false;
+              x.end = dateToday;
+            }
+          });
+
+          userProd.prod_history.push({
+            type: "LOGOUT",
+            start: dateToday,
+            existing: true,
+          });
+
+          await userProd.save();
+        }
+      }
+
+      const bucket =
+        userBuckets > 0
+          ? new Array(...new Set(userBuckets.map((x) => x.viciIp)))
+          : [];
+
+      const userBucketsCanCall = userBuckets
+        .map((x) => x.canCall)
+        .some((y) => y === true);
+      if (userBucketsCanCall) {
+        await logoutVici(logoutUser.vici_id, bucket[0]);
+      }
+
+      await ModifyRecord.create({ name: "Logout", user: logoutUser._id });
+      return {
+        success: true,
+        message: "Successfully logout",
+        user: logoutUser,
+      };
+    }),
+    authorization: safeResolver(async (_, { password }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const validatePassword = await bcrypt.compare(password, user.password);
+
+      if (!validatePassword) throw new CustomError("Invalid");
+
+      return {
+        success: true,
+        message: "Password is valid",
+      };
+    }),
+    deleteUser: safeResolver(async (_, { id }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const deletedUser = await User.findByIdAndDelete(id);
+      if (!deletedUser) throw new CustomError("User not found", 400);
+
+      return {
+        success: true,
+        message: "User successfully deleted",
+      };
+    }),
+    updateUserVici_id: safeResolver(async (_, { vici_id }, { user }) => {
+      const updateUser = await User.findByIdAndUpdate(
+        user._id,
+        {
+          $set: {
+            vici_id: vici_id,
+          },
+        },
+        { new: true }
+      );
+
+      if (!updateUser) throw new CustomError("User not found", 401);
+
+      return {
+        success: true,
+        message: "Successfully added vici dial id",
+        user: updateUser,
+      };
+    }),
+    updateQAUser: safeResolver(async (_, { input }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+      const { userId, departments, buckets, scoreCardType } = input;
+
+      const updateFields = {};
+      if (typeof departments !== "undefined") {
+        updateFields.departments = departments;
+      }
+      if (typeof buckets !== "undefined") {
+        updateFields.buckets = buckets;
+      }
+      if (typeof scoreCardType !== "undefined") {
+        updateFields.scoreCardType = scoreCardType;
+      }
+
+      if (Object.keys(updateFields).length === 0) {
+        throw new CustomError("No fields provided", 400);
+      }
+
+      const updatedUser = await User.findByIdAndUpdate(userId, {
+        $set: updateFields,
+      });
+
+      if (!updatedUser) throw new CustomError("User not found", 401);
+
+      return {
+        success: true,
+        message: "User successfully updated",
+      };
+    }),
   },
 };
 

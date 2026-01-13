@@ -22,6 +22,7 @@ import ServerError from "../pages/ServerError";
 import SuccessToast from "./SuccessToast";
 import { persistor } from "../redux/store";
 import { motion, AnimatePresence } from "framer-motion";
+import { closeWsClient } from "../apollo/wsClient.ts";
 
 type Targets = {
   daily: number;
@@ -345,6 +346,7 @@ const Navbar = () => {
   }>(LOGOUT_USING_PERSIST, {
     onCompleted: async () => {
       await persistor.purge();
+      closeWsClient()
       if (selectedCustomer) {
         const res = await deselectTask({
           variables: { id: selectedCustomer?._id },
@@ -400,6 +402,7 @@ const Navbar = () => {
   }, [deselectTask, logoutToPersist, selectedCustomer, userLogged]);
 
   const accountLoginByOtherUser = useCallback(async () => {
+    closeWsClient()
     if (selectedCustomer) {
       const res = await deselectTask({
         variables: { id: selectedCustomer?._id },
@@ -411,10 +414,11 @@ const Navbar = () => {
       }
     } else {
       dispatch(setLogout());
+      
       navigate("/", { replace: true });
       window.location.reload();
     }
-  }, [deselectTask, selectedCustomer]);
+  }, [deselectTask, selectedCustomer, closeWsClient]);
 
   useEffect(() => {
     const timer = setTimeout(async () => {

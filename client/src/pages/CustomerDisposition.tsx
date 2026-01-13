@@ -1353,9 +1353,6 @@ const CustomerDisposition = () => {
               className="absolute cursor-pointer bg-yellow-600 text-white border-yellow-900 text-shadow-2xs hover:bg-yellow-700 top-5 left-5 py-1 px-3 font-black rounded-sm shadow-md border-2"
             >
               M
-              <div className="absolute -top-3 -right-4 rotate-12 text-[0.5rem] bg-green-600 border-green-800 px-1.5 py-0.5 border-2 rounded-full  ">
-                NEW
-              </div>
             </motion.div>
           )}
           {showMasterFile && (

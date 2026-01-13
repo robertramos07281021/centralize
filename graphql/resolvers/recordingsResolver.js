@@ -5,6 +5,7 @@ import Disposition from "../../models/disposition.js";
 import CustomError from "../../middlewares/errors.js";
 import path from "path";
 import SftpClient from "ssh2-sftp-client";
+import { safeResolver } from "../../middlewares/safeResolver.js";
 
 const passwords = {
   "172.20.21.67": process.env.FTP_PASSWORD1,
@@ -54,7 +55,7 @@ const fileNale = {
 
 const recordingsResolver = {
   Query: {
-    findLagRecording: async (_, { name, _id }) => {
+    findLagRecording: safeResolver(async (_, { name, _id }) => {
       const client = new ftp.Client();
       try {
         const findDispo = await Disposition.findById(_id).populate({
@@ -151,13 +152,11 @@ const recordingsResolver = {
         const remotePath = `${ifATOME}/${name}`;
         const files = await client.list(remotePath);
         return files[0].size;
-      } catch (err) {
-        throw new CustomError(err.message, 500);
       } finally {
         client.close();
       }
-    },
-    findLagOnFTP: async (_, { name }) => {
+    }),
+    findLagOnFTP: safeResolver(async (_, { name }) => {
       const sftp = new SftpClient();
 
       try {
@@ -215,16 +214,11 @@ const recordingsResolver = {
         }
 
         return fileContent.length;
-      } catch (err) {
-        throw new CustomError(
-          err.message || "Unable to download recording",
-          500
-        );
       } finally {
         await sftp.end();
       }
-    },
-    cantFindOnFTP: async (_, { name }) => {
+    }),
+    cantFindOnFTP: safeResolver(async (_, { name }) => {
       const sftp = new SftpClient();
 
       try {
@@ -305,19 +299,14 @@ const recordingsResolver = {
             size: x.size,
           };
         });
-      } catch (err) {
-        throw new CustomError(
-          err.message || "Unable to download recording",
-          500
-        );
       } finally {
         await sftp.end();
       }
-    },
+    }),
   },
 
   Mutation: {
-    findRecordings: async (_, { name, _id, ccsCall }) => {
+    findRecordings: safeResolver(async (_, { name, _id, ccsCall }) => {
       const client = new ftp.Client();
       try {
         const fileNameNewMap = name.split(".mp3");
@@ -456,16 +445,11 @@ const recordingsResolver = {
           url: toDownload,
           message: "Successfully downloaded",
         };
-      } catch (err) {
-        throw new CustomError(
-          err.message || "Unable to download recording",
-          500
-        );
       } finally {
         client.close();
       }
-    },
-    deleteRecordings: (_, { filename }) => {
+    }),
+    deleteRecordings: safeResolver(async (_, { filename }) => {
       const filePath = path.join("./recordings", filename);
       fs.unlink(filePath, (err) => {
         if (err) {
@@ -477,8 +461,8 @@ const recordingsResolver = {
         success: true,
         message: "Successfully deleted",
       };
-    },
-    recordingsFTP: async (_, { _id, fileName }) => {
+    }),
+    recordingsFTP: safeResolver(async (_, { _id, fileName }) => {
       const sftp = new SftpClient();
 
       try {
@@ -552,15 +536,10 @@ const recordingsResolver = {
           url: toDownload,
           message: "Successfully downloaded",
         };
-      } catch (err) {
-        throw new CustomError(
-          err.message || "Unable to download recording",
-          500
-        );
       } finally {
         await sftp.end();
       }
-    },
+    }),
   },
 };
 

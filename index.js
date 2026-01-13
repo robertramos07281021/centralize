@@ -292,7 +292,6 @@ const initWebSocketServer = (httpServer, schema) => {
   useServer(
     {
       schema,
-
       // context for each WS connection
       context: async (ctx) => {
         const authHeader = ctx.connectionParams?.authorization;
@@ -309,8 +308,8 @@ const initWebSocketServer = (httpServer, schema) => {
           user = await User.findById(decoded.id);
           if (!user) throw new CustomError("User not found", 401);
 
-          const userId = user._id.toString();
-          const socket = ctx.extra.socket;
+          const userId = user?._id?.toString();
+          const socket = ctx?.extra?.socket;
 
           // Add socket to connectedUsers
           if (!connectedUsers.has(userId)) {
@@ -320,19 +319,20 @@ const initWebSocketServer = (httpServer, schema) => {
             });
           } else {
             const entry = connectedUsers.get(userId);
-            entry.sockets.add(socket);
-            if (entry.cleanupTimer) {
+            entry?.sockets?.add(socket);
+            if (entry?.cleanupTimer) {
               clearTimeout(entry.cleanupTimer);
               entry.cleanupTimer = null;
             }
           }
 
           ctx.extra.userId = userId;
-        } catch (err) {
-          console.log("WS auth error:", err.message);
-        }
 
-        return { user, pubsub, PUBSUB_EVENTS };
+          return { user, pubsub, PUBSUB_EVENTS };
+
+        } catch (err) {
+          throw new CustomError(err.message,500);
+        }
       },
 
       // disconnect logic
@@ -432,6 +432,7 @@ const initWebSocketServer = (httpServer, schema) => {
                 message: PUBSUB_EVENTS.OFFLINE_USER,
               },
             });
+
           } catch (err) {
             console.error("WS cleanup error:", err);
           }

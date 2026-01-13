@@ -2,77 +2,61 @@ import CustomError from "../../middlewares/errors.js";
 import Group from "../../models/group.js";
 import User from "../../models/user.js";
 import CustomerAccount from "../../models/customerAccount.js";
+import { safeResolver } from "../../middlewares/safeResolver.js";
 
 const groupResolver = {
   Query: {
-    findGroup: async (_, __, { user }) => {
+    findGroup: safeResolver(async (_, __, { user }) => {
       if (!user) throw new CustomError("Unauthorized", 401);
-      try {
-        const getAllGroup = await Group.find({ createdBy: user._id });
-        return getAllGroup;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
+
+      const getAllGroup = await Group.find({ createdBy: user._id });
+      return getAllGroup;
+    }),
   },
   GroupTask: {
-    members: async (parent) => {
-      try {
-        const members = await User.find({ _id: { $in: parent.members } });
-        return members;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
+    members: safeResolver(async (parent) => {
+      const members = await User.find({ _id: { $in: parent.members } });
+      return members;
+    }),
   },
   Mutation: {
-    createGroup: async (_, { name, description }, { user }) => {
+    createGroup: safeResolver(async (_, { name, description }, { user }) => {
       if (!user) throw new CustomError("Unauthorized", 401);
-      try {
-        await Group.create({ name, description, createdBy: user._id });
-        return { success: true, message: `Group successfully created` };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    updateGroup: async (_, { id, name, description }, { user }) => {
-      if (!user) throw new CustomError("Unauthorized", 401);
-      try {
+
+      await Group.create({ name, description, createdBy: user._id });
+      return { success: true, message: `Group successfully created` };
+    }),
+    updateGroup: safeResolver(
+      async (_, { id, name, description }, { user }) => {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
         await Group.findByIdAndUpdate(id, { $set: { name, description } });
         return { success: true, message: `Group successfully updated` };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
       }
-    },
-    deleteGroup: async (_, { id }, { user }) => {
+    ),
+    deleteGroup: safeResolver(async (_, { id }, { user }) => {
       if (!user) throw new CustomError("Unauthorized", 401);
-      try {
-        const deletedGroup = await Group.findByIdAndDelete(id);
-        if (!deletedGroup) throw new CustomError("Group successfully deleted");
 
-        await User.updateMany(
-          { _id: { $in: deletedGroup.members } },
-          { $set: { group: null } }
-        );
-        await CustomerAccount.updateMany(
-          { assigned: deletedGroup._id },
-          { $unset: { assigned: "", assigned_date: "", assignedModel: "" } }
-        );
-        return {
-          success: true,
-          message: "Group successfully deleted",
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
-      }
-    },
-    addGroupMember: async (
-      _,
-      { id, member },
-      { user, pubsub, PUBSUB_EVENTS }
-    ) => {
-      if (!user) throw new CustomError("Unauthorized", 401);
-      try {
+      const deletedGroup = await Group.findByIdAndDelete(id);
+      if (!deletedGroup) throw new CustomError("Group successfully deleted");
+
+      await User.updateMany(
+        { _id: { $in: deletedGroup.members } },
+        { $set: { group: null } }
+      );
+      await CustomerAccount.updateMany(
+        { assigned: deletedGroup._id },
+        { $unset: { assigned: "", assigned_date: "", assignedModel: "" } }
+      );
+      return {
+        success: true,
+        message: "Group successfully deleted",
+      };
+    }),
+    addGroupMember: safeResolver(
+      async (_, { id, member }, { user, pubsub, PUBSUB_EVENTS }) => {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
         const findGroup = await Group.findById(id);
         if (!findGroup) throw new CustomError("Group not found", 404);
 
@@ -96,17 +80,12 @@ const groupResolver = {
           success: true,
           message: `Member successfully added`,
         };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
       }
-    },
-    deleteGroupMember: async (
-      _,
-      { id, member },
-      { user, pubsub, PUBSUB_EVENTS }
-    ) => {
-      if (!user) throw new CustomError("Unauthorized", 401);
-      try {
+    ),
+    deleteGroupMember: safeResolver(
+      async (_, { id, member }, { user, pubsub, PUBSUB_EVENTS }) => {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
         const updateGroup = await Group.findByIdAndUpdate(id, {
           $pull: { members: member },
         });
@@ -129,20 +108,15 @@ const groupResolver = {
           success: true,
           message: `Member successfully deleted`,
         };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
       }
-    },
-    addGroupTask: async (
-      _,
-      { groupId, task },
-      { user, pubsub, PUBSUB_EVENTS }
-    ) => {
-      if (!user) throw new CustomError("Unauthorized", 401);
-      try {
+    ),
+    addGroupTask: safeResolver(
+      async (_, { groupId, task }, { user, pubsub, PUBSUB_EVENTS }) => {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
         const findGroup = await Group.findById(groupId);
-        const user = await User.findById(groupId);
-        const id = findGroup ? findGroup._id : user._id;
+        const findUser = await User.findById(user._id);
+        const id = findGroup ? findGroup._id : findUser._id;
         const CheckAssgined = findGroup ? "Group" : "User";
 
         await CustomerAccount.updateMany(
@@ -167,12 +141,10 @@ const groupResolver = {
           success: true,
           message: "Task successfully added",
         };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
       }
-    },
-    deleteGroupTask: async (_, { caIds }, { pubsub, PUBSUB_EVENTS }) => {
-      try {
+    ),
+    deleteGroupTask: safeResolver(
+      async (_, { caIds }, { pubsub, PUBSUB_EVENTS }) => {
         const findAccounts = await CustomerAccount.find({
           _id: { $in: caIds },
         });
@@ -196,10 +168,8 @@ const groupResolver = {
           success: true,
           message: "Assigned successfully removed",
         };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
       }
-    },
+    ),
   },
 };
 

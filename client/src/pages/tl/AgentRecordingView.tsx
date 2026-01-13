@@ -850,7 +850,7 @@ const AgentRecordingView = () => {
                                                       0 ? (
                                                         <div className="italic p-2 text-nowrap rounded text-slate-500">No Recordings found</div>
                                                       ) : (
-                                                        <div>
+                                                        <div className="flex flex-col gap-2">
                                                           {lateCallRecordingsData.map(
                                                             (x, index) => {
                                                               const duration = x

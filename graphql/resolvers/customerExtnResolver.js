@@ -4,306 +4,286 @@ import CustomerAccount from "../../models/customerAccount.js";
 import Disposition from "../../models/disposition.js";
 import Bucket from "../../models/bucket.js";
 import Callfile from "../../models/callfile.js";
+import { safeResolver } from "../../middlewares/safeResolver.js";
 
 const CustomerExtnResolver = {
   Query: {
-    findAccountHistories: async (_, { id }) => {
-      try {
-        const findCustomerAccount = await CustomerAccount.findById(id);
-        if (!findCustomerAccount)
-          throw new CustomError("Customer not found", 400);
+    findAccountHistories: safeResolver(async (_, { id }) => {
+      const findCustomerAccount = await CustomerAccount.findById(id);
+      if (!findCustomerAccount)
+        throw new CustomError("Customer not found", 400);
 
-        const findHistory = await CustomerAccount.aggregate([
-          {
-            $match: {
-              case_id: { $eq: findCustomerAccount.case_id },
-              callfile: {
-                $ne: new mongoose.Types.ObjectId(findCustomerAccount.callfile),
-              },
-              current_disposition: { $exists: true },
+      const findHistory = await CustomerAccount.aggregate([
+        {
+          $match: {
+            case_id: { $eq: findCustomerAccount.case_id },
+            callfile: {
+              $ne: new mongoose.Types.ObjectId(findCustomerAccount.callfile),
             },
+            current_disposition: { $exists: true },
           },
-          {
-            $lookup: {
-              from: "dispositions",
-              localField: "current_disposition",
-              foreignField: "_id",
-              as: "cd",
-            },
+        },
+        {
+          $lookup: {
+            from: "dispositions",
+            localField: "current_disposition",
+            foreignField: "_id",
+            as: "cd",
           },
-          {
-            $unwind: { path: "$cd", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $unwind: { path: "$cd", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: "buckets",
+            localField: "bucket",
+            foreignField: "_id",
+            as: "account_bucket",
           },
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "bucket",
-              foreignField: "_id",
-              as: "account_bucket",
-            },
+        },
+        {
+          $unwind: {
+            path: "$account_bucket",
+            preserveNullAndEmptyArrays: true,
           },
-          {
-            $unwind: {
-              path: "$account_bucket",
-              preserveNullAndEmptyArrays: true,
-            },
+        },
+        {
+          $lookup: {
+            from: "dispotypes",
+            localField: "cd.disposition",
+            foreignField: "_id",
+            as: "dispotype",
           },
-          {
-            $lookup: {
-              from: "dispotypes",
-              localField: "cd.disposition",
-              foreignField: "_id",
-              as: "dispotype",
-            },
+        },
+        {
+          $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: "callfiles",
+            localField: "callfile",
+            foreignField: "_id",
+            as: "account_callfile",
           },
-          {
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $unwind: {
+            path: "$account_callfile",
+            preserveNullAndEmptyArrays: true,
           },
-          {
-            $lookup: {
-              from: "callfiles",
-              localField: "callfile",
-              foreignField: "_id",
-              as: "account_callfile",
-            },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "cd.user",
+            foreignField: "_id",
+            as: "user",
           },
-          {
-            $unwind: {
-              path: "$account_callfile",
-              preserveNullAndEmptyArrays: true,
-            },
+        },
+        {
+          $unwind: { path: "$user", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $sort: {
+            createdAt: 1,
           },
-          {
-            $lookup: {
-              from: "users",
-              localField: "cd.user",
-              foreignField: "_id",
-              as: "user",
-            },
-          },
-          {
-            $unwind: { path: "$user", preserveNullAndEmptyArrays: true },
-          },
-          {
-            $sort: {
-              createdAt: 1,
-            },
-          },
-        ]);
+        },
+      ]);
 
-        return findHistory;
-      } catch (error) {
-        throw new CustomError(error.message, 500);
+      return findHistory;
+    }),
+    noPTPCollection: safeResolver(async (_, { bucket, interval }) => {
+      const selectedBucket = await Bucket.findById(bucket).lean();
+
+      if (!selectedBucket) return null;
+      const callfile = (
+        await Callfile.find({ bucket: selectedBucket._id }).lean()
+      ).map((cf) => new mongoose.Types.ObjectId(cf._id));
+      const existingCallfile = await Callfile.findOne({
+        bucket: selectedBucket._id,
+        active: true,
+      });
+      if (callfile.length <= 0) return null;
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      const todayEnd = new Date();
+      todayEnd.setHours(23, 59, 59, 999);
+
+      const now = new Date();
+      const currentDay = now.getDay();
+      const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
+
+      const startOfWeek = new Date(now);
+      startOfWeek.setDate(now.getDate() + diffToMonday);
+      startOfWeek.setHours(0, 0, 0, 0);
+
+      const endOfWeek = new Date(startOfWeek);
+      endOfWeek.setDate(startOfWeek.getDate() + 7);
+      endOfWeek.setMilliseconds(-1);
+
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+      endOfMonth.setMilliseconds(-1);
+
+      let filter = {
+        "dispotype.code": "PAID",
+        selectivesDispo: true,
+        $or: [
+          { ptp: false },
+          {
+            $and: [{ ptp: true }, { user: { $exists: false } }],
+          },
+        ],
+      };
+
+      if (interval === "daily") {
+        (filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+      } else if (interval === "weekly") {
+        (filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+      } else if (interval === "monthly") {
+        (filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+      } else if (interval === "callfile") {
+        filter["callfile"] = new mongoose.Types.ObjectId(existingCallfile._id);
       }
-    },
-    noPTPCollection: async (_, { bucket, interval }) => {
-      try {
-        const selectedBucket = await Bucket.findById(bucket).lean();
 
-        if (!selectedBucket) return null;
-        const callfile = (
-          await Callfile.find({ bucket: selectedBucket._id }).lean()
-        ).map((cf) => new mongoose.Types.ObjectId(cf._id));
-        const existingCallfile = await Callfile.findOne({
-          bucket: selectedBucket._id,
-          active: true,
-        });
-        if (callfile.length <= 0) return null;
-        const todayStart = new Date();
-        todayStart.setHours(0, 0, 0, 0);
+      const paid = await Disposition.aggregate([
+        {
+          $lookup: {
+            from: "customeraccounts",
+            localField: "customer_account",
+            foreignField: "_id",
+            as: "customerAccount",
+          },
+        },
+        {
+          $unwind: {
+            path: "$customerAccount",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "buckets",
+            localField: "customerAccount.bucket",
+            foreignField: "_id",
+            as: "bucket",
+          },
+        },
+        {
+          $unwind: { path: "$bucket", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $lookup: {
+            from: "dispotypes",
+            localField: "disposition",
+            foreignField: "_id",
+            as: "dispotype",
+          },
+        },
+        {
+          $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
+        },
+        {
+          $match: filter,
+        },
+        {
+          $group: {
+            _id: "$customerAccount.case_id",
+            count: { $sum: 1 },
+            amount: { $sum: "$amount" },
+          },
+        },
+        {
+          $group: {
+            _id: null,
+            count: { $sum: 1 },
+            amount: { $sum: "$amount" },
+          },
+        },
+        {
+          $project: {
+            _id: 0,
+            count: 1,
+            amount: 1,
+          },
+        },
+      ]);
 
-        const todayEnd = new Date();
-        todayEnd.setHours(23, 59, 59, 999);
-
-        const now = new Date();
-        const currentDay = now.getDay();
-        const diffToMonday = currentDay === 0 ? -6 : 1 - currentDay;
-
-        const startOfWeek = new Date(now);
-        startOfWeek.setDate(now.getDate() + diffToMonday);
-        startOfWeek.setHours(0, 0, 0, 0);
-
-        const endOfWeek = new Date(startOfWeek);
-        endOfWeek.setDate(startOfWeek.getDate() + 7);
-        endOfWeek.setMilliseconds(-1);
-
-        const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
-        const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
-        endOfMonth.setMilliseconds(-1);
-
-        let filter = {
-          "dispotype.code": "PAID",
-          selectivesDispo: true,
-          $or: [
-            { ptp: false },
-            {
-              $and: [
-                { ptp: true },
-                { user: { $exists: false } },
-              ],
-            },
-          ],
-        };
-
-        if (interval === "daily") {
-          (filter["callfile"] = { $in: callfile }),
-            (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
-        } else if (interval === "weekly") {
-          (filter["callfile"] = { $in: callfile }),
-            (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
-        } else if (interval === "monthly") {
-          (filter["callfile"] = { $in: callfile }),
-            (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
-        } else if (interval === "callfile") {
-          filter["callfile"] = new mongoose.Types.ObjectId(
-            existingCallfile._id
-          );
-        }
-
-        const paid = await Disposition.aggregate([
-          {
-            $lookup: {
-              from: "customeraccounts",
-              localField: "customer_account",
-              foreignField: "_id",
-              as: "customerAccount",
-            },
-          },
-          {
-            $unwind: {
-              path: "$customerAccount",
-              preserveNullAndEmptyArrays: true,
-            },
-          },
-          {
-            $lookup: {
-              from: "buckets",
-              localField: "customerAccount.bucket",
-              foreignField: "_id",
-              as: "bucket",
-            },
-          },
-          {
-            $unwind: { path: "$bucket", preserveNullAndEmptyArrays: true },
-          },
-          {
-            $lookup: {
-              from: "dispotypes",
-              localField: "disposition",
-              foreignField: "_id",
-              as: "dispotype",
-            },
-          },
-          {
-            $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true },
-          },
-          {
-            $match: filter,
-          },
-          {
-            $group: {
-              _id: "$customerAccount.case_id",
-              count: { $sum: 1 },
-              amount: { $sum: "$amount" },
-            },
-          },
-          {
-            $group: {
-              _id: null,
-              count: { $sum: 1 },
-              amount: { $sum: "$amount" },
-            },
-          },
-          {
-            $project: {
-              _id: 0,
-              count: 1,
-              amount: 1,
-            },
-          },
-        ]);
-
-        return paid[0];
-      } catch (error) {
-        console.log(error);
-        throw new CustomError(error.message, 500);
-      }
-    },
+      return paid[0];
+    }),
   },
   Mutation: {
-    updateCustomerAccount: async (_, { input }, { user }) => {
-      try {
-        if (!user) throw new CustomError("Unauthorized", 401);
-        const forUpdate = {};
-        if (input.total_os && input.total_os > 0) {
-          forUpdate["out_standing_details.total_os"] = Number(input.total_os);
-        }
-        if (input.principal_os && input.principal_os > 0) {
-          forUpdate["out_standing_details.principal_os"] = Number(
-            input.principal_os
-          );
-        }
-        if (input.balance && input.balance > 0) {
-          forUpdate["balance"] = Number(input.balance);
-        }
-
-        const forHistory = {
-          updated_date: new Date(),
-          updated_by: user._id,
-        };
-
-        if (input.total_os && input.total_os > 0) {
-          forHistory["total_os"] = Number(input.total_os);
-        }
-
-        if (input.principal_os && input.principal_os > 0) {
-          forHistory["principal_os"] = Number(input.principal_os);
-        }
-
-        if (input.balance && input.balance > 0) {
-          forHistory["balance"] = Number(input.balance);
-        }
-
-        const findCustomerAccountExistingCallfile =
-          await CustomerAccount.findById(input.id);
-
-        const existingOnCallfile = {
-          principal_os:
-            findCustomerAccountExistingCallfile.out_standing_details
-              .principal_os,
-          total_os:
-            findCustomerAccountExistingCallfile.out_standing_details
-              .principal_os,
-          balance: findCustomerAccountExistingCallfile.balance,
-        };
-
-        const updateCustomerAccount = await CustomerAccount.findByIdAndUpdate(
-          input.id,
-          {
-            $set: forUpdate,
-            $push: { account_update_history: forHistory },
-            from_existing: existingOnCallfile,
-          },
-          { new: true }
-        );
-
-        if (!updateCustomerAccount)
-          throw new CustomError("Account not found", 404);
-
-        return {
-          success: true,
-          message: "Successfully Updated Customer Account",
-          customerAccount: {
-            balance: updateCustomerAccount.balance,
-            out_standing_details: updateCustomerAccount.out_standing_details,
-            account_update_history:
-              updateCustomerAccount.account_update_history,
-          },
-        };
-      } catch (error) {
-        throw new CustomError(error.message, 500);
+    updateCustomerAccount: safeResolver(async (_, { input }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+      const forUpdate = {};
+      if (input.total_os && input.total_os > 0) {
+        forUpdate["out_standing_details.total_os"] = Number(input.total_os);
       }
-    },
+      if (input.principal_os && input.principal_os > 0) {
+        forUpdate["out_standing_details.principal_os"] = Number(
+          input.principal_os
+        );
+      }
+      if (input.balance && input.balance > 0) {
+        forUpdate["balance"] = Number(input.balance);
+      }
+
+      const forHistory = {
+        updated_date: new Date(),
+        updated_by: user._id,
+      };
+
+      if (input.total_os && input.total_os > 0) {
+        forHistory["total_os"] = Number(input.total_os);
+      }
+
+      if (input.principal_os && input.principal_os > 0) {
+        forHistory["principal_os"] = Number(input.principal_os);
+      }
+
+      if (input.balance && input.balance > 0) {
+        forHistory["balance"] = Number(input.balance);
+      }
+
+      const findCustomerAccountExistingCallfile =
+        await CustomerAccount.findById(input.id);
+
+      const existingOnCallfile = {
+        principal_os:
+          findCustomerAccountExistingCallfile.out_standing_details.principal_os,
+        total_os:
+          findCustomerAccountExistingCallfile.out_standing_details.principal_os,
+        balance: findCustomerAccountExistingCallfile.balance,
+      };
+
+      const updateCustomerAccount = await CustomerAccount.findByIdAndUpdate(
+        input.id,
+        {
+          $set: forUpdate,
+          $push: { account_update_history: forHistory },
+          from_existing: existingOnCallfile,
+        },
+        { new: true }
+      );
+
+      if (!updateCustomerAccount)
+        throw new CustomError("Account not found", 404);
+
+      return {
+        success: true,
+        message: "Successfully Updated Customer Account",
+        customerAccount: {
+          balance: updateCustomerAccount.balance,
+          out_standing_details: updateCustomerAccount.out_standing_details,
+          account_update_history: updateCustomerAccount.account_update_history,
+        },
+      };
+    }),
   },
 };
 

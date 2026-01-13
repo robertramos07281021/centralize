@@ -1457,7 +1457,7 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
   };
 
   return (
-    <div className="p-5 flex flex-col  text-black w-full h-full max-h-[90vh]">
+    <div className=" xl:p-2 overflow-hidden 2xl:p-5 flex flex-col  text-black w-full h-full">
       <motion.div
         ref={scoreCardRef}
         id={SCORE_CARD_EXPORT_ROOT_ID}
@@ -1466,8 +1466,8 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 100 }}
       >
-        <div className="h-[8.4%] font-black  border-b items-center justify-center flex relative  uppercase bg-gray-400 text-2xl text-center py-3 w-full text-black">
-          <div className="">QA Evaluation Page</div>
+        <div className="py-3 font-black  border-b items-center justify-center flex relative uppercase bg-gray-400 text-2xl text-center  w-full text-black">
+          <div className="text-base 2xl:text-2xl">QA Evaluation Page</div>
           <div className="flex items-center absolute right-5 h-full gap-1 justify-end text-xs">
             <div
               role="button"
@@ -1497,14 +1497,14 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
             </div>
           </div>
         </div>
-        <div className="bg-gray-300 h-[91.6%] p-5 flex flex-col">
-          <div className="flex h-[30%] w-full gap-2 justify-between">
-            <div className="border w-full flex flex-col h-full rounded-md  font-black uppercase text-sm shadow-md">
+        <div className="bg-gray-300 h-full overflow-hidden p-3 2xl:p-5 flex flex-col">
+          <div className="flex h-auto w-full gap-2 justify-between">
+            <div className="border w-full flex flex-col h-full rounded-md  font-black uppercase text-xs 2xl:text-sm shadow-md ">
               <div className="grid h-full grid-cols-2 border-b">
                 <div className="bg-gray-400 flex h-full items-center rounded-tl px-5 border-r py-1">
                   Month
                 </div>
-                <div className="flex items-center justify-between rounded-tr bg-gray-200 px-3 py-1 text-sm text-black shadow-sm">
+                <div className="flex items-center justify-between rounded-tr bg-gray-200 px-3 py-1 text-black shadow-sm">
                   <span>{selectedMonth || "N/A"}</span>
                 </div>
               </div>
@@ -1517,7 +1517,7 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
                   <motion.div
                     role="button"
                     tabIndex={0}
-                    className="flex text-black truncate cursor-pointer rounded-tr hover:bg-gray-400 items-center justify-between gap-2 px-3 py-1 text-sm shadow-sm"
+                    className="flex text-black truncate cursor-pointer rounded-tr hover:bg-gray-400 items-center justify-between gap-2 px-3 py-1  shadow-sm"
                     onClick={() =>
                       !deptLoading && setDeptMenuOpen((prev) => !prev)
                     }
@@ -1575,7 +1575,7 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
                           departments.map((dept) => (
                             <motion.div
                               key={dept.id}
-                              className="cursor-pointer w-full even:bg-gray-200 odd:bg-gray-100 border-b last:border-b-0 px-3 py-2 text-sm text-black"
+                              className="cursor-pointer w-full even:bg-gray-200 odd:bg-gray-100 border-b last:border-b-0 px-3 py-2  text-black"
                               onClick={() =>
                                 handleDeptSelect(dept.id, dept.name)
                               }
@@ -1609,7 +1609,7 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
                   <motion.div
                     role="button"
                     tabIndex={0}
-                    className={`flex text-black rounded-tr items-center justify-between gap-2 px-3 py-1 text-sm shadow-sm ${
+                    className={`flex text-black rounded-tr items-center justify-between gap-2 px-3 py-1 shadow-sm ${
                       selectedDeptId
                         ? "cursor-pointer hover:bg-gray-400"
                         : "cursor-not-allowed bg-gray-200"
@@ -1693,7 +1693,7 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
                           agents.map((agent) => (
                             <motion.div
                               key={agent._id}
-                              className="cursor-pointer even:bg-gray-200 odd:bg-gray-100 border-b last:border-b-0 px-3 py-2 text-sm text-black"
+                              className="cursor-pointer even:bg-gray-200 odd:bg-gray-100 border-b last:border-b-0 px-3 py-2 text-black"
                               onClick={() =>
                                 handleAgentSelect(agent._id, agent.name)
                               }
@@ -1770,7 +1770,7 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
 
             <div className="flex h-full justify-end w-full gap-4">
               <div className="flex xl:w-60 w-full flex-col h-full">
-                <div className=" w-full  text-md text-center border rounded-t-md bg-gray-400 py-2 text-black font-black uppercase">
+                <div className=" w-full 2xl:text-xl text-base text-center border rounded-t-md bg-gray-400 py-2 font-black uppercase">
                   Total Score
                 </div>
                 <div
@@ -1799,7 +1799,7 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
             </div>
           </div>
 
-          <div className="w-full h-[70%] flex flex-col mt-2 ">
+          <div className="w-full h-full overflow-hidden flex flex-col mt-2 ">
             <div className="grid font-black uppercase bg-gray-400 border rounded-t-md px-3 py-1 grid-cols-5">
               <div>Criteria</div>
               <div>Category</div>
@@ -1810,10 +1810,10 @@ const DefaultScoreCard = ({ scoreCardType }: DefaultScoreCardProps = {}) => {
 
             <motion.div
               layout
-              className="bg-gray-100  overflow-auto max-h-[480px] h-full rounded-b-md"
+              className="bg-gray-100 border-collapse border border-slate-600 overflow-auto h-full rounded-b-md"
             >
               <div className="flex flex-col text-sm">
-                <div className="grid  border-x border-b grid-cols-5">
+                <div className="grid border grid-cols-5">
                   <div className="border-r px-3 py-1 items-center flex text-center">
                     Opening
                   </div>

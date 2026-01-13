@@ -64,7 +64,7 @@ const QASupervisorDashboard = () => {
   const { data: bucketData } = useQuery(GET_ALL_BUCKETS);
   const { data: scorecardData } = useQuery(GET_SCORECARD_SUMMARIES, {
     variables: { date: null, search: null },
-    fetchPolicy: "network-only",
+    notifyOnNetworkStatusChange: true
   });
 
   const users = data?.getQAUsers?.users || [];

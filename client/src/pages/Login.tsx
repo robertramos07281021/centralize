@@ -17,6 +17,7 @@ import Loading from "./Loading";
 import { useSelector } from "react-redux";
 import { BreakEnum } from "../middleware/exports";
 import { persistor } from "../redux/store";
+import { closeWsClient } from "../apollo/wsClient.ts";
 
 const LOGIN = gql`
   mutation login($username: String!, $password: String!) {
@@ -163,6 +164,7 @@ const Login = () => {
   const [login, { loading }] = useMutation<{ login: Login }>(LOGIN, {
     onCompleted: async (res) => {
       await persistor.purge();
+      closeWsClient()
       dispatch(setUserLogged(res?.login?.user));
       dispatch(setMyToken(res?.login?.token));
       if (!res?.login?.user?.change_password) {
@@ -183,6 +185,7 @@ const Login = () => {
     },
     onError: async (error) => {
       await persistor.purge();
+      console.log(error)
       const errorMessage = ["Invalid", "Already", "Lock"];
       if (!errorMessage.includes(error.message)) {
         dispatch(setServerError(true));
