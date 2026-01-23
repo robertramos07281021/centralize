@@ -12,6 +12,20 @@ const userTypeDefs = gql`
     dispoId: ID
   }
 
+  type UpdateCustomerOrderResponse {
+    success: Boolean!
+    message: String!
+    customer: CA
+  }
+
+  type CA {
+    _id: ID!
+    customerName: String!
+    addresses: [String!]!
+    fieldassigned: String
+    assignedOrder: Int
+  }
+
   enum Break {
     LUNCH
     COFFEE
@@ -117,12 +131,23 @@ const userTypeDefs = gql`
     users: [Users]
   }
 
+  type Note {
+    _id: ID!
+    title: String!
+    description: String
+    until: DateTime
+    createdBy: Users
+    createdAt: DateTime
+    updatedAt: DateTime
+  }
+
   type Query {
     getUsers(page: Int!, limit: Int!): PaginatedUsers!
     getQAUsers(page: Int!, limit: Int!): PaginatedUsers!
     getUser(id: ID): Users
     getMe: Users
     getBucketUser(bucketId: ID): [Users]
+    getBucketFieldUser(bucketId: ID): [Users]
     getAomUser: [Users]
     findUsers(
       search: String!
@@ -138,7 +163,21 @@ const userTypeDefs = gql`
     getHelperAgent: [Users]
     getBucketTL(bucketId: ID): [Users]
     getBucketTLByBucket(bucketId: ID!): [Users]
-    getBucketViciIds(bucketIds:[ID]):[String]
+    getBucketViciIds(bucketIds: [ID]): [String]
+    getNotes(limit: Int): [Note!]!
+  }
+
+  input CreateNoteInput {
+    title: String!
+    description: String
+    until: DateTime
+  }
+
+  input UpdateNoteInput {
+    id: ID!
+    title: String!
+    description: String
+    until: DateTime
   }
 
   input CreatingAccount {
@@ -152,7 +191,7 @@ const userTypeDefs = gql`
     account_type: String
     callfile_id: String
     vici_id: String
-    softphone: String!
+    softphone: String
   }
 
   input UpdateAccount {
@@ -165,8 +204,8 @@ const userTypeDefs = gql`
     callfile_id: String
     account_type: String
     id: ID!
-    vici_id: String 
-    softphone: String!
+    vici_id: String
+    softphone: String
   }
 
   input UpdateQAInput {
@@ -191,6 +230,13 @@ const userTypeDefs = gql`
     deleteUser(id: ID!): Success
     updateUserVici_id(vici_id: String!): Success
     updateQAUser(input: UpdateQAInput): Success
+    updateCustomerOrder(
+      id: ID!
+      assignedOrder: Int!
+    ): UpdateCustomerOrderResponse
+    createNote(input: CreateNoteInput!): Note!
+    updateNote(input: UpdateNoteInput!): Note!
+    deleteNote(id: ID!): Success
   }
 `;
 

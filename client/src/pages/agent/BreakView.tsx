@@ -184,7 +184,7 @@ const BreakView = () => {
 
   if(UpdateProductionLoading) return <Loading/>
 
-  return userLogged && ["AGENT", "QA"].includes(userLogged?.type) ? (
+  return userLogged && ["AGENT"].includes(userLogged?.type) ? (
     <Wrapper>
       <Navbar />
       <NavbarExtn />

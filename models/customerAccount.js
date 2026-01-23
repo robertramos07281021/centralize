@@ -3,6 +3,14 @@ const Schema = mongoose.Schema;
 
 const customerAccountSchema = new Schema(
   {
+    finished: {
+      type: Boolean,
+      default: false,
+    },
+    started: {
+      type: Boolean,
+      default: false,
+    },
     customer: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Customer",
@@ -17,7 +25,10 @@ const customerAccountSchema = new Schema(
     },
     assignedModel: {
       type: String,
-      enum: ["Group", "User", ""],
+      enum: ["Group", "User"],
+    },
+    assigned_date: {
+      type: String,
     },
     current_disposition: {
       type: mongoose.Schema.Types.ObjectId,
@@ -65,12 +76,18 @@ const customerAccountSchema = new Schema(
       type: Number,
       default: 0,
     },
-    assigned_date: {
-      type: String,
-    },
+
     on_hands: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
+    },
+    fieldassigned: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+    },
+    assignedOrder: {
+      type: Number,
+      default: 0,
     },
     features: {
       branch: {
@@ -250,7 +267,6 @@ const customerAccountSchema = new Schema(
       due_date: {
         type: String,
       },
-
     },
     isPTP: {
       type: Boolean,
@@ -286,12 +302,30 @@ const customerAccountSchema = new Schema(
         ref: "Disposition",
       },
     ],
+    fieldhistory: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "FieldDisposition",
+      },
+    ],
+    fielddisposition: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "FieldDisposition",
+    },
+    forfield: {
+      type: Boolean,
+      default: false,
+    },
+    approve: {
+      type: Boolean,
+      default: false,
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const CustomerAccount = mongoose.model(
   "CustomerAccount",
-  customerAccountSchema
+  customerAccountSchema,
 );
 export default CustomerAccount;

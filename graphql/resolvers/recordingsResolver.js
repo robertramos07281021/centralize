@@ -464,7 +464,6 @@ const recordingsResolver = {
     }),
     recordingsFTP: safeResolver(async (_, { _id, fileName }) => {
       const sftp = new SftpClient();
-
       try {
         const REMOTE_DIR = "/var/spool/asterisk/monitorDONE";
 
@@ -479,14 +478,13 @@ const recordingsResolver = {
         const splitFileName2nd = splitFileName[1]
           ? splitFileName[1].split("_")[2]
           : "";
-
-        const sftpConfig = {
-          host: splitFileName2nd,
-          port: 22,
-          username: process.env.FTP_USERNAME,
-          password: passwords[splitFileName2nd],
-        };
-
+          const sftpConfig = {
+            host: splitFileName2nd,
+            port: 22,
+            username: process.env.FTP_USERNAME,
+            password: passwords[splitFileName2nd],
+          };
+       
         await sftp.connect(sftpConfig);
 
         function extractDateFolder(xfilename) {

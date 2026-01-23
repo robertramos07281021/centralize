@@ -48,6 +48,12 @@ export type Targets = {
   monthly: number;
 };
 
+type ViciUserStatus = {
+  status: string
+  subStatus: string
+  acctStatus: string
+};
+
 type UserState = {
   serverError: boolean;
   userLogged: User | null;
@@ -81,9 +87,11 @@ type UserState = {
   bucketCanCall: boolean;
   isRing: boolean;
   mobileToCall: string | null;
-  readyForBreak: BreakEnum | null
-  scoreCardType: string | null
-  viciOnAir: string | null
+  readyForBreak: BreakEnum | null;
+  scoreCardType: string | null;
+  viciOnAir: string | null;
+  viciStatus: ViciUserStatus | null;
+  viciIp: string | null
 };
 
 const initialState: UserState = {
@@ -130,7 +138,9 @@ const initialState: UserState = {
   mobileToCall: null,
   readyForBreak: null,
   scoreCardType: null,
-  viciOnAir: null
+  viciOnAir: null,
+  viciStatus: null,
+  viciIp: null
 };
 
 export const authSlice = createSlice({
@@ -185,7 +195,7 @@ export const authSlice = createSlice({
       state.onCall = false;
       state.deadCall = false;
       state.mobileToCall = null;
-      state.isRing = false
+      state.isRing = false;
     },
     setCallUniqueId: (state, action: PayloadAction<string | null>) => {
       state.callUniqueId = action.payload;
@@ -242,19 +252,26 @@ export const authSlice = createSlice({
     setMobileToCall: (state, action: PayloadAction<string | null>) => {
       state.mobileToCall = action.payload;
     },
-    setReadyForBreak: (state,action: PayloadAction<BreakEnum | null> ) => {
-      state.readyForBreak = action.payload
+    setReadyForBreak: (state, action: PayloadAction<BreakEnum | null>) => {
+      state.readyForBreak = action.payload;
     },
     setScoreCardType: (state, action: PayloadAction<string | null>) => {
       state.scoreCardType = action.payload;
     },
     setViciOnAir: (state, action: PayloadAction<string | null>) => {
-      state.viciOnAir = action.payload
+      state.viciOnAir = action.payload;
+    },
+    setViciStatus: (state, action: PayloadAction<ViciUserStatus | null>) => {
+      state.viciStatus = action.payload;
+    },
+    setViciIp: (state, action: PayloadAction<string | null>) => {
+      state.viciIp = action.payload
     }
-  },
+   },
 });
 
 export const {
+  setViciIp,
   setServerError,
   setUserLogged,
   setSearch,
@@ -291,6 +308,7 @@ export const {
   setIsReport,
   setReadyForBreak,
   setScoreCardType,
-  setViciOnAir
+  setViciOnAir,
+  setViciStatus,
 } = authSlice.actions;
 export default authSlice.reducer;

@@ -13,9 +13,42 @@ import mongoose from "mongoose";
 import { bucketUsersStatus, logoutVici } from "../../middlewares/vicidial.js";
 import CustomerAccount from "../../models/customerAccount.js";
 import { safeResolver } from "../../middlewares/safeResolver.js";
+import Note from "../../models/note.js";
+
+const PROD_TRACKED_TYPES = new Set(["AGENT", "QA"]);
+
+function isProdTrackedUser(user) {
+  return PROD_TRACKED_TYPES.has(String(user?.type ?? "").toUpperCase());
+}
+
+function toFiniteNumber(value, fallback = 0) {
+  const num = Number(value);
+  return Number.isFinite(num) ? num : fallback;
+}
+
+function parseOptionalDateTime(value) {
+  if (value === null || typeof value === "undefined" || value === "")
+    return null;
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) {
+    throw new CustomError("Invalid date", 400);
+  }
+  return date;
+}
 
 const userResolvers = {
   DateTime,
+  Note: {
+    createdBy: safeResolver(async (parent) => {
+      if (!parent?.createdBy) return null;
+
+      if (typeof parent.createdBy === "object" && parent.createdBy?._id) {
+        return parent.createdBy;
+      }
+
+      return await User.findById(parent.createdBy);
+    }),
+  },
   Query: {
     getBucketUser: safeResolver(async (_, { bucketId }, { user }) => {
       let filter = null;
@@ -28,6 +61,19 @@ const userResolvers = {
         type: { $eq: "AGENT" },
         buckets: filter,
       });
+      return findUser;
+    }),
+    getBucketFieldUser: safeResolver(async (_, { bucketId }, { user }) => {
+      if (!user) throw new CustomError("Not authenticated", 401);
+
+      const filter = bucketId ? bucketId : { $in: user.buckets };
+
+      const findUser = await User.find({
+        type: { $eq: "AGENTFIELD" },
+        buckets: filter,
+        active: true,
+      }).select("_id name user_id type vici_id softphone isOnline active");
+
       return findUser;
     }),
     getUsers: safeResolver(async (_, { page = 1, limit = 20 }) => {
@@ -374,6 +420,21 @@ const userResolvers = {
 
       return viciIds;
     }),
+
+    getNotes: safeResolver(async (_, { limit }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const take = Number.isFinite(Number(limit))
+        ? Math.min(Math.max(Number(limit), 1), 200)
+        : 50;
+
+      const notes = await Note.find({})
+        .sort({ createdAt: -1 })
+        .limit(take)
+        .populate({ path: "createdBy", select: "_id name" });
+
+      return notes;
+    }),
   },
   DeptUser: {
     buckets: safeResolver(async (parent) => {
@@ -410,14 +471,14 @@ const userResolvers = {
           departments.map(async (deptId) => {
             const found = await Department.findById(deptId);
             if (!found) throw new Error(`Department not found: ${deptId}`);
-          })
+          }),
         );
 
         await Promise.all(
           buckets.map(async (bucketId) => {
             const found = await Bucket.findById(bucketId);
             if (!found) throw new Error(`Bucket not found: ${bucketId}`);
-          })
+          }),
         );
 
         const findBranch = await Branch.findById(branch);
@@ -484,7 +545,7 @@ const userResolvers = {
       async (
         _,
         { username, password },
-        { res, req, pubsub, PUBSUB_EVENTS }
+        { res, req, pubsub, PUBSUB_EVENTS },
       ) => {
         const user = await User.findOne({ username });
 
@@ -515,7 +576,7 @@ const userResolvers = {
 
         const token = jwt.sign(
           { id: user._id, username: user.username },
-          process.env.SECRET
+          process.env.SECRET,
         );
 
         const todayStart = new Date();
@@ -530,15 +591,20 @@ const userResolvers = {
             createdAt: { $gte: todayStart, $lt: todayEnd },
           }),
           Production.find({ user: new mongoose.Types.ObjectId(user._id) }).sort(
-            { createdAt: 1 }
+            { createdAt: 1 },
           ),
         ]);
 
-        if (!findProd && user.type === "AGENT") {
+        if (!findProd && isProdTrackedUser(user)) {
+          const defaultTarget = toFiniteNumber(user.default_target, 0);
+          const previousTarget =
+            firstProd.length > 0
+              ? toFiniteNumber(firstProd[0]?.target_today, 0)
+              : 0;
           const today_prod =
             firstProd.length > 0
-              ? firstProd[0]?.target_today + user.default_target
-              : user.default_target;
+              ? previousTarget + defaultTarget
+              : defaultTarget;
           await Production.create({
             user: user._id,
             target_today: today_prod,
@@ -549,13 +615,13 @@ const userResolvers = {
 
         const dateToday = new Date();
 
-        if (user?.type === "AGENT") {
+        if (isProdTrackedUser(user)) {
           if (!findProd || findProd?.prod_history?.length <= 0) {
             type = "WELCOME";
           } else {
             type = "PROD";
             const existingProd = findProd?.prod_history?.find(
-              (e) => e.existing === true
+              (e) => e.existing === true,
             );
             if (existingProd?.type === "LOGOUT") {
               findProd?.prod_history.forEach((x) => {
@@ -592,7 +658,7 @@ const userResolvers = {
           start: dateToday,
           token,
         };
-      }
+      },
     ),
     logout: safeResolver(async (_, __, { user, res }) => {
       if (!user) throw new CustomError("Logout: Unauthorized", 401);
@@ -609,14 +675,14 @@ const userResolvers = {
           $set: { isOnline: false },
           $unset: { handsOn: "", "features.token": "" },
         },
-        { new: true }
+        { new: true },
       ).populate("buckets");
 
       if (!findUser) {
         throw CustomError("User not found", 404);
       }
 
-      if (findUser.type === "AGENT") {
+      if (isProdTrackedUser(findUser)) {
         const start = new Date();
         start.setHours(0, 0, 0, 0);
 
@@ -679,7 +745,7 @@ const userResolvers = {
             new_account: false,
           },
         },
-        { new: true }
+        { new: true },
       );
       if (!user) throw new CustomError("User not found", 404);
 
@@ -716,7 +782,7 @@ const userResolvers = {
       const updateUser = await User.findByIdAndUpdate(
         id,
         { $set: { ...others } },
-        { new: true }
+        { new: true },
       );
 
       await ModifyRecord.create({
@@ -753,14 +819,14 @@ const userResolvers = {
           $set: { isOnline: false },
           $unset: { "features.token": "" },
         },
-        { new: true }
+        { new: true },
       );
 
       if (!findUser) {
         throw CustomError("User not found", 404);
       }
 
-      if (findUser.type === "AGENT") {
+      if (isProdTrackedUser(findUser)) {
         const start = new Date();
         start.setHours(0, 0, 0, 0);
 
@@ -811,7 +877,7 @@ const userResolvers = {
             attempt_login: 0,
           },
         },
-        { new: true }
+        { new: true },
       );
 
       if (!unlockUser) throw new CustomError("Agent not found", 404);
@@ -833,7 +899,7 @@ const userResolvers = {
       const logoutUser = await User.findByIdAndUpdate(
         id,
         { $set: { isOnline: false } },
-        { new: true }
+        { new: true },
       );
 
       const userBuckets = await Bucket.find({
@@ -844,7 +910,7 @@ const userResolvers = {
 
       if (!logoutUser) throw new CustomError("User not found", 404);
 
-      if (logoutUser.type === "AGENT") {
+      if (isProdTrackedUser(logoutUser)) {
         const start = new Date();
         start.setHours(0, 0, 0, 0);
 
@@ -926,7 +992,7 @@ const userResolvers = {
             vici_id: vici_id,
           },
         },
-        { new: true }
+        { new: true },
       );
 
       if (!updateUser) throw new CustomError("User not found", 401);
@@ -967,6 +1033,87 @@ const userResolvers = {
         message: "User successfully updated",
       };
     }),
+
+    createNote: safeResolver(async (_, { input }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const title = String(input?.title ?? "").trim();
+      const description = String(input?.description ?? "").trim();
+      const until = parseOptionalDateTime(input?.until);
+
+      if (!title) throw new CustomError("Title is required", 400);
+
+      const note = await Note.create({
+        title,
+        description,
+        until,
+        createdBy: user._id,
+      });
+
+      return await Note.findById(note._id).populate({
+        path: "createdBy",
+        select: "_id name",
+      });
+    }),
+
+    updateNote: safeResolver(async (_, { input }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const id = input?.id;
+      const title = String(input?.title ?? "").trim();
+      const description = String(input?.description ?? "").trim();
+      const until = parseOptionalDateTime(input?.until);
+
+      if (!id) throw new CustomError("Note id is required", 400);
+      if (!title) throw new CustomError("Title is required", 400);
+
+      const note = await Note.findById(id);
+      if (!note) throw new CustomError("Note not found", 404);
+
+      note.title = title;
+      note.description = description;
+      note.until = until;
+      await note.save();
+
+      return await Note.findById(note._id).populate({
+        path: "createdBy",
+        select: "_id name",
+      });
+    }),
+
+    deleteNote: safeResolver(async (_, { id }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+      if (!id) throw new CustomError("Note id is required", 400);
+
+      const deleted = await Note.findByIdAndDelete(id);
+      if (!deleted) throw new CustomError("Note not found", 404);
+
+      return {
+        success: true,
+        message: "Note deleted",
+      };
+    }),
+
+    updateCustomerOrder: async (_, { id, assignedOrder }) => {
+      try {
+        const customer = await CustomerAccount.findById(id);
+        if (!customer) {
+          return {
+            success: false,
+            message: "Customer not found",
+            customer: null,
+          };
+        }
+
+        customer.assignedOrder = assignedOrder;
+        await customer.save();
+
+        return { success: true, message: "Order updated", customer };
+      } catch (err) {
+        console.error("updateCustomerOrder error:", err);
+        return { success: false, message: "Server error", customer: null };
+      }
+    },
   },
 };
 

@@ -8,6 +8,8 @@ const AllBucket = gql`
   query getAllBucket {
     getAllBucket {
       viciIp
+      viciIp_auto
+      name
       _id
     }
   }
@@ -17,7 +19,12 @@ const NeedToLoginVici = () => {
   const { userLogged } = useSelector((state: RootState) => state.auth);
 
   const { data, refetch } = useQuery<{
-    getAllBucket: { viciIp: string; _id: string }[];
+    getAllBucket: {
+      viciIp: string;
+      _id: string;
+      viciIp_auto: string;
+      name: string;
+    }[];
   }>(AllBucket, {
     notifyOnNetworkStatusChange: true,
   });
@@ -33,9 +40,13 @@ const NeedToLoginVici = () => {
     userLogged && userLogged?.buckets?.length > 0
       ? new Array(
           ...new Set(
-            userLogged?.buckets.map(
-              (x) => data?.getAllBucket.find((d) => d._id === x)?.viciIp
-            )
+            userLogged?.buckets.map((x) => {
+              return {
+                name: data?.getAllBucket.find((d) => d._id === x)?.name,
+                manual: data?.getAllBucket.find((d) => d._id === x)?.viciIp,
+                auto: data?.getAllBucket.find((d) => d._id === x)?.viciIp_auto,
+              };
+            })
           )
         )
       : [];
@@ -55,14 +66,23 @@ const NeedToLoginVici = () => {
         <div className="flex flex-col gap-2">
           {userBucket.map((x, index) => {
             return (
-              <a
-                href={`http://${x}`}
-                target="_blank"
-                key={index}
-                className=" hover:bg-gray-100/80 border-gray-800 hover:rounded-4xl shadow-sm transition-all bg-gray-100/60 px-5 py-2 text-black border rounded-md text-sm xl:text-2xl"
-              >
-                {`http://${x}`}
-              </a>
+              <div key={index} className="flex gap-2">
+                {
+                  userBucket.length > 1 &&
+                <p className="border flex items-center justify-center px-5 rounded bg-gray-100/60 text-black">
+                  {x.name}
+                </p>
+                }
+                <a
+                  href={`http://${x.manual}`}
+                  target="_blank"
+                  key={index}
+                  className=" hover:bg-gray-100/80 border-gray-800 hover:rounded-4xl shadow-sm transition-all bg-gray-100/60 px-5 py-2 text-black border rounded-md text-sm xl:text-2xl"
+                >
+                 Manual Only : {`http://${x.manual}`}
+                </a>
+               
+              </div>
             );
           })}
         </div>

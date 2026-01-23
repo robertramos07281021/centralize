@@ -10,11 +10,69 @@ import DispoType from "../../models/dispoType.js";
 import Group from "../../models/group.js";
 import Department from "../../models/department.js";
 import Callfile from "../../models/callfile.js";
+import FieldDisposition from "../../models/fieldDisposition.js";
 import { safeResolver } from "../../middlewares/safeResolver.js";
 
 const dispositionResolver = {
   DateTime,
   Query: {
+    getFieldDispositionsByCustomerAccounts: safeResolver(
+      async (_, { accountIds }, { user }) => {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
+        if (!Array.isArray(accountIds) || accountIds.length === 0) {
+          return [];
+        }
+
+        const invalidId = accountIds.find(
+          (id) => !mongoose.Types.ObjectId.isValid(id),
+        );
+        if (invalidId) {
+          throw new CustomError("Invalid customer account", 400);
+        }
+
+        const ids = accountIds.map((id) => new mongoose.Types.ObjectId(id));
+
+        const fieldDispositions = await FieldDisposition.find({
+          customer_account: { $in: ids },
+          user: user._id,
+        })
+          .select("amount customer_account callfile createdAt")
+          .lean();
+
+        return fieldDispositions;
+      },
+    ),
+    getFieldDispositionsByUser: safeResolver(
+      async (_, { limit }, { user }) => {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
+        const safeLimit =
+          typeof limit === "number" && limit > 0 ? Math.min(limit, 100) : 50;
+
+        const fieldDispositions = await FieldDisposition.find({
+          user: user._id,
+        })
+          .sort({ createdAt: -1 })
+          .limit(safeLimit)
+          .populate({
+            path: "disposition",
+            select: "name code",
+          })
+          .populate({
+            path: "customer_account",
+            select: "customer",
+            populate: {
+              path: "customer",
+              select: "fullName",
+            },
+          })
+          .select("createdAt disposition customer_account")
+          .lean();
+
+        return fieldDispositions;
+      },
+    ),
     getAccountDispoCount: safeResolver(async (_, { id }) => {
       const dispositionCount = await Disposition.countDocuments({
         customer_account: new mongoose.Types.ObjectId(id),
@@ -303,7 +361,7 @@ const dispositionResolver = {
           $match: {
             createdAt: { $gte: todayStart, $lt: todayEnd },
             "bucket._id": new mongoose.Types.ObjectId(bucket),
-            "dispo_user.type": "AGENT",
+            // "dispo_user.type": "AGENT",
           },
         },
         {
@@ -819,14 +877,14 @@ const dispositionResolver = {
       let filter = {};
 
       if (input.interval === "daily") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd }));
       } else if (input.interval === "weekly") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek }));
       } else if (input.interval === "monthly") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth }));
       } else if (input.interval === "callfile") {
         filter["callfile"] = new mongoose.Types.ObjectId(existingCallfile?._id);
       }
@@ -1050,14 +1108,14 @@ const dispositionResolver = {
       };
 
       if (input.interval === "daily") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd }));
       } else if (input.interval === "weekly") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek }));
       } else if (input.interval === "monthly") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth }));
       } else if (input.interval === "callfile") {
         filter["callfile"] = new mongoose.Types.ObjectId(existingCallfile?._id);
       }
@@ -1165,14 +1223,14 @@ const dispositionResolver = {
       };
 
       if (interval === "daily") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd }));
       } else if (interval === "weekly") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek }));
       } else if (interval === "monthly") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth }));
       } else if (interval === "callfile") {
         filter["callfile"] = new mongoose.Types.ObjectId(existingCallfile._id);
       }
@@ -1282,14 +1340,14 @@ const dispositionResolver = {
       let filter = { selectivesDispo: false };
 
       if (input.interval === "daily") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd }));
       } else if (input.interval === "weekly") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek }));
       } else if (input.interval === "monthly") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth }));
       } else if (input.interval === "callfile") {
         filter["callfile"] = new mongoose.Types.ObjectId(existingCallfile?._id);
       }
@@ -1494,7 +1552,7 @@ const dispositionResolver = {
       } else if (interval === "callfile") {
         filter["callfile"] = new mongoose.Types.ObjectId(existingCallfile?._id);
         RPCfilter["callfile"] = new mongoose.Types.ObjectId(
-          existingCallfile?._id
+          existingCallfile?._id,
         );
       }
 
@@ -1676,7 +1734,50 @@ const dispositionResolver = {
                   ],
                 },
               },
-              confirm: {},
+              ptcp: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $eq: ["$dispotype.code", "PTP"],
+                        },
+                        {
+                          $ne: [{ $ifNull: ["$paidDispo", null] }, null],
+                        },
+                        {
+                          $expr: {
+                            $eq: ["$pd.amount", "$ca.balance"],
+                          },
+                        },
+                      ],
+                    },
+                    "$ca.out_standing_details.principal_os",
+                    0,
+                  ],
+                },
+              },
+              confirm: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $eq: ["$dispotype.code", "PAID"],
+                        },
+                        { $eq: ["selectivesDispo", false] },
+                        {
+                          $expr: {
+                            $eq: ["$amount", "$ca.balance"],
+                          },
+                        },
+                      ],
+                    },
+                    "$ca.out_standing_details.principal_os",
+                    0,
+                  ],
+                },
+              },
               kept: {
                 $sum: {
                   $cond: [
@@ -1697,13 +1798,14 @@ const dispositionResolver = {
               ptp: 1,
               kept: 1,
               confirm: 1,
+              ptcp: 1,
             },
           },
         ]);
 
         const newResult = disposition.map((d) => {
           const userRPC = RPCCount.find(
-            (rpc) => rpc?._id.toString() === d.user?.toString()
+            (rpc) => rpc?._id.toString() === d.user?.toString(),
           );
           return {
             ...d,
@@ -1848,6 +1950,40 @@ const dispositionResolver = {
                   ],
                 },
               },
+              ptcp: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $eq: ["$dispotype.code", "PTP"],
+                        },
+                        {
+                          $ne: [{ $ifNull: ["$paidDispo", null] }, null],
+                        },
+                      ],
+                    },
+                    "$amount",
+                    0,
+                  ],
+                },
+              },
+              confirm: {
+                $sum: {
+                  $cond: [
+                    {
+                      $and: [
+                        {
+                          $eq: ["$dispotype.code", "PAID"],
+                        },
+                        { $eq: ["selectivesDispo", false] },
+                      ],
+                    },
+                    "$amount",
+                    0,
+                  ],
+                },
+              },
               kept: {
                 $sum: {
                   $cond: [
@@ -1871,13 +2007,15 @@ const dispositionResolver = {
               user: "$_id",
               ptp: 1,
               kept: 1,
+              ptcp: 1,
+              confirm: 1,
             },
           },
         ]);
 
         const newResult = disposition.map((d) => {
           const userRPC = RPCCount.find(
-            (rpc) => rpc?._id.toString() === d.user?.toString()
+            (rpc) => rpc?._id.toString() === d.user?.toString(),
           );
           return {
             ...d,
@@ -1933,20 +2071,28 @@ const dispositionResolver = {
       let newDataCollected = {};
 
       if (interval === "daily") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd });
-        newDataCollected["target"] = Number(existingCallfile.target) / 4 / 6;
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: todayStart, $lte: todayEnd }));
+        newDataCollected["target"] = existingCallfile?.target
+          ? Number(existingCallfile?.target) / 4 / 6
+          : 0;
       } else if (interval === "weekly") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek });
-        newDataCollected["target"] = Number(existingCallfile.target) / 4;
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfWeek, $lte: endOfWeek }));
+        newDataCollected["target"] = existingCallfile?.target
+          ? Number(existingCallfile?.target) / 4
+          : 0;
       } else if (interval === "monthly") {
-        (filter["callfile"] = { $in: callfile }),
-          (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth });
-        newDataCollected["target"] = Number(existingCallfile.target);
+        ((filter["callfile"] = { $in: callfile }),
+          (filter["createdAt"] = { $gt: startOfMonth, $lte: endOfMonth }));
+        newDataCollected["target"] = existingCallfile?.target
+          ? Number(existingCallfile?.target)
+          : 0;
       } else if (interval === "callfile") {
-        newDataCollected["target"] = Number(existingCallfile.target);
-        filter["callfile"] = new mongoose.Types.ObjectId(existingCallfile._id);
+        newDataCollected["target"] = existingCallfile?.target
+          ? Number(existingCallfile?.target)
+          : 0;
+        filter["callfile"] = new mongoose.Types.ObjectId(existingCallfile?._id);
       }
 
       let result = {};
@@ -2114,8 +2260,63 @@ const dispositionResolver = {
           };
     }),
   },
-
   Mutation: {
+    createFieldDisposition: safeResolver(
+      async (_, { input }, { user }) => {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
+        const {
+          disposition,
+          payment_method,
+          payment,
+          payment_date,
+          amount,
+          ref_no,
+          rfd,
+          sof,
+          customer_account,
+          callfile,
+          comment,
+          user: inputUser,
+        } = input;
+
+        if (!mongoose.Types.ObjectId.isValid(customer_account)) {
+          throw new CustomError("Invalid customer account", 400);
+        }
+        if (!mongoose.Types.ObjectId.isValid(disposition)) {
+          throw new CustomError("Invalid disposition", 400);
+        }
+        if (callfile && !mongoose.Types.ObjectId.isValid(callfile)) {
+          throw new CustomError("Invalid callfile", 400);
+        }
+
+        const fieldDisposition = await FieldDisposition.create({
+          disposition,
+          payment_method: payment_method || null,
+          payment: payment || null,
+          payment_date: payment_date || null,
+          amount: typeof amount === "number" ? amount : null,
+          ref_no: ref_no || null,
+          rfd: rfd || null,
+          sof: sof || null,
+          customer_account,
+          callfile: callfile || null,
+          user: inputUser || user._id,
+          comment: comment || null,
+        });
+
+        await CustomerAccount.findByIdAndUpdate(customer_account, {
+          $push: { fieldhistory: fieldDisposition._id },
+          $set: { fielddisposition: fieldDisposition._id },
+        });
+
+        return {
+          success: true,
+          message: "Field disposition created",
+          fieldDisposition,
+        };
+      },
+    ),
     createDisposition: safeResolver(
       async (_, { input }, { user, pubsub, PUBSUB_EVENTS }) => {
         if (!user) throw new CustomError("Unauthorized", 401);
@@ -2194,8 +2395,8 @@ const dispositionResolver = {
         const assigned = group
           ? group?.members
           : customerAccount?.assigned
-          ? [customerAccount.assigned]
-          : [];
+            ? [customerAccount.assigned]
+            : [];
 
         await pubsub.publish(PUBSUB_EVENTS.DISPOSITION_UPDATE, {
           dispositionUpdated: {
@@ -2253,7 +2454,7 @@ const dispositionResolver = {
         }
 
         const currentDispotype = await DispoType.findById(
-          customerAccount?.current_disposition?.disposition
+          customerAccount?.current_disposition?.disposition,
         );
 
         if (!currentDispotype) {
@@ -2263,7 +2464,7 @@ const dispositionResolver = {
           updateFields["current_disposition"] = newDisposition?._id;
           await Disposition.findByIdAndUpdate(
             customerAccount?.current_disposition,
-            { $set: { existing: false } }
+            { $set: { existing: false } },
           );
           newDisposition.existing = true;
         } else if (currentDispotype.rank === 0 && dispoType.rank === 0) {
@@ -2271,7 +2472,7 @@ const dispositionResolver = {
           newDisposition.existing = true;
           await Disposition.findByIdAndUpdate(
             customerAccount?.current_disposition,
-            { $set: { existing: false } }
+            { $set: { existing: false } },
           );
         }
 
@@ -2285,7 +2486,7 @@ const dispositionResolver = {
             $push: { history: newDisposition._id },
             $inc: { "features.called": 1 },
           },
-          { new: true }
+          { new: true },
         );
 
         return {
@@ -2293,8 +2494,100 @@ const dispositionResolver = {
           message: "Disposition successfully created",
           dispoId: newDisposition._id,
         };
-      }
+      },
     ),
+    updateCustomerForField: safeResolver(
+      async (_, { id, forfield }, { user }) => {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
+        try {
+          const existingCA = await CustomerAccount.findById(id).lean();
+          if (!existingCA) {
+            return {
+              success: false,
+              message: "Customer not found",
+              customer: null,
+            };
+          }
+
+          const updatedCA = await CustomerAccount.findByIdAndUpdate(
+            id,
+            { $set: { forfield: Boolean(forfield) } },
+            { new: true, strict: false },
+          ).lean();
+
+          if (!updatedCA) {
+            return {
+              success: false,
+              message: "Failed to update customer account",
+              customer: null,
+            };
+          }
+
+          return {
+            success: true,
+            message: "Disposition successfully created",
+            customer: updatedCA,
+          };
+        } catch (err) {
+          console.error("updateCustomerForField error:", err);
+          throw new CustomError(err.message || "Server error", 500);
+        }
+      },
+    ),
+    updateFieldAssignee: safeResolver(async (_, { id, assignee }, { user }) => {
+      if (!user) {
+        return { success: false, message: "Unauthorized", customer: null };
+      }
+
+      try {
+        const existingCA = await CustomerAccount.findById(id).lean();
+        if (!existingCA) {
+          return {
+            success: false,
+            message: "Customer not found",
+            customer: null,
+          };
+        }
+
+        const assigneeUser = await User.findById(assignee).lean();
+        if (!assigneeUser) {
+          return {
+            success: false,
+            message: "Assignee not found",
+            customer: null,
+          };
+        }
+
+        const updatedCA = await CustomerAccount.findByIdAndUpdate(
+          id,
+          { $set: { fieldassigned: assignee, started: false } },
+          { new: true, strict: false },
+        ).lean();
+
+        if (!updatedCA) {
+          return {
+            success: false,
+            message: "Failed to update customer account",
+            customer: null,
+          };
+        }
+
+        return {
+          success: true,
+          message: "Assignee successfully updated",
+          customer: updatedCA,
+        };
+      } catch (err) {
+        console.error("updateFieldAssignee error:", err);
+
+        return {
+          success: false,
+          message: err.message || "Server error",
+          customer: null,
+        };
+      }
+    }),
   },
 };
 

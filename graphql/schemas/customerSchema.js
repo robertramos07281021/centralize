@@ -61,6 +61,7 @@ const customerTypeDefs = gql`
     client_id: String
     loan_start: String
     due_date: String
+    agent: String
   }
 
   type CustomerInfo {
@@ -196,6 +197,8 @@ const customerTypeDefs = gql`
     dpd: Int
     paid_amount: Float
     batch_no: String
+    started: Boolean
+    finished: Boolean
     out_standing_details: outStandingDetails
     grass_details: grassDetails
     account_bucket: Bucket
@@ -204,6 +207,7 @@ const customerTypeDefs = gql`
     dispoType: DispoType
     assigned: Assigned
     disposition_user: User
+    fielddisposition: ID
   }
 
   type FindCustomerAccount {
@@ -292,6 +296,12 @@ const customerTypeDefs = gql`
     searchName: String
   }
 
+  type FinishCustomerResponse {
+  success: Boolean!
+  message: String!
+  customer: CustomerAccount
+}
+
   type Query {
     findCustomer(
       fullName: String
@@ -334,6 +344,8 @@ const customerTypeDefs = gql`
       isRPC: Boolean
     ): Success
     updateRPC(id: ID!): Success
+    startCustomer(id: ID!): UpdateCustomerForFieldPayload
+  finishCustomer(id: ID!): FinishCustomerResponse
   }
 `;
 

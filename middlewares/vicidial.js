@@ -175,6 +175,7 @@ export async function logoutVici(agentUser, vici_id) {
   const VICIDIAL_API = `http://${safeViciId}/agc/api.php`;
   try {
     const res = await checkIfAgentIsOnline(agentUser, safeViciId);
+
     if (res) {
       await axios.get(VICIDIAL_API, {
         params: {
@@ -186,7 +187,9 @@ export async function logoutVici(agentUser, vici_id) {
         },
       });
     }
+
   } catch (error) {
+    
     console.error("❌ Error Logout Vici:", error.message);
   }
 }
@@ -194,7 +197,7 @@ export async function logoutVici(agentUser, vici_id) {
 export async function getRecordings(vici_id, agent_user, dateFilter) {
   const safeViciId = normalizeViciId(vici_id);
   if (!safeViciId) return null;
-
+  
   const VICIDIAL_API = `http://${safeViciId}/vicidial/non_agent_api.php`;
   try {
     const date = new Date();
@@ -260,7 +263,6 @@ export async function getLoggedInUser(vici_id) {
         ...credentials,
         pass: viciAuto.includes(safeViciId) ? passwordAuto : passwordNonAuto,
         function: "logged_in_agents",
-        header: "YES",
         show_sub_status: "YES",
       },
     });

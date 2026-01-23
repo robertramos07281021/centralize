@@ -122,6 +122,8 @@ const Login = () => {
       QA: "/qa-agents-dashboard",
       QASUPERVISOR: "/qasv-dashboard",
       COMPLIANCE: "/compliance-dashboard",
+      TLFIELD: "/tl-field-dashboard",
+      AGENTFIELD: "/agent-field-dashboard",
     }),
     []
   );
@@ -170,22 +172,24 @@ const Login = () => {
       if (!res?.login?.user?.change_password) {
         navigate("/change-password", { state: res?.login?.user });
       } else {
-        if (res.login.user.type === "AGENT") {
+        const userType = res.login.user.type;
+        const shouldUseProdFlow = userType === "AGENT";
+
+        if (shouldUseProdFlow) {
           dispatch(setBreakValue(res.login.prodStatus));
           dispatch(setStart(res.login.start));
           const navigateString =
             res.login.prodStatus === BreakEnum.PROD
-              ? userRoutes[res.login.user.type as keyof typeof userRoutes]
+              ? userRoutes[userType as keyof typeof userRoutes]
               : "/break-view";
           navigate(navigateString);
         } else {
-          navigate(userRoutes[res.login.user.type as keyof typeof userRoutes]);
+          navigate(userRoutes[userType as keyof typeof userRoutes]);
         }
       }
     },
     onError: async (error) => {
       await persistor.purge();
-      console.log(error)
       const errorMessage = ["Invalid", "Already", "Lock"];
       if (!errorMessage.includes(error.message)) {
         dispatch(setServerError(true));
@@ -274,7 +278,7 @@ const Login = () => {
       <div className="w-full h-full absolute bg-blue-500/70 backdrop-blur-[4px]"></div>
 
       <motion.a
-        className="absolute max-h-[100%] z-20 bottom-2 right-2 "
+        className="absolute max-h-[100%] hidden md:block z-20 bottom-2 right-2 "
         initial={{ y: 100, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         transition={{ type: "spring", stiffness: 100 }}
@@ -298,7 +302,7 @@ const Login = () => {
       <motion.form
         ref={loginForm}
         onSubmit={handleSubmitLogin}
-        className="bg-white backdrop-blur-lg relative border border-gray-900 w-[420px] min-h-96 py-10 rounded-xl z-50 flex items-center justify-center flex-col gap-2 shadow-2xl shadow-black/80"
+        className="bg-white backdrop-blur-lg relative border border-gray-900 w-[350px] md:w-[420px] min-h-96 py-10 rounded-xl z-50 flex items-center justify-center flex-col gap-2 shadow-2xl shadow-black/80"
         noValidate
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}

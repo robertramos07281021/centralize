@@ -10,7 +10,7 @@ const dispositionTypeDefs = gql`
   }
 
   type Disposition {
-    _id:ID
+    _id: ID
     amount: Float
     ca_disposition: DispoType
     payment_date: String
@@ -27,7 +27,41 @@ const dispositionTypeDefs = gql`
     chatApp: String
     selectivesDispo: Boolean
   }
-  
+
+  type FieldDisposition {
+    _id: ID
+    disposition: DispoType
+    payment_method: String
+    payment: String
+    payment_date: String
+    amount: Float
+    ref_no: String
+    rfd: String
+    sof: String
+    customer_account: ID
+    callfile: ID
+    user: ID
+    comment: String
+    createdAt: DateTime
+  }
+
+  type CustomerName {
+    _id: ID
+    fullName: String
+  }
+
+  type FieldDispositionCustomer {
+    _id: ID
+    customer: CustomerName
+  }
+
+  type FieldDispositionWithCustomer {
+    _id: ID
+    disposition: DispoType
+    customer_account: FieldDispositionCustomer
+    createdAt: DateTime
+  }
+
   type Agent {
     _id: ID
     name: String
@@ -44,12 +78,11 @@ const dispositionTypeDefs = gql`
     count: Int
     amount: Float
   }
-  
 
   type Callfile {
     _id: ID
     name: String
-    totalPrincipal:Float
+    totalPrincipal: Float
     totalAccounts: Int
     totalOB: Float
   }
@@ -87,25 +120,24 @@ const dispositionTypeDefs = gql`
     name: String
     user_id: String
   }
-  
+
   type DispoReport {
     disposition: String
     users: [User]
     count: Int
   }
 
-  # type Buckets { 
+  # type Buckets {
   #   bucket: String
   #   totalAmount: Float
   #   dispositions: [DispoReport]
   # }
 
- 
   type BucketAomDashobard {
     campaign: ID
     ptp_amount: Float
-    ptp_kept_amount:Float
-    amount_collected_amount:Float
+    ptp_kept_amount: Float
+    amount_collected_amount: Float
   }
   type Count {
     count: Int
@@ -115,8 +147,22 @@ const dispositionTypeDefs = gql`
     totalUsers: [User]
   }
 
+  type CustomerAccount {
+    _id: ID
+    forfield: Boolean
+    fieldassigned: ID
+    started: Boolean
+    finished: Boolean
+  }
+
+  type UpdateCustomerForFieldPayload {
+    message: String!
+    success: Boolean!
+    customer: CustomerAccount
+  }
+
   type AomDailyCollection {
-    campaign: ID,
+    campaign: ID
     calls: Float
     sms: Float
     email: Float
@@ -143,7 +189,8 @@ const dispositionTypeDefs = gql`
     RPC: Int
     ptp: Float
     kept: Float
-    confirm:Float
+    ptcp: Float
+    confirm: Float
   }
 
   type RPCCount {
@@ -157,58 +204,88 @@ const dispositionTypeDefs = gql`
   }
 
   input CreateDispo {
-    customer_account:ID!
+    customer_account: ID!
     disposition: ID!
     contact_method: ContactMethod!
-    amount:String
-    payment:String
-    payment_date:String
-    payment_method:String
-    ref_no:String
-    comment:String
+    amount: String
+    payment: String
+    payment_date: String
+    payment_method: String
+    ref_no: String
+    comment: String
     dialer: String
     chatApp: String
     RFD: String
     sms: String
-    callId:String
+    callId: String
     partialPayment: Int
     SOF: String
   }
-  
+
+  input CreateFieldDispositionInput {
+    disposition: ID!
+    payment_method: String
+    payment: String
+    payment_date: String
+    amount: Float
+    ref_no: String
+    rfd: String
+    sof: String
+    customer_account: ID!
+    callfile: ID
+    user: ID
+    comment: String
+  }
+
+  type CreateFieldDispositionPayload {
+    success: Boolean!
+    message: String!
+    fieldDisposition: FieldDisposition
+  }
+
   input SearchDispoReports {
-    agent:String, 
-    disposition:[String], 
-    from:String, 
-    to:String,
-    callfile: ID!,
+    agent: String
+    disposition: [String]
+    from: String
+    to: String
+    callfile: ID!
   }
 
   input Input {
-    bucket: ID,
+    bucket: ID
     interval: String
   }
 
   type Query {
-    getAccountDispositions(id:ID!, limit:Int):[Disposition]
-    getAccountDispoCount(id:ID!): Count
-    getDispositionReports(reports:SearchDispoReports): Reports
-    getAllDispositionTypes:[DispoType]
-    getDailyFTE(bucket:ID):DailyFTE
+    getAccountDispositions(id: ID!, limit: Int): [Disposition]
+    getAccountDispoCount(id: ID!): Count
+    getFieldDispositionsByCustomerAccounts(accountIds: [ID!]!): [FieldDisposition]
+    getFieldDispositionsByUser(limit: Int): [FieldDispositionWithCustomer]
+    getDispositionReports(reports: SearchDispoReports): Reports
+    getAllDispositionTypes: [DispoType]
+    getDailyFTE(bucket: ID): DailyFTE
     getAOMPTPPerDay: [AomDailyCollection]
     getAOMPTPKeptPerDay: [AomDailyCollection]
     getAOMPaidPerDay: [AomDailyCollection]
     getTLPTPTotals(input: Input): TLTotal
     getTLPTPKeptTotals(input: Input): TLTotal
-    getTLPaidTotals(input: Input): TLTotal,
+    getTLPaidTotals(input: Input): TLTotal
     getTLDailyCollected(input: Input): RPCCount
-    agentDispoDaily(bucket:ID, interval: String): [AgentDispo]
-    getTargetPerCampaign(bucket:ID,interval: String): BucketTargets
+    agentDispoDaily(bucket: ID, interval: String): [AgentDispo]
+    getTargetPerCampaign(bucket: ID, interval: String): BucketTargets
   }
 
   type Mutation {
-    createDisposition(input:CreateDispo): Success
+    createDisposition(input: CreateDispo): Success
+    createFieldDisposition(
+      input: CreateFieldDispositionInput!
+    ): CreateFieldDispositionPayload
+    updateCustomerForField(
+      id: ID!
+      forfield: Boolean!
+    ): UpdateCustomerForFieldPayload
+    updateFieldAssignee(id: ID!, assignee: ID!): UpdateCustomerForFieldPayload
   }
-`
+`;
 
-export default dispositionTypeDefs
-
+export default dispositionTypeDefs;

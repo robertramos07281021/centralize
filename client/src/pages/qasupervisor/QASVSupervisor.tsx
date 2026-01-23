@@ -585,9 +585,10 @@ const QASupervisorView = () => {
             <div className="flex justify-center">activity</div>
             <div className="flex justify-center">online</div>
             <div className="flex justify-center">Score card</div>
+            <div className="flex justify-center">Lock</div>
 
 
-            <div className="flex justify-center"></div>
+
           </div>
           <div className="flex  flex-col overflow-auto h-full rounded-b-md">
             {filteredUsers?.length === 0 ? (

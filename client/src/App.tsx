@@ -71,6 +71,13 @@ import { ComplianceRoute } from "./routes/ComplianceRoute.tsx";
 import ComplianceDashboard from "./pages/compliance/ComplianceDashboard.tsx";
 import ComplianceQAAccount from "./pages/compliance/ComplianceQAAccount.tsx";
 import CCSFlow from "./pages/admin/CCSFlow.tsx";
+import { TLFieldRoute } from "./routes/TlFieldRoute.tsx";
+import TLFieldDashboard from "./pages/tl-field/TLFieldDashboard.tsx";
+import TLFieldProductionManager from "./pages/tl-field/TLFieldProductionManager.tsx";
+import { AgentFieldRoute } from "./routes/AgentFieldRoute.tsx";
+import AgentFieldDashboard from "./pages/agent-field/AgentFieldDashboard.tsx";
+import CustomerSorting from "./pages/agent-field/CustomerSorting.tsx";
+import FieldMessage from "./components/FieldMessage.tsx";
 
 Chart.register(
   ...registerables,
@@ -80,7 +87,7 @@ Chart.register(
   BarElement,
   Title,
   Tooltip,
-  Legend
+  Legend,
 );
 
 function App() {
@@ -94,6 +101,15 @@ function App() {
         <Route path="/break-view" element={<BreakView />} />
         <Route path="/score-card-temporary" element={<DefaultScoreCard />} />
         <Route path="/updates" element={<UpdatesPage />} />
+
+        <Route element={<AgentFieldRoute />}>
+          <Route path="/message-center" element={<FieldMessage />} />
+          <Route
+            path="/agent-field-dashboard"
+            element={<AgentFieldDashboard />}
+          />
+          <Route path="/customer-sorting" element={<CustomerSorting />} />
+        </Route>
 
         <Route element={<AdminRoute />}>
           <Route path="/selectives" element={<Selectives />} />
@@ -118,6 +134,22 @@ function App() {
           />
         </Route>
 
+        <Route element={<TLFieldRoute />}>
+          <Route
+            path="/tl-field-production"
+            element={<TLFieldProductionManager />}
+          />
+          <Route path="/tl-field-dashboard" element={<TLFieldDashboard />} />
+        </Route>
+
+        <Route element={<AomRoute />}>
+          <Route
+            path="/aom-dashboard"
+            element={<TLFieldProductionManager />}
+          />
+          <Route path="/aom-field-dashboard" element={<TLFieldDashboard />} />
+        </Route>
+
         <Route element={<AgentRoute />}>
           <Route path="/agent-dashboard" element={<StatisticsView />} />
           <Route path="/agent-cip" element={<CustomerDisposition />} />
@@ -125,14 +157,14 @@ function App() {
         </Route>
 
         <Route element={<ComplianceRoute />}>
-          <Route path="/compliance-dashboard" element={<ComplianceDashboard/>} />
-          <Route path="/compliance-agent-account" element={<ComplianceQAAccount />} />
-        </Route>
-
-        <Route element={<AomRoute />}>
-          <Route path="/aom-dashboard" element={<TlDashboard />} />
-          <Route path="/aom-reports" element={<Reports />} />
-          <Route path="/aom-fte-user" element={<FTEUserView />} />
+          <Route
+            path="/compliance-dashboard"
+            element={<ComplianceDashboard />}
+          />
+          <Route
+            path="/compliance-agent-account"
+            element={<ComplianceQAAccount />}
+          />
         </Route>
 
         <Route element={<OpsRoute />}>

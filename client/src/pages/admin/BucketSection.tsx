@@ -16,6 +16,7 @@ type Bucket = {
   can_update_ca: boolean;
   principal: boolean;
   viciIp_auto: string | null;
+  isPermanent: boolean;
 };
 
 const DEPARTMENT_QUERY = gql`
@@ -40,6 +41,7 @@ const DEPARTMENT_BUCKET = gql`
       can_update_ca
       principal
       viciIp_auto
+      isPermanent
     }
   }
 `;
@@ -84,13 +86,13 @@ const BucketSection: React.FC<BranchSectionProps> = ({
 
   const { data: dept, refetch } = useQuery<{ getDepts: Department[] }>(
     DEPARTMENT_QUERY,
-    { variables: { name: "admin" } }
+    { variables: { name: "admin" } },
   );
 
   const campaignOnly = dept?.getDepts.filter((d) => d.name !== "admin");
   const newDepts = useMemo(
     () => [...new Set(campaignOnly?.map((d) => d.id))],
-    [campaignOnly]
+    [campaignOnly],
   );
 
   const [deptSelected, setDeptSelected] = useState<string | null>(null);
@@ -119,6 +121,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
     principal: false,
     canCall: false,
     viciIp_auto: null,
+    isPermanent: false,
   });
 
   const handleResetToUpdate = useCallback(() => {
@@ -132,6 +135,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
       principal: false,
       canCall: false,
       viciIp_auto: null,
+      isPermanent: false,
     });
   }, [setBucketToUpdate]);
 
@@ -142,7 +146,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
       setRequired(false);
       setIsUpdate(false);
     },
-    [setIsUpdate, setRequired, handleResetToUpdate, setDeptSelected]
+    [setIsUpdate, setRequired, handleResetToUpdate, setDeptSelected],
   );
 
   const { data: bucketData, refetch: bucketRefetch } = useQuery<{
@@ -172,7 +176,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
           success: res.createBucket.success,
           message: res.createBucket.message,
           isMessage: false,
-        })
+        }),
       );
     },
     onError: (error) => {
@@ -199,7 +203,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
           success: res.updateBucket.success,
           message: res.updateBucket.message,
           isMessage: false,
-        })
+        }),
       );
       setBuckets(false);
       setIsUpdate(false);
@@ -213,7 +217,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
             success: true,
             message: "Bucket already exists",
             isMessage: false,
-          })
+          }),
         );
         setConfirm(false);
       } else {
@@ -231,7 +235,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
           success: res.deleteBucket.success,
           message: res.deleteBucket.message,
           isMessage: false,
-        })
+        }),
       );
       handleResetToUpdate();
       setIsUpdate(false);
@@ -266,14 +270,14 @@ const BucketSection: React.FC<BranchSectionProps> = ({
         await updateBucket({ variables: { input: others } });
       }
     },
-    [updateBucket]
+    [updateBucket],
   );
 
   const deletingBucket = useCallback(
     async (b: Bucket | null) => {
       if (b) await deleteBucket({ variables: { id: b._id } });
     },
-    [deleteBucket]
+    [deleteBucket],
   );
 
   const confirmationFunction: Record<
@@ -344,7 +348,7 @@ const BucketSection: React.FC<BranchSectionProps> = ({
       setConfirm,
       setRequiredIps,
       setRequired,
-    ]
+    ],
   );
 
   const handleUpdate = useCallback(
@@ -353,11 +357,12 @@ const BucketSection: React.FC<BranchSectionProps> = ({
       setIsUpdate(true);
       setBucketToUpdate(b);
     },
-    [setRequired, setIsUpdate, setBucketToUpdate]
+    [setRequired, setIsUpdate, setBucketToUpdate],
   );
   return (
     <div className="flex overflow-hidden">
-      <motion.div className="rounded-md border w-full flex flex-col overflow-hidden h-full"
+      <motion.div
+        className="rounded-md border w-full flex flex-col overflow-hidden h-full"
         initial={{ scale: 0.8, opacity: 0 }}
         animate={{ scale: 1, opacity: 1 }}
         transition={{ delay: 0.4 }}
@@ -467,6 +472,12 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                             <div>Can Call: </div>
                             <div className="italic font-bold text-gray-400">
                               {b.canCall ? "True" : "False"}
+                            </div>
+                          </div>
+                          <div className="flex gap-2">
+                            <div>Permanent: </div>
+                            <div className="italic font-bold text-gray-400">
+                              {b.isPermanent ? "True" : "False"}
                             </div>
                           </div>
                         </div>
@@ -733,6 +744,28 @@ const BucketSection: React.FC<BranchSectionProps> = ({
                           }}
                         />
                         <p>Can Call</p>
+                      </label>
+                      <label
+                        className={`" ${
+                          bucketToUpdate.isPermanent
+                            ? "bg-gray-400"
+                            : "bg-gray-300 hover:bg-gray-400"
+                        } flex gap-2   border border-gray-600 rounded-md shadow-md cursor-pointer py-2 px-3 transition-all   "`}
+                      >
+                        <input
+                          type="checkbox"
+                          name="permanent"
+                          id="permanent"
+                          checked={bucketToUpdate.isPermanent}
+                          onChange={(e) => {
+                            const value = e.target.checked;
+                            setBucketToUpdate((prev) => ({
+                              ...prev,
+                              isPermanent: value,
+                            }));
+                          }}
+                        />
+                        <p>Permanent</p>
                       </label>
                     </div>
 

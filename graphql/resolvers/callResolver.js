@@ -698,7 +698,7 @@ const callResolver = {
         phoneNumber,
         bucket[chechIfisOnline.indexOf(true)]
       );
-      return `Call initiated successfully: ${JSON.stringify(res)}`;
+      return `Call initiated successfully: ${JSON.stringify(res)}--${bucket[chechIfisOnline.indexOf(true)]}`;
     }),
     setCallfileToAutoDial: safeResolver(
       async (
@@ -767,7 +767,7 @@ const callResolver = {
     }),
     getCallRecording: safeResolver(async (_, { user_id, mobile }) => {
       if (!Boolean(mobile)) return null;
-
+      
       const date = new Date();
       const year = date.getFullYear();
       const day = date.getDate();
@@ -788,7 +788,7 @@ const callResolver = {
         throw new CustomError("Please Contact Admin to add Vici dial ID", 401);
 
       const splitMobile = mobile?.split("|");
-
+    
       const res = await getRecordings(splitMobile[1], viciId, null);
 
       if (!res || res.includes("ERROR")) return null;
@@ -805,7 +805,7 @@ const callResolver = {
         .split("|")[0]
         .replace(/:/g, "");
 
-      return `${campaign_ID}_${newDate}-${time}_${viciId}_${splitMobile[0]}-all.mp3_${duration}`;
+      return `${campaign_ID}_${newDate}-${time}_${viciId}_${splitMobile[0]}-all.mp3_${duration}_${splitMobile[1]}`;
     }),
     bargeCall: safeResolver(
       async (_, { session_id, viciUser_id }, { user }) => {

@@ -117,6 +117,16 @@ const UPDATE_PRODUCTION = gql`
   }
 `;
 
+const UPDATE_PRODUCTION_QA = gql`
+  mutation UpdateProductionQA($type: String!) {
+    updateProductionQA(type: $type) {
+      message
+      success
+      start
+    }
+  }
+`;
+
 const AGENT_BUCKETS = gql`
   query getTLBucket {
     getTLBucket {
@@ -188,7 +198,7 @@ const Navbar = () => {
 
   useSubscription<{newUserLogin:AccountLogin}>(ACCOUNT_LOGIN, {
     onData: async({data})=> {
-      console.log(data)
+
       if(data.data) {
         if(data.data?.newUserLogin.message === "NEW_LOGIN" && (userLogged?._id.toString() === data?.data?.newUserLogin?.agentId?.toString())){
           await refetch()
@@ -215,7 +225,7 @@ const Navbar = () => {
       (!location.pathname.includes("cip") &&
         !["AGENT", "TL"].includes(userLogged?.type as keyof typeof String)) ||
       !canCallMap?.includes(true),
-    pollInterval: 3000,
+    // pollInterval: 3000,
   });
 
   useEffect(() => {
@@ -233,6 +243,8 @@ const Navbar = () => {
       );
     }
   }, [viciDialError]);
+
+
 
   useEffect(() => {
     if (userIsOnlineOnVici && canCallMap?.includes(true)) {
@@ -392,6 +404,17 @@ const Navbar = () => {
     },
   });
 
+  const [updateProductionQA] = useMutation<{
+    updateProductionQA: UpdateProduction;
+  }>(UPDATE_PRODUCTION_QA, {
+    onCompleted: () => {
+      dispatch(setStart(new Date().toString()));
+    },
+    onError: () => {
+      dispatch(setServerError(true));
+    },
+  });
+
   const forceLogout = useCallback(async () => {
     if (selectedCustomer) {
       await deselectTask({
@@ -454,7 +477,15 @@ const Navbar = () => {
     e: React.ChangeEvent<HTMLInputElement>
   ) => {
     if (e.target.checked) {
-      const res = await updateProduction({ variables: { type: value } });
+      const userType = String(userLogged?.type ?? "").toUpperCase();
+      const res =
+        userType === "QA"
+          ? await updateProductionQA({ variables: { type: value } })
+          : userType === "AGENT"
+          ? await updateProduction({ variables: { type: value } })
+          : null;
+
+      if (!res) return;
       if (!res.errors) {
         setPopUpBreak(false);
         setPopUpUser(false);
@@ -482,7 +513,7 @@ const Navbar = () => {
 
   useEffect(() => {
     const timer = setTimeout(async () => {
-      if (data && userLogged) {
+      if (data?.getMe && userLogged) {
         dispatch(
           setUserLogged({
             ...userLogged,
@@ -540,9 +571,9 @@ const Navbar = () => {
             }
           />
         )}
-        <div className="sticky top-0 z-50 print:hidden">
+        <div className="sticky z-50 top-0 print:hidden">
           <div className="py-2 px-5 bg-blue-500 flex justify-between items-center ">
-            <a href="/" title="Home"  className="flex cursor-pointer text-2xl gap-2 font-medium items-center text-white italic">
+            <a href="/" title="Home"  className="flex cursor-pointer text-xs md:text-2xl gap-2 font-medium items-center text-white italic">
               <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10 rounded-sm shadow-md" />
               Collections System
               {userLogged?.type === "AGENT" &&
@@ -550,7 +581,7 @@ const Navbar = () => {
                 !selectedCustomer && <IdleAutoLogout />}
             </a>
             <div className="p-1 flex gap-2 text-xs z-50">
-              <p className="font-black text-lg mr-2 flex items-center text-white text-shadow-sm uppercase">
+              <p className="font-black text-xs md:text-lg mr-2 flex items-center text-white text-shadow-sm uppercase">
                 Hello!&nbsp;
                 <span className="uppercase">{userLogged?.name}</span>
               </p>

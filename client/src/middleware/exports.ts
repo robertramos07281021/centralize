@@ -80,6 +80,15 @@ type links = {
 };
 
 export const accountsNavbar: { [key: string]: links[] } = {
+  AGENTFIELD: [
+    { name: "Dashboard", link: "/agent-field-dashboard", tabs: null },
+    { name: "Customer Sorting", link: "/customer-sorting", tabs: null },
+    {name: "Messenger", link: "/message-center", tabs: null},
+  ],
+  TLFIELD: [
+    { name: "Dashboard", link: "/tl-field-dashboard", tabs: null },
+    { name: "assigning", link: "/tl-field-production", tabs: null },
+  ],
   ADMIN: [
     {
       name: "Dashboard",
@@ -133,8 +142,8 @@ export const accountsNavbar: { [key: string]: links[] } = {
     {
       name: "CCS Flow",
       link: "/ccs-flow",
-      tabs: null
-    }
+      tabs: null,
+    },
   ],
   AGENT: [
     {
@@ -207,15 +216,6 @@ export const accountsNavbar: { [key: string]: links[] } = {
         },
       ],
     },
-    // {
-    //   name: "test",
-    //   link: "/testsample",
-    //   tabs: null,
-    // },{
-    //   name: "recoringsssx",
-    //   link: "/test2",
-    //   tabs: null,
-    // }
   ],
   MIS: [
     {
@@ -257,14 +257,9 @@ export const accountsNavbar: { [key: string]: links[] } = {
     },
     {
       name: "Full Time Employee",
-      link: "/aom-fte-user",
+      link: "/aom-field-dashboard",
       tabs: null,
-    },
-    {
-      name: "Report",
-      link: "/aom-reports",
-      tabs: null,
-    },
+    }
   ],
   QA: [
     {

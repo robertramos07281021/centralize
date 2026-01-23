@@ -8,7 +8,7 @@ const bucketResolver = {
   Query: {
     getBuckets: safeResolver(async (_, { dept }) => {
       const depts = (await Department.find({ _id: { $in: dept } })).map(
-        (e) => e.name
+        (e) => e.name,
       );
       const deptBucket = await Bucket.aggregate([
         {
@@ -58,8 +58,9 @@ const bucketResolver = {
       return res;
     }),
     getAllBucket: safeResolver(async () => {
-      return await Bucket.find();
+      return await Bucket.find().lean().sort('name')
     }),
+
     getTLBucket: safeResolver(async (_, __, { user }) => {
       if (!user) throw new CustomError("Unauthorized", 401);
       const res = await Bucket.find({
@@ -70,7 +71,7 @@ const bucketResolver = {
     findAomBucket: safeResolver(async (_, __, { user }) => {
       if (!user) throw new CustomError("Unauthorized", 401);
       const aomDept = (await Department.find({ aom: user._id }).lean()).map(
-        (e) => e.name
+        (e) => e.name,
       );
 
       const findAomBucket = await Bucket.aggregate([
@@ -151,7 +152,7 @@ const bucketResolver = {
         await Bucket.findByIdAndUpdate(
           updateBucket._id,
           { $set: { name, viciIp, issabelIp, ...others } },
-          { new: true }
+          { new: true },
         );
 
         await pubsub.publish(PUBSUB_EVENTS.NEW_UPDATE_BUCKET, {
@@ -162,7 +163,7 @@ const bucketResolver = {
         });
 
         return { message: "Bucket successfully updated", success: true };
-      }
+      },
     ),
     deleteBucket: safeResolver(async (_, { id }, { user }) => {
       if (!user) throw new CustomError("Unauthorized", 401);
@@ -190,7 +191,7 @@ const bucketResolver = {
           success: true,
           message: "Message successfully send",
         };
-      }
+      },
     ),
   },
 };

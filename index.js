@@ -62,9 +62,9 @@ import { fileURLToPath } from "url";
 import scoreCardResolver from "./graphql/resolvers/scoreCardResolver.js";
 import scoreCardTypeDefs from "./graphql/schemas/scoreCardSchema.js";
 import EventEmitter from "events";
-import Client from "ssh2-sftp-client";
 import patchUpdateResolver from "./graphql/resolvers/updateResolver.js";
 import patchUpdateTypeDefs from "./graphql/schemas/updateSchema.js";
+import { initViciPolling } from "./middlewares/viciPolling.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -101,6 +101,7 @@ app.use(
         callback(new Error("Not allowed by CORS"));
       }
     },
+    allowedHeaders: ["Content-Type", "Authorization"],
     credentials: true,
   })
 );
@@ -295,7 +296,6 @@ const initWebSocketServer = (httpServer, schema) => {
       // context for each WS connection
       context: async (ctx) => {
         const authHeader = ctx.connectionParams?.authorization;
-
         if (!authHeader || !authHeader.startsWith("Bearer ")) {
           throw new CustomError("Missing Token", 401);
         }
@@ -483,13 +483,27 @@ const startServer = async () => {
         context: async ({ req, res }) => {
           const sessionUser = req.session?.user;
           let user = null;
+          const authHeader = req.headers?.authorization;
+    
+          if (authHeader && authHeader.startsWith("Bearer ")) {
+            const token = authHeader.split(" ")[1];
+            try {
+              const decoded = jwt.verify(token, process.env.SECRET);
+              user = await User.findById(decoded.id);
+            } catch (err) {
+              user = null;
+            }
+          }
+
           if (sessionUser) {
-            user = await User.findById(sessionUser._id);
+            user = user || (await User.findById(sessionUser._id));
           }
           return { user, res, req, pubsub, PUBSUB_EVENTS };
         },
       })
     );
+
+    initViciPolling()
 
     httpServer.listen(process.env.PORT, () => {
       console.log(

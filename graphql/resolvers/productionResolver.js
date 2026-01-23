@@ -1230,7 +1230,9 @@ const productionResolver = {
               user: new mongoose.Types.ObjectId(agentID),
               contact_method: "call",
               callId: { $eq: null },
-              $expr: { $gt: [{ $size: "$customer.contact_no" }, 0] },
+              $expr: {
+                $gt: [{ $size: { $ifNull: ["$customer.contact_no", []] } }, 0],
+              },
               $or: [
                 {
                   selectivesDispo: { $eq: false },
@@ -1992,13 +1994,23 @@ const productionResolver = {
     updateProduction: safeResolver(async (_, { type }, { user }) => {
       if (!user) throw new CustomError("Unauthorized", 401);
 
+      const prodTrackedTypes = new Set([
+        "AGENT",
+        "QA",
+        "QASUPERVISOR",
+        "QA SUPERVISOR",
+      ]);
+      const isProdTrackedUser = prodTrackedTypes.has(
+        String(user?.type ?? "").toUpperCase()
+      );
+
       const start = new Date();
       start.setHours(0, 0, 0, 0);
 
       const end = new Date();
       end.setHours(23, 59, 59, 999);
 
-      const updateProduction = await Production.findOne({
+      let updateProduction = await Production.findOne({
         $and: [
           {
             user: user._id,
@@ -2010,7 +2022,15 @@ const productionResolver = {
       });
 
       if (!updateProduction) {
-        throw new CustomError("Production not found");
+        if (!isProdTrackedUser) {
+          throw new CustomError("Production not found");
+        }
+
+        updateProduction = await Production.create({
+          user: user._id,
+          target_today: 0,
+          prod_history: [],
+        });
       }
 
       updateProduction.prod_history = updateProduction.prod_history.map(

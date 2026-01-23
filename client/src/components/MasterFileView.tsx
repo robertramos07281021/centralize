@@ -72,6 +72,7 @@ const GET_MASTERFILE_BY_CALLFILE = gql`
 const MasterFileView: React.FC<MasterFileViewProps> = ({ close }) => {
   const { userLogged } = useSelector((state: RootState) => state.auth);
   const [search, setSearch] = useState("");
+  const [selectedBucketId, setSelectedBucketId] = useState<string>("");
 
   const renderText = (value: unknown, fallback: string) => {
     const v = String(value ?? "").trim();
@@ -106,15 +107,26 @@ const MasterFileView: React.FC<MasterFileViewProps> = ({ close }) => {
     notifyOnNetworkStatusChange: true,
   });
 
+  const tlBuckets: any[] = useMemo(() => {
+    return Array.isArray(bucketsData?.getTLBucket)
+      ? bucketsData.getTLBucket
+      : [];
+  }, [bucketsData]);
+
   const bucketIds: string[] = useMemo(() => {
     return Array.isArray(bucketsData?.getTLBucket)
       ? bucketsData.getTLBucket.map((b: any) => String(b._id))
       : [];
   }, [bucketsData]);
 
+  const activeBucketIds: string[] = useMemo(() => {
+    if (selectedBucketId) return [selectedBucketId];
+    return bucketIds;
+  }, [bucketIds, selectedBucketId]);
+
   const { data: callfilesData } = useQuery(GET_BUCKET_ACTIVE_CALLFILES, {
-    skip: !userLogged || bucketIds.length === 0,
-    variables: { bucketIds },
+    skip: !userLogged || activeBucketIds.length === 0,
+    variables: { bucketIds: activeBucketIds },
     notifyOnNetworkStatusChange: true,
   });
 
@@ -137,36 +149,27 @@ const MasterFileView: React.FC<MasterFileViewProps> = ({ close }) => {
   });
 
   useEffect(() => {
-    if (bucketsData?.getTLBucket) {
-      console.log("getTLBucket result", bucketsData.getTLBucket);
-    }
-  }, [bucketsData]);
-
-  useEffect(() => {
     const buckets = bucketsData?.getTLBucket;
     const callfiles = callfilesData?.getBucketActiveCallfile;
     if (!Array.isArray(buckets) || !Array.isArray(callfiles)) return;
 
-    const bucketNameById = new Map(
-      buckets.map((b: any) => [String(b._id), String(b.name)])
-    );
-
-    const grouped = callfiles.reduce((acc: Record<string, any[]>, cf: any) => {
-      const bId = String(cf.bucket);
-      if (!acc[bId]) acc[bId] = [];
-      acc[bId].push(cf);
-      return acc;
-    }, {});
-
-    Object.entries(grouped).forEach(([bId, cfs]) => {
-      console.log(
-        `active callfiles for bucket ${bucketNameById.get(bId) ?? bId}`,
-        cfs.map((x) => x.name)
-      );
-    });
   }, [bucketsData, callfilesData]);
 
-  const rows = masterData?.masterFileAccountsByCallfile?.accounts ?? [];
+  const rows = useMemo(() => {
+    const list = masterData?.masterFileAccountsByCallfile?.accounts;
+    const safeList = Array.isArray(list) ? list : [];
+    return [...safeList].sort((a: any, b: any) => {
+      const bucketA = String(a?.account_bucket?.name ?? "").toLowerCase();
+      const bucketB = String(b?.account_bucket?.name ?? "").toLowerCase();
+      if (bucketA < bucketB) return -1;
+      if (bucketA > bucketB) return 1;
+      const nameA = String(a?.customer_info?.fullName ?? "").toLowerCase();
+      const nameB = String(b?.customer_info?.fullName ?? "").toLowerCase();
+      if (nameA < nameB) return -1;
+      if (nameA > nameB) return 1;
+      return 0;
+    });
+  }, [masterData]);
 
   return (
     <div className="w-full h-full z-50 gap-5 absolute top-0 left-0 bg-black/50 backdrop-blur-[2px] p-5">
@@ -180,6 +183,20 @@ const MasterFileView: React.FC<MasterFileViewProps> = ({ close }) => {
             MASTER FILE
           </h1>
           <div className="flex items-center gap-2">
+            <div>
+              <select
+                className="border px-3 py-1 outline-none rounded-sm shadow-md bg-white"
+                value={selectedBucketId}
+                onChange={(e) => setSelectedBucketId(e.target.value)}
+              >
+                {tlBuckets.map((b: any) => (
+                  <option key={String(b._id)} value={String(b._id)}>
+                    {String(b.name)}
+                    {b?.dept ? ` (${String(b.dept)})` : ""}
+                  </option>
+                ))}
+              </select>
+            </div>
             <div>
               <input
                 placeholder="Search..."
@@ -246,7 +263,8 @@ const MasterFileView: React.FC<MasterFileViewProps> = ({ close }) => {
                   const balance = r?.balance;
                   const principal = r?.out_standing_details?.principal_os;
                   const payment = r?.out_standing_details?.last_payment_amount;
-                  const paymentDate = r?.out_standing_details?.last_payment_date;
+                  const paymentDate =
+                    r?.out_standing_details?.last_payment_date;
 
                   return (
                     <motion.div
@@ -256,8 +274,12 @@ const MasterFileView: React.FC<MasterFileViewProps> = ({ close }) => {
                       animate={{ opacity: 1 }}
                       transition={{ delay: index * 0.03 }}
                     >
-                      <div className="truncate">{renderText(name, "No name")}</div>
-                      <div className="truncate">{renderText(bucketName, "No bucket")}</div>
+                      <div className="truncate">
+                        {renderText(name, "No name")}
+                      </div>
+                      <div className="truncate">
+                        {renderText(bucketName, "No bucket")}
+                      </div>
                       <div className="truncate">
                         {renderText(contact, "No contact number")}
                       </div>

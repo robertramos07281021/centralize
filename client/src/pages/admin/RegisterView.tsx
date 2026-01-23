@@ -28,7 +28,9 @@ type DeptBucket = {
 
 enum Type {
   AGENT = "AGENT",
+  AGENTFIELD = "AGENT - FIELD",
   TL = "TL",
+  TLFIELD = "TL - FIELD",
   AOM = "AOM",
   MIS = "MIS",
   CEO = "CEO",
@@ -37,7 +39,6 @@ enum Type {
   QA = "QA",
   QASUPERVISOR = "QA SUPERVISOR",
   COMPLIANCE = "COMPLIANCE",
-  FIELD = "FIELD",
 }
 
 enum AccountType {
@@ -106,7 +107,7 @@ const GET_BUCKET_VICIIDS = gql`
   }
 `;
 
-const validForCampaignAndBucket = ["TL", "AGENT", "MIS", "QA", "COMPLIANCE"];
+const validForCampaignAndBucket = ["TL", "AGENT", "MIS", "QA", "COMPLIANCE", "AGENTFIELD", "TLFIELD", "AOM"];
 
 type RegisterProps = {
   setCancel: () => void;
@@ -263,6 +264,9 @@ const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
     no: () => {},
   });
 
+  const typeKey = String(data.type ?? "");
+  const requiresSoftphone = !["AGENTFIELD", "TLFIELD"].includes(typeKey);
+
   const validateAgent = () =>
     data.branch &&
     data.name &&
@@ -270,7 +274,7 @@ const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
     data.departments.length > 0 &&
     data.buckets.length > 0 &&
     data.vici_id &&
-    data.softphone;
+    (!requiresSoftphone || data.softphone);
 
   const validateOther = () => data.name && data.username;
 
@@ -490,7 +494,9 @@ const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
               <p className="w-full text-base font-black uppercase text-slate-800">
                 Softphone ID:{" "}
                 <span className="text-red-500">
-                  {data.type && required && !data.softphone ? "*" : ""}
+                  {requiresSoftphone && data.type && required && !data.softphone
+                    ? "*"
+                    : ""}
                 </span>
               </p>
               <input
@@ -555,7 +561,9 @@ const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
                   id="account_type"
                   name="account"
                   value={data.account_type || ""}
-                  disabled={data.type !== "AGENT"}
+                  disabled={
+                    data.type !== Type.AGENT && data.type !== Type.AGENTFIELD
+                  }
                   onChange={(e) => {
                     const value =
                       e.target.value.trim() === ""
@@ -564,10 +572,10 @@ const RegisterView: React.FC<RegisterProps> = ({ setCancel }) => {
                     setData((prev) => ({ ...prev, account_type: value }));
                   }}
                   className={`${
-                    data.type !== "AGENT" ? "bg-gray-200" : "bg-gray-50"
+                    data.type !== Type.AGENT ? "bg-gray-200" : "bg-gray-50"
                   } border-slate-300 border text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
                 >
-                  <option value="">Choose a account type</option>
+                  <option value="">Choose an account type</option>
                   <option value={AccountType.CALLER}>Caller</option>
                   <option value={AccountType.FIELD}>Field</option>
                   <option value={AccountType.SKIPER}>Skipper</option>

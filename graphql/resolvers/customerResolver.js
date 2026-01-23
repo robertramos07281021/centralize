@@ -1,4 +1,5 @@
 import { DateTime } from "../../middlewares/dateTime.js";
+
 import CustomError from "../../middlewares/errors.js";
 import Bucket from "../../models/bucket.js";
 import Customer from "../../models/customer.js";
@@ -32,7 +33,7 @@ const customerResolver = {
           },
         ]);
         return searchQuery;
-      }
+      },
     ),
 
     getCustomers: safeResolver(async (_, { page }) => {
@@ -116,7 +117,7 @@ const customerResolver = {
                       $match: {
                         bucket: {
                           $in: user.buckets.map(
-                            (x) => new mongoose.Types.ObjectId(x)
+                            (x) => new mongoose.Types.ObjectId(x),
                           ),
                         },
                       },
@@ -392,7 +393,7 @@ const customerResolver = {
             campaign: e.campaign,
             rate: users.length === 0 ? 0 : (e.users / users.length) * 100,
           };
-        })
+        }),
       );
 
       const connectedDispo = [
@@ -742,7 +743,7 @@ const customerResolver = {
     }),
     accountsCount: safeResolver(async (_, __, { user }) => {
       const aomDept = (await Department.find({ aom: user._id }).lean()).map(
-        (dept) => dept.name
+        (dept) => dept.name,
       );
 
       const deptBuckets = (
@@ -766,7 +767,7 @@ const customerResolver = {
         dept: { $in: aomCampaignNameArray },
       }).lean();
       const newArrayCampaignBucket = campaignBucket.map(
-        (e) => new mongoose.Types.ObjectId(e._id)
+        (e) => new mongoose.Types.ObjectId(e._id),
       );
       const { _id } = dispoType.find((x) => x.code === "PAID");
       const ptp = dispoType.find((x) => x.code === "PTP");
@@ -783,7 +784,7 @@ const customerResolver = {
       }).lean();
 
       const newMapCallfile = findActiveCallfile.map(
-        (x) => new mongoose.Types.ObjectId(x._id)
+        (x) => new mongoose.Types.ObjectId(x._id),
       );
 
       const monthlyTarget = await CustomerAccount.aggregate([
@@ -1113,7 +1114,7 @@ const customerResolver = {
 
         const allowed = requestedBucketIds.length
           ? requestedBucketIds.filter((id) =>
-              userBucketIds.includes(String(id))
+              userBucketIds.includes(String(id)),
             )
           : userBucketIds;
 
@@ -1122,7 +1123,7 @@ const customerResolver = {
         }
 
         const allowedBucketObjectIds = allowed.map(
-          (id) => new mongoose.Types.ObjectId(id)
+          (id) => new mongoose.Types.ObjectId(id),
         );
 
         const activeCallfiles = await Callfile.find({
@@ -1244,13 +1245,13 @@ const customerResolver = {
                 $ifNull: [{ $arrayElemAt: ["$total.count", 0] }, 0],
               },
             },
-          }
+          },
         );
 
         const result = await CustomerAccount.aggregate(pipeline);
         const first = result?.[0] ?? { accounts: [], total: 0 };
         return first;
-      }
+      },
     ),
 
     masterFileAccountsByCallfile: safeResolver(
@@ -1395,13 +1396,13 @@ const customerResolver = {
                 $ifNull: [{ $arrayElemAt: ["$total.count", 0] }, 0],
               },
             },
-          }
+          },
         );
 
         const result = await CustomerAccount.aggregate(pipeline);
         const first = result?.[0] ?? { accounts: [], total: 0 };
         return first;
-      }
+      },
     ),
   },
   CustomerAccount: {
@@ -1446,7 +1447,7 @@ const customerResolver = {
       async (
         _,
         { input, callfile, bucket },
-        { user, pubsub, PUBSUB_EVENTS }
+        { user, pubsub, PUBSUB_EVENTS },
       ) => {
         if (!user) throw new CustomError("Unauthorized", 401);
 
@@ -1475,6 +1476,7 @@ const customerResolver = {
             totalAccounts: input.length,
             totalPrincipal: callfilePrincipal,
             totalOB: callfileOB,
+            approve: false,
           });
         } else {
           await Callfile.findByIdAndUpdate(
@@ -1486,7 +1488,7 @@ const customerResolver = {
                 totalOB: callfileOB,
               },
             },
-            { new: true }
+            { new: true },
           );
         }
 
@@ -1509,80 +1511,97 @@ const customerResolver = {
           ordered: false,
         });
 
-        const customerAccountDocs = input.map((e, i) => {
-          const customer = insertedCustomers[i];
-          return {
-            customer: customer._id,
-            bucket: findBucket._id,
-            case_id: e.case_id,
-            callfile: newCallfile._id,
-            credit_customer_id: e.credit_user_id,
-            client_type: e.client_type,
-            overdue_balance: e.overdue_balance,
-            client_id: e.client_id,
-            due_date: e.due_date,
-            loan_start: e.loan_start,
-            endorsement_date: e.endorsement_date,
-            bill_due_date: e.bill_due_date,
-            max_dpd: e.max_dpd,
-            dpd: e.dpd,
-            balance: e.balance,
-            month_pd: e.mpd,
-            paid_amount: e.total_os - e.balance,
-            features: { branch: e.branch },
-            out_standing_details: {
-              principal_os: e.principal_os,
-              interest_os: e.interest_os,
-              admin_fee_os: e.admin_fee_os,
-              txn_fee_os: e.txn_fee_os,
-              late_charge_os: e.late_charge_os,
-              penalty_interest_os: e.penalty_interest_os,
-              dst_fee_os: e.dst_fee_os,
-              waive_fee_os: e.late_charge_waive_fee_os,
-              total_os: e.total_os,
-              total_balance: e.balance,
-              writeoff_balance: e.writeoff_balance,
-              overall_balance: e.overall_balance,
-              cf: e.cf,
-              mo_balance: e.mo_balance,
-              pastdue_amount: e.pastdue_amount,
-              mo_amort: e.mo_amort,
-              partial_payment_w_service_fee: e.partial_payment_w_service_fee,
-              new_tad_with_sf: e.new_tad_with_sf,
-              new_pay_off: e.new_pay_off,
-              service_fee: e.service_fee,
-              year: e.year,
-              brand: e.brand,
-              model: e.model,
-              last_payment_date: e.last_payment_date,
-              last_payment_amount: e.last_payment_amount,
-              term: e.term,
-              paid: e.paid,
-              rem_months: e.rem_months,
-              product: e.product,
+        const customerAccountDocs = await Promise.all(
+          input.map(async (e, i) => {
+            const customer = insertedCustomers[i];
+            const findAgent = await User.findOne({
+              vici_id: { $eq: e.agent },
+              type: "AGENT",
+            }).lean();
+
+            return {
+              customer: customer._id,
+              bucket: findBucket._id,
+              case_id: e.case_id,
+              callfile: newCallfile._id,
+              credit_customer_id: e.credit_user_id,
               client_type: e.client_type,
               overdue_balance: e.overdue_balance,
               client_id: e.client_id,
-              loan_start: e.loan_start,
               due_date: e.due_date,
-            },
-            emergency_contact: {
-              name: e.emergencyContactName,
-              mobile: e.emergencyContactMobile,
-            },
-            grass_details: {
-              grass_region: e.grass_region,
-              vendor_endorsement: e.vendor_endorsement,
-              grass_date: e.grass_date,
-            },
-            on_hands: null,
-          };
-        });
+              loan_start: e.loan_start,
+              endorsement_date: e.endorsement_date,
+              bill_due_date: e.bill_due_date,
+              max_dpd: e.max_dpd,
+              dpd: e.dpd,
+              balance: e.balance,
+              month_pd: e.mpd,
+              paid_amount: e.total_os - e.balance,
+              features: {
+                branch: e.branch,
+                permanent: findAgent ? findAgent._id : null,
+              },
+              out_standing_details: {
+                principal_os: e.principal_os,
+                interest_os: e.interest_os,
+                admin_fee_os: e.admin_fee_os,
+                txn_fee_os: e.txn_fee_os,
+                late_charge_os: e.late_charge_os,
+                penalty_interest_os: e.penalty_interest_os,
+                dst_fee_os: e.dst_fee_os,
+                waive_fee_os: e.late_charge_waive_fee_os,
+                total_os: e.total_os,
+                total_balance: e.balance,
+                writeoff_balance: e.writeoff_balance,
+                overall_balance: e.overall_balance,
+                cf: e.cf,
+                mo_balance: e.mo_balance,
+                pastdue_amount: e.pastdue_amount,
+                mo_amort: e.mo_amort,
+                partial_payment_w_service_fee: e.partial_payment_w_service_fee,
+                new_tad_with_sf: e.new_tad_with_sf,
+                new_pay_off: e.new_pay_off,
+                service_fee: e.service_fee,
+                year: e.year,
+                brand: e.brand,
+                model: e.model,
+                last_payment_date: e.last_payment_date,
+                last_payment_amount: e.last_payment_amount,
+                term: e.term,
+                paid: e.paid,
+                rem_months: e.rem_months,
+                product: e.product,
+                client_type: e.client_type,
+                overdue_balance: e.overdue_balance,
+                client_id: e.client_id,
+                loan_start: e.loan_start,
+                due_date: e.due_date,
+              },
+              emergency_contact: {
+                name: e.emergencyContactName,
+                mobile: e.emergencyContactMobile,
+              },
+              grass_details: {
+                grass_region: e.grass_region,
+                vendor_endorsement: e.vendor_endorsement,
+                grass_date: e.grass_date,
+              },
+              on_hands: null,
+              ...(findBucket.isPermanent && findAgent
+                ? {
+                    assigned: findAgent._id,
+                    assignedModel: "User",
+                    assigned_date: new Date(),
+                  }
+                : {}),
+            };
+          }),
+        );
 
         // Insert customer accounts in bulk
         const insertedAccounts = await CustomerAccount.insertMany(
           customerAccountDocs,
-          { ordered: false }
+          { ordered: false },
         );
 
         const bulkOps = insertedCustomers.map((cust, idx) => ({
@@ -1607,22 +1626,22 @@ const customerResolver = {
           success: true,
           message: "Callfile successfully created",
         };
-      }
+      },
     ),
     updateCustomer: safeResolver(
       async (
         _,
         { fullName, dob, gender, addresses, mobiles, emails, id, isRPC },
-        { user }
+        { user },
       ) => {
         if (!user) throw new CustomError("Unauthorized", 401);
         const safeEmails = Array.isArray(emails) ? emails : [];
         const safeMobiles = Array.isArray(mobiles) ? mobiles : [];
         const filtersEmail = safeEmails.filter(
-          (x) => typeof x === "string" && x.trim() !== ""
+          (x) => typeof x === "string" && x.trim() !== "",
         );
         const filtersMobile = safeMobiles.filter(
-          (x) => typeof x === "string" && x.trim() !== ""
+          (x) => typeof x === "string" && x.trim() !== "",
         );
         const findCustomer = await Customer.findById(id);
         const ToUpdate = {
@@ -1650,7 +1669,7 @@ const customerResolver = {
               },
             },
           },
-          { new: true }
+          { new: true },
         );
 
         if (!customer) throw new CustomError("Customer not found", 404);
@@ -1659,7 +1678,7 @@ const customerResolver = {
           message: "Customer successfully updated",
           customer,
         };
-      }
+      },
     ),
     updateRPC: safeResolver(async (_, { id }, { user }) => {
       if (!user) throw new CustomError("Unauthorized", 401);
@@ -1677,13 +1696,75 @@ const customerResolver = {
             },
           },
         },
-        { new: true }
+        { new: true },
       );
       if (!customer) throw new CustomError("Customer not found", 404);
       return {
         success: true,
         message: "Customer successfully updated",
         customer,
+      };
+    }),
+
+    startCustomer: safeResolver(async (_, { id }, { user }) => {
+      if (!user) {
+        return { success: false, message: "Unauthorized", customer: null };
+      }
+
+      try {
+        await CustomerAccount.updateMany(
+          { fieldassigned: user._id },
+          { started: false },
+        );
+
+        const updatedCustomer = await CustomerAccount.findByIdAndUpdate(
+          id,
+          { started: true },
+          { new: true },
+        ).lean();
+
+        if (!updatedCustomer) {
+          return {
+            success: false,
+            message: "Customer not found",
+            customer: null,
+          };
+        }
+
+        return {
+          success: true,
+          message: "Customer started successfully",
+          customer: updatedCustomer,
+        };
+      } catch (err) {
+        console.error("startCustomer error:", err);
+
+        return {
+          success: false,
+          message: err.message || "Server error",
+          customer: null,
+        };
+      }
+    }),
+
+    finishCustomer: safeResolver(async (_, { id }, { user }) => {
+      if (!user) {
+        return { success: false, message: "Unauthorized" };
+      }
+      const updated = await CustomerAccount.findByIdAndUpdate(
+        id,
+        { $set: { started: false, finished: true } },
+        { new: true },
+      ).lean();
+
+      if (!updated) {
+        return { success: false, message: "Customer not found" };
+      }
+
+      return {
+        success: true,
+        message: "Customer finished",
+        customer: updated,
       };
     }),
   },

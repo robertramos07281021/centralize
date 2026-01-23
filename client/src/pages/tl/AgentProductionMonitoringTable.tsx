@@ -30,6 +30,8 @@ type AgentDailies = {
   ptp: number;
   kept: number;
   RPC: number;
+  confirm: number;
+  ptcp: number;
 };
 
 const AGENT_DAILY_PROD = gql`
@@ -39,6 +41,8 @@ const AGENT_DAILY_PROD = gql`
       ptp
       kept
       RPC
+      confirm
+      ptcp
     }
   }
 `;
@@ -135,12 +139,12 @@ const AgentProductionMonitoringTable = () => {
         <div className="w-full h-full overflow-hidden">
           <div className="w-full h-full flex flex-col text-gray-600 table-fixed overflow-hidden">
             <div className="bg-gray-300 sticky top-0 border-white">
-              <div className="grid border-y border-gray-500 grid-cols-7 gap-2 items-center font-black uppercase">
-                <div className="px-2 flex">
-                
-                </div>
+              <div className="grid border-y border-gray-500 grid-cols-9 gap-2 items-center font-black uppercase">
+                <div className="px-2 flex"></div>
                 <div className="py-1.5">RPC</div>
                 <div>PTP</div>
+                <div>PTCP</div>
+                <div>Confirm</div>
                 <div>Kept</div>
                 <div>Collection %</div>
                 <div>Target</div>
@@ -172,7 +176,7 @@ const AgentProductionMonitoringTable = () => {
                   x.active &&
                   withProdAgentData?.checkAgentIfHaveProd?.includes(x._id) && (
                     <motion.div
-                      className="text-left hover:bg-gray-200  odd:bg-gray-100 bg-white items-center gap-2 grid grid-cols-7 text-gray-600"
+                      className="text-left hover:bg-gray-200  odd:bg-gray-100 bg-white items-center gap-2 grid grid-cols-9 text-gray-600"
                       key={x._id}
                       initial={{ opacity: 0 }}
                       animate={{ opacity: 1 }}
@@ -182,7 +186,6 @@ const AgentProductionMonitoringTable = () => {
                         className="truncate py-2 lg:text-xs 2xl:text-sm text-left pl-2 capitalize text-nowrap"
                         title={x.name}
                       >
-
                         {x.name}
                       </div>
                       <div>
@@ -199,13 +202,29 @@ const AgentProductionMonitoringTable = () => {
                         )}
                       </div>
                       <div>
-                        {findAgent?.kept.toLocaleString("en-PH", {
+                        {findAgent?.ptcp.toLocaleString("en-PH", {
                           style: "currency",
                           currency: "PHP",
                         }) || (
-                          <div className="text-gray-400 italic">No KEPT</div>
+                          <div className="text-gray-400 italic">No PTCP</div>
                         )}
                       </div>
+                      <div>
+                        {findAgent?.confirm.toLocaleString("en-PH", {
+                          style: "currency",
+                          currency: "PHP",
+                        }) || (
+                          <div className="text-gray-400 italic">No Confirm</div>
+                        )}
+                      </div>
+                          <div>
+                            {findAgent?.kept.toLocaleString("en-PH", {
+                              style: "currency",
+                              currency: "PHP",
+                            }) || (
+                              <div className="text-gray-400 italic">No KEPT</div>
+                            )}
+                          </div>
                       <div
                         className={`${
                           collectionPercent && collectionPercent < 100

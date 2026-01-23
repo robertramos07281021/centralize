@@ -162,7 +162,7 @@ const TlDashboard = () => {
       <AnimatePresence>
         {showSelector && (
           <motion.div
-            className="absolute bottom-4 right-14 w-2/20 border bg-white rounded-md border-black p-2 flex flex-col gap-2"
+            className="absolute bottom-4 right-14 w-auto h-100 overflow-auto border bg-white rounded-md border-black p-2 flex flex-col gap-2 "
             ref={bucketSelectorRef}
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -170,11 +170,12 @@ const TlDashboard = () => {
           >
             {buckets?.map((x) => {
               const findBucket = data?.getAllBucket.find((y) => x === y._id);
+              
               return (
                 findBucket?.isActive && (
                   <label
                     key={x}
-                    className={`w-full border border-black text-black hover:bg-gray-300 cursor-pointer px-2 py-1 rounded ${
+                    className={`w-full h-auto border border-black text-black hover:bg-gray-300 cursor-pointer px-2 py-1 rounded ${
                       selectedBucket === x ? "bg-gray-200" : ""
                     }`}
                   >

@@ -9,12 +9,12 @@ const dispositionSchema = new Schema(
     customer_account: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "CustomerAccount",
-      required: true
+      required: true,
     },
     disposition: {
-      type:mongoose.Schema.Types.ObjectId,
+      type: mongoose.Schema.Types.ObjectId,
       ref: "DispoType",
-      required: true
+      required: true,
     },
     user: {
       type: mongoose.Schema.Types.ObjectId,
@@ -30,91 +30,95 @@ const dispositionSchema = new Schema(
       type: String,
     },
     comment: {
-      type: String
+      type: String,
     },
     existing: {
       type: Boolean,
-      default: false
+      default: false,
     },
     ptp: {
       type: Boolean,
-      default: false
+      default: false,
     },
     RFD: {
       type: String,
     },
     callId: {
-      type:String
+      type: String,
     },
     bucket: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Bucket"
+      ref: "Bucket",
     },
     callfile: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Callfile"
+      ref: "Callfile",
     },
     contact_method: {
       type: String,
-      enum: ['call','sms','email','skip','field'],
+      enum: ["call", "sms", "email", "skip", "field"],
+      default: 'call'
     },
     payment: {
-      type:String,
-      enum: ['partial','full'],
-      default: undefined
+      type: String,
+      enum: ["partial", "full"],
     },
     dialer: {
       type: String,
-      enum: ['issabel','vici','inbound'],
-      default: undefined
+      enum: ["issabel", "vici", "inbound", "saiduo"],
     },
     chatApp: {
       type: String,
-      enum: ['viber','whatsapp','facebook','google','linkedin','gcash','yellowpage','brgy','telegram',],
-      default: undefined
+      enum: [
+        "viber",
+        "whatsapp",
+        "facebook",
+        "google",
+        "linkedin",
+        "gcash",
+        "yellowpage",
+        "brgy",
+        "telegram",
+      ],
+      default: null
     },
     sms: {
       type: String,
-      enum: ['openvox','dinstar','inbound','M360'],
-      default: undefined
+      enum: ["openvox", "dinstar", "inbound", "M360"],
     },
     selectivesDispo: {
       type: Boolean,
-      default: false
+      default: false,
     },
     selectiveFiles: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Selective"
+      ref: "Selective",
     },
     paidDispo: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: 'Disposition'
+      ref: "Disposition",
     },
     features: {
       partialPayment: {
         type: Number,
       },
       SOF: {
-        type: String
-      }
-    }
+        type: String,
+      },
+    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
-
-
-
 
 dispositionSchema.pre("save", function (next) {
   if (this.isNew && this.createdAt) {
-    this.$__.timestamps = false; 
+    this.$__.timestamps = false;
   }
   next();
 });
 
-
 dispositionSchema.pre("insertMany", function (next, docs) {
-  docs.forEach(doc => {
+  docs.forEach((doc) => {
     if (doc.createdAt) {
       doc.$__.timestamps = false;
     }

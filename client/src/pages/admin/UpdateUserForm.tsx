@@ -238,7 +238,9 @@ type UserType =
 
 enum Types {
   AGENT = "AGENT",
+  AGENTFIELD = "AGENTFIELD",
   TL = "TL",
+  TLFIELD = "TLFIELD",
   AOM = "AOM",
   MIS = "MIS",
   CEO = "CEO",

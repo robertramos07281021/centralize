@@ -11,6 +11,8 @@ type ToolsProduction = {
   contact_method: string;
   rpc: number;
   ptp: number;
+  ptcp: number;
+  confirm: number;
   kept: number;
   paid: number;
 };
@@ -21,6 +23,8 @@ const TOOLS_PRODUCTION = gql`
       contact_method
       rpc
       ptp
+      ptcp
+      confirm
       kept
       paid
     }
@@ -29,7 +33,7 @@ const TOOLS_PRODUCTION = gql`
 
 const ToolsProductionMonitoringTable = () => {
   const { intervalTypes, selectedBucket } = useSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   );
   const location = useLocation();
   const pathName = location.pathname.slice(1);
@@ -43,7 +47,7 @@ const ToolsProductionMonitoringTable = () => {
     notifyOnNetworkStatusChange: true,
   });
   const toolsData = data?.getToolsProduction || [];
-  
+
   useEffect(() => {
     const refetching = async () => {
       await refetch();
@@ -69,12 +73,23 @@ const ToolsProductionMonitoringTable = () => {
     toolsData.length > 0
       ? toolsData.map((rpc) => rpc.paid).reduce((t, v) => t + v)
       : 0;
+  const totalPtcp =
+    toolsData.length > 0
+      ? toolsData.map((rpc) => rpc.ptcp).reduce((t, v) => t + v)
+      : 0;
+  const totalConfirm =
+    toolsData.length > 0
+      ? toolsData.map((rpc) => rpc.confirm).reduce((t, v) => t + v)
+      : 0;
+
+
 
   return (
-    <motion.div className="w-full h-full shadow-md relative flex border border-gray-500 my-2 rounded-md lg:text-xs 2xl:text-base flex-col"
-      initial={{y: 20, opacity: 0}}
-      animate={{y: 0, opacity: 1}}
-      transition={{delay: 0.4}}
+    <motion.div
+      className="w-full h-full shadow-md relative flex border border-gray-500 my-2 rounded-md lg:text-xs 2xl:text-base flex-col"
+      initial={{ y: 20, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ delay: 0.4 }}
     >
       <h1 className="font-black  uppercase lg:text-sm 2xl:text-lg text-gray-800 bg-gray-400 px-2 py-1.5 text-center rounded-t-sm">
         Tools Production Monitoring
@@ -86,10 +101,12 @@ const ToolsProductionMonitoringTable = () => {
       ) : (
         <div className="w-full flex flex-col h-full text-gray-600 table-fixed">
           <div className="bg-gray-300 sticky border-white">
-            <div className="grid border-y border-gray-500 grid-cols-5 justify-center text-center items-center font-black uppercase">
+            <div className="grid border-y border-gray-500 grid-cols-7 justify-center text-center items-center font-black uppercase">
               <div></div>
               <div className="py-1.5">RPC</div>
               <div>PTP</div>
+              <div>PTCP</div>
+              <div>Confirm</div>
               <div>Kept</div>
               <div>No PTP PAYMENT</div>
             </div>
@@ -98,17 +115,37 @@ const ToolsProductionMonitoringTable = () => {
             {tools.map((tool, index) => {
               const findTools =
                 data?.getToolsProduction?.find(
-                  (t) => t.contact_method === tool
+                  (t) => t.contact_method === tool,
                 ) || null;
               return (
                 <div
                   key={index}
-                  className="even:bg-gray-100 hover:bg-gray-200 items-center h-full uppercase border-white grid grid-cols-5"
+                  className="even:bg-gray-100 hover:bg-gray-200 items-center h-full uppercase border-white grid grid-cols-7"
                 >
                   <div className="text-left px-5 uppercase">{tool}</div>
                   <div className="uppercase">{findTools?.rpc || 0}</div>
                   <div className="uppercase">
                     {findTools?.ptp.toLocaleString("en-PH", {
+                      style: "currency",
+                      currency: "PHP",
+                    }) ||
+                      (0).toLocaleString("en-PH", {
+                        style: "currency",
+                        currency: "PHP",
+                      })}
+                  </div>
+                  <div className="uppercase">
+                    {findTools?.ptcp.toLocaleString("en-PH", {
+                      style: "currency",
+                      currency: "PHP",
+                    }) ||
+                      (0).toLocaleString("en-PH", {
+                        style: "currency",
+                        currency: "PHP",
+                      })}
+                  </div>
+                  <div className="uppercase">
+                    {findTools?.confirm.toLocaleString("en-PH", {
                       style: "currency",
                       currency: "PHP",
                     }) ||
@@ -140,11 +177,23 @@ const ToolsProductionMonitoringTable = () => {
                 </div>
               );
             })}
-            <div className="bg-gray-200 rounded-b-md border-gray-500 grid grid-cols-5 items-center border-t">
+            <div className="bg-gray-200 rounded-b-md border-gray-500 grid grid-cols-7 items-center border-t">
               <div className="text-left px-5 font-black uppercase ">Total</div>
               <div>{totalRPC}</div>
               <div>
                 {totalPtp?.toLocaleString("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                })}
+              </div>
+              <div>
+                {totalPtcp?.toLocaleString("en-PH", {
+                  style: "currency",
+                  currency: "PHP",
+                })}
+              </div>
+              <div>
+                {totalConfirm?.toLocaleString("en-PH", {
                   style: "currency",
                   currency: "PHP",
                 })}

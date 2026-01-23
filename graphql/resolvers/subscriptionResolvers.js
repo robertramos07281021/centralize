@@ -1,5 +1,6 @@
 import pubsub from "../../middlewares/pubsub.js";
 import { PUBSUB_EVENTS } from "../../middlewares/pubsubEvents.js";
+import { withFilter } from "graphql-subscriptions";
 
 const subscriptionsResolver = {
   Subscription: {
@@ -76,10 +77,29 @@ const subscriptionsResolver = {
     },
     newUserLogin: {
       subscribe: () => {
-        return pubsub.asyncIterableIterator([PUBSUB_EVENTS.NEW_LOGIN])
-      }
-    }
+        return pubsub.asyncIterableIterator([PUBSUB_EVENTS.NEW_LOGIN]);
+      },
+    },
+    agentStatusUpdated: {
+      subscribe: withFilter(
+        () => pubsub.asyncIterableIterator([PUBSUB_EVENTS.AGENT_STATUS_UPDATED]),
+        (payload, variables, context) => {
 
+          // Case 1: Specific user subscription
+          if (variables.userId) {
+            return payload.agentStatusUpdated.userId === variables.userId;
+          }
+
+          // Case 2: TL/Admin sees all
+          if (context.role === "TL" || context.role === "ADMIN") {
+            return true;
+          }
+
+          // Otherwise ignore
+          return false;
+        }
+      ),
+    },
   },
 };
 

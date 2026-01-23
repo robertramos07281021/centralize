@@ -76,6 +76,7 @@ const DailyFTE = () => {
     skip: !selectedBucket,
     notifyOnNetworkStatusChange: true,
   });
+  console.log(campaignAssignedData)
 
   useEffect(() => {
     const fetchData = async () => {
@@ -96,6 +97,7 @@ const DailyFTE = () => {
   const loading = actual || ecaLoading;
 
   const findData = data?.getDailyFTE?.totalUsers;
+
   const FTEPercent =
     (Number(findData?.length) /
       Number(campaignAssignedData?.getCampaignAssigned)) *
@@ -154,7 +156,7 @@ const DailyFTE = () => {
                 Actual Agent
               </h1>
               <div className="flex flex-col border-x border-b rounded-b-md border-slate-700 p-4 bg-white">
-                {findData && findData?.length > 1 ? (
+                {findData && findData?.length > 0 ? (
                   <>
                     {findData?.map((x, index) => {
                       return (

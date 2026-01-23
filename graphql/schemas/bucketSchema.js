@@ -14,6 +14,7 @@ const bucketTypeDefs = gql`
     can_update_ca: Boolean
     isActive: Boolean
     canCall: Boolean
+    isPermanent: Boolean
   }
   
   type GetBuckets {
@@ -35,6 +36,7 @@ const bucketTypeDefs = gql`
     canCall: Boolean
     can_update_ca: Boolean
     principal: Boolean
+    isPermanent: Boolean
   }
 
   input CreateBucket {
@@ -46,6 +48,7 @@ const bucketTypeDefs = gql`
     canCall: Boolean
     can_update_ca: Boolean
     principal: Boolean
+    isPermanent: Boolean
   }
 
   type Query {

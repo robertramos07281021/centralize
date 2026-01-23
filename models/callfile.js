@@ -8,6 +8,10 @@ const Schema = mongoose.Schema;
 
 const callFileSchema = new Schema(
   {
+    approve: {
+      type: Boolean,
+      default: true,
+    },
     name: {
       type: String,
       required: true,
@@ -51,7 +55,7 @@ const callFileSchema = new Schema(
     },
     autoDial: {
       type: Boolean,
-      default: false
+      default: false,
     },
     target: {
       type: Number,
@@ -59,11 +63,11 @@ const callFileSchema = new Schema(
     },
     roundCount: {
       type: Number,
-      default: 1
+      default: 1,
     },
     roundCountTotal: {
       type: Number,
-      default: 0
+      default: 0,
     },
     penetration_details: {
       calls: {
@@ -88,7 +92,7 @@ const callFileSchema = new Schema(
       },
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 callFileSchema.post("findOneAndDelete", async (data) => {
@@ -96,11 +100,11 @@ callFileSchema.post("findOneAndDelete", async (data) => {
     if (data) {
       const accounts = await CustomerAccount.find({ callfile: data._id });
       const customerIds = accounts.map(
-        (acc) => new mongoose.Types.ObjectId(acc.customer)
+        (acc) => new mongoose.Types.ObjectId(acc.customer),
       );
       await Customer.deleteMany({ _id: { $in: customerIds } });
       await CustomerAccount.deleteMany({ callfile: data._id });
-      await Disposition.deleteMany({callfile: data._id})
+      await Disposition.deleteMany({ callfile: data._id });
     }
   } catch (error) {
     throw new CustomError(error.message, 500);

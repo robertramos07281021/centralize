@@ -12,6 +12,7 @@ import {
   setServerError,
   setIsReport,
   setSelectedCustomer,
+  setViciStatus,
 } from "../redux/slices/authSlice.ts";
 import { useEffect, useState, useCallback } from "react";
 import ConfirmationModal from "./Confirmation.tsx";
@@ -124,10 +125,27 @@ const AGENT_BUCKETS = gql`
   }
 `;
 
+type viciAgentStatus = {
+  status: string
+  subStatus: string
+  acctStatus: string
+}
+
+const AGENT_VICI_STATUS_SUBSCRIPTION = gql`
+  subscription agentStatusUpdated($userId: ID) {
+    agentStatusUpdated(userId: $userId) {
+      status
+      subStatus
+      acctStatus
+    }
+  }
+`;
+
 const NavbarExtn = () => {
-  const { userLogged, success, onCall, selectedCustomer } = useSelector(
+  const { userLogged, success, onCall, selectedCustomer, viciStatus } = useSelector(
     (state: RootState) => state.auth
   );
+ 
   const location = useLocation();
   const { data: myTask, refetch } = useQuery<{ myTasks: MyTask[] }>(MY_TASK, {
     notifyOnNetworkStatusChange: true,
@@ -226,6 +244,20 @@ const NavbarExtn = () => {
     },
   });
 
+  useSubscription<{agentStatusUpdated:viciAgentStatus}>(AGENT_VICI_STATUS_SUBSCRIPTION, {
+    variables: { userId: userLogged?._id },
+    onData({ data }) {
+      if(data) {
+        if(data?.data) {
+        console.log(data?.data)
+          if(viciStatus !== data.data?.agentStatusUpdated) {
+            dispatch(setViciStatus(data.data?.agentStatusUpdated))
+          }
+        }
+      }
+    },
+  });
+
   const userType = userLogged?.type as keyof typeof accountsNavbar;
   if (!userType || !accountsNavbar[userType]) return null;
   const length = myTask?.myTasks.length || 0;
@@ -291,8 +323,6 @@ const NavbarExtn = () => {
     }
   }, [isAutoDialData?.isAutoDial, location?.pathname]);
 
-  
-
   const endCallYes = useCallback(async () => {
     if (selectedCustomer?._id) {
       await deselectTask({ variables: { id: selectedCustomer._id } });
@@ -349,7 +379,7 @@ const NavbarExtn = () => {
                     e.preventDefault();
                     setOpenIndex(index === openIndex ? null : index);
                   } else {
-                    e.preventDefault(); 
+                    e.preventDefault();
                     navClick(an.link!);
                   }
                 }}

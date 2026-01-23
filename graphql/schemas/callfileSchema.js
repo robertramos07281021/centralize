@@ -13,6 +13,7 @@ const callfileTypeDefs = gql`
     name: String
     createdAt: DateTime
     active: Boolean
+    approve: Boolean
     endo: String
     finished_by: User
     totalPrincipal: Float
@@ -23,12 +24,32 @@ const callfileTypeDefs = gql`
     roundCount: Int
   }
 
+  type CustomerAccountField {
+    _id: ID
+    firstName: String
+    lastName: String
+    bucket: ID
+    callfile: ID
+    accountNumber: String
+    customer: ID
+    forfield: Boolean
+    balance: Float
+    customerName: String
+    addresses: [String]
+    fieldassigned: ID
+    contact_no: [String]
+    emails: [String]
+    started: Boolean
+    finished: Boolean
+    approve: Boolean
+  }
+
   type Result {
     callfile: Callfile
     uncontactable: Int
     accounts: Int
     connected: Int
-   
+
     target: Float
     principal: Float
     collected: Float
@@ -51,6 +72,8 @@ const callfileTypeDefs = gql`
     contact_method: String
     rpc: Int
     ptp: Float
+    ptcp: Float
+    confirm: Float
     kept: Float
     paid: Float
   }
@@ -78,15 +101,32 @@ const callfileTypeDefs = gql`
     total: Int
   }
 
+  type UpdateCustomerApprovePayload {
+    message: String!
+    success: Boolean!
+    customer: CustomerAccount
+  }
+
+  type UpdateCallfileApprovePayload {
+    message: String!
+    success: Boolean!
+    callfile: Callfile
+  }
+
   type Query {
-    getCallfiles(bucket:ID, limit:Int! , page:Int! ,status: String!):CallFilesResult
-    getCF(bucket:ID,limit:Int!,page:Int!):AdminCallfile
-    downloadCallfiles(callfile:ID!): String!
+    getCallfiles(
+      bucket: ID
+      limit: Int!
+      page: Int!
+      status: String!
+    ): CallFilesResult
+    getCF(bucket: ID, limit: Int!, page: Int!): AdminCallfile
+    downloadCallfiles(callfile: ID!): String!
     monthlyDetails: [MonthlyDetails]
-    getBucketCallfile(bucketId:[ID]):[Callfile]
-    getBucketActiveCallfile(bucketIds:[ID]):[Callfile]
-    getToolsProduction(bucket:ID,interval:String):[ToolsProduction]
-    getCollectionMonitoring(bucket:ID, interval:String):Collection
+    getBucketCallfile(bucketId: [ID]): [Callfile]
+    getBucketActiveCallfile(bucketIds: [ID]): [Callfile]
+    getToolsProduction(bucket: ID, interval: String): [ToolsProduction]
+    getCollectionMonitoring(bucket: ID, interval: String): Collection
     getCallfileDispositions(
       callfileId: ID!
       dateFrom: DateTime
@@ -99,14 +139,21 @@ const callfileTypeDefs = gql`
       dateFrom: DateTime
       dateTo: DateTime
     ): [CallfileDispositionSummary]
+    getCustomerAccountsByBucket(bucketId: ID!): [CustomerAccountField]
+    getCustomerAccountsByAssignee(assigneeId: ID!): [CustomerAccountField]
   }
 
   type Mutation {
-    setCallfileTarget(callfile:ID!,target:Float!):Success
-    finishedCallfile(callfile:ID!):Success
-    deleteCallfile(callfile:ID!):Success
-    addSelective(_id:ID, selectiveName:String, selectives:[Selective]):Success
+    setCallfileTarget(callfile: ID!, target: Float!): Success
+    finishedCallfile(callfile: ID!): Success
+    deleteCallfile(callfile: ID!): Success
+    addSelective(
+      _id: ID
+      selectiveName: String
+      selectives: [Selective]
+    ): Success
+    updateCallfileApprove(id: ID!, approve: Boolean!): UpdateCallfileApprovePayload
   }
-`
+`;
 
-export default callfileTypeDefs
+export default callfileTypeDefs;

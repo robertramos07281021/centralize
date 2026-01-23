@@ -111,6 +111,19 @@ const CREATE_DISPOSITION = gql`
   }
 `;
 
+const UPDATE_FORFIELD = gql`
+  mutation updateCustomerForField($id: ID!, $forfield: Boolean!) {
+    updateCustomerForField(id: $id, forfield: $forfield) {
+      message
+      success
+      customer {
+        _id
+        forfield
+      }
+    }
+  }
+`;
+
 const TL_ESCATATION = gql`
   mutation TlEscalation($id: ID!, $tlUserId: ID!) {
     tlEscalation(id: $id, tlUserId: $tlUserId) {
@@ -344,7 +357,7 @@ const DispositionForm: React.FC<Props> = ({
     skip: !selectedCustomer,
   });
   const existingDispo = selectedCustomer?.dispo_history.find(
-    (x) => x.existing === true
+    (x) => x.existing === true,
   );
 
   const neverChangeContactMethod = ["PTP", "UNEG", "PAID"];
@@ -353,10 +366,10 @@ const DispositionForm: React.FC<Props> = ({
     .map((x) => x.id);
 
   const checkIfChangeContactMethod = dispoNeverChangeContactMethod?.includes(
-    existingDispo?.disposition as string
+    existingDispo?.disposition as string,
   );
   const { data: agentBucketData } = useQuery<{ getDeptBucket: Bucket[] }>(
-    GET_AGENT_BUCKET
+    GET_AGENT_BUCKET,
   );
 
   const [updateRPC] = useMutation<{
@@ -373,15 +386,33 @@ const DispositionForm: React.FC<Props> = ({
             success: res.updateRPC.success,
             message: res.updateRPC.message,
             isMessage: false,
-          })
+          }),
         );
         dispatch(
           setSelectedCustomer({
             ...selectedCustomer,
             customer_info: res.updateRPC.customer,
-          })
+          }),
         );
       }
+    },
+  });
+
+  const [updateForfield] = useMutation<{
+    updateCustomerForField: {
+      success: boolean;
+      message: string;
+      customer: { _id: string; forfield: boolean } | null;
+    };
+  }>(UPDATE_FORFIELD, {
+    onError: (error) => {
+      dispatch(
+        setSuccess({
+          success: false,
+          message: error.message,
+          isMessage: false,
+        }),
+      );
     },
   });
 
@@ -396,15 +427,15 @@ const DispositionForm: React.FC<Props> = ({
     return Object.fromEntries(d.map((e) => [e.code, e.id]));
   }, [disposition]);
   const ptpDispoType = disposition?.getDispositionTypes.find(
-    (d) => d.code === "PTP"
+    (d) => d.code === "PTP",
   );
   const paidDispoType = disposition?.getDispositionTypes.find(
-    (d) => d.code === "PAID"
+    (d) => d.code === "PAID",
   );
   const dispoKeyCode: Record<string, string> = useMemo(() => {
     const d: DispositionType[] = disposition?.getDispositionTypes || [];
     return Object.fromEntries(
-      d.map((e) => [e.code, Code[e.code as keyof typeof Code]])
+      d.map((e) => [e.code, Code[e.code as keyof typeof Code]]),
     );
   }, [disposition]);
 
@@ -508,15 +539,23 @@ const DispositionForm: React.FC<Props> = ({
           success: res.createDisposition.success,
           message: res.createDisposition.message,
           isMessage: false,
-        })
+        }),
       );
       dispatch(setViciOnAir(null));
       await deselectTask({ variables: { id: selectedCustomer?._id } });
       setLoading(false);
     },
-    onError: async () => {
-      await deselectTask({ variables: { id: selectedCustomer?._id } });
+    onError: async (error) => {
+      console.log("createDisposition error", error);
+      dispatch(
+        setSuccess({
+          success: false,
+          message: error.message,
+          isMessage: false,
+        }),
+      );
       dispatch(setServerError(true));
+      setLoading(false);
     },
   });
 
@@ -533,7 +572,7 @@ const DispositionForm: React.FC<Props> = ({
           success: res.tlEscalation.success,
           message: res.tlEscalation.message,
           isMessage: false,
-        })
+        }),
       );
       await deselectTask({ variables: { id: selectedCustomer?._id } });
     },
@@ -594,7 +633,7 @@ const DispositionForm: React.FC<Props> = ({
       onPresetAmountChange({ amount: numericValue, label: null });
       handleDataChange("payment", payment);
     },
-    [selectedCustomer, handleDataChange, onPresetAmountChange]
+    [selectedCustomer, handleDataChange, onPresetAmountChange],
   );
 
   const [modalProps, setModalProps] = useState({
@@ -608,16 +647,41 @@ const DispositionForm: React.FC<Props> = ({
     getCallRecording: string;
   }>(GET_RECORDING);
 
+  const createForFieldDispo = useCallback(async () => {
+    const caId = selectedCustomer?._id;
+    if (!caId) return;
+
+    try {
+      const res = await updateForfield({
+        variables: { id: caId, forfield: true },
+      });
+
+      if (res?.data?.updateCustomerForField?.success) {
+        dispatch(
+          setSuccess({
+            success: true,
+            message: res.data.updateCustomerForField.message,
+            isMessage: false,
+          }),
+        );
+      }
+    } catch (err) {
+      console.error("updateForfield call failed:", err);
+    }
+
+    await deselectTask({ variables: { id: caId } });
+  }, [selectedCustomer, updateForfield, deselectTask, dispatch]);
+
+
   const creatingDispo = useCallback(async () => {
     let callId: string | undefined;
-
     if (Boolean(viciOnAir) && data?.contact_method === AccountType.CALL) {
       const vicidialIp = viciOnAir?.split("|")[1];
       const callIdRes = await getCallRecording({
         variables: { user_id: userLogged?._id, mobile: viciOnAir },
       });
-      if (!callIdRes.data?.getCallRecording?.toString().includes("ERROR")) {
-        callId = `${callIdRes.data?.getCallRecording}_${vicidialIp}`;
+      if (!callIdRes.data?.getCallRecording?.toString()?.includes("ERROR")) {
+        callId = `${callIdRes.data?.getCallRecording}`;
       } else {
         const year = new Date().getFullYear();
         const month = new Date().getMonth() + 1;
@@ -627,8 +691,8 @@ const DispositionForm: React.FC<Props> = ({
           date > 9 ? date : `0${date}`
         }_010101_${userLogged?.vici_id}_0_${vicidialIp}`;
       }
-    } else if (callUniqueId) {
-      callId = callUniqueId;
+    } else if (Boolean(callUniqueId)) {
+      callId = callUniqueId as string | undefined;
     } else {
       const year = new Date().getFullYear();
       const month = new Date().getMonth() + 1;
@@ -643,12 +707,12 @@ const DispositionForm: React.FC<Props> = ({
         variables: {
           input: {
             ...data,
-            user: userLogged?._id,
             customer_account: selectedCustomer?._id,
             callId,
           },
         },
       });
+
       setConfirm(false);
     }, 300);
   }, [
@@ -664,6 +728,16 @@ const DispositionForm: React.FC<Props> = ({
   const noCallback = useCallback(() => {
     setConfirm(false);
   }, [setConfirm]);
+
+  const confirmCreateForFieldDispo = useCallback(() => {
+    setConfirm(true);
+    setModalProps({
+      message: "Do you want to create the for field disposition?",
+      toggle: "CREATE",
+      yes: createForFieldDispo,
+      no: noCallback,
+    });
+  }, [setConfirm, setModalProps, createForFieldDispo, noCallback]);
 
   const callbackUpdateRPC = useCallback(async () => {
     await updateRPC({
@@ -745,7 +819,7 @@ const DispositionForm: React.FC<Props> = ({
         }
       }
     },
-    [setRequired, setConfirm, setModalProps, Form, creatingDispo, noCallback]
+    [setRequired, setConfirm, setModalProps, Form, creatingDispo, noCallback],
   );
 
   const tlEscalationCallback = useCallback(async () => {
@@ -775,7 +849,7 @@ const DispositionForm: React.FC<Props> = ({
     async (id: string) => {
       await tlEscalation({ variables: { id, tlUserId: tlOptions } });
     },
-    [tlData, tlEscalation]
+    [tlData, tlEscalation],
   );
 
   const handleSubmitEscalationToTl = useCallback(
@@ -801,7 +875,7 @@ const DispositionForm: React.FC<Props> = ({
       noCallback,
       setConfirm,
       setCAToEscalate,
-    ]
+    ],
   );
 
   useEffect(() => {
@@ -831,7 +905,7 @@ const DispositionForm: React.FC<Props> = ({
     customer: Customer | null | undefined,
     user: User | null | undefined,
     ptpDispoType: DispoType | null | undefined,
-    paidDispoType: DispoType | null | undefined
+    paidDispoType: DispoType | null | undefined,
   ): boolean {
     if (!customer) return false;
 
@@ -955,7 +1029,7 @@ const DispositionForm: React.FC<Props> = ({
                       <select
                         name="contact_method"
                         id="contact_method"
-                        required={requiredDispo.includes(selectedDispo)}
+                        required
                         value={data.contact_method ?? ""}
                         onChange={(e) => {
                           handleDataChange(
@@ -964,7 +1038,7 @@ const DispositionForm: React.FC<Props> = ({
                               !selectedCustomer.current_disposition
                                 ?.selectivesDispo
                               ? existingDispo?.contact_method
-                              : e.target.value
+                              : e.target.value,
                           );
                           handleDataChange("disposition", null);
                         }}
@@ -1002,7 +1076,7 @@ const DispositionForm: React.FC<Props> = ({
                                 </option>
                               )
                             );
-                          }
+                          },
                         )}
                       </select>
                     </label>
@@ -1016,7 +1090,7 @@ const DispositionForm: React.FC<Props> = ({
                         id="disposition"
                         value={
                           disposition?.getDispositionTypes?.find(
-                            (x) => x.id === data.disposition
+                            (x) => x.id === data.disposition,
                           )?.code ?? ""
                         }
                         required
@@ -1025,7 +1099,7 @@ const DispositionForm: React.FC<Props> = ({
 
                           handleDataChange(
                             "disposition",
-                            dispoObject[selectedCode]
+                            dispoObject[selectedCode],
                           );
 
                           if (
@@ -1051,7 +1125,7 @@ const DispositionForm: React.FC<Props> = ({
                           ([key, value], index) => {
                             const findDispoName =
                               disposition?.getDispositionTypes?.find(
-                                (x) => x.id === value
+                                (x) => x.id === value,
                               );
 
                             const dispoCM =
@@ -1061,7 +1135,7 @@ const DispositionForm: React.FC<Props> = ({
                               data.contact_method &&
                               findDispoName?.active &&
                               findDispoName?.buckets?.includes(
-                                selectedCustomer?.account_bucket?._id
+                                selectedCustomer?.account_bucket?._id,
                               ) &&
                               dispoCM[
                                 data?.contact_method as keyof typeof dispoCM
@@ -1081,7 +1155,7 @@ const DispositionForm: React.FC<Props> = ({
                                 </option>
                               )
                             );
-                          }
+                          },
                         )}
                       </select>
                     </label>
@@ -1123,7 +1197,7 @@ const DispositionForm: React.FC<Props> = ({
                     <div className="w-full">
                       {anabledDispo.includes(selectedDispo) &&
                       agentBucketData?.getDeptBucket?.some(
-                        (bucket) => bucket.name !== "BPIBANK 2025"
+                        (bucket) => bucket.name !== "BPIBANK 2025",
                       ) ? (
                         <label className="flex flex-col w-full items-center">
                           <p className="text-gray-800 font-bold text-start w-full  2xl:text-sm text-xs leading-4">
@@ -1164,7 +1238,7 @@ const DispositionForm: React.FC<Props> = ({
                                       value.slice(1, value.length)}
                                   </option>
                                 );
-                              }
+                              },
                             )}
                           </select>
                         </label>
@@ -1188,8 +1262,8 @@ const DispositionForm: React.FC<Props> = ({
                             data.contact_method === AccountType.CALL &&
                             checkIfCanCall
                           )
-                            ? data?.dialer ?? ""
-                            : Dialer.VICI ?? ""
+                            ? (data?.dialer ?? "")
+                            : (Dialer.VICI ?? "")
                         }
                         onChange={(e) =>
                           handleDataChange(
@@ -1198,7 +1272,7 @@ const DispositionForm: React.FC<Props> = ({
                               !selectedCustomer.current_disposition
                                 ?.selectivesDispo
                               ? existingDispo?.dialer
-                              : e.target.value
+                              : e.target.value,
                           )
                         }
                         className={`${
@@ -1253,7 +1327,7 @@ const DispositionForm: React.FC<Props> = ({
                               !selectedCustomer.current_disposition
                                 ?.selectivesDispo
                               ? existingDispo?.sms
-                              : e.target.value
+                              : e.target.value,
                           )
                         }
                         className={`${
@@ -1275,7 +1349,7 @@ const DispositionForm: React.FC<Props> = ({
                                   value.slice(1, value.length)}
                               </option>
                             );
-                          }
+                          },
                         )}
                       </select>
                     </label>
@@ -1297,7 +1371,7 @@ const DispositionForm: React.FC<Props> = ({
                               !selectedCustomer.current_disposition
                                 ?.selectivesDispo
                               ? existingDispo?.chatApp
-                              : e.target.value
+                              : e.target.value,
                           )
                         }
                         className={`${
@@ -1319,7 +1393,7 @@ const DispositionForm: React.FC<Props> = ({
                                   value.slice(1, value.length)}
                               </option>
                             );
-                          }
+                          },
                         )}
                       </select>
                     </label>
@@ -1352,8 +1426,8 @@ const DispositionForm: React.FC<Props> = ({
                       SOF:
                     </p>
                     <select
-                      name="sms_collector"
-                      id="sms_collector"
+                      name="SOF"
+                      id="SOF"
                       value={data.SOF ?? ""}
                       onChange={(e) => handleDataChange("SOF", e.target.value)}
                       className={` border bg-gray-50  border-black  shadow-md  rounded-sm focus:ring-blue-500 focus:border-blue-500 p-2 text-xs 2xl:text-sm w-full`}
@@ -1420,7 +1494,7 @@ const DispositionForm: React.FC<Props> = ({
                                 {value}
                               </option>
                             );
-                          }
+                          },
                         )}
                       </select>
                     </label>
@@ -1464,10 +1538,22 @@ const DispositionForm: React.FC<Props> = ({
                       className={`" border-black text-black shadow-md bg-gray-50 min-h-10 border rounded-sm focus:ring-blue-500 focus:border-blue-500 text-xs 2xl:text-sm w-full p-2 resize-none "`}
                     ></textarea>
                   </label>
-                  <div className="flex flex-col justify-end gap-2 mt-2 h-full items-end">
+                  <div className="flex flex-col w-full justify-end gap-2 mt-2 h-full items-end">
                     {/* {data.disposition && userLogged?.type === "AGENT" && ( */}
 
-                    <div className="flex gap-2">
+                    <div className="flex w-full gap-2">
+                      {userLogged?.type === "TL" && (
+                        <motion.div
+                          initial={{ scale: 0.5, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ delay: 0.1 }}
+                          onClick={confirmCreateForFieldDispo}
+                          className="bg-blue-600 cursor-pointer hover:bg-blue-700 2xl:text-sm text-xs border-blue-900 rounded-sm shadow-md px-5 truncate w-full justify-center flex items-center font-black uppercase text-white border-2"
+                        >
+                          for FIELD
+                        </motion.div>
+                      )}
+
                       {(!isRing || !onCall) &&
                         !(
                           inlineData?.includes("PAUSED") &&
@@ -1481,7 +1567,7 @@ const DispositionForm: React.FC<Props> = ({
                                 animate={{ scale: 1, opacity: 1 }}
                                 accessKey="q"
                                 type="submit"
-                                className={`bg-green-500 border-2 transition-a=ll border-green-800 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-black shadow-md rounded-sm uppercase px-5 py-3 cursor-pointer 2xl:text-sm text-xs`}
+                                className={`bg-green-500 w-full border-2 border-green-800 hover:bg-green-600 focus:outline-none text-white focus:ring-4 focus:ring-green-400 font-black shadow-md rounded-sm uppercase px-5 py-3 cursor-pointer 2xl:text-sm text-xs`}
                               >
                                 Submit
                               </motion.button>
@@ -1493,10 +1579,10 @@ const DispositionForm: React.FC<Props> = ({
                         initial={{ scale: 0.5, opacity: 0 }}
                         animate={{ scale: 1, opacity: 1 }}
                         type="button"
-                        className="bg-red-500 border-2 transition-all border-red-800 hover:bg-red-600 focus:outline-none text-white uppercase  focus:ring-4 focus:ring-red-400 font-black rounded-sm shadow-md px-5 py-3 cursor-pointer 2xl:text-sm text-xs "
+                        className="bg-red-500 truncate w-full border-2 transition-all border-red-800 hover:bg-red-600 focus:outline-none text-white uppercase  focus:ring-4 focus:ring-red-400 font-black rounded-sm shadow-md px-5 py-3 cursor-pointer 2xl:text-sm text-xs "
                         onClick={() =>
                           handleSubmitEscalationToTl(
-                            selectedCustomer?._id || ""
+                            selectedCustomer?._id || "",
                           )
                         }
                       >
@@ -1516,7 +1602,7 @@ const DispositionForm: React.FC<Props> = ({
         <AnimatePresence>
           {isOpen &&
             agentBucketData?.getDeptBucket?.some(
-              (bucket) => bucket.name === "BPIBANK 2025"
+              (bucket) => bucket.name === "BPIBANK 2025",
             ) && (
               <div className="absolute top-0 flex left-0 justify-center items-center z-30 w-full h-full ">
                 <motion.div

@@ -21,6 +21,13 @@ const subscriptionTypeDefs = gql`
     bucket: ID
     message: String
   }
+  
+  type AgentStatus {
+    userId: ID,
+    status: String,
+    subStatus: String
+    acctStatus: String
+  }
 
   type Subscription {
     ping: String!,
@@ -36,6 +43,7 @@ const subscriptionTypeDefs = gql`
     accountOffline:AgentLockSubsribeSuccess
     newUpdateOnBucket:UpdateCAllfile
     newUserLogin:AgentLockSubsribeSuccess
+    agentStatusUpdated(userId: ID): AgentStatus
   }
 `
 

@@ -118,6 +118,7 @@ const Uploader: React.FC<modalProps> = ({
             due_date,
             loan_start,
             term,
+            agent,
             ...others
           } = row;
 
@@ -203,6 +204,7 @@ const Uploader: React.FC<modalProps> = ({
             last_payment_amount: Number(last_payment_amount) || 0,
             gender: isNaN(gender) ? gender : "O",
             overdue_balance: Number(overdue_balance) || 0,
+            agent: String(agent)
           } as Record<string, any>;
 
           if (emergencyContactMobile) {
@@ -370,6 +372,8 @@ const Uploader: React.FC<modalProps> = ({
     }
   }, []);
 
+  console.log(excelData)
+ 
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [],

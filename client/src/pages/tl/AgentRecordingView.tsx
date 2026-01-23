@@ -826,7 +826,7 @@ const AgentRecordingView = () => {
                                                     e.callId
                                                   )
                                                 }
-                                                className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-20 justify-center items-center text-center py-[6px] hover:bg-blue-600 transition-all"
+                                                className="bg-blue-500 shadow-md flex gap-1 rounded-sm border cursor-pointer border-blue-800 w-20 justify-center items-center text-center py-[6px]hover:bg-blue-600 transition-all py-1.5" title={e.callId}
                                               >
                                                 <FaDownload color="white" />
                                                 <p className="text-white">
