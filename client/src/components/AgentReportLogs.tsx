@@ -579,14 +579,14 @@ const QAAgentReportLogs = () => {
     !hasDispositionResults || agentDispositionLoading || isExporting;
 
   return (
-    <div className="flex flex-row h-full max-h-[90vh] p-10 gap-2  ">
+    <div className="flex flex-row h-full max-h-[90vh] p-4 gap-2  ">
       <motion.div
-        className="bg-gray-300 max-w-[500px] overflow-hidden w-full flex flex-col font-black text-black  border rounded-md shadow-md  "
+        className="bg-blue-200 max-w-[500px] overflow-hidden w-full flex flex-col font-black text-black  border-2 border-blue-800 rounded-md shadow-md  "
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 100 }}
       >
-        <div className="text-center items-center transition  flex justify-center border-b h-[8.4%] p-3 bg-gray-400 font-black uppercase w-full text-2xl ">
+        <div className="text-center items-center transition border-blue-800 flex justify-center text-white text-shadow-2xs border-b-2 h-[8.4%] p-3 bg-blue-500 font-black uppercase w-full text-2xl ">
           Agent Report
         </div>
         <div className="px-3 flex  flex-col h-[91.6%] pb-3">
@@ -596,7 +596,7 @@ const QAAgentReportLogs = () => {
               className="relative w-full col-span-2 flex "
               ref={bucketDropdownRef}
             >
-              <div className="border mr-2 w-full rounded-sm bg-gray-200 shadow-md ">
+              <div className="border mr-2 w-full rounded-sm bg-blue-100 shadow-md ">
                 <input
                   className="outline-none w-full px-3 py-1 font-normal"
                   placeholder={
@@ -621,7 +621,7 @@ const QAAgentReportLogs = () => {
                     setIsBucketOpen(!isBucketOpen);
                   }
                 }}
-                className="border bg-gray-200 items-center flex text-black rounded-sm px-3 py-1 cursor-pointer shadow-md "
+                className="border bg-blue-100 items-center flex text-black rounded-sm px-3 py-1 cursor-pointer shadow-md "
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -646,7 +646,7 @@ const QAAgentReportLogs = () => {
                       setIsBucketOpen(false);
                       setIsAgentOpen(true);
                     }}
-                    className="absolute z-20 overflow-auto bg-gray-200 max-h-40 w-full top-10 shadow-sm border rounded-sm "
+                    className="absolute z-20 overflow-auto bg-blue-100 max-h-40 w-full top-10 shadow-sm border rounded-sm "
                     initial={{ y: -10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -10, opacity: 0 }}
@@ -660,7 +660,7 @@ const QAAgentReportLogs = () => {
                             setBucketSearchTerm("");
                             setIsBucketOpen(false);
                           }}
-                          className="px-3 hover:bg-gray-300 odd:bg-gray-100 even:bg-white border-b border-gray-300 last:border-b-0 cursor-pointer py-1"
+                          className="px-3 hover:bg-blue-300 first-letter:uppercase odd:bg-blue-100 even:bg-blue-200 border-b border-blue-300 last:border-b-0 cursor-pointer py-1"
                           key={bucket._id}
                         >
                           {bucket.name}
@@ -680,7 +680,7 @@ const QAAgentReportLogs = () => {
           <div className="grid items-center h-[10%] grid-cols-3 mt-2">
             <div className="uppercase  text-right mr-2 ">Agent:</div>
             <div className="relative col-span-2 flex" ref={agentDropdownRef}>
-              <div className="border mr-2 w-full rounded-sm bg-gray-200 shadow-md ">
+              <div className="border mr-2 w-full rounded-sm bg-blue-100 shadow-md ">
                 <input
                   className="outline-none w-full px-3 py-1 font-normal"
                   placeholder={
@@ -701,7 +701,7 @@ const QAAgentReportLogs = () => {
                 onClick={() => {
                   setIsAgentOpen(!isAgentOpen);
                 }}
-                className={`"  col-span-2 items-center flex border bg-gray-200 px-3 py-1 rounded-sm  cursor-pointer  shadow-md  "`}
+                className={`"  col-span-2 items-center flex border bg-blue-100 px-3 py-1 rounded-sm  cursor-pointer  shadow-md  "`}
               >
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
@@ -721,7 +721,7 @@ const QAAgentReportLogs = () => {
               <AnimatePresence>
                 {isAgentOpen && (
                   <motion.div
-                    className="absolute   max-h-40 overflow-auto bg-gray-200 w-full top-10 shadow-sm border rounded-sm "
+                    className="absolute   max-h-40 overflow-auto bg-blue-100 w-full top-10 shadow-sm border rounded-sm "
                     initial={{ y: -10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -10, opacity: 0 }}
@@ -734,7 +734,7 @@ const QAAgentReportLogs = () => {
                             setSelectedAgent(agent);
                             setAgentSearchTerm("");
                           }}
-                          className="px-3 hover:bg-gray-300 first-letter:uppercase odd:bg-gray-100 even:bg-white border-b border-gray-300 last:border-b-0  cursor-pointer py-1"
+                          className="px-3 hover:bg-blue-300 first-letter:uppercase odd:bg-blue-100 even:bg-blue-200 border-b border-blue-300 last:border-b-0  cursor-pointer py-1"
                           key={agent._id}
                         >
                           {agent.name}
@@ -753,13 +753,13 @@ const QAAgentReportLogs = () => {
 
           <div className="mt-5  gap-2 h-[50%] flex flex-col">
             <div className="text-center uppercase">select Disposition</div>
-            <div className="bg-gray-200 h-full grid grid-cols-2 items-center  overflow-auto  shadow-md border rounded-sm gap-1 p-2">
+            <div className="bg-blue-100 h-full grid grid-cols-2 items-center  overflow-auto  shadow-md border rounded-sm gap-1 p-2">
               <div
                 onClick={handleSelectAll}
                 className={`text-sm uppercase py-1 px-3 h-full items-center flex rounded-xs cursor-pointer border transition-colors ${
                   areAllSelected
-                    ? "bg-gray-500 text-white border-black"
-                    : "bg-gray-300 hover:bg-gray-400"
+                    ? "bg-blue-500 text-white border-black"
+                    : "bg-blue-300 hover:bg-blue-400"
                 }`}
               >
                 <div>select all</div>
@@ -777,8 +777,8 @@ const QAAgentReportLogs = () => {
                     onClick={() => toggleDisposition(key)}
                     className={`text-sm py-1 px-3 h-full items-center flex rounded-xs cursor-pointer border transition-colors ${
                       isSelected
-                        ? "bg-gray-500 text-white border-black"
-                        : "bg-gray-300 hover:bg-gray-400"
+                        ? "bg-blue-500 text-white border-black"
+                        : "bg-blue-300 hover:bg-blue-400"
                     }`}
                   >
                     <div>{name}</div>
@@ -791,7 +791,7 @@ const QAAgentReportLogs = () => {
           <div className="grid items-center h-[10%] grid-cols-3 mt-2">
             <div className="uppercase  text-right mr-2 ">Date from:</div>
             <input
-              className="col-span-2 border bg-gray-200 rounded-sm px-3 py-1 cursor-pointer  shadow-md "
+              className="col-span-2 border bg-blue-100 rounded-sm px-3 py-1 cursor-pointer  shadow-md "
               type="date"
               value={dateFrom}
               onChange={(event) => setDateFrom(event.target.value)}
@@ -801,7 +801,7 @@ const QAAgentReportLogs = () => {
           <div className="grid items-center h-[10%] grid-cols-3 mt-2">
             <div className="uppercase  text-right mr-2 ">Date To:</div>
             <input
-              className="col-span-2 border bg-gray-200 rounded-sm px-3 py-1 cursor-pointer  shadow-md "
+              className="col-span-2 border bg-blue-100 rounded-sm px-3 py-1 cursor-pointer  shadow-md "
               type="date"
               min={dateFrom || undefined}
               value={dateTo}
@@ -848,15 +848,15 @@ const QAAgentReportLogs = () => {
       </motion.div>
 
       <motion.div
-        className=" h-full flex flex-col w-full bg-gray-300 border overflow-hidden rounded-md "
+        className=" h-full flex flex-col w-full bg-blue-100 border-2 overflow-hidden border-blue-800 rounded-md "
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 100, delay: 0.1 }}
       >
-        <div className=" font-black h-[8.4%] uppercase text-center text-2xl py-2 border-b bg-gray-400">
+        <div className=" font-black text-white text-shadow-2xs h-[8.4%] uppercase text-center text-2xl py-2 border-b-2 border-blue-800 bg-blue-500">
           <div> Agent Performance</div>
           <div className="flex justify-center  w-full gap-3">
-            <div className="text-sm text-black flex">
+            <div className="text-sm text-white flex">
               Bucket:{" "}
               {selectedBucket ? (
                 selectedBucket.name
@@ -864,7 +864,7 @@ const QAAgentReportLogs = () => {
                 <div className="font-semibold ml-1">Select a bucket</div>
               )}
             </div>
-            <div className="text-sm text-black flex">
+            <div className="text-sm text-white flex">
               Agent:{" "}
               {selectedAgent ? (
                 selectedAgent.name
@@ -874,8 +874,8 @@ const QAAgentReportLogs = () => {
             </div>
           </div>
         </div>
-        <div className="h-[91.6%] grid grid-cols-3 gap-2 p-2 bg-gray-300">
-          <div className="border flex flex-col gap-2 px-2 py-2 items-center rounded-sm bg-gray-200 overflow-auto">
+        <div className="h-[91.6%] grid grid-cols-3 gap-2 p-2 bg-blue-200">
+          <div className="border flex flex-col gap-2 px-2 py-2 items-center rounded-sm bg-blue-100 overflow-auto">
             {!selectedBucket || !selectedAgent ? (
               <div className="text-sm h-full flex items-center text-gray-500 text-center">
                 Select a bucket and agent to view dispositions.
@@ -906,7 +906,7 @@ const QAAgentReportLogs = () => {
                 return (
                   <motion.div
                     key={summary.code}
-                    className="w-full flex border hover:bg-gray-200 justify-between items-center bg-white rounded-sm px-3 py-2 shadow-sm"
+                    className="w-full flex border hover:bg-blue-100 justify-between items-center bg-white rounded-sm px-3 py-2 shadow-sm"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
@@ -935,7 +935,7 @@ const QAAgentReportLogs = () => {
               </div>
             )}
           </div>
-          <div className="border col-span-2 rounded-sm bg-gray-200 flex items-center justify-center p-4">
+          <div className="border col-span-2 rounded-sm bg-blue-100 flex items-center justify-center p-4">
             {!selectedBucket || !selectedAgent ? (
               <div className="text-sm text-gray-500 text-center">
                 Select a bucket and agent to view the doughnut chart.

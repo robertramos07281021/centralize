@@ -39,7 +39,6 @@ import DispositionConfigurationView from "./pages/admin/DispositionConfiguration
 import QASVAgentRecordings from "./pages/qasupervisor/QASVAgentRecordings";
 import ChartDataLabels from "chartjs-plugin-datalabels";
 import MISDashboard from "./pages/tl/MISDashboard";
-import FTEUserView from "./pages/aom/FTEUserView";
 import QARoute from "./routes/QARoute.tsx";
 import QAAgentViews from "./pages/qa/QAAgentViews.tsx";
 import QADashboard from "./pages/qa/QADashboard.tsx";
@@ -47,11 +46,9 @@ import CallfilesConfig from "./pages/admin/CallfilesConfig.tsx";
 import QASVRoute from "./routes/QASVRoute.tsx";
 import QASVSupervisor from "./pages/qasupervisor/QASVSupervisor.tsx";
 import QASupervisorDashboard from "./pages/qasupervisor/QASupervisorDashboard.tsx";
-import CallLogs from "./pages/tl/CallLogs.tsx";
-import CallAllAgentLogs from "./components/CallAllAgentLogs.tsx";
-import AgentAttendanceLogs from "./components/AgentAttendanceLogs.tsx";
+import CallMonitoring from "./pages/CallMonitoring.tsx";
+import AgentLogs from "./pages/AgentLogs.tsx";
 import Selectives from "./pages/admin/Selectives.tsx";
-import CallQALogs from "./pages/qa/QACallLogs.tsx";
 import QAAgentReportLogs from "./components/AgentReportLogs.tsx";
 import AgentReportLogs from "./components/AgentReportLogs.tsx";
 import CallfileReportLogs from "./components/CallfileReport.tsx";
@@ -60,7 +57,6 @@ import DefaultScoreCard from "./components/ScoreCard.tsx";
 import UBScoreCard from "./components/UBScoreCard.tsx";
 import EastwestScoreCard from "./components/EastwestScoreCard.tsx";
 import QACallAllAgentLogs from "./pages/qa/QACallAllAgentLogs.tsx";
-import QASVCallAllAgentLogs from "./pages/qasupervisor/QASVCallAllAgentLogs.tsx";
 import UBMortgageScoreCard from "./components/UBMortgageScoreCard.tsx";
 import Guidlines from "./components/Guidlines.tsx";
 import ScoreCardOverview from "./components/ScoreCardOverview.tsx";
@@ -78,6 +74,12 @@ import { AgentFieldRoute } from "./routes/AgentFieldRoute.tsx";
 import AgentFieldDashboard from "./pages/agent-field/AgentFieldDashboard.tsx";
 import CustomerSorting from "./pages/agent-field/CustomerSorting.tsx";
 import FieldMessage from "./components/FieldMessage.tsx";
+import TLFieldEnrollment from "./pages/tl-field/TLFieldEnrollment.tsx";
+import FieldStatus from "./pages/tl/FieldStatus.tsx";
+import EOD from "./pages/admin/EODProcess.tsx";
+import TicketingSystem from "./components/TicketingSystem.tsx";
+import FAQs from "./components/FAQs.tsx";
+import AgentFAQs from "./components/FAQs.tsx";
 
 Chart.register(
   ...registerables,
@@ -112,18 +114,19 @@ function App() {
         </Route>
 
         <Route element={<AdminRoute />}>
+          <Route path="/eod" element={<EOD />} />
           <Route path="/selectives" element={<Selectives />} />
           <Route path="/admin-dashboard" element={<AdminDashboard />} />
           <Route path="/setup" element={<SetupView />} />
           <Route path="/accounts" element={<AccountsView />} />
           <Route path="/user-account" element={<UserView />} />
-          <Route path="/all-call-logs" element={<CallAllAgentLogs />} />
+          <Route
+            path="/all-call-logs"
+            element={<CallMonitoring variant="admin" />}
+          />
           <Route path="/update-news" element={<UpdateBoard />} />
           <Route path="/ccs-flow" element={<CCSFlow />} />
-          <Route
-            path="/agent-attendance-logs"
-            element={<AgentAttendanceLogs />}
-          />
+          <Route path="/agent-attendance-logs" element={<AgentLogs />} />
           <Route
             path="/callfile-configurations"
             element={<CallfilesConfig />}
@@ -140,20 +143,22 @@ function App() {
             element={<TLFieldProductionManager />}
           />
           <Route path="/tl-field-dashboard" element={<TLFieldDashboard />} />
+          <Route path="/tl-field-enrollment" element={<TLFieldEnrollment />} />
         </Route>
 
         <Route element={<AomRoute />}>
           <Route
-            path="/aom-dashboard"
+            path="/aom-field-dashboard"
             element={<TLFieldProductionManager />}
           />
-          <Route path="/aom-field-dashboard" element={<TLFieldDashboard />} />
+          <Route path="/aom-dashboard" element={<TLFieldDashboard />} />
         </Route>
 
         <Route element={<AgentRoute />}>
           <Route path="/agent-dashboard" element={<StatisticsView />} />
           <Route path="/agent-cip" element={<CustomerDisposition />} />
           <Route path="/agent-report" element={<AgentReport />} />
+          <Route path="/agent-faqs" element={<AgentFAQs />} />
         </Route>
 
         <Route element={<ComplianceRoute />}>
@@ -173,8 +178,10 @@ function App() {
         </Route>
 
         <Route element={<TlRoute />}>
+          <Route path="tl-faqs" element={<FAQs />} />
           <Route path="/tl-dashboard" element={<TlDashboard />} />
           <Route path="/mis-dashboard" element={<MISDashboard />} />
+          <Route path="/tl-field-status" element={<FieldStatus />} />
           <Route
             path="/tl-production-manager"
             element={<ProductionManagerView />}
@@ -185,11 +192,11 @@ function App() {
           <Route path="/tl-task-manager" element={<TaskManagerView />} />
           <Route path="/tl-cip" element={<CustomerDisposition />} />
           <Route path="/tl-reports" element={<CallfileAndAgentReport />} />
-          <Route path="/call-agents-logs" element={<CallLogs />} />
           <Route
-            path="/tl-agent-attendance"
-            element={<AgentAttendanceLogs />}
+            path="/call-agents-logs"
+            element={<CallMonitoring variant="tl" />}
           />
+          <Route path="/tl-agent-attendance" element={<AgentLogs />} />
         </Route>
 
         <Route element={<CeoRoute />}>
@@ -199,29 +206,26 @@ function App() {
         <Route element={<QARoute />}>
           <Route path="/qa-agents-dashboard" element={<QAAgentViews />} />
           <Route path="/qa-dashboard" element={<QADashboard />} />
-          <Route path="/agent-call-logs" element={<CallQALogs />} />
+          <Route
+            path="/agent-call-logs"
+            element={<CallMonitoring variant="qa" />}
+          />
           <Route path="/qa-agent-reports" element={<QAAgentReportLogs />} />
           <Route path="/qa-callfile-reports" element={<QACallfileReport />} />
           <Route
             path="/qa-call-all-agent-logs"
             element={<QACallAllAgentLogs />}
           />
-          <Route
-            path="/qa-agent-attendance"
-            element={<AgentAttendanceLogs />}
-          />
+          <Route path="/qa-agent-attendance" element={<AgentLogs />} />
           <Route path="/score-card" element={<QAScoreCardAssign />} />
         </Route>
 
         <Route element={<QASVRoute />}>
           <Route
             path="/qasv-call-all-agent-logs"
-            element={<QASVCallAllAgentLogs />}
+            element={<CallMonitoring variant="qasv" />}
           />
-          <Route
-            path="/qasv-agent-attendance"
-            element={<AgentAttendanceLogs />}
-          />
+          <Route path="/qasv-agent-attendance" element={<AgentLogs />} />
           <Route path="/qasv-agent-reports" element={<QAAgentReportLogs />} />
           <Route path="/qasv-accounts" element={<QASVSupervisor />} />
           <Route path="/qasv-dashboard" element={<QASupervisorDashboard />} />

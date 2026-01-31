@@ -267,6 +267,28 @@ const customerAccountSchema = new Schema(
       due_date: {
         type: String,
       },
+      code: {
+        type: String,
+      },
+      mcc_endo: {
+        type: String,
+      },
+      cycle: {
+        type: Number,
+      },
+      mad: {
+        type: Number,
+      },
+      lb: {
+        type: Number,
+      },
+      employer_name: {
+        type: String,
+      },
+      topup: {
+        type: Number,
+        default: 0,
+      },
     },
     isPTP: {
       type: Boolean,

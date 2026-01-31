@@ -31,7 +31,6 @@ import AgentTimer from "./agent/AgentTimer";
 import MyTaskSection from "../components/MyTaskSection";
 import { BreakEnum, breaks } from "../middleware/exports";
 import Loading from "./Loading";
-import { IoRibbon } from "react-icons/io5";
 import Confirmation from "../components/Confirmation";
 import { debounce } from "lodash";
 import { motion, AnimatePresence } from "framer-motion";
@@ -128,6 +127,11 @@ const PICK_RANDOM = gql`
         due_date
         loan_start
         term
+        code
+        mcc_endo
+        cycle
+        mad
+        lb
       }
       grass_details {
         grass_region
@@ -139,6 +143,7 @@ const PICK_RANDOM = gql`
         dept
         _id
         can_update_ca
+        isPermanent
       }
       customer_info {
         fullName
@@ -251,6 +256,14 @@ const SEARCH = gql`
         due_date
         loan_start
         term
+        code
+        mcc_endo
+        cycle
+        mad
+        lb
+        product
+        topup
+        employer_name
       }
       grass_details {
         grass_region
@@ -262,6 +275,7 @@ const SEARCH = gql`
         dept
         _id
         can_update_ca
+        isPermanent
       }
       customer_info {
         fullName
@@ -460,6 +474,7 @@ const SearchResult = memo(
       document.addEventListener("keydown", handleKeyDown);
       return () => document.removeEventListener("keydown", handleKeyDown);
     }, [data, onClick]);
+
     useEffect(() => {
       if (!data) {
         setSelectedIndex(0);
@@ -552,7 +567,7 @@ const FieldListDisplay = memo(
         <div className="flex flex-col gap-2">
           {isEmpty ? (
             <div
-              className={`w-full border italic text-xs items-center px-3 h-full py-2.5 border-black ${fallbackHeight}  rounded-sm bg-gray-50 text-gray-400 text-wrap`}
+              className={`w-full border-2 italic text-xs items-center px-3 h-full py-2.5 border-blue-800 ${fallbackHeight}  rounded-sm bg-white text-gray-600 text-wrap`}
             >
               No information
             </div>
@@ -561,8 +576,8 @@ const FieldListDisplay = memo(
               return (
                 <div className="flex gap-2 w-full " key={index}>
                   <div
-                    className={`w-full border border-black p-2.5 rounded-sm bg-gray-50 text-black flex flex-wrap ${
-                      val === "" ? "italic text-gray-400" : ""
+                    className={`w-full border-2 border-blue-800 p-2.5 rounded-sm  bg-white text-black flex flex-wrap ${
+                      val === "" ? "italic text-gray-600" : ""
                     } `}
                   >
                     {val === "" ? "No information" : val}
@@ -610,7 +625,7 @@ const FieldDisplay = memo(
     const displayValue = hasValue ? (
       value
     ) : (
-      <div className="italic text-gray-400">No information</div>
+      <div className="italic text-gray-600">No information</div>
     );
 
     return (
@@ -621,7 +636,7 @@ const FieldDisplay = memo(
         <div
           className={`${
             hasValue ? "p-2.5" : "p-2.5"
-          } w-full border border-black rounded-sm  bg-gray-50 text-black text-wrap`}
+          } w-full border-2 border-blue-800 rounded-sm bg-white text-black text-wrap`}
         >
           {displayValue}
         </div>
@@ -1142,6 +1157,8 @@ const CustomerDisposition = () => {
     },
   );
 
+  console.log(selectedCustomer)
+
   const { data: isAutoDialData, refetch: isAutodialRefetch } = useQuery<{
     isAutoDial: boolean;
   }>(IS_AUTO_DIAL, {
@@ -1398,12 +1415,16 @@ const CustomerDisposition = () => {
   useEffect(() => {
     const timer = setTimeout(async () => {
       const res = await caiiRefetching();
-     
-      const split = [...new Set(
-        res.data.checkIfAgentIsInline.split(",").map((x) => {
-          return !x.includes("ERROR") && Boolean(x.split("|")[0] !== undefined);
-        }),
-      )];
+
+      const split = [
+        ...new Set(
+          res.data.checkIfAgentIsInline.split(",").map((x) => {
+            return (
+              !x.includes("ERROR") && Boolean(x.split("|")[0] !== undefined)
+            );
+          }),
+        ),
+      ];
       setSplitingStatus(split);
     });
     return () => clearTimeout(timer);
@@ -1419,33 +1440,32 @@ const CustomerDisposition = () => {
       ref={containerRef}
     >
       <motion.div
-        className={`absolute z-50 bg-white flex flex-col gap-2 border  rounded shadow-md shadow-black/20   ${
-          minimize
-            ? "w-100 h-auto overflow-hidden top-5 left-5"
-            : "w-150 h-150 top-0 left-0"
+        className={`absolute z-50 bg-white flex flex-col gap-2 border-2 border-blue-800 rounded shadow-md shadow-black/20   ${
+          !minimize
+            ? " h-auto overflow-hidden top-5 left-18"
+            : "w-150 h-150 top-5 left-18"
         } `}
+        layout
         drag
         dragConstraints={containerRef}
         dragElastic={0.1}
         dragMomentum={false}
-        initial={{ opacity: 0, scale: 0.6 }}
+        initial={{ opacity: 0, scale: minimize ? 0.5 : 1 }}
         animate={{ opacity: 1, scale: 1 }}
         transition={{ duration: 1, type: "spring" }}
       >
-        {minimize ? (
-          <div className="w-full h-full flex gap-2 ">
-            <div className="p-2 h-full w-full cursor-grabbing">Vicidial</div>
-            <div
-              className="flex items-center justify-center px-4 hover:bg-slate-500 cursur-pointer"
-              onClick={() => setMinimize((prev) => !prev)}
-            >
-              <p className="p-2 border bg-slate-200 border-slate-500"></p>
-            </div>
+        {!minimize ? (
+          <div
+            onClick={() => setMinimize((prev) => !prev)}
+            className="w-full h-full cursor-pointer hover:bg-blue-600 transition-all flex gap-2 bg-blue-500 text-white font-bold "
+            title="VICIDIAL"
+          >
+            <div className="px-3.5 py-1 h-full font-black w-full">V</div>
           </div>
         ) : (
           <>
-            <div className="flex bg-blue-500 border-b">
-              <div className="w-full py-2 cursor-grabbing bg-blue-500 text-center text-white ">
+            <div className="flex bg-blue-500 border-b w-full">
+              <div className="w-full py-2 cursor-grabbing bg-blue-500 text-center text-white font-bold">
                 HOLD ME HERE
               </div>
               <div
@@ -1470,7 +1490,7 @@ const CustomerDisposition = () => {
               </div>
             </div>
             {checkBucketUp.length > 1 && (
-              <div className="p-1 ">
+              <div className="p-2">
                 <select
                   value={viciIp || ""}
                   name="viciSelection"
@@ -1493,7 +1513,7 @@ const CustomerDisposition = () => {
             )}
 
             {!viciIp && checkBucketUp.length > 1 && (
-              <div className="h-full w-full flex flex-col items-center justify-center gap-5">
+              <div className="h-full p-2 w-full flex flex-col items-center justify-center gap-5">
                 <h1>Please Select Vici Dial Ip To Used</h1>
               </div>
             )}
@@ -1503,8 +1523,10 @@ const CustomerDisposition = () => {
         {viciIp && (
           <iframe
             src={`http://${viciIp}/agc/vicidial.php#`}
-            className={`${minimize ? "hidden" : ""} h-full w-full px-2 pb-2`}
-          ></iframe>
+            className={`${minimize ? "" : "hidden"} h-full w-full px-2 pb-2`}
+          >
+            hello
+          </iframe>
         )}
       </motion.div>
 
@@ -1513,7 +1535,7 @@ const CustomerDisposition = () => {
           <Loading />
         ) : (
           <>
-            {(!splitingStatus.includes(true)) &&
+            {!splitingStatus.includes(true) &&
             canCallBuckets?.includes(true) ? (
               <NeedToLoginVici />
             ) : (
@@ -1609,12 +1631,12 @@ const CustomerDisposition = () => {
                             layout
                             className="w-full"
                           >
-                            <div className=" bg-gray-100 h-full w-full transition-all flex flex-col shadow-md shadow-black/20 overflow-hidden rounded-md items-center border-black ovesrflow-hidden z-10 border relative">
+                            <div className=" bg-blue-100 h-full w-full transition-all flex flex-col shadow-md shadow-black/20 overflow-hidden rounded-md items-center border-blue-800 ovesrflow-hidden z-10 border-2 relative">
                               <div className="w-32 h-32 absolute -top-28"></div>
 
                               <div className="top-40 absolute  left-0 bg-black"></div>
 
-                              <h1 className="text-center px-10 w-full flex-nowrap truncate text-ellipsis py-3 border-b bg-gray-400 border-black uppercase font-black text-black text-2xl mb-1 ">
+                              <h1 className="text-center px-10 w-full flex-nowrap truncate text-ellipsis py-3 border-b-2 border-blue-800 bg-blue-500 uppercase font-black text-white text-shadow-2xs text-2xl mb-1 ">
                                 Customer Information
                               </h1>
                               <div
@@ -1651,11 +1673,14 @@ const CustomerDisposition = () => {
                                   )}
                                 {selectedCustomer?._id &&
                                   selectedCustomer?.customer_info?.isRPC && (
-                                    <IoRibbon className=" text-5xl text-blue-500" />
+                                    <div className="border-2 shadow-md text-xs py-1 border-green-800 top-7 -right-32 text-center w-96 absolute bg-green-600 text-white font-black uppercase rotate-[35deg]">
+                                      <div>RIGHT PERSON</div>
+                                      <div>CONTACTED</div>
+                                    </div>
                                   )}
                               </div>
 
-                              <div className="px-5 flex flex-col w-full pb-5">
+                              <div className="px-5 flex flex-col w-full py-5">
                                 {!selectedCustomer && (
                                   <div className="relative w-full flex justify-center">
                                     {!isAutoDialData?.isAutoDial && (
@@ -1671,10 +1696,10 @@ const CustomerDisposition = () => {
                                           }
                                           id="search"
                                           placeholder="Search"
-                                          className=" w-full p-2 text-sm  text-gray-900 border border-black rounded-sm bg-gray-50 focus:ring-blue-500 focus:ring outline-0 focus:border-blue-500 "
+                                          className=" w-full p-2 text-sm  text-gray-600 border-blue-800 border-2 bg-white rounded-sm outline-none"
                                         />
                                         <button
-                                          className="border-2 rounded px-5 cursor-pointer bg-blue-600 hover:bg-blue-700 transition-all text-white border-blue-900 uppercase font-bold text-sm"
+                                          className="border-2 rounded  px-5 cursor-pointer bg-blue-600 hover:bg-blue-700 transition-all text-white border-blue-800 uppercase font-bold text-sm"
                                           onClick={autoSearch}
                                         >
                                           Search
@@ -1717,7 +1742,7 @@ const CustomerDisposition = () => {
                                   value={
                                     selectedCustomer?.customer_info
                                       ?.fullName || (
-                                      <div className="italic text-gray-400">
+                                      <div className="italic text-gray-600">
                                         No information
                                       </div>
                                     )
@@ -1727,7 +1752,7 @@ const CustomerDisposition = () => {
                                   label="Date Of Birth (yyyy-mm-dd)"
                                   value={
                                     selectedCustomer?.customer_info?.dob || (
-                                      <div className="italic text-gray-400">
+                                      <div className="italic text-gray-600">
                                         No information
                                       </div>
                                     )
@@ -2088,11 +2113,11 @@ const CustomerDisposition = () => {
                                               handleClear();
                                             }
                                           }}
-                                          className={`" ${
+                                          className={`${
                                             manualDial && manualDial.length > 0
                                               ? "bg-red-600 cursor-pointer hover:bg-red-800 border-red-950 text-white "
                                               : "bg-gray-400 border-gray-500 cursor-not-allowed text-gray-300"
-                                          }  h-full  w-full text-xs flex items-center justify-center border shadow-md  rounded-sm "`}
+                                          }  h-full  w-full text-xs flex items-center justify-center border shadow-md  rounded-sm`}
                                         >
                                           clear
                                         </div>
@@ -2114,13 +2139,13 @@ const CustomerDisposition = () => {
                                             dialManualNumber();
                                           }
                                         }}
-                                        className={`" ${
+                                        className={`${
                                           manualDial &&
                                           manualDial.length > 10 &&
                                           isValidMobile(manualDial)
                                             ? "bg-green-500 hover:bg-green-600 border-black cursor-pointer text-white"
                                             : "bg-gray-400 border-gray-500 cursor-not-allowed text-gray-300"
-                                        }  h-full flex justify-center   transition-all shadow-md text-center items-center border  text-xs rounded-sm "`}
+                                        }  h-full flex justify-center   transition-all shadow-md text-center items-center border  text-xs rounded-sm`}
                                       >
                                         Dial
                                       </div>
@@ -2182,7 +2207,7 @@ const CustomerDisposition = () => {
                                       >
                                         <div
                                           onClick={handleUsingPhoneUI}
-                                          className={`" ${
+                                          className={`${
                                             (viciStatus?.status === "PAUSED" &&
                                               (viciStatus?.acctStatus === "" ||
                                                 viciStatus.acctStatus ===
@@ -2190,12 +2215,13 @@ const CustomerDisposition = () => {
                                               viciStatus?.subStatus === "") ||
                                             (viciStatus?.status === "INCALL" &&
                                               viciStatus.subStatus === "DEAD" &&
-                                              viciStatus.acctStatus === "") || (viciStatus?.status === "INCALL" &&
+                                              viciStatus.acctStatus === "") ||
+                                            (viciStatus?.status === "INCALL" &&
                                               viciStatus.subStatus === "DEAD" &&
                                               viciStatus.acctStatus === "LOGIN")
                                               ? " hover:scale-110 cursor-pointer bg-green-500 hover:bg-green-600 border-green-900 "
                                               : "bg-gray-400 border-gray-500 cursor-not-allowed "
-                                          }  transition-all items-center justify-center flex p-2 text-white  rounded-full border-2 "`}
+                                          }  transition-all items-center justify-center flex p-2 text-white  rounded-full border-2`}
                                         >
                                           <div
                                             title={

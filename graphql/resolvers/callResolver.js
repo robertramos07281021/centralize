@@ -228,9 +228,11 @@ const callResolver = {
     //     throw new CustomError(error.message, 500);
     //   }
     // },
-    randomCustomer: safeResolver(async (_, { buckets, autoDial }) => {
+    randomCustomer: safeResolver(async (_, { buckets, autoDial }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
       const userBucketIds = buckets.map(
-        (id) => new mongoose.Types.ObjectId(id)
+        (id) => new mongoose.Types.ObjectId(id),
       );
 
       const bucketDocs = await Bucket.find({
@@ -251,7 +253,6 @@ const callResolver = {
 
       const positiveIds = positiveDispotype.map((x) => x._id);
 
-      // Prepare callfile filter
       let callfileFilter = callfiles.map((x) => x._id);
       if (autoDial) {
         const callfileAuto = callfiles.filter((x) => x.autoDial === true);
@@ -259,17 +260,15 @@ const callResolver = {
       }
 
       const pipeline = [
-        // --- Early filter ---
         {
           $match: {
-            $or: [{ on_hands: null }, { on_hands: { $exists: false } }],
+            // $or: [{ on_hands: null }, { on_hands: { $exists: false } }],
             bucket: { $in: allowedBuckets },
-            $or: [{ assigned: null }, { assigned: { $exists: false } }],
+
             callfile: { $in: callfileFilter },
           },
         },
 
-        // --- Lookup callfile to get roundCount if autoDial ---
         {
           $lookup: {
             from: "callfiles",
@@ -280,8 +279,6 @@ const callResolver = {
           },
         },
         { $unwind: "$ac" },
-
-        // --- Filter based on dispositions and call status ---
         {
           $match: {
             "current_disposition.disposition": { $nin: positiveIds },
@@ -299,8 +296,6 @@ const callResolver = {
                 }),
           },
         },
-
-        // --- Lookup customer info ---
         {
           $lookup: {
             from: "customers",
@@ -323,8 +318,6 @@ const callResolver = {
           },
         },
         { $unwind: "$customer_info" },
-
-        // --- Keep only docs with at least one valid contact number ---
         {
           $match: {
             $expr: {
@@ -343,11 +336,69 @@ const callResolver = {
             },
           },
         },
+        {
+          $lookup: {
+            from: "buckets",
+            localField: "bucket",
+            foreignField: "_id",
+            as: "account_bucket",
+          },
+        },
+        {
+          $unwind: {
+            path: "$account_bucket",
+            preserveNullAndEmptyArrays: true,
+          },
+        },
+        {
+          $lookup: {
+            from: "users",
+            localField: "on_hands",
+            foreignField: "_id",
+            as: "oh",
+          },
+        },
+        { $unwind: { path: "$oh", preserveNullAndEmptyArrays: true } },
 
-        // --- Pick 1 random customer ---
+        {
+          $match: {
+            $and: [
+              {
+                $or: [
+                  {
+                    $expr: { $ne: ["$oh.handsOn", "$_id"] },
+                  },
+                  {
+                    on_hands: null,
+                  },
+                  {
+                    on_hands: { $exists: false },
+                  },
+                ],
+              },
+              {
+                $expr: {
+                  $cond: {
+                    if: "$account_bucket.isPermanent",
+                    then: {
+                      $or: [
+                        { $eq: [user._id, "$features.permanent"] },
+                        {
+                          $eq: [{ $ifNull: ["$assigned", null] }, null],
+                        },
+                      ],
+                    },
+                    else: {
+                      $eq: [{ $ifNull: ["$assigned", null] }, null],
+                    },
+                  },
+                },
+              },
+            ],
+          },
+        },
         { $sample: { size: 1 } },
 
-        // --- Lookup other related data ---
         {
           $lookup: {
             from: "dispotypes",
@@ -357,16 +408,6 @@ const callResolver = {
           },
         },
         { $unwind: { path: "$dispotype", preserveNullAndEmptyArrays: true } },
-
-        {
-          $lookup: {
-            from: "buckets",
-            localField: "bucket",
-            foreignField: "_id",
-            as: "account_bucket",
-          },
-        },
-        { $unwind: "$account_bucket" },
 
         {
           $lookup: {
@@ -394,6 +435,7 @@ const callResolver = {
       ];
 
       const res = await CustomerAccount.aggregate(pipeline);
+
       return res[0] || null;
     }),
     checkUserIsOnlineOnVici: safeResolver(async (_, { _id }, { user }) => {
@@ -418,7 +460,7 @@ const callResolver = {
           bucket.map(async (x) => {
             const res = await checkIfAgentIsOnline(findUser?.vici_id, x);
             return res;
-          })
+          }),
         );
         return chechIfisOnline.includes(true);
       } else {
@@ -445,8 +487,8 @@ const callResolver = {
                     viciIp: x.viciIp,
                     viciIp_auto: x.viciIp_auto,
                   };
-                })
-              )
+                }),
+              ),
             )
           : [];
 
@@ -455,20 +497,20 @@ const callResolver = {
           const data = [];
           const res = await checkIfAgentIsInlineOnVici(
             findUser?.vici_id,
-            x.viciIp
+            x.viciIp,
           );
 
-          data.push(`${res.trim("\n") + "|" + x.viciIp}`.toString());
+          data.push(`${(res ?? "ERROR").trim("\n") + "|" + x.viciIp}`.toString());
 
           if (x.viciIp_auto) {
             const resAuto = await checkIfAgentIsInlineOnVici(
               findUser?.vici_id,
-              x.viciIp_auto
+              x.viciIp_auto,
             );
-            data.push(`${resAuto.trim("\n") + "|" + x.viciIp_auto}`.toString());
+            data.push(`${(resAuto ?? "ERROR").trim("\n") + "|" + x.viciIp_auto}`.toString());
           }
           return data.toString();
-        })
+        }),
       );
 
       return chechIfisOnline.toString();
@@ -488,7 +530,7 @@ const callResolver = {
       const userCallfiles = await Callfile.find({
         bucket: {
           $in: user.buckets.map(
-            (bucket) => new mongoose.Types.ObjectId(bucket)
+            (bucket) => new mongoose.Types.ObjectId(bucket),
           ),
         },
         active: true,
@@ -624,7 +666,7 @@ const callResolver = {
               {
                 "current_disposition.disposition": {
                   $nin: positiveDispotype.map(
-                    (x) => new mongoose.Types.ObjectId(x)
+                    (x) => new mongoose.Types.ObjectId(x),
                   ),
                 },
               },
@@ -690,13 +732,13 @@ const callResolver = {
         bucket.map(async (x) => {
           const res = await checkIfAgentIsOnline(findUser?.vici_id, x);
           return res;
-        })
+        }),
       );
 
       const res = await callViaVicidial(
         findUser.vici_id,
         phoneNumber,
-        bucket[chechIfisOnline.indexOf(true)]
+        bucket[chechIfisOnline.indexOf(true)],
       );
       return `Call initiated successfully: ${JSON.stringify(res)}--${bucket[chechIfisOnline.indexOf(true)]}`;
     }),
@@ -704,7 +746,7 @@ const callResolver = {
       async (
         _,
         { callfileId, roundCount, finished },
-        { pubsub, PUBSUB_EVENTS }
+        { pubsub, PUBSUB_EVENTS },
       ) => {
         const findCallfile = await Callfile.findById(callfileId);
         if (!findCallfile) throw new CustomError("Callfile not found", 401);
@@ -724,7 +766,7 @@ const callResolver = {
               $set: {
                 "features.called": 0,
               },
-            }
+            },
           );
         }
 
@@ -739,7 +781,7 @@ const callResolver = {
           success: true,
           message: "Callfile successfully updated",
         };
-      }
+      },
     ),
     endAndDispoCall: safeResolver(async (_, __, { user }) => {
       const findUser = await User.findById(user._id).populate("buckets");
@@ -755,7 +797,7 @@ const callResolver = {
         bucket.map(async (x) => {
           const res = await checkIfAgentIsOnline(findUser?.vici_id, x);
           return res;
-        })
+        }),
       );
 
       await endAndDispo(user.vici_id, bucket[chechIfisOnline.indexOf(true)]);
@@ -767,7 +809,7 @@ const callResolver = {
     }),
     getCallRecording: safeResolver(async (_, { user_id, mobile }) => {
       if (!Boolean(mobile)) return null;
-      
+
       const date = new Date();
       const year = date.getFullYear();
       const day = date.getDate();
@@ -778,7 +820,7 @@ const callResolver = {
 
       const findUser = await User.findById(user_id).populate(
         "buckets",
-        "viciIp viciIp_auto"
+        "viciIp viciIp_auto",
       );
       if (!findUser) throw new CustomError("User not found", 401);
 
@@ -788,7 +830,7 @@ const callResolver = {
         throw new CustomError("Please Contact Admin to add Vici dial ID", 401);
 
       const splitMobile = mobile?.split("|");
-    
+
       const res = await getRecordings(splitMobile[1], viciId, null);
 
       if (!res || res.includes("ERROR")) return null;
@@ -828,17 +870,17 @@ const callResolver = {
           bucket.map(async (x) => {
             const res = await checkIfAgentIsOnline(findUser?.vici_id, x);
             return res;
-          })
+          }),
         );
 
         const res = await bargeUser(
           bucket[chechIfisOnline.indexOf(true)],
           session_id,
-          tlUser.softphone
+          tlUser.softphone,
         );
 
         return res;
-      }
+      },
     ),
     updateDialNext: safeResolver(async (_, { callfile }) => {
       await CustomerAccount.updateMany(
@@ -849,7 +891,7 @@ const callResolver = {
           $set: {
             "features.alreadyCalled": false,
           },
-        }
+        },
       );
 
       return {
@@ -938,7 +980,7 @@ const callResolver = {
       const getRecordingManual = await getRecordings(
         dispo[0].bucket.viciIp,
         dispo[0].user.vici_id,
-        formattedDate
+        formattedDate,
       );
 
       const records = [];
@@ -954,7 +996,7 @@ const callResolver = {
         const getRecordingAuto = await getRecordings(
           dispo[0].bucket.viciIp_auto,
           dispo[0].user.vici_id,
-          formattedDate
+          formattedDate,
         );
 
         if (!getRecordingAuto.includes("ERROR")) {
@@ -987,7 +1029,7 @@ const callResolver = {
       for (const record of [...new Set(records)]) {
         if (
           contact.some(
-            (x) => record.includes(normalizeMobile(x)) || record.includes(x)
+            (x) => record.includes(normalizeMobile(x)) || record.includes(x),
           )
         ) {
           const splitRecord = record.split("/");
@@ -995,7 +1037,7 @@ const callResolver = {
 
           const duration = record.split("|")[4];
           recordings.push(
-            `${splitRecord[splitRecord.length - 1]}-all.mp3_${duration}_${ip}`
+            `${splitRecord[splitRecord.length - 1]}-all.mp3_${duration}_${ip}`,
           );
         }
       }

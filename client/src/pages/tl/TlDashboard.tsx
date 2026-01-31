@@ -55,7 +55,7 @@ type AomBucket = {
 
 const TlDashboard = () => {
   const { userLogged, selectedBucket, intervalTypes } = useSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   );
 
   const [showSelector, setShowSelector] = useState<boolean>(false);
@@ -92,7 +92,7 @@ const TlDashboard = () => {
   const intervalSelectorRef = useRef<HTMLDivElement | null>(null);
 
   const findBucket = data?.getAllBucket.find(
-    (bucket) => bucket._id === selectedBucket
+    (bucket) => bucket._id === selectedBucket,
   );
 
   useEffect(() => {
@@ -162,7 +162,7 @@ const TlDashboard = () => {
       <AnimatePresence>
         {showSelector && (
           <motion.div
-            className="absolute bottom-4 right-14 w-auto h-100 overflow-auto border bg-white rounded-md border-black p-2 flex flex-col gap-2 "
+            className="absolute bottom-4 right-14 w-auto max-h-100 overflow-auto border bg-white rounded-md border-black p-2 flex flex-col gap-2 "
             ref={bucketSelectorRef}
             initial={{ opacity: 0, x: 10 }}
             animate={{ opacity: 1, x: 0 }}
@@ -170,7 +170,7 @@ const TlDashboard = () => {
           >
             {buckets?.map((x) => {
               const findBucket = data?.getAllBucket.find((y) => x === y._id);
-              
+
               return (
                 findBucket?.isActive && (
                   <label
@@ -245,7 +245,9 @@ const TlDashboard = () => {
           animate={{ opacity: 1, x: 0 }}
           transition={{ type: "spring", duration: 1 }}
         >
-          <div className={`" ${isOpenMessage ? "scale-105" : "opacity-25 hover:opacity-100 hover:scale-105 hover:shadow-xl"} w-8 flex items-center justify-center cursor-pointer h-8 bg-white  transition-all  border rounded-full "`}>
+          <div
+            className={`" ${isOpenMessage ? "scale-105" : "opacity-25 hover:opacity-100 hover:scale-105 hover:shadow-xl"} w-8 flex items-center justify-center cursor-pointer h-8 bg-white  transition-all  border rounded-full "`}
+          >
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"

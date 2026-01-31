@@ -4,15 +4,17 @@ import { Users } from "../../middleware/types";
 import Confirmation from "../../components/Confirmation";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import { MdKeyboardArrowDown } from "react-icons/md";
-import UserOptionSettings from "./UserOptionSettings";
+// import { MdKeyboardArrowDown } from "react-icons/md";
+// import UserOptionSettings from "./UserOptionSettings";
 import { useAppDispatch } from "../../redux/store";
 import { setServerError, setSuccess } from "../../redux/slices/authSlice";
 import Loading from "../Loading.tsx";
+import { motion, AnimatePresence } from "framer-motion";
 // import { useSelector } from "react-redux";
 
 type modalProps = {
   state: Users;
+  onClose?: () => void;
 };
 
 type SuccessUpdate = {
@@ -52,6 +54,22 @@ const DEPT_BUCKET_QUERY = gql`
         _id
         name
       }
+    }
+  }
+`;
+
+type ModifyRecords = {
+  id: string;
+  name: string;
+  createdAt: string;
+};
+
+const MODIFY_RECORD_QUERY = gql`
+  query Query($id: ID!) {
+    getModifyReport(id: $id) {
+      id
+      name
+      createdAt
     }
   }
 `;
@@ -264,10 +282,23 @@ type Data = {
   softphone: string;
 };
 
-const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
+const UpdateUserForm: React.FC<modalProps> = ({ state, onClose }) => {
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [isBranchOpen, setIsBranchOpen] = useState(false);
+  const [isCampaignOpen, setIsCampaignOpen] = useState(false);
+  const [isBucketOpen, setIsBucketOpen] = useState(false);
+  const [isAccountOpen, setIsAccountOpen] = useState(false);
+
+  if (!state) {
+    return (
+      <div className="w-full text-center py-10 text-gray-500">
+        No user selected. Please select a user to update.
+      </div>
+    );
+  }
+
   const validForCampaignAndBucket = [
     "AGENT",
     "TL",
@@ -287,6 +318,14 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
   const [confirm, setConfirm] = useState(false);
   const [selectionDept, setSelectionDept] = useState<boolean>(false);
   const [selectionBucket, setSelectionBucket] = useState<boolean>(false);
+
+  const { data: modifyRecord, refetch } = useQuery<{
+    getModifyReport: ModifyRecords[];
+  }>(MODIFY_RECORD_QUERY, {
+    variables: { id: state?._id },
+    skip: !state?._id,
+    notifyOnNetworkStatusChange: true,
+  });
 
   const isValidUserType = (value: string): value is UserType => {
     return [
@@ -364,7 +403,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
       variables: { dept: data.departments },
       skip: String(data.departments).trim() === "",
       notifyOnNetworkStatusChange: true,
-    }
+    },
   );
 
   const dept: { [key: string]: string } = useMemo(() => {
@@ -380,7 +419,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
   const bucketObject: { [key: string]: string } = useMemo(() => {
     const bucketArray = deptBucket?.getBuckets || [];
     return Object.fromEntries(
-      bucketArray.flatMap((ba) => ba.buckets.map((e) => [e.name, e._id]))
+      bucketArray.flatMap((ba) => ba.buckets.map((e) => [e.name, e._id])),
     );
   }, [deptBucket]);
 
@@ -397,7 +436,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
           success: res.updateUser.success,
           message: res.updateUser.message,
           isMessage: false,
-        })
+        }),
       );
       setIsUpdate(false);
     },
@@ -418,7 +457,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
           success: res.resetPassword.success,
           message: res.resetPassword.message,
           isMessage: false,
-        })
+        }),
       );
     },
     onError: () => {
@@ -439,7 +478,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
             success: res.updateActiveStatus.success,
             message: res.updateActiveStatus.message,
             isMessage: false,
-          })
+          }),
         );
       },
       onError: () => {
@@ -459,7 +498,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
           success: res.unlockUser.success,
           message: res.unlockUser.message,
           isMessage: false,
-        })
+        }),
       );
     },
     onError: () => {
@@ -479,7 +518,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
           success: res.adminLogout.success,
           message: res.adminLogout.message,
           isMessage: false,
-        })
+        }),
       );
     },
     onError: (err) => {
@@ -602,14 +641,14 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
   const handleSubmit = useCallback(
     (
       action: "UPDATE" | "RESET" | "STATUS" | "UNLOCK" | "LOGOUT",
-      status: boolean
+      status: boolean,
     ) => {
       submitValue[action]?.();
       if (action === "STATUS") {
         setCheck(status);
       }
     },
-    [setCheck, submitValue]
+    [setCheck, submitValue],
   );
 
   const handleCheckedDept = useCallback(
@@ -619,7 +658,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
         : data.departments.filter((d) => d !== dept[value]);
       setData((prev) => ({ ...prev, departments: check, buckets: [] }));
     },
-    [data, setData, dept]
+    [data, setData, dept],
   );
 
   const handleCheckedBucket = useCallback(
@@ -629,7 +668,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
         : data.buckets.filter((d) => d !== bucketObject[value]);
       setData((prev) => ({ ...prev, buckets: check }));
     },
-    [setData, bucketObject, data]
+    [setData, bucketObject, data],
   );
 
   useEffect(() => {
@@ -653,9 +692,20 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
   if (isLoading) return <Loading />;
 
   return (
-    <>
-      <div
-        className=" w-full grid grid-cols-2 gap-10 col-span-2"
+    <div className="absolute p-4 top-0 z-20 flex justify-center items-center left-0 w-full h-full">
+      
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="absolute cursor-pointer top-0 bg-black/60 backdrop-blur-xs z-10 left-0 w-full h-full  backdrop"
+        onClick={() => onClose?.()}
+      ></motion.div>
+      <motion.div
+        initial={{ scale: 0.8, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        exit={{ scale: 0.8, opacity: 0 }}
+        className="grid max-w-1/2 overflow-hidden bg-blue-200 border-2 relative  border-blue-800 rounded-md z-20  grid-cols-2 gap-2 col-span-2"
         onMouseDown={(e) => {
           if (!campaignDiv.current?.contains(e.target as Node)) {
             setSelectionDept(false);
@@ -665,70 +715,315 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
           }
         }}
       >
-        <div className=" w-full flex flex-col gap-2 py-5 text-slate-600">
+        {isBranchOpen && (
+          <div className="absolute 0 w-full flex justify-center items-center h-full  ">
+            <div
+              onClick={() => setIsBranchOpen(false)}
+              className="absolute cursor-pointer z-20 top-0 backdrop-blur-sm left-0 w-full h-full bg-black/40"
+            ></div>
+            <div className="bg-blue-20 min-w-64 z-30 border-2 border-blue-800 rounded-sm">
+              <div className="bg-bluye-500 font-black text-center uppercase text-white bg-blue-500 px-3 py-1 border-b-2 border-blue-800">
+                Select Branch
+              </div>
+
+              {branchesData?.getBranches.map((branch) => (
+                <div
+                  className="even:bg-blue-200 hover:bg-blue-300 transition-all cursor-pointer odd:bg-blue-100 px-3 py-1 border-b border-blue-300"
+                  key={branch.id}
+                  onClick={() => {
+                    setData((prev) => ({
+                      ...prev,
+                      branch: objectBranch[branch.name],
+                      departments: [],
+                      buckets: [],
+                    }));
+                    setIsBranchOpen(false);
+                  }}
+                >
+                  {branch.name.toUpperCase()}
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+        <AnimatePresence>
+          {isBucketOpen && (
+            <div className="absolute 0 w-full flex justify-center items-center h-full  ">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsBucketOpen(false)}
+                className="absolute cursor-pointer z-20 top-0 backdrop-blur-sm left-0 w-full h-full bg-black/40"
+              ></motion.div>
+              <motion.div
+                initial={{ opacity: 0, scale: 0.8 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.8 }}
+                className="bg-blue-200 relative min-w-64 z-30 border-2 border-blue-800 rounded-sm max-h-[70vh] overflow-auto"
+              >
+                <div
+                  onClick={() => setIsBucketOpen(false)}
+                  className="absolute p-1 cursor-pointer text-white border-2 border-red-800 bg-red-600 rounded-full top-1.5 right-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="size-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18 18 6M6 6l12 12"
+                    />
+                  </svg>
+                </div>
+                <div className="bg-bluye-500 text-2xl font-black text-center uppercase text-white bg-blue-500 px-3 py-1 border-b-2 border-blue-800">
+                  Select Bucket
+                </div>
+
+                <div className="p-2 grid grid-cols-2 gap-2">
+                  {deptBucket?.getBuckets.map((dept, idx) => (
+                    <div key={idx} className="py-1">
+                      <div className="uppercase text-sm font-black mb-1">
+                        {dept.dept}
+                      </div>
+                      <div className="grid grid-cols-1 gap-1">
+                        {dept.buckets.map((bucket) => {
+                          const isSelected = data.buckets.includes(bucket._id);
+                          return (
+                            <label
+                              key={bucket._id}
+                              className={`flex gap-2 items-center font-semibold cursor-pointer px-3 py-1 rounded-sm shadow border-2 border-blue-800 ${
+                                isSelected ? "bg-blue-300" : "bg-blue-100"
+                              }`}
+                            >
+                              <input
+                                type="checkbox"
+                                name={bucket.name}
+                                id={bucket._id}
+                                value={bucket.name}
+                                onChange={(e) =>
+                                  handleCheckedBucket(e, e.target.value)
+                                }
+                                checked={isSelected}
+                              />
+                              <span className="uppercase">
+                                {bucket.name.replace(/_/g, " ")}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="col-span-2 bg-blue-500 flex justify-end border-t-2 border-blue-800 p-2">
+                  <button
+                    className="bg-green-600 cursor-pointer font-black uppercase border-2 border-green-800 text-white px-3 py-1 rounded"
+                    onClick={() => setIsBucketOpen(false)}
+                  >
+                    Done
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {isCampaignOpen && (
+            <div className="absolute w-full p-10 flex justify-center items-center h-full  ">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsCampaignOpen(false)}
+                className="absolute cursor-pointer z-20 top-0 backdrop-blur-sm left-0 w-full h-full bg-black/40"
+              ></motion.div>
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="bg-blue-20 flex flex-col relative w-full h-full z-30 border-2 border-blue-800 rounded-sm"
+              >
+                <div
+                  onClick={() => setIsCampaignOpen(false)}
+                  className="absolute p-1 cursor-pointer text-white border-2 border-red-800 bg-red-600 rounded-full top-1.5 right-2"
+                >
+                  <svg
+                    xmlns="http://www.w3.org/2000/svg"
+                    fill="none"
+                    viewBox="0 0 24 24"
+                    strokeWidth="1.5"
+                    stroke="currentColor"
+                    className="size-4"
+                  >
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      d="M6 18 18 6M6 6l12 12"
+                    />
+                  </svg>
+                </div>
+                <div className="text-2xl font-black text-center uppercase text-white bg-blue-500 px-3 py-1 border-b-2 border-blue-800">
+                  Select Campaign
+                </div>
+                <div className="grid grid-cols-2 w-full h-full p-2 gap-2 overflow-auto bg-blue-200">
+                  {branchDeptData?.getBranchDept.map((e) => {
+                    const isSelected = data.departments.includes(e.id);
+                    return (
+                      e.name !== "ADMIN" && (
+                        <label
+                          key={e.id}
+                          className={`flex cursor-pointer px-3 py-1 font-semibold  gap-2 rounded-sm border-2 shadow border-blue-800 ${
+                            isSelected ? "bg-blue-300" : "bg-blue-100"
+                          }`}
+                        >
+                          <input
+                            type="checkbox"
+                            name={e.name}
+                            id={e.name}
+                            value={e.name}
+                            onChange={(event) =>
+                              handleCheckedDept(event, e.name)
+                            }
+                            checked={isSelected}
+                          />
+                          <span>{e.name.replace(/_/g, " ")}</span>
+                        </label>
+                      )
+                    );
+                  })}
+                </div>
+                <div className="col-span-2 bg-blue-500 flex justify-end border-t-2 border-blue-800 p-2">
+                  <button
+                    className="bg-green-600 font-black uppercase border-2 border-green-800 text-white px-3 py-1 rounded"
+                    onClick={() => setIsCampaignOpen(false)}
+                  >
+                    Done
+                  </button>
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+        <AnimatePresence>
+          {isAccountOpen && (
+            <div className="absolute w-full p-10 flex justify-center items-center h-full  ">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                onClick={() => setIsAccountOpen(false)}
+                className="absolute cursor-pointer z-20 top-0 backdrop-blur-sm left-0 w-full h-full bg-black/40"
+              ></motion.div>
+              <motion.div
+                initial={{ scale: 0.8, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                exit={{ scale: 0.8, opacity: 0 }}
+                className="bg-blue-200 flex flex-col w-full max-w-60 z-30 border-2 border-blue-800 rounded-sm"
+              >
+                <div className="bg-bluye-500 font-black text-center uppercase text-white bg-blue-500 px-3 py-1 border-b-2 border-blue-800">
+                  Account Type
+                </div>
+                <div className="grid bg-blue-200">
+                  {["caller", "field", "skipper"].map((a) => (
+                    <div
+                      key={a}
+                      className="px-3 py-2 odd:bg-blue-200 even:bg-blue-100 cursor-pointer border-b border-blue-300 bg-blue-100 hover:bg-blue-300"
+                      onClick={() => {
+                        setData((prev) => ({ ...prev, account_type: a }));
+                        setIsAccountOpen(false);
+                      }}
+                    >
+                      {a}
+                    </div>
+                  ))}
+                </div>
+              </motion.div>
+            </div>
+          )}
+        </AnimatePresence>
+
+        <div className="bg-blue-500 w-full border-b-2 border-blue-800 col-span-2 text-white font-black uppercase text-2xl text-center py-2">
+          UPDATE THE USER INFORMATIoN
+        </div>
+        <div className=" flex flex-col gap-2 p-4 justify-center items-center text-slate-600">
           {required && (
             <div className="text-center text-xs text-red-500">
               All fields are required.
             </div>
           )}
-          <label className="w-full">
-            <p className=" text-base font-medium text-slate-500">Type</p>
-            <select
-              id="type"
-              name="type"
-              value={data?.type}
-              disabled={!isUpdate}
-              onChange={(e) => {
-                const newType = e.target.value as UserType;
-                setData((prev) => ({ ...prev, type: newType }));
-              }}
-              className={`bg-slate-50 border-slate-300 border text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
-            >
-              <option value="">--Choose a Type--</option>
-              {Object.entries(Types).map(([key, value]) => (
-                <option value={value} key={key}>
-                  {value}
-                </option>
-              ))}
-            </select>
-          </label>
 
-          <label className="w-full">
-            <p className=" text-base font-medium text-slate-500">Username</p>
-            <input
-              type="text"
-              name="username"
-              id="username"
-              autoComplete="off"
-              value={data?.username}
-              disabled
-              className={`${
-                data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"
-              }  border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 w-full p-2.5`}
-            />
-          </label>
+          <div className="grid grid-cols-2 gap-2 w-full">
+            <label className="w-full col-span-2">
+              <p className=" text-base font-black text-black uppercase">
+                Type:
+              </p>
+              <select
+                id="type"
+                name="type"
+                value={data?.type}
+                disabled={!isUpdate}
+                onChange={(e) => {
+                  const newType = e.target.value as UserType;
+                  setData((prev) => ({ ...prev, type: newType }));
+                }}
+                className={`bg-blue-100 shadow-md border-blue-800 outline-none border-2 text-sm rounded-md block w-full p-2.5`}
+              >
+                <option value="">--Choose a Type--</option>
+                {Object.entries(Types).map(([key, value]) => (
+                  <option value={value} key={key}>
+                    {value}
+                  </option>
+                ))}
+              </select>
+            </label>
 
-          <label className="w-full">
-            <p className=" text-base font-medium text-slate-500">Name</p>
-            <input
-              type="text"
-              id="name"
-              name="name"
-              autoComplete="off"
-              value={data?.name}
-              onChange={(e) =>
-                setData((prev) => ({ ...prev, name: e.target.value }))
-              }
-              disabled={!isUpdate}
-              className={`${
-                data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"
-              }  border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200 capitalize`}
-            />
-          </label>
-
-          <div className="grid grid-cols-2 grid-rows-2 gap-2">
             <label className="w-full">
-              <p className=" text-base font-medium text-slate-500">SIP ID</p>
+              <p className=" text-base font-black text-black uppercase">
+                Username:
+              </p>
+              <input
+                type="text"
+                name="username"
+                id="username"
+                autoComplete="off"
+                value={data?.username}
+                disabled
+                className={` bg-blue-100  shadow-md
+                  border-2 border-blue-800  text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 w-full p-2.5 `}
+              />
+            </label>
+
+            <label className="w-full">
+              <p className=" text-base font-black text-black uppercase">
+                Name:
+              </p>
+              <input
+                type="text"
+                id="name"
+                name="name"
+                autoComplete="off"
+                value={data?.name}
+                onChange={(e) =>
+                  setData((prev) => ({ ...prev, name: e.target.value }))
+                }
+                disabled={!isUpdate}
+                className={`bg-blue-100 shadow-md border-2 border-blue-800  text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200 capitalize`}
+              />
+            </label>
+          </div>
+
+          <div className="grid grid-cols-2 w-full grid-rows-2 gap-2">
+            <label className="w-full">
+              <p className=" text-base font-black text-black uppercase">
+                SIP ID:
+              </p>
               <input
                 type="text"
                 id="sip_id"
@@ -739,13 +1034,11 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                   setData((prev) => ({ ...prev, user_id: e.target.value }))
                 }
                 disabled={!isUpdate}
-                className={`${
-                  data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"
-                }  border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}
+                className={` border-2 border-blue-800 text-sm rounded-md p-2.5 w-full bg-blue-100 shadow-md `}
               />
             </label>
             <label className="w-full">
-              <p className=" text-base font-medium text-slate-500">
+              <p className=" text-base font-black text-black uppercase">
                 Callfile ID
               </p>
               <input
@@ -758,15 +1051,13 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                   setData((prev) => ({ ...prev, callfile_id: e.target.value }))
                 }
                 disabled={!isUpdate}
-                className={`${
-                  data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"
-                }  border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}
+                className={`  border-2 border-blue-800  text-sm rounded-md p-2.5 w-full bg-blue-100 shadow-md`}
               />
             </label>
 
             <label className="w-full">
-              <p className=" text-base font-medium text-slate-500">
-                Softphone ID
+              <p className=" text-base font-black text-black uppercase">
+                Softphone ID:
               </p>
               <input
                 type="text"
@@ -775,17 +1066,17 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                 autoComplete="off"
                 disabled={!isUpdate}
                 value={data.softphone}
-                onChange={(e)=> {
-                  setData((prev)=> ({...prev, softphone: e.target.value}))
+                onChange={(e) => {
+                  setData((prev) => ({ ...prev, softphone: e.target.value }));
                 }}
-                className={`${
-                  data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"
-                }  border border-gray-300  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}
+                className={` border-2 border-blue-800 bg-blue-100 shadow-md text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full `}
               />
             </label>
 
             <label className="w-full">
-              <p className=" text-base font-medium text-slate-500">VICI ID</p>
+              <p className=" text-base font-black text-black uppercase">
+                VICI ID:
+              </p>
               <input
                 type="text"
                 id="vici_id"
@@ -796,14 +1087,12 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                   setData((prev) => ({ ...prev, vici_id: e.target.value }))
                 }
                 disabled={!isUpdate}
-                className={`${
-                  data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"
-                }  border border-gray-300 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-2.5 w-full in-disabled:bg-gray-200`}
+                className={` border-2 border-blue-800 text-sm rounded-md p-2.5 w-full bg-blue-100 shadow-md`}
               />
             </label>
           </div>
-          <label className="w-full">
-            <p className=" text-base font-medium text-slate-500">
+          {/* <label className="w-full">
+            <p className=" text-base font-black text-black uppercase">
               Account Type
             </p>
             <select
@@ -816,16 +1105,95 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
               disabled={!isUpdate}
               className={`${
                 data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"
-              } border-slate-300 border text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              } border-blue-800 border-2 text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
               <option value="">Choose account type</option>
               <option value="caller">Caller</option>
               <option value="field">Field</option>
               <option value="skipper">Skipper</option>
             </select>
-          </label>
-          <label className="w-full">
-            <p className=" text-base font-medium text-slate-500">Branch</p>
+          </label> */}
+          <div className="grid grid-cols-2 gap-2 w-full">
+            <div className="flex w-full flex-col">
+              <div className="font-black uppercase text-black">
+                Account Type:
+              </div>
+              <div
+                className="px-3 py-1 items-center cursor-pointer rounded-md flex justify-between shadow-md border-2 border-blue-800 bg-blue-100"
+                onClick={() => isUpdate && setIsAccountOpen(true)}
+              >
+                <div className="truncate">
+                  {data.account_type
+                    ? data.account_type
+                    : "Select Account type"}
+                </div>
+              </div>
+            </div>
+            <div className="flex w-full flex-col">
+              <div className="font-black uppercase text-black">Branch:</div>
+              <div
+                className="px-3 py-1 items-center cursor-pointer rounded-md flex justify-between shadow-md border-2 border-blue-800 bg-blue-100"
+                onClick={() => isUpdate && setIsBranchOpen(true)}
+              >
+                <div>
+                  {branchObject[data.branch]
+                    ? branchObject[data.branch].toUpperCase()
+                    : "Select branch"}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex w-full flex-col">
+              <div className="font-black uppercase text-black">Campaign:</div>
+              <div
+                className="px-3 py-1 items-center cursor-pointer rounded-md flex justify-between shadow-md border-2 border-blue-800 bg-blue-100"
+                onClick={() => {
+                  if (isUpdate) {
+                    setIsCampaignOpen(true);
+                  }
+                }}
+              >
+                <div className="truncate">
+                  {data.departments.length > 0
+                    ? data.departments
+                        .map(
+                          (did) =>
+                            Object.entries(dept).find(
+                              ([k, v]) => v === did,
+                            )?.[0],
+                        )
+                        .join(", ")
+                        .replace(/_/g, " ")
+                    : "Select Campaign"}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex w-full flex-col">
+              <div className="font-black uppercase text-black">Bucket:</div>
+              <div
+                className="px-3 py-1 items-center cursor-pointer rounded-md flex justify-between shadow-md border-2 border-blue-800 bg-blue-100"
+                onClick={() => isUpdate && setIsBucketOpen(true)}
+              >
+                <div className="truncate">
+                  {data.buckets.length > 0
+                    ? data.buckets
+                        .map(
+                          (bid) =>
+                            Object.entries(bucketObject).find(
+                              ([k, v]) => v === bid,
+                            )?.[0],
+                        )
+                        .join(", ")
+                        .replace(/_/g, " ")
+                    : "Select Bucket"}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* <label className="w-full">
+            <p className=" text-base font-black text-black uppercase">Branch</p>
             <select
               id="branch"
               name="branch"
@@ -841,7 +1209,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
               disabled={!isUpdate}
               className={`${
                 data?.type?.trim() === "" ? "bg-gray-200" : "bg-gray-50"
-              } border-slate-300 border  text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
+              } border-blue-800 border-2  text-sm rounded-md focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5`}
             >
               <option value="">Choose a branch</option>
               {branchesData?.getBranches.map((branch) => (
@@ -850,19 +1218,18 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                 </option>
               ))}
             </select>
-          </label>
-
-          <div className="w-full relative" ref={campaignDiv}>
-            <p className="w-full text-base font-medium text-slate-500">
+          </label> */}
+          {/* <div className="w-full " ref={campaignDiv}>
+            <p className="w-full text-base font-black text-black uppercase">
               Campaign
             </p>
             <div
               className={`${
                 data?.departments?.length === 0 && "bg-gray-200"
-              } w-full text-sm border rounded-lg flex justify-between ${
+              } w-full text-sm border-2 rounded-md flex justify-between ${
                 selectionDept && data.departments.length > 0
                   ? "border-blue-500"
-                  : "border-slate-300"
+                  : "border-blue-800"
               }`}
             >
               <div
@@ -871,8 +1238,8 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                   ?.map(
                     (deptId) =>
                       Object.entries(dept).find(
-                        ([, val]) => val.toString() === deptId
-                      )?.[0]
+                        ([, val]) => val.toString() === deptId,
+                      )?.[0],
                   )
                   .join(", ")
                   .replace(/_/g, " ")}
@@ -892,8 +1259,8 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                       ?.map(
                         (deptId) =>
                           Object.entries(dept).find(
-                            ([, val]) => val.toString() === deptId
-                          )?.[0]
+                            ([, val]) => val.toString() === deptId,
+                          )?.[0],
                       )
                       .join(", ")
                       .replace(/_/g, " ")}
@@ -912,14 +1279,14 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
               />
             </div>
             {selectionDept && data.branch && (
-              <div className="w-full absolute left-0 grid grid-cols-2 gap-1 bottom-11 bg-white rounded-md border-gray-600 p-1.5 max-h-[400px] overflow-y-auto border z-40">
+              <div className="w-full absolute left-0 grid grid-cols-2 gap-1 bottom-11 rounded-md border-gray-600 p-1.5 max-h-[400px] overflow-y-auto border-2 z-40">
                 {branchDeptData?.getBranchDept.map((e) => {
                   const isSelected = data.departments.includes(e.id);
                   return (
                     e.name !== "ADMIN" && (
                       <label
                         key={e.id}
-                        className={`flex gap-2 cursor-pointer px-3 py-1 rounded-sm shadow border border-gray-600 ${
+                        className={`flex gap-2 cursor-pointer px-3 py-1 rounded-sm shadow border-2 border-gray-600 ${
                           isSelected ? "bg-gray-300" : "bg-gray-200"
                         }`}
                       >
@@ -939,17 +1306,17 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
               </div>
             )}
           </div>
-          <div className="w-full relative" ref={bucketDiv}>
-            <p className="w-full text-base font-medium text-slate-500">
+          <div className="w-full" ref={bucketDiv}>
+            <p className="w-full text-base font-black text-black uppercase">
               Bucket
             </p>
             <div
               className={`${
                 data?.departments?.length === 0 && "bg-gray-200"
-              } w-full text-sm border rounded-lg flex justify-between ${
+              } w-full text-sm border-2 rounded-md flex justify-between ${
                 selectionBucket && data?.departments?.length > 0
                   ? "border-blue-500"
-                  : "border-slate-300"
+                  : "border-blue-800"
               }`}
             >
               <div
@@ -958,8 +1325,8 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                   .map(
                     (bucketId) =>
                       Object.entries(bucketObject).find(
-                        ([, val]) => val.toString() === bucketId
-                      )?.[0]
+                        ([, val]) => val.toString() === bucketId,
+                      )?.[0],
                   )
                   .join(", ")
                   .replace(/_/g, " ")}
@@ -979,8 +1346,8 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                       .map(
                         (bucketId) =>
                           Object.entries(bucketObject).find(
-                            ([, val]) => val.toString() === bucketId
-                          )?.[0]
+                            ([, val]) => val.toString() === bucketId,
+                          )?.[0],
                       )
                       .join(", ")
                       .replace(/_/g, " ")}
@@ -997,7 +1364,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
               />
             </div>
             {selectionBucket && data.departments.length > 0 && (
-              <div className="w-full absolute left-0 bottom-11 grid grid-cols-2  gap-1 bg-white border-slate-300 p-1.5 max-h-50 overflow-y-auto border z-40">
+              <div className="w-full absolute left-0 bottom-11 grid grid-cols-2  gap-1 bg-white border-blue-800 p-1.5 max-h-50 overflow-y-auto border-2 z-40">
                 {deptBucket?.getBuckets.map((dept, index) => (
                   <div key={index} className="py-0.5">
                     <div className="uppercase text-sm">{dept.dept}</div>
@@ -1006,7 +1373,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                       return (
                         <label
                           key={bucket._id}
-                          className={`flex mb-1 gap-2 cursor-pointer px-3 py-1 rounded-sm shadow border border-gray-600 ${
+                          className={`flex mb-1 gap-2 cursor-pointer px-3 py-1 rounded-sm shadow border-2 border-gray-600 ${
                             isSelected ? "bg-gray-300" : "bg-gray-200"
                           }`}
                         >
@@ -1030,21 +1397,21 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
                 ))}
               </div>
             )}
-          </div>
+          </div> */}
 
           <div>
             {isUpdate ? (
               <div className="flex">
                 <button
                   type="button"
-                  className="bg-orange-500  border-2 border-orange-800 transition-all hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-black uppercase rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
+                  className="bg-orange-500  border-2 border-orange-800 transition-all hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 font-black uppercase rounded-md text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
                   onClick={() => handleSubmit("UPDATE", false)}
                 >
                   Submit
                 </button>
                 <button
                   type="button"
-                  className="bg-slate-500   border-2 border-gray-800 transition-all hover:bg-slate-600 focus:outline-none text-white focus:ring-4 focus:ring-slate-400 font-black uppercase rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
+                  className="bg-slate-500   border-2 border-gray-800 transition-all hover:bg-slate-600 focus:outline-none text-white focus:ring-4 focus:ring-slate-400 font-black uppercase rounded-md text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
                   onClick={handleCancel}
                 >
                   Cancel
@@ -1053,7 +1420,7 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
             ) : (
               <button
                 type="button"
-                className="bg-orange-500 border-2 border-orange-800 font-black uppercase hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 shadow-md transition-all rounded-lg text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
+                className="bg-orange-500 border-2 border-orange-800 font-black uppercase hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 shadow-md transition-all rounded-md text-sm px-5 py-2.5 me-2 mb-2  cursor-pointer mt-5"
                 onClick={() => setIsUpdate(true)}
               >
                 Update
@@ -1062,18 +1429,91 @@ const UpdateUserForm: React.FC<modalProps> = ({ state }) => {
           </div>
         </div>
 
-        <UserOptionSettings
-          Submit={(
-            action: "UPDATE" | "RESET" | "STATUS" | "UNLOCK" | "LOGOUT",
-            status
-          ) => handleSubmit(action, status)}
-          check={check}
-          isLock={state.isLock}
-          isOnline={state.isOnline}
-        />
-      </div>
+        <div className="px-4 flex flex-col gap-2">
+          <div>
+            <button
+              type="button"
+              className="bg-orange-500 w-full transition-all border-2 border-orange-800 font-black uppercase shadow-md hover:bg-orange-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 rounded-md text-sm px-5 py-2.5 cursor-pointer mt-5"
+              onClick={() => handleSubmit("RESET", false)}
+            >
+              Reset Password
+            </button>
+          </div>
+
+          {state.isOnline && (
+            <div>
+              <button
+                type="button"
+                className="bg-red-500 w-full transition-all border-2 border-red-800 font-black uppercase shadow-md hover:bg-red-600 focus:outline-none text-white focus:ring-4 focus:ring-orange-400 rounded-md text-sm px-5 py-2.5 cursor-pointer"
+                onClick={() => handleSubmit("LOGOUT", false)}
+              >
+                Logout
+              </button>
+            </div>
+          )}
+
+          {state.isLock && (
+            <div>
+              <button
+                type="button"
+                className="bg-red-600 hover:bg-red-700 focus:outline-none text-white focus:ring-4 focus:ring-red-400 font-black rounded-md text-sm px-5 py-2.5 me-2 mb-2 cursor-pointer mt-5"
+                onClick={() => handleSubmit("UNLOCK", false)}
+              >
+                Unlock User
+              </button>
+            </div>
+          )}
+
+          <label className="inline-flex border-2 border-blue-800 w-full shadow-md p-2 hover:bg-blue-300 rounded-md bg-blue-100 transition-all uppercase items-center cursor-pointer">
+            <input
+              type="checkbox"
+              checked={check}
+              id="activation"
+              name="activation"
+              onChange={(e) => handleSubmit("STATUS", e.target.checked)}
+              className="sr-only peer"
+            />
+            <div className="relative w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 dark:peer-focus:ring-blue-800 rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-600 dark:peer-checked:bg-blue-600"></div>
+            <span className="ms-3 text-sm font-black text-gray-900 dark:text-gray-300">
+              {check ? "Activated" : "Deactivated"}
+            </span>
+          </label>
+          <div className="border-2 border-blue-800 rounded-md shadow-md">
+            <div className="bg-blue-500 px-3 py-2 border-b-2 border-blue-800 font-black uppercase text-white grid grid-cols-2">
+              <div>name</div>
+              <div>Date</div>
+            </div>
+
+            <div className="overflow-auto flex max-h-80 flex-col">
+              {modifyRecord && modifyRecord.getModifyReport.length === 0 && (
+                <div className="text-center bg-blue-100 text-sm text-gray-500 p-4">
+                  No modification records found.
+                </div>
+              )}
+              {modifyRecord?.getModifyReport?.map((mr) => (
+                <div
+                  key={mr.id}
+                  className="grid grid-cols-2 py-1.5 px-2 odd:bg-blue-100"
+                >
+                  <div className="text-slate-700 font-medium text-base">
+                    {mr.name}
+                  </div>
+                  <div className="text-slate-600 text-sm">
+                    {new Date(mr.createdAt).toLocaleDateString()} -{" "}
+                    {new Date(mr.createdAt).toLocaleTimeString("en-US", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: true,
+                    })}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      </motion.div>
       {confirm && <Confirmation {...modalProps} />}
-    </>
+    </div>
   );
 };
 

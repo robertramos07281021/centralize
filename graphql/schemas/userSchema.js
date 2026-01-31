@@ -68,6 +68,7 @@ const userTypeDefs = gql`
     branch: ID
     change_password: Boolean
     buckets: [ID]
+    bucketDetails: [Bucket]
     isOnline: Boolean
     active: Boolean
     callfile_id: String
@@ -83,6 +84,9 @@ const userTypeDefs = gql`
     scoreCardType: String
     features: Features
     softphone: String
+    area: String
+    contactNumber: String
+    plateNumber: String
   }
 
   type PaginatedUsers {
@@ -148,6 +152,7 @@ const userTypeDefs = gql`
     getMe: Users
     getBucketUser(bucketId: ID): [Users]
     getBucketFieldUser(bucketId: ID): [Users]
+    getFieldUsers: [Users]
     getAomUser: [Users]
     findUsers(
       search: String!
@@ -165,6 +170,9 @@ const userTypeDefs = gql`
     getBucketTLByBucket(bucketId: ID!): [Users]
     getBucketViciIds(bucketIds: [ID]): [String]
     getNotes(limit: Int): [Note!]!
+    getEODs: [EOD]
+    getEODsByDate(date: String): [EOD]
+    getEOD(id: ID!): EOD
   }
 
   input CreateNoteInput {
@@ -215,8 +223,76 @@ const userTypeDefs = gql`
     scoreCardType: String
   }
 
+  input CreateFieldUserInput {
+    name: String!
+    username: String!
+    branch: ID!
+    buckets: [ID!]!
+    frontIdImage: String
+    backIdImage: String
+    area: String
+    contactNumber: String
+    plateNumber: String
+  }
+
+  input UpdateFieldUserInput {
+    id: ID!
+    name: String
+    username: String
+    branch: ID
+    buckets: [ID!]
+    frontIdImage: String
+    backIdImage: String
+    area: String
+    contactNumber: String
+    plateNumber: String
+  }
+
+  type EOD {
+    _id: ID!
+    campaign: EODDepartment
+    ticketNo: String
+    description: String
+    status: String
+    recommendation: String
+    createdBy: EODUser
+    finishedAt: String
+    createdAt: String
+    updatedAt: String
+  }
+
+  type EODDepartment {
+    _id: ID
+    name: String
+    branch: String
+  }
+
+  type EODUser {
+    _id: ID
+    name: String
+    user_id: String
+  }
+
+  input CreateEODInput {
+    campaign: ID!
+    ticketNo: String
+    description: String
+    status: String!
+    recommendation: String
+  }
+
+  input UpdateEODInput {
+    campaign: ID
+    ticketNo: String
+    description: String
+    status: String
+    recommendation: String
+  }
+
   type Mutation {
     createUser(createInput: CreatingAccount): Success
+    createUserField(input: CreateFieldUserInput!): Success
+    updateUserField(input: UpdateFieldUserInput!): Success
     updateUser(updateInput: UpdateAccount): Success
     updatePassword(_id: ID!, password: String!, confirmPass: String!): Users
     resetPassword(id: ID!): Success
@@ -237,6 +313,10 @@ const userTypeDefs = gql`
     createNote(input: CreateNoteInput!): Note!
     updateNote(input: UpdateNoteInput!): Note!
     deleteNote(id: ID!): Success
+    createEOD(input: CreateEODInput!): EOD
+    updateEOD(id: ID!, input: UpdateEODInput!): EOD
+    deleteEOD(id: ID!): EOD
+    finishEOD(id: ID!): EOD
   }
 `;
 

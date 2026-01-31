@@ -83,11 +83,12 @@ export const accountsNavbar: { [key: string]: links[] } = {
   AGENTFIELD: [
     { name: "Dashboard", link: "/agent-field-dashboard", tabs: null },
     { name: "Customer Sorting", link: "/customer-sorting", tabs: null },
-    {name: "Messenger", link: "/message-center", tabs: null},
+    // { name: "Messenger", link: "/message-center", tabs: null },
   ],
   TLFIELD: [
     { name: "Dashboard", link: "/tl-field-dashboard", tabs: null },
     { name: "assigning", link: "/tl-field-production", tabs: null },
+    { name: "Enrollment", link: "/tl-field-enrollment", tabs: null },
   ],
   ADMIN: [
     {
@@ -144,6 +145,11 @@ export const accountsNavbar: { [key: string]: links[] } = {
       link: "/ccs-flow",
       tabs: null,
     },
+    {
+      name: "EOD",
+      link: "/eod",
+      tabs: null,
+    },
   ],
   AGENT: [
     {
@@ -161,6 +167,7 @@ export const accountsNavbar: { [key: string]: links[] } = {
       link: "/agent-report",
       tabs: null,
     },
+    { name: "FAQs", link: "/agent-faqs", tabs: null },
   ],
   TL: [
     {
@@ -216,6 +223,8 @@ export const accountsNavbar: { [key: string]: links[] } = {
         },
       ],
     },
+    { name: "Field Status", link: "/tl-field-status", tabs: null },
+    { name: "FAQs", link: "/tl-faqs", tabs: null },
   ],
   MIS: [
     {
@@ -256,10 +265,10 @@ export const accountsNavbar: { [key: string]: links[] } = {
       tabs: null,
     },
     {
-      name: "Full Time Employee",
+      name: "Approval",
       link: "/aom-field-dashboard",
       tabs: null,
-    }
+    },
   ],
   QA: [
     {

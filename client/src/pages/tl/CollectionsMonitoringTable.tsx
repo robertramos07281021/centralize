@@ -53,12 +53,12 @@ const CollectionsMonitoringTable = () => {
     : 0;
 
   return (
-    <motion.div className="lg:text-xs 2xl:text-base flex flex-col rounded-md border border-gray-500"
+    <motion.div className="lg:text-xs 2xl:text-base flex flex-col rounded-md border-2 border-blue-800"
       initial={{y: 20, opacity: 0}}
       animate={{y: 0, opacity: 1}}
       transition={{delay: 0.2}}
     >
-      <h1 className="uppercase bg-gray-400 rounded-t-sm lg:text-sm 2xl:text-lg text-gray-800  px-2 py-1.5 font-black text-center">
+      <h1 className="uppercase text-white bg-blue-500 rounded-t-sm lg:text-sm 2xl:text-lg text-shadow-2xs px-2 py-1.5 font-black text-center">
         Collections Monitoring
       </h1>
       {loading ? (
@@ -66,7 +66,7 @@ const CollectionsMonitoringTable = () => {
           <AiOutlineLoading3Quarters className="animate-spin text-4xl" />
         </div>
       ) : (
-        <div className="w-full flex flex-col bg-gray-100 rounded-b-sm border-t text-gray-600 py-2 text-center font-black table-fixed">
+        <div className="w-full flex flex-col bg-blue-100 border-blue-800 rounded-b-sm border-t-2 text-gray-600 py-2 text-center font-black table-fixed">
           <div className="w-full">
             <div className="grid grid-cols-4 w-full">
               <div className="font-black uppercase ">Target</div>

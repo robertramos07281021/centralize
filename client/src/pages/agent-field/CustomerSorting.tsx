@@ -3,7 +3,7 @@ import { gql, useQuery, useMutation } from "@apollo/client";
 import { motion, AnimatePresence, Reorder } from "framer-motion";
 import AgentBooked from "../agent-field/AgentBooked";
 import { useSelector } from "react-redux";
-import { RootState } from "../redux/store";
+import { RootState } from "../../redux/store";
 
 type Customer = {
   id: string;
@@ -475,6 +475,7 @@ const CustomerSorting = () => {
         <Reorder.Group
           axis="y"
           values={filteredCustomerOrder}
+          layoutScroll
           onReorder={(newOrder) => {
             if (!canReorder) return;
             setCustomerOrder(newOrder);
@@ -515,24 +516,27 @@ const CustomerSorting = () => {
                   initial={{ y: 10, opacity: 0 }}
                   animate={{ y: 0, opacity: 1 }}
                   transition={{ delay: index * 0.05 }}
+                  style={{ touchAction: "none" }}
                   className={`${
                     selected
                       ? "border-gray-300 text-gray-400 bg-gray-200"
                       : "border-blue-800 text-white bg-blue-500"
-                  } select-none grid grid-cols-6 gap-2 justify-between text-base w-full py-3 px-3 border-2 rounded-sm font-black cursor-grab active:cursor-grabbing`}
+                  } select-none grid grid-cols-6 gap-4 justify-between text-base w-full py-3 px-3 border-2 rounded-sm font-black cursor-grab active:cursor-grabbing`}
                 >
                   <div className="flex col-span-4  flex-col justify-start">
                     <div className="font-black uppercase text-ellipsis">
                       {a.customerName}
                     </div>
                     <div className="text-xs flex flex-col text-ellipsis  font-semibold text-white">
-                      {a.addresses[0].split("|").map((part, i) => (
-                        <span key={i}>
-                          {part}
-                          {i < a.addresses[0].split("|").length - 1 && "|"}
-                        </span>
-                      ))}
-                      {a.addresses[1]}
+                      {(a.addresses?.[0] ?? "")
+                        .split("|")
+                        .map((part: string, i: number, arr: string[]) => (
+                          <span key={i}>
+                            {part}
+                            {i < arr.length - 1 && "|"}
+                          </span>
+                        ))}
+                      {a.addresses?.[1]}
                     </div>
                   </div>
 

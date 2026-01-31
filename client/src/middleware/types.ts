@@ -101,6 +101,12 @@ export type CustomerData = {
   paid: number;
   product: string;
   rem_months: number;
+  code: string;
+  mcc_date: string;
+  mcc_endo?: string;
+  cycle: number;
+  lb: number;
+  mad:number
 };
 
 // =======================
@@ -140,6 +146,14 @@ export type OutStandingDetails = {
   client_id: string;
   loan_start: string;
   due_date: string;
+  code: string;
+  mcc_endo?: string;
+  cycle: number;
+  lb: number;
+  mad:number;
+  topup: number;
+  employer_name: string;
+
 };
 
 type grassDetails = {
@@ -148,11 +162,12 @@ type grassDetails = {
   grass_date: string;
 };
 
-type AccountBucket = {
+export type AccountBucket = {
   name: string;
   dept: string;
   _id: string;
   can_update_ca: boolean;
+  isPermanent: boolean
 };
 
 type EmergencyContact = {

@@ -249,7 +249,6 @@ const NavbarExtn = () => {
     onData({ data }) {
       if(data) {
         if(data?.data) {
-        console.log(data?.data)
           if(viciStatus !== data.data?.agentStatusUpdated) {
             dispatch(setViciStatus(data.data?.agentStatusUpdated))
           }

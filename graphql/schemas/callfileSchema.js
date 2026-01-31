@@ -41,6 +41,7 @@ const callfileTypeDefs = gql`
     emails: [String]
     started: Boolean
     finished: Boolean
+    assignee: String
     approve: Boolean
   }
 
@@ -88,6 +89,11 @@ const callfileTypeDefs = gql`
     name: String
     count: Int
     amount: Float
+  }
+
+  type BucketTaskCount {
+    bucket: ID
+    total: Int
   }
 
   input Selective {
@@ -141,6 +147,7 @@ const callfileTypeDefs = gql`
     ): [CallfileDispositionSummary]
     getCustomerAccountsByBucket(bucketId: ID!): [CustomerAccountField]
     getCustomerAccountsByAssignee(assigneeId: ID!): [CustomerAccountField]
+    getFieldTasksByBuckets(bucketIds: [ID!]!): [BucketTaskCount]
   }
 
   type Mutation {

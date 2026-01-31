@@ -129,6 +129,21 @@ const userSchema = new Schema(
       token: {
         type: String
       }
+    },
+    area: {
+      type: String
+    },
+    contactNumber: {
+      type: String
+    },
+    plateNumber: {
+      type: String
+    },
+    frontIdImage: {
+      type: String
+    },
+    backIdImage: {
+      type: String
     }
   },
   { timestamps: true }

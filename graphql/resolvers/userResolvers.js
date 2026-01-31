@@ -14,6 +14,9 @@ import { bucketUsersStatus, logoutVici } from "../../middlewares/vicidial.js";
 import CustomerAccount from "../../models/customerAccount.js";
 import { safeResolver } from "../../middlewares/safeResolver.js";
 import Note from "../../models/note.js";
+import EOD from "../../models/eod.js";
+import fs from "fs/promises";
+import path from "path";
 
 const PROD_TRACKED_TYPES = new Set(["AGENT", "QA"]);
 
@@ -34,6 +37,30 @@ function parseOptionalDateTime(value) {
     throw new CustomError("Invalid date", 400);
   }
   return date;
+}
+
+function parseBase64Image(data) {
+  if (!data) {
+    console.log("parseBase64Image: No data provided");
+    return null;
+  }
+  const matches = String(data).match(
+    /^data:(image\/[a-zA-Z0-9.+-]+);base64,(.+)$/,
+  );
+  if (!matches) {
+    console.log(
+      "parseBase64Image: Invalid format, data starts with:",
+      String(data).substring(0, 50),
+    );
+    return null;
+  }
+  const mime = matches[1];
+  const buffer = Buffer.from(matches[2], "base64");
+  const ext = mime.split("/")[1] || "png";
+  console.log(
+    `parseBase64Image: Parsed ${mime}, buffer size: ${buffer.length}`,
+  );
+  return { buffer, ext };
 }
 
 const userResolvers = {
@@ -75,6 +102,18 @@ const userResolvers = {
       }).select("_id name user_id type vici_id softphone isOnline active");
 
       return findUser;
+    }),
+    getFieldUsers: safeResolver(async (_, __, { user }) => {
+      if (!user) throw new CustomError("Not authenticated", 401);
+
+      const fieldUsers = await User.find({
+        type: "AGENTFIELD",
+      }).populate("buckets");
+
+      return fieldUsers.map((u) => ({
+        ...u.toObject(),
+        bucketDetails: u.buckets,
+      }));
     }),
     getUsers: safeResolver(async (_, { page = 1, limit = 20 }) => {
       const res = await User.aggregate([
@@ -435,6 +474,40 @@ const userResolvers = {
 
       return notes;
     }),
+
+    getEODs: safeResolver(async (_, __, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+      const eods = await EOD.find({})
+        .sort({ createdAt: -1 })
+        .populate({ path: "campaign", select: "_id name" })
+        .populate({ path: "createdBy", select: "_id name" });
+      return eods;
+    }),
+
+    getEODsByDate: safeResolver(async (_, { date }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+      const startOfDay = new Date(date);
+      startOfDay.setHours(0, 0, 0, 0);
+      const endOfDay = new Date(date);
+      endOfDay.setHours(23, 59, 59, 999);
+
+      const eods = await EOD.find({
+        createdAt: { $gte: startOfDay, $lte: endOfDay },
+      })
+        .sort({ createdAt: -1 })
+        .populate({ path: "campaign", select: "_id name" })
+        .populate({ path: "createdBy", select: "_id name" });
+      return eods;
+    }),
+
+    getEOD: safeResolver(async (_, { id }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+      const eod = await EOD.findById(id)
+        .populate({ path: "campaign", select: "_id name" })
+        .populate({ path: "createdBy", select: "_id name" });
+      if (!eod) throw new CustomError("EOD not found", 404);
+      return eod;
+    }),
   },
   DeptUser: {
     buckets: safeResolver(async (parent) => {
@@ -513,6 +586,95 @@ const userResolvers = {
       return {
         success: true,
         message: "New Account Created",
+      };
+    }),
+
+    createUserField: safeResolver(async (_, { input }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const {
+        name,
+        username,
+        branch,
+        buckets,
+        frontIdImage,
+        backIdImage,
+        area,
+        contactNumber,
+        plateNumber,
+      } = input;
+
+      const existing = await User.findOne({ username });
+      if (existing) throw new CustomError("Username already exists", 400);
+
+      const saltPassword = await bcrypt.genSalt(10);
+      const hashPassword = await bcrypt.hash("Bernales2025", saltPassword);
+
+      const newUser = await User.create({
+        name,
+        username,
+        password: hashPassword,
+        type: "AGENTFIELD",
+        departments: null,
+        branch,
+        isOnline: false,
+        change_password: true,
+        account_type: "field",
+        buckets,
+        user_id: null,
+        new_account: false,
+        active: true,
+        reliver: false,
+        attempt_login: 0,
+        callfile_id: "",
+        new_agent: true,
+        isLock: false,
+        area,
+        contactNumber,
+        plateNumber,
+      });
+
+      const imagesDir = path.join(
+        process.cwd(),
+        "client",
+        "src",
+        "fieldimages",
+      );
+      console.log("Creating images directory at:", imagesDir);
+      await fs.mkdir(imagesDir, { recursive: true });
+
+      const front = parseBase64Image(frontIdImage);
+      if (front) {
+        const frontName = `${newUser._id}_front.${front.ext}`;
+        const frontPath = path.join(imagesDir, frontName);
+        console.log("Writing front image to:", frontPath);
+        try {
+          await fs.writeFile(frontPath, front.buffer);
+          console.log("Front image written successfully");
+        } catch (writeErr) {
+          console.error("Error writing front image:", writeErr);
+        }
+      }
+
+      const back = parseBase64Image(backIdImage);
+      if (back) {
+        const backName = `${newUser._id}_back.${back.ext}`;
+        const backPath = path.join(imagesDir, backName);
+        console.log("Writing back image to:", backPath);
+        try {
+          await fs.writeFile(backPath, back.buffer);
+          console.log("Back image written successfully");
+        } catch (writeErr) {
+          console.error("Error writing back image:", writeErr);
+        }
+      }
+
+      await ModifyRecord.create({ name: "Created", user: newUser._id });
+
+      return {
+        success: true,
+        message: "New Field Agent Created",
+        user: newUser,
       };
     }),
 
@@ -1114,6 +1276,159 @@ const userResolvers = {
         return { success: false, message: "Server error", customer: null };
       }
     },
+
+    createEOD: safeResolver(async (_, { input }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const newEOD = new EOD({
+        ...input,
+        createdBy: user._id,
+      });
+
+      await newEOD.save();
+
+      const populatedEOD = await EOD.findById(newEOD._id)
+        .populate("campaign")
+        .populate("createdBy", "name user_id");
+
+      return populatedEOD;
+    }),
+
+    updateEOD: safeResolver(async (_, { id, input }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const updatedEOD = await EOD.findByIdAndUpdate(
+        id,
+        { $set: input },
+        { new: true },
+      )
+        .populate("campaign")
+        .populate("createdBy", "name user_id");
+
+      if (!updatedEOD) throw new CustomError("EOD not found", 404);
+
+      return updatedEOD;
+    }),
+
+    deleteEOD: safeResolver(async (_, { id }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const deletedEOD = await EOD.findByIdAndDelete(id)
+        .populate("campaign")
+        .populate("createdBy", "name user_id");
+
+      if (!deletedEOD) throw new CustomError("EOD not found", 404);
+
+      return deletedEOD;
+    }),
+
+    finishEOD: safeResolver(async (_, { id }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const finishedEOD = await EOD.findByIdAndUpdate(
+        id,
+        { $set: { finishedAt: new Date() } },
+        { new: true },
+      )
+        .populate("campaign")
+        .populate("createdBy", "name user_id");
+
+      if (!finishedEOD) throw new CustomError("EOD not found", 404);
+
+      return finishedEOD;
+    }),
+
+    updateUserField: safeResolver(async (_, { input }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const {
+        id,
+        name,
+        username,
+        branch,
+        buckets,
+        frontIdImage,
+        backIdImage,
+        area,
+        contactNumber,
+        plateNumber,
+      } = input;
+
+      const updateData = {};
+
+      if (name !== undefined) updateData.name = name;
+      if (username !== undefined) updateData.username = username;
+      if (branch !== undefined) updateData.branch = branch;
+      if (buckets !== undefined) updateData.buckets = buckets;
+      if (area !== undefined) updateData.area = area;
+      if (contactNumber !== undefined) updateData.contactNumber = contactNumber;
+      if (plateNumber !== undefined) updateData.plateNumber = plateNumber;
+
+      try {
+        const imagesDir = path.join(
+          process.cwd(),
+          "client",
+          "public",
+          "fieldimages",
+        );
+        await fs.mkdir(imagesDir, { recursive: true });
+
+        const existingFiles = await fs.readdir(imagesDir);
+
+        if (frontIdImage) {
+          for (const f of existingFiles) {
+            if (f.startsWith(`${id}_front.`)) {
+              try {
+                await fs.unlink(path.join(imagesDir, f));
+              } catch (err) {
+                console.error("Error deleting old front image:", f, err);
+              }
+            }
+          }
+
+          const front = parseBase64Image(frontIdImage);
+          if (front) {
+            const frontName = `${id}_front.${front.ext}`;
+            const frontPath = path.join(imagesDir, frontName);
+            await fs.writeFile(frontPath, front.buffer);
+            updateData.frontIdImage = `/fieldimages/${frontName}`;
+          }
+        }
+
+        if (backIdImage) {
+          for (const f of existingFiles) {
+            if (f.startsWith(`${id}_back.`)) {
+              try {
+                await fs.unlink(path.join(imagesDir, f));
+              } catch (err) {
+                console.error("Error deleting old back image:", f, err);
+              }
+            }
+          }
+
+          const back = parseBase64Image(backIdImage);
+          if (back) {
+            const backName = `${id}_back.${back.ext}`;
+            const backPath = path.join(imagesDir, backName);
+            await fs.writeFile(backPath, back.buffer);
+            updateData.backIdImage = `/fieldimages/${backName}`;
+          }
+        }
+      } catch (err) {
+        console.error("Error handling field images:", err);
+      }
+
+      const updatedUser = await User.findByIdAndUpdate(id, updateData, {
+        new: true,
+      });
+      if (!updatedUser) throw new CustomError("User not found", 404);
+
+      return {
+        success: true,
+        message: "Field user updated successfully!",
+        user: updatedUser,
+      };
+    }),
   },
 };
 

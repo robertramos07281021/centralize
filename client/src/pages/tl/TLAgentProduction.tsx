@@ -20,7 +20,7 @@ const TL_BUCKET = gql`
 
 const TLAgentProduction = () => {
   const { intervalTypes, selectedBucket } = useSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   );
   const pathName = location.pathname.slice(1);
   const isTLDashboard = ["tl-dashboard", "aom-dashboard"].includes(pathName);
@@ -38,7 +38,7 @@ const TLAgentProduction = () => {
   }, [selectedBucket, intervalTypes]);
 
   const findBucket = tlBucketData?.getAllBucket.find(
-    (bucket) => bucket._id === selectedBucket
+    (bucket) => bucket._id === selectedBucket,
   );
 
   const bucketObject: { [key: string]: string } = useMemo(() => {
@@ -48,27 +48,33 @@ const TLAgentProduction = () => {
 
   return (
     <div className="col-span-6 flex flex-col overflow-hidden">
-      <div className="   text-slate-700 flex items-center mb-2 gap-2 justify-between">
-        <div className="flex justify-between w-full">
-          <h1 className="font-bold lg:text-lg 2xl:text-3xl">
-            {bucketObject[selectedBucket as keyof typeof bucketObject]}
-            {!findBucket?.principal && (
-              <span className="uppercase"> - {intervalTypes}</span>
+      <div className="text-slate-700 border-blue-800 bg-blue-100 border-2 rounded-md p-2 px-4 flex items-center mb-2 gap-2 justify-between">
+        <div className="flex justify-between font-black w-full">
+          <h1 className="lg:text-base 2xl:text-xl">
+            {selectedBucket ? (
+              <div>
+                {bucketObject[selectedBucket as keyof typeof bucketObject]}
+                {!findBucket?.principal && (
+                  <span className="uppercase"> - {intervalTypes}</span>
+                )}
+              </div>
+            ) : (
+              "ds"
             )}
           </h1>
         </div>
         {intervalTypes === IntervalsTypes.MONTHLY && (
           <div className="flex gap-5 text-gray-800">
-            <div className="flex gap-2 items-center">
-              <p>From</p>
-              <div className="bg-gray-100 border border-gray-800 shadow-md rounded-md flex gap-2 items-center">
-                <input className="px-3 py-1" type="date" />
+            <div className="flex font-black uppercase gap-2 items-center">
+              <p>From:</p>
+              <div className="bg-blue-50 border-2 border-blue-800 shadow-md rounded-md flex gap-2 items-center">
+                <input className="px-3 py-1 outline-none" type="date" />
               </div>
             </div>
-            <div className="flex gap-2 items-center">
-              <p>To</p>
-              <div className="bg-gray-100 border border-gray-800 shadow-md  rounded-md ">
-                <input className="px-3 py-1" type="date" />
+            <div className="flex font-black uppercase gap-2 items-center">
+              <p>To:</p>
+              <div className="bg-blue-50 border-2 border-blue-800 shadow-md  rounded-md ">
+                <input className="px-3 py-1 outline-none" type="date" />
               </div>
             </div>
           </div>

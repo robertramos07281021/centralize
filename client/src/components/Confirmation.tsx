@@ -116,7 +116,7 @@ const Confirmation: React.FC<modalProps> = ({ yes, no, message, toggle }) => {
     <div
       tabIndex={0}
       onKeyDown={(e) => e}
-      className="fixed w-screen h-screen top-0 left-0 z-60 flex items-center justify-center"
+      className="fixed w-screen h-screen top-0 p-10 left-0 z-60 flex items-center justify-center"
     >
       <motion.div
         onClick={() => !loading && no()}
@@ -127,18 +127,18 @@ const Confirmation: React.FC<modalProps> = ({ yes, no, message, toggle }) => {
       ></motion.div>
       <motion.div
         key={"confirmModal-div"}
-        className={` ${color[toggle]?.title}  min-w-96  max-h-96 max-w-120 bg-white rounded-lg z-20 shadow-xl overflow-hidden flex flex-col `}
+        className={` ${color[toggle]?.title}  md:min-w-96  md:max-h-96 max-w-120 bg-white rounded-lg z-20 shadow-xl overflow-hidden flex flex-col `}
         initial={{ opacity: 0, scale: 0.8 }}
         animate={{ opacity: 1, scale: 1 }}
         layout
       >
         <div
-          className={`${color[toggle]?.title} p-2  text-2xl text-white py-4 font-black uppercase text-center `}
+          className={`${color[toggle]?.title} p-2 text-lg md:text-2xl text-white py-2 md:py-4 font-black uppercase text-center `}
         >
           Confirmation
         </div>
-        <div className="h-full p-10 flex flex-col bg-white items-center justify-center gap-10">
-          <p className="text-xl font-medium text-slate-700 px-10 text-center">
+        <div className="h-full p-5 md:p-10 flex flex-col bg-white items-center justify-center gap-5 md:gap-10">
+          <p className="text-sm md:text-xl font-medium text-slate-700 px-10 text-center">
             {loading
               ? noButtonHide.includes(toggle)
                 ? "Processing..."
@@ -155,7 +155,7 @@ const Confirmation: React.FC<modalProps> = ({ yes, no, message, toggle }) => {
               type="button"
               accessKey="w"
               className={
-                `transition-all focus:ring-4 font-black uppercase rounded-md shadow-md text-lg px-6 py-2  ` +
+                `transition-all font-black uppercase rounded-md shadow-md text-sm md:text-lg px-4 md:px-6 py-2  ` +
                 (loading
                   ? "opacity-60 cursor-not-allowed bg-gray-300 text-gray-400"
                   : `  text-white cursor-pointer ${color[toggle]?.button} ` ||
@@ -181,7 +181,7 @@ const Confirmation: React.FC<modalProps> = ({ yes, no, message, toggle }) => {
             {!noButtonHide.includes(toggle) && (
               <button
                 type="button"
-                className={`text-white bg-gray-400 border-gray-500 transition-all hover:bg-gray-500 shadow-md font-black uppercase rounded-md text-lg px-6 py-2 cursor-pointer ${
+                className={`text-white bg-gray-400 border-gray-500 transition-all hover:bg-gray-500 shadow-md font-black uppercase rounded-sm text-xs md:text-lg px-4 md:px-6 py-2  cursor-pointer ${
                   loading ? "opacity-60 cursor-not-allowed" : ""
                 }`}
                 onClick={no}

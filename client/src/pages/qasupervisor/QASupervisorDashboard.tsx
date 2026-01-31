@@ -364,7 +364,7 @@ const QASupervisorDashboard = () => {
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="h-full"
+          className="h-full row-span-2"
         >
           <div className="grid  rounded-md shadow overflow-hidden border border-black h-full bg-gray-200">
             <div className="grid-cols-4 py-2 border-b text-start grid items-center px-4 shadow-md rounded-t-sm font-black text-sm text-black uppercase bg-gray-300">
@@ -415,157 +415,13 @@ const QASupervisorDashboard = () => {
             </div>
           </div>
         </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.4 }}
-        >
-          <div className=" rounded-md overflow-hidden flex flex-col shadow border border-black h-full bg-gray-200">
-            <div className="bg-gray-300 border-b justify-center gap-2 items-center shadow-md border-black rounded-t-sm flex w-full">
-              <div className="font-black uppercase text-center py-2 text-black text-sm ">
-                Top 6 QA Performance
-              </div>
-
-              <div
-                title={`Performance is based on QA production, such as \nlogging in to CCS and creating score sheets.`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  fill="none"
-                  viewBox="0 0 24 24"
-                  strokeWidth="2"
-                  stroke="currentColor"
-                  className="size-4"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    d="M9.879 7.519c1.171-1.025 3.071-1.025 4.242 0 1.172 1.025 1.172 2.687 0 3.712-.203.179-.43.326-.67.442-.745.361-1.45.999-1.45 1.827v.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Zm-9 5.25h.008v.008H12v-.008Z"
-                  />
-                </svg>
-              </div>
-
-              <div className="ml-2">
-                <input
-                  className="text-xs font-semibold px-2 py-1 rounded border border-gray-500 bg-gray-100"
-                  type="month"
-                  value={performanceMonth}
-                  onChange={(e) => setPerformanceMonth(e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="h-full px-4 flex flex-col">
-              {topQaPerfLoading ? (
-                <div className="flex-1 flex items-center justify-center text-sm font-semibold text-gray-500">
-                  Loading...
-                </div>
-              ) : (
-                <>
-                  <div className="flex-1 mt-4 grid grid-cols-6 grid-rows-1 gap-3 items-end content-center justify-center">
-                    {topQaSlots.map((row: any, idx) => {
-                      const total = row ? Number(row?.total ?? 0) : 0;
-                      const percent = Math.round((total / topQaMaxTotal) * 100);
-                      const barTitle = row
-                        ? `${row?.user?.name ?? "Unknown"}\nTotal: ${total}\nProduction: ${Number(
-                            row?.productionCount ?? 0
-                          )}\nScore Sheets: ${Number(row?.scoreSheetCount ?? 0)}`
-                        : "No data";
-
-                      return (
-                        <div
-                          key={row?.user?._id ?? `slot-${idx}`}
-                          className="w-full h-full flex flex-col justify-end items-center"
-                          title={barTitle}
-                        >
-                          <div
-                            className={`w-12 sm:w-14 md:w-16 rounded-t-md text-center transition-all duration-500 ${
-                              total > 0 ? "bg-green-700" : "bg-gray-400"
-                            }`}
-                            style={{ height: `${percent}%` }}
-                          ></div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  <div className="border-t border-gray-500 grid grid-cols-6 gap-3 truncate text-center font-black uppercase text-gray-500 justify-evenly py-2 text-xs">
-                    {topQaSlots.map((row: any, idx) => (
-                      <div
-                        key={row?.user?._id ?? `label-${idx}`}
-                        className="truncate"
-                        title={row?.user?.name ?? ""}
-                      >
-                        {row?.user?.name ?? "-"}
-                      </div>
-                    ))}
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        </motion.div>
-        <motion.div
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-        >
-          <div className=" rounded-md shadow  border relative flex flex-col border-gray-500 h-full bg-gray-200">
-            <div className="bg-gray-300 border-b border-gray-500  rounded-t-sm justify-evenly py-2 shadow-md w-full flex text-sm ">
-              <div className="font-black uppercase text-center py-3 text-gray-500 ">
-                Overall Satisfaction Score
-              </div>
-              <div className="font-black uppercase text-center py-3 text-gray-500 ">
-                Satisfaction Score - By QA
-              </div>
-            </div>
-            <div className="flex h-full">
-              <div className="flex items-center justify-center h-full flex-col w-full relative">
-                <GaugeChart
-                  id="gauge-chart"
-                  nrOfLevels={100}
-                  colors={["#fff"]}
-                  percent={value}
-                  arcWidth={0.3}
-                  needleColor="#333"
-                  arcsLength={[1]}
-                  hideText
-                />
-                <div className="font-black uppercase text-gray-500">
-                  Satisfaction Score: 3.33
-                </div>
-              </div>
-              <div className="flex flex-col w-full h-full py-3 px-3 items-end font-black text-gray-500">
-                <div className="h-full flex w-full">
-                  <div className="h-full flex pr-5 border-r-2 flex-col text-end justify-evenly">
-                    <div>Jim</div>
-                    <div>Stewart</div>
-                    <div>Manuel</div>
-                    <div>Joshua</div>
-                    <div>Daniel</div>
-                  </div>
-                  <div className="h-full w-full flex pr-5 flex-col text-start justify-evenly">
-                    <div>d</div>
-                    <div>d</div>
-                    <div>d</div>
-                    <div>d</div>
-                    <div>d</div>
-                  </div>
-                </div>
-                <div className="flex flex-row border-t-2 pl-20 pt-3 justify-evenly w-full">
-                  <div>0</div>
-                  <div>1</div>
-                  <div>2</div>
-                  <div>3</div>
-                  <div>4</div>
-                  <div>5</div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        
+       
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.6 }}
+          className="row-span-2"
         >
           <div className="rounded-md shadow border relative flex flex-col border-black h-full bg-gray-200 overflow-hidden">
             <div className="bg-gray-300 border-b border-black rounded-t-md w-full shrink-0">

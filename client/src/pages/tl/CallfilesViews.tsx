@@ -781,7 +781,7 @@ const CallfilesViews: React.FC<Props> = ({
       >
         <div className="w-full h-full rounded-b-sm overflow-hidden flex flex-col text-left">
           <div className="w-full">
-            <div className=" w-full border border-black px-2 py-2 uppercase rounded-t-md truncate bg-gray-300 grid grid-cols-[repeat(14,_minmax(0,_1fr))] gap-2 font-black text-black text-xs">
+            <div className=" w-full border-2 border-blue-800 px-2 py-2 uppercase rounded-t-md truncate bg-blue-500 grid grid-cols-[repeat(14,_minmax(0,_1fr))] gap-2 font-black text-white text-xs">
               {labels.map((x, index) => (
                 <div
                   className="w-full text-ellipsis cursor-default truncate"
@@ -799,7 +799,7 @@ const CallfilesViews: React.FC<Props> = ({
             <div className=" overflow-y-auto h-full">
               {data?.getCallfiles?.result &&
                 data?.getCallfiles?.result?.length < 1 && (
-                  <div className="w-full py-3 bg-gray-100 border-x border-b rounded-b-md border-black shadow-md flex justify-center items-center text-gray-500 italic">
+                  <div className="w-full py-3 bg-blue-100 border-x-2 border-b-2 rounded-b-md border-blue-800 shadow-md flex justify-center items-center text-gray-500 italic">
                     No callfiles found.
                   </div>
                 )}
@@ -821,12 +821,12 @@ const CallfilesViews: React.FC<Props> = ({
                 return (
                   <motion.div
                     key={index}
-                    className="border-x border-b border-black last:rounded-b-md overflow-hidden last:shadow-md"
+                    className="border-x-2 border-b-2 border-blue-800 last:rounded-b-md cursor-pointer overflow-hidden odd:bg-blue-100 even:bg-blue-200 last:shadow-md"
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: index * 0.1 }}
                   >
-                    <div className="text-[0.7rem]    hover:bg-gray-300 transition-all items-center py-2 px-3 bg-gray-100 even:bg-gray-200 2xl:text-xs gap-2 text-gray-800 grid grid-cols-[repeat(14,_minmax(0,_1fr))] w-full ">
+                    <div className="text-[0.7rem] hover:bg-blue-300 transition-all items-center py-2 px-3  2xl:text-xs gap-2 text-gray-800 grid grid-cols-[repeat(14,_minmax(0,_1fr))] w-full ">
                       <div
                         className="overflow-hidden pr-2"
                         title={res.callfile.name}
@@ -850,7 +850,7 @@ const CallfilesViews: React.FC<Props> = ({
                       <div>{res.uncontactable || 0}</div>
                       <div>{res.connected}</div>
                       <div
-                        className="truncate cursor-default"
+                        className="truncate"
                         title={res.OB.toLocaleString("en-PH", {
                           style: "currency",
                           currency: "PHP",
@@ -862,7 +862,7 @@ const CallfilesViews: React.FC<Props> = ({
                         })}
                       </div>
                       <div
-                        className="truncate cursor-default"
+                        className="truncate "
                         title={res.principal.toLocaleString("en-PH", {
                           style: "currency",
                           currency: "PHP",
@@ -875,7 +875,7 @@ const CallfilesViews: React.FC<Props> = ({
                       </div>
 
                       <div
-                        className="truncate cursor-default"
+                        className="truncate"
                         title={res.target.toLocaleString("en-PH", {
                           style: "currency",
                           currency: "PHP",

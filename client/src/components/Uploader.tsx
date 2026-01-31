@@ -60,7 +60,13 @@ const Uploader: React.FC<modalProps> = ({
           const cleanRow: Record<string, any> = {};
           for (const key in row) {
             const cleanKey = key.trim().replace(/\s+/g, "_");
-            cleanRow[cleanKey] = row[key];
+            const normalizedKey =
+              cleanKey === "platform_customer"
+                ? "platform_user_id"
+                : cleanKey === "mcc_date"
+                  ? "mcc_endo"
+                  : cleanKey;
+            cleanRow[normalizedKey] = row[key];
           }
           return cleanRow;
         });
@@ -119,6 +125,14 @@ const Uploader: React.FC<modalProps> = ({
             loan_start,
             term,
             agent,
+            code,
+            mcc_endo,
+            cycle,
+            mad,
+            lb,
+            employer_name,
+            product,
+            topup,
             ...others
           } = row;
 
@@ -191,10 +205,13 @@ const Uploader: React.FC<modalProps> = ({
               : Number(penalty_interest_os) || 0,
             dst_fee_os: isNaN(dst_fee_os) ? 0 : Number(dst_fee_os) || 0,
             balance: Number(balance) || Number(total_os),
+            topup: Number(topup) || 0,
             total_os: Number(total_os) || Number(mo_amort),
             late_charge_waive_fee_os: Number(late_charge_waive_fee_os) || 0,
             overall_balance: Number(overall_balance) || 0,
             mo_balance: Number(mo_balance) || 0,
+            mad: Number(mad) || 0,
+            lb: Number(lb) || 0,
             partial_payment_w_service_fee:
               Number(partial_payment_w_service_fee) || 0,
             new_tad_with_sf: Number(new_tad_with_sf) || 0,
@@ -202,19 +219,36 @@ const Uploader: React.FC<modalProps> = ({
             service_fee: Number(service_fee) || 0,
             term: Number(term) || 0,
             last_payment_amount: Number(last_payment_amount) || 0,
+            cycle: Number(cycle) || 0,
             gender: isNaN(gender) ? gender : "O",
             overdue_balance: Number(overdue_balance) || 0,
-            agent: String(agent)
+            agent: String(agent),
           } as Record<string, any>;
 
           if (emergencyContactMobile) {
             rows["emergencyContactMobile"] = normalizePHNumber(
-              emergencyContactMobile
+              emergencyContactMobile,
             );
           }
 
           if (model) {
             rows["model"] = model.toString().trim();
+          }
+
+          if (employer_name) {
+            rows["employer_name"] = employer_name.toString().trim();
+          }
+
+          if (product) {
+            rows["product"] = product.toString().trim();
+          }
+
+          if (code) {
+            rows["code"] = code.toString().trim();
+          }
+
+          if (mcc_endo) {
+            rows["mcc_endo"] = safeDate(mcc_endo);
           }
 
           if (client_type) {
@@ -279,7 +313,7 @@ const Uploader: React.FC<modalProps> = ({
 
             if (contactStr.includes("PHONE MOBILE1")) {
               const mobileMatches = contactStr.match(
-                /PHONE MOBILE\d*\s*:\s*(\d{10,11})/g
+                /PHONE MOBILE\d*\s*:\s*(\d{10,11})/g,
               );
 
               if (mobileMatches) {
@@ -372,8 +406,8 @@ const Uploader: React.FC<modalProps> = ({
     }
   }, []);
 
-  console.log(excelData)
- 
+  console.log(excelData);
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     accept: {
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [],
@@ -420,7 +454,7 @@ const Uploader: React.FC<modalProps> = ({
             callfile: file[0]?.name?.split(".")[0],
             bucket: bucket,
           },
-        })
+        }),
       );
 
       const results = await Promise.allSettled(promises);
@@ -436,7 +470,7 @@ const Uploader: React.FC<modalProps> = ({
           .map((x) =>
             x.status === "rejected"
               ? String(x.reason).includes("E11000")
-              : false
+              : false,
           )
           .some((x) => x === true)
       ) {
@@ -445,7 +479,7 @@ const Uploader: React.FC<modalProps> = ({
             success: true,
             message: "Duplicate file name",
             isMessage: false,
-          })
+          }),
         );
         setExcelData([]);
         setFile([]);
@@ -456,7 +490,7 @@ const Uploader: React.FC<modalProps> = ({
           .map((x) =>
             x.status === "rejected"
               ? String(x.reason).includes("Not Include")
-              : false
+              : false,
           )
           .some((x) => x === true)
       ) {
@@ -465,7 +499,7 @@ const Uploader: React.FC<modalProps> = ({
             success: true,
             message: "There is a buckets not included",
             isMessage: false,
-          })
+          }),
         );
         setLoading(false);
         setExcelData([]);
@@ -535,7 +569,7 @@ const Uploader: React.FC<modalProps> = ({
             {...getRootProps()}
             className={`${
               required && file.length === 0 && "border-red-500 bg-red-50"
-            } border bg-gray-200 shadow-md hover:shadow-none hover:bg-gray-100 transition-all border-dashed h-full rounded-md text-center cursor-pointer w-full flex items-center justify-center lg:text-xs 2xl:sm`}
+            } border bg-blue-200 shadow-md hover:shadow-none hover:bg-blue-100 transition-all border-dashed h-full rounded-md text-center cursor-pointer w-full flex items-center justify-center lg:text-xs 2xl:sm`}
           >
             <input {...getInputProps()} />
             {file.length === 0 && (

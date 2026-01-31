@@ -62,6 +62,13 @@ const customerTypeDefs = gql`
     loan_start: String
     due_date: String
     agent: String
+    code: String
+    mcc_endo: String
+    cycle: Float
+    mad: Float
+    lb: Float
+    employer_name: String
+    topup: Float
   }
 
   type CustomerInfo {
@@ -118,6 +125,13 @@ const customerTypeDefs = gql`
     client_id: String
     loan_start: String
     due_date: String
+    code: String
+    mcc_endo: String
+    mad: Float
+    cycle: String
+    lb: Float
+    employer_name: String
+    topup: Float
   }
 
   type grassDetails {
@@ -301,6 +315,12 @@ const customerTypeDefs = gql`
   message: String!
   customer: CustomerAccount
 }
+
+  type UpdateCustomerForFieldPayload {
+    message: String!
+    success: Boolean!
+    customer: CustomerAccount
+  }
 
   type Query {
     findCustomer(

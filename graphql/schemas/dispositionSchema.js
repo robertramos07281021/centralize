@@ -62,6 +62,22 @@ const dispositionTypeDefs = gql`
     createdAt: DateTime
   }
 
+  type FieldDispositionWithCustomerAndUser {
+    _id: ID
+    disposition: DispoType
+    customer_account: FieldDispositionCustomer
+    user: ID
+    amount: Float
+    payment_method: String
+    payment: String
+    payment_date: String
+    ref_no: String
+    rfd: String
+    sof: String
+    comment: String
+    createdAt: DateTime
+  }
+
   type Agent {
     _id: ID
     name: String
@@ -119,6 +135,17 @@ const dispositionTypeDefs = gql`
   type User {
     name: String
     user_id: String
+  }
+
+  type Notification {
+    _id: ID
+    user: User
+    assignee: ID
+    assigneeUser: User
+    bucket: ID
+    task: Int
+    createdAt: DateTime
+    code: Int
   }
 
   type DispoReport {
@@ -261,6 +288,15 @@ const dispositionTypeDefs = gql`
     getAccountDispoCount(id: ID!): Count
     getFieldDispositionsByCustomerAccounts(accountIds: [ID!]!): [FieldDisposition]
     getFieldDispositionsByUser(limit: Int): [FieldDispositionWithCustomer]
+    getFieldDispositionsByUsers(
+      userIds: [ID!]!
+      accountIds: [ID!]!
+    ): [FieldDispositionWithCustomerAndUser]
+    getNotificationsByAssignee(
+      assigneeId: ID!
+      limit: Int
+    ): [Notification]
+    getNotificationsByBucket(bucketId: ID!, limit: Int): [Notification]
     getDispositionReports(reports: SearchDispoReports): Reports
     getAllDispositionTypes: [DispoType]
     getDailyFTE(bucket: ID): DailyFTE
@@ -284,7 +320,11 @@ const dispositionTypeDefs = gql`
       id: ID!
       forfield: Boolean!
     ): UpdateCustomerForFieldPayload
-    updateFieldAssignee(id: ID!, assignee: ID!): UpdateCustomerForFieldPayload
+    updateFieldAssignee(
+      id: ID!
+      assignee: ID!
+      task: Int
+    ): UpdateCustomerForFieldPayload
   }
 `;
 

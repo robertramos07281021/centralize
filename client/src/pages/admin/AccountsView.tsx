@@ -16,6 +16,7 @@ import Confirmation from "../../components/Confirmation";
 import { Department, Users } from "../../middleware/types.ts";
 import { motion, AnimatePresence } from "framer-motion";
 import RegisterView from "./RegisterView.tsx";
+import UpdateUserForm from "../admin/UpdateUserForm.tsx";
 
 type DeptBranchBucket = {
   _id: string;
@@ -144,7 +145,7 @@ const AccountsView = () => {
   const [search, setSearch] = useState("");
   const dispatch = useAppDispatch();
   const { limit, adminUsersPage } = useSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   );
   const [cancel, setCancel] = useState<boolean>(false);
   const location = useLocation();
@@ -154,6 +155,8 @@ const AccountsView = () => {
   const [width, setWidth] = useState<number>(50);
   const [option, setOption] = useState<number>(0);
   const [filter, setFilter] = useState<filter>("all");
+  const [isAccountOpen, setIsAccountOpen] = useState<boolean>(false);
+  const [selectedUser, setSelectedUser] = useState<Users | null>(null);
 
   const { data: getDeptData, refetch: deptRefetch } = useQuery<{
     getDepts: Department[];
@@ -221,7 +224,7 @@ const AccountsView = () => {
             success: result.deleteUser.success,
             message: result.deleteUser.message,
             isMessage: false,
-          })
+          }),
         );
       }
     },
@@ -245,7 +248,7 @@ const AccountsView = () => {
         },
       });
     },
-    [setConfirm, setModalProps]
+    [setConfirm, setModalProps],
   );
 
   useEffect(() => {
@@ -255,7 +258,7 @@ const AccountsView = () => {
   useEffect(() => {
     if (searchData) {
       const searchExistingPages = Math.ceil(
-        (searchData?.findUsers.total || 1) / limit
+        (searchData?.findUsers.total || 1) / limit,
       );
       setTotalPage(searchExistingPages);
     }
@@ -280,7 +283,7 @@ const AccountsView = () => {
             success: res.unlockUser.success,
             message: res.unlockUser.message,
             isMessage: false,
-          })
+          }),
         );
       }
     },
@@ -304,7 +307,7 @@ const AccountsView = () => {
         },
       });
     },
-    [setModalProps, setConfirm, unlockUser]
+    [setModalProps, setConfirm, unlockUser],
   );
 
   return (
@@ -384,8 +387,8 @@ const AccountsView = () => {
                     option === 50
                       ? "bg-green-200"
                       : option === 95
-                      ? "bg-red-200"
-                      : "bg-gray-200"
+                        ? "bg-red-200"
+                        : "bg-gray-200"
                   } absolute z-10 top-0 overflow-hidden left-0 h-full flex items-center justify-center "`}
                   initial={{ x: 0, width: 50 }}
                   animate={{ x: option, width: width }}
@@ -400,7 +403,7 @@ const AccountsView = () => {
               animate={{ opacity: 1, y: 0 }}
               transition={{ type: "spring", duration: 0.6 }}
             >
-              <label className="flex border h-full border-slate-500 rounded-md">
+              <label className="flex border-2 h-full border-blue-800 rounded-md">
                 <div className=" inset-y-0 start-0 flex items-center px-2 pointer-events-none">
                   <CiSearch />
                 </div>
@@ -444,7 +447,7 @@ const AccountsView = () => {
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0.2 }}
         >
-          <div className=" rounded-t-sm pr-3 bg-gray-200 border border-gray-500 dark:bg-gray-700 dark:text-gray-400 grid grid-cols-13 py-2 font-black uppercase">
+          <div className=" rounded-t-sm pr-3 bg-blue-500 border-2 text-white border-blue-800 grid grid-cols-13 py-2 font-black uppercase">
             <div className="col-span-2 px-2">Name</div>
             <div>Username</div>
             <div>VICI ID</div>
@@ -463,7 +466,7 @@ const AccountsView = () => {
               users?.map((user, index) => (
                 <motion.div
                   key={user._id}
-                  className="grid grid-cols-13 border-x border-gray-500 border-b last:rounded-b-md last:shadow-md py-2 hover:bg-gray-200 odd:bg-gray-100 cursor-default items-center"
+                  className="grid grid-cols-13 border-x-2 border-blue-800 border-b-2 last:rounded-b-md last:shadow-md py-2 hover:bg-blue-300 even:bg-blue-200 odd:bg-blue-100 cursor-default items-center"
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   transition={{ delay: index * 0.1 }}
@@ -477,7 +480,7 @@ const AccountsView = () => {
                   <div className="truncate pr-1" title={user.username}>
                     {user.username}
                   </div>
-                   <div>
+                  <div>
                     {user.vici_id || (
                       <div className="text-xs italic text-gray-400">
                         No VICI ID
@@ -588,16 +591,18 @@ const AccountsView = () => {
                     )}
                   </div>
                   <div className="flex justify-center items-center gap-2 overflow-hidden  ">
-                    <Link
-                      to="/user-account"
-                      state={user}
-                      className="font-medium bg-blue-700 hover:bg-blue-800 border-2 border-blue-900 rounded-sm px-2 py-1 text-blue-600 dark:text-blue-500 hover:underline relative"
+                    <div
+                      onClick={() => {
+                        setSelectedUser(user);
+                        setIsAccountOpen(true);
+                      }}
+                      className="font-medium cursor-pointer bg-blue-700 hover:bg-blue-800 border-2 border-blue-900 rounded-sm px-2 py-1 text-blue-600 dark:text-blue-500 hover:underline relative"
                     >
                       <FaUserGear
                         className="text-xl text-white "
                         title="View"
                       />
-                    </Link>
+                    </div>
 
                     <div className="items-center flex ">
                       <div
@@ -643,6 +648,21 @@ const AccountsView = () => {
           currentPage={adminUsersPage}
         />
 
+        {/* global modal for viewing/updating a selected user */}
+        <AnimatePresence>
+          {isAccountOpen && selectedUser && (
+            <div className="absolute z-40 left-0 top-0 w-full h-full flex justify-center items-center">
+              <UpdateUserForm
+                state={selectedUser}
+                onClose={() => {
+                  setIsAccountOpen(false);
+                  setSelectedUser(null);
+                }}
+              />
+            </div>
+          )}
+        </AnimatePresence>
+
         <AnimatePresence>
           {create && (
             <div className="absolute flex z-10 top-0 justify-center items-center left-0 w-full h-full">
@@ -669,14 +689,11 @@ const AccountsView = () => {
                 animate={{ scale: 1, opacity: 1 }}
                 exit={{ scale: 0.8, opacity: 0 }}
               >
-                <RegisterView
-                  setCancel={() => setCreate(false)}
-                />
+                <RegisterView setCancel={() => setCreate(false)} />
               </motion.div>
             </div>
           )}
         </AnimatePresence>
-
       </div>
       <AnimatePresence>
         {confirm && <Confirmation {...modalProps} />}

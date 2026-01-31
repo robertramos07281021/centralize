@@ -75,11 +75,11 @@ const ProductionManagerView = () => {
       <div className="h-full flex flex-col ">
         <div className="px-5 py-2 w-full flex gap-2 ">
           <motion.div
-            className="bg-gray-100 border overflow-hidden border-black rounded-md w-full items-center flex flex-col"
+            className="bg-blue-100 border-2 overflow-hidden border-blue-800 rounded-md w-full items-center flex flex-col"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
           >
-            <h1 className=" font-black bg-gray-400 w-full uppercase text-base py-2 text-black  text-center border-b">
+            <h1 className="text-shadow-2xs font-black bg-blue-500 w-full uppercase text-base py-2 text-white border-blue-800  text-center border-b-2">
               Call files{" "}
               {bucketObject[callfileBucket as keyof typeof bucketObject]}
             </h1>
@@ -95,8 +95,8 @@ const ProductionManagerView = () => {
                   }}
                   value={callfileBucket || ""}
                   className={`${
-                    required ? "bg-red-50 border-red-500" : "border-black"
-                  } text-sm font-black w-full p-2 h-full  border rounded-md`}
+                    required ? "bg-red-50 border-red-500" : "border-blue-800"
+                  } text-sm  font-black w-full p-2 h-full outline-none bg-blue-200 border-2 rounded-md`}
                 >
                   {bucketData?.getTLBucket.map((e) => (
                     <option key={e._id} value={e._id}>
@@ -106,7 +106,7 @@ const ProductionManagerView = () => {
                 </select>
               </label>
 
-              <div className="overflow-hidden relative border border-black rounded-md flex  text-sm font-black">
+              <div className="overflow-hidden relative border-2 border-blue-800 bg-blue-200 shadow-md rounded-md flex  text-sm font-black">
                 <motion.div
                   initial={{ x: 0, opacity: 0 }}
                   animate={{
@@ -153,12 +153,12 @@ const ProductionManagerView = () => {
             </div>
           </motion.div>
           <motion.div
-            className="w-full border overflow-hidden border-black rounded-md bg-gray-100 flex flex-col"
+            className="w-full border-2 overflow-hidden border-blue-800 rounded-md bg-blue-100 flex flex-col"
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{delay: 0.2}}
           >
-            <div className="h-full items-center py-2 flex justify-center text-base font-black uppercase text-black bg-gray-400 border-b text-center">
+            <div className=" items-center py-2 flex justify-center text-base font-black uppercase text-white text-shadow-2xs bg-blue-500 border-blue-800  border-b-2 text-center">
               {"Uploader"}
             </div>
             <div className="px-3 py-2 h-full flex items-end">

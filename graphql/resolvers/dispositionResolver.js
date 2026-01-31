@@ -5,6 +5,7 @@ import CustomerAccount from "../../models/customerAccount.js";
 import Disposition from "../../models/disposition.js";
 import Production from "../../models/production.js";
 import User from "../../models/user.js";
+import Notification from "../../models/notification.js";
 import Bucket from "../../models/bucket.js";
 import DispoType from "../../models/dispoType.js";
 import Group from "../../models/group.js";
@@ -16,6 +17,93 @@ import { safeResolver } from "../../middlewares/safeResolver.js";
 const dispositionResolver = {
   DateTime,
   Query: {
+    getNotificationsByAssignee: safeResolver(
+      async (_, { assigneeId, limit }, { user }) => {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
+        if (!mongoose.Types.ObjectId.isValid(assigneeId)) {
+          return [];
+        }
+        
+        const safeLimit =
+          typeof limit === "number" && limit > 0 ? Math.min(limit, 100) : 20;
+
+        const notifications = await Notification.find({
+          assignee: new mongoose.Types.ObjectId(assigneeId),
+        })
+        
+          .sort({ createdAt: -1 })
+          .limit(safeLimit)
+          .populate({ path: "user", select: "name user_id bucket" })
+          .populate({ path: "assignee", select: "name user_id" })
+          .select("user assignee bucket task createdAt code")
+          .lean();
+
+        return notifications.map((n) => ({
+          _id: n._id,
+          user: n.user
+            ? {
+                name: n.user?.name || "Unknown",
+                user_id: n.user?.user_id || String(n.user?._id || ""),
+              }
+            : null,
+          assignee: n.assignee?._id || n.assignee || null,
+          assigneeUser: n.assignee
+            ? {
+                name: n.assignee?.name || "Unknown",
+                user_id: n.assignee?.user_id || String(n.assignee?._id || ""),
+              }
+            : null,
+          bucket: n.bucket || null,
+          task: typeof n.task === "number" ? n.task : 0,
+          createdAt: n.createdAt || null,
+          code: typeof n.code === "number" ? n.code : 1,
+        }));
+      },
+    ),
+    getNotificationsByBucket: safeResolver(
+      async (_, { bucketId, limit }, { user }) => {
+        if (!user) throw new CustomError("Unauthorized", 401);
+
+        if (!mongoose.Types.ObjectId.isValid(bucketId)) {
+          return [];
+        }
+
+        const safeLimit =
+          typeof limit === "number" && limit > 0 ? Math.min(limit, 100) : 20;
+
+        const notifications = await Notification.find({
+          bucket: new mongoose.Types.ObjectId(bucketId),
+        })
+          .sort({ createdAt: -1 })
+          .limit(safeLimit)
+          .populate({ path: "user", select: "name user_id" })
+          .populate({ path: "assignee", select: "name user_id" })
+          .select("user assignee bucket task createdAt code")
+          .lean();
+
+        return notifications.map((n) => ({
+          _id: n._id,
+          user: n.user
+            ? {
+                name: n.user?.name || "Unknown",
+                user_id: n.user?.user_id || String(n.user?._id || ""),
+              }
+            : null,
+          assignee: n.assignee?._id || n.assignee || null,
+          assigneeUser: n.assignee
+            ? {
+                name: n.assignee?.name || "Unknown",
+                user_id: n.assignee?.user_id || String(n.assignee?._id || ""),
+              }
+            : null,
+          bucket: n.bucket || null,
+          task: typeof n.task === "number" ? n.task : 0,
+          createdAt: n.createdAt || null,
+          code: typeof n.code === "number" ? n.code : 1,
+        }));
+      },
+    ),
     getFieldDispositionsByCustomerAccounts: safeResolver(
       async (_, { accountIds }, { user }) => {
         if (!user) throw new CustomError("Unauthorized", 401);
@@ -43,18 +131,62 @@ const dispositionResolver = {
         return fieldDispositions;
       },
     ),
-    getFieldDispositionsByUser: safeResolver(
-      async (_, { limit }, { user }) => {
+    getFieldDispositionsByUser: safeResolver(async (_, { limit }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      const safeLimit =
+        typeof limit === "number" && limit > 0 ? Math.min(limit, 100) : 50;
+
+      const fieldDispositions = await FieldDisposition.find({
+        user: user._id,
+      })
+        .sort({ createdAt: -1 })
+        .limit(safeLimit)
+        .populate({
+          path: "disposition",
+          select: "name code",
+        })
+        .populate({
+          path: "customer_account",
+          select: "customer",
+          populate: {
+            path: "customer",
+            select: "fullName",
+          },
+        })
+        .select("createdAt disposition customer_account")
+        .lean();
+
+      return fieldDispositions;
+    }),
+    getFieldDispositionsByUsers: safeResolver(
+      async (_, { userIds, accountIds }, { user }) => {
         if (!user) throw new CustomError("Unauthorized", 401);
 
-        const safeLimit =
-          typeof limit === "number" && limit > 0 ? Math.min(limit, 100) : 50;
+        if (!Array.isArray(userIds) || userIds.length === 0) return [];
+        if (!Array.isArray(accountIds) || accountIds.length === 0) return [];
+
+        const invalidUserId = userIds.find(
+          (id) => !mongoose.Types.ObjectId.isValid(id),
+        );
+        if (invalidUserId) throw new CustomError("Invalid user id", 400);
+
+        const invalidAccountId = accountIds.find(
+          (id) => !mongoose.Types.ObjectId.isValid(id),
+        );
+        if (invalidAccountId)
+          throw new CustomError("Invalid customer account", 400);
+
+        const userObjIds = userIds.map((id) => new mongoose.Types.ObjectId(id));
+        const accountObjIds = accountIds.map(
+          (id) => new mongoose.Types.ObjectId(id),
+        );
 
         const fieldDispositions = await FieldDisposition.find({
-          user: user._id,
+          user: { $in: userObjIds },
+          customer_account: { $in: accountObjIds },
         })
           .sort({ createdAt: -1 })
-          .limit(safeLimit)
           .populate({
             path: "disposition",
             select: "name code",
@@ -67,7 +199,9 @@ const dispositionResolver = {
               select: "fullName",
             },
           })
-          .select("createdAt disposition customer_account")
+          .select(
+            "createdAt disposition customer_account user amount payment_method payment payment_date ref_no rfd sof comment",
+          )
           .lean();
 
         return fieldDispositions;
@@ -2261,62 +2395,85 @@ const dispositionResolver = {
     }),
   },
   Mutation: {
-    createFieldDisposition: safeResolver(
-      async (_, { input }, { user }) => {
-        if (!user) throw new CustomError("Unauthorized", 401);
+    createFieldDisposition: safeResolver(async (_, { input }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
 
-        const {
-          disposition,
-          payment_method,
-          payment,
-          payment_date,
-          amount,
-          ref_no,
-          rfd,
-          sof,
-          customer_account,
-          callfile,
-          comment,
-          user: inputUser,
-        } = input;
+      const {
+        disposition,
+        payment_method,
+        payment,
+        payment_date,
+        amount,
+        ref_no,
+        rfd,
+        sof,
+        customer_account,
+        callfile,
+        comment,
+        user: inputUser,
+      } = input;
 
-        if (!mongoose.Types.ObjectId.isValid(customer_account)) {
-          throw new CustomError("Invalid customer account", 400);
+      if (!mongoose.Types.ObjectId.isValid(customer_account)) {
+        throw new CustomError("Invalid customer account", 400);
+      }
+      if (!mongoose.Types.ObjectId.isValid(disposition)) {
+        throw new CustomError("Invalid disposition", 400);
+      }
+      if (callfile && !mongoose.Types.ObjectId.isValid(callfile)) {
+        throw new CustomError("Invalid callfile", 400);
+      }
+
+      const fieldDisposition = await FieldDisposition.create({
+        disposition,
+        payment_method: payment_method || null,
+        payment: payment || null,
+        payment_date: payment_date || null,
+        amount: typeof amount === "number" ? amount : null,
+        ref_no: ref_no || null,
+        rfd: rfd || null,
+        sof: sof || null,
+        customer_account,
+        callfile: callfile || null,
+        user: inputUser || user._id,
+        comment: comment || null,
+      });
+
+      // Find the customer account to get its bucket
+      const customerAccountDoc = await CustomerAccount.findById(customer_account).lean();
+      const bucketId = customerAccountDoc?.bucket || null;
+
+      // Find all TLFIELD users who have this bucket assigned
+      if (bucketId) {
+        const tlfieldUsers = await User.find({
+          type: "TLFIELD",
+          buckets: bucketId,
+        }).lean();
+
+        // Create notifications for each TLFIELD user
+        for (const tlUser of tlfieldUsers) {
+          await Notification.create({
+            user: user._id, // AGENTFIELD who created the disposition
+            assignee: tlUser._id, // TLFIELD to be notified
+            bucket: bucketId,
+            task: 1,
+            code: 2, // code 2 for field disposition created
+            createdAt: new Date(),
+          });
         }
-        if (!mongoose.Types.ObjectId.isValid(disposition)) {
-          throw new CustomError("Invalid disposition", 400);
-        }
-        if (callfile && !mongoose.Types.ObjectId.isValid(callfile)) {
-          throw new CustomError("Invalid callfile", 400);
-        }
+      }
 
-        const fieldDisposition = await FieldDisposition.create({
-          disposition,
-          payment_method: payment_method || null,
-          payment: payment || null,
-          payment_date: payment_date || null,
-          amount: typeof amount === "number" ? amount : null,
-          ref_no: ref_no || null,
-          rfd: rfd || null,
-          sof: sof || null,
-          customer_account,
-          callfile: callfile || null,
-          user: inputUser || user._id,
-          comment: comment || null,
-        });
 
-        await CustomerAccount.findByIdAndUpdate(customer_account, {
-          $push: { fieldhistory: fieldDisposition._id },
-          $set: { fielddisposition: fieldDisposition._id },
-        });
+      await CustomerAccount.findByIdAndUpdate(customer_account, {
+        $push: { fieldhistory: fieldDisposition._id },
+        $set: { fielddisposition: fieldDisposition._id },
+      });
 
-        return {
-          success: true,
-          message: "Field disposition created",
-          fieldDisposition,
-        };
-      },
-    ),
+      return {
+        success: true,
+        message: "Field disposition created",
+        fieldDisposition,
+      };
+    }),
     createDisposition: safeResolver(
       async (_, { input }, { user, pubsub, PUBSUB_EVENTS }) => {
         if (!user) throw new CustomError("Unauthorized", 401);
@@ -2350,6 +2507,7 @@ const dispositionResolver = {
 
         if (!userProdRaw) await Production.create({ user: findUser._id });
 
+        const findBucket = await Bucket.findById(customerAccount.bucket);
         if (
           withPayment.includes(dispoType.code) &&
           !input.amount &&
@@ -2413,7 +2571,8 @@ const dispositionResolver = {
 
         if (
           isPTPDispo ||
-          (currentDispo && isCurrentPTP && dispoType?.status !== 1)
+          (currentDispo && isCurrentPTP && dispoType?.status !== 1) ||
+          findBucket.isPermanent
         ) {
           updateFields["assigned"] = findUser._id;
           updateFields["assignedModel"] = "User";
@@ -2535,59 +2694,76 @@ const dispositionResolver = {
         }
       },
     ),
-    updateFieldAssignee: safeResolver(async (_, { id, assignee }, { user }) => {
-      if (!user) {
-        return { success: false, message: "Unauthorized", customer: null };
-      }
+    updateFieldAssignee: safeResolver(
+      async (_, { id, assignee, task }, { user }) => {
+        if (!user) {
+          return { success: false, message: "Unauthorized", customer: null };
+        }
 
-      try {
-        const existingCA = await CustomerAccount.findById(id).lean();
-        if (!existingCA) {
+        try {
+          const existingCA = await CustomerAccount.findById(id).lean();
+          if (!existingCA) {
+            return {
+              success: false,
+              message: "Customer not found",
+              customer: null,
+            };
+          }
+
+          const assigneeUser = await User.findById(assignee).lean();
+          if (!assigneeUser) {
+            return {
+              success: false,
+              message: "Assignee not found",
+              customer: null,
+            };
+          }
+
+          const updatedCA = await CustomerAccount.findByIdAndUpdate(
+            id,
+            { $set: { fieldassigned: assignee, started: false } },
+            { new: true, strict: false },
+          ).lean();
+
+          if (!updatedCA) {
+            return {
+              success: false,
+              message: "Failed to update customer account",
+              customer: null,
+            };
+          }
+
+          if (typeof task === "number" && task > 0) {
+            try {
+              await Notification.create({
+                user: user._id,
+                assignee,
+                bucket: updatedCA?.bucket || existingCA?.bucket || null,
+                task,
+                code: 1,
+                createdAt: new Date(),
+              });
+            } catch (notifyErr) {
+              console.error("create notification error:", notifyErr);
+            }
+          }
+
+          return {
+            success: true,
+            message: "Assignee successfully updated",
+            customer: updatedCA,
+          };
+        } catch (err) {
+          console.error("updateFieldAssignee error:", err);
+
           return {
             success: false,
-            message: "Customer not found",
+            message: err.message || "Server error",
             customer: null,
           };
         }
-
-        const assigneeUser = await User.findById(assignee).lean();
-        if (!assigneeUser) {
-          return {
-            success: false,
-            message: "Assignee not found",
-            customer: null,
-          };
-        }
-
-        const updatedCA = await CustomerAccount.findByIdAndUpdate(
-          id,
-          { $set: { fieldassigned: assignee, started: false } },
-          { new: true, strict: false },
-        ).lean();
-
-        if (!updatedCA) {
-          return {
-            success: false,
-            message: "Failed to update customer account",
-            customer: null,
-          };
-        }
-
-        return {
-          success: true,
-          message: "Assignee successfully updated",
-          customer: updatedCA,
-        };
-      } catch (err) {
-        console.error("updateFieldAssignee error:", err);
-
-        return {
-          success: false,
-          message: err.message || "Server error",
-          customer: null,
-        };
-      }
-    }),
+      },
+    ),
   },
 };
 

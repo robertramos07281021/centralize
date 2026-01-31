@@ -37,16 +37,16 @@ type DivFTEsProps = {
 
 const DivFTEs = ({ label, value, loading }: DivFTEsProps) => {
   return (
-    <div className="border overflow-hidden border-slate-700 rounded-sm shadow-md bg-white flex h-full flex-col items-center justify-center">
-      <h1 className="text-[0.8rem] 2xl:text-xs text-center uppercase font-black text-gray-800 bg-gray-400 border-b border-gray-700 h-[50%] w-full flex items-center justify-center">
+    <div className={`  border-2 overflow-hidden border-blue-800 rounded-sm shadow-md bg-white flex h-full text-shadow-2xs flex-col items-center justify-center `}>
+      <h1 className={` text-[0.5rem] 2xl:text-xs  text-center uppercase font-black text-white bg-blue-500 border-b-2 border-blue-800 h-[50%] w-full flex items-center justify-center `}>
         {label}
       </h1>
       {loading ? (
-        <p className="text-2xl 2xl:text-4xl text-center font-bold text-gray-800 flex items-center justify-center w-full h-[50%]">
-          Loading....
-        </p>
+        <div className="w-full h-[50%] flex justify-center items-center bg-blue-100" >
+          <div className="border-t-2 w-8 h-8 rounded-full animate-spin" ></div>
+        </div>
       ) : (
-        <p className="text-2xl 2xl:text-4xl text-center font-bold text-gray-800 flex items-center justify-center w-full h-[50%]">
+        <p className="text-2xl 2xl:text-4xl  bg-blue-100 text-center font-bold text-gray-800 flex items-center justify-center w-full h-[50%]">
           {value ?? "-"}
         </p>
       )}
@@ -152,10 +152,10 @@ const DailyFTE = () => {
               transition={{ type: "spring", duration: 0.3 }}
               exit={{ opacity: 0, y: -10 }}
             >
-              <h1 className="uppercase font-bold text-gray-800 text-center py-2 bg-gray-400 border-x  border-y rounded-t-sm border-slate-700">
+              <h1 className="uppercase font-bold text-white text-center py-2 bg-blue-500 border-2 rounded-t-sm border-blue-800">
                 Actual Agent
               </h1>
-              <div className="flex flex-col border-x border-b rounded-b-md border-slate-700 p-4 bg-white">
+              <div className="flex flex-col border-x-2 bg-blue-100 border-b-2 rounded-b-md border-blue-800 p-4">
                 {findData && findData?.length > 0 ? (
                   <>
                     {findData?.map((x, index) => {

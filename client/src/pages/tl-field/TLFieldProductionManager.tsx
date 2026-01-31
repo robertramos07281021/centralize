@@ -3,6 +3,8 @@ import { gql, useQuery, useMutation } from "@apollo/client";
 import { motion, AnimatePresence } from "framer-motion";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../../redux/store.ts";
+import Lottie from "lottie-react";
+import loadingAnimation from "../../Animations/Businessman flies up with rocket.json";
 
 import { setSuccess } from "../../redux/slices/authSlice";
 
@@ -87,13 +89,14 @@ const GET_CUSTOMERACCOUNTS_BY_BUCKET = gql`
       customerName
       addresses
       fieldassigned
+      assignee
     }
   }
 `;
 
 const UPDATE_FIELD_ASSIGNEE = gql`
-  mutation UpdateFieldAssignee($id: ID!, $assignee: ID!) {
-    updateFieldAssignee(id: $id, assignee: $assignee) {
+  mutation UpdateFieldAssignee($id: ID!, $assignee: ID!, $task: Int) {
+    updateFieldAssignee(id: $id, assignee: $assignee, task: $task) {
       success
       message
       customer {
@@ -112,6 +115,7 @@ const TLFieldProductionManager = () => {
   const [isBucketOpen, setIsBucketOpen] = useState<boolean>(false);
   const [isTLFieldOpen, setIsTLFieldOpen] = useState<boolean>(false);
   const [selectedBucket, setSelectedBucket] = useState<Bucket | null>(null);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const bucketDropdownRef = useRef<HTMLDivElement | null>(null);
   const longPressTimerRef = useRef<number | null>(null);
   const dispatch = useAppDispatch();
@@ -233,6 +237,7 @@ const TLFieldProductionManager = () => {
       customerName?: string;
       addresses?: string[];
       fieldassigned?: string;
+      assignee?: string;
     }[];
   }>(GET_CUSTOMERACCOUNTS_BY_BUCKET, {
     variables: { bucketId: selectedBucket?._id ?? null },
@@ -248,7 +253,9 @@ const TLFieldProductionManager = () => {
       console.error("Invalid assignee ID");
       return;
     }
-    for (const id of selectedIds) {
+    const taskCount = selectedIds.length;
+
+    for (const [index, id] of selectedIds.entries()) {
       if (!id) {
         console.warn("Skipping invalid ID:", id);
         continue;
@@ -256,7 +263,11 @@ const TLFieldProductionManager = () => {
 
       try {
         const result = await updateFieldAssignee({
-          variables: { id, assignee: assigneeId },
+          variables: {
+            id,
+            assignee: assigneeId,
+            task: index === 0 ? taskCount : null,
+          },
           errorPolicy: "all",
         });
 
@@ -390,108 +401,154 @@ const TLFieldProductionManager = () => {
     <div className="relative p-4 h-[90dvh] gap-4 flex flex-col bg-blue-50 overflow-hidden">
       <div
         ref={bucketDropdownRef}
-        className={`" flex justify-between shrink-0 relative "`}
+        className={`" ${userType === "TLFIELD" ? "justify-between" : "justify-end"} flex   shrink-0 relative "`}
       >
         {userType === "AOM" &&
           selectedBucket &&
           callfilesData?.getBucketActiveCallfile.length !== 0 && (
-            <motion.button
-              initial={{ scale: 0.6, opacity: 0 }}
-              animate={{ scale: 1, opacity: 1 }}
-              whileTap={{ scale: 0.6 }}
-              transition={{ duration: 0.2, ease: "easeOut" }}
-              type="button"
-              onClick={handleApproveSelected}
-              className={` ${
-                callfilesData?.getBucketActiveCallfile?.some(
-                  (file) => file.approve === false,
-                )
-                  ? "bg-green-600 border-green-900"
-                  : "bg-red-600 border-red-900 "
-              } border-2  font-black px-3 uppercase  text-white shadow-md items-center flex rounded-sm `}
-            >
-              <div>
-                {callfilesData?.getBucketActiveCallfile?.some(
-                  (file) => file.approve === false,
-                )
-                  ? "Enable"
-                  : "Disable"}
-              </div>
-            </motion.button>
+            <div className="flex  justify-start w-full">
+              <motion.button
+                initial={{ scale: 0.6, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                whileTap={{ scale: 0.6 }}
+                transition={{ duration: 0.2, ease: "easeOut" }}
+                type="button"
+                onClick={handleApproveSelected}
+                className={` ${
+                  callfilesData?.getBucketActiveCallfile?.some(
+                    (file) => file.approve === false,
+                  )
+                    ? "bg-green-600 border-green-900"
+                    : "bg-red-600 border-red-900 "
+                } border-2  font-black px-3 uppercase  text-white shadow-md items-center flex rounded-sm `}
+              >
+                <div>
+                  {callfilesData?.getBucketActiveCallfile?.some(
+                    (file) => file.approve === false,
+                  )
+                    ? "Enable"
+                    : "Disable"}
+                </div>
+              </motion.button>
+            </div>
           )}
-        <button
-          type="button"
-          onClick={() => setIsBucketOpen((v) => !v)}
-          className="min-w-40 rounded-sm md:cursor-pointer transition-all hover:bg-gray-100 border bg-white justify-between items-center px-3 py-1 flex"
-        >
-          <div className="truncate pr-2">
-            {tlBucketLoading
-              ? "Loading…"
-              : selectedBucket?.name || "Select Bucket"}
-          </div>
-          <div
-            className={`${
-              isBucketOpen ? "rotate-90" : ""
-            } transition-transform`}
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              fill="none"
-              viewBox="0 0 24 24"
-              strokeWidth="1.5"
-              stroke="currentColor"
-              className="size-5"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                d="m8.25 4.5 7.5 7.5-7.5 7.5"
-              />
-            </svg>
-          </div>
-        </button>
-        <AnimatePresence>
-          {isBucketOpen && (
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-              className="absolute right-0 top-full mt-2 w-72 rounded-sm border bg-white shadow-lg z-20 overflow-hidden"
-            >
-              <div className="max-h-64 overflow-y-auto">
-                {buckets.length === 0 ? (
-                  <div className="px-3 py-2 text-sm text-gray-500">
-                    No buckets assigned.
-                  </div>
-                ) : (
-                  buckets.map((b) => (
-                    <button
-                      key={b._id}
-                      type="button"
-                      onClick={() => {
-                        setSelectedBucket(b);
-                        setIsBucketOpen(false);
-                        setSelectedIds([]);
-                      }}
-                      className={`w-full text-left px-3 py-2 text-sm hover:bg-gray-50 md:cursor-pointer transition-colors ${
-                        selectedBucket?._id === b._id
-                          ? "bg-gray-200 font-semibold"
-                          : ""
-                      }`}
+        <div className="flex justify-between gap-2 w-full">
+          {userType === "TLFIELD" && (
+            <div className="flex w-full ">
+              <div className="border flex w-full  md:w-auto shadow-md justify-between items-center px-3 py-1 bg-white rounded-sm">
+                <input
+                  placeholder="Search..."
+                  className="outline-none w-full"
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                />
+                {searchTerm && (
+                  <div
+                    onClick={() => setSearchTerm("")}
+                    className="cursor-pointer text-gray-400 hover:text-gray-600 ml-2"
+                  >
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                      strokeWidth="2"
+                      stroke="currentColor"
+                      className="size-4"
                     >
-                      <div className="truncate">{b.name}</div>
-                      {b.dept ? (
-                        <div className="text-xs text-gray-500 truncate">
-                          {b.dept}
-                        </div>
-                      ) : null}
-                    </button>
-                  ))
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        d="M6 18 18 6M6 6l12 12"
+                      />
+                    </svg>
+                  </div>
                 )}
               </div>
-            </motion.div>
+            </div>
           )}
-        </AnimatePresence>
+          <div
+            role="button"
+            tabIndex={0}
+            onClick={() => setIsBucketOpen((v) => !v)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                setIsBucketOpen((v) => !v);
+              }
+            }}
+            className="w-full md:w-auto relative shadow-md rounded-sm md:cursor-pointer transition-all hover:bg-gray-100 border bg-white justify-between items-center px-3 py-1 flex"
+          >
+            <div className="truncate pr-2">
+              {tlBucketLoading
+                ? "Loading…"
+                : selectedBucket?.name || "Select Bucket"}
+            </div>
+            <div
+              className={`${
+                isBucketOpen ? "rotate-90" : ""
+              } transition-transform`}
+            >
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth="1.5"
+                stroke="currentColor"
+                className="size-5"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="m8.25 4.5 7.5 7.5-7.5 7.5"
+                />
+              </svg>
+            </div>
+            <AnimatePresence>
+              {isBucketOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute right-0 top-full mt-2 w-full rounded-sm border bg-white shadow-lg z-20 overflow-hidden"
+                  onClick={(event) => event.stopPropagation()}
+                >
+                  <div className="max-h-64 overflow-y-auto">
+                    {buckets.length === 0 ? (
+                      <div className="px-3 py-2 text-sm text-gray-500">
+                        No buckets assigned.
+                      </div>
+                    ) : (
+                      buckets.map((b) => (
+                        <button
+                          key={b._id}
+                          type="button"
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            setSelectedBucket(b);
+                            setIsBucketOpen(false);
+                            setSelectedIds([]);
+                          }}
+                          className={`flex flex-col w-full text-left px-3 py-2 text-sm hover:bg-gray-50 md:cursor-pointer transition-colors ${
+                            selectedBucket?._id === b._id
+                              ? "bg-gray-200 font-semibold"
+                              : ""
+                          }`}
+                        >
+                          <div className="truncate">{b.name}</div>
+                          {b.dept ? (
+                            <div className="text-xs text-gray-500 truncate">
+                              {b.dept}
+                            </div>
+                          ) : null}
+                        </button>
+                      ))
+                    )}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
+        </div>
       </div>
       <div
         className={` flex flex-col h-full gap-2 overflow-y-auto transition-all ${
@@ -505,16 +562,11 @@ const TLFieldProductionManager = () => {
         )}
 
         {caLoading && (
-          <motion.div
-            className="w-full h-full flex justify-center items-center"
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-          >
-            <div className="relative h-20 w-20 flex justify-center bg-blue-200 rounded-full shadow-md items-center">
-              <div className="text-xs text-gray-500 absolute">Loading...</div>
-              <div className="w-full h-full border-t animate-spin rounded-full"></div>
+          <div className="flex items-center justify-center  h-full w-full">
+            <div className=" w-40">
+              <Lottie animationData={loadingAnimation} />
             </div>
-          </motion.div>
+          </div>
         )}
         {userType === "AOM" ? (
           <div className="flex flex-col pr-2 sm:grid sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-2">
@@ -588,57 +640,72 @@ const TLFieldProductionManager = () => {
                     </div>
                   )}
 
-                {caData?.getCustomerAccountsByBucket.map((ca, index) => {
-                  const selected = selectedIds.includes(ca._id);
+                {caData?.getCustomerAccountsByBucket
+                  .filter((ca) => {
+                    if (!searchTerm.trim()) return true;
+                    const term = searchTerm.toLowerCase();
+                    const nameMatch = ca.customerName
+                      ?.toLowerCase()
+                      .includes(term);
+                    const addressMatch = ca.addresses?.some((addr) =>
+                      addr?.toLowerCase().includes(term),
+                    );
+                    return nameMatch || addressMatch;
+                  })
+                  .map((ca, index) => {
+                    const selected = selectedIds.includes(ca._id);
 
-                  return (
-                    <motion.div
-                      key={ca._id}
-                      role="button"
-                      tabIndex={0}
-                      onPointerDown={() => {
-                        if (!ca.fieldassigned && userType !== "AOM") {
-                          startLongPress(ca._id);
-                        }
-                      }}
-                      onPointerUp={cancelLongPress}
-                      onPointerLeave={cancelLongPress}
-                      onClick={() => {
-                        if (!ca.fieldassigned && userType !== "AOM") {
-                          handleCardClick(ca._id);
-                        }
-                      }}
-                      initial={{ y: 10, opacity: 0 }}
-                      animate={{ y: 0, opacity: 1 }}
-                      transition={{ delay: index * 0.1 }}
-                      className={`${
-                        selected
-                          ? "border-gray-300 cursor-pointer  text-gray-400 bg-gray-200"
-                          : ca.fieldassigned
-                            ? "border-gray-300 text-gray-400 bg-gray-200"
-                            : "border-blue-800 cursor-pointer  hover:bg-blue-600 text-white bg-blue-500"
-                      } select-none relative text-base flex flex-col justify-center  border-2 md:transition-all rounded-sm font-black`}
-                    >
-                      <div className="overflow-hidden h-24 py-2 px-3 relative">
-                        <div className="uppercase truncate">
-                          {ca.customerName}
-                        </div>
-                        <div className="font-semibold text-xs">
-                          {ca.addresses}
-                        </div>
-                        {ca.fieldassigned ? (
-                          <div className="absolute text-sm uppercase text-center py-1 text-white -rotate-45 bottom-5 bg-green-500 border-2 border-green-900 shadow-md w-40 -right-11">
-                            <div>assigned</div>
+                    return (
+                      <motion.div
+                        key={ca._id}
+                        role="button"
+                        tabIndex={0}
+                        onPointerDown={() => {
+                          if (!ca.fieldassigned && userType !== "AOM") {
+                            startLongPress(ca._id);
+                          }
+                        }}
+                        onPointerUp={cancelLongPress}
+                        onPointerLeave={cancelLongPress}
+                        onClick={() => {
+                          if (!ca.fieldassigned && userType !== "AOM") {
+                            handleCardClick(ca._id);
+                          }
+                        }}
+                        initial={{ y: 10, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        transition={{ delay: index * 0.1 }}
+                        className={`${
+                          selected
+                            ? "border-gray-300 cursor-pointer  text-gray-400 bg-gray-200"
+                            : ca.fieldassigned
+                              ? "border-gray-300 text-gray-400 bg-gray-200"
+                              : "border-blue-800 cursor-pointer  hover:bg-blue-600 text-white bg-blue-500"
+                        } select-none relative text-base flex flex-col justify-center  border-2 md:transition-all rounded-sm font-black`}
+                      >
+                        <div className="overflow-hidden h-24 py-2 px-3 relative">
+                          <div className="uppercase truncate">
+                            {ca.customerName}
                           </div>
-                        ) : (
-                          <div className="absolute text-xs uppercase text-center py-1.5 text-white -rotate-45 bottom-5 bg-red-500 border-2 border-red-900 shadow-md w-40 -right-11">
-                            <div>unassigned</div>
+                          <div className="font-semibold text-xs">
+                            {ca.addresses}
                           </div>
-                        )}
-                      </div>
-                    </motion.div>
-                  );
-                })}
+                          {ca.fieldassigned ? (
+                            <div className="absolute text-sm uppercase text-center py-1 text-white -rotate-45 bottom-5 bg-green-500 border-2 border-green-900 shadow-md w-52 -right-14">
+                              <div>assigned to</div>
+                              <div className="font-normal text-[0.7rem]" >{ca.assignee}</div>
+                            </div>
+                          ) : (
+                            <div className="absolute text-xs uppercase text-center py-1.5 text-white -rotate-45 bottom-5 bg-red-500 border-2 border-red-900 shadow-md w-40 -right-11">
+                              <div>unassigned</div>
+                            </div>
+                          )}
+
+                          
+                        </div>
+                      </motion.div>
+                    );
+                  })}
               </div>
             )}
           </div>
@@ -671,7 +738,7 @@ const TLFieldProductionManager = () => {
           }}
           className="py-2 cursor-pointer hover:bg-green-700 transition-all w-full md:px-6 md:w-auto bg-green-600 border-green-900 text-shadow-2xs border-2 font-black uppercase text-white rounded-sm shadow-md flex justify-center text-center"
         >
-          Assigned to
+          Assign to
         </button>
       </motion.div>
 

@@ -32,7 +32,7 @@ const TLDailyCollected = () => {
   const pathName = location.pathname.slice(1);
   const isTLDashboard = ["tl-dashboard", "aom-dashboard"]?.includes(pathName);
   const { intervalTypes, selectedBucket } = useSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   );
 
   const {
@@ -47,19 +47,18 @@ const TLDailyCollected = () => {
     notifyOnNetworkStatusChange: true,
   });
 
-  const { data: bucketData, refetch:selectedBucketRefetch } = useQuery<{ selectedBucket: Bucket }>(
-    SELECTED_BUCKET,
-    {
-      variables: { id: selectedBucket },
-      skip: !isTLDashboard,
-      notifyOnNetworkStatusChange: true,
-    }
-  );
+  const { data: bucketData, refetch: selectedBucketRefetch } = useQuery<{
+    selectedBucket: Bucket;
+  }>(SELECTED_BUCKET, {
+    variables: { id: selectedBucket },
+    skip: !isTLDashboard,
+    notifyOnNetworkStatusChange: true,
+  });
 
   useEffect(() => {
     const timer = async () => {
       await refetch();
-      await selectedBucketRefetch()
+      await selectedBucketRefetch();
     };
     if (selectedBucket) {
       timer();
@@ -69,7 +68,7 @@ const TLDailyCollected = () => {
   const paidSelected = dailyCollected?.getTLDailyCollected || null;
 
   return (
-    <div className="border-yellow-500 relative border rounded-sm shadow-md  text-yellow-800 font-black uppercase flex flex-col">
+    <div className="border-yellow-800 relative border-2 rounded-sm shadow-md  text-yellow-800 font-black uppercase flex flex-col">
       <div
         className="absolute top-2 right-2 text-yellow-800"
         title="RPC will be counted only when the agent dispose the client interaction as a positive call. Interactions dispose as negative calls will not be counted."
@@ -90,7 +89,7 @@ const TLDailyCollected = () => {
         </svg>
       </div>
 
-      <div className="lg:text-xs 2xl:text-lg font-black text-yellow-800 flex text-center bg-yellow-400 border-b border-yellow-500 rounded-t-xs justify-center items-center h-[50%] ">
+      <div className="lg:text-xs 2xl:text-lg font-black text-yellow-800 flex text-center bg-yellow-400 border-b-2 border-yellow-800 rounded-t-xs justify-center items-center h-[50%] ">
         <h1>
           RPC{" "}
           {!bucketData?.selectedBucket?.principal && (
@@ -98,15 +97,14 @@ const TLDailyCollected = () => {
           )}
         </h1>
       </div>
-      <div className="w-full flex justify-between relative h-[50%] bg-white rounded-b-sm gap-2 items-center text-base 2xl:text-xl">
+      <div className="w-full flex justify-between relative h-[50%] bg-yellow-100 rounded-b-sm gap-2 items-center text-base 2xl:text-xl">
         {!loading ? (
           <div className="flex justify-center items-center w-full">
-            {/* <div className="absolute top-0 left-0 text-xs">Total</div> */}
             <p className="text-4xl">{paidSelected ? paidSelected?.isRPC : 0}</p>
           </div>
         ) : (
-          <div className="flex justify-center w-full">
-            <AiOutlineLoading3Quarters className="animate-spin" />
+          <div className="w-full h-full flex justify-center items-center ">
+            <div className="border-t-2 w-8 h-8 rounded-full animate-spin"></div>
           </div>
         )}
       </div>

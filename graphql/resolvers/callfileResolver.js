@@ -423,9 +423,10 @@ const callfileResolver = {
           callfile: { $in: callfileIds },
         })
           .select(
-            "_id account_id case_id bucket customer forfield fieldassigned",
+            "_id account_id case_id bucket customer forfield fieldassigned finished",
           )
           .populate({ path: "customer", select: "fullName addresses " })
+          .populate({ path: "fieldassigned", select: "name" })
           .lean();
 
         const forField = [];
@@ -448,7 +449,9 @@ const callfileResolver = {
             customerName: fullName,
             addresses: ca.customer?.addresses || [],
             forfield: !!ca.forfield,
-            fieldassigned: ca.fieldassigned || null,
+            fieldassigned: ca.fieldassigned?._id || ca.fieldassigned || null,
+            finished: typeof ca.finished === "boolean" ? ca.finished : null,
+            assignee: ca.fieldassigned?.name || null,
           };
 
           if (ca.forfield === true) forField.push(item);
@@ -517,6 +520,55 @@ const callfileResolver = {
       },
     ),
 
+    getFieldTasksByBuckets: safeResolver(async (_, { bucketIds }, { user }) => {
+      if (!user) throw new CustomError("Unauthorized", 401);
+
+      if (!Array.isArray(bucketIds) || bucketIds.length === 0) return [];
+
+      const validBucketIds = bucketIds.filter((id) =>
+        mongoose.Types.ObjectId.isValid(id),
+      );
+
+      if (!validBucketIds.length) return [];
+
+      const bucketObjIds = validBucketIds.map(
+        (id) => new mongoose.Types.ObjectId(id),
+      );
+
+      const callfiles = await Callfile.find({
+        bucket: { $in: bucketObjIds },
+        active: true,
+      })
+        .select("_id bucket")
+        .lean();
+
+      const callfilesByBucket = callfiles.reduce((acc, cf) => {
+        const key = String(cf.bucket);
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(cf._id);
+        return acc;
+      }, {});
+
+      const results = await Promise.all(
+        bucketObjIds.map(async (bucketId) => {
+          const key = String(bucketId);
+          const callfileIds = callfilesByBucket[key] || [];
+          if (!callfileIds.length) {
+            return { bucket: bucketId, total: 0 };
+          }
+
+          const total = await CustomerAccount.countDocuments({
+            callfile: { $in: callfileIds },
+            forfield: true,
+          });
+
+          return { bucket: bucketId, total };
+        }),
+      );
+
+      return results;
+    }),
+
     getBucketActiveCallfile: safeResolver(
       async (_, { bucketIds }, { user }) => {
         if (!user) throw new CustomError("Unauthorized", 401);
@@ -553,6 +605,7 @@ const callfileResolver = {
 
         const matchFilters = {
           callfile: new mongoose.Types.ObjectId(callfileId),
+          selectivesDispo: false,
         };
 
         if (dateFrom) {
@@ -599,6 +652,27 @@ const callfileResolver = {
             },
           },
           {
+            $lookup: {
+              from: "customeraccounts",
+              localField: "customer_account",
+              foreignField: "_id",
+              as: "ca",
+            },
+          },
+          {
+            $unwind: {
+              path: "$ca",
+              preserveNullAndEmptyArrays: true,
+            },
+          },
+          {
+            $match: {
+              $expr: {
+                $in: [ "$_id",{ $ifNull: ["$ca.history", []] }],
+              },
+            },
+          },
+          {
             $group: {
               _id: {
                 code: "$dispoType.code",
@@ -606,9 +680,7 @@ const callfileResolver = {
               },
               count: { $sum: 1 },
               amount: {
-                $sum: {
-                  $cond: [{ $ifNull: ["$amount", false] }, "$amount", 0],
-                },
+                $sum: "$amount",
               },
             },
           },
@@ -865,6 +937,15 @@ const callfileResolver = {
                     { $ne: ["$$h.callId", ""] }, // not empty string
                     { $ne: ["$$h.callId", undefined] },
                   ],
+                },
+              },
+            },
+            historiesWoSelective: {
+              $filter: {
+                input: "$histories",
+                as: "h",
+                cond: {
+                  $eq: ["$$h.selectivesDispo", false],
                 },
               },
             },
@@ -1151,6 +1232,8 @@ const callfileResolver = {
             collector_sip: "$user.user_id",
             collector: "$user.name",
             outstanding_balance: "$out_standing_details.total_os",
+            topup: "$out_standing_details.topup",
+            employer_name: "$out_standing_details.employer_name",
             endorsement_date: "$endorsement_date",
             amount_paid: "$paid_amount",
             principal: "$out_standing_details.principal_os",
@@ -1181,6 +1264,7 @@ const callfileResolver = {
             platform_user_id: "$customer_info.platform_customer_id",
             emergencyContactName: "$emergency_contact.name",
             emergencyContactMobile: "$emergency_contact.mobile",
+            histories: "$historiesWoSelective",
             payment: {
               $cond: {
                 if: {
@@ -1303,8 +1387,8 @@ const callfileResolver = {
 
       function formatDateTimeForPenetration(date) {
         if (!date) return "";
-        const newdate = date.slice(0, 8); // 20251119
-        const time = date.slice(9); // 165925
+        const newdate = date.slice(0, 8);
+        const time = date.slice(9);
 
         const year = newdate.slice(0, 4);
         const month = newdate.slice(4, 6);
@@ -1314,7 +1398,6 @@ const callfileResolver = {
         const minute = time.slice(2, 4);
         const second = time.slice(4, 6);
 
-        // Convert to AM/PM
         const ampm = hour >= 12 ? "PM" : "AM";
         hour = hour % 12 || 12;
 
@@ -1389,10 +1472,14 @@ const callfileResolver = {
         "last_payment_date",
         "call_penetration",
         "call_penetration_count",
+        "histories",
+        "history_count",
         "term",
         "paid",
         "product",
         "rem_months",
+        "employer_name",
+        "topup",
       ];
 
       const formatCustomerRow = (c) => {
@@ -1414,17 +1501,23 @@ const callfileResolver = {
           })
           .filter(Boolean);
 
+        const histories = c.histories.map((history) => {
+          return `${dispotypeMap[history.disposition]}-${history.createdAt}\n`;
+        });
+
         return {
           ...c,
           contact1: c.contact1 ? `="${c.contact1}"` : "",
           contact2: c.contact2 ? `="${c.contact2}"` : "",
           contact3: c.contact3 ? `="${c.contact3}"` : "",
-          call_penetration: callPenetration.length
-            ? `="${callPenetration.toString()}"`
-            : "",
-          call_penetration_count: callPenetration.length
-            ? `="${callPenetration.length}"`
-            : "",
+          call_penetration:
+            callPenetration.length > 0
+              ? `="${callPenetration.toString()}"`
+              : "",
+          call_penetration_count:
+            callPenetration.length > 0 ? `="${callPenetration.length}"` : "",
+          histories: histories.length > 0 ? `="${histories.toString()}"` : ``,
+          history_count: histories.length > 0 ? `="${histories.length}"` : ``,
           platform_user_id: c.platform_user_id
             ? `="${c.platform_user_id}"`
             : "",
@@ -2453,7 +2546,7 @@ const callfileResolver = {
               endo: new Date(),
               finished_by: user._id,
               autoDial: false,
-              approve: false
+              approve: false,
             },
           },
           { new: true },
@@ -2671,44 +2764,45 @@ const callfileResolver = {
       },
     ),
 
-    
-    updateCallfileApprove: safeResolver(async (_, { id, approve }, { user }) => {
-      if (!user) throw new CustomError("Unauthorized", 401);
+    updateCallfileApprove: safeResolver(
+      async (_, { id, approve }, { user }) => {
+        if (!user) throw new CustomError("Unauthorized", 401);
 
-      try {
-        const existingCF = await Callfile.findById(id).lean();
-        if (!existingCF) {
+        try {
+          const existingCF = await Callfile.findById(id).lean();
+          if (!existingCF) {
+            return {
+              success: false,
+              message: "Callfile not found",
+              callfile: null,
+            };
+          }
+
+          const updatedCF = await Callfile.findByIdAndUpdate(
+            id,
+            { $set: { approve: Boolean(approve) } },
+            { new: true, strict: false },
+          ).lean();
+
+          if (!updatedCF) {
+            return {
+              success: false,
+              message: "Failed to update callfile",
+              callfile: null,
+            };
+          }
+
           return {
-            success: false,
-            message: "Callfile not found",
-            callfile: null,
+            success: true,
+            message: "Callfile approve updated",
+            callfile: updatedCF,
           };
+        } catch (err) {
+          console.error("updateCallfileApprove error:", err);
+          throw new CustomError(err.message || "Server error", 500);
         }
-
-        const updatedCF = await Callfile.findByIdAndUpdate(
-          id,
-          { $set: { approve: Boolean(approve) } },
-          { new: true, strict: false },
-        ).lean();
-
-        if (!updatedCF) {
-          return {
-            success: false,
-            message: "Failed to update callfile",
-            callfile: null,
-          };
-        }
-
-        return {
-          success: true,
-          message: "Callfile approve updated",
-          callfile: updatedCF,
-        };
-      } catch (err) {
-        console.error("updateCallfileApprove error:", err);
-        throw new CustomError(err.message || "Server error", 500);
-      }
-    }),
+      },
+    ),
   },
 };
 

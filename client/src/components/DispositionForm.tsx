@@ -12,7 +12,7 @@ import {
 } from "../redux/slices/authSlice";
 import { motion, AnimatePresence } from "framer-motion";
 import { PresetSelection } from "./AccountInfo";
-import { CustomerRegistered } from "../middleware/types.ts";
+import { AccountBucket, CustomerRegistered } from "../middleware/types.ts";
 import Loading from "../pages/Loading.tsx";
 
 type Data = {
@@ -320,6 +320,7 @@ type DispoType = { id: string };
 type Customer = {
   assigned?: string;
   balance?: number;
+  account_bucket: AccountBucket;
   current_disposition?: {
     disposition?: string;
     selectivesDispo?: boolean;
@@ -912,14 +913,15 @@ const DispositionForm: React.FC<Props> = ({
     const cd = customer.current_disposition;
     const balance = customer.balance;
     const dispo = cd?.disposition;
-
+  
     const hasSelective = cd?.selectivesDispo;
+    const bucketOfAccount = customer.account_bucket
     const assignedToUser =
       customer.assigned?.toString() === user?._id.toString();
     const notAssigned = !customer.assigned;
     const ptpId = ptpDispoType?.id;
     const paidId = paidDispoType?.id;
-    const isPTPAndAssignedToUser = dispo === ptpId && assignedToUser;
+    const isPTPAndAssignedToUser = (dispo === ptpId && assignedToUser) || (assignedToUser && bucketOfAccount.isPermanent) ;
     const isPaidWithSelective = dispo === paidId && hasSelective;
 
     return !!(
@@ -930,7 +932,7 @@ const DispositionForm: React.FC<Props> = ({
   }
 
   if (dispoLoading || getRecordingLoading) return <Loading />;
-
+  
   return (
     canProceed(selectedCustomer, userLogged, ptpDispoType, paidDispoType) && (
       <>
@@ -1014,9 +1016,9 @@ const DispositionForm: React.FC<Props> = ({
               initial={{ x: 20, opacity: 0 }}
               animate={{ x: 0, opacity: 1 }}
               transition={{ delay: 0.1 }}
-              className="flex flex-col bg-gray-100 overflow-hidden uppercase w-full h-full rounded-md border border-black shadow-md justify-center select-none relative"
+              className="flex flex-col bg-blue-100 overflow-hidden uppercase w-full h-full rounded-md border-2 border-blue-800 shadow-md justify-center select-none relative"
             >
-              <h1 className="text-center py-3 bg-gray-400 d uppercase border-b font-black text-black text-2xl">
+              <h1 className="text-center py-3 bg-blue-500 uppercase border-b-2 border-blue-800 font-black text-white text-2xl">
                 Customer Disposition
               </h1>
               <div className="flex gap-2 p-5">

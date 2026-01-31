@@ -12,13 +12,13 @@ type Props = {
 const Helper: React.FC<Props> = ({ close }) => {
   return (
     <motion.div
-      className="absolute top-0 left-0 h-full w-full bg-black/40 backdrop-blur-sm p-5 border z-50 flex overflow-hidden"
+      className="absolute top-0 left-0 h-full w-full bg-black/40 backdrop-blur-sm p-5 z-50 flex overflow-hidden"
       initial={{ opacity: 0, scale: 0.8 }}
       animate={{ opacity: 1, scale: 1 }}
       exit={{ opacity: 0, scale: 0.8 }}
     >
-      <div className="h-full w-full rounded-md bg-white border relative flex flex-col overflow-hidden ">
-        <h1 className="text-5xl h-[10%] justify-center font-black flex items-center uppercase bg-blue-600 text-white text-center border-b border-black p-5">
+      <div className="h-full w-full rounded-md bg-white border-2 border-blue-800 relative flex flex-col overflow-hidden ">
+        <h1 className="text-5xl h-[10%] justify-center font-black flex items-center uppercase bg-blue-600 text-white text-center border-b-2 border-blue-800 p-5">
           Knowledge Base
           <button
             className="absolute right-5 border-2 border-red-800 rounded-full p-1 text-xl flex items-center justify-center cursor-pointer bg-red-600 hover:bg-red-700 transition-all text-white"
@@ -104,7 +104,7 @@ const Helper: React.FC<Props> = ({ close }) => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
             >
               <p className="mt-5 text-xl font-black uppercase">
                 How To Use Customer Disposition
@@ -121,7 +121,7 @@ const Helper: React.FC<Props> = ({ close }) => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
             >
               <img
                 src={dispositionPanel}
@@ -137,7 +137,7 @@ const Helper: React.FC<Props> = ({ close }) => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.2 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
             >
               <p className="mt-5 text-xl font-black uppercase">
                 Cannot dispose or search a customer account?
@@ -160,7 +160,7 @@ const Helper: React.FC<Props> = ({ close }) => {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.4 }}
-              viewport={{ once: false }}
+              viewport={{ once: true }}
             >
               <div className="border  border-black pr-5 items-center justify-center rounded-md shadow-md flex xl:flex-row flex-col">
                 <img

@@ -599,14 +599,14 @@ const QACallfileReport = () => {
   }, []);
 
   return (
-    <div className="flex flex-row h-full max-h-[90vh] p-10 gap-2  ">
+    <div className="flex flex-row h-full max-h-[90vh] p-4 gap-2  ">
       <motion.div
-        className="bg-gray-300 max-w-[500px] overflow-hidden w-full flex flex-col font-black text-black  border rounded-md shadow-md "
+        className="bg-blue-200 max-w-[500px] overflow-hidden w-full flex flex-col font-black  border-2 border-blue-800 rounded-md shadow-md "
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 100 }}
       >
-        <div className="text-center h-[8.4%] bg-gray-400 py-4 border-b font-black uppercase w-full text-2xl  ">
+        <div className="text-center h-[8.4%] text-white bg-blue-500 py-4 border-b-2 border-blue-800 font-black uppercase w-full text-2xl  ">
           Callfile Report
         </div>
 
@@ -617,7 +617,7 @@ const QACallfileReport = () => {
               className="relative col-span-2 flex"
               ref={bucketDropdownRef}
             >
-              <div className="border mr-2 w-full rounded-sm bg-gray-200 shadow-md ">
+              <div className="border mr-2 w-full rounded-sm bg-blue-100 shadow-md ">
                 <input
                   className="outline-none w-full px-3 py-1 font-normal"
                   placeholder={
@@ -639,7 +639,7 @@ const QACallfileReport = () => {
                   setIsCallfileOpen(false);
                   setIsBucketOpen((prev) => !prev);
                 }}
-                className="border bg-gray-200 rounded-sm px-3 py-1 cursor-pointer shadow-md flex items-center justify-center"
+                className="border bg-blue-100 rounded-sm px-3 py-1 cursor-pointer shadow-md flex items-center justify-center"
                 aria-label="Toggle bucket list"
               >
                 <svg
@@ -658,7 +658,7 @@ const QACallfileReport = () => {
               <AnimatePresence>
                 {isBucketOpen && (
                   <motion.div
-                    className="absolute z-20 overflow-auto bg-gray-200 max-h-40 w-full top-10 shadow-sm border rounded-sm "
+                    className="absolute z-20 overflow-auto bg-blue-100 max-h-40 w-full top-10 shadow-sm border rounded-sm "
                     initial={{ y: -10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -10, opacity: 0 }}
@@ -698,7 +698,7 @@ const QACallfileReport = () => {
               className="relative col-span-2 flex"
               ref={callfileDropdownRef}
             >
-              <div className="border mr-2 w-full rounded-sm bg-gray-200 shadow-md ">
+              <div className="border mr-2 w-full rounded-sm bg-blue-100 shadow-md ">
                 <input
                   className="outline-none w-full px-3 py-1 font-normal"
                   placeholder={
@@ -720,7 +720,7 @@ const QACallfileReport = () => {
                   setIsBucketOpen(false);
                   setIsCallfileOpen((prev) => !prev);
                 }}
-                className="border bg-gray-200 rounded-sm px-3 py-1 cursor-pointer shadow-md flex items-center justify-center"
+                className="border bg-blue-100 rounded-sm px-3 py-1 cursor-pointer shadow-md flex items-center justify-center"
                 aria-label="Toggle callfile list"
               >
                 <svg
@@ -739,7 +739,7 @@ const QACallfileReport = () => {
               <AnimatePresence>
                 {isCallfileOpen && (
                   <motion.div
-                    className="absolute z-20 bg-gray-200 max-h-40 overflow-auto w-full top-10 shadow-sm border rounded-sm "
+                    className="absolute z-20 bg-blue-100 max-h-40 overflow-auto w-full top-10 shadow-sm border rounded-sm "
                     initial={{ y: -10, opacity: 0 }}
                     animate={{ y: 0, opacity: 1 }}
                     exit={{ y: -10, opacity: 0 }}
@@ -773,13 +773,13 @@ const QACallfileReport = () => {
 
           <div className="mt-5  gap-2 h-[50%] flex flex-col">
             <div className="text-center uppercase">select Disposition</div>
-            <div className="bg-gray-200 h-full grid grid-cols-2 items-center  overflow-auto  shadow-md border rounded-sm gap-1 p-2">
+            <div className="bg-blue-100 h-full grid grid-cols-2 items-center  overflow-auto  shadow-md border rounded-sm gap-1 p-2">
               <div
                 onClick={handleSelectAll}
-                className={`text-sm uppercase py-1 px-3 h-full items-center flex rounded-xs cursor-pointer hover:bg-gray-500 hover:text-white border text-shadow-2xs ${
+                className={`text-sm uppercase py-1 px-3 h-full items-center flex rounded-xs cursor-pointer hover:bg-blue-500 hover:text-white border text-shadow-2xs ${
                   areAllSelected
-                    ? "bg-gray-500 text-white border border-black"
-                    : "bg-gray-300"
+                    ? "bg-blue-500 text-white border border-black"
+                    : "bg-blue-300"
                 }`}
               >
                 <div>select all</div>
@@ -795,10 +795,10 @@ const QACallfileReport = () => {
                     transition={{ delay: index * 0.05 }}
                     key={key}
                     onClick={() => toggleDisposition(key)}
-                    className={`text-sm py-1 px-3 h-full items-center flex rounded-xs cursor-pointer hover:bg-gray-500 hover:text-white text-shadow-2xs border ${
+                    className={`text-sm py-1 px-3 h-full items-center flex rounded-xs cursor-pointer hover:bg-blue-500 hover:text-white text-shadow-2xs border ${
                       isSelected
-                        ? "bg-gray-500 text-white border border-black"
-                        : "bg-gray-300"
+                        ? "bg-blue-500 text-white border border-black"
+                        : "bg-blue-300"
                     }`}
                   >
                     <div>{name}</div>
@@ -811,7 +811,7 @@ const QACallfileReport = () => {
           <div className="grid items-center h-[10%] grid-cols-3 mt-2">
             <div className="uppercase  text-right mr-2 ">Date from:</div>
             <input
-              className="col-span-2 border bg-gray-200 rounded-sm px-3 py-1 cursor-pointer  shadow-md "
+              className="col-span-2 border bg-blue-100 rounded-sm px-3 py-1 cursor-pointer  shadow-md "
               type="date"
               value={dateFrom}
               onChange={(event) => setDateFrom(event.target.value)}
@@ -821,7 +821,7 @@ const QACallfileReport = () => {
           <div className="grid items-center h-[10%] grid-cols-3 mt-2">
             <div className="uppercase  text-right mr-2 ">Date To:</div>
             <input
-              className="col-span-2 border bg-gray-200 rounded-sm px-3 py-1 cursor-pointer  shadow-md "
+              className="col-span-2 border bg-blue-100 rounded-sm px-3 py-1 cursor-pointer  shadow-md "
               type="date"
               min={dateFrom || undefined}
               value={dateTo}
@@ -868,15 +868,15 @@ const QACallfileReport = () => {
       </motion.div>
 
       <motion.div
-        className=" h-full flex flex-col w-full bg-gray-300 border overflow-hidden rounded-md "
+        className=" h-full flex flex-col w-full bg-blue-200 border-2 border-blue-800 overflow-hidden rounded-md "
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ type: "spring", stiffness: 100, delay: 0.1 }}
       >
-        <div className=" font-black h-[8.4%] uppercase text-center text-2xl py-2 border-b bg-gray-400">
-          <div> Callfile Performance</div>
+        <div className="text-white font-black h-[8.4%] text-shadow-2xs uppercase text-center text-2xl py-2 border-b-2 border-blue-800 bg-blue-500">
+          <div className="" > Callfile Performance</div>
           <div className="flex justify-center w-full gap-3">
-            <div className="text-sm text-black flex">
+            <div className="text-sm flex">
               Bucket:{" "}
               {selectedBucket ? (
                 selectedBucket.name
@@ -884,7 +884,7 @@ const QACallfileReport = () => {
                 <div className="font-semibold ml-1">Select a bucket</div>
               )}
             </div>
-            <div className="text-sm text-black flex">
+            <div className="text-sm flex">
               Callfile:{" "}
               {selectedCallfile ? (
                 selectedCallfile.name
@@ -895,7 +895,7 @@ const QACallfileReport = () => {
           </div>
         </div>
         <div className="grid w-full gap-2 h-[91.6%] p-2 grid-cols-3">
-          <div className="border flex flex-col gap-2 px-2 py-2 items-center rounded-sm bg-gray-200 overflow-auto">
+          <div className="border flex flex-col gap-2 px-2 py-2 items-center rounded-sm bg-blue-100 overflow-auto">
             {!isDateRangeValid ? (
               <div className="text-sm h-full items-center justify-center flex text-red-600 text-center">
                 Adjust the date range: Date To must be on or after Date From.
@@ -921,7 +921,7 @@ const QACallfileReport = () => {
                 return (
                   <motion.div
                     key={summary.code}
-                    className="w-full flex border hover:bg-gray-200 justify-between items-center bg-white rounded-sm px-3 py-2 shadow-sm"
+                    className="w-full flex border hover:bg-blue-100 justify-between items-center bg-white rounded-sm px-3 py-2 shadow-sm"
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{
@@ -952,7 +952,7 @@ const QACallfileReport = () => {
               </div>
             )}
           </div>
-          <div className="border col-span-2 rounded-sm bg-gray-200 flex items-center justify-center p-4">
+          <div className="border col-span-2 rounded-sm bg-blue-100 flex items-center justify-center p-4">
             {!isDateRangeValid ? (
               <div className="text-sm text-red-600 text-center">
                 Adjust the date range: Date To must be on or after Date From.

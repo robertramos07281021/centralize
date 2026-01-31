@@ -105,6 +105,13 @@ const OTHER_ACCOUNTS = gql`
         due_date
         loan_start
         late_charge_waive_fee_os
+        code
+        mcc_endo
+        cycle
+        mad
+        lb
+        employer_name
+        topup
       }
       grass_details {
         grass_region
@@ -275,6 +282,13 @@ type AccountHistory = {
   term: number;
   rem_months: number;
   product: string;
+  code: string;
+  mcc_date: string;
+  cycle: number;
+  lb: number;
+  mad: number;
+  employer_name: string;
+  topup: string;
 };
 
 const FieldsDiv = ({
@@ -324,7 +338,7 @@ const FieldsDiv = ({
       <div
         className={`${
           newValue || null ? "p-2" : "p-2"
-        } text-xs 2xl:text-sm border rounded-sm border-black bg-gray-100 text-black w-full`}
+        } text-xs 2xl:text-sm border rounded-sm border-black  bg-white text-black w-full`}
       >
         {newValue || (
           <div className="italic text-gray-400 lowercase first-letter:uppercase">
@@ -353,7 +367,7 @@ const AccountInfo = forwardRef<
   const location = useLocation();
   const isTLCIP = ["/tl-cip", "/agent-cip"].includes(location.pathname);
   const { selectedCustomer, userLogged } = useSelector(
-    (state: RootState) => state.auth
+    (state: RootState) => state.auth,
   );
   const [showAccounts, setShowAccounts] = useState<boolean>(false);
   const { data, refetch: otherAccountsRefetch } = useQuery<{
@@ -396,7 +410,7 @@ const AccountInfo = forwardRef<
     {
       notifyOnNetworkStatusChange: true,
       skip: !selectedCustomer && !isTLCIP,
-    }
+    },
   );
 
   useImperativeHandle(ref, () => ({
@@ -441,7 +455,7 @@ const AccountInfo = forwardRef<
     selectedCustomer?.out_standing_details?.product ??
     (selectedCustomer?.out_standing_details?.mo_balance ?? 0).toLocaleString(
       "en-PH",
-      { style: "currency", currency: "PHP" }
+      { style: "currency", currency: "PHP" },
     );
   const remMonthsValue =
     selectedCustomer?.out_standing_details?.rem_months ??
@@ -661,9 +675,9 @@ const AccountInfo = forwardRef<
         <motion.div
           initial={{ x: 50, opacity: 0 }}
           animate={{ opacity: 1, x: 0 }}
-          className="flex flex-col z-10 w-full overflow-hidden 2xl:gap-2 gap-2 bg-gray-100 border-t border-x border-black rounded-md justify-center "
+          className="flex flex-col z-10 w-full overflow-hidden 2xl:gap-2 gap-2 bg-blue-100 border-t-2 border-x-2 border-blue-800 rounded-md justify-center "
         >
-          <h1 className="text-center font-black bg-gray-400 border-b uppercase text-black text-2xl py-3">
+          <h1 className="text-center font-black bg-blue-500 border-b-2 border-blue-800 uppercase text-white text-2xl py-3">
             Account Information{" "}
           </h1>
 
@@ -671,7 +685,7 @@ const AccountInfo = forwardRef<
             <div className=" flex items-center justify-center text-gray-600">
               <div className="w-1/4 flex flex-col text-center">
                 <div className="font-bold text-black text-sm">Batch No.</div>
-                <div className="border rounded-sm border-black text-sm py-1.5 bg-gray-100">
+                <div className="border rounded-sm border-black text-sm py-1.5  bg-white">
                   {selectedCustomer.batch_no}
                 </div>
               </div>
@@ -723,20 +737,20 @@ const AccountInfo = forwardRef<
           </div>
 
           {!updateCustomerAccounts ? (
-            <div className="flex flex-col bg-gray-100 border-black border-b rounded-b-md shadow-md px-5 pb-5 items-end justify-center gap-1 text-slate-800 uppercase font-medium">
+            <div className="flex flex-col bg-blue-100 border-blue-800 border-b-2 rounded-b-md shadow-md px-5 pb-5 items-end justify-center gap-1 text-slate-800 uppercase font-medium">
               {selectedCustomer &&
                 agentBucketData?.getDeptBucket &&
                 agentBucketData.getDeptBucket.length > 0 &&
                 agentBucketData.getDeptBucket.every(
-                  (bucket) => bucket.name !== "BPIBANK 2025"
+                  (bucket) => bucket.name !== "BPIBANK 2025",
                 ) && (
                   <div className="w-full flex flex-col lg:ml-3 gap-5 text-black">
-                    <div className="bg-gray-100 w-full gap-2 grid grid-cols-2 lg:flex flex-col mb-1 md:mb-0 md:flex-row rounded-md">
+                    <div className=" w-full gap-2 grid grid-cols-2 lg:flex flex-col mb-1 md:mb-0 md:flex-row rounded-md">
                       <div className="w-full">
                         <h1 className="font-medium truncate whitespace-nowrap 2xl:text-sm text-xs text-nowrap">
                           {restructuringLabel}
                         </h1>
-                        <div className="w-full p-1 pl-2 border border-black rounded-sm">
+                        <div className="w-full bg-white p-1 pl-2 border border-black rounded-sm">
                           {productValue}
                         </div>
                       </div>
@@ -745,7 +759,7 @@ const AccountInfo = forwardRef<
                         <h1 className="font-medium 2xl:text-sm text-xs text-nowrap">
                           Past Due Amount
                         </h1>
-                        <div className="w-full p-1 pl-2 border border-black rounded-sm">
+                        <div className="w-full bg-white p-1 pl-2 border border-black rounded-sm">
                           {(
                             selectedCustomer?.out_standing_details
                               ?.pastdue_amount ?? 0
@@ -760,7 +774,7 @@ const AccountInfo = forwardRef<
                         <h1 className="font-medium 2xl:text-sm text-xs">
                           Monthly Amort
                         </h1>
-                        <div className="w-full pl-2 p-1 border border-black rounded-sm">
+                        <div className="w-full pl-2 bg-white p-1 border border-black rounded-sm">
                           {(
                             selectedCustomer?.out_standing_details?.mo_amort ??
                             0
@@ -775,11 +789,11 @@ const AccountInfo = forwardRef<
                         <h1 className="font-medium 2xl:text-sm text-xs">
                           {dfLabel}
                         </h1>
-                        <div className=" w-full pl-2 p-1 border border-black rounded-sm">
+                        <div className=" w-full bg-white border border-black rounded-sm">
                           {remMonthsValue || 0 > 0 ? (
                             remMonthsValue
                           ) : (
-                            <div className="2xl:p-0.5 first-letter:uppercase truncate italic text-gray-400 lowercase 2xl:text-sm lg:text-base">
+                            <div className="p-2 first-letter:uppercase truncate italic text-gray-400 lowercase text-xs h-full font-normal">
                               No information
                             </div>
                           )}
@@ -788,11 +802,108 @@ const AccountInfo = forwardRef<
                     </div>
                   </div>
                 )}
+
+              {bucketName === "SBF" && (
+                <div className="grid w-full gap-2 text-black text-sm grid-cols-3">
+                  <div className="flex flex-col">
+                    <div>Employer name: </div>
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
+                      {selectedCustomer?.out_standing_details?.employer_name || (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <div>Topup: </div>
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
+                      {selectedCustomer?.out_standing_details?.topup || (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <div>Write off balance: </div>
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
+                      {selectedCustomer?.out_standing_details?.writeoff_balance || (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {bucketName === "MBTC" && (
+                <div className="grid w-full gap-2 text-black text-sm grid-cols-3 grid-rows-1">
+                  <div className="flex flex-col">
+                    <div>Code: </div>
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
+                      {selectedCustomer?.out_standing_details?.code || (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex col-span-2 flex-col">
+                    <div>MCC Date Endorsement: </div>
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
+                      {selectedCustomer?.out_standing_details?.mcc_endo || (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <div>Cycle: </div>
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
+                      {selectedCustomer?.out_standing_details?.cycle || (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <div>Mad: </div>
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
+                      {selectedCustomer?.out_standing_details?.mad || (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-col">
+                    <div>LB: </div>
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
+                      {selectedCustomer?.out_standing_details?.lb || (
+                        <div className="italic text-gray-400 lowercase first-letter:uppercase">
+                          No information
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {bucketName === "FINBRO" && (
                 <div className="grid w-full gap-2 text-black text-sm grid-cols-4 grid-rows-2">
                   <div className="flex flex-col">
                     <div>Client Type: </div>
-                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
                       {selectedCustomer?.out_standing_details?.client_type || (
                         <div className="italic text-gray-400 lowercase first-letter:uppercase">
                           No information
@@ -802,7 +913,7 @@ const AccountInfo = forwardRef<
                   </div>
                   <div className="flex flex-col">
                     <div className="truncate">Overdue Balance: </div>
-                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
                       {(selectedCustomer?.out_standing_details
                         ?.overdue_balance ?? 0) > 0 ? (
                         (
@@ -821,7 +932,7 @@ const AccountInfo = forwardRef<
                   </div>
                   <div className="flex flex-col">
                     <div>Client ID: </div>
-                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
                       {selectedCustomer?.out_standing_details?.client_id || (
                         <div className="italic text-gray-400 lowercase first-letter:uppercase">
                           No information
@@ -832,7 +943,7 @@ const AccountInfo = forwardRef<
 
                   <div className="flex flex-col">
                     <div>Loan Start: </div>
-                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
                       {selectedCustomer?.out_standing_details?.loan_start || (
                         <div className="italic text-gray-400 lowercase first-letter:uppercase">
                           No information
@@ -843,7 +954,7 @@ const AccountInfo = forwardRef<
 
                   <div className="flex flex-col">
                     <div className="truncate">Last Payment Date: </div>
-                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
                       {selectedCustomer?.out_standing_details
                         ?.last_payment_date || (
                         <div className="italic text-gray-400 lowercase first-letter:uppercase">
@@ -854,7 +965,7 @@ const AccountInfo = forwardRef<
                   </div>
                   <div className="flex flex-col">
                     <div className="truncate">Last Payment Amount: </div>
-                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
                       {(selectedCustomer?.out_standing_details
                         ?.last_payment_amount ?? 0) > 0 ? (
                         (
@@ -873,7 +984,7 @@ const AccountInfo = forwardRef<
                   </div>
                   <div className="flex flex-col col-span-2">
                     <div>Due Date: </div>
-                    <div className="border p-1 pl-2 rounded-sm shadow-md">
+                    <div className="border p-1 pl-2 bg-white rounded-sm shadow-md">
                       {selectedCustomer?.out_standing_details?.due_date || (
                         <div className="italic text-gray-400 lowercase first-letter:uppercase">
                           No information
@@ -886,10 +997,10 @@ const AccountInfo = forwardRef<
 
               {selectedCustomer &&
                 agentBucketData?.getDeptBucket?.some(
-                  (bucket) => bucket.name === "BPIBANK 2025"
+                  (bucket) => bucket.name === "BPIBANK 2025",
                 ) && (
                   <div className="w-full flex flex-col lg:ml-3 gap-5 text-black">
-                    <div className="bg-gray-100 w-full gap-2 grid grid-cols-5 grid-rows-3 mb-1 md:mb-0 md:flex-row rounded-md">
+                    <div className=" bg-white w-full gap-2 grid grid-cols-5 grid-rows-3 mb-1 md:mb-0 md:flex-row rounded-md">
                       <div className="w-full">
                         <div
                           className="font-medium truncate 2xl:text-sm text-xs text-nowrap"
@@ -1058,7 +1169,7 @@ const AccountInfo = forwardRef<
 
               {selectedCustomer &&
               agentBucketData?.getDeptBucket?.some(
-                (bucket) => bucket.name === "BPIBANK 2025"
+                (bucket) => bucket.name === "BPIBANK 2025",
               ) ? (
                 <div className="flex w-full gap-2 text-black justify-end items-end">
                   <div className="w-full">
@@ -1066,56 +1177,56 @@ const AccountInfo = forwardRef<
                       {presetLabel === "Partial"
                         ? "Partial Payment w/ Service Fee:"
                         : presetLabel === "New Tad with SF"
-                        ? "New TAD w/ SF:"
-                        : presetLabel === "New Pay Off"
-                        ? "New Pay Off:"
-                        : ""}
+                          ? "New TAD w/ SF:"
+                          : presetLabel === "New Pay Off"
+                            ? "New Pay Off:"
+                            : ""}
                     </p>
-                    <div className="w-full  border p-2  border-black rounded-sm bg-gray-100 2xl:text-sm lg:text-base">
+                    <div className="w-full  border p-2  border-black rounded-sm  bg-white 2xl:text-sm lg:text-base">
                       {presetLabel === "Partial"
                         ? selectedCustomer?.out_standing_details?.partial_payment_w_service_fee?.toLocaleString(
                             "en-PH",
-                            { style: "currency", currency: "PHP" }
+                            { style: "currency", currency: "PHP" },
                           )
                         : presetLabel === "New Tad with SF"
-                        ? selectedCustomer?.out_standing_details?.new_tad_with_sf?.toLocaleString(
-                            "en-PH",
-                            { style: "currency", currency: "PHP" }
-                          )
-                        : presetLabel === "New Pay Off"
-                        ? selectedCustomer?.out_standing_details?.new_pay_off?.toLocaleString(
-                            "en-PH",
-                            { style: "currency", currency: "PHP" }
-                          )
-                        : "No selected!"}
+                          ? selectedCustomer?.out_standing_details?.new_tad_with_sf?.toLocaleString(
+                              "en-PH",
+                              { style: "currency", currency: "PHP" },
+                            )
+                          : presetLabel === "New Pay Off"
+                            ? selectedCustomer?.out_standing_details?.new_pay_off?.toLocaleString(
+                                "en-PH",
+                                { style: "currency", currency: "PHP" },
+                              )
+                            : "No selected!"}
                     </div>
                   </div>
                   <div className="w-full">
                     <p className="font-medium text-xs 2xl:text-sm ">Balance:</p>
-                    <div className="w-full border p-2  border-black rounded-sm bg-gray-100 2xl:text-sm lg:text-base">
+                    <div className="w-full border p-2  border-black rounded-sm  bg-white 2xl:text-sm lg:text-base">
                       {presetLabel === "Partial"
                         ? selectedCustomer?.out_standing_details?.partial_payment_w_service_fee?.toLocaleString(
                             "en-PH",
-                            { style: "currency", currency: "PHP" }
+                            { style: "currency", currency: "PHP" },
                           )
                         : presetLabel === "New Tad with SF"
-                        ? selectedCustomer?.out_standing_details?.new_tad_with_sf?.toLocaleString(
-                            "en-PH",
-                            { style: "currency", currency: "PHP" }
-                          )
-                        : presetLabel === "New Pay Off"
-                        ? selectedCustomer?.out_standing_details?.new_pay_off?.toLocaleString(
-                            "en-PH",
-                            { style: "currency", currency: "PHP" }
-                          )
-                        : "No selected!"}
+                          ? selectedCustomer?.out_standing_details?.new_tad_with_sf?.toLocaleString(
+                              "en-PH",
+                              { style: "currency", currency: "PHP" },
+                            )
+                          : presetLabel === "New Pay Off"
+                            ? selectedCustomer?.out_standing_details?.new_pay_off?.toLocaleString(
+                                "en-PH",
+                                { style: "currency", currency: "PHP" },
+                              )
+                            : "No selected!"}
                     </div>
                   </div>
                   <div className="w-full">
                     <p className="font-medium text-xs 2xl:text-sm">
                       Total Paid
                     </p>
-                    <div className="w-full border p-2 border-black rounded-sm bg-gray-100 2xl:text-sm lg:text-base">
+                    <div className="w-full border p-2 border-black rounded-sm  bg-white 2xl:text-sm lg:text-base">
                       {selectedCustomer?.paid_amount?.toLocaleString("en-PH", {
                         style: "currency",
                         currency: "PHP",
@@ -1151,10 +1262,10 @@ const AccountInfo = forwardRef<
                         ? "Outstanding Balance"
                         : "OSB w/ CF"}
                     </p>
-                    <div className="w-full  border p-2  border-black rounded-sm bg-gray-100 2xl:text-sm lg:text-base">
+                    <div className="w-full  border p-2  border-black rounded-sm  bg-white 2xl:text-sm lg:text-base">
                       {selectedCustomer?.out_standing_details?.total_os?.toLocaleString(
                         "en-PH",
-                        { style: "currency", currency: "PHP" }
+                        { style: "currency", currency: "PHP" },
                       ) || (
                         <div className="text-gray-400 italic lowercase first-letter:uppercase">
                           No information
@@ -1164,7 +1275,7 @@ const AccountInfo = forwardRef<
                   </div>
                   <div className="w-full">
                     <p className="font-medium text-xs 2xl:text-sm ">Balance</p>
-                    <div className="w-full border p-2  border-black rounded-sm bg-gray-100 2xl:text-sm lg:text-base">
+                    <div className="w-full border p-2  border-black rounded-sm  bg-white 2xl:text-sm lg:text-base">
                       {selectedCustomer?.balance?.toLocaleString("en-PH", {
                         style: "currency",
                         currency: "PHP",
@@ -1179,7 +1290,7 @@ const AccountInfo = forwardRef<
                     <p className="font-medium text-xs 2xl:text-sm">
                       Total Paid
                     </p>
-                    <div className="w-full border p-2 border-black rounded-sm bg-gray-100 2xl:text-sm lg:text-base">
+                    <div className="w-full border p-2 border-black rounded-sm  bg-white 2xl:text-sm lg:text-base">
                       {selectedCustomer?.paid_amount?.toLocaleString("en-PH", {
                         style: "currency",
                         currency: "PHP",
@@ -1241,7 +1352,7 @@ const AccountInfo = forwardRef<
                 animate={{ x: 0, opacity: 1 }}
                 transition={{ delay: 0.1 }}
               >
-                <div className="bg-gray-100 w-full shadow-md px-3 py-4 border-2 gap-1 flex flex-col border-gray-600 rounded-md">
+                <div className=" bg-white w-full shadow-md px-3 py-4 border-2 gap-1 flex flex-col border-gray-600 rounded-md">
                   <div>
                     <h1 className="font-medium 2xl:text-lg lg:text-base">
                       Customer Total OB

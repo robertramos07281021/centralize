@@ -15,7 +15,7 @@ const UserOptionSettings: React.FC<modalProps> = ({
   isOnline,
 }) => {
   return (
-    <div className="flex flex-col py-6 gap-2 pr-5">
+    <div className="flex flex-col gap-2 pr-5">
       <div>
         <button
           type="button"

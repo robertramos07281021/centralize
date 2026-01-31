@@ -4,7 +4,11 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { useSelector } from "react-redux";
 import { RootState, useAppDispatch } from "../redux/store";
 import { dateAndTime } from "../middleware/dateAndTime";
-import { setIsRing, setSelectedCustomer, setServerError } from "../redux/slices/authSlice";
+import {
+  setIsRing,
+  setSelectedCustomer,
+  setServerError,
+} from "../redux/slices/authSlice";
 import { Search } from "../middleware/types";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -75,6 +79,26 @@ const MY_TASKS = gql`
         mo_balance
         pastdue_amount
         mo_amort
+        partial_payment_w_service_fee
+        new_tad_with_sf
+        new_pay_off
+        service_fee
+        year
+        brand
+        model
+        last_payment_amount
+        last_payment_date
+        client_type
+        overdue_balance
+        client_id
+        due_date
+        loan_start
+        term
+        code
+        mcc_endo
+        cycle
+        mad
+        lb
       }
       grass_details {
         grass_region
@@ -85,6 +109,8 @@ const MY_TASKS = gql`
         name
         dept
         _id
+        can_update_ca
+        isPermanent
       }
       customer_info {
         fullName
@@ -183,6 +209,26 @@ const GROUP_TASKS = gql`
           mo_balance
           pastdue_amount
           mo_amort
+          partial_payment_w_service_fee
+          new_tad_with_sf
+          new_pay_off
+          service_fee
+          year
+          brand
+          model
+          last_payment_amount
+          last_payment_date
+          client_type
+          overdue_balance
+          client_id
+          due_date
+          loan_start
+          term
+          code
+          mcc_endo
+          cycle
+          mad
+          lb
         }
         grass_details {
           grass_region
@@ -193,6 +239,8 @@ const GROUP_TASKS = gql`
           name
           dept
           _id
+          can_update_ca
+          isPermanent
         }
         customer_info {
           fullName
@@ -303,13 +351,13 @@ type Dispotypes = {
 };
 
 const MyTaskSection = () => {
-  const { userLogged, selectedCustomer, } = useSelector(
-    (state: RootState) => state.auth
+  const { userLogged, selectedCustomer } = useSelector(
+    (state: RootState) => state.auth,
   );
   const dispatch = useAppDispatch();
   const { data: myTasksData, refetch } = useQuery<{ myTasks: Search[] | [] }>(
     MY_TASKS,
-    { notifyOnNetworkStatusChange: true }
+    { notifyOnNetworkStatusChange: true },
   );
   const { data: groupTaskData, refetch: groupTaskRefetch } = useQuery<{
     groupTask: GroupTask;
@@ -407,10 +455,10 @@ const MyTaskSection = () => {
 
   const groupLength =
     groupTaskData?.groupTask.task.filter((e) =>
-      userLogged?.buckets.toString().includes(e.account_bucket._id)
+      userLogged?.buckets.toString().includes(e.account_bucket._id),
     ).length || null;
   const taskLength = myTasksData?.myTasks?.filter((e) =>
-    userLogged?.buckets.toString().includes(e.account_bucket?._id)
+    userLogged?.buckets.toString().includes(e.account_bucket?._id),
   ).length;
 
   useEffect(() => {
@@ -418,17 +466,17 @@ const MyTaskSection = () => {
       setData(
         myTasksData?.myTasks
           ? myTasksData?.myTasks.filter((e) =>
-              userLogged?.buckets.toString().includes(e.account_bucket._id)
+              userLogged?.buckets.toString().includes(e.account_bucket._id),
             )
-          : null
+          : null,
       );
     } else {
       setData(
         groupTaskData?.groupTask?.task
           ? groupTaskData?.groupTask.task.filter((e) =>
-              userLogged?.buckets.toString().includes(e.account_bucket._id)
+              userLogged?.buckets.toString().includes(e.account_bucket._id),
             )
-          : null
+          : null,
       );
     }
   }, [selection, myTasksData, groupTaskData, userLogged]);
@@ -469,10 +517,10 @@ const MyTaskSection = () => {
       const res = await selectTask({ variables: { id: data._id } });
       if (res.data.selectTask.success) {
         dispatch(setSelectedCustomer({ ...data, isRPCToday: false }));
-        dispatch(setIsRing(true))
+        dispatch(setIsRing(true));
       }
     },
-    [deselectTask, dispatch, selectedCustomer]
+    [deselectTask, dispatch, selectedCustomer],
   );
 
   const handleClickGroupTask = () => {

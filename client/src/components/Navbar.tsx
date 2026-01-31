@@ -572,15 +572,15 @@ const Navbar = () => {
           />
         )}
         <div className="sticky z-50 top-0 print:hidden">
-          <div className="py-2 px-5 bg-blue-500 flex justify-between items-center ">
-            <a href="/" title="Home"  className="flex cursor-pointer text-xs md:text-2xl gap-2 font-medium items-center text-white italic">
-              <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-10 rounded-sm shadow-md" />
+          <div className="py-2 px-3 md:px-5 bg-blue-500 flex justify-between items-center ">
+            <a href="/" title="Home"  className="flex cursor-pointer text-xs md:text-2xl gap-1 md:gap-2 font-medium items-center text-white italic">
+              <img src="/singlelogo.jpg" alt="Bernales Logo" className="w-8 md:w-10 rounded-sm shadow-md" />
               Collections System
               {userLogged?.type === "AGENT" &&
                 breakValue !== BreakEnum.WELCOME &&
                 !selectedCustomer && <IdleAutoLogout />}
             </a>
-            <div className="p-1 flex gap-2 text-xs z-50">
+            <div className="p-1 flex md:gap-2 text-xs z-50">
               <p className="font-black text-xs md:text-lg mr-2 flex items-center text-white text-shadow-sm uppercase">
                 Hello!&nbsp;
                 <span className="uppercase">{userLogged?.name}</span>

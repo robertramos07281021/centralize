@@ -65,6 +65,8 @@ import EventEmitter from "events";
 import patchUpdateResolver from "./graphql/resolvers/updateResolver.js";
 import patchUpdateTypeDefs from "./graphql/schemas/updateSchema.js";
 import { initViciPolling } from "./middlewares/viciPolling.js";
+import eodResolver from "./graphql/resolvers/eodResolver.js";
+import eodTypeDefs from "./graphql/schemas/eodSchema.js";
 
 const __filename = fileURLToPath(import.meta.url);
 
@@ -113,6 +115,10 @@ app.use(compression());
 
 app.use("/recordings", express.static(path.join(process.cwd(), "recordings")));
 app.use("/tmp", express.static(path.join(__dirname, "tmp")));
+app.use(
+  "/fieldimages",
+  express.static(path.join(process.cwd(), "client", "src", "fieldimages"))
+);
 
 const now = new Date();
 const tomorrow = new Date(now);
@@ -173,9 +179,19 @@ cron.schedule(
         },
         { $unwind: { path: "$cd", preserveNullAndEmptyArrays: true } },
         {
+          $lookup: {
+            from: "buckets",
+            localField: "bucket",
+            foreignField: "_id",
+            as: "bucket",
+          },
+        },
+        { $unwind: { path: "$bucket", preserveNullAndEmptyArrays: true } },
+        {
           $match: {
             "cd.createdAt": { $lte: cutoff },
             "cd.disposition": dispotype._id,
+            "bucket.isPermanent": {$eq: false},
           },
         },
         { $project: { _id: 1, user: "$cd.user" } },
@@ -255,7 +271,8 @@ const resolvers = mergeResolvers([
   callResolver,
   selectivesResolver,
   scoreCardResolver,
-  patchUpdateResolver
+  patchUpdateResolver,
+  eodResolver
 ]);
 
 const typeDefs = mergeTypeDefs([
@@ -277,7 +294,8 @@ const typeDefs = mergeTypeDefs([
   callTypeDefs,
   selectivesTypeDefs,
   scoreCardTypeDefs,
-  patchUpdateTypeDefs
+  patchUpdateTypeDefs,
+  eodTypeDefs
 ]);
 
 const schema = makeExecutableSchema({ typeDefs, resolvers });

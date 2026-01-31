@@ -157,7 +157,7 @@ const AgentView = () => {
           data.data?.somethingOnAgentAccount.message ===
             "SOMETHING_ON_AGENT_ACCOUNT" &&
           data.data?.somethingOnAgentAccount.buckets.some((bucket) =>
-            userLogged?.buckets.includes(bucket)
+            userLogged?.buckets.includes(bucket),
           )
         ) {
           await refetch();
@@ -178,11 +178,11 @@ const AgentView = () => {
           e.user_id?.includes(search) ||
           e.name.toLowerCase().includes(search.toLowerCase()) ||
           e.buckets.some((bucket) =>
-            bucket.name.toLowerCase()?.includes(search.toLowerCase())
+            bucket.name.toLowerCase()?.includes(search.toLowerCase()),
           ) ||
           e.departments.some((dept) =>
-            dept.name.toLowerCase()?.includes(search.toLowerCase())
-          )
+            dept.name.toLowerCase()?.includes(search.toLowerCase()),
+          ),
       );
     }
     if (option === 50) {
@@ -200,11 +200,11 @@ const AgentView = () => {
         e.user_id?.includes(search) ||
         e.name.toLowerCase()?.includes(search.toLowerCase()) ||
         e.buckets.some((bucket) =>
-          bucket.name.toLowerCase()?.includes(search.toLowerCase())
+          bucket.name.toLowerCase()?.includes(search.toLowerCase()),
         ) ||
         e.departments.some((dept) =>
-          dept.name.toLowerCase()?.includes(search.toLowerCase())
-        )
+          dept.name.toLowerCase()?.includes(search.toLowerCase()),
+        ),
     );
     if (filteredData) {
       setAgentProduction(filteredData);
@@ -221,7 +221,7 @@ const AgentView = () => {
           success: res.unlockUser.success,
           message: res.unlockUser.message,
           isMessage: false,
-        })
+        }),
       );
       await refetch();
       await agentProdDataRefetch();
@@ -246,7 +246,7 @@ const AgentView = () => {
   }
 
   const [userToUpdateTargets, setUserToUpdateTargets] = useState<string | null>(
-    null
+    null,
   );
   const [updateSetTargets, setUpdateSetTarget] = useState<boolean>(false);
   const [bucketTargetModal, setBucketTargetModal] = useState<boolean>(false);
@@ -261,12 +261,12 @@ const AgentView = () => {
           e.user_id.includes(search) ||
           e.name.toLowerCase().includes(search.toLowerCase()) ||
           e.buckets.some((bucket) =>
-            bucket.name.toLowerCase().includes(search.toLowerCase())
+            bucket.name.toLowerCase().includes(search.toLowerCase()),
           ) ||
           e.departments.some((dept) =>
-            dept?.name.toLowerCase().includes(search.toLowerCase())
+            dept?.name.toLowerCase().includes(search.toLowerCase()),
           ) ||
-          e.customer?.fullName?.toLowerCase().includes(search.toLowerCase())
+          e.customer?.fullName?.toLowerCase().includes(search.toLowerCase()),
       );
     }
     if (option === 50) {
@@ -282,7 +282,7 @@ const AgentView = () => {
     async (userId: string | null) => {
       await unlockUser({ variables: { id: userId } });
     },
-    [unlockUser]
+    [unlockUser],
   );
 
   const eventType: Record<
@@ -305,7 +305,7 @@ const AgentView = () => {
     (
       userId: string | null,
       lock: boolean,
-      eventMethod: keyof typeof ButtonType
+      eventMethod: keyof typeof ButtonType,
     ) => {
       const message = eventMethod.toLowerCase();
       if (
@@ -325,7 +325,7 @@ const AgentView = () => {
         });
       }
     },
-    [eventType, setAuthentication, setIsAuthorize]
+    [eventType, setAuthentication, setIsAuthorize],
   );
 
   const formatCurrency = useCallback((amount?: number | null) => {
@@ -352,7 +352,7 @@ const AgentView = () => {
                 success,
                 message,
                 isMessage: false,
-              })
+              }),
             );
             refetch();
             agentProdDataRefetch();
@@ -371,93 +371,14 @@ const AgentView = () => {
           }}
         />
       )}
-      <div className="h-full w-full flex flex-col overflow-hidden p-2">
+      <div className="h-full w-full flex flex-col overflow-hidden p-4 gap-2">
         <div className="flex justify-between">
-          <h1 className="py-5 pt-6 px-6 uppercase font-black text-2xl  text-gray-500">
-            Agent Production
-          </h1>
-          <div className="flex justify-end gap-3 px-5 items-center relative">
-            <motion.div
-              className="bg-white  relative border-2 border-gray-500 overflow-hidden px-4 py-1 rounded-full flex gap-6 text-gray-400 font-black uppercase items-center"
-              initial={{ y: 20, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              transition={{ delay: 0.2 }}
-            >
-              <div
-                onClick={() => {
-                  setOption(0);
-                  setWidth(50);
-                }}
-                className={`" ${
-                  option === 0 ? "text-gray-500" : " text-gray-400"
-                } transition-all text-xs z-20  cursor-pointer "`}
-              >
-                ALL
-              </div>
-              <div
-                onClick={() => {
-                  setOption(50);
-                  setWidth(45);
-                }}
-                className={`"  ${
-                  option === 50 ? "text-green-600" : " text-gray-400"
-                } transition-all cursor-pointer  z-20 text-green-500 "`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="size-5"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z"
-                    clipRule="evenodd"
-                  />
-                  <path d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
-                </svg>
-              </div>
-              <div
-                onClick={() => {
-                  setOption(95);
-                  setWidth(50);
-                }}
-                className={`" ${
-                  option === 95 ? "text-red-600" : " text-red-500"
-                } transition-all cursor-pointer z-20  "`}
-              >
-                <svg
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 24 24"
-                  fill="currentColor"
-                  className="size-5"
-                >
-                  <path
-                    fillRule="evenodd"
-                    d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z"
-                    clipRule="evenodd"
-                  />
-                  <path d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
-                </svg>
-              </div>
-              <motion.div
-                className={`" ${
-                  option === 50
-                    ? "bg-green-200"
-                    : option === 95
-                    ? "bg-red-200"
-                    : "bg-gray-200"
-                } absolute z-10 top-0 overflow-hidden left-0 h-full flex items-center justify-center "`}
-                initial={{ x: 0, width: 50 }}
-                animate={{ x: option, width: width }}
-                transition={{ duration: 0.6, type: "spring" }}
-              ></motion.div>
-            </motion.div>
+          <div className="flex justify-end w-full gap-3 items-center relative">
             <div className="flex">
               <motion.div
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.3 }}
+                transition={{ delay: 0.2 }}
                 className="h-full border flex pl-2 rounded-md shadow-md items-center gap-2"
               >
                 <svg
@@ -487,6 +408,83 @@ const AgentView = () => {
                 />
               </motion.div>
             </div>
+            <motion.div
+              className=" relative border-2 border-blue-800 bg-blue-50 overflow-hidden h-full rounded-md shadow-md flex text-gray-400 font-black uppercase items-center"
+              initial={{ y: 20, opacity: 0 }}
+              animate={{ y: 0, opacity: 1 }}
+              transition={{ delay: 0.3 }}
+            >
+              <div
+                onClick={() => {
+                  setOption(0);
+                  setWidth(45);
+                }}
+                className={`" ${
+                  option === 0 ? "text-gray-500" : " text-gray-400"
+                } transition-all text-xs z-20  px-3 h-full flex items-center cursor-pointer "`}
+              >
+                ALL
+              </div>
+              <div
+                onClick={() => {
+                  setOption(45);
+                  setWidth(45);
+                }}
+                className={`"  ${
+                  option === 45 ? "text-green-600" : " text-gray-400"
+                } transition-all cursor-pointer px-3 items-center flex w-full h-full  z-20 text-green-500 "`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="size-5"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z"
+                    clipRule="evenodd"
+                  />
+                  <path d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
+                </svg>
+              </div>
+              <div
+                onClick={() => {
+                  setOption(90);
+                  setWidth(55);
+                }}
+                className={`" ${
+                  option === 90 ? "text-red-600" : " text-red-500"
+                } transition-all cursor-pointer  px-3 h-full flex items-center z-20  "`}
+              >
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="currentColor"
+                  className="size-5"
+                >
+                  <path
+                    fillRule="evenodd"
+                    d="M8.25 6.75a3.75 3.75 0 1 1 7.5 0 3.75 3.75 0 0 1-7.5 0ZM15.75 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM2.25 9.75a3 3 0 1 1 6 0 3 3 0 0 1-6 0ZM6.31 15.117A6.745 6.745 0 0 1 12 12a6.745 6.745 0 0 1 6.709 7.498.75.75 0 0 1-.372.568A12.696 12.696 0 0 1 12 21.75c-2.305 0-4.47-.612-6.337-1.684a.75.75 0 0 1-.372-.568 6.787 6.787 0 0 1 1.019-4.38Z"
+                    clipRule="evenodd"
+                  />
+                  <path d="M5.082 14.254a8.287 8.287 0 0 0-1.308 5.135 9.687 9.687 0 0 1-1.764-.44l-.115-.04a.563.563 0 0 1-.373-.487l-.01-.121a3.75 3.75 0 0 1 3.57-4.047ZM20.226 19.389a8.287 8.287 0 0 0-1.308-5.135 3.75 3.75 0 0 1 3.57 4.047l-.01.121a.563.563 0 0 1-.373.486l-.115.04c-.567.2-1.156.349-1.764.441Z" />
+                </svg>
+              </div>
+              <motion.div
+                className={`" ${
+                  option === 45
+                    ? "bg-green-200"
+                    : option === 90
+                      ? "bg-red-200"
+                      : "bg-gray-200"
+                } absolute z-10 top-0 overflow-hidden left-0 h-full flex items-center justify-center "`}
+                initial={{ x: 0, width: 50 }}
+                animate={{ x: option, width: width }}
+                transition={{ duration: 0.6, type: "spring" }}
+              ></motion.div>
+            </motion.div>
+
             <motion.button
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -502,12 +500,12 @@ const AgentView = () => {
         </div>
 
         <motion.div
-          className="h-full overflow-hidden m-5 text-sm"
+          className="h-full overflow-hidden text-sm"
           initial={{ y: 20, opacity: 0 }}
           animate={{ y: 0, opacity: 1 }}
           transition={{ delay: 0 }}
         >
-          <div className="grid px-2 border rounded-t-md gap-2 border-gray-600 grid-cols-11 font-black uppercase  text-slate-800 bg-gray-300 ">
+          <div className="grid px-2 border-2 rounded-t-md gap-2 border-blue-800 grid-cols-11 font-black uppercase  text-white text-shadow-2xs bg-blue-500 ">
             <div className=" py-1 flex items-center">Name</div>
             <div className="py-1 truncate flex items-center">VICI ID</div>
             <div className="py-1 truncate flex items-center">Bucket</div>
@@ -528,29 +526,31 @@ const AgentView = () => {
                 <div>Montly</div>
               </div>
             </div>
-            <div className="py-1 truncate flex items-center justify-end mr-4">Action</div>
+            <div className="py-1 truncate flex items-center justify-end mr-4">
+              Action
+            </div>
           </div>
           <div className="h-[93%] overflow-y-auto">
             {agentProduction.length !== 0 ? (
               <div>
                 {agentProduction.map((e, index) => {
                   const findAgentProd = agentProdData?.getAgentProductions.find(
-                    (y) => y.user === e._id
+                    (y) => y.user === e._id,
                   );
                   const findExsitingStatus = findAgentProd?.prod_history.find(
-                    (x) => x.existing === true
+                    (x) => x.existing === true,
                   );
                   return (
                     e.type === "AGENT" &&
                     e.active && (
                       <motion.div
                         key={e._id}
-                        className="cursor-default border-x border-b border-gray-600 last:rounded-b-md last:shadow-md bg-gray-100  odd:bg-gray-200    "
+                        className="cursor-default border-x-2 hover:bg-blue-300 transition-all border-b-2 border-gray-600 even:bg-blue-200 odd:bg-blue-100 last:rounded-b-md last:shadow-md  "
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
-                        transition={{ delay: index * 0.1 }}
+                        transition={{ delay: index * 0.05 }}
                       >
-                        <div className="items-center hover:bg-gray-300 transition-all gap-2 px-2 py-2 grid grid-cols-11 lg:text-xs 2xl:text-sm text-gray-800 font-normal">
+                        <div className="items-center transition-all gap-2 px-2 py-2 grid grid-cols-11 lg:text-xs 2xl:text-sm text-gray-800 font-normal">
                           <div className="capitalize truncate">{e.name}</div>
                           <div>
                             {e.vici_id || (
@@ -591,7 +591,7 @@ const AgentView = () => {
                                   onClickAction(
                                     e._id,
                                     e.isLock,
-                                    ButtonType.UNLOCK
+                                    ButtonType.UNLOCK,
                                   )
                                 }
                                 className=" bg-red-700 cursor-pointer hover:bg-red-800 shadow-md h-full  px-2 py-1 border-2  rounded-sm border-red-900 text-white"
@@ -724,7 +724,7 @@ const AgentView = () => {
                 })}
               </div>
             ) : (
-              <div className="italic font-sans border-x border-b border-gray-700 bg-gray-100 py-2 rounded-b-md text-center text-gray-400 text-base">
+              <div className="italic font-sans border-x-2 border-b-2 border-blue-800 bg-blue-100 py-2 rounded-b-md text-center text-gray-400 text-base">
                 No agent found
               </div>
             )}

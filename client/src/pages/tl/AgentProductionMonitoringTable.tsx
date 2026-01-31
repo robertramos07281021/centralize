@@ -115,20 +115,26 @@ const AgentProductionMonitoringTable = () => {
     refetching();
   }, [selectedBucket, intervalTypes]);
 
-  const bucketAgents = selectedBucket
-    ? agentBucketData?.getBucketUser?.filter(
+  const bucketAgents: Agent[] = selectedBucket
+    ? (agentBucketData?.getBucketUser ?? []).filter(
         (x) => x.buckets?.includes(selectedBucket) && x.type === "AGENT"
       )
     : [];
 
+  const visibleAgents = bucketAgents.filter(
+    (x) =>
+      x.active &&
+      (withProdAgentData?.checkAgentIfHaveProd?.includes(x._id) ?? false),
+  );
+
   return (
     <motion.div
-      className="h-full flex flex-col border border-gray-600 rounded-md lg:text-xs 2xl:text-base overflow-hidden"
+      className="h-full flex flex-col border-2 border-blue-800 rounded-md lg:text-xs 2xl:text-base overflow-hidden"
       initial={{ y: 20, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ delay: 0.6 }}
     >
-      <h1 className="font-black uppercase lg:text-sm 2xl:text-lg text-gray-800 bg-gray-400 px-2 py-1.5 text-center">
+      <h1 className="font-black uppercase lg:text-sm 2xl:text-lg text-white text-shadow-2xs bg-blue-500 px-2 py-1.5 text-center">
         Agent Production Monitoring
       </h1>
       {loading ? (
@@ -138,8 +144,8 @@ const AgentProductionMonitoringTable = () => {
       ) : (
         <div className="w-full h-full overflow-hidden">
           <div className="w-full h-full flex flex-col text-gray-600 table-fixed overflow-hidden">
-            <div className="bg-gray-300 sticky top-0 border-white">
-              <div className="grid border-y border-gray-500 grid-cols-9 gap-2 items-center font-black uppercase">
+            <div className="bg-blue-500 sticky top-0 border-white">
+              <div className="grid border-y-2 border-blue-800 grid-cols-9 gap-2 items-center text-white text-shadow-2xs font-black uppercase">
                 <div className="px-2 flex"></div>
                 <div className="py-1.5">RPC</div>
                 <div>PTP</div>
@@ -151,8 +157,13 @@ const AgentProductionMonitoringTable = () => {
                 <div>Variance</div>
               </div>
             </div>
-            <div className=" overflow-auto flex flex-col h-full">
-              {bucketAgents?.map((x, index) => {
+            <div className=" overflow-auto bg-blue-100 flex flex-col h-full">
+              {visibleAgents.length === 0 && (
+                <div className="flex h-full w-full items-center justify-center text-gray-400 italic">
+                  No agents found.
+                </div>
+              )}
+              {visibleAgents.map((x, index) => {
                 const findAgent = agentDailyProd?.agentDispoDaily
                   ? agentDailyProd?.agentDispoDaily.find(
                       (agent) => agent.user === x._id
@@ -173,21 +184,19 @@ const AgentProductionMonitoringTable = () => {
                   : null;
 
                 return (
-                  x.active &&
-                  withProdAgentData?.checkAgentIfHaveProd?.includes(x._id) && (
-                    <motion.div
-                      className="text-left hover:bg-gray-200  odd:bg-gray-100 bg-white items-center gap-2 grid grid-cols-9 text-gray-600"
-                      key={x._id}
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      transition={{ delay: index * 0.2 }}
+                  <motion.div
+                    className="text-left  odd:bg-blue-200 even:bg-blue-100 border-b border-blue-400 bg-white items-center gap-2 grid grid-cols-9 text-gray-600"
+                    key={x._id}
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ delay: index * 0.2 }}
+                  >
+                    <div
+                      className="truncate py-2 lg:text-xs 2xl:text-sm text-left pl-2 capitalize text-nowrap"
+                      title={x.name}
                     >
-                      <div
-                        className="truncate py-2 lg:text-xs 2xl:text-sm text-left pl-2 capitalize text-nowrap"
-                        title={x.name}
-                      >
-                        {x.name}
-                      </div>
+                      {x.name}
+                    </div>
                       <div>
                         {findAgent?.RPC || (
                           <div className="text-gray-400 italic">No RPC</div>
@@ -266,8 +275,7 @@ const AgentProductionMonitoringTable = () => {
                           </div>
                         )}
                       </div>
-                    </motion.div>
-                  )
+                  </motion.div>
                 );
               })}
             </div>

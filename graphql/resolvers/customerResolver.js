@@ -279,6 +279,8 @@ const customerResolver = {
             product: "$ca.out_standing_details.product",
             paid: "$ca.out_standing_details.paid",
             term: "$ca.out_standing_details.term",
+            employer_name: "$ca.out_standing_details.employer_name",
+            topup: "$ca.out_standing_details.topup",
           },
         },
       ]);
@@ -1576,6 +1578,13 @@ const customerResolver = {
                 client_id: e.client_id,
                 loan_start: e.loan_start,
                 due_date: e.due_date,
+                code: e.code,
+                mcc_endo: e.mcc_endo,
+                cycle: e.cycle,
+                mad: e.mad,
+                lb: e.lb,
+                employer_name: e.employer_name,
+                topup: e.topup,
               },
               emergency_contact: {
                 name: e.emergencyContactName,
